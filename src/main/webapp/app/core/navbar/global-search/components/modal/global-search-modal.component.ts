@@ -25,7 +25,10 @@ import { LectureSearchService } from '../../services/lecture-search.service';
 import { LECTURE_CONTENT_TYPE, mapLectureContentResult } from '../../models/lecture-content-result.util';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
-import { matchCoursePages } from '../../models/course-page-results.util';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
+import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
+import { COURSE_PAGE_TYPE, matchCoursePages } from '../../models/course-page-results.util';
 
 /** Iris content search is a vector search behind a network hop, so it gets its own, longer ceiling. */
 export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
@@ -72,6 +75,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private readonly lectureSearchService = inject(LectureSearchService);
     private readonly courseStorageService = inject(CourseStorageService);
     private readonly translateService = inject(TranslateService);
+    private readonly courseManagementService = inject(CourseManagementService);
+    private readonly courseOverviewGuard = inject(CourseOverviewGuard);
 
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
@@ -207,7 +212,34 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
     }
 
+    /** The available tabs of the one course the search is scoped to, which decide the guarded course pages it may offer. */
+    private readonly scopedCourseTabs = signal<{ courseId: number; tabs: CourseAvailableTabs } | undefined>(undefined);
+
     constructor() {
+        // Read directly from the endpoint rather than through CourseAvailableTabsService, whose held tabs belong to the
+        // course page the user is on and must not be replaced by a course picked in the palette.
+        effect((onCleanup) => {
+            const courseIds = this.courseIdsParam();
+            if (!this.overlay.isOpen() || courseIds.length !== 1) {
+                return;
+            }
+            const courseId = courseIds[0];
+            if (untracked(this.scopedCourseTabs)?.courseId === courseId) {
+                return;
+            }
+            const subscription = this.courseManagementService
+                .getCourseAvailableTabs(courseId)
+                .pipe(catchError(() => EMPTY))
+                .subscribe((tabs) => {
+                    this.scopedCourseTabs.set({ courseId, tabs });
+                    // The tabs can arrive after the search results: offer the pages they allow next to the hits already shown.
+                    if (this.hasSearched() && !this.contentSearchActive()) {
+                        this.replaceResultsKeepingSelection([...this.coursePageResults(), ...this.results().filter((result) => result.type !== COURSE_PAGE_TYPE)]);
+                    }
+                });
+            onCleanup(() => subscription.unsubscribe());
+        });
+
         // Wire the store's side-effects: a token change re-runs the search pipeline; menu/picker actions refocus input.
         this.filter.configure({
             applyTokens: (tokens) => this.applyTokens(tokens),
@@ -401,13 +433,33 @@ export class GlobalSearchModalComponent implements OnDestroy {
      * The pages of the one course the search is scoped to whose name matches the typed text, such as "grades" for the
      * statistics page. Offered only for a plain search in a single course, where the course is unambiguous.
      */
+    /**
+     * Replaces the shown results while keeping the selected one selected: the views select by index, and the slides-and-
+     * videos row, when shown, takes the first index before the results.
+     */
+    private replaceResultsKeepingSelection(results: GlobalSearchResult[]): void {
+        const rowOffset = this.contentPreview().length > 0 && !this.contentSearchActive() ? 1 : 0;
+        const selected = this.selectedIndex();
+        // IDs are only unique per entity type: an exercise and a lecture can both have ID 7.
+        const selectedResult = selected >= rowOffset ? this.results()[selected - rowOffset] : undefined;
+        this.results.set(results);
+        if (selectedResult !== undefined) {
+            const index = results.findIndex((result) => result.type === selectedResult.type && result.id === selectedResult.id);
+            this.selectedIndex.set(index >= 0 ? index + rowOffset : -1);
+        }
+    }
+
     private coursePageResults(): GlobalSearchResult[] {
         const courseIds = this.courseIdsParam();
         if (this.contentSearchActive() || courseIds.length !== 1 || this.typesParam() !== undefined || this.excludeTypesParam() !== undefined) {
             return [];
         }
         const courseId = courseIds[0];
-        return matchCoursePages(this.searchText(), courseId, this.courseStorageService.getCourse(courseId)?.title, (key) => this.translateService.instant(key));
+        const scopedTabs = this.scopedCourseTabs();
+        const tabs = scopedTabs?.courseId === courseId ? scopedTabs.tabs : undefined;
+        // The guard's own rule decides, so the palette offers exactly the tabs the course page would open.
+        const isAvailable = (segment: string) => !!tabs && this.courseOverviewGuard.decideAccess(courseId, tabs, segment) === true;
+        return matchCoursePages(this.searchText(), courseId, this.courseStorageService.getCourse(courseId)?.title, (key) => this.translateService.instant(key), isAvailable);
     }
 
     /**
@@ -645,6 +697,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     private resetSearch() {
+        // Tab availability can change while the palette is closed (an exam becomes visible), so each opening reads it again.
+        this.scopedCourseTabs.set(undefined);
         this.lastSearchText = '';
         this.chipKeyOrigin = undefined;
         this.searchSubject.next(null);

@@ -19,6 +19,7 @@ import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { GlobalSearchNavigationViewComponent } from '../views/navigation-view/global-search-navigation-view.component';
@@ -85,6 +86,19 @@ describe('GlobalSearchModalComponent', () => {
         isMac: vi.fn(() => true),
     };
 
+    const noTabs = {
+        lectures: false,
+        exams: false,
+        competencies: false,
+        tutorialGroups: false,
+        iris: false,
+        faq: false,
+        learningPaths: false,
+        communication: false,
+        training: false,
+    };
+    const mockCourseManagementService = { getCourseAvailableTabs: vi.fn(() => of(noTabs)) };
+
     const mockSearchService = {
         globalSearch: vi.fn(() => of<GlobalSearchResult[]>([])),
     };
@@ -113,6 +127,7 @@ describe('GlobalSearchModalComponent', () => {
                 { provide: GlobalSearchApi, useValue: mockSearchService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
                 { provide: CourseStorageService, useValue: mockCourseStorageService },
+                { provide: CourseManagementService, useValue: mockCourseManagementService },
             ],
         });
 
@@ -1472,6 +1487,67 @@ describe('GlobalSearchModalComponent', () => {
 
             expect(component['results']().map((result) => result.type)).toEqual(['course_page', 'exercise']);
             expect(component['results']()[0].metadata?.['link']).toBe('/courses/42/statistics');
+        });
+
+        it('offers a guarded course page only when the course has that tab', () => {
+            mockCourseManagementService.getCourseAvailableTabs.mockReturnValue(of({ ...noTabs, lectures: true }));
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 42, title: 'Intro to CS' });
+            Object.defineProperty(router, 'url', { get: () => '/courses/42', configurable: true });
+            mockSearchService.globalSearch.mockReturnValue(of([]));
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            component['onSearchInput']('vorlesungen');
+            vi.advanceTimersByTime(300);
+            expect(component['results']().map((result) => result.metadata?.['link'])).toEqual(['/courses/42/lectures']);
+
+            component['onSearchInput']('faq');
+            vi.advanceTimersByTime(300);
+            expect(component['results']()).toEqual([]);
+        });
+
+        it('adds the guarded pages when the course tabs arrive after the search results', () => {
+            const tabs = new Subject<typeof noTabs>();
+            mockCourseManagementService.getCourseAvailableTabs.mockReturnValue(tabs);
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 42, title: 'Intro to CS' });
+            Object.defineProperty(router, 'url', { get: () => '/courses/42', configurable: true });
+            mockSearchService.globalSearch.mockReturnValue(
+                of([{ id: '1', type: 'exercise', title: 'Vorlesungen planen' } as GlobalSearchResult, { id: '1', type: 'lecture', title: 'Vorlesung 1' } as GlobalSearchResult]),
+            );
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            component['onSearchInput']('vorlesungen');
+            vi.advanceTimersByTime(300);
+            expect(component['results']().map((result) => result.type)).toEqual(['exercise', 'lecture']);
+            // The lecture shares its ID with the exercise before it; the selection must stay on the lecture.
+            component['selectedIndex'].set(1);
+
+            tabs.next({ ...noTabs, lectures: true });
+
+            expect(component['results']().map((result) => result.type)).toEqual(['course_page', 'exercise', 'lecture']);
+            expect(component['selectedIndex']()).toBe(2);
+        });
+
+        it('reads the course tabs again when the palette is opened again', () => {
+            mockCourseManagementService.getCourseAvailableTabs.mockClear();
+            mockCourseManagementService.getCourseAvailableTabs.mockReturnValue(of(noTabs));
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 42, title: 'Intro to CS' });
+            Object.defineProperty(router, 'url', { get: () => '/courses/42', configurable: true });
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            mockSearchOverlayService.isOpen.set(false);
+            fixture.detectChanges();
+            mockCourseManagementService.getCourseAvailableTabs.mockReturnValue(of({ ...noTabs, exams: true }));
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+            mockSearchService.globalSearch.mockReturnValue(of([]));
+            component['onSearchInput']('klausuren');
+            vi.advanceTimersByTime(300);
+
+            expect(mockCourseManagementService.getCourseAvailableTabs).toHaveBeenCalledTimes(2);
+            expect(component['results']().map((result) => result.metadata?.['link'])).toEqual(['/courses/42/exams']);
         });
 
         it('offers no course page without a single course in scope', () => {
