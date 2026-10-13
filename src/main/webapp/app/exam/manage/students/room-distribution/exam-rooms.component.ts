@@ -19,6 +19,7 @@ import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { TumAetUiButtonDirective, TumAetUiCardComponent, TumAetUiTableDirective } from '@tumaet/ui-angular';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
@@ -29,7 +30,17 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-exam-rooms',
     templateUrl: './exam-rooms.component.html',
-    imports: [TranslateDirective, SortDirective, SortByDirective, FaIconComponent, ArtemisTranslatePipe, HelpIconComponent],
+    imports: [
+        TranslateDirective,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        HelpIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiCardComponent,
+        TumAetUiTableDirective,
+    ],
 })
 export class ExamRoomsComponent implements OnInit {
     private readonly examRoomsService = inject(ExamRoomsService);

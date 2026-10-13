@@ -273,8 +273,8 @@
                             <span class="placement-option__title">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.newGroup' | artemisTranslate }}</span>
                             <span class="placement-option__hint">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.newGroupHint' | artemisTranslate }}</span>
                             @if (placementChoice() === 'new-group') {
-                                <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- This wrapper only prevents clicks on its native form fields from selecting the parent option. -->
-                                <div class="new-group-settings" (click)="$event.stopPropagation()">
+                                <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -- This wrapper only prevents clicks on its native form fields from selecting the parent option. -->
+                                <div class="new-group-settings" (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()">
                                     <div class="flex flex-wrap gap-2 items-end mt-2">
                                         <div class="grow" style="min-width: 120px">
                                             <label class="new-group-settings__label" for="wiz-group-title">{{
@@ -497,7 +497,7 @@
             <ng-container *ngTemplateOutlet="nextSteps" />
             <ng-container *ngTemplateOutlet="stepSummary" />
             <div class="flex justify-end gap-2">
-                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
+                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()" data-testid="variant-wizard-close">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                 }}</tumaet-ui-button>
                 @if (generatedVariant()) {
@@ -519,7 +519,7 @@
                 </div>
             </div>
             <div class="flex justify-end gap-2">
-                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
+                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()" data-testid="variant-wizard-close">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                 }}</tumaet-ui-button>
                 @if (generatedVariant()) {
@@ -576,7 +576,7 @@
             </div>
 
             <div class="flex justify-end gap-2 mt-4">
-                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()">{{
+                <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="close()" data-testid="variant-wizard-close">{{
                     'artemisApp.exerciseVariantGeneration.wizard.close' | artemisTranslate
                 }}</tumaet-ui-button>
                 <tumaet-ui-button

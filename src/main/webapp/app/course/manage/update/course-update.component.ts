@@ -167,7 +167,7 @@ export class CourseUpdateComponent implements OnInit {
     protected readonly faCircleExclamation = faCircleExclamation;
 
     /** Options of the default programming language select, sorted like the previous native select; clearing it leaves the course without a default. */
-    protected readonly programmingLanguageOptions = Object.values(ProgrammingLanguage).sort();
+    protected readonly programmingLanguageOptions = Object.values(ProgrammingLanguage).sort((a, b) => a.localeCompare(b));
 
     readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     readonly colorSelector = viewChild.required(ColorSelectorComponent);
@@ -352,6 +352,7 @@ export class CourseUpdateComponent implements OnInit {
                 gradeRelevant: new FormControl(this.course.courseConfiguration?.gradeRelevant ?? true),
                 dataRetentionHold: new FormControl(this.course.courseConfiguration?.dataRetentionHold ?? false),
                 learningPathsEnabled: new FormControl(this.course.learningPathsEnabled),
+                presentationAssessmentsEnabled: new FormControl(this.course.presentationAssessmentsEnabled ?? false),
                 autoOrchestratorEnabled: new FormControl(this.course.courseConfiguration?.autoOrchestratorEnabled ?? false),
                 // Seconds / daily run counts: reject fractional values in addition to the lower bound.
                 debounceWindowSecondsOverride: new FormControl(this.course.courseConfiguration?.debounceWindowSecondsOverride, {

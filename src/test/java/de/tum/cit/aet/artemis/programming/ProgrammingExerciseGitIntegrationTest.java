@@ -114,7 +114,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractProgrammingIntegrati
                 .isThrownBy(() -> programmingExerciseRepository.findWithTemplateParticipationAndLatestSubmissionByIdElseThrow(Long.MAX_VALUE));
 
         assertThatExceptionOfType(EntityNotFoundException.class)
-                .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(Long.MAX_VALUE));
+                .isThrownBy(() -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(Long.MAX_VALUE));
     }
 
     @Test

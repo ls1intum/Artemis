@@ -20,12 +20,12 @@ import { Conversation, ConversationDTO } from 'app/communication/shared/entities
 import { Observable, Subject, catchError, forkJoin, map, of, takeUntil } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { PageType, PostContextFilter, PostSortCriterion, SortDirection, getUnreadPostsByLastReadDate } from 'app/communication/metis.util';
-import { MetisService } from 'app/communication/service/metis.service';
+import { PageType, PostContextFilter, PostSortCriterion, SortDirection, getUnreadPostsByLastReadDate } from 'app/communication/communication.util';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { Channel, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChat, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { OneToOneChat, isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { User } from 'app/account/user/user.model';
@@ -80,8 +80,8 @@ function withConsecutiveFlag(post: Post, isConsecutive: boolean): Post {
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     private sessionStorageService = inject(SessionStorageService);
     private breakpointObserver = inject(BreakpointObserver);
-    metisService = inject(MetisService);
-    metisConversationService = inject(MetisConversationService);
+    communicationService = inject(CommunicationService);
+    courseConversationsService = inject(CourseConversationsService);
     accountService = inject(AccountService);
 
     private ngUnsubscribe = new Subject<void>();
@@ -155,7 +155,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as effect()s: the first three react to
         // rendered view children / focus inputs to perform DOM side effects (scroll, highlight, requestAnimationFrame)
         // — exactly what effect() is for. The last one re-runs the imperative setPosts() (which filters, reverses,
-        // re-groups, and may fetch forwarded messages over HTTP, and is also driven from the metis subscription), so it
+        // re-groups, and may fetch forwarded messages over HTTP, and is also driven from the posts subscription), so it
         // cannot be expressed as a computed().
         effect(() => {
             const focusPostIdValue = this.focusPostId();
@@ -219,12 +219,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     ngOnInit(): void {
         this.subscribeToSearch();
-        this.subscribeToMetis();
+        this.subscribeToPosts();
         this.subscribeToActiveConversation();
         this.setupScrollDebounce();
 
         // Fetch and subscribe to pinned posts, emit count to parent component
-        this.metisService
+        this.communicationService
             .getPinnedPosts()
             .pipe(takeUntil(this.ngUnsubscribe))
             .subscribe((pinnedPosts) => {
@@ -237,12 +237,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         });
 
         // Ensure that all pinned posts are fetched when the component is initialized
-        this.metisService.fetchAllPinnedPosts(this._activeConversation()!.id!).subscribe();
+        this.communicationService.fetchAllPinnedPosts(this._activeConversation()!.id!).subscribe();
         this.initialized = true;
     }
 
     private subscribeToActiveConversation() {
-        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO | undefined) => {
+        this.courseConversationsService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO | undefined) => {
             // This statement avoids a bug that reloads the messages when the conversation is already displayed
             if (conversation && this._activeConversation()?.id === conversation.id) {
                 return;
@@ -326,7 +326,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.canStartSaving = false;
             this.onSearch();
             this.createEmptyPost();
-            this.metisService.fetchAllPinnedPosts(activeConversation.id!).subscribe({
+            this.communicationService.fetchAllPinnedPosts(activeConversation.id!).subscribe({
                 next: (pinnedPosts: Post[]) => {
                     this.pinnedPosts.set(pinnedPosts);
                     this.pinnedCount.emit(pinnedPosts.length);
@@ -335,19 +335,19 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
     }
 
-    private subscribeToMetis() {
-        this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
+    private subscribeToPosts() {
+        this.communicationService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.allPosts.set(posts);
             this.setPosts();
             this.isFetchingPosts.set(false);
             this.computeLastReadState();
         });
-        this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
+        this.communicationService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
         });
     }
 
-    private refreshMetisConversationPostContextFilter(): void {
+    private refreshConversationPostContextFilter(): void {
         const activeConversationId = this._activeConversation()?.id;
         this.currentPostContextFilter = {
             courseId: this.course()?.id,
@@ -458,7 +458,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     private fetchForwardedMessages = (postIds: number[]) => {
-        this.metisService.getForwardedMessagesByIds(postIds, PostingType.POST)?.subscribe((response) => {
+        this.communicationService.getForwardedMessagesByIds(postIds, PostingType.POST)?.subscribe((response) => {
             const forwardedMessagesGroups = response.body;
 
             if (!forwardedMessagesGroups) {
@@ -549,11 +549,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         // or the fetch may otherwise fail. Swallow any error to undefined so one bad source does not break rendering of the
         // whole message list (extractFetchedSources tolerates undefined).
         if (sourcePostIds.length > 0) {
-            requests.push(this.metisService.getSourcePostsByIds(sourcePostIds).pipe(catchError(() => of(undefined))));
+            requests.push(this.communicationService.getSourcePostsByIds(sourcePostIds).pipe(catchError(() => of(undefined))));
         }
 
         if (sourceAnswerIds.length > 0) {
-            requests.push(this.metisService.getSourceAnswerPostsByIds(sourceAnswerIds).pipe(catchError(() => of(undefined))));
+            requests.push(this.communicationService.getSourceAnswerPostsByIds(sourceAnswerIds).pipe(catchError(() => of(undefined))));
         }
 
         return requests;
@@ -610,7 +610,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         let addBuffer = 0;
         if (morePostsAvailable) {
             this.page += 1;
-            this.commandMetisToFetchPosts();
+            this.fetchPosts();
             addBuffer = 50;
         } else if (!this.canStartSaving) {
             this.canStartSaving = true;
@@ -621,24 +621,24 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
     }
 
-    public commandMetisToFetchPosts(forceUpdate = false) {
-        this.refreshMetisConversationPostContextFilter();
+    public fetchPosts(forceUpdate = false) {
+        this.refreshConversationPostContextFilter();
         if (this.currentPostContextFilter) {
             this.isFetchingPosts.set(true); // will be set to false in subscription
-            this.metisService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this._activeConversation());
+            this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this._activeConversation());
         }
     }
 
     onSearch(): void {
         this.page = 1;
-        this.commandMetisToFetchPosts(true);
+        this.fetchPosts(true);
     }
 
     createEmptyPost(): void {
-        this.newPost.set(this.createEmptyPostInMetis());
+        this.newPost.set(this.buildEmptyPostForActiveConversation());
     }
 
-    private createEmptyPostInMetis() {
+    private buildEmptyPostForActiveConversation() {
         const activeConversation = this._activeConversation();
         if (!activeConversation) {
             return undefined;
@@ -656,8 +656,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             throw new Error('Conversation type not supported');
         }
         conversation.id = activeConversation.id;
-        this.refreshMetisConversationPostContextFilter();
-        return this.metisService.createEmptyPostForContext(conversation);
+        this.refreshConversationPostContextFilter();
+        return this.communicationService.createEmptyPostForContext(conversation);
     }
 
     postsGroupTrackByFn = (_index: number, post: PostGroup): string => 'grp_' + post.posts.map((p) => p.id?.toString()).join('_');

@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.service.featureusage;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -59,7 +61,7 @@ public class FeatureUsageInterceptor implements HandlerInterceptor {
      */
     private final ApplicationContext applicationContext;
 
-    private volatile FeatureUsageCollector collector;
+    private final AtomicReference<FeatureUsageCollector> collector = new AtomicReference<>();
 
     public FeatureUsageInterceptor(FeatureUsageProperties properties, ApplicationContext applicationContext) {
         this.properties = properties;
@@ -67,10 +69,10 @@ public class FeatureUsageInterceptor implements HandlerInterceptor {
     }
 
     private FeatureUsageCollector collector() {
-        FeatureUsageCollector resolved = collector;
+        FeatureUsageCollector resolved = collector.get();
         if (resolved == null) {
             resolved = applicationContext.getBean(FeatureUsageCollector.class);
-            collector = resolved;
+            collector.set(resolved);
         }
         return resolved;
     }

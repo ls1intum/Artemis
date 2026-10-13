@@ -52,13 +52,10 @@ public class PrefixedKeyGenerator implements KeyGenerator {
 
         private final Object[] params;
 
-        private final int hashCodeValue;
-
         PrefixedSimpleKey(String prefix, String methodName, Object... elements) {
             this.prefix = prefix;
             this.methodName = methodName;
             this.params = elements.clone();
-            this.hashCodeValue = Objects.hash(prefix, methodName) * 31 + Arrays.deepHashCode(this.params);
         }
 
         @Override
@@ -69,7 +66,7 @@ public class PrefixedKeyGenerator implements KeyGenerator {
 
         @Override
         public int hashCode() {
-            return this.hashCodeValue;
+            return Objects.hash(prefix, methodName) * 31 + Arrays.deepHashCode(this.params);
         }
 
         @Override

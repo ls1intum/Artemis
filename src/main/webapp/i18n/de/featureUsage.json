@@ -381,6 +381,10 @@
                         "name": "Ergebnisse und Feedbackanalyse",
                         "description": "Zusammengefasstes Feedback über alle Abgaben einer Aufgabe."
                     },
+                    "PRESENTATION_ASSESSMENT": {
+                        "name": "Präsentationsbewertungen",
+                        "description": "Präsentationsbewertungen, Präsentationstermine, Vortragende und deren Bewertungen verwalten."
+                    },
                     "EXAM_TAKE": {
                         "name": "Klausur schreiben",
                         "description": "Eine Klausur beginnen, bearbeiten und abgeben."
@@ -720,6 +724,10 @@
                     "IRIS_ADMIN_DASHBOARD": {
                         "name": "Iris-Dashboard",
                         "description": "Nutzung, Kosten und Warnungen von Iris."
+                    },
+                    "INGESTION_DASHBOARD": {
+                        "name": "Index-Dashboard",
+                        "description": "Abdeckung des Global-Search-Index im Vergleich zu den Erwartungen der Datenbank."
                     },
                     "UPCOMING_EXAMS_AND_EXERCISES": {
                         "name": "Anstehende Klausuren und Aufgaben",

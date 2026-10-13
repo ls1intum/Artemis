@@ -3,11 +3,9 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { expect } from '@playwright/test';
 import { admin, studentTwo } from '../../support/users';
 import { generateUUID } from '../../support/utils';
-import dayjs from 'dayjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingLanguage } from '../../support/constants';
-import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { SEED_COURSES } from '../../support/seedData';
 
 /**
@@ -57,11 +55,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
     test.beforeEach('Create exam with 3 programming exercises', async ({ login, examAPIRequests, exerciseAPIRequests }) => {
         await login(admin);
 
-        exam = await createExam(course, examAPIRequests, {
-            title: 'PlantUML Isolation ' + generateUUID(),
-            examMaxPoints: 30,
-            numberOfExercisesInExam: 3,
-        });
+        exam = await examAPIRequests.createRunningExam({ course, title: 'PlantUML Isolation ' + generateUUID(), examMaxPoints: 30, numberOfExercisesInExam: 3 });
 
         // Create 3 exercise groups with programming exercises, each with a DIFFERENT PlantUML diagram.
         // The distinct class names in the diagrams allow us to detect cross-contamination.
@@ -243,21 +237,9 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         await expect(page.locator(`#plantUml-${exerciseC.id}-1 svg`)).toBeAttached({ timeout: 30000 });
     });
 
-    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+    test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+        // The test ends as a student, who is not allowed to delete the exam; without the login the exam leaked.
+        await login(admin);
         await examAPIRequests.deleteExam(exam);
     });
 });
-
-async function createExam(course: any, examAPIRequests: ExamAPIRequests, customExamConfig?: any) {
-    const defaultExamConfig = {
-        course,
-        title: 'exam' + generateUUID(),
-        visibleDate: dayjs().subtract(3, 'minutes'),
-        startDate: dayjs().subtract(2, 'minutes'),
-        endDate: dayjs().add(1, 'hour'),
-        examMaxPoints: 10,
-        numberOfExercisesInExam: 1,
-    };
-    const examConfig = { ...defaultExamConfig, ...customExamConfig };
-    return await examAPIRequests.createExam(examConfig);
-}

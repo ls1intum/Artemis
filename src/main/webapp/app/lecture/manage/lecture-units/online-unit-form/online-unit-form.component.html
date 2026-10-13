@@ -11,6 +11,7 @@
             <input
                 tumAetUiInput
                 id="source"
+                [attr.aria-label]="'artemisApp.onlineUnit.createOnlineUnit.source' | artemisTranslate"
                 type="text"
                 formControlName="source"
                 required
@@ -31,6 +32,7 @@
             <input
                 tumAetUiInput
                 id="name"
+                [attr.aria-label]="'artemisApp.onlineUnit.createOnlineUnit.name' | artemisTranslate"
                 type="text"
                 formControlName="name"
                 required
@@ -55,6 +57,7 @@
             <textarea
                 tumAetUiTextarea
                 id="description"
+                [attr.aria-label]="'artemisApp.onlineUnit.createOnlineUnit.description' | artemisTranslate"
                 rows="3"
                 formControlName="description"
                 [placeholder]="'artemisApp.onlineUnit.createOnlineUnit.descriptionPlaceHolder' | artemisTranslate"

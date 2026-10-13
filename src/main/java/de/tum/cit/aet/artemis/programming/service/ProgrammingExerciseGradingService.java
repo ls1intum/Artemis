@@ -555,6 +555,9 @@ public class ProgrammingExerciseGradingService {
      */
     public List<Result> updateParticipationResults(@NonNull final ProgrammingExerciseStudentParticipation participation) {
         final ProgrammingExercise exercise = participation.getProgrammingExercise();
+        if (exercise == null) {
+            throw new IllegalStateException("Participation " + participation.getId() + " is not linked to a programming exercise");
+        }
         final Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseIdAndActive(exercise.getId(), true);
         final Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate = filterTestCasesForStudents(testCases, true);
         final Set<ProgrammingExerciseTestCase> testCasesAfterDueDate = filterTestCasesForStudents(testCases, false);

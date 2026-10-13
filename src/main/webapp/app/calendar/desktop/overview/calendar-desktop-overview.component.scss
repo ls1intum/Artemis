@@ -10,25 +10,14 @@
      * The filter is the control that gives way when the bar runs out of room: it may grow to show the chips but must
      * be free to shrink, otherwise the neighbouring buttons are squeezed until their labels are cut off.
      */
-    p-multiselect {
+    tumaet-ui-multi-select {
         min-width: 0;
         max-width: 30rem;
-
-        /*
-         * Outlined like the buttons beside it, from the tokens their own outline comes from, so the row reads as one
-         * family of controls and the dark theme follows without a rule of its own.
-         */
-        border-color: var(--p-button-outlined-primary-border-color);
-
-        /* ::ng-deep because the chevron belongs to PrimeNG's own view, which a page-scoped selector never reaches. */
-        ::ng-deep .p-multiselect-dropdown svg {
-            color: var(--p-button-outlined-primary-color);
-        }
     }
 
     /* The buttons keep their label width; only the filter above shrinks. */
-    p-selectbutton,
-    p-buttongroup,
+    tumaet-ui-select-button,
+    tumaet-ui-button-group,
     > div,
     > button {
         flex: 0 0 auto;
@@ -47,14 +36,12 @@
         gap: 0.25rem;
         margin-inline-end: 0.375rem;
         line-height: normal;
-        color: var(--p-button-outlined-primary-color);
     }
 
     .filter-count {
         display: none;
     }
 
-    /* The label itself is normalised by `title-bar-compact-controls`; a page stylesheet cannot reach into PrimeNG's view. */
     .chips-section {
         display: flex;
         gap: 0.375rem;
@@ -87,44 +74,11 @@
     }
 
     /*
-     * Shared by the chips in the bar and the options in the dropdown, so a category reads the same in both. Declared
-     * at this level rather than inside `.chips-section` for that reason.
-     */
-    .filter-option {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .legend-circle {
-        width: 0.75rem;
-        height: 0.75rem;
-        border-radius: 0.25rem;
-        flex: 0 0 auto;
-    }
-
-    .exam-chip {
-        background-color: var(--pastel-teal);
-    }
-
-    .lecture-chip {
-        background-color: var(--pastel-blue);
-    }
-
-    .tutorial-chip {
-        background-color: var(--pastel-purple);
-    }
-
-    .exercise-chip {
-        background-color: var(--pastel-cyan);
-    }
-
-    /*
      * Last in the block on purpose: `.chips-section` above declares the same property at the same specificity, so the
      * hiding rule has to come after it to win.
      */
     @container title-bar (max-width: 68rem) {
-        p-multiselect {
+        tumaet-ui-multi-select {
             max-width: 5.5rem;
         }
 
@@ -136,6 +90,39 @@
             display: inline;
         }
     }
+}
+
+/*
+ * Shared by the chips in the bar and the options in the dropdown, so a category reads the same in both. Declared
+ * at the top level, not under the bar: the dropdown is rendered in an overlay outside it.
+ */
+.filter-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-circle {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 0.25rem;
+    flex: 0 0 auto;
+}
+
+.exam-chip {
+    background-color: var(--pastel-teal);
+}
+
+.lecture-chip {
+    background-color: var(--pastel-blue);
+}
+
+.tutorial-chip {
+    background-color: var(--pastel-purple);
+}
+
+.exercise-chip {
+    background-color: var(--pastel-cyan);
 }
 
 .frame {

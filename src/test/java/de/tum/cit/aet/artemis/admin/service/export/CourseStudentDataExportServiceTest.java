@@ -17,6 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.util.UserUtilService;
+import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
+import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
+import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -64,6 +67,9 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private LLMTokenUsageService llmTokenUsageService;
+
     private Path tempDir;
 
     @BeforeEach
@@ -108,6 +114,29 @@ class CourseStudentDataExportServiceTest extends AbstractSpringIntegrationLocalC
         assertThat(resultsFile).exists();
         // the automatic feedback lives in the typed tables and must be synthesized into the CSV
         assertThat(Files.readString(resultsFile)).contains("export failure message");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportLlmTokenUsage_containsPromptCacheColumns() throws IOException {
+        Course course = courseUtilService.createCourse();
+        var request = new LLMRequest("gpt-6-luna", 1000, 0.0891f, 20, 0.4454f, "IRIS_CHAT_COURSE_MESSAGE", 900, 0.0089f, 50, 0.1114f);
+        llmTokenUsageService.saveLLMTokenUsage(List.of(request), LLMServiceType.IRIS, builder -> builder.withCourse(course.getId()));
+
+        List<String> errors = new ArrayList<>();
+        courseStudentDataExportService.exportAllStudentData(course.getId(), tempDir, errors);
+        assertThat(errors).isEmpty();
+
+        List<String> lines = Files.readAllLines(tempDir.resolve("student-data").resolve("llm-token-usage.csv"));
+        assertThat(lines).hasSize(2);
+        List<String> header = List.of(lines.get(0).split(","));
+        List<String> values = List.of(lines.get(1).split(",", -1));
+        assertThat(values).hasSameSizeAs(header);
+        assertThat(values.get(header.indexOf("NumInputTokens"))).isEqualTo("1000");
+        assertThat(values.get(header.indexOf("NumCachedInputTokens"))).isEqualTo("900");
+        assertThat(values.get(header.indexOf("CostPerMillionCachedInputTokens"))).isEqualTo("0.0089");
+        assertThat(values.get(header.indexOf("NumCacheWriteInputTokens"))).isEqualTo("50");
+        assertThat(values.get(header.indexOf("CostPerMillionCacheWriteInputTokens"))).isEqualTo("0.1114");
     }
 
     @Test

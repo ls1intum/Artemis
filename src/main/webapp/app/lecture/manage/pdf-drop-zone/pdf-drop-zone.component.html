@@ -7,7 +7,18 @@
     (dragleave)="onDragLeave($event)"
     (drop)="onDrop($event)"
 >
-    <input #fileInput type="file" accept=".pdf,application/pdf" multiple class="hidden" tabindex="-1" aria-hidden="true" (change)="onFileInputChange($event)" />
+    <input
+        #fileInput
+        type="file"
+        accept=".pdf,application/pdf"
+        multiple
+        class="hidden"
+        tabindex="-1"
+        aria-hidden="true"
+        [attr.aria-label]="'artemisApp.lecture.pdfUpload.selectFiles' | artemisTranslate"
+        [attr.aria-describedby]="hintId"
+        (change)="onFileInputChange($event)"
+    />
     <fa-icon [icon]="faCloudUploadAlt" class="pdf-drop-zone-icon text-2xl" />
     <div class="flex min-w-0 grow flex-col gap-0.5">
         <span class="font-medium" [jhiTranslate]="heading()"></span>

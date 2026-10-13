@@ -4,9 +4,9 @@
             <button type="button" class="btn btn-sm btn-outline-secondary d-inline-block d-sm-none me-2" (click)="openSidebar()">
                 <fa-icon [icon]="faChevronLeft" />
             </button>
-            <span jhiTranslate="artemisApp.metis.overview.savedPosts"></span>
+            <span jhiTranslate="artemisApp.communication.overview.savedPosts"></span>
             @if (savedPostStatus()) {
-                (<span [jhiTranslate]="'artemisApp.metis.overview.' + savedPostStatus()?.toString()"></span>)
+                (<span [jhiTranslate]="'artemisApp.communication.overview.' + savedPostStatus()?.toString()"></span>)
             }
         </h4>
     </div>
@@ -14,7 +14,7 @@
     @if (isShowDeleteNotice()) {
         <div class="saved-posts-delete-notice m-2 fs-x-small text-secondary">
             <fa-icon class="me-1" [icon]="faInfoCircle" />
-            <span jhiTranslate="artemisApp.metis.overview.deleteNoticeSavedPosts"></span>
+            <span jhiTranslate="artemisApp.communication.overview.deleteNoticeSavedPosts"></span>
         </div>
     }
     <div class="saved-posts-post-container flex-grow">
@@ -33,7 +33,7 @@
         } @else {
             <div class="saved-posts-empty-notice text-secondary">
                 <fa-icon class="mb-3" size="3x" [icon]="faBookmark" />
-                <span jhiTranslate="artemisApp.metis.overview.emptySavedPosts"></span>
+                <span jhiTranslate="artemisApp.communication.overview.emptySavedPosts"></span>
             </div>
         }
     </div>

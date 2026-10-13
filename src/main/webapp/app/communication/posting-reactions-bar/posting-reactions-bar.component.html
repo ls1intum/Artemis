@@ -13,7 +13,7 @@
                 <div>
                     <button type="button" class="reaction-button clickable collapse-answers-btn" [class.reaction-button--reacted]="showAnswers()" (click)="closeAnswerView()">
                         <jhi-emoji [emoji]="closeCrossId" />
-                        <span jhiTranslate="artemisApp.metis.collapseAnswers" class="emoji-count"></span>
+                        <span jhiTranslate="artemisApp.communication.collapseAnswers" class="emoji-count"></span>
                     </button>
                 </div>
             } @else {
@@ -22,8 +22,8 @@
                         <fa-icon class="fa-xs align-self-center" [icon]="faArrowRight" />
                         <span class="emoji-count">{{
                             sortedAnswerPosts()?.length === 1
-                                ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
-                                : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts()?.length })
+                                ? ('artemisApp.communication.showSingleAnswer' | artemisTranslate)
+                                : ('artemisApp.communication.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts()?.length })
                         }}</span>
                     </button>
                 </div>
@@ -34,8 +34,8 @@
                     <fa-icon [icon]="faArrowRight" />
                     <span class="emoji-count px-2">{{
                         sortedAnswerPosts()?.length === 1
-                            ? ('artemisApp.metis.showSingleAnswer' | artemisTranslate)
-                            : ('artemisApp.metis.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts()?.length })
+                            ? ('artemisApp.communication.showSingleAnswer' | artemisTranslate)
+                            : ('artemisApp.communication.showMultipleAnswers' | artemisTranslate: { number: sortedAnswerPosts()?.length })
                     }}</span>
                 </button>
             </div>
@@ -45,7 +45,7 @@
     @if (showSearchResultInAnswersHint()) {
         <div class="search-result-in-answers-info">
             <fa-icon class="fa-xs align-self-center" [icon]="faInfoCircle" />
-            <span class="emoji-count px-2" jhiTranslate="artemisApp.metis.overview.searchResultInAnswersHint"></span>
+            <span class="emoji-count px-2" jhiTranslate="artemisApp.communication.overview.searchResultInAnswersHint"></span>
         </div>
     }
 
@@ -85,7 +85,7 @@
                     <fa-icon
                         [icon]="getPostingType() === 'post' ? faSmile : faSmile"
                         [class.open-selector]="showReactionSelector()"
-                        [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
+                        [title]="'artemisApp.communication.chooseReaction' | artemisTranslate"
                     />
                 </button>
 
@@ -114,7 +114,7 @@
                 class="reaction-button clickable px-2 fs-small"
                 data-testid="posting-reaction-edit"
                 (click)="editPosting()"
-                [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
+                [ngbTooltip]="'artemisApp.communication.editPosting' | artemisTranslate"
             >
                 <fa-icon [icon]="faPencilAlt" />
             </button>
@@ -126,8 +126,8 @@
                 <jhi-confirm-icon
                     iconSize="sm"
                     (confirmEvent)="deletePosting()"
-                    [initialTooltip]="'artemisApp.metis.delete' + (getPostingType() === 'answerPost' ? 'Answer' : 'Post') | artemisTranslate"
-                    [confirmTooltip]="'artemisApp.metis.confirmDelete' + (getPostingType() === 'answerPost' ? 'Answer' : 'Post') | artemisTranslate"
+                    [initialTooltip]="'artemisApp.communication.delete' + (getPostingType() === 'answerPost' ? 'Answer' : 'Post') | artemisTranslate"
+                    [confirmTooltip]="'artemisApp.communication.confirmDelete' + (getPostingType() === 'answerPost' ? 'Answer' : 'Post') | artemisTranslate"
                 />
             </div>
         }
@@ -148,13 +148,13 @@
                             [icon]="faCheck"
                             [ngbTooltip]="
                                 isAtLeastTutorInCourse() || isAuthorOfOriginalPost()
-                                    ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
-                                    : ('artemisApp.metis.resolvingAnswerTooltip' | artemisTranslate)
+                                    ? ('artemisApp.communication.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
+                                    : ('artemisApp.communication.resolvingAnswerTooltip' | artemisTranslate)
                             "
                         />
                     } @else {
                         @if (isAtLeastTutorInCourse() || isAuthorOfOriginalPost()) {
-                            <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate" />
+                            <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.communication.markAsResolvingAnswerTooltip' | artemisTranslate" />
                         }
                     }
                 </button>
@@ -181,7 +181,7 @@
                 type="button"
                 class="reaction-button clickable px-2 fs-small bookmark"
                 (click)="bookmarkPosting()"
-                [ngbTooltip]="(getSaved() ? 'artemisApp.metis.post.removeBookmarkPost' : 'artemisApp.metis.post.bookmarkPost') | artemisTranslate"
+                [ngbTooltip]="(getSaved() ? 'artemisApp.communication.post.removeBookmarkPost' : 'artemisApp.communication.post.bookmarkPost') | artemisTranslate"
             >
                 <fa-icon [icon]="getSaved() ? faBookmark : farBookmark" />
             </button>
@@ -192,7 +192,7 @@
                 data-testid="posting-reaction-forward"
                 [disabled]="isReadOnlyMode()"
                 (click)="forwardMessage()"
-                [ngbTooltip]="'artemisApp.metis.post.forwardMessage' | artemisTranslate"
+                [ngbTooltip]="'artemisApp.communication.post.forwardMessage' | artemisTranslate"
             >
                 <fa-icon [icon]="faShare" cdkOverlayOrigin />
             </button>
@@ -204,7 +204,7 @@
                 class="reaction-button clickable px-2 fs-small"
                 [disabled]="isReadOnlyMode()"
                 (click)="markMessageAsUnread()"
-                [ngbTooltip]="'artemisApp.metis.post.markAsUnread' | artemisTranslate"
+                [ngbTooltip]="'artemisApp.communication.post.markAsUnread' | artemisTranslate"
             >
                 <fa-icon [icon]="faEnvelopeOpenText" cdkOverlayOrigin />
             </button>

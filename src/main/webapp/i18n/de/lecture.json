@@ -71,15 +71,17 @@
                 "saved": "Vorlesungsdetails um {{ time }} gespeichert",
                 "contentHint": "Änderungen an Inhalten werden automatisch gespeichert.",
                 "createHint": "Speichere die Vorlesung, um Inhalte hinzuzufügen.",
-                "nothingToSave": "Es gibt keine Änderungen zum Speichern.",
+                "nothingToSave": "Die Vorlesungsdetails haben keine Änderungen zum Speichern. Inhalte werden automatisch gespeichert.",
                 "detailsIncomplete": "Fülle die Pflichtangaben aus, um zu speichern.",
-                "periodInvalid": "Korrigiere den Zeitraum der Vorlesung, um zu speichern."
+                "periodInvalid": "Korrigiere den Zeitraum der Vorlesung, um zu speichern.",
+                "savingContent": "Inhalte werden gespeichert…"
             },
             "newLectureUnit": "Neuer Inhalt",
             "dismissChangesModal": {
                 "title": "Ungespeicherte Änderungen der Vorlesung verwerfen?",
                 "message": "Ungespeicherte Änderungen in: {{ sections }}. Willst du sie verwerfen?",
-                "keepEditing": "Weiter bearbeiten"
+                "keepEditing": "Weiter bearbeiten",
+                "stillSaving": "Das Speichern läuft weiter."
             },
             "creationMode": {
                 "singleLectureLabel": "Einzelne Vorlesung",
@@ -141,7 +143,7 @@
             },
             "splitPdf": {
                 "title": "Ein Vorlesungs-PDF in mehrere Inhalte aufteilen",
-                "description": "Artemis findet die Gliederungsfolie und schlägt einen Inhalt pro Abschnitt vor. Du prüfst den Vorschlag, bevor etwas erstellt wird.",
+                "description": "Für PDFs, deren Folien die Gliederung vor jedem Abschnitt wiederholen: Artemis schlägt einen Inhalt pro Abschnitt vor, der jeweils bei einer Folie mit dem Wort „Outline“ oder „Gliederung“ beginnt. Du prüfst den Vorschlag, bevor etwas erstellt wird.",
                 "unit": "Aufzuteilendes PDF",
                 "unitPlaceholder": "PDF auswählen",
                 "start": "In Abschnitte aufteilen",
@@ -159,7 +161,13 @@
                 "retry": "Erneut versuchen",
                 "discard": "Änderung verwerfen und schließen",
                 "failedAfterLeaving": "Eine Änderung an einem Vorlesungsinhalt konnte nicht gespeichert werden. Öffne die Vorlesung erneut, um ihre Inhalte zu prüfen.",
-                "unconfirmedContent": "Speichere oder verwirf zuerst die neue Datei oder Video-URL."
+                "unconfirmedContent": "Speichere oder verwirf zuerst die neue Video-URL.",
+                "done": "Fertig"
+            },
+            "leaveWhileSavingModal": {
+                "title": "Inhalte werden noch gespeichert",
+                "message": "Warte, bis deine Änderungen an den Inhalten gespeichert sind, bevor du die Seite verlässt. Wenn du jetzt gehst und das Speichern fehlschlägt, gehen diese Änderungen verloren.",
+                "leave": "Trotzdem verlassen"
             }
         },
         "attachment": {

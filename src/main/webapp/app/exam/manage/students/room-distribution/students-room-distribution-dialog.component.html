@@ -1,53 +1,50 @@
-<p-dialog
-    [(visible)]="dialogVisible"
-    [modal]="true"
-    [closable]="true"
-    [dismissableMask]="true"
-    (onHide)="closeDialog()"
-    styleClass="distribution-dialog-width"
-    [draggable]="false"
-    appendTo="body"
->
-    <ng-template #header>
-        <h4>
-            <span jhiTranslate="artemisApp.exam.examUsers.rooms.dialogTitle"></span>
-        </h4>
-    </ng-template>
-    <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate (keydown.enter)="$event.preventDefault()">
-        <p jhiTranslate="artemisApp.exam.examUsers.rooms.introText" class="intro-text"></p>
-        <div class="d-flex flex-column align-items-end mb-2">
-            <div class="form-group text-end mb-2">
-                <label for="reserveFactor" jhiTranslate="artemisApp.exam.examUsers.rooms.reserveFactor" class="small"></label>
-                <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.reserveFactorTooltip" />
-                <input
-                    id="reserveFactor"
-                    type="text"
-                    class="form-control form-control-sm distribution-reserve-factor-input"
-                    [defaultValue]="RESERVE_FACTOR_DEFAULT_PERCENTAGE"
-                    (input)="handleReserveFactorInput($event)"
-                    (focusout)="resetReserveFactorText($event)"
-                    (focusin)="selectAllTextAndOpenDropdown($event)"
-                />
+<tumaet-ui-dialog [(visible)]="dialogVisible" [header]="'artemisApp.exam.examUsers.rooms.dialogTitle' | artemisTranslate" size="large">
+    <form id="roomDistributionDialogForm" name="distributionForm" role="form" novalidate class="flex flex-col gap-4" (keydown.enter)="$event.preventDefault()">
+        <p class="my-0!" jhiTranslate="artemisApp.exam.examUsers.rooms.introText"></p>
+        <div class="flex flex-col items-end gap-2">
+            <div class="flex items-center gap-2">
+                <label for="reserveFactor" class="m-0 text-sm" jhiTranslate="artemisApp.exam.examUsers.rooms.reserveFactor"></label>
+                <jhi-help-icon text="artemisApp.exam.examUsers.rooms.reserveFactorTooltip" />
+                <div class="w-28">
+                    <tumaet-ui-input-number
+                        fluid
+                        inputId="reserveFactor"
+                        name="reserveFactor"
+                        [min]="0"
+                        [max]="100"
+                        [ngModel]="reservePercentage()"
+                        (ngModelChange)="setReservePercentage($event)"
+                    />
+                </div>
             </div>
-            <div class="form-check form-switch ms-auto">
-                <label for="allowNarrowLayoutsToggle" jhiTranslate="artemisApp.exam.examUsers.rooms.allowNarrowLayouts" class="form-check-label"></label>
-                <input id="allowNarrowLayoutsToggle" type="checkbox" class="form-check-input" [checked]="allowNarrowLayouts()" (change)="toggleNarrowLayouts()" />
-                <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.allowNarrowLayoutsTooltip" />
+            <div class="flex items-center gap-2">
+                <label for="allowNarrowLayoutsToggle" class="m-0 text-sm" jhiTranslate="artemisApp.exam.examUsers.rooms.allowNarrowLayouts"></label>
+                <tumaet-ui-toggle-switch
+                    inputId="allowNarrowLayoutsToggle"
+                    name="allowNarrowLayouts"
+                    [ngModel]="allowNarrowLayouts()"
+                    (ngModelChange)="allowNarrowLayouts.set($event)"
+                />
+                <jhi-help-icon text="artemisApp.exam.examUsers.rooms.allowNarrowLayoutsTooltip" />
             </div>
         </div>
-        <input
-            type="text"
-            class="form-control"
-            placeholder="{{ 'artemisApp.exam.examUsers.rooms.searchPlaceholder' | artemisTranslate }}"
-            [ngbTypeahead]="search"
-            [resultFormatter]="formatter"
-            [inputFormatter]="emptyStringFormatter"
-            (selectItem)="pickSelectedRoom($event)"
-            (focusin)="selectAllTextAndOpenDropdown($event)"
+        <tumaet-ui-autocomplete
+            name="roomSearch"
+            optionLabel="label"
+            [completeOnFocus]="true"
+            [minLength]="0"
+            [debounceMs]="200"
+            [suggestions]="roomSuggestions()"
+            [placeholder]="'artemisApp.exam.examUsers.rooms.searchPlaceholder' | artemisTranslate"
+            [ariaLabel]="'artemisApp.exam.examUsers.rooms.searchPlaceholder' | artemisTranslate"
+            [ngModel]="roomSearchValue()"
+            (ngModelChange)="roomSearchValue.set($event)"
+            (searchRequested)="searchRooms($event.query)"
+            (optionSelected)="onRoomSuggestionSelected($event)"
         />
         @if (hasSelectedRooms()) {
-            <div class="table-responsive distribution-rooms-table-wrapper">
-                <table class="table table-striped">
+            <div class="max-h-[45dvh] overflow-y-auto">
+                <table tumAetUiTable size="small" [striped]="true">
                     <thead>
                         <tr>
                             <th jhiTranslate="artemisApp.exam.examUsers.rooms.name"></th>
@@ -73,7 +70,14 @@
                                     }
                                 </td>
                                 <td>
-                                    <button type="button" jhiTranslate="entity.action.remove" class="btn btn-sm btn-danger" (click)="removeSelectedRoom(examRoom)"></button>
+                                    <button
+                                        tumAetUiButton
+                                        type="button"
+                                        size="small"
+                                        severity="danger"
+                                        jhiTranslate="entity.action.remove"
+                                        (click)="removeSelectedRoom(examRoom)"
+                                    ></button>
                                 </td>
                             </tr>
                         }
@@ -81,53 +85,51 @@
                 </table>
             </div>
             @let capacities = seatInfo();
-            @if (canSeatAllStudents()) {
-                <div class="alert alert-success">
-                    <p jhiTranslate="artemisApp.exam.examUsers.rooms.enoughSeatsForStudents" [translateValues]="{ totalStudents: capacities.totalStudents }"></p>
-                </div>
+            @if (!registeredStudentsKnown()) {
+                <tumaet-ui-message severity="warn" data-testid="registered-students-unknown">
+                    <span jhiTranslate="artemisApp.exam.examUsers.rooms.registeredStudentsUnknown"></span>
+                </tumaet-ui-message>
+            } @else if (canSeatAllStudents()) {
+                <tumaet-ui-message severity="success">
+                    <span jhiTranslate="artemisApp.exam.examUsers.rooms.enoughSeatsForStudents" [translateValues]="{ totalStudents: capacities.totalStudents }"></span>
+                </tumaet-ui-message>
             } @else {
-                <div class="alert alert-warning">
-                    <p
+                <tumaet-ui-message severity="warn">
+                    <span
                         jhiTranslate="artemisApp.exam.examUsers.rooms.notEnoughSeatsForStudents"
                         [translateValues]="{ usableCapacity: capacities.usableCapacity, totalStudents: capacities.totalStudents, percentage: capacities.percentage }"
-                    ></p>
-                </div>
+                    ></span>
+                </tumaet-ui-message>
             }
         } @else {
-            <div class="alert alert-warning mt-3">
-                <p jhiTranslate="artemisApp.exam.examUsers.rooms.noRoomSelected"></p>
-            </div>
+            <tumaet-ui-message severity="warn">
+                <span jhiTranslate="artemisApp.exam.examUsers.rooms.noRoomSelected"></span>
+            </tumaet-ui-message>
         }
     </form>
     <ng-template #footer>
-        <div class="distribution-footer-container">
-            <p>
+        <div class="flex w-full items-center justify-between gap-4">
+            <p class="my-0!">
                 <span jhiTranslate="artemisApp.exam.examUsers.rooms.cantFindRoom"></span>
                 <a
                     id="examRoomManagementLink"
                     routerLink="/exams/rooms"
                     target="_blank"
                     rel="noopener noreferrer"
-                    class="text-primary text-decoration-underline"
+                    class="text-primary underline"
                     jhiTranslate="artemisApp.examRooms.management.openButtonTitle"
                 ></a>
             </p>
-            <div class="distribution-footer-buttons">
-                <button id="cancel-button" type="button" class="btn btn-secondary cancel" (click)="closeDialog()">
+            <div class="flex items-center gap-2">
+                <button id="cancel-button" tumAetUiButton type="button" severity="secondary" (click)="closeDialog()">
                     <fa-icon [icon]="faBan" />
-                    <span jhiTranslate="entity.action.cancel" class="m-1"></span>
+                    <span jhiTranslate="entity.action.cancel"></span>
                 </button>
-                <button
-                    type="button"
-                    class="btn btn-primary"
-                    id="finish-button"
-                    (click)="attemptDistributeAndCloseDialog()"
-                    [disabled]="!(hasSelectedRooms() && canSeatAllStudents())"
-                >
+                <button id="finish-button" tumAetUiButton type="button" (click)="attemptDistributeAndCloseDialog()" [disabled]="!(hasSelectedRooms() && canSeatAllStudents())">
                     <fa-icon [icon]="faThLarge" />
-                    <span jhiTranslate="artemisApp.exam.examUsers.rooms.distribute" class="m-1"></span>
+                    <span jhiTranslate="artemisApp.exam.examUsers.rooms.distribute"></span>
                 </button>
             </div>
         </div>
     </ng-template>
-</p-dialog>
+</tumaet-ui-dialog>

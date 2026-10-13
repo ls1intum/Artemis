@@ -43,6 +43,7 @@ import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.domain.User_;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -632,6 +633,22 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
     List<User> findAllByIdIn(Collection<Long> ids);
 
+    /**
+     * Finds the ids of all users who currently hold a teaching role (tutor, editor or instructor) in the given course.
+     *
+     * @param courseId the id of the course
+     * @return the ids of the users with at least the tutor role in the course
+     */
+    @Query("""
+            SELECT DISTINCT ucr.user.id
+            FROM UserCourseRole ucr
+            WHERE ucr.course.id = :courseId
+                AND ucr.role IN (de.tum.cit.aet.artemis.core.domain.CourseRole.TEACHING_ASSISTANT,
+                    de.tum.cit.aet.artemis.core.domain.CourseRole.EDITOR,
+                    de.tum.cit.aet.artemis.core.domain.CourseRole.INSTRUCTOR)
+            """)
+    Set<Long> findIdsOfTeachingStaffByCourseId(@Param("courseId") long courseId);
+
     @Query("""
             SELECT DISTINCT NEW de.tum.cit.aet.artemis.exercise.dto.StudentDTO(u.id, u.login, u.firstName, u.lastName, u.registrationNumber, u.email)
             FROM User u
@@ -751,7 +768,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         if (pageable.isUnpaged()) {
             return pageable;
         }
-        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort().and(Sort.by(Sort.Direction.ASC, "id")));
+        return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), pageable.getSort().and(Sort.by(Sort.Direction.ASC, User_.ID)));
     }
 
     /**

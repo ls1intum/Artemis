@@ -7,8 +7,8 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ConversationOptionsComponent } from 'app/course/sidebar/conversation-options/conversation-options.component';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
-import { MetisService } from 'app/communication/service/metis.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
 
@@ -34,7 +34,7 @@ describe('SidebarCardSmallComponent', () => {
             ],
         }).compileComponents();
 
-        const metisService = new MockMetisService();
+        const communicationService = new MockCommunicationService();
         TestBed.overrideComponent(SidebarCardSmallComponent, {
             // Replace the real (heavyweight) ConversationOptionsComponent — which pulls in
             // ConversationService → TranslateService and routerLinkActive → router.parseUrl —
@@ -42,7 +42,7 @@ describe('SidebarCardSmallComponent', () => {
             remove: { imports: [ConversationOptionsComponent] },
             add: {
                 imports: [MockComponent(ConversationOptionsComponent)],
-                providers: [{ provide: MetisService, useValue: metisService }],
+                providers: [{ provide: CommunicationService, useValue: communicationService }],
             },
         });
 
@@ -73,7 +73,7 @@ describe('SidebarCardSmallComponent', () => {
 
     /*
    Next 2 tests explicitly adjusted for the messages module as a workaround, since routing in the messages module
-   operates differently over the MetisConversations service, it will get adjusted in a followup PR
+   operates differently over the CourseConversationsService, it will get adjusted in a followup PR
    */
 
     it('should navigate to the item URL on click', async () => {

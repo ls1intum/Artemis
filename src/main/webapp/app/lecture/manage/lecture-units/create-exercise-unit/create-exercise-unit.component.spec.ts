@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { of } from 'rxjs';
+import { Observable, Subject, defer, finalize, of } from 'rxjs';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { SortService } from 'app/foundation/service/sort.service';
@@ -157,6 +157,56 @@ describe('CreateExerciseUnitComponent', () => {
         await createExerciseUnitComponentFixture.whenStable();
         expect(createStub).toHaveBeenCalledTimes(3);
     });
+    it('should let the lecture editor follow the create requests until they complete', () => {
+        const course = new Course();
+        const exercise = new TextExercise(course, undefined);
+        exercise.id = 1;
+        const response = new Subject<HttpResponse<ExerciseUnit>>();
+        createStub.mockReturnValue(response);
+        const createdSpy = vi.fn();
+        let running = false;
+        const trackRequest = vi.fn(<T>(request: Observable<T>) =>
+            defer(() => {
+                running = true;
+                return request.pipe(finalize(() => (running = false)));
+            }),
+        );
+        createExerciseUnitComponent.onExerciseUnitCreated.subscribe(createdSpy);
+        createExerciseUnitComponentFixture.componentRef.setInput('shouldNavigateOnSubmit', false);
+        createExerciseUnitComponentFixture.componentRef.setInput('lectureId', 1);
+        createExerciseUnitComponentFixture.componentRef.setInput('trackRequest', trackRequest);
+        createExerciseUnitComponent.exercisesToCreateUnitFor.set([exercise]);
+
+        createExerciseUnitComponent.createExerciseUnits();
+        expect(trackRequest).toHaveBeenCalledOnce();
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(running).toBe(true);
+
+        response.next(new HttpResponse({ body: new ExerciseUnit(), status: 201 }));
+        response.complete();
+        expect(running).toBe(false);
+        expect(createdSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not report the created items once the form is closed, since the page that followed the requests reloads its list', () => {
+        const exercise = new TextExercise(new Course(), undefined);
+        exercise.id = 1;
+        const response = new Subject<HttpResponse<ExerciseUnit>>();
+        createStub.mockReturnValue(response);
+        // Angular drops the listeners of a destroyed output, so only the emit itself shows whether the form still reports the items.
+        const emitSpy = vi.spyOn(createExerciseUnitComponent.onExerciseUnitCreated, 'emit');
+        createExerciseUnitComponentFixture.componentRef.setInput('shouldNavigateOnSubmit', false);
+        createExerciseUnitComponentFixture.componentRef.setInput('lectureId', 1);
+        createExerciseUnitComponent.exercisesToCreateUnitFor.set([exercise]);
+
+        createExerciseUnitComponent.createExerciseUnits();
+        createExerciseUnitComponentFixture.destroy();
+        response.next(new HttpResponse({ body: new ExerciseUnit(), status: 201 }));
+        response.complete();
+
+        expect(emitSpy).not.toHaveBeenCalled();
+    });
+
     describe('choosing exercises', () => {
         let textExercise: TextExercise;
         let modelingExercise: ModelingExercise;

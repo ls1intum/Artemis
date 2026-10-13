@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.globalsearch.service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,5 +60,19 @@ public class ExerciseSearchableEntityLoadService {
             }
         }
         return dtos;
+    }
+
+    /**
+     * Loads a single exercise for dispatch-time re-derivation (used by {@link SearchableEntityResolver}) and builds its
+     * searchable DTO. Unlike {@link #loadExerciseDtos(Collection)}, which is migration-oriented and skips an exercise it
+     * cannot map, this returns empty <b>only</b> when the exercise row is absent from the database. A loading or mapping
+     * failure propagates, so the outbox dispatcher retries the write with backoff instead of mistaking the failure for a
+     * deletion and dropping the row.
+     *
+     * @param exerciseId the exercise id
+     * @return the DTO if the exercise exists, or {@link Optional#empty()} if no such row exists
+     */
+    public Optional<ExerciseSearchableEntityDTO> loadExerciseDtoForResolve(long exerciseId) {
+        return exerciseRepository.findAllForSearchMigrationWithCourseAndExam(List.of(exerciseId)).stream().findFirst().map(ExerciseSearchableEntityDTO::fromExercise);
     }
 }

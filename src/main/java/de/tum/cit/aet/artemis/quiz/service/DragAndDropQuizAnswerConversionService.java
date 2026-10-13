@@ -55,6 +55,9 @@ public class DragAndDropQuizAnswerConversionService {
     public void convertDragAndDropQuizAnswerAndStoreAsPdf(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Path outputDir, boolean showResult) throws IOException {
         DragAndDropQuestion question = (DragAndDropQuestion) dragAndDropSubmittedAnswer.getQuizQuestion();
         String backgroundFilePath = question.getBackgroundFilePath();
+        if (backgroundFilePath == null) {
+            throw new IOException("The drag and drop question " + question.getId() + " has no background image");
+        }
         BufferedImage backgroundImage = ImageIO.read(new FileSystemLocation.DragAndDropBackground(backgroundFilePath).path().toFile());
 
         generateDragAndDropSubmittedAnswerImage(backgroundImage, dragAndDropSubmittedAnswer, showResult);
@@ -115,11 +118,12 @@ public class DragAndDropQuizAnswerConversionService {
         Set<DragAndDropMapping> mappings = dragAndDropSubmittedAnswer.getMappings();
         for (var mapping : mappings) {
             if (dropLocation.equals(mapping.getDropLocation())) {
-                if (mapping.getDragItem().getPictureFilePath() == null) {
+                String pictureFilePath = mapping.getDragItem().getPictureFilePath();
+                if (pictureFilePath == null) {
                     drawTextDragItem(graphics, dropLocationCoordinates, dropLocationMidY, mapping);
                 }
                 else {
-                    drawPictureDragItem(graphics, dropLocationCoordinates, mapping);
+                    drawPictureDragItem(graphics, dropLocationCoordinates, pictureFilePath);
                 }
                 // if the drop location is invalid, we already marked the spot as invalid, no need to mark it twice
                 if (mapping.getDragItem().isInvalid() && !mapping.getDropLocation().isInvalid()) {
@@ -134,8 +138,8 @@ public class DragAndDropQuizAnswerConversionService {
         graphics.drawString(mapping.getDragItem().getText(), dropLocationCoordinates.x + 5, dropLocationMidY);
     }
 
-    private void drawPictureDragItem(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates, DragAndDropMapping mapping) throws IOException {
-        BufferedImage dragItem = ImageIO.read(new FileSystemLocation.DragItem(mapping.getDragItem().getPictureFilePath()).path().toFile());
+    private void drawPictureDragItem(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates, String pictureFilePath) throws IOException {
+        BufferedImage dragItem = ImageIO.read(new FileSystemLocation.DragItem(pictureFilePath).path().toFile());
         Dimension scaledDimForDragItem = getScaledDimension(new Dimension(dragItem.getWidth(), dragItem.getHeight()),
                 new Dimension(dropLocationCoordinates.width, dropLocationCoordinates.height));
         graphics.drawImage(dragItem, dropLocationCoordinates.x, dropLocationCoordinates.y, (int) scaledDimForDragItem.getWidth(), (int) scaledDimForDragItem.getHeight(), null);
@@ -194,10 +198,10 @@ public class DragAndDropQuizAnswerConversionService {
     private void markItemAsInvalid(Graphics2D graphics, DropLocationCoordinates dropLocationCoordinates) {
         graphics.setColor(Color.DARK_GRAY);
         // create a cross to signal that the drop location is invalid
-        Shape diagonalFromBottomToTop = new Line2D.Float(dropLocationCoordinates.x, dropLocationCoordinates.y + dropLocationCoordinates.height,
-                dropLocationCoordinates.x + dropLocationCoordinates.width, dropLocationCoordinates.y);
-        Shape diagonalFromTopToBottom = new Line2D.Float(dropLocationCoordinates.x, dropLocationCoordinates.y, dropLocationCoordinates.x + dropLocationCoordinates.width,
-                dropLocationCoordinates.y + dropLocationCoordinates.height);
+        Shape diagonalFromBottomToTop = new Line2D.Float(dropLocationCoordinates.x, (float) dropLocationCoordinates.y + dropLocationCoordinates.height,
+                (float) dropLocationCoordinates.x + dropLocationCoordinates.width, dropLocationCoordinates.y);
+        Shape diagonalFromTopToBottom = new Line2D.Float(dropLocationCoordinates.x, dropLocationCoordinates.y, (float) dropLocationCoordinates.x + dropLocationCoordinates.width,
+                (float) dropLocationCoordinates.y + dropLocationCoordinates.height);
         graphics.draw(diagonalFromBottomToTop);
         graphics.draw(diagonalFromTopToBottom);
     }

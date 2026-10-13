@@ -105,7 +105,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     constructor() {
         super();
-        this.course.set(this.metisService.getCourse());
+        this.course.set(this.communicationService.getCourse());
         // Normalise the bound posting to an AnswerPost instance whenever it changes.
         //
         // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as an effect(): `posting` is a two-way
@@ -196,7 +196,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     /** True for users who are allowed to approve, edit, or reject unverified Iris replies. */
     get mayVerify(): boolean {
-        return this.metisService.metisUserIsAtLeastTutorInCourse();
+        return this.communicationService.currentUserIsAtLeastTutorInCourse();
     }
 
     /**
@@ -209,7 +209,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
             return;
         }
         this.isVerifying.set(true);
-        this.metisService.verifyAnswerPost(posting, content?.trim() || undefined).subscribe({
+        this.communicationService.verifyAnswerPost(posting, content?.trim() || undefined).subscribe({
             next: (verified) => {
                 // The verify response's parent carries only its id (AnswerMessageDTO -> ParentPostDTO), so replacing the
                 // posting wholesale would drop post.conversation and make AnswerPostService.getResourceEndpoint route a
@@ -246,7 +246,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
             return;
         }
         this.isVerifying.set(true);
-        this.metisService.deleteAnswerPost(posting).subscribe({
+        this.communicationService.deleteAnswerPost(posting).subscribe({
             next: () => {
                 this.isVerifying.set(false);
             },

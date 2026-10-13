@@ -35,10 +35,10 @@
                             [btnSize]="ButtonSize.SMALL"
                             [icon]="faArrowDown"
                             id="new-messages-btn"
-                            [title]="'artemisApp.metis.newMessagesButton'"
+                            [title]="'artemisApp.communication.newMessagesButton'"
                             (onClick)="scrollToFirstUnreadPostIfNotVisible()"
                         >
-                            <span [jhiTranslate]="'artemisApp.metis.newMessagesButton'" [translateValues]="{ count: unreadPostsCount() }"></span>
+                            <span [jhiTranslate]="'artemisApp.communication.newMessagesButton'" [translateValues]="{ count: unreadPostsCount() }"></span>
                         </jhi-button>
                     </div>
                 }
@@ -50,7 +50,7 @@
                             @if (post.id === firstUnreadPostId() && unreadPostsCount() > 0) {
                                 <div class="new-messages-separator">
                                     <div class="separator-line" id="unread-post-line"></div>
-                                    <span class="new-label" jhiTranslate="artemisApp.metis.newMessages">New</span>
+                                    <span class="new-label" jhiTranslate="artemisApp.communication.newMessages">New</span>
                                 </div>
                             }
                             <div class="post-item">
@@ -78,7 +78,12 @@
                         <div class="px-3">
                             @if (getAsChannel(activeConversation)?.isAnnouncementChannel) {
                                 <div class="pt-2">
-                                    <button type="button" class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-md btn-primary"
+                                        (click)="createEditModal.open()"
+                                        jhiTranslate="artemisApp.communication.newAnnouncement"
+                                    ></button>
                                     <jhi-post-create-edit-modal #createEditModal [posting]="newPost()!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
                                 </div>
                             } @else {
@@ -99,7 +104,12 @@
                     <div class="d-none d-sm-block px-3">
                         @if (getAsChannel(activeConversation)?.isAnnouncementChannel) {
                             <div class="pt-2">
-                                <button type="button" class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.metis.newAnnouncement"></button>
+                                <button
+                                    type="button"
+                                    class="btn btn-md btn-primary"
+                                    (click)="createEditModal.open()"
+                                    jhiTranslate="artemisApp.communication.newAnnouncement"
+                                ></button>
                                 <jhi-post-create-edit-modal #createEditModal [posting]="newPost()!" [isCommunicationPage]="true" (onCreate)="handleNewMessageCreated()" />
                             </div>
                         } @else {

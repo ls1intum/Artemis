@@ -98,7 +98,7 @@ export class ForwardedMessageComponent implements AfterViewInit {
      */
     getTodayFlag(): string | undefined {
         if (this.postingIsOfToday()) {
-            return 'artemisApp.metis.today';
+            return 'artemisApp.communication.today';
         } else {
             return undefined;
         }

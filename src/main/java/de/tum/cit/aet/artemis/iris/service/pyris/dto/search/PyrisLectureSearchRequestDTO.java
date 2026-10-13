@@ -14,10 +14,20 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * Request sent to Pyris {@code POST /api/v1/search/lectures}.
  * <p>
+ * {@code artemisBaseUrl} is the raw, server-supplied {@code server.url} of the Artemis instance. Pyris uses it as
+ * an exact instance-ownership boundary. Release Artemis callers first: an older Iris version ignores this field;
+ * enable the secured Iris endpoint only after every caller sends it.
+ * <p>
  * {@code excludeCourseIds} only has to travel when Artemis cannot subtract the exclusion itself, which is the unrestricted caller: it is sent without a course
  * ceiling, so the query is the only place left to apply the exclusion. Older Pyris versions ignore the field, and every other caller arrives with the exclusion
  * already removed from {@code courseIds}.
  */
-public record PyrisLectureSearchRequestDTO(@NotBlank String query, @Min(1) @Max(20) int limit, @Nullable List<Long> courseIds, @Nullable List<Long> excludeCourseIds,
-        @Nullable PyrisAccessContextDTO accessContext) {
+public record PyrisLectureSearchRequestDTO(@NotBlank String query, @Min(1) @Max(20) int limit, @NotBlank String artemisBaseUrl, @Nullable List<Long> courseIds,
+        @Nullable List<Long> excludeCourseIds, @Nullable PyrisAccessContextDTO accessContext) {
+
+    public PyrisLectureSearchRequestDTO {
+        if (artemisBaseUrl == null || artemisBaseUrl.isBlank()) {
+            throw new IllegalArgumentException("Artemis base URL must not be blank");
+        }
+    }
 }

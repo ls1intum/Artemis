@@ -49,6 +49,7 @@
                     "number": "Raumnummer",
                     "name": "Name",
                     "building": "Gebäude",
+                    "registeredStudentsUnknown": "Die Anzahl der registrierten Studierenden liegt noch nicht vor oder konnte nicht geladen werden. Du kannst die Studierenden verteilen, sobald sie bekannt ist; falls diese Meldung bleibt, schließe den Dialog und öffne ihn erneut.",
                     "enoughSeatsForStudents": "Du kannst alle {{ totalStudents }} Studierenden unterbringen.",
                     "notEnoughSeatsForStudents": "Du kannst nur {{ usableCapacity }} der {{ totalStudents }} Studierenden unterbringen ({{ percentage }}%).",
                     "distribute": "Verteilen",
@@ -393,6 +394,7 @@
                 "explanation": "Deine Abgabe und deine Ergebnisse sind auf dem Server gespeichert, es ist nichts verloren. Bitte überprüfe deine Internetverbindung und versuche es erneut.",
                 "retry": "Erneut versuchen"
             },
+            "programmingActions": "Aktionen der Programmieraufgabe",
             "saveExercise": "Aufgabe speichern",
             "exerciseSaved": "Aufgabe gespeichert",
             "reloadWarning": "Durch das Neuladen der Seite gehen alle ungespeicherten Änderungen verloren. Bist du sicher, dass du die Seite neu laden möchtest?"
@@ -584,6 +586,8 @@
                 "setup": "Testlauf Erstellen",
                 "author": "Autor:in",
                 "setWorkingTime": "Lege eine Bearbeitungszeit fest (Minuten und Sekunden):",
+                "workingTimeMinutes": "Bearbeitungszeit Minuten",
+                "workingTimeSeconds": "Bearbeitungszeit Sekunden",
                 "setupHint": "Wähle für jede Aufgabengruppe eine Aufgabe aus, indem du auf die Aufgabe klickst.\n<strong>Hinweis:</strong> Wenn du bereits einen Testlauf mit einer der Aufgaben erstellt hast, dann wird diese bereits eine Abgabe und Ergebnis enthalten.",
                 "assess": "Deine Testläufe Bewerten",
                 "manage": "Arbeitszeit verwalten",
@@ -661,10 +665,6 @@
                     "AttendanceNotChecked": "Anwesenheitsprüfung fehlgeschlagen",
                     "AttendanceChecked": "Anwesenheitsprüfung bestanden"
                 },
-                "filterGroup": {
-                    "progress": "Fortschritt",
-                    "attendance": "Anwesenheit"
-                },
                 "menu": {
                     "manageStudents": "Studierende",
                     "examLogistics": "Logistik",
@@ -719,6 +719,8 @@
                 "noExercises": "Es wurden noch keine Aufgaben hinzugefügt.",
                 "noExerciseGroups": "Es wurden noch keine Aufgabengruppen erstellt.",
                 "titleInfo": "Der Name der Aufgabengruppe wird den Studierenden als Aufgabenname angezeigt.",
+                "titleRequired": "Bitte gib einen Titel für die Aufgabengruppe ein.",
+                "titleTooLong": "Der Titel ist zu lang. Bitte gib höchstens 255 Zeichen ein.",
                 "delete": {
                     "question": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden ebenfalls gelöscht.",
                     "questionLocalVC": "Soll die Aufgabengruppe <strong>{{ title }}</strong> wirklich gelöscht werden? Alle zugehörigen Aufgaben werden gelöscht.<br>Alle Studierenden- Template-, Lösungs- und Test-Repositories sowie Build-Pläne werden ebenfalls gelöscht.<br>Achtung: Dies kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!<br>Es wird empfohlen die Repositories und Build-Pläne erst zu sichern! ",
@@ -779,7 +781,7 @@
                 }
             },
             "reset": {
-                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft zurückgesetzt werden? Alle Klausuren der Studierenden werden gelöscht. Teilnehmende an der Klausur und die Konfigurationen der Aufgaben bleiben erhalten. Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft zurückgesetzt werden? Alle Klausuren der Studierenden werden gelöscht und alle angemeldeten Studierenden werden aus der Klausur entfernt. Die Klausur selbst und die Konfigurationen der Aufgaben bleiben erhalten. Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein.",
                 "success": "Die Klausur wurde erfolgreich zurückgesetzt."
             },
@@ -808,6 +810,7 @@
                     "examDetails": "Ausfüllen aller Klausurdetails",
                     "conductExam": "Abhalten der Klausur",
                     "assessAllSubmissions": "Bewertung aller Abgaben",
+                    "plagiarismCases": "Bearbeitung der Plagiatsfälle",
                     "publishResults": "Veröffentlichung der Ergebnisse",
                     "examReview": "Planung der Klausureinsicht ",
                     "resolveComplaints": "Auflösung aller Beschwerden",
@@ -825,6 +828,7 @@
                     "examDetails": "Alle relevanten Details der Klausur müssen vor dem Start der Korrektur eingetragen sein.",
                     "conductExam": "In der Studierenden-Klausurübersicht sieht man, welche Studierende ihre Klausur bereits abgegeben haben.",
                     "assessAllSubmissions": "Die Anzahl der Korrekturrunden der Aufgaben entspricht der in der Klausur angegebenen Anzahl von Korrekturrunden.",
+                    "plagiarismCases": "Die Plagiatsfälle der Klausur können eingesehen, die betroffenen Studierenden informiert und ein Urteil für jeden Fall festgelegt werden.",
                     "publishResults": "Das Veröffentlichen der Ergebnisse macht diese zugänglich für die Teilnehmenden der Klausur.",
                     "examReview": "Alle relevanten Daten müssen in der Klausur spezifiziert sein.",
                     "resolveComplaints": "Beschwerden können im Bewertungs-Dashboard bearbeitet werden.",

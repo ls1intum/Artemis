@@ -14,12 +14,13 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-submission-export-dialog',
     templateUrl: './submission-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FaIconComponent],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FaIconComponent, ArtemisTranslatePipe],
 })
 export class SubmissionExportDialogComponent implements OnInit {
     private exerciseService = inject(ExerciseService);

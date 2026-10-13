@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import org.eclipse.jgit.lib.BaseRepositoryBuilder;
+import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 
@@ -18,6 +19,7 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
 
     private ProgrammingExerciseParticipation participation;
 
+    @Nullable
     private Path localPath;
 
     private final LocalVCRepositoryUri remoteRepositoryUri;
@@ -54,7 +56,7 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
             return false;
         }
 
-        if (file.equals(this.localPath.toFile())) {
+        if (this.localPath != null && file.equals(this.localPath.toFile())) {
             return true;
         }
 

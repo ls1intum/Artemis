@@ -9,7 +9,7 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
 @Component({
     selector: 'jhi-posting-thread',
     templateUrl: './posting-thread.component.html',
-    styleUrls: ['../metis.component.scss'],
+    styleUrls: ['../communication.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [PostComponent],
 })

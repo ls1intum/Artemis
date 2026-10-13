@@ -8,7 +8,7 @@
                 type="button"
                 data-testid="posting-summary-open"
                 (click)="$event.stopPropagation(); onTriggerNavigateToPost()"
-                [attr.aria-label]="'artemisApp.metis.post.openPost' | artemisTranslate: { title: post()!.conversation!.title! }"
+                [attr.aria-label]="'artemisApp.communication.post.openPost' | artemisTranslate: { title: post()!.conversation!.title! }"
                 class="posting-summary-conversation fs-x-small text-secondary flex items-center mb-1 border-0 bg-transparent p-0 text-start focus-visible:outline-2 focus-visible:outline-offset-2"
             >
                 <span class="d-inline-block">
@@ -17,7 +17,7 @@
                 <span class="d-inline-block ms-1">
                     {{ post()!.conversation!.title! }}
                     @if (isAnswerPost()) {
-                        > <span jhiTranslate="artemisApp.metis.post.thread"></span>
+                        > <span jhiTranslate="artemisApp.communication.post.thread"></span>
                     }
                 </span>
             </button>
@@ -48,7 +48,7 @@
                                     type="button"
                                     data-testid="posting-summary-open"
                                     (click)="$event.stopPropagation(); onTriggerNavigateToPost()"
-                                    [attr.aria-label]="'artemisApp.metis.post.openPost' | artemisTranslate: { title: post()!.author!.name! }"
+                                    [attr.aria-label]="'artemisApp.communication.post.openPost' | artemisTranslate: { title: post()!.author!.name! }"
                                     class="font-semibold inline-block me-1 border-0 bg-transparent p-0 text-start text-inherit focus-visible:outline-2 focus-visible:outline-offset-2"
                                 >
                                     {{ post()!.author!.name! }}
@@ -68,7 +68,7 @@
                                 [isEdited]="!!post()!.updatedDate"
                                 [posting]="post()!"
                                 [isReply]="false"
-                                [isSubscribeToMetis]="false"
+                                [subscribesToPosts]="false"
                             />
                         </div>
                     </div>
@@ -82,7 +82,7 @@
                     <button
                         type="button"
                         class="btn btn-outline-secondary"
-                        ngbTooltip="{{ 'artemisApp.metis.post.removeBookmarkPost' | artemisTranslate }}"
+                        ngbTooltip="{{ 'artemisApp.communication.post.removeBookmarkPost' | artemisTranslate }}"
                         (click)="onRemoveBookmarkClick($event)"
                     >
                         <fa-icon [icon]="faBookmark" />
@@ -91,7 +91,7 @@
                         [disabled]="post()!.savedPostStatus === SavedPostStatus.IN_PROGRESS"
                         type="button"
                         class="btn btn-outline-secondary"
-                        ngbTooltip="{{ 'artemisApp.metis.post.bookmarkPostProgress' | artemisTranslate }}"
+                        ngbTooltip="{{ 'artemisApp.communication.post.bookmarkPostProgress' | artemisTranslate }}"
                         (click)="onStatusChangeClick($event, SavedPostStatus.IN_PROGRESS)"
                     >
                         <fa-icon [icon]="faBarsProgress" />
@@ -100,7 +100,7 @@
                         [disabled]="post()!.savedPostStatus === SavedPostStatus.COMPLETED"
                         type="button"
                         class="btn btn-outline-secondary"
-                        ngbTooltip="{{ 'artemisApp.metis.post.bookmarkPostComplete' | artemisTranslate }}"
+                        ngbTooltip="{{ 'artemisApp.communication.post.bookmarkPostComplete' | artemisTranslate }}"
                         (click)="onStatusChangeClick($event, SavedPostStatus.COMPLETED)"
                     >
                         <fa-icon [icon]="faCheckSquare" />
@@ -109,7 +109,7 @@
                         [disabled]="post()!.savedPostStatus === SavedPostStatus.ARCHIVED"
                         type="button"
                         class="btn btn-outline-secondary"
-                        ngbTooltip="{{ 'artemisApp.metis.post.bookmarkPostArchived' | artemisTranslate }}"
+                        ngbTooltip="{{ 'artemisApp.communication.post.bookmarkPostArchived' | artemisTranslate }}"
                         (click)="onStatusChangeClick($event, SavedPostStatus.ARCHIVED)"
                     >
                         <fa-icon [icon]="faBoxArchive" />

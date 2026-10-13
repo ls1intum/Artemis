@@ -9,6 +9,7 @@
         <input
             tumAetUiInput
             id="field_title"
+            [attr.aria-label]="'artemisApp.lecture.title' | artemisTranslate"
             name="title"
             type="text"
             required
@@ -30,6 +31,7 @@
             <input
                 tumAetUiInput
                 id="field_channel_name"
+                [attr.aria-label]="'artemisApp.lecture.channelName' | artemisTranslate"
                 name="channelName"
                 type="text"
                 required
