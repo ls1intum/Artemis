@@ -161,7 +161,14 @@ describe('MonacoTextEditorAdapter', () => {
         let input: HTMLTextAreaElement;
         let readOnly: boolean;
         let selectionCount: number;
-        let fakeEditor: { getDomNode: () => HTMLElement | null; getSelections: () => unknown[]; getOption: () => boolean; pushUndoStop: ReturnType<typeof vi.fn> };
+        let textFocused: boolean;
+        let fakeEditor: {
+            getDomNode: () => HTMLElement | null;
+            getSelections: () => unknown[];
+            getOption: () => boolean;
+            hasTextFocus: () => boolean;
+            pushUndoStop: ReturnType<typeof vi.fn>;
+        };
         let pasteAdapter: MonacoTextEditorAdapter;
 
         beforeEach(() => {
@@ -170,10 +177,12 @@ describe('MonacoTextEditorAdapter', () => {
             domNode.appendChild(input);
             readOnly = false;
             selectionCount = 1;
+            textFocused = true;
             fakeEditor = {
                 getDomNode: () => domNode,
                 getSelections: () => new Array(selectionCount).fill({}),
                 getOption: () => readOnly,
+                hasTextFocus: () => textFocused,
                 pushUndoStop: vi.fn(),
             };
             pasteAdapter = new MonacoTextEditorAdapter(fakeEditor as unknown as monaco.editor.IStandaloneCodeEditor);
@@ -216,6 +225,7 @@ describe('MonacoTextEditorAdapter', () => {
             { case: 'the editor is read-only', setUp: () => (readOnly = true), text: 'https://x.org' },
             { case: 'there are several selections', setUp: () => (selectionCount = 2), text: 'https://x.org' },
             { case: 'nothing was pasted as text', setUp: () => {}, text: '' },
+            { case: 'the paste goes into a widget such as the find input', setUp: () => (textFocused = false), text: 'https://x.org' },
         ])('should not call the handler if $case', ({ setUp, text }) => {
             setUp();
             const handler = vi.fn().mockReturnValue(true);
