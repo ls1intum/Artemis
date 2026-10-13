@@ -97,6 +97,8 @@ public class IrisGlobalSearchResource {
      * This is search, not an Iris feature: it covers every course the caller can access, including courses with Iris switched off in the course
      * settings, because that setting only switches off the Iris chat and the other interactive Iris features.
      *
+     * Requires the AI opt-in like the Iris answer, because the query is processed by AI models in Pyris.
+     *
      * @param requestDTO the search request containing query, limit, and the optional course filters
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of search results
      */
@@ -104,8 +106,10 @@ public class IrisGlobalSearchResource {
     @UsageInteraction(FeatureInteraction.VIEW)
     @PostMapping("lecture-search")
     @EnforceAtLeastStudent
+    @LimitRequestsPerMinute(type = RateLimitType.CONTENT_SEARCH)
     public ResponseEntity<List<PyrisLectureSearchResultDTO>> search(@RequestBody @Valid GlobalSearchLectureRequestDTO requestDTO) {
         var user = userRepository.getUserWithCourseRolesAndAuthorities();
+        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var accessContext = irisAccessContextService.resolveAccessContext(user);
         var excludedCourseIds = requestDTO.excludeCourseIds() == null ? List.<Long>of() : requestDTO.excludeCourseIds();
         var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext, false);
