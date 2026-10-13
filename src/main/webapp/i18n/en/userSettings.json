@@ -101,7 +101,10 @@
                     "doNotExpire": "Do not expire",
                     "expireAutomatically": "Expire automatically",
                     "daysUntilExpiry": "Days until expiry",
-                    "keyWillExpireOn": "Key will expire on"
+                    "keyWillExpireOn": "Key will expire on",
+                    "presetsLabel": "Expires in",
+                    "presetDays": "{{ days }} days",
+                    "mustBeInFuture": "The expiry date must be tomorrow or later."
                 }
             },
             "vcsAccessTokensSettingsPage": {

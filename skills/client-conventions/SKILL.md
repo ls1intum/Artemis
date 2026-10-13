@@ -183,6 +183,27 @@ child-input identity boundary, read the cloning section of `reference/migration-
 `packages/tum-aet-ui` is outside these application rules and must not import `app/` utilities.
 Choose copying behavior appropriate to the package's data and identity requirements.
 
+## Exercise update forms
+
+The text, modeling and file upload exercise forms keep the exercise in an `ExerciseFormState`
+(`src/main/webapp/app/exercise/util/exercise-form-state.ts`). It notifies on every write and keeps
+the object, so what the form derives (footer reasons, status bar sections) is a `computed()`.
+
+- Write only through the state: `[ngModel]="exercise.maxPoints"` with
+  `(ngModelChange)="exerciseState.patch('maxPoints', $event)"`, never `[(ngModel)]="exercise.maxPoints"`;
+  `exerciseState.update(...)` in code, also in HTTP callbacks.
+- A child that writes a field the form derives state from emits `exerciseChange` with the same
+  object; the form binds `[(exercise)]` to a setter that calls `set`, or
+  `(exerciseChange)="exerciseState.set($event)"`.
+- Derive validity from the model with `src/main/webapp/app/exercise/util/exercise-validation.util.ts`,
+  never from `NgModel.valid` or `control.errors`, and never keep it in sync with a `valueChanges`
+  subscription. A child exposes what only it knows as a signal (`isTitleDisallowed`, `invalidControlNames`).
+- Do not copy the exercise per edit: a new reference re-runs what every child derives from it and
+  re-creates rows tracked by identity.
+
+Details: the _Exercise update forms_ subsection of
+`documentation/docs/developer/guidelines/client-development.mdx`.
+
 ## Styling
 
 Use TUM AET UI components (`@tumaet/ui-angular`) and Tailwind v4 utilities. Do not add Bootstrap or
