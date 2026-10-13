@@ -446,6 +446,18 @@ describe('IrisChatService', () => {
                 expect(byIdStub).toHaveBeenCalledOnce();
             });
 
+            it('should reload the open session when it is asked for by id, since the page opened it on its own', async () => {
+                // The course page opens an empty chat; a global search handoff reuses that chat, fills it and asks for it by id.
+                vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithId(777)));
+                const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
+
+                service.openChat(ChatServiceMode.COURSE, courseId);
+                await waitForSessionIdValue(777);
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+
+                expect(byIdStub).toHaveBeenCalledExactlyOnceWith(courseId, 777);
+            });
+
             it('should not reload the session when it is already open', async () => {
                 const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
 

@@ -20,10 +20,6 @@
             @if (phase() === 'thinking') {
                 <span class="iris-strip-status text-truncate" role="status" data-testid="iris-strip-status">{{ stageStatusKey() | artemisTranslate: stageStatusParams() }}</span>
             }
-            <!-- Top right, where it is seen first and never moves, whatever the chips below do. -->
-            @if (canContinueInIris()) {
-                <jhi-global-search-iris-handoff class="ms-auto" [question]="searchQuery()" [answer]="irisResult()?.answer ?? ''" [citedSources]="citedSources()" />
-            }
         </div>
 
         <!-- Body. Collapsed to nothing while the card is a strip; the grid row animates the opening
@@ -158,6 +154,11 @@
                 }
             </div>
         </div>
+
+        <!-- Footer, right after the sources: where the reader ends up once the answer is read. -->
+        @if (canContinueInIris()) {
+            <jhi-global-search-iris-handoff [question]="searchQuery()" [answer]="irisResult()?.answer ?? ''" [citedSources]="citedSources()" />
+        }
 
         @if (citationPopover(); as popover) {
             <div class="iris-cite-popover" role="tooltip" data-testid="iris-citation-popover" [style.left.px]="popover.left" [style.top.px]="popover.top">

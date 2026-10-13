@@ -104,7 +104,7 @@ describe('chatAnswer', () => {
             cited([slide(algorithms, divideAndConquer, 100, 3, 'Week 4: [Sorting]'), video(algorithms, divideAndConquer, 101, 221)]),
         );
 
-        expect(answer).toBe('Halves the input.[cite:L:100:3:::Week 4 Sorting:] Merges every level.[cite:L:101::221::Recording:]');
+        expect(answer).toBe('Halves the input.[cite:L:100:3:::Week 4 Sorting:Week 4 Sorting] Merges every level.[cite:L:101::221::Recording:Recording]');
     });
 
     it('turns course information into links to the pages their chips open', () => {
@@ -121,6 +121,18 @@ describe('chatAnswer', () => {
 
         const answer = chatAnswer('A.[1] B.[2]', cited([slide(algorithms, divideAndConquer, 100, 3)], [exercise], ['entity', 'lecture']));
 
-        expect(answer).toBe('A. [Mergesort](</courses/1/exercises/50>) B.[cite:L:100:3:::Slides:]');
+        expect(answer).toBe('A. [Mergesort](</courses/1/exercises/50>) B.[cite:L:100:3:::Slides:Slides]');
+    });
+
+    it('carries the cited passage as the summary the chat shows on hover, kept to one safe, short line', () => {
+        const withSnippet = (snippet: string) => ({ ...slide(algorithms, divideAndConquer, 100, 3), snippet });
+
+        expect(chatAnswer('A.[1]', cited([withSnippet('Split the array [0, n)\nin half.')]))).toBe('A.[cite:L:100:3:::Slides:Split the array (0, n) in half.]');
+        expect(chatAnswer('A.[1]', cited([withSnippet('See also the summary:va3')]))).toBe('A.[cite:L:100:3:::Slides:See also the summary: va3]');
+
+        const long = chatAnswer('A.[1]', cited([withSnippet(`${'word '.repeat(60)}end`)]));
+        const summary = long.slice(long.lastIndexOf(':') + 1, -1);
+        expect(summary.endsWith('word…')).toBe(true);
+        expect(summary.length).toBeLessThanOrEqual(201);
     });
 });

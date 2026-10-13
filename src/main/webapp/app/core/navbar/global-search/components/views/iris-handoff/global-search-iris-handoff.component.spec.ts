@@ -58,7 +58,7 @@ describe('GlobalSearchIrisHandoffComponent', () => {
             providers: [
                 provideRouter([]),
                 { provide: IrisChatHttpService, useValue: { createSessionFromGlobalSearch: createSession } },
-                { provide: OsDetectorService, useValue: { actionKeyLabel: signal('⌘'), isActionKey: (event: KeyboardEvent) => event.metaKey } },
+                { provide: OsDetectorService, useValue: { actionKeyLabel: signal('⌘'), isMac: signal(true), isActionKey: (event: KeyboardEvent) => event.metaKey } },
             ],
         })
             .overrideComponent(GlobalSearchIrisHandoffComponent, {
@@ -76,11 +76,18 @@ describe('GlobalSearchIrisHandoffComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('shows the shortcut and names the lecture the answer comes from in its accessible name', () => {
+    it('names the lecture in the prompt, which describes the action named by its visible label, with the shortcut announced', () => {
         render(oneLecture);
 
-        expect(button()?.textContent?.replace(/\s+/g, '')).toBe('global.search.irisHandoffContinue⌘↵');
-        expect(button()?.getAttribute('aria-label')).toBe('global.search.irisHandoffContinueIn: Divide and Conquer');
+        const prompt = fixture.nativeElement.querySelector('.iris-handoff-prompt') as HTMLElement;
+        expect(prompt.textContent?.replace(/\s+/g, ' ').trim()).toBe('global.search.irisHandoffFollowUp Divide and Conquer');
+        // Only the action is a button; the prompt is plain text beside it.
+        expect(prompt.closest('button')).toBeNull();
+        expect(button()?.textContent?.replace(/\s+/g, '')).toBe('global.search.irisHandoffOpenChat⌘↵');
+        // The accessible name is the visible label (no aria-label), so voice control finds it by what it says.
+        expect(button()?.hasAttribute('aria-label')).toBe(false);
+        expect(button()?.getAttribute('aria-describedby')).toBe(prompt.id);
+        expect(button()?.getAttribute('aria-keyshortcuts')).toBe('Meta+Enter');
     });
 
     it('renders nothing when no source names a course', () => {
@@ -99,7 +106,7 @@ describe('GlobalSearchIrisHandoffComponent', () => {
             courseId: 1,
             context: { mode: ChatServiceMode.LECTURE, entityId: 10 },
             question: 'Why is merge sort O(n log n)?',
-            answer: 'It halves the input.[cite:L:100:3:::Slides:]',
+            answer: 'It halves the input.[cite:L:100:3:::Slides:Slides]',
         });
         expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/courses', 1, 'iris'], { queryParams: { irisSession: 77 } });
     });
@@ -132,6 +139,10 @@ describe('GlobalSearchIrisHandoffComponent', () => {
         render(oneLecture);
 
         button()!.click();
+        fixture.detectChanges();
+        // Marked busy but still focusable, so keyboard focus is not dropped while the chat is created.
+        expect(button()!.getAttribute('aria-disabled')).toBe('true');
+        expect(button()!.disabled).toBe(false);
         button()!.click();
 
         expect(createSession).toHaveBeenCalledOnce();
@@ -144,7 +155,7 @@ describe('GlobalSearchIrisHandoffComponent', () => {
         button()!.click();
         fixture.detectChanges();
 
-        expect(button()!.disabled).toBe(false);
+        expect(button()!.getAttribute('aria-disabled')).toBe('false');
         expect(router.navigate).not.toHaveBeenCalled();
     });
 });

@@ -1,12 +1,15 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faComment } from '@fortawesome/free-regular-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { OsDetectorService } from 'app/core/navbar/global-search/services/os-detector.service';
 import { IrisHandoffTarget, chatAnswer, handoffTarget } from 'app/core/navbar/global-search/util/iris-chat-handoff.util';
 import { CitedSources } from 'app/core/navbar/global-search/util/iris-cited-sources.util';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IRIS_SESSION_QUERY_PARAM } from 'app/iris/shared/entities/iris-session.model';
+
+let nextHandoffId = 0;
 
 /**
  * Continues a finished global search answer in the Iris chat of the course it came from, on the lecture or exercise the answer
@@ -17,7 +20,7 @@ import { IRIS_SESSION_QUERY_PARAM } from 'app/iris/shared/entities/iris-session.
     selector: 'jhi-global-search-iris-handoff',
     templateUrl: './global-search-iris-handoff.component.html',
     styleUrl: './global-search-iris-handoff.component.scss',
-    imports: [TumAetUiTooltipDirective, ArtemisTranslatePipe],
+    imports: [FaIconComponent, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { '(window:keydown)': 'onWindowKeydown($event)' },
 })
@@ -33,10 +36,15 @@ export class GlobalSearchIrisHandoffComponent {
     /** The sources the answer cites, numbered the way its markers are. */
     readonly citedSources = input.required<CitedSources>();
 
+    protected readonly faComment = faComment;
     protected readonly target = computed(() => handoffTarget(this.citedSources()));
     /** Set while the chat is being created, so a double click creates one chat rather than two. */
     protected readonly isOpening = signal(false);
     protected readonly shortcutLabel = computed(() => `${this.osDetector.actionKeyLabel()}↵`);
+    /** The shortcut as assistive technology names it; the keycap itself is decorative. */
+    protected readonly keyShortcuts = computed(() => (this.osDetector.isMac() ? 'Meta+Enter' : 'Control+Enter'));
+    /** Links the action to the prompt that describes where it leads. */
+    protected readonly promptId = `iris-handoff-prompt-${nextHandoffId++}`;
 
     /** Cmd/Ctrl+Enter, the same as the button; the palette's own Enter handlers leave the modified key alone. */
     protected onWindowKeydown(event: KeyboardEvent): void {

@@ -100,15 +100,30 @@ export function chatAnswer(answer: string, cited: CitedSources): string {
     });
 }
 
+/** Longest summary a handed-off citation carries; the chat shows it in the citation's hover card. */
+const CITATION_SUMMARY_MAX_LENGTH = 200;
+
 /**
  * A chat citation of a lecture unit. The chat opens it with the same page or timestamp the answer card's chip uses, and labels
- * it with the unit's name; the server pins it to the current material version when the chat is created.
+ * it with the unit's name; the server pins it to the current material version when the chat is created. Its summary is the
+ * cited passage, so hovering it shows what the answer drew on, like a citation Iris writes in the chat.
  */
 function lectureCitation(source: LectureSearchResult): string {
     const unit = source.lectureUnit;
     const page = unit.queryParams['page'] ?? '';
     const timestamp = unit.queryParams['timestamp'] ?? '';
-    return `[cite:L:${unit.id}:${page}:${timestamp}::${citationKeyword(unit.name)}:]`;
+    const keyword = citationKeyword(unit.name);
+    return `[cite:L:${unit.id}:${page}:${timestamp}::${keyword}:${citationSummary(source.snippet) || keyword}]`;
+}
+
+/**
+ * The cited passage as a citation summary: one line, without the brackets that would end the citation, and short enough for a
+ * hover card. A trailing token that reads like a version field is set apart, so it cannot pass for the material version.
+ */
+function citationSummary(snippet?: string): string {
+    const text = (snippet ?? '').replace(/\[/g, '(').replace(/]/g, ')').replace(/\s+/g, ' ').trim();
+    const short = text.length <= CITATION_SUMMARY_MAX_LENGTH ? text : `${text.slice(0, CITATION_SUMMARY_MAX_LENGTH).replace(/\s+\S*$/, '')}…`;
+    return short.replace(/:(v[at]\d+)$/, ': $1');
 }
 
 /** The unit's name as a citation keyword, which may not contain the citation's own separators. */

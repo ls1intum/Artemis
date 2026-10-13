@@ -85,6 +85,13 @@ export class IrisChatService implements OnDestroy {
         this.currentSessionIdSubject.next(id);
     }
 
+    /**
+     * The session the page last asked {@link openChat} for by id. Asking for it again does not reload it, but asking for the
+     * session that happens to be open does: the page opened that one on its own, and a global search handoff may have just
+     * filled it with the question and the answer.
+     */
+    private requestedSessionId?: number;
+
     messages: BehaviorSubject<IrisMessage[]> = new BehaviorSubject<IrisMessage[]>([]);
     newIrisMessage: BehaviorSubject<IrisMessage | undefined> = new BehaviorSubject<IrisMessage | undefined>(undefined);
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
@@ -209,6 +216,7 @@ export class IrisChatService implements OnDestroy {
      */
     private resetState(): void {
         this.stateGeneration++;
+        this.requestedSessionId = undefined;
         // Tear down session-level subscriptions before clearing subjects so no late `next` can race.
         if (this.sessionId !== undefined) {
             this.irisWebsocketService.unsubscribeFromSession(this.sessionId);
@@ -1000,9 +1008,10 @@ export class IrisChatService implements OnDestroy {
      */
     public openChat(mode: ChatServiceMode, entityId: number, sessionId?: number): void {
         const ctx: SessionContext = { mode: mode, entityId: entityId };
-        if (sameSessionContext(ctx, this.contextService.page()) && (sessionId === undefined || sessionId === this.sessionId)) return;
+        if (sameSessionContext(ctx, this.contextService.page()) && (sessionId === undefined || sessionId === this.requestedSessionId)) return;
         this.contextService.setPageContext(ctx);
         this.close();
+        this.requestedSessionId = sessionId;
         this.start(sessionId);
     }
 
