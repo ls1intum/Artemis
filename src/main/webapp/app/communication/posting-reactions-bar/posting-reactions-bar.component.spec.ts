@@ -46,7 +46,7 @@ import { PostingReactionsBarComponent } from 'app/communication/posting-reaction
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -405,6 +405,79 @@ describe('PostingReactionsBarComponent', () => {
         component.addOrRemoveReaction(reactionToDelete.emojiId!);
         expect(communicationServiceDeleteReactionMock).toHaveBeenCalledWith(reactionToDelete);
         expect(component.showReactionSelector()).toBeFalsy();
+    });
+
+    describe('quickly toggling the same reaction', () => {
+        beforeEach(() => {
+            post.reactions = [];
+            fixture.componentRef.setInput('posting', post);
+            component.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+        });
+
+        it('should ignore further clicks on an emoji while its request is still running', () => {
+            const createSubject = new Subject<Reaction>();
+            const createReactionSpy = vi.spyOn(communicationService, 'createReaction').mockReturnValue(createSubject);
+
+            component.updateReaction('+1');
+            component.updateReaction('+1');
+            component.updateReaction('+1');
+
+            expect(createReactionSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should show the created reaction as soon as the response arrived', () => {
+            const createSubject = new Subject<Reaction>();
+            vi.spyOn(communicationService, 'createReaction').mockReturnValue(createSubject);
+
+            component.updateReaction('+1');
+            createSubject.next(createdReaction('+1', 10));
+            createSubject.complete();
+
+            expect(post.reactions).toHaveLength(1);
+            expect(component.reactionMetaDataMap()['+1'].hasReacted).toBe(true);
+        });
+
+        it('should remove the reaction on the next click even if the websocket update has not arrived yet', () => {
+            const createReactionSpy = vi.spyOn(communicationService, 'createReaction').mockReturnValue(of(createdReaction('+1', 10)));
+            const deleteReactionSpy = vi.spyOn(communicationService, 'deleteReaction').mockReturnValue(of(undefined));
+
+            component.updateReaction('+1');
+            component.updateReaction('+1');
+
+            expect(createReactionSpy).toHaveBeenCalledOnce();
+            expect(deleteReactionSpy).toHaveBeenCalledOnce();
+            expect(post.reactions).toHaveLength(0);
+        });
+
+        it('should not add the reaction twice when the websocket update arrived before the response', () => {
+            const reaction = createdReaction('+1', 10);
+            const createSubject = new Subject<Reaction>();
+            vi.spyOn(communicationService, 'createReaction').mockReturnValue(createSubject);
+
+            component.updateReaction('+1');
+            post.reactions = [reaction];
+            createSubject.next(reaction);
+
+            expect(post.reactions).toHaveLength(1);
+        });
+
+        it('should accept a click on an emoji again after its request failed', () => {
+            const createReactionSpy = vi.spyOn(communicationService, 'createReaction').mockReturnValue(throwError(() => new Error('conflict')));
+
+            component.updateReaction('+1');
+            component.updateReaction('+1');
+
+            expect(createReactionSpy).toHaveBeenCalledTimes(2);
+        });
+
+        function createdReaction(emojiId: string, id: number): Reaction {
+            const reaction = new Reaction();
+            reaction.id = id;
+            reaction.emojiId = emojiId;
+            reaction.user = communicationUser1;
+            return reaction;
+        }
     });
 
     it('should invoke communication service method with own reaction to remove it', () => {
