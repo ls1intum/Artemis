@@ -119,6 +119,18 @@ public class WeaviateOutboxDispatcher {
     private final Map<String, float[]> carriedVectors = new HashMap<>();
 
     /**
+     * Number of bulk deletes confirmed so far. A bulk delete has no entity key, so the per-entity guard cannot tell which
+     * waiting background rows it supersedes; a row prepared before it is therefore not written but re-read later.
+     */
+    private long confirmedBulkDeletes;
+
+    /**
+     * A background row waiting for its embeddings, with the number of bulk deletes confirmed when it was prepared.
+     */
+    private record WaitingRow(SearchableEntityWeaviateService.PreparedEntry prepared, long bulkDeletesAtPrepare) {
+    }
+
+    /**
      * Checks the index against the configuration and rebuilds it when needed; runs before the first write.
      */
     private final SearchableEntityIndexRebuildService rebuildService;
@@ -291,7 +303,7 @@ public class WeaviateOutboxDispatcher {
         carriedVectors.clear();
         Set<String> failedChunks = new HashSet<>();
         Set<String> pendingChunks = new LinkedHashSet<>();
-        List<SearchableEntityWeaviateService.PreparedEntry> waiting = new ArrayList<>();
+        List<WaitingRow> waiting = new ArrayList<>();
         boolean rowBudgetExhausted = false;
         boolean requestBudgetExhausted = false;
         for (WeaviateOutboxEntry entry : rows) {
@@ -305,7 +317,7 @@ public class WeaviateOutboxDispatcher {
             try {
                 SearchableEntityWeaviateService.PreparedEntry prepared = searchableEntityWeaviateService.prepareOutboxEntry(entry);
                 missingChunks(prepared).stream().filter(chunk -> !embedded.containsKey(chunk)).forEach(pendingChunks::add);
-                waiting.add(prepared);
+                waiting.add(new WaitingRow(prepared, confirmedBulkDeletes));
             }
             catch (Exception e) {
                 recordFailure(entry, e);
@@ -324,7 +336,7 @@ public class WeaviateOutboxDispatcher {
             requestBudgetExhausted = !embedNextRequest(pendingChunks, embedded, failedChunks, confirmedInTurn);
         }
         applyCompleteRows(waiting, embedded, failedChunks, now, confirmedInTurn);
-        waiting.forEach(prepared -> missingChunks(prepared).stream().filter(embedded::containsKey).forEach(chunk -> carriedVectors.put(chunk, embedded.get(chunk))));
+        waiting.forEach(row -> carryVectors(row, embedded));
         return !rowBudgetExhausted && !requestBudgetExhausted && rows.size() == BACKGROUND_STEP_ROWS;
     }
 
@@ -359,19 +371,26 @@ public class WeaviateOutboxDispatcher {
     }
 
     /**
-     * Drops every waiting row that a confirmed write for the same entity superseded, writes every waiting row whose chunks
-     * all have vectors, and records a failure for every row with a failed chunk; all of them leave the waiting list.
+     * Drops every waiting row that a confirmed write for the same entity superseded, leaves every waiting row prepared
+     * before a confirmed bulk delete due for a later step, writes every waiting row whose chunks all have vectors, and
+     * records a failure for every row with a failed chunk; all of them leave the waiting list.
      */
-    private void applyCompleteRows(List<SearchableEntityWeaviateService.PreparedEntry> waiting, Map<String, float[]> embedded, Set<String> failedChunks, ZonedDateTime now,
-            Map<String, Long> confirmedInTurn) {
+    private void applyCompleteRows(List<WaitingRow> waiting, Map<String, float[]> embedded, Set<String> failedChunks, ZonedDateTime now, Map<String, Long> confirmedInTurn) {
         var iterator = waiting.iterator();
         while (iterator.hasNext()) {
-            SearchableEntityWeaviateService.PreparedEntry prepared = iterator.next();
+            WaitingRow row = iterator.next();
+            SearchableEntityWeaviateService.PreparedEntry prepared = row.prepared();
             List<String> missing = missingChunks(prepared);
             // A write for the same entity confirmed meanwhile (for example a user's delete) makes the row obsolete,
             // whether or not its chunks could be embedded.
             if (skipIfSuperseded(prepared.entry(), confirmedInTurn)) {
                 iterator.remove();
+            }
+            else if (row.bulkDeletesAtPrepare() != confirmedBulkDeletes) {
+                // A bulk delete applied meanwhile may have removed this entity; leave the row due so it is re-derived
+                // from the database in a later step, and keep its vectors so nothing is embedded twice.
+                iterator.remove();
+                carryVectors(row, embedded);
             }
             else if (missing.stream().anyMatch(failedChunks::contains)) {
                 iterator.remove();
@@ -382,6 +401,10 @@ public class WeaviateOutboxDispatcher {
                 applyPrepared(prepared, embedded, now, confirmedInTurn);
             }
         }
+    }
+
+    private void carryVectors(WaitingRow row, Map<String, float[]> embedded) {
+        missingChunks(row.prepared()).stream().filter(embedded::containsKey).forEach(chunk -> carriedVectors.put(chunk, embedded.get(chunk)));
     }
 
     /**
@@ -475,6 +498,9 @@ public class WeaviateOutboxDispatcher {
         confirmWrite(entry, now, writtenContentHash);
         if (entry.getEntityId() != null) {
             confirmedInTurn.merge(entityKey(entry), entry.getId(), Math::max);
+        }
+        else {
+            confirmedBulkDeletes++;
         }
     }
 

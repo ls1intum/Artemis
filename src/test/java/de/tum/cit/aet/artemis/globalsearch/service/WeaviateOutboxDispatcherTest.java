@@ -733,6 +733,41 @@ class WeaviateOutboxDispatcherTest {
     }
 
     @Test
+    void testBackgroundStep_aRowPreparedBeforeABulkDeleteIsReadAgainInsteadOfWritten() {
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        Map<String, String> weaviate = new HashMap<>();
+        wireInMemoryOutbox(table, weaviate);
+        WeaviateOutboxEntry background = entry(1L, COURSE, 7L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+        table.add(background);
+        wirePreparedUpserts(Map.of(1L, List.of("a")));
+        WeaviateOutboxEntry courseDeletion = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, "{\"courseId\":7}", WeaviateOutboxOrigin.LIVE);
+        courseDeletion.setId(2L);
+        // While the background row waits for its embedding, an instructor deletes the course.
+        AtomicInteger embeddingRequests = new AtomicInteger();
+        doAnswer(invocation -> {
+            if (embeddingRequests.getAndIncrement() == 0) {
+                table.add(courseDeletion);
+            }
+            return invocation.<List<String>>getArgument(0).stream().map(_ -> new float[] { 1f, 0f }).toList();
+        }).when(embeddingClient).embedDocuments(any());
+
+        dispatcher.drain();
+
+        verify(searchableEntityWeaviateService).applyOutboxEntry(courseDeletion);
+        verify(searchableEntityWeaviateService, never()).applyPrepared(any(), any());
+        assertThat(table).as("the row stays due, to be derived again from the database").containsExactly(background);
+        assertThat(background.getAttempts()).isZero();
+
+        // The next step reads the row again and reuses the vector computed before.
+        dispatcher.drain();
+
+        verify(searchableEntityWeaviateService, times(2)).prepareOutboxEntry(background);
+        verify(searchableEntityWeaviateService).applyPrepared(any(), any());
+        assertThat(embeddingRequests).hasValue(1);
+        assertThat(table).isEmpty();
+    }
+
+    @Test
     void testBackgroundStep_aRowWhoseVectorsAreAllReusedNeedsNoEmbeddingRequest() {
         List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
         wireInMemoryOutbox(table, new HashMap<>());
