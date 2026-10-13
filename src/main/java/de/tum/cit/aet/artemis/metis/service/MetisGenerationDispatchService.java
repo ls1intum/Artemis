@@ -229,10 +229,12 @@ public class MetisGenerationDispatchService {
     /**
      * Creates the missing checks of an exercise and puts its failed checks back into the queue, at the request of an instructor, without waiting for the
      * delays of the poller. Checks skipped for missing consent or a closed window are queued again as well, since both can change after the due date; checks
-     * skipped for no submission or no own code stay as they are, since neither can. The questions are generated later by the scheduling node.
+     * skipped for no submission or no own code stay as they are, since neither can. The existing checks are queued again before the missing ones are created,
+     * so that a check created now is counted once and the check of a student without consent stays skipped. The questions are generated later by the
+     * scheduling node.
      *
      * @param exerciseId the exercise
-     * @return how many checks were created and how many were put back into the queue
+     * @return how many checks were created and how many existing checks were put back into the queue
      * @throws BadRequestAlertException {@code metis.unsupportedExercise} if the exercise is no individual programming exercise of a course
      * @throws ConflictException        {@code metis.notEnabled} if the check is not enabled for the exercise, {@code metis.noDueDate} if it has no due date
      */
@@ -246,8 +248,9 @@ public class MetisGenerationDispatchService {
         if (facts.dueDate() == null) {
             throw new ConflictException("The exercise needs a due date before questions can be generated.", ENTITY_NAME, "metis.noDueDate");
         }
-        int created = createMissingChecks(exerciseId, TimeUtil.now());
+        // Requeue first: a check created now for a student without consent stays skipped, and no check counts as created and as requeued
         int requeued = checkRepository.requeueChecksOfExercise(exerciseId, MetisFailureReason.REQUEUED_BY_GENERATE_NOW);
+        int created = createMissingChecks(exerciseId, TimeUtil.now());
         log.info("Generate now for exercise {}: created {} and requeued {} Metis checks", exerciseId, created, requeued);
         return new MetisGenerateResultDTO(created, requeued);
     }

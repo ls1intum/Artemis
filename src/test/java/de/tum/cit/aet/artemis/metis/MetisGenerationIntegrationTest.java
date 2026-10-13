@@ -69,6 +69,7 @@ import de.tum.cit.aet.artemis.metis.service.MetisLlmService.Mode;
 import de.tum.cit.aet.artemis.metis.service.MetisLlmService.Pipeline;
 import de.tum.cit.aet.artemis.metis.service.MetisQuestionGenerationService;
 import de.tum.cit.aet.artemis.metis.service.MetisQuestionGenerationService.Outcome;
+import de.tum.cit.aet.artemis.metis.service.MetisQuestionReviewService;
 import de.tum.cit.aet.artemis.metis.util.MetisLlmTestResponses;
 import de.tum.cit.aet.artemis.metis.util.MetisUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
@@ -139,6 +140,9 @@ class MetisGenerationIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @Autowired
     private MetisQuestionGenerationService generationService;
+
+    @Autowired
+    private MetisQuestionReviewService questionReviewService;
 
     @Autowired
     private MetisUtilService metisUtilService;
@@ -1069,6 +1073,28 @@ class MetisGenerationIntegrationTest extends AbstractProgrammingIntegrationLocal
             assertRegenerationFails(question, ConflictException.class, "metis.questionChanged");
 
             assertThat(questionRepository.findByIdElseThrow(question.getId()).getQuestionText()).isEqualTo(question.getQuestionText());
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldKeepTheTextAnotherEditorEditedDuringTheCall() throws Exception {
+            Generated generated = generatedAndApproved(true);
+            MetisQuestion question = generated.questions().getFirst();
+            String edited = "Which value does sort compare last?";
+            when(metisLlmService.complete(eq(Pipeline.QUESTION_REGENERATION), eq(Mode.INTERACTIVE), anyString(), anyString(), any())).thenAnswer(invocation -> {
+                // The check is in review during the call, which allows an edit, and an edit leaves the regeneration count as it is
+                questionReviewService.updateQuestionText(exerciseId, question.getId(), edited);
+                return MetisLlmTestResponses.completion(MetisLlmTestResponses.questionsJson(List.of(NEW_QUESTION), List.of(150)));
+            });
+
+            assertRegenerationFails(question, ConflictException.class, "metis.questionChanged");
+
+            MetisQuestion kept = questionRepository.findByIdElseThrow(question.getId());
+            assertThat(kept.getQuestionText()).isEqualTo(edited);
+            assertThat(kept.getRegenerationCount()).isZero();
+            assertThat(kept.getApprovedAt()).isNotNull();
+            // Nothing was replaced, so the check, whose main questions are all still approved, is ready again
+            assertThat(checkRepository.findByIdElseThrow(generated.check().getId()).getStatus()).isEqualTo(MetisCheckStatus.READY);
         }
 
         @Test

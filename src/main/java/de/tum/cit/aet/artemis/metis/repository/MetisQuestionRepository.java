@@ -180,13 +180,16 @@ public interface MetisQuestionRepository extends ArtemisJpaRepository<MetisQuest
     int updateTextIfNotShown(@Param("questionId") long questionId, @Param("questionText") String questionText);
 
     /**
-     * Stores a regenerated question: its new text and time limit, one more regeneration, and no approval, since nobody has reviewed the new text. The count the
-     * caller read before the LLM call guards against a second regeneration or edit that finished meanwhile.
+     * Stores a regenerated question: its new text and time limit, one more regeneration, and no approval, since nobody has reviewed the new text. The
+     * regeneration count and the text the caller read before the LLM call guard against a second regeneration and against an edit of the text that finished
+     * meanwhile, which the regenerated text must not overwrite unseen. On MySQL the texts are compared in the collation of the column, which ignores case, so
+     * an edit that changes nothing but the case of letters is not noticed there.
      *
      * @param questionId                the main question
      * @param questionText              the new text
      * @param timeLimitSeconds          the new time limit
      * @param expectedRegenerationCount the regeneration count the caller read before it asked the LLM
+     * @param expectedQuestionText      the text the caller read before it asked the LLM
      * @return 1 if the question was replaced, 0 if it changed meanwhile, has been shown, or its check is started or neither ready nor in review
      */
     @Modifying
@@ -199,6 +202,7 @@ public interface MetisQuestionRepository extends ArtemisJpaRepository<MetisQuest
                 q.approvedAt = NULL
             WHERE q.id = :questionId
                 AND q.regenerationCount = :expectedRegenerationCount
+                AND q.questionText = :expectedQuestionText
                 AND q.shownAt IS NULL
                 AND EXISTS (
                     SELECT c.id
@@ -209,7 +213,7 @@ public interface MetisQuestionRepository extends ArtemisJpaRepository<MetisQuest
                 )
             """)
     int replaceAfterRegeneration(@Param("questionId") long questionId, @Param("questionText") String questionText, @Param("timeLimitSeconds") int timeLimitSeconds,
-            @Param("expectedRegenerationCount") int expectedRegenerationCount);
+            @Param("expectedRegenerationCount") int expectedRegenerationCount, @Param("expectedQuestionText") String expectedQuestionText);
 
     /**
      * Shows a question to its student, which starts its timer on the server.

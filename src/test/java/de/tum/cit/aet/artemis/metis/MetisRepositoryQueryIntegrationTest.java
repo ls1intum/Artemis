@@ -695,12 +695,15 @@ class MetisRepositoryQueryIntegrationTest extends AbstractProgrammingIntegration
             // A check in generation has not been started either, so only the guard on the status refuses its question.
             MetisQuestion ofCheckInGeneration = mainQuestion(check("student4", MetisCheckStatus.GENERATING), 1);
 
-            assertThat(questionRepository.replaceAfterRegeneration(regenerated.getId(), "Regenerated", 200, 0)).isOne();
-            assertThat(questionRepository.replaceAfterRegeneration(regenerated.getId(), "Regenerated again", 210, 0)).isZero();
-            assertThat(questionRepository.replaceAfterRegeneration(shownMain.getId(), "Regenerated", 200, 0)).isZero();
-            assertThat(questionRepository.replaceAfterRegeneration(ofStartedCheck.getId(), "Regenerated", 200, 0)).isZero();
-            assertThat(questionRepository.replaceAfterRegeneration(ofCheckInReview.getId(), "Regenerated in review", 220, 0)).isOne();
-            assertThat(questionRepository.replaceAfterRegeneration(ofCheckInGeneration.getId(), "Regenerated", 200, 0)).isZero();
+            // An editor changed the text after the regeneration read it
+            assertThat(questionRepository.replaceAfterRegeneration(regenerated.getId(), "Regenerated", 200, 0, "Text before the edit")).isZero();
+            assertThat(questionRepository.replaceAfterRegeneration(regenerated.getId(), "Regenerated", 200, 0, regenerated.getQuestionText())).isOne();
+            // Another regeneration finished after this one read the question
+            assertThat(questionRepository.replaceAfterRegeneration(regenerated.getId(), "Regenerated again", 210, 0, "Regenerated")).isZero();
+            assertThat(questionRepository.replaceAfterRegeneration(shownMain.getId(), "Regenerated", 200, 0, shownMain.getQuestionText())).isZero();
+            assertThat(questionRepository.replaceAfterRegeneration(ofStartedCheck.getId(), "Regenerated", 200, 0, ofStartedCheck.getQuestionText())).isZero();
+            assertThat(questionRepository.replaceAfterRegeneration(ofCheckInReview.getId(), "Regenerated in review", 220, 0, ofCheckInReview.getQuestionText())).isOne();
+            assertThat(questionRepository.replaceAfterRegeneration(ofCheckInGeneration.getId(), "Regenerated", 200, 0, ofCheckInGeneration.getQuestionText())).isZero();
 
             MetisQuestion replaced = reload(regenerated);
             assertThat(replaced.getQuestionText()).isEqualTo("Regenerated");
