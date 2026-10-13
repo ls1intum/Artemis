@@ -589,6 +589,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         var result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
         var updated = mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
         assertThat(updated.description()).hasSize(1000);
+
+        // Wait for the background slide splitting triggered by the create to finish, so it does not outlive the test and reach the next test's Iris mock
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(created.id())).hasSize(SLIDE_COUNT));
     }
 
     @Test
@@ -605,8 +608,11 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
                 .file(createAttachmentVideoUnitPart(details, AttachmentUpdateIntent.NO_FILE_CHANGE)).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         request.performMvcRequest(builder).andExpect(status().isBadRequest());
 
-        var unchanged = attachmentVideoUnitRepository.findById(created.id()).orElseThrow();
-        assertThat(unchanged.getDescription()).isEqualTo("Lorem Ipsum");
+        var unchanged = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + created.id(), HttpStatus.OK, AttachmentVideoUnitDTO.class);
+        assertThat(unchanged.description()).isEqualTo("Lorem Ipsum");
+
+        // Wait for the background slide splitting triggered by the create to finish, so it does not outlive the test and reach the next test's Iris mock
+        await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(created.id())).hasSize(SLIDE_COUNT));
     }
 
     @Test

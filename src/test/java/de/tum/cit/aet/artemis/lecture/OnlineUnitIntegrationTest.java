@@ -226,8 +226,8 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatc
         request.putWithResponseBody("/api/lecture/lectures/" + lecture1.getId() + "/online-units", onlineUnitDtoForRequest(this.onlineUnit), OnlineUnitDTO.class,
                 HttpStatus.BAD_REQUEST);
 
-        OnlineUnit unchanged = onlineUnitRepository.findById(this.onlineUnit.getId()).orElseThrow();
-        assertThat(unchanged.getDescription()).isEqualTo("LoremIpsum");
+        var unchanged = request.get("/api/lecture/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.OK, OnlineUnitDTO.class);
+        assertThat(unchanged.description()).isEqualTo("LoremIpsum");
     }
 
     @Test
