@@ -13,12 +13,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.account.domain.PendingEmailChange;
 import de.tum.cit.aet.artemis.account.domain.UserRecoveryKey;
 import de.tum.cit.aet.artemis.account.repository.UserRecoveryKeyRepository;
 
 /**
- * Owns the activation and password-reset keys of an account, which live in {@code user_recovery_key} rather than on the
- * user row.
+ * Owns the activation and password-reset keys of an account and the e-mail change it is waiting to have confirmed, which live
+ * in {@code user_recovery_key} rather than on the user row.
  * <p>
  * Callers go through this service so that "nothing is outstanding" is resolved in one place: a row exists only while a
  * key is pending, and a row that has become empty is deleted rather than kept as a row of nulls.
@@ -116,6 +117,59 @@ public class UserRecoveryKeyService {
      */
     public Optional<UserRecoveryKey> findByResetKeyId(String resetKeyId) {
         return userRecoveryKeyRepository.findByResetKeyId(resetKeyId);
+    }
+
+    /**
+     * The e-mail change the account has requested and that is still waiting to be confirmed.
+     *
+     * @param userId the account
+     * @return the pending change, or empty if none is pending
+     */
+    public Optional<PendingEmailChange> findPendingEmailChange(long userId) {
+        return userRecoveryKeyRepository.findByUserId(userId).map(UserRecoveryKey::getPendingEmailChange);
+    }
+
+    /**
+     * Stores an e-mail change the account is waiting to have confirmed, replacing any previous one.
+     *
+     * @param userId the account
+     * @param change the change to store
+     */
+    public void storePendingEmailChange(long userId, PendingEmailChange change) {
+        saveHandlingConcurrentInsert(userId, row -> row.setPendingEmailChange(change));
+    }
+
+    /**
+     * Finds the account whose pending e-mail change one of the given keys belongs to.
+     * <p>
+     * A key id belongs to the address it was mailed to, so the same id never matches both lookups.
+     *
+     * @param keyId the id of a key mailed to the current or the new address
+     * @return the row holding the pending change, or empty if no pending change has that key
+     */
+    public Optional<UserRecoveryKey> findByEmailChangeKeyId(String keyId) {
+        return userRecoveryKeyRepository.findByPendingEmailChangeCurrentKeyId(keyId).or(() -> userRecoveryKeyRepository.findByPendingEmailChangeNewKeyId(keyId));
+    }
+
+    /**
+     * Saves a change to the pending e-mail change of a row that was read earlier, such as a confirmation timestamp.
+     *
+     * @param row the row to save
+     */
+    public void save(UserRecoveryKey row) {
+        userRecoveryKeyRepository.save(row);
+    }
+
+    /**
+     * Clears the pending e-mail change, and removes the row when nothing is left outstanding.
+     * <p>
+     * Called wherever the account's control is in question: a completed password reset, a password change and an administrator's
+     * edit. A request made by a session that was in use during an intrusion must not stay confirmable afterwards.
+     *
+     * @param userId the account
+     */
+    public void clearPendingEmailChange(long userId) {
+        clear(userId, row -> row.setPendingEmailChange(null));
     }
 
     /**

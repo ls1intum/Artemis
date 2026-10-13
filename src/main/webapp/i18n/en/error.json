@@ -72,6 +72,8 @@
         "notEnoughSubmissions": "There are not enough valid submissions in this exercise to compare. At least two submissions that pass the configured minimum score and size are required.",
         "incorrectPassword": "The current password is incorrect.",
         "invalidActivationKey": "The activation key is invalid. Please use the registration form to sign up.",
+        "sessionOutdated": "You signed in before your credentials last changed. Please sign in again to add a passkey, SSH key or access token.",
+        "invalidEmailChangeKey": "The link to confirm the email change is invalid or has expired.",
         "internalServerError": "Internal server error",
         "server.not.reachable": "Server not reachable",
         "url.not.found": "Not found",

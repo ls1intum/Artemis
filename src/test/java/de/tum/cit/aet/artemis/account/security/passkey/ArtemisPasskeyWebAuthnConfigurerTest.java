@@ -23,7 +23,8 @@ class ArtemisPasskeyWebAuthnConfigurerTest {
 
     @BeforeEach
     void setUp() {
-        configurer = new ArtemisPasskeyWebAuthnConfigurer(null, null, null, null, null, null, null, null, mock(AndroidFingerprintService.class), null, null, null, null, null);
+        configurer = new ArtemisPasskeyWebAuthnConfigurer(null, null, null, null, null, null, null, null, mock(AndroidFingerprintService.class), null, null, null, null, null,
+                null);
         androidFingerprintService = mock(AndroidFingerprintService.class);
         when(androidFingerprintService.getFingerprints()).thenReturn(List.of());
         ReflectionTestUtils.setField(configurer, "androidFingerprintService", androidFingerprintService);
