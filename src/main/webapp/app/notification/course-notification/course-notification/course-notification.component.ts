@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { renderPostingMarkdownToHtml } from 'app/foundation/util/markdown-render.util';
+import { escapeString } from 'app/foundation/util/text.utils';
 import { RouterLink } from '@angular/router';
 
 /**
@@ -44,6 +45,7 @@ export class CourseNotificationComponent {
     protected readonly faIcon = signal<IconDefinition>(undefined!);
     protected readonly notificationParameters = signal<{ [key: string]: unknown }>(undefined!);
     protected readonly notificationType = signal<string>(undefined!);
+    protected readonly notificationContentKey = signal<string>(undefined!);
     protected readonly notificationInitialized = signal<boolean>(false);
     protected readonly notificationUrl = signal<{ link: string[]; queryParams: Record<string, string> }>(undefined!);
     protected readonly notificationTimeTranslationKey = signal<string>(undefined!);
@@ -85,8 +87,13 @@ export class CourseNotificationComponent {
         };
         // Interpolation is by name, so every value of the payload is offered to the translation. The payload is a
         // record of the notification type, so the names are the ones that type declares rather than whatever a map held.
+        let hasNotificationText = false;
         for (const [key, value] of Object.entries(notification.payload ?? {})) {
-            if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
+            if (key === CourseNotificationService.NOTIFICATION_TEXT_PARAMETER && typeof value === 'string') {
+                // The translation is assigned as HTML, so the editor's plain text is escaped to show up exactly as written.
+                notificationParameters[key] = escapeString(value);
+                hasNotificationText = value.trim() !== '';
+            } else if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
                 notificationParameters[key] = value;
             } else {
                 // Render markdown, then iteratively strip HTML tags to plain text (handles nested tags like
@@ -112,6 +119,8 @@ export class CourseNotificationComponent {
         }
         this.notificationParameters.set(notificationParameters);
         this.notificationType.set(notification.notificationType!);
+        // A notification carrying a message of its editor shows that message, otherwise the generic content of its type.
+        this.notificationContentKey.set(`artemisApp.courseNotification.${notification.notificationType}.${hasNotificationText ? 'contentWithNotificationText' : 'content'}`);
         this.notificationUrl.set(this.parseUrlToRouterObject(notification.relativeWebAppUrl!));
         this.notificationTimeTranslationKey.set(this.courseNotificationService.getDateTranslationKey(notification));
         this.notificationTimeTranslationParameters.set(this.courseNotificationService.getDateTranslationParams(notification));

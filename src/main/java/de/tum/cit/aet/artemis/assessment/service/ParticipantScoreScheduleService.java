@@ -136,6 +136,25 @@ public class ParticipantScoreScheduleService {
     }
 
     /**
+     * Whether the results of the given participation contribute to a participant score.
+     * <p>
+     * A participant score is keyed by the exercise and the id of its participant, and the exercise mode decides whether that id is read as a user or as a team. A student who
+     * practices a team exercise on their own has a participation that belongs to the student, so its participant id would be read as a team id and could update, replace or delete
+     * the score of an unrelated team. The team exercise keeps the scores of its teams only, so such a participation has none.
+     *
+     * @param participation the participation a result belongs to
+     * @return true if participant score updates have to be scheduled for results of the participation
+     */
+    public static boolean hasParticipantScore(StudentParticipation participation) {
+        Participant participant = participation.getParticipant();
+        if (participant == null) {
+            return false;
+        }
+        // only a practice participation can belong to a student in a team exercise, so a regular result does not need to look at the exercise
+        return !(participant instanceof User && participation.isPracticeMode() && participation.getExercise().isTeamMode());
+    }
+
+    /**
      * Check if the scheduler has tasks to be executed or is idle.
      *
      * @return true if the scheduler is idle, false otherwise
@@ -230,7 +249,7 @@ public class ParticipantScoreScheduleService {
         var resultsToProcess = resultRepository.findAllByLastModifiedDateAfter(latestRun);
         resultsToProcess.forEach(result -> {
             var submission = result.getSubmission();
-            if (submission != null && submission.getParticipation() instanceof StudentParticipation studentParticipation) {
+            if (submission != null && submission.getParticipation() instanceof StudentParticipation studentParticipation && hasParticipantScore(studentParticipation)) {
                 var lastModified = result.getLastModifiedDate() == null ? Instant.now() : result.getLastModifiedDate();
                 scheduleTask(studentParticipation.getExercise().getId(), studentParticipation.getParticipant().getId(), lastModified, null);
             }

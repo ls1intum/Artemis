@@ -729,6 +729,39 @@ producer's `equal`. When a child binds the whole object, hand it a new top-level
 Assembling a view object from parts that must stay reference-identical also reads better as explicit field
 assignments than as a copy — see the `GradingComponent.gradingScale` getter.
 
+#### Exercise update forms
+
+The text, modeling and file upload exercise forms hold the exercise in an `ExerciseFormState`
+(`app/exercise/util/exercise-form-state.ts`): a signal declared with `equal: () => false` and three ways to write to
+it — `set(exercise)`, `update(mutator)` and `patch(field, value)`. Every write notifies, while the object stays the same,
+so the children that receive it keep their nested associations. What the form derives from the exercise — the reasons
+the footer lists, the sections of the status bar — is therefore a `computed()`, never a method the template calls or a
+value a `valueChanges` subscription keeps up to date.
+
+A computed only follows writes that go through the state, so a form never writes to the exercise directly:
+
+```html
+<!-- Don't - writes onto the object the signal returned; the derived state keeps the old value -->
+<input [(ngModel)]="textExercise.maxPoints" name="points" />
+
+<!-- Do - the write goes through the state, which notifies -->
+<input [ngModel]="textExercise.maxPoints" (ngModelChange)="exerciseState.patch('maxPoints', $event)" name="points" />
+```
+
+The same goes for writes in code (`exerciseState.update(resetForImport)`, an HTTP callback that sets the course) and for
+child components. A child that writes a field the form derives state from announces it with an `exerciseChange` output
+that emits the same object, and the form binds it two-way, either `[(exercise)]="textExercise"` to a setter that calls
+`set` or `(exerciseChange)="exerciseState.set($event)"`; `TeamConfigFormGroupComponent` and
+`ExerciseTitleChannelNameComponent` do that.
+
+Derive validity from the model, not from the state of a form control: `NgModel.valid` and `control.errors` are not
+signals, so a computed that reads them goes stale. The checks in `app/exercise/util/exercise-validation.util.ts` take the
+exercise and return the reasons, grouped by the section of the form that shows them
+(`getGeneralSectionInvalidReasons`, `getModeSectionInvalidReasons`, `getGradingSectionInvalidReasons`). A section is
+valid when its reasons are empty, so the status bar and the footer always agree. What a child component knows and the
+model does not — whether the title is already used, which plagiarism control is invalid — it exposes as a signal
+(`isTitleDisallowed`, `invalidControlNames`).
+
 ### Prettier and ESLint
 
 - We use `prettier` to style code automatically and `eslint` to find additional issues.
