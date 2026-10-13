@@ -121,4 +121,13 @@ public interface SearchableEntitySyncStateRepository extends ArtemisJpaRepositor
     @Modifying(flushAutomatically = true)
     @Query("UPDATE SearchableEntitySyncState s SET s.verifiedAt = :verifiedAt WHERE s.entityType = :entityType AND s.entityId = :entityId")
     void markVerified(@Param("entityType") String entityType, @Param("entityId") Long entityId, @Param("verifiedAt") ZonedDateTime verifiedAt);
+
+    /**
+     * Empties the ledger when the index is rebuilt: the rebuilt collection holds no row the ledger could vouch for, so
+     * the missing pass must treat every entity as never written.
+     */
+    @Transactional // ok because of the modifying delete
+    @Modifying(flushAutomatically = true)
+    @Query("DELETE FROM SearchableEntitySyncState s")
+    void deleteAllForRebuild();
 }

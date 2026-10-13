@@ -46,6 +46,7 @@
         "search": {
             "title": "Suchen",
             "placeholder": "Suchen oder Frage stellen...",
+            "showMoreResults": "Mehr Ergebnisse anzeigen",
             "noResultsFound": "Keine Ergebnisse gefunden",
             "searchPlaceholder": "Suche...",
             "tooShortQueryHint": "Bitte gib einen längeren Suchbegriff ein.",
@@ -153,7 +154,6 @@
             },
             "searchFailed": "Suche fehlgeschlagen. Bitte versuche es erneut.",
             "contentSearchPrompt": "Gib einen Suchbegriff ein, um Vorlesungsfolien und Videos zu durchsuchen.",
-            "contentSearchDisabled": "Folien und Videos können in diesen Kursen nicht durchsucht werden.",
             "contentSearchUnavailable": "Die Suche in Folien und Videos ist gerade nicht verfügbar. Bitte versuche es später erneut.",
             "irisAnswerShowMore": "Mehr anzeigen",
             "irisAnswerShowLess": "Weniger anzeigen",
