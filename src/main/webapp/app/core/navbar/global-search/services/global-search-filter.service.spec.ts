@@ -213,7 +213,7 @@ describe('GlobalSearchFilterService', () => {
                 { facet: 'type', value: 'course', negate: true },
                 { facet: 'type', value: 'exercise', negate: true },
                 { facet: 'type', value: 'lecture', negate: true },
-                { facet: 'type', value: 'communication', negate: true },
+                { facet: 'type', value: 'channel', negate: true },
                 { facet: 'type', value: 'faq', negate: true },
             ]);
             service.searchQuery.set('-type:');

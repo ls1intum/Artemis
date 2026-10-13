@@ -525,7 +525,7 @@ export class GlobalSearchFilterService {
 
     /**
      * Resolves the `type` facet value whose server types match the given tags exactly
-     * (e.g. `['channel', 'post', 'answer_post']` -> `communication`).
+     * (e.g. `['lecture', 'lecture_unit']` -> `lecture`).
      */
     private typeFacetForTags(tags: SearchEntityType[]): TypeFacetValue | undefined {
         const target = new Set(tags);
@@ -549,7 +549,7 @@ export class GlobalSearchFilterService {
         exercises: ['exercise'],
         lectures: ['lecture', 'lecture_unit'],
         exams: ['exam'],
-        communication: ['channel', 'post', 'answer_post'],
+        communication: ['channel'],
         faq: ['faq'],
         faqs: ['faq'],
     };
