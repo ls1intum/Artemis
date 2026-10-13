@@ -313,10 +313,12 @@ class SearchableEntityMultiVectorWeaviateTest {
         index(sorting);
         List<String> graphChunks = SearchableEntityChunker.chunk(graphs);
         String deepChunk = graphChunks.get(graphChunks.size() - 1);
-        // The query means exactly what the last chunk of the long exercise says.
-        when(embeddingClient.embedQuery("what does the end of the graph task say")).thenReturn(vector(deepChunk));
+        // The words of the query match the other exercise, but its meaning is exactly the last chunk of the long one: only a
+        // search that weighs the vector ranks the long exercise first (a keyword-only search ranks the other one first).
+        String query = "sorting arrays";
+        when(embeddingClient.embedQuery(query)).thenReturn(vector(deepChunk));
 
-        var candidates = searchService.searchEntityCandidatesForAnswer("what does the end of the graph task say", null, 5);
+        var candidates = searchService.searchEntityCandidatesForAnswer(query, null, 5);
 
         assertThat(candidates).isNotEmpty();
         assertThat(((Number) candidates.getFirst().properties().get(SearchableEntitySchema.Properties.ENTITY_ID)).longValue()).isEqualTo(1L);

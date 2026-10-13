@@ -153,7 +153,10 @@ computed for them are kept in memory for the next step.
 
 `SearchableEntityWeaviateService#searchSearchableEntities` embeds the query with the configured
 `open-ai-query-instruction` in front and sends a hybrid query with that vector. The collection uses multi-vector
-storage with MaxSim scoring: for one query vector, a row scores with its best matching chunk. If connecting to the
+storage with MaxSim scoring: for one query vector, a row scores with its best matching chunk. The vector and keyword
+scores are combined with relative score fusion and `alpha` 0.75 (`SearchableEntityWeaviateService.HYBRID_ALPHA`).
+Always set `alpha` explicitly: the Java client sends none by default, and Weaviate then uses 0, which is pure keyword
+search. If connecting to the
 embedding API or waiting for its answer takes longer than `embedding.query-timeout` (each), or the hybrid query fails,
 the search uses BM25 keyword search.
 

@@ -185,6 +185,9 @@ class SearchableEntityWeaviateServiceTest {
         assertThat(((Target.TextTarget) query.searchTarget()).query()).containsExactly(expectedText);
         // Artemis provides the query vector; Weaviate must not try to vectorize the text itself.
         assertThat(query.near()).isInstanceOf(NearVector.class);
+        // Without an explicit alpha, Weaviate weighs the vector with 0 and the search is keyword-only.
+        assertThat(query.alpha()).isEqualTo(0.75f);
+        assertThat(query.fusionType()).isEqualTo(Hybrid.FusionType.RELATIVE_SCORE);
         assertThat(query.queryProperties()).isEmpty();
         assertThat(query.common().limit()).isEqualTo(expectedLimit);
         if (expectedFilter == null) {

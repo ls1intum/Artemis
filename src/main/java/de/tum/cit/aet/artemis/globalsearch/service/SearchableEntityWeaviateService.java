@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.embedding.SearchableEntityEmb
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
 import io.weaviate.client6.v1.api.collections.query.Filter;
+import io.weaviate.client6.v1.api.collections.query.Hybrid;
 import io.weaviate.client6.v1.api.collections.query.NearVector;
 
 /**
@@ -79,6 +80,13 @@ public class SearchableEntityWeaviateService {
      * short-name matches (exercises only) count twice as much. Prevents long problem statements from
      * outscoring short, on-point titles.
      */
+    /**
+     * Weight of the vector score in hybrid search (1 = vectors only, 0 = keywords only), combined with relative score
+     * fusion; the values the chunked embeddings were evaluated with. It must be set explicitly: without it, the Weaviate
+     * client sends no alpha and the server falls back to 0, which silently turns hybrid search into keyword search.
+     */
+    static final float HYBRID_ALPHA = 0.75f;
+
     private static final String[] QUERY_PROPERTIES = { SearchableEntitySchema.Properties.TITLE + "^3", SearchableEntitySchema.Properties.SHORT_NAME + "^2",
             SearchableEntitySchema.Properties.DESCRIPTION + "^1" };
 
@@ -234,7 +242,7 @@ public class SearchableEntityWeaviateService {
             String @Nullable [] queryProperties, boolean includeVectors) {
         try {
             return collection.query.hybrid(query, builder -> {
-                builder.nearVector(NearVector.of(new float[][] { queryVector })).limit(limit);
+                builder.nearVector(NearVector.of(new float[][] { queryVector })).alpha(HYBRID_ALPHA).fusionType(Hybrid.FusionType.RELATIVE_SCORE).limit(limit);
                 if (queryProperties != null) {
                     builder.queryProperties(queryProperties);
                 }
