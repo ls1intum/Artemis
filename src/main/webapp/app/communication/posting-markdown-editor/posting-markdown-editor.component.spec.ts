@@ -93,6 +93,7 @@ describe('PostingsMarkdownEditor', () => {
         revealRange: vi.fn(),
         addCompleter: vi.fn(),
         addPasteListener: vi.fn(),
+        addPasteInterceptor: vi.fn(),
         getFullText: vi.fn(),
     };
 
