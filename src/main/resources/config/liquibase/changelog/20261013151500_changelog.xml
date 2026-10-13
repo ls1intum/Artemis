@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20261013151500-01-create-quiz-question-pool-item" author="reyers">
+        <createTable tableName="quiz_question_pool_item">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_quiz_question_pool_item" nullable="false"/>
+            </column>
+            <column name="course_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="competency_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="language" type="varchar(10)"><constraints nullable="false"/></column>
+            <column name="question_type" type="varchar(30)"><constraints nullable="false"/></column>
+            <column name="difficulty" type="varchar(10)"><constraints nullable="false"/></column>
+            <column name="item_index" type="int"><constraints nullable="false"/></column>
+            <column name="state" type="varchar(30)"><constraints nullable="false"/></column>
+            <column name="review_state" type="varchar(20)"><constraints nullable="false"/></column>
+            <column name="generation_attempts" type="int" defaultValueNumeric="0"><constraints nullable="false"/></column>
+            <column name="filter_attempts" type="int" defaultValueNumeric="0"><constraints nullable="false"/></column>
+            <column name="failure" type="varchar(100)"/>
+            <column name="generator_model" type="varchar(255)"/>
+            <column name="judge_model" type="varchar(255)"/>
+            <column name="question" type="json"/>
+            <column name="decision" type="json"/>
+            <column name="accepted" type="boolean"/>
+            <column name="claimed_at" type="datetime(3)"/>
+            <column name="updated_at" type="datetime(3)"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="quiz_question_pool_item" constraintName="fk_quiz_question_pool_item_course_id"
+                                 referencedColumnNames="id" referencedTableName="course" onDelete="CASCADE" onUpdate="RESTRICT"/>
+        <addForeignKeyConstraint baseColumnNames="competency_id" baseTableName="quiz_question_pool_item" constraintName="fk_quiz_question_pool_item_competency_id"
+                                 referencedColumnNames="id" referencedTableName="competency" onDelete="CASCADE" onUpdate="RESTRICT"/>
+        <createIndex indexName="idx_quiz_question_pool_item_course_state" tableName="quiz_question_pool_item">
+            <column name="course_id"/>
+            <column name="state"/>
+        </createIndex>
+        <createIndex indexName="idx_quiz_question_pool_item_competency_id" tableName="quiz_question_pool_item"><column name="competency_id"/></createIndex>
+    </changeSet>
+
+    <changeSet id="20261013151500-02-create-hyperion-course-settings" author="reyers">
+        <createTable tableName="hyperion_course_settings">
+            <column name="course_id" type="bigint">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_hyperion_course_settings"/>
+            </column>
+            <column name="settings" type="json"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="hyperion_course_settings" constraintName="fk_hyperion_course_settings_course_id"
+                                 referencedColumnNames="id" referencedTableName="course" onDelete="CASCADE" onUpdate="RESTRICT"/>
+    </changeSet>
+</databaseChangeLog>
