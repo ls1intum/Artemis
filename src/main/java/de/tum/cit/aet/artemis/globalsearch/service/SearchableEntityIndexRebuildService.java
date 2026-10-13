@@ -29,6 +29,7 @@ import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
 import io.weaviate.client6.v1.api.collections.query.Filter;
+import io.weaviate.client6.v1.api.collections.query.SortBy;
 import io.weaviate.client6.v1.api.collections.vectorindex.Hnsw;
 import io.weaviate.client6.v1.api.collections.vectorizers.SelfProvidedVectorizer;
 
@@ -156,34 +157,52 @@ public class SearchableEntityIndexRebuildService {
     /**
      * Queues a rewrite of every channel row written before channel rows carried the date from which students may see the
      * channel. The search shows students only channel rows with that date, so such a row stays hidden from them until it is
-     * rewritten; once all are, this finds nothing.
+     * rewritten; once all are, this finds nothing. A failure only delays the repair to the next startup: the rows stay
+     * hidden from students meanwhile, and index writes must not wait for it.
      */
     private void queueChannelRowsWithoutVisibilityDate() {
+        try {
+            int queued = queueChannelRowsWithoutVisibilityDate(CHANNEL_BACKFILL_PAGE_SIZE);
+            if (queued > 0) {
+                log.info("Queued {} channel rows without the date from which students may see them for a rewrite", queued);
+            }
+        }
+        catch (RuntimeException e) {
+            log.warn("Could not look for channel rows without a visibility date; they stay hidden from students until the next startup retries: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Reads the channel rows without a visibility date page by page, ordered by channel id and continuing after the last
+     * one, so the walk is not bound by Weaviate's limit on offsets.
+     *
+     * @param pageSize rows read per request
+     * @return the number of rewrites queued
+     */
+    int queueChannelRowsWithoutVisibilityDate(int pageSize) {
         var collection = client.collections.use(properties.collectionPrefix() + SearchableEntitySchema.COLLECTION_NAME);
         Filter withoutDate = Filter.and(Filter.property(SearchableEntitySchema.Properties.TYPE).eq(SearchableEntitySchema.TypeValues.CHANNEL),
                 Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull());
         List<WeaviateOutboxEntry> rewrites = new ArrayList<>();
-        int offset = 0;
+        long lastChannelId = Long.MIN_VALUE;
         while (true) {
-            int pageOffset = offset;
-            var page = collection.query
-                    .fetchObjects(
-                            query -> query.filters(withoutDate).limit(CHANNEL_BACKFILL_PAGE_SIZE).offset(pageOffset).returnProperties(SearchableEntitySchema.Properties.ENTITY_ID))
-                    .objects();
-            for (var row : page) {
+            Filter page = Filter.and(withoutDate, Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).gt(lastChannelId));
+            var rows = collection.query.fetchObjects(query -> query.filters(page).sort(SortBy.property(SearchableEntitySchema.Properties.ENTITY_ID).asc()).limit(pageSize)
+                    .returnProperties(SearchableEntitySchema.Properties.ENTITY_ID)).objects();
+            for (var row : rows) {
                 if (row.properties().get(SearchableEntitySchema.Properties.ENTITY_ID) instanceof Number channelId) {
                     rewrites.add(WeaviateOutboxEntry.forUpsert(SearchableEntitySchema.TypeValues.CHANNEL, channelId.longValue(), WeaviateOutboxOrigin.RECONCILE_DRIFT));
+                    lastChannelId = Math.max(lastChannelId, channelId.longValue());
                 }
             }
-            if (page.size() < CHANNEL_BACKFILL_PAGE_SIZE) {
+            if (rows.size() < pageSize) {
                 break;
             }
-            offset += CHANNEL_BACKFILL_PAGE_SIZE;
         }
         if (!rewrites.isEmpty()) {
             outboxRepository.saveAll(rewrites);
-            log.info("Queued {} channel rows without the date from which students may see them for a rewrite", rewrites.size());
         }
+        return rewrites.size();
     }
 
     private Optional<String> readStoredSignature() throws IOException {
