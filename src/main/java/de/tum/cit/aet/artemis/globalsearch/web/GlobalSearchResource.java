@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.web;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,11 +28,13 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseForSearchFilterDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.GlobalSearchResultRanker;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityAccessFilterService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -68,6 +71,12 @@ public class GlobalSearchResource {
      * set, so only a crafted request can reach it.
      */
     private static final int MAX_COURSE_ID_FILTERS = 100;
+
+    /** How many rows are read from Weaviate per requested result, so ranking and de-duplication still fill the limit. */
+    private static final int CANDIDATE_FACTOR = 4;
+
+    /** Upper bound on the rows read from Weaviate for one search. */
+    private static final int MAX_CANDIDATES = 100;
 
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
@@ -169,7 +178,11 @@ public class GlobalSearchResource {
             return ResponseEntity.ok(List.of());
         }
 
-        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), effectiveLimit);
+        // A search is over-fetched, because the ranking below moves rows of running courses up and drops older semester
+        // copies of an item; the limit applies after that. A browse without a query is returned in Weaviate's order.
+        boolean hasQuery = query != null && !query.isBlank();
+        int candidateLimit = hasQuery ? Math.min(MAX_CANDIDATES, effectiveLimit * CANDIDATE_FACTOR) : effectiveLimit;
+        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), candidateLimit);
 
         Map<Long, Course> coursesById;
         Set<Long> staffCourseIds;
@@ -188,6 +201,22 @@ public class GlobalSearchResource {
         }
         Map<Long, String> courseNameById = new HashMap<>();
         coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
+        List<Map<String, Object>> rankedResults = GlobalSearchResultRanker.rank(rawResults, hasQuery, coursesById, ZonedDateTime.now());
+        if (hasQuery && rankedResults.size() < effectiveLimit && rawResults.size() == candidateLimit && candidateLimit < MAX_CANDIDATES) {
+            // Merging semester copies shrank a cut-off candidate set below the limit, so more distinct matches may lie
+            // beyond it. Reading the larger set keeps a short result list meaning "no more matches", which is what the
+            // client relies on to offer more results.
+            rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), MAX_CANDIDATES);
+            if (filterResult.accessibleCoursesById() == null) {
+                coursesById = resolveCoursesById(rawResults);
+                courseNameById.clear();
+                coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
+                staffCourseIds = coursesById.keySet();
+                editorCourseIds = coursesById.keySet();
+            }
+            rankedResults = GlobalSearchResultRanker.rank(rawResults, hasQuery, coursesById, ZonedDateTime.now());
+        }
+        rawResults = rankedResults.subList(0, Math.min(rankedResults.size(), effectiveLimit));
 
         Map<Long, Long> exerciseGroupIdByExerciseId = resolveExerciseGroupIds(rawResults);
         Map<Long, String> channelNameById = resolveChannelNames(rawResults);
@@ -200,6 +229,22 @@ public class GlobalSearchResource {
             }
         }
         return ResponseEntity.ok(resultDTOs);
+    }
+
+    /**
+     * GET /api/search/course-options : the courses the user can scope a global search to.
+     * <p>
+     * Lists every course an unscoped search covers, past courses included, so the {@code course:} filter can narrow to
+     * any of them. The client ranks the active ones first.
+     *
+     * @return status 200 with the user's accessible courses and whether each is still active
+     */
+    @GetMapping("search/course-options")
+    @EnforceAtLeastStudent
+    @Operation(summary = "List the courses a global search can be scoped to", description = "Returns every course the user has access to, active and past, with an active flag.")
+    @ApiResponse(responseCode = "200", description = "The courses the user can filter the global search by")
+    public ResponseEntity<List<CourseForSearchFilterDTO>> getCourseFilterOptions() {
+        return ResponseEntity.ok(accessFilterService.findCourseFilterOptions(userRepository.getUserIdElseThrow()));
     }
 
     /**

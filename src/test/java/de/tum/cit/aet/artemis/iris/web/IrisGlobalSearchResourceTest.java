@@ -94,7 +94,7 @@ class IrisGlobalSearchResourceTest {
     @Test
     void ask_whenEntityPrefetchSucceeds_forwardsTheCandidates() {
         var candidate = new SearchableEntityCandidateDTO("exercise", 8L, 11L, "Test course", "RNN and LSTM Fundamentals", "A quiz", null, "/courses/11/exercises/8", null, null,
-                null, null, null, null, null, 10.0, null, null, "quiz", null, null, null);
+                null, null, null, null, null, 10.0, null, null, "quiz", null, null, null, null);
         when(searchableEntityPrefetchApi.prefetchCandidates(eq(testUser), anyString(), anyInt(), eq((List<Long>) null), eq(List.of()))).thenReturn(List.of(candidate));
 
         var requestDTO = new GlobalSearchAskRequestDTO("is there an rnn quiz", 5, UUID.randomUUID());

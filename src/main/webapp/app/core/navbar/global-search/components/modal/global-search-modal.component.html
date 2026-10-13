@@ -58,6 +58,10 @@
                 [contentSearchActive]="contentSearchActive()"
                 [courseIds]="courseIdsParam()"
                 [excludeCourseIds]="excludeCourseIdsParam()"
+                [contentPreview]="contentPreview()"
+                (showContentHits)="showContentHits()"
+                [canShowMore]="canShowMore()"
+                (showMore)="showMoreResults()"
             />
         }
     </div>
