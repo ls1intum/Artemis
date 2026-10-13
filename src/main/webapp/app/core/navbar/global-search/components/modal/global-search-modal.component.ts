@@ -28,7 +28,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
-import { matchCoursePages } from '../../models/course-page-results.util';
+import { COURSE_PAGE_TYPE, matchCoursePages } from '../../models/course-page-results.util';
 
 /** Iris content search is a vector search behind a network hop, so it gets its own, longer ceiling. */
 export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
@@ -230,7 +230,13 @@ export class GlobalSearchModalComponent implements OnDestroy {
             const subscription = this.courseManagementService
                 .getCourseAvailableTabs(courseId)
                 .pipe(catchError(() => EMPTY))
-                .subscribe((tabs) => this.scopedCourseTabs.set({ courseId, tabs }));
+                .subscribe((tabs) => {
+                    this.scopedCourseTabs.set({ courseId, tabs });
+                    // The tabs can arrive after the search results: offer the pages they allow next to the hits already shown.
+                    if (this.hasSearched() && !this.contentSearchActive()) {
+                        this.results.set([...this.coursePageResults(), ...this.results().filter((result) => result.type !== COURSE_PAGE_TYPE)]);
+                    }
+                });
             onCleanup(() => subscription.unsubscribe());
         });
 
@@ -675,6 +681,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     private resetSearch() {
+        // Tab availability can change while the palette is closed (an exam becomes visible), so each opening reads it again.
+        this.scopedCourseTabs.set(undefined);
         this.lastSearchText = '';
         this.chipKeyOrigin = undefined;
         this.searchSubject.next(null);
