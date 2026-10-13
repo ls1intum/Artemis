@@ -49,7 +49,7 @@ class GenerationVariantDraftServiceMySqlTest {
 
     @Test
     void assignmentCommittedWhileDraftWaitsCannotBeHiddenByARepeatableReadSnapshot() throws Exception {
-        try (var mysql = new MySQLContainer(DockerImageName.parse("mysql:" + System.getProperty("mysql.version"))).withDatabaseName("authoring")) {
+        try (var mysql = new MySQLContainer(DockerImageName.parse("mysql:" + System.getProperty("mysql.version"))).withDatabaseName("authoring").withUsername("root")) {
             mysql.start();
             var dataSource = new DriverManagerDataSource(mysql.getJdbcUrl(), mysql.getUsername(), mysql.getPassword());
             var jdbc = new JdbcTemplate(dataSource);
