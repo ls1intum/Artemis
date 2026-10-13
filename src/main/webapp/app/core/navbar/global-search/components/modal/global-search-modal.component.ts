@@ -849,12 +849,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
         return arrow && (event.metaKey || event.altKey || event.ctrlKey || event.shiftKey);
     }
 
-    /** Highlights a chip from the keyboard and remembers where focus and the cursor were at that moment. */
-    private highlightChip(index: number) {
-        this.selectedChip.set(index);
-        this.recordChipKeyOrigin();
-    }
-
     private recordChipKeyOrigin() {
         const target = this.document.activeElement;
         const input = target instanceof HTMLInputElement ? target : undefined;

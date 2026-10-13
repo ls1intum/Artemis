@@ -1255,7 +1255,7 @@ describe('GlobalSearchModalComponent', () => {
                 { facet: 'type', value: 'exercise' },
                 { facet: 'course', value: '5' },
             ]);
-            (component as any).highlightChip(1);
+            (component as any).onBackspaceAtStart(new KeyboardEvent('keydown', { key: 'Backspace', cancelable: true }));
 
             component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
 
