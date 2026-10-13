@@ -1095,6 +1095,29 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(comp.loadingFeedbackSuggestions()).toBe(false);
     });
 
+    it('should discard a feedback-suggestions response that arrives after a save or submit replaced the manual result', async () => {
+        const suggestionsSubject = new Subject<Feedback[]>();
+        vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValue(suggestionsSubject.asObservable());
+        comp.submission.set({ id: 42 } as ProgrammingSubmission);
+        const requestedManualResult = { id: 1, feedbacks: [] } as Result;
+        comp.manualResult.set(requestedManualResult);
+
+        const loadPromise = comp['loadFeedbackSuggestions']();
+        // Save or submit completes while the suggestions are still loading and swaps in the persisted result.
+        const persistedManualResult = { id: 1, feedbacks: [] } as Result;
+        comp.manualResult.set(persistedManualResult);
+
+        suggestionsSubject.next([{ type: FeedbackType.AUTOMATIC, credits: 1, text: 'late suggestion' }]);
+        suggestionsSubject.complete();
+        await loadPromise;
+
+        expect(persistedManualResult.feedbacks).toEqual([]);
+        expect(requestedManualResult.feedbacks).toEqual([]);
+        expect(comp.hasAcceptedFeedbackSuggestions()).toBe(false);
+        expect(comp.hasPendingChanges).toBe(false);
+        expect(comp.loadingFeedbackSuggestions()).toBe(false);
+    });
+
     it('should not alert for a stale feedback-suggestions failure once a newer request has started', async () => {
         const staleSubject = new Subject<Feedback[]>();
         vi.spyOn(comp['athenaService'], 'getProgrammingFeedbackSuggestions').mockReturnValueOnce(staleSubject.asObservable()).mockReturnValueOnce(NEVER);

@@ -458,10 +458,13 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         // mutate the assessment, show an error, or clear the loading state.
         const requestGeneration = ++this.feedbackSuggestionsRequestGeneration;
         const isStale = () => requestGeneration !== this.feedbackSuggestionsRequestGeneration;
+        // A save or submit that completes while the request is in flight replaces the manual result without starting a new
+        // request, so the generation alone cannot tell that the suggestions would end up on a result they were not requested for.
+        const requestedManualResult = this.manualResult();
         this.loadingFeedbackSuggestions.set(true);
         try {
             const feedbackSuggestions = (await firstValueFrom(this.athenaService.getProgrammingFeedbackSuggestions(this.exercise(), this.submission()!.id!))) ?? [];
-            if (isStale()) {
+            if (isStale() || this.manualResult() !== requestedManualResult) {
                 return;
             }
             const allFeedback = [...this.referencedFeedback(), ...this.unreferencedFeedback()];
