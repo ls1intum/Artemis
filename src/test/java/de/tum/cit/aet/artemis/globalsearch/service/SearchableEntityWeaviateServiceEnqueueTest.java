@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.embedding.SearchableEntityEmbeddingClient;
 
 /**
  * Unit tests for the enqueue side of {@link SearchableEntityWeaviateService}.
@@ -65,7 +66,8 @@ class SearchableEntityWeaviateServiceEnqueueTest {
 
     @BeforeEach
     void setUp() {
-        service = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher);
+        service = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class));
     }
 
     @Test
@@ -90,7 +92,7 @@ class SearchableEntityWeaviateServiceEnqueueTest {
     void testEachUpsertMethod_enqueuesUpsertWithCorrectTypeAndId() {
         service.upsertCourseAsync(new CourseSearchableEntityDTO(1L, "c", null, null));
         service.upsertLectureAsync(new LectureSearchableEntityDTO(2L, 10L, "l", null, null, null));
-        service.upsertLectureUnitAsync(new LectureUnitSearchableEntityDTO(3L, 10L, 20L, "u", null, "text", null));
+        service.upsertLectureUnitAsync(new LectureUnitSearchableEntityDTO(3L, 10L, 20L, null, "u", null, "text", null));
         service.upsertExamAsync(new ExamSearchableEntityDTO(4L, 10L, "e", null, null, null, null, false));
         service.upsertFaqAsync(new FaqSearchableEntityDTO(5L, 10L, "q", "a", "ACCEPTED"));
         service.upsertChannelAsync(new ChannelSearchableEntityDTO(6L, 10L, "ch", null, false, true));

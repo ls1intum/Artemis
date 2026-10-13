@@ -44,7 +44,7 @@ class WeaviateServiceExternalCollectionTest {
     void wrapsAnExternalCollectionConnectionFailureAfterTheSdkInitializes() throws Exception {
         int port = server.getAddress().getPort();
         try (WeaviateClient client = WeaviateClient.connectToCustom(config -> config.scheme("http").httpHost("127.0.0.1").httpPort(port).grpcHost("127.0.0.1").grpcPort(port))) {
-            var properties = new WeaviateConfigurationProperties(true, "127.0.0.1", port, port, "http", "Artemis_", "none", null, null, null, null);
+            var properties = new WeaviateConfigurationProperties(true, "127.0.0.1", port, port, "http", "Artemis_", "none", null, null, null, null, null);
             var service = new WeaviateService(Optional.of(client), properties, new MockEnvironment());
 
             assertThatThrownBy(() -> service.externalCollectionExists("Lectures")).isInstanceOf(WeaviateException.class)

@@ -22,8 +22,10 @@ import { FilterToken } from '../../models/search-token.model';
 import { removeTokenAt } from '../../models/search-token.util';
 import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
 import { LectureSearchService } from '../../services/lecture-search.service';
-import { mapLectureContentResult } from '../../models/lecture-content-result.util';
-import { HttpErrorResponse } from '@angular/common/http';
+import { LECTURE_CONTENT_TYPE, mapLectureContentResult } from '../../models/lecture-content-result.util';
+import { TranslateService } from '@ngx-translate/core';
+import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { matchCoursePages } from '../../models/course-page-results.util';
 
 /** Iris content search is a vector search behind a network hop, so it gets its own, longer ceiling. */
 export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
@@ -31,8 +33,14 @@ export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
 /** Number of content hits requested per search. */
 const CONTENT_SEARCH_LIMIT = 10;
 
+/** Results per page of the metadata search, and the most the server returns for one search. */
+export const DEFAULT_RESULT_LIMIT = 10;
+export const EXPANDED_RESULT_LIMIT = 25;
+
 interface SearchState {
     query: string;
+    /** How many results to ask for; the default page size when absent. */
+    limit?: number;
 }
 
 /**
@@ -62,6 +70,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly filter = inject(GlobalSearchFilterService);
     private readonly availability = inject(IrisSearchAvailabilityService);
     private readonly lectureSearchService = inject(LectureSearchService);
+    private readonly courseStorageService = inject(CourseStorageService);
+    private readonly translateService = inject(TranslateService);
 
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
@@ -104,6 +114,12 @@ export class GlobalSearchModalComponent implements OnDestroy {
     });
     protected readonly results = signal<GlobalSearchResult[]>([]);
     protected readonly isLoading = signal<boolean>(false);
+    /** Slide and video hits for the current query, shown as one row above the results while content search is not active. */
+    protected readonly contentPreview = signal<GlobalSearchResult[]>([]);
+    private readonly contentPreviewSubject = new Subject<SearchState | null>();
+    /** The result limit of the search that produced the current results. */
+    private readonly resultLimit = signal(DEFAULT_RESULT_LIMIT);
+    protected readonly canShowMore = computed(() => !this.contentSearchActive() && this.resultLimit() < EXPANDED_RESULT_LIMIT && this.results().length >= this.resultLimit());
     protected readonly hasSearched = signal<boolean>(false);
     protected readonly searchError = signal<string | undefined>(undefined);
     protected readonly selectedIndex = signal(-1);
@@ -267,7 +283,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     const searchQuery = hasValidQuery ? trimmedQuery : '';
                     const courseIdsParam = courseIds.length ? courseIds : undefined;
                     const excludeCourseIdsParam = excludeCourseIds.length ? excludeCourseIds : undefined;
-                    const cacheKey = this.filterCacheKey(types, excludeTypes, courseIds, excludeCourseIds);
+                    const limit = event.limit ?? DEFAULT_RESULT_LIMIT;
+                    this.resultLimit.set(limit);
+                    const cacheKey = this.filterCacheKey(types, excludeTypes, courseIds, excludeCourseIds, limit);
 
                     // Empty query with filter — serve from cache synchronously if available
                     if (!hasValidQuery && hasFilter) {
@@ -282,7 +300,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     this.isLoading.set(true);
                     return timer(SEARCH_DEBOUNCE_MS).pipe(
                         switchMap(() =>
-                            this.searchService.globalSearch(searchQuery, types, excludeTypes, courseIdsParam, excludeCourseIdsParam).pipe(
+                            this.searchService.globalSearch(searchQuery, types, excludeTypes, courseIdsParam, excludeCourseIdsParam, limit).pipe(
                                 tap((results) => {
                                     if (!hasValidQuery && hasFilter) {
                                         this.placeholderCache.set(cacheKey, results);
@@ -300,11 +318,37 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 takeUntilDestroyed(),
             )
             .subscribe((results) => {
-                this.results.set(results);
+                this.results.set([...this.coursePageResults(), ...results]);
                 this.selectedIndex.set(-1);
                 this.isLoading.set(false);
                 this.hasSearched.set(true);
             });
+
+        // A light, parallel content search: it only feeds the row that offers to switch to the slides-and-videos
+        // search, so a failure just hides the row.
+        this.contentPreviewSubject
+            .pipe(
+                switchMap((event) => {
+                    if (event === null) {
+                        return of([]);
+                    }
+                    const courseIds = this.courseIdsParam();
+                    const excludeCourseIds = this.excludeCourseIdsParam();
+                    return timer(SEARCH_DEBOUNCE_MS).pipe(
+                        switchMap(() =>
+                            this.lectureSearchService
+                                .search(event.query, CONTENT_SEARCH_LIMIT, courseIds.length ? courseIds : undefined, excludeCourseIds.length ? excludeCourseIds : undefined, true)
+                                .pipe(
+                                    timeout(CONTENT_SEARCH_TIMEOUT_MS),
+                                    map((results) => results.map(mapLectureContentResult)),
+                                    catchError(() => of([])),
+                                ),
+                        ),
+                    );
+                }),
+                takeUntilDestroyed(),
+            )
+            .subscribe((hits) => this.setContentPreview(hits));
 
         this.router.events
             .pipe(
@@ -353,6 +397,58 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.searchSubject.next({ query: '' });
     }
 
+    /**
+     * The pages of the one course the search is scoped to whose name matches the typed text, such as "grades" for the
+     * statistics page. Offered only for a plain search in a single course, where the course is unambiguous.
+     */
+    private coursePageResults(): GlobalSearchResult[] {
+        const courseIds = this.courseIdsParam();
+        if (this.contentSearchActive() || courseIds.length !== 1 || this.typesParam() !== undefined || this.excludeTypesParam() !== undefined) {
+            return [];
+        }
+        const courseId = courseIds[0];
+        return matchCoursePages(this.searchText(), courseId, this.courseStorageService.getCourse(courseId)?.title, (key) => this.translateService.instant(key));
+    }
+
+    /**
+     * Asks for the slide and video hits of the query when the content row can be offered: the user opted into AI, the
+     * slides-and-videos search is not already active, and the query is long enough to search.
+     */
+    private requestContentPreview(query: string): void {
+        const offersRow = !this.contentSearchActive() && this.availability.contentSearchAvailable() && query.trim().length >= MIN_SEARCH_QUERY_LENGTH;
+        // The hits of the previous query or scope no longer apply; the row stays hidden until the new ones arrive.
+        this.setContentPreview([]);
+        this.contentPreviewSubject.next(offersRow ? { query: query.trim() } : null);
+    }
+
+    /**
+     * Shows new preview hits. The row is the first selectable item, so a selected result keeps its selection when the
+     * row appears or disappears instead of the selection pointing at whatever now sits at its old index.
+     */
+    private setContentPreview(hits: GlobalSearchResult[]): void {
+        const hadRow = this.contentPreview().length > 0;
+        const hasRow = hits.length > 0;
+        const selected = this.selectedIndex();
+        if (hadRow !== hasRow && selected >= 0) {
+            this.selectedIndex.set(hasRow ? selected + 1 : selected - 1);
+        }
+        this.contentPreview.set(hits);
+    }
+
+    /** Switches to the slides-and-videos search for the current query, keeping the course filters. */
+    protected showContentHits(): void {
+        // A type chip cannot stay next to the slides-and-videos chip, which reads a different index; course chips can.
+        const courseTokens = this.tokens().filter((token) => token.facet !== 'type');
+        this.applyTokens([...courseTokens, { facet: 'type', value: LECTURE_CONTENT_TYPE }]);
+        this.focusInput();
+    }
+
+    /** Loads the longer result list for the current search; the next search starts at the default page size again. */
+    protected showMoreResults(): void {
+        this.isLoading.set(true);
+        this.searchSubject.next({ query: this.lastSearchText, limit: EXPANDED_RESULT_LIMIT });
+    }
+
     protected onSearchInput(query: string): void {
         this.searchQuery.set(query);
         this.searchError.set(undefined);
@@ -381,6 +477,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 this.isLoading.set(true);
             }
             this.searchSubject.next({ query: text });
+            this.requestContentPreview(text);
         }
         this.returnHomeIfEmpty();
     }
@@ -513,10 +610,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     .pipe(
                         timeout(CONTENT_SEARCH_TIMEOUT_MS),
                         map((results) => results.map(mapLectureContentResult)),
-                        catchError((error: unknown) => {
-                            const irisDisabledForScope = error instanceof HttpErrorResponse && error.status === 403;
+                        catchError(() => {
                             this.isLoading.set(false);
-                            this.searchError.set(irisDisabledForScope ? 'global.search.contentSearchDisabled' : 'global.search.contentSearchUnavailable');
+                            this.searchError.set('global.search.contentSearchUnavailable');
                             return of([]);
                         }),
                     ),
@@ -525,10 +621,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     /** Stable cache key for placeholder (empty-query) results, keyed by the active filter set. */
-    private filterCacheKey(types: string | undefined, excludeTypes: string | undefined, courseIds: number[], excludeCourseIds: number[]): string {
+    private filterCacheKey(types: string | undefined, excludeTypes: string | undefined, courseIds: number[], excludeCourseIds: number[], limit = DEFAULT_RESULT_LIMIT): string {
         const ids = [...courseIds].sort((a, b) => a - b).join('.');
         const excludeIds = [...excludeCourseIds].sort((a, b) => a - b).join('.');
-        return `${types ?? ''}_e${excludeTypes ?? ''}_${ids}_x${excludeIds}`;
+        return `${types ?? ''}_e${excludeTypes ?? ''}_${ids}_x${excludeIds}_l${limit}`;
     }
 
     /**
@@ -545,12 +641,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
         this.lastSearchText = query;
         this.searchSubject.next({ query });
+        this.requestContentPreview(query);
     }
 
     private resetSearch() {
         this.lastSearchText = '';
         this.chipKeyOrigin = undefined;
         this.searchSubject.next(null);
+        this.contentPreviewSubject.next(null);
         this.filter.reset();
         this.results.set([]);
         this.selectedIndex.set(-1);
