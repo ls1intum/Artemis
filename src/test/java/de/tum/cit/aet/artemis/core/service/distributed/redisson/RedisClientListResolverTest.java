@@ -36,6 +36,23 @@ class RedisClientListResolverTest {
     }
 
     @Test
+    void safeWriterAndWorkerRolesDoNotHideAnUnfencedOrLegacyWriter() {
+        var factory = mock(ReactiveRedisConnectionFactory.class);
+        var connection = mock(ReactiveRedisConnection.class, RETURNS_DEEP_STUBS);
+        when(factory.getReactiveConnection()).thenReturn(connection);
+        var writer = new RedisNodeIdentity("artemis-core", true, true);
+        var worker = new RedisNodeIdentity("aiworker", false, false);
+        var unfenced = new RedisNodeIdentity("artemis-core", true, false);
+        var resolver = new RedisClientListResolver(factory);
+        when(connection.serverCommands().getClientList()).thenReturn(Flux.just(client(writer.connectionName(), "10.0.0.1:1"), client(worker.connectionName(), "10.0.0.2:2")));
+        assertThat(resolver.resolveClients().allWritersFenced()).isTrue();
+        for (String unsafeName : new String[] { unfenced.connectionName(), "artemis-core", "artemis-coordination:00000000-0000-0000-0000-000000000001:artemis-core" }) {
+            when(connection.serverCommands().getClientList()).thenReturn(Flux.just(client(writer.connectionName(), "10.0.0.1:1"), client(unsafeName, "10.0.0.1:2")));
+            assertThat(resolver.resolveClients().allWritersFenced()).isFalse();
+        }
+    }
+
+    @Test
     void partialClusterResponseNeverBecomesOwnershipEvidence() {
         var factory = mock(ReactiveRedisConnectionFactory.class);
         var connection = mock(ReactiveRedisClusterConnection.class, RETURNS_DEEP_STUBS);

@@ -17,6 +17,23 @@ class RedisNodeIdentityTest {
     }
 
     @Test
+    void writerProfilesAdvertiseTheDeploymentFencingSettingWhileWorkersRemainObservers() {
+        for (String profile : new String[] { "core", "localvc" }) {
+            var environment = new org.springframework.mock.env.MockEnvironment();
+            environment.setActiveProfiles(profile);
+            var disabled = new RedisNodeIdentity("artemis-node", environment, false);
+            var enabled = new RedisNodeIdentity("artemis-node", environment, true);
+            assertThat(RedisNodeIdentity.declaresSafeWriterRole(disabled.connectionName())).isFalse();
+            assertThat(RedisNodeIdentity.declaresSafeWriterRole(enabled.connectionName())).isTrue();
+        }
+        for (String profile : new String[] { "aiworker", "buildagent" }) {
+            var environment = new org.springframework.mock.env.MockEnvironment();
+            environment.setActiveProfiles(profile);
+            assertThat(RedisNodeIdentity.declaresSafeWriterRole(new RedisNodeIdentity("worker", environment, false).connectionName())).isTrue();
+        }
+    }
+
+    @Test
     void legacyAndMalformedNamesAreNotOwnershipEvidence() {
         for (String name : new String[] { "artemis-core", "", "artemis-coordination:", "artemis-coordination:00000000-0000-0000-0000-000000000000:",
                 "artemis-coordination:zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz:artemis-core" }) {

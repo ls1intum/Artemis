@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import java.time.Instant;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
@@ -23,29 +24,39 @@ final class GenerationRecoverySlots {
     private GenerationRecoverySlots() {
     }
 
-    static String claim(DistributedMap<String, JobInfo> jobMap, User user, long exerciseId, @Nullable String localNodeId, Runnable validateTopology,
-            Consumer<JobInfo> claimNormal) {
+    static String claim(DistributedMap<String, JobInfo> jobMap, User user, long exerciseId, @Nullable String localNodeId, Runnable validateTopology, Consumer<JobInfo> claimNormal,
+            BiConsumer<String, @Nullable JobInfo> compensateFailedClaim) {
         String key = String.valueOf(exerciseId);
-        jobMap.lock(key);
+        String token = GenerationJobService.REVERT_JOB_PREFIX + UUID.randomUUID();
+        JobInfo previousRecovery = null;
         try {
-            validateTopology.run();
-            JobInfo existing = jobMap.get(key);
-            boolean recovering = existing != null && existing.jobId().startsWith(RECOVERY_PREFIX);
-            String token = (recovering ? RETRY_PREFIX : "revert-") + UUID.randomUUID();
-            Instant now = Instant.now();
-            JobInfo replacement = new JobInfo(token, user.getLogin(), exerciseId, now, null, localNodeId, now, false, null);
-            if (recovering) {
-                if (!jobMap.replace(key, existing, replacement)) {
-                    throw new ConflictException("The recovery reservation changed; retry the undo.", "hyperionExerciseGeneration", "exerciseGenerationRunning");
+            jobMap.lock(key);
+            try {
+                validateTopology.run();
+                JobInfo existing = jobMap.get(key);
+                if (isPending(existing)) {
+                    previousRecovery = existing;
+                    token = RETRY_PREFIX + UUID.randomUUID();
                 }
+                Instant now = Instant.now();
+                JobInfo replacement = new JobInfo(token, user.getLogin(), exerciseId, now, null, localNodeId, now, false, null);
+                if (previousRecovery != null) {
+                    if (!jobMap.replace(key, previousRecovery, replacement)) {
+                        throw new ConflictException("The recovery reservation changed; retry the undo.", "hyperionExerciseGeneration", "exerciseGenerationRunning");
+                    }
+                }
+                else {
+                    claimNormal.accept(replacement);
+                }
+                return token;
             }
-            else {
-                claimNormal.accept(replacement);
+            finally {
+                jobMap.unlock(key);
             }
-            return token;
         }
-        finally {
-            jobMap.unlock(key);
+        catch (RuntimeException failedClaim) {
+            compensateFailedClaim.accept(token, previousRecovery);
+            throw failedClaim;
         }
     }
 

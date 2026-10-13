@@ -121,11 +121,6 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
     }
 
     @Override
-    public void lock(K key, Duration lease) {
-        map.lock(key, lease.toMillis(), TimeUnit.MILLISECONDS);
-    }
-
-    @Override
     public void unlock(K key) {
         map.unlock(key);
     }

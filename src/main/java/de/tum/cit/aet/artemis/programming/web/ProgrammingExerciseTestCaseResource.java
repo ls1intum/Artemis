@@ -115,7 +115,7 @@ public class ProgrammingExerciseTestCaseResource {
         var authorizationExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, authorizationExercise, user);
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
             Set<ProgrammingExerciseTestCase> updatedTests = programmingExerciseTestCaseService.update(exerciseId, testCaseProgrammingExerciseTestCaseDTOS);
             // A test case is now marked as AFTER_DUE_DATE: a scheduled score update might be needed.
@@ -127,7 +127,12 @@ public class ProgrammingExerciseTestCaseResource {
             for (ProgrammingExerciseTestCase testCase : updatedTests) {
                 testCase.setExercise(null);
             }
-            exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(programmingExercise, user);
+            }
             return ResponseEntity.ok(updatedTests.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet()));
         }
     }
@@ -147,12 +152,17 @@ public class ProgrammingExerciseTestCaseResource {
         User user = userRepository.getUserWithAuthorities();
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
             programmingExerciseTestCaseService.logTestCaseReset(user, programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
 
             List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(programmingExercise);
-            exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(programmingExercise, user);
+            }
             return ResponseEntity.ok(testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).toList());
         }
     }

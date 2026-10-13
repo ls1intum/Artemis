@@ -44,7 +44,7 @@ public final class GenerationGrading {
         }
     }
 
-    /** Grading values changed by generation, including bonus credit for preservation checks. */
+    /** Grading values captured for guarded restoration. */
     public record Grading(@Nullable Double weight, @Nullable Visibility visibility, @Nullable Double bonusPoints) implements Serializable {
 
         static Grading of(ProgrammingExerciseTestCase test) {

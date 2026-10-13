@@ -194,7 +194,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     }
 
     @Override
-    OptionalLong getExerciseIdForMutation(Long participationId) {
+    OptionalLong getExerciseIdForMutation(Long participationId, RepositoryActionType repositoryAction) {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         if (!(participation instanceof TemplateProgrammingExerciseParticipation) && !(participation instanceof SolutionProgrammingExerciseParticipation)) {
             return OptionalLong.empty();
@@ -204,7 +204,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (exercise == null) {
             throw new IllegalArgumentException();
         }
-        repositoryAccessService.checkAccessRepositoryElseThrow(programmingParticipation, userRepository.getUserWithAuthorities(), exercise, RepositoryActionType.WRITE);
+        repositoryAccessService.checkAccessRepositoryElseThrow(programmingParticipation, userRepository.getUserWithAuthorities(), exercise, repositoryAction);
         return OptionalLong.of(exercise.getId());
     }
 

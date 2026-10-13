@@ -36,7 +36,6 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.admin.domain.LLMRequest;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationAccountingState;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationActivityDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationArtifactCompleteness;
@@ -50,6 +49,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDT
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationUsageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.GenerationUsage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -74,7 +74,8 @@ class GenerationJobReplayStoreTest {
     @BeforeEach
     void setUp() {
         hazelcastInstance.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
-        replayStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), TERMINAL_REPLAY_TTL);
+        replayStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), TERMINAL_REPLAY_TTL,
+                HyperionDistributedDataTestProvider.provider(hazelcastInstance).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
     }
 
     @AfterAll
@@ -94,7 +95,8 @@ class GenerationJobReplayStoreTest {
         var otherInstructor = new User();
         otherInstructor.setLogin("other");
 
-        var reconnectedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), TERMINAL_REPLAY_TTL);
+        var reconnectedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), TERMINAL_REPLAY_TTL,
+                HyperionDistributedDataTestProvider.provider(hazelcastInstance).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
         assertThat(reconnectedStore.getStatus(owner, exercise)).hasValueSatisfying(status -> assertThat(status.input()).isEqualTo(input));
         assertThat(reconnectedStore.getStatus(otherInstructor, exercise)).isEmpty();
 
@@ -217,7 +219,8 @@ class GenerationJobReplayStoreTest {
     void retainAfterJobCleared_expiresTranscriptFileChangesAndUsageTogetherOnTheConfiguredTtl() {
         // The TTL is set at three independent call sites, so a short injected value proves all three read the same configured value. It must still outlast the writes below,
         // which already carry it, and the pre-condition reads that follow them.
-        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ofSeconds(5));
+        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ofSeconds(5),
+                HyperionDistributedDataTestProvider.provider(hazelcastInstance).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
         long exerciseId = 610L;
         String key = String.valueOf(exerciseId);
         String jobId = "short-lived";
@@ -241,7 +244,8 @@ class GenerationJobReplayStoreTest {
     @Test
     void newReplayStore_rejectsANonPositiveTerminalReplayTtl() {
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ZERO))
+                .isThrownBy(() -> new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ZERO,
+                        HyperionDistributedDataTestProvider.provider(hazelcastInstance).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4))))
                 .withMessageContaining("terminal-replay-ttl");
     }
 
@@ -507,7 +511,8 @@ class GenerationJobReplayStoreTest {
 
     @Test
     void recordUsage_appliesTheRetentionBound() {
-        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ofSeconds(1));
+        GenerationJobReplayStore shortLivedStore = new GenerationJobReplayStore(HyperionDistributedDataTestProvider.provider(hazelcastInstance), Duration.ofSeconds(1),
+                HyperionDistributedDataTestProvider.provider(hazelcastInstance).getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, Duration.ofHours(4)));
 
         shortLivedStore.recordUsage("orphan", llmRequest());
         assertThat(usageMap().get("orphan")).isNotNull();
@@ -515,8 +520,8 @@ class GenerationJobReplayStoreTest {
         await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> assertThat(usageMap().get("orphan")).isNull());
     }
 
-    private static LLMRequest llmRequest() {
-        return new LLMRequest("model", 100, 1f, 50, 2f, "pipeline", "provider-id", 20L, 0.1f, true);
+    private static GenerationUsage llmRequest() {
+        return new GenerationUsage("model", 100, 1f, 50, 2f, "pipeline", "provider-id", 20L, 0.1f, true);
     }
 
     private static GenerationJobService.JobInfo jobInfo(String jobId, long exerciseId) {

@@ -176,7 +176,7 @@ public class ProgrammingExerciseUpdateResource {
         Course authorizationCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(authorizationExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, authorizationCourse, user);
 
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(updateDTO.id())) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(updateDTO.id())) {
             var programmingExerciseBeforeUpdate = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
             var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(updateDTO.id());
             validateCourseAndExerciseGroupUnchanged(updateDTO, programmingExerciseBeforeUpdate);
@@ -306,10 +306,20 @@ public class ProgrammingExerciseUpdateResource {
                     originalProblemStatement);
 
             exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-            exerciseService.updatePointsInRelatedParticipantScoresSynchronously(originalMaxPoints, originalBonusPoints, updatedProgrammingExercise);
+            if (lease.coordinated()) {
+                exerciseService.updatePointsInRelatedParticipantScoresSynchronously(originalMaxPoints, originalBonusPoints, updatedProgrammingExercise);
+            }
+            else {
+                exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, updatedProgrammingExercise);
+            }
             participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, originalDueDate);
             slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, updatedProgrammingExercise));
-            exerciseVersionService.createExerciseVersionSynchronously(savedProgrammingExercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(savedProgrammingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(savedProgrammingExercise, user);
+            }
             return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(savedProgrammingExercise, buildConfig));
         }
     }
@@ -534,7 +544,7 @@ public class ProgrammingExerciseUpdateResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(authorizationExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             // Reload after claiming so a request that waited for another mutation cannot apply a stale managed entity.
             var programmingExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(exerciseId);
             var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId);
@@ -567,10 +577,20 @@ public class ProgrammingExerciseUpdateResource {
 
             // Apply all post-save side effects that the normal update path performs
             exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-            exerciseService.updatePointsInRelatedParticipantScoresSynchronously(originalMaxPoints, originalBonusPoints, savedExercise);
+            if (lease.coordinated()) {
+                exerciseService.updatePointsInRelatedParticipantScoresSynchronously(originalMaxPoints, originalBonusPoints, savedExercise);
+            }
+            else {
+                exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, savedExercise);
+            }
             participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedExercise, originalDueDate);
             slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, savedExercise));
-            exerciseVersionService.createExerciseVersionSynchronously(savedExercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(savedExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(savedExercise, user);
+            }
 
             return ResponseEntity.ok(ProgrammingExerciseResponseDTO.of(savedExercise, buildConfig));
         }

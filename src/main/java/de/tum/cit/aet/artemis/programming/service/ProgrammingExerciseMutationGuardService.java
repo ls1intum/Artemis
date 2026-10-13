@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 public class ProgrammingExerciseMutationGuardService {
 
     private static final MutationLease NO_OP_LEASE = new MutationLease(() -> {
-    });
+    }, false);
 
     private final Optional<HyperionExerciseMutationApi> hyperionExerciseMutationApi;
 
@@ -37,7 +37,7 @@ public class ProgrammingExerciseMutationGuardService {
      * @return a lease that releases the slot when closed
      */
     public MutationLease claimExternalMutation(long exerciseId) {
-        if (hyperionExerciseMutationApi.isEmpty()) {
+        if (hyperionExerciseMutationApi.isEmpty() || !hyperionExerciseMutationApi.get().isCoordinationEnabled()) {
             return NO_OP_LEASE;
         }
         HyperionExerciseMutationApi api = hyperionExerciseMutationApi.get();
@@ -49,7 +49,11 @@ public class ProgrammingExerciseMutationGuardService {
         return exerciseId.isPresent() ? claimExternalMutation(exerciseId.getAsLong()) : NO_OP_LEASE;
     }
 
-    public record MutationLease(Runnable release) implements AutoCloseable {
+    public record MutationLease(Runnable release, boolean coordinated) implements AutoCloseable {
+
+        public MutationLease(Runnable release) {
+            this(release, true);
+        }
 
         @Override
         public void close() {

@@ -113,11 +113,6 @@ public abstract class DelegatingDistributedMap<K, V> implements DistributedMap<K
     }
 
     @Override
-    public void lock(K key, Duration lease) {
-        delegate.lock(key, lease);
-    }
-
-    @Override
     public void unlock(K key) {
         delegate.unlock(key);
     }
