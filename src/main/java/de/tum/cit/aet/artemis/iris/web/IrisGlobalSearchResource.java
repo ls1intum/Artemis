@@ -93,8 +93,8 @@ public class IrisGlobalSearchResource {
     /**
      * POST api/iris/lecture-search: Search for lecture units using Pyris.
      * <p>
-     * Courses with Iris switched off in the course settings are dropped from the requested scope, so content search respects the same toggle as every other Iris feature.
-     * Disabling a course does not remove what was already ingested, which is why the scope has to be narrowed here rather than relying on an empty index.
+     * This is search, not an Iris feature: it covers every course the caller can access, including courses with Iris switched off in the course
+     * settings, because that setting only switches off the Iris chat and the other interactive Iris features.
      *
      * @param requestDTO the search request containing query, limit, and the optional course filters
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and the list of search results
@@ -107,7 +107,7 @@ public class IrisGlobalSearchResource {
         var user = userRepository.getUserWithCourseRolesAndAuthorities();
         var accessContext = irisAccessContextService.resolveAccessContext(user);
         var excludedCourseIds = requestDTO.excludeCourseIds() == null ? List.<Long>of() : requestDTO.excludeCourseIds();
-        var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext);
+        var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext, false);
         if (scope.searchesNothing()) {
             return ResponseEntity.ok(List.of());
         }
@@ -133,12 +133,13 @@ public class IrisGlobalSearchResource {
     }
 
     /**
-     * Narrows a search to the courses whose Iris course settings are enabled.
+     * Narrows a search to the courses the caller asked for, minus the ones it asked to hide, and, for the Iris answer, to the courses whose Iris
+     * course settings are enabled.
      * <p>
-     * An unscoped request cannot be forwarded untouched. Pyris falls back to the access context when it receives no
-     * course list, and that context is built from course roles alone, so lecture content belonging to a course whose
-     * instructor switched Iris off would still be searchable. Disabling never removes what was already ingested, which
-     * is why the scope has to be narrowed here rather than relying on an empty index.
+     * The Iris answer is an interactive Iris feature, like the chat it can be continued in, so it must not draw on a course whose instructor
+     * switched Iris off. An unscoped request cannot be forwarded untouched for it: Pyris falls back to the access context when it receives no
+     * course list, and that context is built from course roles alone. Switching Iris off does not remove what was already ingested, and the
+     * content of such a course stays searchable, which is why the scope has to be narrowed here rather than relying on an empty index.
      * <p>
      * The narrowed scope is never forwarded empty: {@code PyrisLectureSearchRequestDTO} omits an empty list on the wire and
      * Pyris reads an absent list as unscoped, so a caller whose courses all have Iris switched off is refused instead.
@@ -146,9 +147,11 @@ public class IrisGlobalSearchResource {
      * @param requestedCourseIds the course IDs the client asked for, {@code null} or empty for an unscoped search
      * @param excludedCourseIds  the course IDs the client asked to hide, empty when nothing is hidden
      * @param accessContext      the caller's resolved access context
+     * @param onlyIrisEnabled    whether to keep only courses with Iris enabled, which the Iris answer needs and the content search does not
      * @return the scope to search, see {@link LectureSearchScope}
      */
-    private LectureSearchScope lectureSearchScope(@Nullable List<Long> requestedCourseIds, List<Long> excludedCourseIds, PyrisAccessContextDTO accessContext) {
+    private LectureSearchScope lectureSearchScope(@Nullable List<Long> requestedCourseIds, List<Long> excludedCourseIds, PyrisAccessContextDTO accessContext,
+            boolean onlyIrisEnabled) {
         boolean isUnscoped = requestedCourseIds == null || requestedCourseIds.isEmpty();
         if (isUnscoped && accessContext.unrestricted()) {
             // An unrestricted caller carries no course list to narrow, so Pyris keeps its own no-ceiling behaviour. With no
@@ -163,6 +166,10 @@ public class IrisGlobalSearchResource {
             // The exclusions removed every course in scope. An empty list is dropped on the wire and read as unscoped, so
             // answering here is what keeps "hide all of them" from searching all of them.
             return LectureSearchScope.nothing();
+        }
+        if (!onlyIrisEnabled) {
+            // A caller without any course has nothing to narrow; its access context is empty too, so Pyris searches nothing.
+            return LectureSearchScope.of(scopedCourseIds, null);
         }
         var enabledCourseIds = irisSettingsService.filterCourseIdsWithIrisEnabled(scopedCourseIds);
         // A caller without any course has nothing to narrow; its access context is empty too, so Pyris searches nothing.
@@ -194,7 +201,7 @@ public class IrisGlobalSearchResource {
         // genuine rejection (AccessForbiddenAlertException from lectureSearchScope), not a transient
         // failure, and must never leave an orphaned job token behind for that case.
         var excludedCourseIds = requestDTO.excludeCourseIds() == null ? List.<Long>of() : requestDTO.excludeCourseIds();
-        var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext);
+        var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext, true);
         // Entity candidates are pre-fetched with the palette's access filtering, because channel
         // membership, exam registrations and role-dependent release rules only exist in the Artemis
         // database; Pyris renders them into cards and reranks them against the lecture content.

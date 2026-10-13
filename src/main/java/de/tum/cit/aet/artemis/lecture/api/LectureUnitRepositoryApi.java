@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitIngestedVersionsDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
 /**
  * API for managing lecture units.
@@ -32,9 +33,13 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
-    public LectureUnitRepositoryApi(LectureUnitRepository lectureUnitRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository) {
+    private final VideoSourceResolverService videoSourceResolver;
+
+    public LectureUnitRepositoryApi(LectureUnitRepository lectureUnitRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            VideoSourceResolverService videoSourceResolver) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.videoSourceResolver = videoSourceResolver;
     }
 
     public Set<LectureUnitCompletion> findByLectureUnitsAndUserId(Collection<? extends LectureUnit> lectureUnits, Long userId) {
@@ -98,7 +103,16 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
         return lectureUnitRepository.findUnitIdCourseIdPairsWithPdfAttachmentForCourses(courseIds);
     }
 
-    public List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithVideoForCourses(Collection<Long> courseIds) {
-        return lectureUnitRepository.findUnitIdCourseIdPairsWithVideoForCourses(courseIds);
+    /**
+     * Returns the (courseId, unitId) pairs of the units in the given courses whose video the ingestion path transcribes: a video from a supported source
+     * on a lecture that is not a tutorial lecture. A link to any other video page is never transcribed, so expecting a transcript for it would report the
+     * unit missing permanently.
+     *
+     * @param courseIds the ids of the courses
+     * @return the (courseId, unitId) pairs of units with a supported video source
+     */
+    public List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithSupportedVideoForCourses(Collection<Long> courseIds) {
+        return lectureUnitRepository.findVideoSourcesForCourses(courseIds).stream().filter(unit -> videoSourceResolver.isSupportedSource(unit.videoSource()))
+                .map(unit -> new CourseEntityIdDTO(unit.courseId(), unit.unitId())).toList();
     }
 }

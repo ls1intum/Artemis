@@ -5,7 +5,9 @@ import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeavi
 import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_UNITS_COLLECTION;
 import static de.tum.cit.aet.artemis.globalsearch.service.IngestionCoverageWeaviateReadService.LECTURE_UNIT_SEGMENTS_COLLECTION;
 
+import java.time.Duration;
 import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +15,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -39,8 +42,9 @@ import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
  * the indexer actually writes a row. That equivalence is the correctness property; the query shapes are not. A gap
  * between the two cannot be cleared by re-ingesting, so it is reported on every recompute for as long as the content
  * exists: the metadata sets follow the global-search indexer, while the content sets (slides, transcript) follow the
- * lecture ingestion path, which requires Iris to be enabled for the course and skips tutorial lectures, non-file
- * attachments, and anything that is not a PDF or a video.
+ * lecture ingestion path, which skips tutorial lectures, non-file attachments, and anything that is not a PDF or a video.
+ * That path catches up on content only for courses within the ingestion window ({@code artemis.iris.ingestion.course-window}),
+ * so only those courses are required to hold content; older courses may hold content from earlier ingestion.
  * <p>
  * Entities from optional modules (lecture, lecture unit, exam) are reached through their module {@code api} packages, so
  * a disabled module yields an empty set rather than breaking the load.
@@ -54,19 +58,28 @@ public class IngestionCoverageSetLoader {
      * What the database expects to be indexed, per course. Every map is keyed by course id; a course with nothing of a
      * given type is simply absent from that map rather than mapped to an empty set.
      *
-     * @param exercises    indexable exercise ids, including exam exercises
-     * @param lectures     lecture ids
-     * @param lectureUnits indexable lecture unit ids (text, online, attachment/video)
-     * @param exams        exam ids
-     * @param faqs         FAQ ids
-     * @param channels     indexable channel ids (not archived, and course-wide or public)
-     * @param pdfUnits     ids of attachment/video units whose attachment is a PDF, expected to have slide content;
-     *                         empty for a course whose content the ingestion path does not process
-     * @param videoUnits   ids of attachment/video units with a video source, expected to have transcript content;
-     *                         empty for a course whose content the ingestion path does not process
+     * @param exercises        indexable exercise ids, including exam exercises
+     * @param lectures         lecture ids
+     * @param lectureUnits     indexable lecture unit ids (text, online, attachment/video)
+     * @param exams            exam ids
+     * @param faqs             FAQ ids
+     * @param channels         indexable channel ids (not archived, and course-wide or public)
+     * @param pdfUnits         ids of attachment/video units whose attachment is a PDF, which can hold slide content
+     * @param videoUnits       ids of attachment/video units with a video source, which can hold transcript content
+     * @param contentCourseIds the courses whose PDF and video units are required to hold content: those within the
+     *                             ingestion window; for any other course, content is optional and only content of a unit
+     *                             without a PDF or video counts as orphaned
      */
     public record ExpectedSets(Map<Long, Set<Long>> exercises, Map<Long, Set<Long>> lectures, Map<Long, Set<Long>> lectureUnits, Map<Long, Set<Long>> exams,
-            Map<Long, Set<Long>> faqs, Map<Long, Set<Long>> channels, Map<Long, Set<Long>> pdfUnits, Map<Long, Set<Long>> videoUnits) {
+            Map<Long, Set<Long>> faqs, Map<Long, Set<Long>> channels, Map<Long, Set<Long>> pdfUnits, Map<Long, Set<Long>> videoUnits, Set<Long> contentCourseIds) {
+
+        /**
+         * @param courseId the course
+         * @return whether the course's PDF and video units are required to hold content
+         */
+        public boolean requiresContent(long courseId) {
+            return contentCourseIds.contains(courseId);
+        }
     }
 
     /**
@@ -95,15 +108,18 @@ public class IngestionCoverageSetLoader {
 
     private final IngestionCoverageWeaviateReadService weaviateReadService;
 
+    private final Duration ingestionCourseWindow;
+
     public IngestionCoverageSetLoader(IngestionCoverageExpectedIdsRepository expectedIdsRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
             Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<IrisSettingsApi> irisSettingsApi,
-            IngestionCoverageWeaviateReadService weaviateReadService) {
+            IngestionCoverageWeaviateReadService weaviateReadService, @Value("${artemis.iris.ingestion.course-window:P730D}") Duration ingestionCourseWindow) {
         this.expectedIdsRepository = expectedIdsRepository;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.examRepositoryApi = examRepositoryApi;
         this.irisSettingsApi = irisSettingsApi;
         this.weaviateReadService = weaviateReadService;
+        this.ingestionCourseWindow = ingestionCourseWindow;
     }
 
     /**
@@ -120,23 +136,22 @@ public class IngestionCoverageSetLoader {
         Map<Long, Set<Long>> lectures = bucket(lectureRepositoryApi.map(api -> api.findLectureIdCourseIdPairsForCourses(courseIds)).orElse(List.of()));
         Map<Long, Set<Long>> exams = bucket(examRepositoryApi.map(api -> api.findExamIdCourseIdPairsForCourses(courseIds)).orElse(List.of()));
         Map<Long, Set<Long>> lectureUnits = bucket(lectureUnitRepositoryApi.map(api -> api.findIndexableUnitIdCourseIdPairsForCourses(courseIds)).orElse(List.of()));
-        // Content lives in the Iris collections, which are only written for a course that has Iris enabled. Asking for
-        // the other courses would report every one of their PDFs and videos missing for as long as Iris stays off.
-        Collection<Long> irisEnabledCourseIds = courseIdsWithIrisEnabled(courseIds);
-        Map<Long, Set<Long>> pdfUnits = irisEnabledCourseIds.isEmpty() ? Map.of()
-                : bucket(lectureUnitRepositoryApi.map(api -> api.findUnitIdCourseIdPairsWithPdfAttachmentForCourses(irisEnabledCourseIds)).orElse(List.of()));
-        Map<Long, Set<Long>> videoUnits = irisEnabledCourseIds.isEmpty() ? Map.of()
-                : bucket(lectureUnitRepositoryApi.map(api -> api.findUnitIdCourseIdPairsWithVideoForCourses(irisEnabledCourseIds)).orElse(List.of()));
-        return new ExpectedSets(exercises, lectures, lectureUnits, exams, faqs, channels, pdfUnits, videoUnits);
+        Map<Long, Set<Long>> pdfUnits = bucket(lectureUnitRepositoryApi.map(api -> api.findUnitIdCourseIdPairsWithPdfAttachmentForCourses(courseIds)).orElse(List.of()));
+        Map<Long, Set<Long>> videoUnits = bucket(lectureUnitRepositoryApi.map(api -> api.findUnitIdCourseIdPairsWithSupportedVideoForCourses(courseIds)).orElse(List.of()));
+        return new ExpectedSets(exercises, lectures, lectureUnits, exams, faqs, channels, pdfUnits, videoUnits, contentCourseIds(courseIds));
     }
 
     /**
-     * The given courses that have Iris enabled, which are the only ones whose lecture content the ingestion path
-     * processes. An absent {@link IrisSettingsApi} means the module is switched off for this instance, so nothing
-     * writes the content collections at all and no course expects content.
+     * The given courses whose lecture content the ingestion path catches up on: those within the ingestion window. The
+     * course's Iris setting plays no role, because content is ingested for global search in every course. An absent
+     * {@link IrisSettingsApi} means the Iris module is switched off for this instance, so nothing writes the content
+     * collections at all and no course requires content.
      */
-    private Collection<Long> courseIdsWithIrisEnabled(Collection<Long> courseIds) {
-        return irisSettingsApi.map(api -> api.filterCourseIdsWithIrisEnabled(courseIds)).orElse(List.of());
+    private Set<Long> contentCourseIds(Collection<Long> courseIds) {
+        if (irisSettingsApi.isEmpty() || courseIds.isEmpty()) {
+            return Set.of();
+        }
+        return expectedIdsRepository.findCourseIdsEndedSince(courseIds, ZonedDateTime.now().minus(ingestionCourseWindow));
     }
 
     /**

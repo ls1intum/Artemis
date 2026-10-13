@@ -22,7 +22,6 @@ import { removeTokenAt } from '../../models/search-token.util';
 import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
 import { LectureSearchService } from '../../services/lecture-search.service';
 import { mapLectureContentResult } from '../../models/lecture-content-result.util';
-import { HttpErrorResponse } from '@angular/common/http';
 
 /** Iris content search is a vector search behind a network hop, so it gets its own, longer ceiling. */
 export const CONTENT_SEARCH_TIMEOUT_MS = 5_000;
@@ -499,10 +498,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     .pipe(
                         timeout(CONTENT_SEARCH_TIMEOUT_MS),
                         map((results) => results.map(mapLectureContentResult)),
-                        catchError((error: unknown) => {
-                            const irisDisabledForScope = error instanceof HttpErrorResponse && error.status === 403;
+                        catchError(() => {
                             this.isLoading.set(false);
-                            this.searchError.set(irisDisabledForScope ? 'global.search.contentSearchDisabled' : 'global.search.contentSearchUnavailable');
+                            this.searchError.set('global.search.contentSearchUnavailable');
                             return of([]);
                         }),
                     ),
