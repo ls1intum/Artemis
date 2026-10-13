@@ -40,6 +40,7 @@ export class FormFooterComponent {
     protected readonly faSpinner = faSpinner;
 
     isSaving = input(false);
+    showGenerateWithAi = input(false);
     isDisabled = input(false);
     invalidReasons = input<ValidationReason[]>([]);
     /**
@@ -57,6 +58,7 @@ export class FormFooterComponent {
 
     notificationTextChange = output<string>();
     save = output<void>();
+    generateWithAi = output<void>();
     onCancel = output<void>();
 
     saveTitle = computed<string>(() => (this.isImport() ? 'entity.action.import' : this.isCreation() ? 'entity.action.generate' : 'entity.action.save'));
@@ -81,6 +83,10 @@ export class FormFooterComponent {
         if (!this.isBlocked()) {
             this.save.emit();
         }
+    }
+
+    onGenerateWithAi(): void {
+        if (this.showGenerateWithAi() && !this.isBlocked()) this.generateWithAi.emit();
     }
 
     /**

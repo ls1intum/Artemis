@@ -35,6 +35,19 @@ describe('FormFooterComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('uses fresh validation for the restored AI action and blocks saves already in flight', () => {
+        fixture.componentRef.setInput('showGenerateWithAi', true);
+        fixture.componentRef.setInput('invalidReasons', [{ translateKey: 'test.key', translateValues: {} }]);
+        fixture.componentRef.setInput('revalidate', () => []);
+        const generated = vi.fn();
+        comp.generateWithAi.subscribe(generated);
+        comp.onGenerateWithAi();
+        expect(generated).toHaveBeenCalledTimes(1);
+        fixture.componentRef.setInput('isSaving', true);
+        comp.onGenerateWithAi();
+        expect(generated).toHaveBeenCalledTimes(1);
+    });
+
     const findSubmitTooltipHost = (): DebugElement => {
         const host = fixture.debugElement.queryAll(By.directive(TumAetUiTooltipDirective)).find((candidate) => (candidate.nativeElement as HTMLElement).id === 'save-entity');
         if (!host) {
