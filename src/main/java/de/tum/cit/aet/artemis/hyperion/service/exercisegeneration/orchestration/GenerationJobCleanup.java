@@ -36,11 +36,15 @@ final class GenerationJobCleanup {
     }
 
     void unpublished(JobInfo job, @Nullable StartedReplay startedReplay) {
-        cleanup(new Cleanup(job.exerciseId(), job.jobId(), job, startedReplay));
+        cleanup(new Cleanup(job.exerciseId(), job.jobId(), job, startedReplay, null));
     }
 
     void finished(long exerciseId, String jobId) {
-        cleanup(new Cleanup(exerciseId, jobId, null, null));
+        cleanup(new Cleanup(exerciseId, jobId, null, null, null));
+    }
+
+    void incomplete(long exerciseId, String jobId, String ownerNodeId) {
+        cleanup(new Cleanup(exerciseId, jobId, null, null, ownerNodeId));
     }
 
     void retry() {
@@ -58,6 +62,18 @@ final class GenerationJobCleanup {
                     pending.remove(cleanup);
                     return;
                 }
+                if (cleanup.recoveryOwner() != null) {
+                    if (current != null && (!current.jobId().equals(cleanup.jobId()) && !GenerationRecoverySlots.isGenerationRecoveryOf(current, cleanup.jobId())
+                            || current.jobId().equals(cleanup.jobId()) && (current.cancellable() || !cleanup.recoveryOwner().equals(current.ownerNodeId())))) {
+                        pending.remove(cleanup);
+                        return;
+                    }
+                    GenerationRecoverySlots.retainGeneration(jobs, cleanup.exerciseId(), cleanup.jobId(), cleanup.recoveryOwner());
+                    JobInfo afterConversion = jobs.get(key);
+                    if (afterConversion != null && afterConversion.jobId().equals(cleanup.jobId())) {
+                        throw new IllegalStateException("The incomplete generation reservation was not converted to a recovery guard");
+                    }
+                }
                 if (cleanup.unpublishedJob() == null) {
                     replay.retainAfterJobCleared(cleanup.exerciseId(), cleanup.jobId());
                 }
@@ -66,10 +82,10 @@ final class GenerationJobCleanup {
                 }
                 cancellations.remove(cleanup.jobId());
                 boolean matching = current != null && (cleanup.unpublishedJob() == null ? current.jobId().equals(cleanup.jobId()) : current.equals(cleanup.unpublishedJob()));
-                if (matching && !jobs.remove(key, current)) {
+                if (matching && cleanup.recoveryOwner() == null && !jobs.remove(key, current)) {
                     throw new IllegalStateException("The generation reservation changed during exact-token cleanup");
                 }
-                publishCompletion = cleanup.unpublishedJob() == null && (current == null || matching);
+                publishCompletion = cleanup.unpublishedJob() == null && cleanup.recoveryOwner() == null && (current == null || matching);
             }
             finally {
                 jobs.unlock(key);
@@ -86,6 +102,6 @@ final class GenerationJobCleanup {
         }
     }
 
-    private record Cleanup(long exerciseId, String jobId, @Nullable JobInfo unpublishedJob, @Nullable StartedReplay startedReplay) {
+    private record Cleanup(long exerciseId, String jobId, @Nullable JobInfo unpublishedJob, @Nullable StartedReplay startedReplay, @Nullable String recoveryOwner) {
     }
 }

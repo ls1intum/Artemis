@@ -13,6 +13,7 @@ import static org.mockito.Mockito.spy;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
@@ -138,6 +139,94 @@ class GenerationJobCleanupTest {
         assertThat(slots.get("42")).isEqualTo(reservation);
         assertThat(jobs.getStatus(user(), exercise())).isEqualTo(status);
         assertThat(jobs.getRetainedArtifacts(user(), exercise())).isEqualTo(artifacts);
+    }
+
+    @Test
+    void initializationUnlockFailureRetainsTheRollbackSnapshotUntilPriorCandidateIsRestored() {
+        var provider = spy(new LocalDataProviderService());
+        var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+        doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
+        var events = new ArrayList<Object>();
+        var jobs = new GenerationJobService(provider, events::add, mock(GenerationTokenUsageService.class));
+        jobs.init();
+        String previousJob = jobs.startJob(user(), exercise(), "first", GenerationMode.GENERATE);
+        var file = ExerciseGenerationFileChangeDTO.of("solution/Stack.java", "write", 1);
+        jobs.recordFileChange(42, previousJob, file);
+        var artifacts = new ExerciseGenerationRetainedArtifactsDTO(previousJob, ExerciseGenerationArtifactCompleteness.COMPLETE, "previous statement", null, List.of());
+        jobs.retainUnsavedArtifacts(42, previousJob, user().getLogin(), artifacts);
+        jobs.clearJob(42, previousJob);
+        var previous = jobs.getStatus(user(), exercise());
+        events.clear();
+        var failure = new IllegalStateException("initialization unlock response lost");
+        var unlocks = new AtomicInteger();
+        doAnswer(invocation -> {
+            invocation.callRealMethod();
+            if (unlocks.incrementAndGet() == 2) {
+                doThrow(new IllegalStateException("rollback unavailable")).doCallRealMethod().when(slots).lock("42");
+                throw failure;
+            }
+            return null;
+        }).when(slots).unlock("42");
+        assertThatThrownBy(() -> jobs.startJob(user(), exercise(), "second", GenerationMode.GENERATE)).isSameAs(failure);
+        assertThat(events).noneMatch(GenerationStartedEvent.class::isInstance);
+        assertThat(slots.get("42")).isNotNull();
+        jobs.retryPendingCleanup();
+        assertThat(slots.get("42")).isNull();
+        assertThat(jobs.getStatus(user(), exercise())).isEqualTo(previous);
+        assertThat(jobs.getRetainedArtifacts(user(), exercise())).contains(artifacts);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void partialSaveRecoveryConversionRetriesWithoutReleasingTheExercise(boolean lostConversionResponse) {
+        var provider = spy(new LocalDataProviderService());
+        var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+        doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
+        var jobs = new GenerationJobService(provider, _ -> {
+        }, mock(GenerationTokenUsageService.class));
+        jobs.init();
+        String job = jobs.startJob(user(), exercise(), "brief", GenerationMode.GENERATE);
+        jobs.enterNonCancellablePhase(42, job);
+        if (lostConversionResponse) {
+            doAnswer(invocation -> {
+                invocation.callRealMethod();
+                throw new IllegalStateException("conversion response lost");
+            }).doCallRealMethod().when(slots).replace(eq("42"), any(JobInfo.class), any(JobInfo.class));
+        }
+        else {
+            doThrow(new IllegalStateException("store unavailable")).doCallRealMethod().when(slots).lock("42");
+        }
+        jobs.retainIncompleteGenerationSlot(42, job);
+        assertThat(slots.get("42")).isNotNull();
+        assertThat(slots.get("42").cancellable()).isFalse();
+        jobs.retryPendingCleanup();
+        JobInfo recovery = slots.get("42");
+        assertThat(GenerationRecoverySlots.isGenerationRecoveryOf(recovery, job)).isTrue();
+        assertThat(jobs.hasActiveJob(42)).isTrue();
+        assertThat(jobs.recoverWedgedSlot(42, job)).isFalse();
+        assertThat(jobs.recoverWedgedSlot(42, recovery.jobId())).isTrue();
+    }
+
+    @Test
+    void partialSaveRecoveryRetryCannotConvertOrReleaseAReplacementJob() {
+        var provider = spy(new LocalDataProviderService());
+        var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+        doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
+        var jobs = new GenerationJobService(provider, _ -> {
+        }, mock(GenerationTokenUsageService.class));
+        jobs.init();
+        String job = jobs.startJob(user(), exercise(), "brief", GenerationMode.GENERATE);
+        jobs.enterNonCancellablePhase(42, job);
+        doThrow(new IllegalStateException("store unavailable")).doCallRealMethod().when(slots).lock("42");
+        jobs.retainIncompleteGenerationSlot(42, job);
+        slots.remove("42");
+        String replacementJob = jobs.startJob(user(), exercise(), "replacement", GenerationMode.GENERATE);
+        JobInfo replacement = slots.get("42");
+        var status = jobs.getStatus(user(), exercise());
+        jobs.retryPendingCleanup();
+        assertThat(slots.get("42")).isEqualTo(replacement);
+        assertThat(jobs.getStatus(user(), exercise())).isEqualTo(status);
+        assertThat(slots.get("42").jobId()).isEqualTo(replacementJob);
     }
 
     @Test
