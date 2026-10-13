@@ -19,6 +19,16 @@ on:
         description: 'Whether the AI Worker sandbox or Hyperion code changed and needs real Docker tests.'
         required: true
         type: boolean
+      run_server_tests:
+        description: 'When false, the server suite (planning, shards and report) is skipped. ci.yml passes false for a pull request that cannot affect it.'
+        required: false
+        type: boolean
+        default: true
+      run_client_tests:
+        description: 'When false, the client suite is skipped. ci.yml passes false for a pull request that cannot affect it.'
+        required: false
+        type: boolean
+        default: true
       is_internal_pr:
         description: 'True only for PRs from branches inside ls1intum/Artemis (external services like Codacy skip on fork PRs).'
         required: true
@@ -94,6 +104,7 @@ jobs:
   # module-affected run stays a single shard, because its selection cuts across buckets.
   server-test-shards:
     name: Plan Server Test Shards
+    if: ${{ inputs.run_server_tests }}
     runs-on: ubuntu-latest
     permissions: {}
     outputs:
@@ -131,6 +142,7 @@ jobs:
   server-tests:
     name: Server Tests (${{ matrix.shard.name }})
     needs: server-test-shards
+    if: ${{ inputs.run_server_tests }}
     runs-on: aet-large-ubuntu
     strategy:
       # One shard failing must not cancel the others: the reporting job needs every shard's results to
@@ -253,7 +265,9 @@ jobs:
   server-tests-report:
     name: Server Tests Report
     needs: server-tests
-    if: ${{ !cancelled() }}
+    # Without `run_server_tests` there are no shards to report, and `!cancelled()` alone would run this
+    # job anyway (it is true for a skipped dependency) and fail on the missing coverage data.
+    if: ${{ !cancelled() && inputs.run_server_tests }}
     runs-on: aet-large-ubuntu
     timeout-minutes: 20
     permissions:
@@ -378,6 +392,7 @@ jobs:
 
   client-tests:
     name: Client Tests
+    if: ${{ inputs.run_client_tests }}
     runs-on: aet-large-ubuntu
     # 45 minutes proved too tight on slower runners: the suite finished green but the job was
     # cancelled during the final coverage aggregation (develop already peaks at ~40 minutes).

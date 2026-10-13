@@ -89,7 +89,7 @@ public interface DistributedMap<K, V> {
     boolean remove(K key, V value);
 
     /**
-     * Atomically replaces an entry only if it still has the expected value.
+     * Atomically replaces an entry only if it still has the expected value, without changing its expiry deadline.
      *
      * @param key              the key
      * @param expectedValue    the value the entry must currently hold
