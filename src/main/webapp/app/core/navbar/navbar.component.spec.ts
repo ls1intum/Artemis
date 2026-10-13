@@ -50,7 +50,6 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
-import { mockThemeSwitcherComponentViewChildren } from 'test/helpers/mocks/mock-instance.helper';
 import { NavbarComponent } from 'app/core/navbar/navbar.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
@@ -109,9 +108,6 @@ describe('NavbarComponent', () => {
         translate: true,
         uri: '/course-management/1/programming-exercises/',
     } as MockBreadcrumb;
-
-    // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
-    mockThemeSwitcherComponentViewChildren();
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
