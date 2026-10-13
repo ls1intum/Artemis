@@ -168,6 +168,11 @@ the suite ran).
   `packages`. Playwright specs are `*.spec.ts` too, which is why client specs are matched by
   location, and a change under `src/test/playwright` always runs E2E. `build` and the other required
   checks still run.
+- A **draft** pull request does not start E2E either; marking it ready for review starts a run that
+  does. The PR Docker image (`docker-pr` in `ci-build.yml`) is built for a draft, because a test
+  server deploys the image of an open pull request, but not for a pull request that only changes
+  tests (`build_pr_image`): neither E2E nor a deploy needs it, and a deploy of such a commit has no
+  `sha-<commit>` image to find.
 - Only `pull_request` events skip. A push to `develop`, a merge group, a manual run and a release
   other than a `@tumaet/*` one run both suites, because the coverage badge and Sonar read both
   suites' coverage there and `develop` is where anything that slipped past a pull request's own run

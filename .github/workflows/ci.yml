@@ -66,6 +66,7 @@ jobs:
       run_client_tests: ${{ steps.decide.outputs.run_client_tests }}
       server_test_inputs: ${{ steps.decide.outputs.server_test_inputs }}
       run_e2e: ${{ steps.decide.outputs.run_e2e }}
+      build_pr_image: ${{ steps.decide.outputs.build_pr_image }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -300,11 +301,12 @@ jobs:
           F_CLIENT_TESTS: ${{ steps.relevant.outputs.client_tests }}
           F_E2E: ${{ steps.relevant.outputs.e2e_tests }}
           EVENT_NAME: ${{ github.event_name }}
+          IS_DRAFT: ${{ github.event.pull_request.draft || false }}
           CHANGED_FILES: ${{ github.event.pull_request.changed_files || 0 }}
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_tum_aet_ui codeql_relevant run_server_tests run_client_tests server_test_inputs run_e2e; do
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_tum_aet_ui codeql_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -336,8 +338,17 @@ jobs:
                 echo "run_server_tests=true"
                 echo "run_client_tests=true"
                 echo "run_e2e=true"
+                echo "build_pr_image=true"
               else
-                echo "run_e2e=${F_E2E:-false}"
+                # E2E is the slowest stage, so a draft does not start it; `ready_for_review` starts a
+                # run that does. The image stays for a draft, because a test server deploys the image of
+                # an open pull request, drafts included. A pull request that only changes tests builds none.
+                echo "build_pr_image=${F_E2E:-false}"
+                if [ "${F_E2E:-false}" = "true" ] && [ "$IS_DRAFT" != "true" ]; then
+                  echo "run_e2e=true"
+                else
+                  echo "run_e2e=false"
+                fi
                 if [ "${F_SERVER_TESTS:-false}" = "true" ] || [ "${F_SERVER_TEST_INPUTS:-false}" = "true" ]; then
                   echo "run_server_tests=true"
                 else
@@ -374,6 +385,9 @@ jobs:
       attestations: write
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      # The PR image only feeds E2E and test-server deploys; a pull request that only changes tests needs neither.
+      # `!= 'false'`, so an output that went missing builds it.
+      build_pr_image: ${{ needs.detect-changes.outputs.build_pr_image != 'false' }}
       is_pr: ${{ github.event_name == 'pull_request' }}
       is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
       is_release: ${{ github.event_name == 'release' }}
@@ -827,8 +841,8 @@ jobs:
     name: E2E
     needs: [detect-changes, build]
     # A pull request that only changes tests (server, client) or documentation cannot change the outcome of
-    # E2E, the slowest stage, so it does not start it (`run_e2e`, see `detect-changes`). `!= 'false'`, so an
-    # output that went missing runs E2E instead of skipping it.
+    # E2E, the slowest stage, and neither can a draft be merged, so neither starts it (`run_e2e`, see
+    # `detect-changes`). `!= 'false'`, so an output that went missing runs E2E instead of skipping it.
     if: >-
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository) &&
