@@ -66,7 +66,7 @@ final class GenerationJobReplayStore {
 
     private DistributedMap<String, GenerationJobService.JobInfo> jobMap;
 
-    private DistributedMap<String, Boolean> cancellationMap;
+    private final DistributedMap<String, Boolean> cancellationMap;
 
     private DistributedMap<String, GenerationJobService.JobTranscript> transcriptMap;
 
@@ -85,6 +85,11 @@ final class GenerationJobReplayStore {
     }
 
     GenerationJobReplayStore(DistributedDataProvider distributedDataProvider, Duration terminalReplayTtl, Duration maxJobDuration) {
+        this(distributedDataProvider, terminalReplayTtl, maxJobDuration, distributedDataProvider.getExpiringMap(GenerationJobService.CANCEL_MAP_NAME, maxJobDuration));
+    }
+
+    GenerationJobReplayStore(DistributedDataProvider distributedDataProvider, Duration terminalReplayTtl, Duration maxJobDuration,
+            DistributedMap<String, Boolean> cancellationMap) {
         if (terminalReplayTtl == null || terminalReplayTtl.isZero() || terminalReplayTtl.isNegative()) {
             throw new IllegalArgumentException("artemis.hyperion.generation.terminal-replay-ttl must be positive");
         }
@@ -93,6 +98,7 @@ final class GenerationJobReplayStore {
         }
         // Resolve maps lazily: the distributed provider need not be ready during bean construction.
         this.distributedDataProvider = distributedDataProvider;
+        this.cancellationMap = cancellationMap;
         this.terminalReplayTtlSeconds = terminalReplayTtl.toSeconds();
         // Keep a failed write visible through the longest run and its retained usage lifetime; never evict it while that account can still be sealed as complete.
         usageWriteFailures = Caffeine.newBuilder().expireAfterWrite(maxJobDuration.plus(terminalReplayTtl).plus(terminalReplayTtl)).build();
@@ -103,14 +109,6 @@ final class GenerationJobReplayStore {
             jobMap = distributedDataProvider.getMap(JOB_MAP_NAME);
         }
         return jobMap;
-    }
-
-    private DistributedMap<String, Boolean> cancellationMap() {
-        if (cancellationMap == null) {
-            // Read-only handle: the job service owns cancellation writes and their effort-profile lifetime.
-            cancellationMap = distributedDataProvider.getMap(GenerationJobService.CANCEL_MAP_NAME);
-        }
-        return cancellationMap;
     }
 
     private DistributedMap<String, GenerationJobService.JobTranscript> transcriptMap() {
@@ -316,7 +314,8 @@ final class GenerationJobReplayStore {
 
     private void restoreReplayIfStillCurrent(String key, StartedReplay replay) {
         // A rejected start restores its predecessor, but must never repopulate a slot after another run replaced its transcript.
-        boolean restoreArtifacts = replay.previousArtifacts() != null && replay.currentTranscript().equals(transcriptMap().get(key));
+        boolean restoreArtifacts = replay.previousArtifacts() != null
+                && (replay.currentTranscript().equals(transcriptMap().get(key)) || isActiveJob(key, replay.currentTranscript().jobId()));
         restoreTranscriptIfStillCurrent(key, replay.currentTranscript(), replay.previousTranscript());
         restoreFileChangesIfStillCurrent(key, replay.currentFileChanges(), replay.previousFileChanges());
         if (restoreArtifacts) {
@@ -476,7 +475,7 @@ final class GenerationJobReplayStore {
         jobMap().lock(key);
         try {
             GenerationJobService.JobFileChangeIndex index = fileChangeMap().get(key);
-            if (index == null || !index.jobId().equals(jobId) || !isActiveJob(key, jobId) || Boolean.TRUE.equals(cancellationMap().get(jobId))) {
+            if (index == null || !index.jobId().equals(jobId) || !isActiveJob(key, jobId) || Boolean.TRUE.equals(cancellationMap.get(jobId))) {
                 return false;
             }
             List<ExerciseGenerationFileChangeDTO> changes = new ArrayList<>(index.changes());

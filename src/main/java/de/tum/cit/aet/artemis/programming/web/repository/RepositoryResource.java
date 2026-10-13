@@ -123,7 +123,7 @@ public abstract class RepositoryResource {
     abstract String getOrRetrieveBranchOfDomainObject(Long domainID);
 
     /** Resolves the exercise mutation slot for Hyperion-owned repositories; unrelated repositories return empty. */
-    abstract OptionalLong getExerciseIdForMutation(Long domainId);
+    abstract OptionalLong getExerciseIdForMutation(Long domainId, RepositoryActionType repositoryAction);
 
     @FunctionalInterface
     protected interface RepositoryLoader {
@@ -175,7 +175,8 @@ public abstract class RepositoryResource {
         log.debug("REST request to create file {} for domainId : {}", filePath, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId)); var inputStream = request.getInputStream()) {
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.WRITE));
+                    var inputStream = request.getInputStream()) {
                 Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
                 repositoryService.createFile(repository, filePath, inputStream);
             }
@@ -195,7 +196,8 @@ public abstract class RepositoryResource {
         log.debug("REST request to create file {} for domainId : {}", folderPath, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId)); InputStream inputStream = request.getInputStream()) {
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.WRITE));
+                    InputStream inputStream = request.getInputStream()) {
                 Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
                 repositoryService.createFolder(repository, folderPath, inputStream);
             }
@@ -214,7 +216,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to rename file {} to {} for domainId : {}", fileMove.currentFilePath(), fileMove.newFilename(), domainId);
 
         return executeAndCheckForExceptions(() -> {
-            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId))) {
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.WRITE))) {
                 Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
                 repositoryService.renameFile(repository, fileMove);
             }
@@ -233,7 +235,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to delete file {} for domainId : {}", filename, domainId);
 
         return executeAndCheckForExceptions(() -> {
-            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId))) {
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.WRITE))) {
                 Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, false);
                 repositoryService.deleteFile(repository, filename);
             }
@@ -251,7 +253,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to pull Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId));
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.READ));
                     Repository repository = getRepository(domainId, RepositoryActionType.READ, true, false)) {
                 repositoryService.pullChanges(repository);
 
@@ -270,7 +272,7 @@ public abstract class RepositoryResource {
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     protected ResponseEntity<Map<String, String>> saveFilesAndCommitChanges(Long domainId, List<FileSubmission> submissions, boolean commit, RepositoryLoader repositoryLoader) {
-        OptionalLong exerciseId = getExerciseIdForMutation(domainId);
+        OptionalLong exerciseId = getExerciseIdForMutation(domainId, RepositoryActionType.WRITE);
         return executeAndCheckForExceptions(() -> {
             try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
                 Repository repository = repositoryLoader.load();
@@ -296,7 +298,7 @@ public abstract class RepositoryResource {
         log.debug("REST request to commit Repository for domainId : {}", domainId);
 
         return executeAndCheckForExceptions(() -> {
-            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId))) {
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.WRITE))) {
                 Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true, true);
                 return commitChanges(domainId, repository, user);
             }
@@ -320,7 +322,7 @@ public abstract class RepositoryResource {
      */
     public ResponseEntity<Void> resetToLastCommit(Long domainId) {
         return executeAndCheckForExceptions(() -> {
-            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId))) {
+            try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(getExerciseIdForMutation(domainId, RepositoryActionType.WRITE))) {
                 Repository repository = getRepository(domainId, RepositoryActionType.RESET, false, true);
                 gitService.resetToOriginHead(repository);
             }

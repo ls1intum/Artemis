@@ -21,7 +21,7 @@ Hyperion extends Artemis with AI-assisted authoring features. For programming ex
 
 ## Enable the Hyperion module
 
-Hyperion is disabled by default. Set `artemis.hyperion.enabled=true` on a core node to enable AI help for problem statements, quizzes, FAQs, and quiz variants. This does not enable programming exercise generation. That workflow also needs `artemis.hyperion.exercise-generation.enabled=true`, LocalCI, LocalVC, and an AI Worker. All writer nodes coordinate repository mutations through the selected distributed provider, even when generation is disabled locally.
+Hyperion is disabled by default. Set `artemis.hyperion.enabled=true` on a core node to enable AI help for problem statements, quizzes, FAQs, and quiz variants. This does not enable programming exercise generation. That workflow also needs `artemis.hyperion.exercise-generation.enabled=true`, LocalCI, LocalVC, and an AI Worker. When generation is enabled anywhere in a deployment, all writer nodes must enable cluster fencing through the selected distributed provider. Default-off deployments do not claim generation slots.
 
 ```yaml
 artemis:
@@ -266,32 +266,17 @@ model authoring starts. The worker receives a frozen, bounded repository snapsho
 against that snapshot before persisting them, and checks repository heads and
 exercise metadata again before writing.
 
-All `core` and `localvc` writer nodes must run this version and use the same
-distributed provider. Their mutation guard remains active even when local
-generation is disabled, so they cannot overwrite a generation-owned exercise
-on another node. The guard does not load a model or connect to an AI Worker.
-Do not mix guarded and unguarded nodes while generation is enabled.
-
-A writer-only node can keep both Hyperion settings disabled:
-
-```yaml
-artemis:
-    hyperion:
-        enabled: false
-        exercise-generation:
-            enabled: false
-```
-
-On an eligible generation core, these two Hyperion settings also start AI Worker
-coordination. Do not set `artemis.aiworker.enabled=true` just for Hyperion. That
-setting is optional and reserved for a core that must coordinate workers while
-Hyperion generation is off. Provider access and worker IDs are still required
-on a generation core.
-
-Disabling generation does not disable distributed mutation coordination or
-release an interrupted save's slot. Writer nodes still require a connected
-provider and a complete coordination view. Reconcile interrupted saves through
-the audited operator path; do not disable a feature flag to bypass their guards.
+Use identical generation settings on generation-capable core nodes. The
+exercise-mutation guard also runs on `core` and `localvc` writer nodes where
+Hyperion is disabled; it does not load a model or connect to a worker.
+Every writer must run this version of Artemis and use the same distributed data
+provider. Set `artemis.hyperion.generation.cluster-fencing-enabled=true` on every
+`core` and `localvc` writer before enabling generation anywhere. The setting defaults
+to the local `artemis.hyperion.exercise-generation.enabled` value; it does not start
+a model, worker, or generation service. When both settings are false everywhere,
+ordinary edits and template copies do not claim generation slots or query provider
+topology. Do not mix guarded and older, unguarded nodes while generation is enabled.
+Drain runs and restart all writers together when changing the fencing setting.
 
 Coordination follows the selected provider rather than assuming every store is a
 Hazelcast cluster:
@@ -314,17 +299,27 @@ Hazelcast cluster:
   additionally stop authoring and participation in the majority partition.
 - **Redis / Valkey:** all writers must use the same authoritative store and
   distributed-data namespace. Each Redisson client receives a unique process
-  incarnation in its connection name; the configured client name remains the
+  incarnation and a fenced-writer, unfenced-writer, or non-writer role in its
+  connection name; the configured client name remains the
   display name in monitoring. Reusing a display name after restart does not reuse
   ownership. Coordination requires a complete `CLIENT LIST` response containing
   the calling process. Grant the existing Artemis Redis account permission to
-  inspect clients; unavailable, denied, or incomplete lookups reject new writes.
+  inspect clients; unavailable, denied, or incomplete lookups reject coordinated writes.
+  Admission also requires every observed Artemis writer to declare fencing. Worker-only
+  processes need no writer setting. Legacy Artemis connections without a role reject
+  admission; custom Redis connections must use the same process identity rather than a
+  raw display name. Use a dedicated, trusted Redis account and namespace: connection
+  names declare application configuration, not authentication of arbitrary clients.
   Connected Artemis clients are **not** Redis data members, so their count is not
   checked against the Hazelcast member-count setting.
 
 Neither connection absence nor a timeout proves an old JVM stopped writing Git or
 the database. Non-cancellable slots do not expire or become automatically
-recoverable when an owner disconnects. The operator recovery procedure below is
+recoverable when an owner disconnects. A writer whose operation has finished retries
+its exact-token slot release after temporary store failures; it does not admit a
+replacement writer until release succeeds. This retry is local to the running
+process. If that process stops before releasing the slot, operator recovery is
+still required. The operator recovery procedure below is
 mandatory for both providers.
 
 The store is coordination infrastructure, not a disposable cache. Redis/Valkey
@@ -583,8 +578,9 @@ worker process. Drain active runs before changing profiles, disabling
 coordination, or replacing either artifact.
 
 Mutation protection on writer nodes is intentionally separate from generation
-activation. Disabling Hyperion must not remove guards that protect an exercise
-another eligible core is authoring. Replay and ownership state are bounded
+activation. Keep deployment-wide fencing enabled while any eligible core can author
+exercises, including on writers with Hyperion disabled. Disable fencing only after
+draining every generation run and reconciling outstanding slots. Replay and ownership state are bounded
 operational state, not a durable SQL job journal. A full deployment restart does
 not promise automatic continuation or resampling of interrupted runs.
 
@@ -637,3 +633,13 @@ and a `generation-recovery-` token; unlike an in-flight generation reservation, 
 released while its owner is still present. A fully compensated failure leaves no recovery
 guard. A first undo refused before any write also releases its temporary reservation, but
 such a refusal during a recovery retry preserves the existing guard.
+
+On an eligible generation core, the two Hyperion settings also start AI Worker
+coordination. Do not set `artemis.aiworker.enabled=true` just for Hyperion. That
+setting is optional and reserved for a core that must coordinate workers while
+Hyperion generation is off. Provider access and worker IDs are still required
+on a generation core.
+
+If generation is disabled locally but remains enabled elsewhere, keep cluster
+fencing enabled. Reconcile interrupted saves through the audited operator path;
+do not disable fencing to bypass their guards.

@@ -1,4 +1,5 @@
 import { generationCapabilityBlocker, hasSupportedProgrammingConfiguration, injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
+import { LegacyCodeGenerationComponent } from 'app/programming/manage/code-editor/legacy-code-generation/legacy-code-generation.component';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnDestroy, computed, inject, linkedSignal, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -46,7 +47,7 @@ import { Observable, Subject, finalize, take, takeUntil, tap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ProblemStatementAiOperationsHelper } from 'app/hyperion/problem-statement/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
@@ -109,6 +110,7 @@ interface ConsistencyIssueNavigationIssue {
     // Keep review comment state scoped to each editor container instance.
     providers: [ExerciseReviewCommentService, TumAetUiConfirmationService, HyperionGenerationActivityFacade],
     imports: [
+        LegacyCodeGenerationComponent,
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -449,6 +451,23 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         () => this.hyperionGenerationSupported && !!this.exercise()?.id && (this.exercise()?.isAtLeastEditor ?? false) && hasSupportedProgrammingConfiguration(this.exercise()),
     );
 
+    protected readonly legacyCodeGenerationOffered = computed(() => {
+        const exercise = this.exercise();
+        return (
+            this.hyperionEnabled &&
+            !!exercise?.id &&
+            !!exercise.isAtLeastEditor &&
+            exercise.programmingLanguage === ProgrammingLanguage.JAVA &&
+            (!this.hyperionGenerationSupported || hyperionGenerationBlocker(exercise, this.now()) !== undefined)
+        );
+    });
+    protected readonly legacyCodeGenerationRunning = signal(false);
+    protected readonly legacyCodeGenerationBlockedReason = computed(() => {
+        if (this.isAiApplying() || this.isCheckingConsistency()) return HYPERION_GENERATION_BLOCKER_KEY + 'problemStatementBusy';
+        if (!this.canRefreshAfterHyperionRepositoryChange()) return 'artemisApp.hyperion.generationActivity.saveChangesFirst';
+        return this.runStateBlockedReason();
+    });
+
     /** Whether the run machinery (status polling, editing locks, reload after a save) applies to this exercise at all. */
     protected readonly generationSupported = computed(() => {
         const exercise = this.exercise();
@@ -519,7 +538,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!this.exercise()?.isAtLeastEditor) {
             return HYPERION_GENERATION_BLOCKER_KEY + 'requiresEditor';
         }
-        if (this.isAiApplying()) {
+        if (this.isAiApplying() || this.legacyCodeGenerationRunning()) {
             return HYPERION_GENERATION_BLOCKER_KEY + 'problemStatementBusy';
         }
         return this.runStateBlockedReason();
@@ -529,7 +548,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!this.exercise()?.isAtLeastEditor) {
             return HYPERION_GENERATION_BLOCKER_KEY + 'requiresEditor';
         }
-        if (this.isCheckingConsistency()) {
+        if (this.isCheckingConsistency() || this.legacyCodeGenerationRunning()) {
             return HYPERION_GENERATION_BLOCKER_KEY + 'consistencyCheckBusy';
         }
         return this.runStateBlockedReason();
@@ -565,7 +584,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     );
 
     /** Operations with no indicator of their own; a generation run already shows as the progress link's status dot. */
-    protected readonly aiActionsBusy = computed(() => this.isAiApplying() || this.isCheckingConsistency() || this.repositorySetupBusy());
+    protected readonly aiActionsBusy = computed(() => this.isAiApplying() || this.isCheckingConsistency() || this.repositorySetupBusy() || this.legacyCodeGenerationRunning());
 
     /** Adapt the exercise using the selected review feedback. */
     protected readonly canAdaptNow = computed(() => this.adaptOffered() && this.adaptBlockedReason() === undefined);

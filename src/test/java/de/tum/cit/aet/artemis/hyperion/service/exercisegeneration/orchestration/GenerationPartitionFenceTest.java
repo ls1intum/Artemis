@@ -85,10 +85,11 @@ class GenerationPartitionFenceTest {
         assertThat(slots.get("42")).isNull();
     }
 
-    @Test
-    void missingWriterDeclarationRejectsGenerationEvenWithCompleteMembership() {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void missingWriterDeclarationRejectsGenerationEvenWithCompleteMembership(boolean memberHosted) {
         var provider = spy(new LocalDataProviderService());
-        doAnswer(_ -> Optional.of(new CoordinationSnapshot(Set.of(provider.getLocalNodeId()), true, false))).when(provider).getCoordinationSnapshot();
+        doAnswer(_ -> Optional.of(new CoordinationSnapshot(Set.of(provider.getLocalNodeId()), memberHosted, false))).when(provider).getCoordinationSnapshot();
         assertThatThrownBy(() -> new GenerationClusterTopology(provider, 1).verifyAllMembers()).isInstanceOf(ServiceUnavailableAlertException.class);
         assertThatThrownBy(() -> new GenerationExternalMutationService(provider, 1, true).claimParticipationSlot(42)).isInstanceOf(ServiceUnavailableAlertException.class);
         var ordinaryWriter = new GenerationExternalMutationService(provider, 1, false);

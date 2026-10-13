@@ -195,7 +195,7 @@ class ProgrammingExerciseUpdateResourceTest {
                 .thenAnswer(invocation -> invocation.getArgument(0, ProgrammingExercise.class).getCourseViaExerciseGroupOrCourseMember());
         ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(
                 Optional.of(new HyperionExerciseMutationApi(new GenerationExternalMutationService(
-                        new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance), 1))));
+                        new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance), 1, true))));
         var buildConfigRepository = mock(de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository.class);
         when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(org.mockito.ArgumentMatchers.anyLong()))
                 .thenReturn(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());

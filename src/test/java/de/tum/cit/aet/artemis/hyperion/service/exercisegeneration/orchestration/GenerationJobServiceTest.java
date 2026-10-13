@@ -354,7 +354,7 @@ class GenerationJobServiceTest {
 
     @Test
     void concurrentTemplateCopiesExcludeGenerationUntilBothReservationsClose() throws Exception {
-        var copies = new GenerationExternalMutationService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), 1);
+        var copies = new GenerationExternalMutationService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), 1, true);
         String first = copies.claimParticipationSlot(43);
         var entered = new CountDownLatch(1);
         var release = new CountDownLatch(1);
@@ -392,7 +392,7 @@ class GenerationJobServiceTest {
 
     @Test
     void partialUndoKeepsEveryWriterExcludedUntilAuthorizedRetryCompletes() {
-        var copies = new GenerationExternalMutationService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), 1);
+        var copies = new GenerationExternalMutationService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), 1, true);
         String original = jobService.claimRevertSlot(user("owner"), 43);
         jobService.retainRevertRecoverySlot(43, original);
         assertThat(jobService.isRevertRecoveryPending(43)).isTrue();
@@ -763,7 +763,7 @@ class GenerationJobServiceTest {
         assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(owner, exercise(exerciseId), "again", GenerationMode.GENERATE));
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimExternalMutationSlot(exerciseId));
-        var copies = new GenerationExternalMutationService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), 1);
+        var copies = new GenerationExternalMutationService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), 1, true);
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> copies.claimParticipationSlot(exerciseId));
         var info = jobService.getWedgedSlotInfo(exerciseId).orElseThrow();
         assertThat(info.kind()).isEqualTo(GenerationJobService.WedgedSlotKind.GENERATION);
@@ -1885,7 +1885,6 @@ class GenerationJobServiceTest {
         jobService.startJob(user("owner"), exercise(454L), "generate", GenerationMode.GENERATE);
 
         verify(observed).lock("454");
-        verify(observed, never()).lock(eq("454"), any(Duration.class));
     }
 
     private CountDownLatch captureNextJobLockAttempt(String key) {

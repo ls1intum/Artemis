@@ -131,7 +131,7 @@ class GenerationModelCostConfigurationBindingTest {
     void shippedConfigurationKeysAreValidAndUniqueOnceStripped() throws IOException {
         var config = bind(shippedConfiguration());
 
-        // Both lookup paths LLMTokenUsageService uses must stay well-formed for whatever the file ships.
+        // Exact and normalized model lookups must accept the shipped configuration.
         config.validateModelCosts();
         assertThat(config.getModelCosts().keySet().stream().map(GenerationModelCostConfiguration::stripToAlphanumeric).toList()).doesNotHaveDuplicates();
         assertThat(GenerationModelCostConfiguration.stripToAlphanumeric("Qwen/Qwen3.8-27B")).isEqualTo("QwenQwen3827B");

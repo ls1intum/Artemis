@@ -81,8 +81,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
- * Resource-level unit tests for {@link HyperionExerciseGenerationResource}: the non-LLM contract (202/409/404/204/400 and role gating) with the collaborators mocked. The
- * end-to-end agentic behaviour is covered by the mocked-LLM E2E tests.
+ * Resource-level unit tests for {@link HyperionExerciseGenerationResource}: request validation, ownership, and response mapping with collaborators mocked.
+ * HTTP authorization is covered by the resource integration tests.
  */
 class HyperionExerciseGenerationResourceTest {
 

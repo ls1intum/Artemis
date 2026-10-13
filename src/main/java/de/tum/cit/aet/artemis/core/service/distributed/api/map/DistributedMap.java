@@ -220,14 +220,6 @@ public interface DistributedMap<K, V> {
     void lock(K key);
 
     /**
-     * Locks the key and releases the provider lock automatically after the lease elapses.
-     *
-     * @param key   key to lock
-     * @param lease maximum lock lifetime
-     */
-    void lock(K key, Duration lease);
-
-    /**
      * Unlocks the specified key in the map
      *
      * @param key the key to unlock

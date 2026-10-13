@@ -200,7 +200,7 @@ class ProgrammingExercisePartialUpdateResourceTest {
 
     private ProgrammingExerciseMutationGuardService realGuard() {
         return new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(new GenerationExternalMutationService(
-                new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance), 1))));
+                new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance), 1, true))));
     }
 
     private void assertGenerationCannotClaim(long exerciseId) {

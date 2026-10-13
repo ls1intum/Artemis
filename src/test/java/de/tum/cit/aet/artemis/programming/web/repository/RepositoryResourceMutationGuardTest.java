@@ -90,7 +90,7 @@ class RepositoryResourceMutationGuardTest {
         jobService.init();
         ProgrammingExerciseMutationGuardService mutationGuard = new ProgrammingExerciseMutationGuardService(
                 Optional.of(new HyperionExerciseMutationApi(new GenerationExternalMutationService(
-                        new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance), 1))));
+                        new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance), 1, true))));
         UserRepository userRepository = mock(UserRepository.class);
         User user = user("instructor");
         when(userRepository.getUser()).thenReturn(user);
@@ -127,9 +127,9 @@ class RepositoryResourceMutationGuardTest {
         when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(solutionParticipation)).thenReturn(exercise());
         RepositoryProgrammingExerciseParticipationResource resource = participationResource(participationRepository, programmingExerciseRepository);
 
-        assertThat(resource.getExerciseIdForMutation(studentParticipationId)).isEmpty();
-        assertThat(resource.getExerciseIdForMutation(templateParticipationId)).hasValue(EXERCISE_ID);
-        assertThat(resource.getExerciseIdForMutation(solutionParticipationId)).hasValue(EXERCISE_ID);
+        assertThat(resource.getExerciseIdForMutation(studentParticipationId, RepositoryActionType.WRITE)).isEmpty();
+        assertThat(resource.getExerciseIdForMutation(templateParticipationId, RepositoryActionType.WRITE)).hasValue(EXERCISE_ID);
+        assertThat(resource.getExerciseIdForMutation(solutionParticipationId, RepositoryActionType.WRITE)).hasValue(EXERCISE_ID);
     }
 
     @Test
@@ -141,7 +141,7 @@ class RepositoryResourceMutationGuardTest {
         AuxiliaryRepositoryResource resource = auxiliaryResource(auxiliaryRepositoryRepository, mock(UserRepository.class), mock(RepositoryAccessService.class),
                 mock(GitService.class), new ProgrammingExerciseMutationGuardService(Optional.empty()));
 
-        assertThat(resource.getExerciseIdForMutation(17L)).hasValue(EXERCISE_ID);
+        assertThat(resource.getExerciseIdForMutation(17L, RepositoryActionType.WRITE)).hasValue(EXERCISE_ID);
     }
 
     @Test
@@ -153,11 +153,11 @@ class RepositoryResourceMutationGuardTest {
         when(auxiliaryRepositoryRepository.findByIdElseThrow(17L)).thenReturn(auxiliaryRepository);
         UserRepository userRepository = mock(UserRepository.class);
         RepositoryAccessService repositoryAccessService = mock(RepositoryAccessService.class);
-        doThrow(new AccessForbiddenException()).when(repositoryAccessService).checkAccessTestOrAuxRepositoryElseThrow(true, exercise, null, "auxiliary");
+        doThrow(new AccessForbiddenException()).when(repositoryAccessService).checkAccessTestOrAuxRepositoryElseThrow(false, exercise, null, "auxiliary");
         AuxiliaryRepositoryResource resource = auxiliaryResource(auxiliaryRepositoryRepository, userRepository, repositoryAccessService, mock(GitService.class),
                 mock(ProgrammingExerciseMutationGuardService.class));
 
-        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.getExerciseIdForMutation(17L));
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.getExerciseIdForMutation(17L, RepositoryActionType.WRITE));
     }
 
     @Test
@@ -167,7 +167,7 @@ class RepositoryResourceMutationGuardTest {
         AuxiliaryRepositoryResource resource = auxiliaryResource(auxiliaryRepositoryRepository, mock(UserRepository.class), mock(RepositoryAccessService.class),
                 mock(GitService.class), mock(ProgrammingExerciseMutationGuardService.class));
 
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resource.getExerciseIdForMutation(17L));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> resource.getExerciseIdForMutation(17L, RepositoryActionType.WRITE));
     }
 
     @Test
@@ -273,7 +273,7 @@ class RepositoryResourceMutationGuardTest {
         }
 
         @Override
-        OptionalLong getExerciseIdForMutation(Long domainId) {
+        OptionalLong getExerciseIdForMutation(Long domainId, RepositoryActionType repositoryAction) {
             return OptionalLong.of(EXERCISE_ID);
         }
     }

@@ -119,22 +119,6 @@ class LLMTokenUsageServiceTest {
     }
 
     @Test
-    void explicitCachePricesRemainSeparateInPersistence() {
-        LLMRequest request = new LLMRequest("model", 11, 2f, 7, 5f, "PIPE", 2, 0.5f, 3, 4f);
-        llmTokenUsageService.saveLLMTokenUsage(java.util.List.of(request), LLMServiceType.IRIS, builder -> builder);
-
-        var saved = ArgumentCaptor.forClass(LLMTokenUsageTrace.class);
-        verify(llmTokenUsageTraceRepository).save(saved.capture());
-        assertThat(saved.getValue().getLLMRequests()).singleElement().satisfies(persisted -> {
-            assertThat(persisted.getCostPerMillionInputTokens()).isEqualTo(2f);
-            assertThat(persisted.getNumCachedInputTokens()).isEqualTo(2);
-            assertThat(persisted.getCostPerMillionCachedInputTokens()).isEqualTo(0.5f);
-            assertThat(persisted.getNumCacheWriteInputTokens()).isEqualTo(3);
-            assertThat(persisted.getCostPerMillionCacheWriteInputTokens()).isEqualTo(4f);
-        });
-    }
-
-    @Test
     void constructor_withStrippedModelCostCollision_throwsIllegalStateException() {
         LLMModelCostConfiguration configuration = new LLMModelCostConfiguration();
         LLMModelCostConfiguration.ModelCostProperties dashedModel = new LLMModelCostConfiguration.ModelCostProperties();

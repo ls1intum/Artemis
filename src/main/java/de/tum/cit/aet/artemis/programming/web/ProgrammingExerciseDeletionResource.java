@@ -105,7 +105,7 @@ public class ProgrammingExerciseDeletionResource {
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesElseThrow(exerciseId);
             exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
             exerciseDeletionService.delete(exerciseId, deleteBaseReposBuildPlans);
@@ -141,7 +141,7 @@ public class ProgrammingExerciseDeletionResource {
         if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         }
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
             if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
                 continuousIntegrationService.orElseThrow().recreateBuildPlansForExercise(programmingExercise);
@@ -150,7 +150,12 @@ public class ProgrammingExerciseDeletionResource {
                 exerciseDeletionService.reset(exerciseId);
                 exerciseDeletionService.cleanup(exerciseId);
             }
-            exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(programmingExercise, user);
+            }
             return ResponseEntity.ok().build();
         }
     }
@@ -171,10 +176,15 @@ public class ProgrammingExerciseDeletionResource {
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
-        try (var ignored = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
             programmingExerciseDeletionService.deleteTasks(exercise.getId());
-            exerciseVersionService.createExerciseVersionSynchronously(exercise, user);
+            if (lease.coordinated()) {
+                exerciseVersionService.createExerciseVersionSynchronously(exercise, user);
+            }
+            else {
+                exerciseVersionService.createExerciseVersion(exercise, user);
+            }
             return ResponseEntity.noContent().build();
         }
     }

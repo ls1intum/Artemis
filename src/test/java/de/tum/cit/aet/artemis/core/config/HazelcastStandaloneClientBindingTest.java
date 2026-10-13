@@ -19,7 +19,7 @@ class HazelcastStandaloneClientBindingTest {
 
     @Test
     @ResourceLock(Resources.SYSTEM_PROPERTIES)
-    void standaloneCoreAcceptsExternalClientsOnlyWithExplicitInterfaceSetting() {
+    void standaloneCoreWithoutDiscoveryRemainsLoopbackBound() {
         String previousLocalAddress = System.getProperty("hazelcast.local.localAddress");
         String previousPublicAddress = System.getProperty("hazelcast.local.publicAddress");
         try {
@@ -46,9 +46,11 @@ class HazelcastStandaloneClientBindingTest {
         ReflectionTestUtils.setField(configuration, "hazelcastInterface", "0.0.0.0");
         var externalClient = new Config();
         ReflectionTestUtils.invokeMethod(configuration, "configureNetworkBindingAndDiscovery", externalClient);
-        assertThat(externalClient.getNetworkConfig().getInterfaces().isEnabled()).isFalse();
-        assertThat(externalClient.getNetworkConfig().getPort()).isEqualTo(5701);
-        assertThat(externalClient.getClusterName()).isEqualTo("prod");
+        assertThat(externalClient.getNetworkConfig().getInterfaces().isEnabled()).isTrue();
+        assertThat(externalClient.getNetworkConfig().getInterfaces().getInterfaces()).containsExactly("127.0.0.1");
+        assertThat(externalClient.getProperty("hazelcast.socket.bind.any")).isEqualTo("false");
+        assertThat(externalClient.getProperty("hazelcast.socket.server.bind.any")).isEqualTo("false");
+        assertThat(externalClient.getProperty("hazelcast.socket.client.bind.any")).isEqualTo("false");
     }
 
     private static void restoreProperty(String name, String previousValue) {

@@ -49,8 +49,8 @@ public class LlmOnlyExporterConfig {
      * @return a {@link SpanExporter} that exports only spans with {@code ai.span=true}
      */
     @Bean(name = "otlpLlmTraceExporter")
-    public SpanExporter llmOnlyOtlpExporter(@Value("${management.opentelemetry.tracing.export.otlp.endpoint}") String endpoint,
-            @Value("${management.opentelemetry.tracing.export.otlp.headers.Authorization}") String authHeader) {
+    public SpanExporter llmOnlyOtlpExporter(@Value("${management.opentelemetry.tracing.export.otlp.endpoint:${management.otlp.tracing.endpoint}}") String endpoint,
+            @Value("${management.opentelemetry.tracing.export.otlp.headers.Authorization:${management.otlp.tracing.headers.Authorization}}") String authHeader) {
 
         SpanExporter delegate = OtlpHttpSpanExporter.builder().setEndpoint(endpoint).addHeader("Authorization", authHeader).build();
 

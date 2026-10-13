@@ -146,14 +146,17 @@ class GenerationTokenUsageServiceTest {
         org.mockito.Mockito.when(usage.getPromptTokens()).thenReturn(10);
         org.mockito.Mockito.when(usage.getCompletionTokens()).thenReturn(3);
         org.mockito.Mockito.when(usage.getCacheReadInputTokens()).thenReturn(8L);
-        org.mockito.Mockito.doAnswer(invocation -> {
-            java.util.List<de.tum.cit.aet.artemis.admin.domain.LLMRequest> requests = invocation.getArgument(0);
-            assertThat(requests.getFirst().costPerMillionInputToken()).isCloseTo(0.8f, org.assertj.core.api.Assertions.within(0.00001f));
-            return null;
-        }).when(persistence).saveLLMTokenUsage(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
         var observed = new java.util.concurrent.atomic.AtomicReference<GenerationUsage>();
         assertThat(service.trackChatResponseTokenUsage(response, de.tum.cit.aet.artemis.admin.domain.LLMServiceType.HYPERION, "generation", builder -> builder, observed::set))
                 .isTrue();
+        org.mockito.ArgumentCaptor<java.util.List<de.tum.cit.aet.artemis.admin.domain.LLMRequest>> saved = org.mockito.ArgumentCaptor.captor();
+        org.mockito.Mockito.verify(persistence).saveLLMTokenUsage(saved.capture(), org.mockito.ArgumentMatchers.eq(de.tum.cit.aet.artemis.admin.domain.LLMServiceType.HYPERION),
+                org.mockito.ArgumentMatchers.any());
+        assertThat(saved.getValue()).singleElement().satisfies(request -> {
+            assertThat(request.numInputTokens()).isEqualTo(10);
+            assertThat(request.numOutputTokens()).isEqualTo(3);
+            assertThat(request.costPerMillionInputToken()).isCloseTo(0.8f, org.assertj.core.api.Assertions.within(0.00001f));
+        });
         assertThat(observed.get().costPerMillionInputToken()).isEqualTo(2f);
         assertThat(observed.get().numCachedInputTokens()).isEqualTo(8L);
         assertThat(observed.get().costEstimateComplete()).isTrue();

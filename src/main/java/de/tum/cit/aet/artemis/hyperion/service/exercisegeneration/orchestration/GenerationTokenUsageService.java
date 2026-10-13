@@ -59,7 +59,7 @@ public class GenerationTokenUsageService {
     }
 
     /**
-     * Build an GenerationUsage with automatic cost lookup from configuration.
+     * Builds generation usage with operator-supplied prices.
      *
      * @param model        model identifier
      * @param inputTokens  number of input tokens
@@ -88,7 +88,7 @@ public class GenerationTokenUsageService {
         String stripped = GenerationModelCostConfiguration.stripToAlphanumeric(normalized);
         ModelCost cost = costs.getOrDefault(normalized, costsByStrippedKey.getOrDefault(stripped, ModelCost.UNKNOWN));
         if (cost.equals(ModelCost.UNKNOWN) && inputTokens + outputTokens > 0) {
-            log.warn("No LLM cost configured for model '{}' (normalized '{}', stripped '{}') on pipeline [{}]; recording an incomplete zero estimate. Known cost keys: {}", model,
+            log.warn("No LLM cost configured for model '{}' (normalized '{}', stripped '{}') on pipeline [{}]; recording an incomplete estimate. Known cost keys: {}", model,
                     normalized, stripped, pipelineId, costs.keySet());
         }
         boolean zeroTokenRequest = inputTokens + outputTokens == 0;

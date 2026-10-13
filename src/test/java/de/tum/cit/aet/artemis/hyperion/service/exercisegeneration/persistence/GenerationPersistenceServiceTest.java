@@ -321,7 +321,30 @@ class GenerationPersistenceServiceTest {
 
     @Test
     void persist_happyPath_commitsInProductionOrderWaitsForTestsPushBuildAndCreatesVersion() throws Exception {
-        stubSuccessfulCheckoutAndCommits();
+        Repository templateRepository = mock(Repository.class);
+        Repository solutionRepository = mock(Repository.class);
+        Repository testsRepository = mock(Repository.class);
+        Map<RepositoryType, Repository> repositories = Map.of(RepositoryType.TEMPLATE, templateRepository, RepositoryType.SOLUTION, solutionRepository, RepositoryType.TESTS,
+                testsRepository);
+        for (var entry : repositories.entrySet()) {
+            String name = entry.getKey().name().toLowerCase(java.util.Locale.ROOT);
+            Path workingTree = temporaryDirectory.resolve(name);
+            FileUtils.forceMkdir(workingTree.toFile());
+            when(entry.getValue().getLocalPath()).thenReturn(workingTree);
+            when(gitService.getOrCheckoutRepositoryOnBranch(eq(exercise.getRepositoryURI(entry.getKey())), any(Path.class), eq("main"))).thenReturn(entry.getValue());
+            when(gitService.getLocalHeadHash(entry.getValue())).thenReturn("pre-" + name);
+            when(gitService.commitStagedChanges(eq(entry.getValue()), anyString(), eq(user))).thenReturn("hash-" + name);
+            when(gitService.getLastCommitHash(exercise.getRepositoryURI(entry.getKey()), "main")).thenReturn("hash-" + name);
+        }
+        when(gitService.getFileByName(any(), any())).thenReturn(Optional.empty());
+        when(repositoryService.getFiles(any())).thenReturn(Map.of());
+        doAnswer(invocation -> {
+            Repository target = invocation.getArgument(0);
+            String path = invocation.getArgument(1);
+            InputStream contents = invocation.getArgument(2);
+            FileUtils.copyInputStreamToFile(contents, target.getLocalPath().resolve(path).toFile());
+            return null;
+        }).when(repositoryService).createFile(any(), anyString(), any(InputStream.class));
         ProgrammingExerciseParticipation solutionParticipation = mock(ProgrammingExerciseParticipation.class);
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
 
@@ -331,16 +354,16 @@ class GenerationPersistenceServiceTest {
         GenerationPersistenceService.PersistResult persistResult = service.persist(exercise, user, outcome, "old statement", null, "job-1", () -> true);
 
         InOrder order = Mockito.inOrder(gitService, resultRepository, programmingSubmissionService, exerciseVersionService);
-        order.verify(gitService).getLocalHeadHash(repository);
-        order.verify(gitService).commitStagedChanges(repository, "Generate exercise with Hyperion (job-1)", user);
-        order.verify(gitService).pushCommitWithLease(repository, "hash-template", "main", "pre-template");
-        order.verify(gitService).getLocalHeadHash(repository);
-        order.verify(gitService).commitStagedChanges(repository, "Generate exercise with Hyperion (job-1)", user);
-        order.verify(gitService).pushCommitWithLease(repository, "hash-solution", "main", "pre-solution");
+        order.verify(gitService).getLocalHeadHash(templateRepository);
+        order.verify(gitService).commitStagedChanges(templateRepository, "Generate exercise with Hyperion (job-1)", user);
+        order.verify(gitService).pushCommitWithLease(templateRepository, "hash-template", "main", "pre-template");
+        order.verify(gitService).getLocalHeadHash(solutionRepository);
+        order.verify(gitService).commitStagedChanges(solutionRepository, "Generate exercise with Hyperion (job-1)", user);
+        order.verify(gitService).pushCommitWithLease(solutionRepository, "hash-solution", "main", "pre-solution");
         order.verify(resultRepository).findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(anyLong());
-        order.verify(gitService).getLocalHeadHash(repository);
-        order.verify(gitService).commitStagedChanges(repository, "Generate exercise with Hyperion (job-1)", user);
-        order.verify(gitService).pushCommitWithLease(repository, "hash-tests", "main", "pre-tests");
+        order.verify(gitService).getLocalHeadHash(testsRepository);
+        order.verify(gitService).commitStagedChanges(testsRepository, "Generate exercise with Hyperion (job-1)", user);
+        order.verify(gitService).pushCommitWithLease(testsRepository, "hash-tests", "main", "pre-tests");
         order.verify(programmingSubmissionService).existsNewerSuccessfulTestResultForParticipationAndCommitHash(anyLong(), eq("hash-tests"), any());
         order.verify(exerciseVersionService).createExerciseVersionOrThrow(exercise, user,
                 Map.of(RepositoryType.TEMPLATE, "hash-template", RepositoryType.SOLUTION, "hash-solution", RepositoryType.TESTS, "hash-tests"));
@@ -354,6 +377,15 @@ class GenerationPersistenceServiceTest {
                 .containsEntry(RepositoryType.TESTS, "hash-tests");
         assertThat(persistResult.persistedProblemStatement()).isEqualTo("new statement");
         assertThat(persistResult.persistedTitle()).isNull();
+        verify(gitService).getOrCheckoutRepositoryOnBranch(eq(templateUri), any(Path.class), eq("main"));
+        verify(gitService).getOrCheckoutRepositoryOnBranch(eq(solutionUri), any(Path.class), eq("main"));
+        verify(gitService).getOrCheckoutRepositoryOnBranch(eq(testsUri), any(Path.class), eq("main"));
+        verify(repositoryService).createFile(eq(templateRepository), eq("Template.java"), any(InputStream.class));
+        verify(repositoryService).createFile(eq(solutionRepository), eq("Solution.java"), any(InputStream.class));
+        verify(repositoryService).createFile(eq(testsRepository), eq("Test.java"), any(InputStream.class));
+        assertThat(FileUtils.readFileToByteArray(templateRepository.getLocalPath().resolve("Template.java").toFile())).isEqualTo("t".getBytes(StandardCharsets.UTF_8));
+        assertThat(FileUtils.readFileToByteArray(solutionRepository.getLocalPath().resolve("Solution.java").toFile())).isEqualTo("s".getBytes(StandardCharsets.UTF_8));
+        assertThat(FileUtils.readFileToByteArray(testsRepository.getLocalPath().resolve("Test.java").toFile())).isEqualTo("x".getBytes(StandardCharsets.UTF_8));
     }
 
     @Test
@@ -799,11 +831,14 @@ class GenerationPersistenceServiceTest {
 
     @Test
     void gradingUndoRefusesInstructorChangesAndAllowsAnAlreadyRestoredValue() {
-        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS).active(true);
+        ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).bonusPoints(2.0).visibility(Visibility.ALWAYS).active(true);
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour));
         String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
         GenerationPersistenceService.PersistResult saved = service.persist(exercise, user, outcomeWithPlan(Map.of(), Map.of(), Map.of(), "", plan));
 
+        behaviour.setBonusPoints(1.0);
+        assertThat(service.canRestoreGrading(1L, saved.previousGrading(), saved.savedGrading())).isFalse();
+        behaviour.setBonusPoints(2.0);
         behaviour.setWeight(7.0);
         assertThat(service.canRestoreGrading(1L, saved.previousGrading(), saved.savedGrading())).isFalse();
         behaviour.setWeight(1.0);
@@ -813,6 +848,7 @@ class GenerationPersistenceServiceTest {
                 .isFalse();
         assertThat(service.resyncAfterRevertWithSignal(exercise, user, null, null, null, null, null, Map.of(), saved.previousGrading(), saved.savedGrading(), () -> true)).isTrue();
         assertThat(behaviour.getWeight()).isEqualTo(1.0);
+        assertThat(behaviour.getBonusPoints()).isEqualTo(2.0);
         verify(programmingExerciseCreationScheduleService, times(2)).scheduleOperations(1L);
     }
 

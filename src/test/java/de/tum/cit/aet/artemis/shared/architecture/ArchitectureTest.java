@@ -967,9 +967,9 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 "IngestionCoverageResourceTest", "PyrisInternalIngestionWorkerResourceTest" };
         // Resource unit tests exercise validation and ownership checks directly. Their nested parameterized cases belong to the same test, not production code.
         final var resourceBehaviourTests = new String[] { "ParticipationResourceGenerationGuardTest", "ProgrammingExerciseCreationResourceMutationGuardTest",
-                "ProgrammingExerciseDeletionResourceMutationGuardTest", "ProgrammingExercisePartialUpdateResourceTest", "ProgrammingExerciseTestCaseResourceTest",
-                "ProgrammingExerciseUpdateResourceTest", "RepositoryResourceMutationGuardTest", "StaticCodeAnalysisResourceMutationGuardTest",
-                "SubmissionPolicyResourceMutationGuardTest" };
+                "ProgrammingExerciseDeletionResourceMutationGuardTest", "ProgrammingExerciseBuildConfigResourceMutationGuardTest", "ProgrammingExercisePartialUpdateResourceTest",
+                "ProgrammingExerciseTestCaseResourceTest", "ProgrammingExerciseUpdateResourceTest", "RepositoryResourceMutationGuardTest",
+                "StaticCodeAnalysisResourceMutationGuardTest", "SubmissionPolicyResourceMutationGuardTest" };
         final var classes = classesAndNestedExcept(classesExcept(allClasses, exceptions), resourceBehaviourTests);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }

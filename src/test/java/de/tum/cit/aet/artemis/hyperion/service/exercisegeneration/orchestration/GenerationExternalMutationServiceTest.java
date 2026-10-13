@@ -2,21 +2,25 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.test.context.support.TestPropertySourceUtils;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.core.Hazelcast;
-
+import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.CoordinationSnapshot;
@@ -24,6 +28,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationTaskService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService.JobInfo;
@@ -48,58 +53,216 @@ class GenerationExternalMutationServiceTest {
             assertThat(context.getBean(HyperionCodeGenerationJobService.class)).isNotNull();
             var service = context.getBean(GenerationExternalMutationService.class);
             String token = service.claimExternalMutationSlot(42);
-            assertThat(service.isGenerationActive(42)).isTrue();
-            service.clearExternalMutationSlot(42, token);
+            assertThat(token).isNull();
             assertThat(service.isGenerationActive(42)).isFalse();
         }
     }
 
     @Test
-    void disabledGenerationAllowsOrdinaryWritesInAnExistingTwoMemberCluster() {
-        var firstConfig = new Config();
-        firstConfig.setClusterName("disabled-generation-" + System.nanoTime());
-        firstConfig.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        firstConfig.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true).addMember("127.0.0.1");
-        firstConfig.getNetworkConfig().getInterfaces().setEnabled(true).addInterface("127.0.0.1");
-        var first = Hazelcast.newHazelcastInstance(firstConfig);
-        try {
-            var secondConfig = new Config();
-            secondConfig.setClusterName(firstConfig.getClusterName());
-            secondConfig.getNetworkConfig().getInterfaces().setEnabled(true).addInterface("127.0.0.1");
-            secondConfig.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-            var address = first.getCluster().getLocalMember().getAddress();
-            secondConfig.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true).addMember(address.getHost() + ":" + address.getPort());
-            var second = Hazelcast.newHazelcastInstance(secondConfig);
-            try (var context = new AnnotationConfigApplicationContext()) {
-                org.awaitility.Awaitility.await().until(() -> first.getCluster().getMembers().size() == 2);
-                context.getEnvironment().setActiveProfiles("core", "localvc");
-                context.registerBean(DistributedDataProvider.class, () -> HyperionDistributedDataTestProvider.provider(first));
-                context.register(GenerationExternalMutationService.class, HyperionExerciseMutationApi.class);
-                context.refresh();
-                var api = context.getBean(HyperionExerciseMutationApi.class);
-                String token = api.claimExternalMutationSlot(42);
-                api.clearExternalMutationSlot(42, token);
-                try (var reservation = api.reserveParticipation(42)) {
-                    assertThat(reservation).isNotNull();
-                }
-                DistributedMap<String, JobInfo> jobs = context.getBean(DistributedDataProvider.class).getMap(GenerationJobService.JOB_MAP_NAME);
-                jobs.put("42", new JobInfo("generation", "owner", 42, Instant.now(), null, "other-core", Instant.now(), true, null));
-                assertThatThrownBy(() -> api.claimExternalMutationSlot(42)).isInstanceOf(ConflictException.class);
-                assertThatThrownBy(() -> api.reserveParticipation(42)).isInstanceOf(ConflictException.class);
-            }
-            finally {
-                second.shutdown();
-            }
+    void deploymentWithFencingDisabledDoesNotUseTheDistributedProvider() {
+        var provider = org.mockito.Mockito.mock(DistributedDataProvider.class);
+        var service = new GenerationExternalMutationService(provider, 1, false);
+        var api = new HyperionExerciseMutationApi(service);
+        String token = api.claimExternalMutationSlot(42);
+        api.clearExternalMutationSlot(42, token);
+        try (var reservation = api.reserveParticipation(42)) {
+            assertThat(reservation).isNotNull();
         }
-        finally {
-            first.shutdown();
+        assertThat(api.isGenerationActive(42)).isFalse();
+        assertThat(service.getWedgedSlotInfo(42)).isEmpty();
+        assertThat(service.recoverWedgedSlot(42, "obsolete-token")).isFalse();
+        service.retryPendingReleases();
+        org.mockito.Mockito.verifyNoInteractions(provider);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void revertAcquisitionRetriesCleanupAndRestoresThePreviousRecoveryGuard(boolean recovering) {
+        var provider = spy(new LocalDataProviderService());
+        var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+        doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
+        var guard = new GenerationExternalMutationService(provider, 1, true);
+        var jobs = new GenerationJobService(provider, _ -> {
+        }, org.mockito.Mockito.mock(GenerationTokenUsageService.class), null, new HyperionAgentProperties(), org.mockito.Mockito.mock(HyperionEffortProfileService.class),
+                Runnable::run, 1, Duration.ofHours(4), 0, guard);
+        jobs.init();
+        var user = new User();
+        user.setLogin("editor");
+        if (recovering) {
+            jobs.retainRevertRecoverySlot(42, jobs.claimRevertSlot(user, 42));
         }
+        JobInfo previous = slots.get("42");
+        var failure = new IllegalStateException("unlock response lost");
+        var unlocks = new AtomicInteger();
+        doAnswer(invocation -> {
+            invocation.callRealMethod();
+            if (unlocks.incrementAndGet() == (recovering ? 1 : 2)) {
+                doThrow(new IllegalStateException("cleanup unavailable")).doCallRealMethod().when(slots).lock("42");
+                throw failure;
+            }
+            return null;
+        }).when(slots).unlock("42");
+        assertThatThrownBy(() -> jobs.claimRevertSlot(user, 42)).isSameAs(failure);
+        assertThat(slots.get("42").jobId()).startsWith(recovering ? GenerationRecoverySlots.RETRY_PREFIX : GenerationJobService.REVERT_JOB_PREFIX);
+        guard.retryPendingReleases();
+        assertThat(slots.get("42")).isEqualTo(previous);
+        assertThat(jobs.isRevertRecoveryPending(42)).isEqualTo(recovering);
+
+        unlocks.set(0);
+        doAnswer(invocation -> {
+            invocation.callRealMethod();
+            if (unlocks.incrementAndGet() == (recovering ? 1 : 2)) {
+                doThrow(new IllegalStateException("cleanup unavailable")).doCallRealMethod().when(slots).lock("42");
+                throw failure;
+            }
+            return null;
+        }).when(slots).unlock("42");
+        assertThatThrownBy(() -> jobs.claimRevertSlot(user, 42)).isSameAs(failure);
+        JobInfo replacement = new JobInfo("replacement", "owner", 42, Instant.now(), null, "local-node", Instant.now(), true, null);
+        slots.put("42", replacement);
+        guard.retryPendingReleases();
+        assertThat(slots.get("42")).isEqualTo(replacement);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void lostRevertWriteResponseRestoresTheExactPreviousReservation(boolean recovering) {
+        var provider = spy(new LocalDataProviderService());
+        var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+        doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
+        var guard = new GenerationExternalMutationService(provider, 1, true);
+        var jobs = new GenerationJobService(provider, _ -> {
+        }, org.mockito.Mockito.mock(GenerationTokenUsageService.class), null, new HyperionAgentProperties(), org.mockito.Mockito.mock(HyperionEffortProfileService.class),
+                Runnable::run, 1, Duration.ofHours(4), 0, guard);
+        jobs.init();
+        var user = new User();
+        user.setLogin("editor");
+        if (recovering) {
+            jobs.retainRevertRecoverySlot(42, jobs.claimRevertSlot(user, 42));
+        }
+        JobInfo previous = slots.get("42");
+        var failure = new IllegalStateException("write response lost");
+        if (recovering) {
+            doAnswer(invocation -> {
+                invocation.callRealMethod();
+                throw failure;
+            }).doCallRealMethod().when(slots).replace(org.mockito.ArgumentMatchers.eq("42"), org.mockito.ArgumentMatchers.eq(previous),
+                    org.mockito.ArgumentMatchers.any(JobInfo.class));
+        }
+        else {
+            doAnswer(invocation -> {
+                invocation.callRealMethod();
+                throw failure;
+            }).when(slots).putIfAbsent(org.mockito.ArgumentMatchers.eq("42"), org.mockito.ArgumentMatchers.any(JobInfo.class));
+        }
+        assertThatThrownBy(() -> jobs.claimRevertSlot(user, 42)).isSameAs(failure);
+        assertThat(slots.get("42")).isEqualTo(previous);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void failedAcquisitionQueuesExactCleanupAfterUnlockAndPreservesReplacement(boolean participation) {
+        var provider = spy(new LocalDataProviderService());
+        var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+        doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
+        var service = new GenerationExternalMutationService(provider, 1, true);
+        var failure = new IllegalStateException("unlock response lost");
+        doAnswer(invocation -> {
+            invocation.callRealMethod();
+            doThrow(new IllegalStateException("cleanup unavailable")).doCallRealMethod().when(slots).lock("42");
+            throw failure;
+        }).doCallRealMethod().when(slots).unlock("42");
+        assertThatThrownBy(() -> {
+            if (participation) {
+                service.claimParticipationSlot(42);
+            }
+            else {
+                service.claimExternalMutationSlot(42);
+            }
+        }).isSameAs(failure);
+        assertThat(slots.get("42")).isNotNull();
+        service.retryPendingReleases();
+        assertThat(slots.get("42")).isNull();
+
+        doAnswer(invocation -> {
+            invocation.callRealMethod();
+            doThrow(new IllegalStateException("cleanup unavailable")).doCallRealMethod().when(slots).lock("42");
+            throw failure;
+        }).doCallRealMethod().when(slots).unlock("42");
+        assertThatThrownBy(() -> {
+            if (participation) {
+                service.claimParticipationSlot(42);
+            }
+            else {
+                service.claimExternalMutationSlot(42);
+            }
+        }).isSameAs(failure);
+        JobInfo replacement = new JobInfo("replacement", "owner", 42, Instant.now(), null, "local-node", Instant.now(), true, null);
+        slots.put("42", replacement);
+        service.retryPendingReleases();
+        assertThat(slots.get("42")).isEqualTo(replacement);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void uncertainSlotWriteIsCompensatedBeforeReturningTheAcquisitionFailure(boolean participation) {
+        var provider = spy(new LocalDataProviderService());
+        var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+        doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
+        var failure = new IllegalStateException("write response lost");
+        doAnswer(invocation -> {
+            invocation.callRealMethod();
+            throw failure;
+        }).when(slots).putIfAbsent(org.mockito.ArgumentMatchers.eq("42"), org.mockito.ArgumentMatchers.any(JobInfo.class));
+        var service = new GenerationExternalMutationService(provider, 1, true);
+        assertThatThrownBy(() -> {
+            if (participation) {
+                service.claimParticipationSlot(42);
+            }
+            else {
+                service.claimExternalMutationSlot(42);
+            }
+        }).isSameAs(failure);
+        assertThat(slots.get("42")).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void completedOperationRetriesReleaseWithoutClearingAReplacement(boolean participation) {
+        var provider = spy(new LocalDataProviderService());
+        var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+        doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
+        var service = new GenerationExternalMutationService(provider, 1, true);
+        String token = participation ? service.claimParticipationSlot(42) : service.claimExternalMutationSlot(42);
+        doThrow(new IllegalStateException("store temporarily unavailable")).doCallRealMethod().when(slots).lock("42");
+        if (participation) {
+            service.clearParticipationSlot(42, token);
+        }
+        else {
+            service.clearExternalMutationSlot(42, token);
+        }
+        assertThat(slots.get("42")).isNotNull();
+        service.retryPendingReleases();
+        assertThat(slots.get("42")).isNull();
+
+        String staleToken = participation ? service.claimParticipationSlot(42) : service.claimExternalMutationSlot(42);
+        doThrow(new IllegalStateException("store temporarily unavailable")).doCallRealMethod().when(slots).lock("42");
+        if (participation) {
+            service.clearParticipationSlot(42, staleToken);
+        }
+        else {
+            service.clearExternalMutationSlot(42, staleToken);
+        }
+        JobInfo replacement = new JobInfo("new-generation", "owner", 42, Instant.now(), null, "local-node", Instant.now(), true, null);
+        slots.put("42", replacement);
+        service.retryPendingReleases();
+        assertThat(slots.get("42")).isEqualTo(replacement);
     }
 
     @Test
     void sharedCopyRecoveryRequiresEveryRecordedOwnerToBeAbsent() {
         var provider = initializedProvider();
-        var service = new GenerationExternalMutationService(provider, 1);
+        var service = new GenerationExternalMutationService(provider, 1, true);
         String first = service.claimParticipationSlot(42);
         String second = service.claimParticipationSlot(42);
         DistributedMap<String, JobInfo> jobs = provider.getMap(GenerationJobService.JOB_MAP_NAME);
@@ -144,7 +307,7 @@ class GenerationExternalMutationServiceTest {
     @Test
     void generationActiveIsAReadOnlyViewOfAnySlotAndWorksWithoutTheGenerationEngine() {
         var provider = initializedProvider();
-        var service = new GenerationExternalMutationService(provider, 1);
+        var service = new GenerationExternalMutationService(provider, 1, true);
         var api = new HyperionExerciseMutationApi(service);
         DistributedMap<String, JobInfo> jobs = provider.getMap(GenerationJobService.JOB_MAP_NAME);
         assertThat(api.isGenerationActive(42)).isFalse();
@@ -167,7 +330,7 @@ class GenerationExternalMutationServiceTest {
     @Test
     void delayedReleaseDoesNotClearReplacement() {
         var provider = initializedProvider();
-        var service = new GenerationExternalMutationService(provider, 1);
+        var service = new GenerationExternalMutationService(provider, 1, true);
         String old = service.claimExternalMutationSlot(42);
         service.clearExternalMutationSlot(42, old);
         String replacement = service.claimExternalMutationSlot(42);
@@ -182,7 +345,7 @@ class GenerationExternalMutationServiceTest {
     @Test
     void recoveryRequiresExactDepartedOwnerAndMajority() {
         var provider = spy(initializedProvider());
-        var service = new GenerationExternalMutationService(provider, 3);
+        var service = new GenerationExternalMutationService(provider, 3, true);
         doReturn(Optional.of(new CoordinationSnapshot(Set.of("local-node", "other", "third"), true))).when(provider).getCoordinationSnapshot();
         DistributedMap<String, JobInfo> jobs = provider.getMap(GenerationJobService.JOB_MAP_NAME);
         assertThat(service.getWedgedSlotInfo(42)).isEmpty();
@@ -203,7 +366,7 @@ class GenerationExternalMutationServiceTest {
     @Test
     void disabledGenerationRecoveryNeverReleasesGenerationOrUnknownOwner() {
         var provider = initializedProvider();
-        var service = new GenerationExternalMutationService(provider, 1);
+        var service = new GenerationExternalMutationService(provider, 1, true);
         DistributedMap<String, JobInfo> jobs = provider.getMap(GenerationJobService.JOB_MAP_NAME);
         JobInfo generation = new JobInfo("generation", "owner", 42, Instant.now(), null, "departed", Instant.now(), false, null);
         jobs.put("42", generation);
@@ -222,7 +385,7 @@ class GenerationExternalMutationServiceTest {
     void unknownCoordinationNeverBypassesWriterProtection() {
         var provider = spy(initializedProvider());
         doReturn(Optional.empty()).when(provider).getCoordinationSnapshot();
-        var service = new GenerationExternalMutationService(provider, 1);
+        var service = new GenerationExternalMutationService(provider, 1, true);
         assertThatThrownBy(() -> service.claimExternalMutationSlot(42)).isInstanceOf(ServiceUnavailableAlertException.class);
         assertThat(provider.getMap(GenerationJobService.JOB_MAP_NAME).get("42")).isNull();
         assertThatThrownBy(() -> service.recoverWedgedSlot(42, "unknown")).isInstanceOf(ServiceUnavailableAlertException.class);
@@ -231,7 +394,7 @@ class GenerationExternalMutationServiceTest {
     @Test
     void missingTopologyDoesNotBypassTheGuard() {
         var provider = spy(initializedProvider());
-        var service = new GenerationExternalMutationService(provider, 1);
+        var service = new GenerationExternalMutationService(provider, 1, true);
         doReturn(Optional.empty()).when(provider).getCoordinationSnapshot();
         assertThatThrownBy(() -> service.claimExternalMutationSlot(42)).isInstanceOf(ServiceUnavailableAlertException.class);
         doReturn(Optional.of(new CoordinationSnapshot(Set.of("other"), true))).when(provider).getCoordinationSnapshot();

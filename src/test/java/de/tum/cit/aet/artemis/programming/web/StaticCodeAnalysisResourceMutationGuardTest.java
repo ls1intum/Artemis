@@ -6,15 +6,19 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -75,7 +79,7 @@ class StaticCodeAnalysisResourceMutationGuardTest {
             assertThat(invocation.<ProgrammingExercise>getArgument(0)).isSameAs(authoritativeExercise);
             throw failure;
         }).when(staticCodeAnalysisService).resetCategories(authoritativeExercise);
-        ProgrammingExerciseMutationGuardService mutationGuard = trackingGuard(leaseHeld);
+        ProgrammingExerciseMutationGuardService mutationGuard = trackingGuard(leaseHeld, true);
         StaticCodeAnalysisResource resource = resource(repository, mock(AuthorizationCheckService.class), staticCodeAnalysisService, mutationGuard);
 
         assertThatThrownBy(() -> resource.resetStaticCodeAnalysisCategories(TARGET_EXERCISE_ID)).isSameAs(failure);
@@ -83,32 +87,48 @@ class StaticCodeAnalysisResourceMutationGuardTest {
         assertThat(leaseHeld).isFalse();
     }
 
-    @Test
-    void update_versionsTheAuthoritativeExerciseBeforeReleasingTheSlot() {
+    @ParameterizedTest
+    @MethodSource("versionModes")
+    void versionsTheAuthoritativeExerciseInTheRequiredMode(Mutation mutation, boolean coordinated) {
         ProgrammingExercise authorizationExercise = exercise(TARGET_EXERCISE_ID);
         ProgrammingExercise authoritativeExercise = exercise(TARGET_EXERCISE_ID);
         ProgrammingExerciseRepository repository = mock(ProgrammingExerciseRepository.class);
         when(repository.findByIdElseThrow(Long.valueOf(TARGET_EXERCISE_ID))).thenReturn(authorizationExercise, authoritativeExercise);
         StaticCodeAnalysisService staticCodeAnalysisService = mock(StaticCodeAnalysisService.class);
-        when(staticCodeAnalysisService.updateCategories(TARGET_EXERCISE_ID, Set.of())).thenReturn(Set.of());
+        when(repository.findByIdElseThrow(Long.valueOf(SOURCE_EXERCISE_ID))).thenReturn(exercise(SOURCE_EXERCISE_ID));
         User user = new User();
         UserRepository userRepository = mock(UserRepository.class);
         when(userRepository.getUser()).thenReturn(user);
         ExerciseVersionService exerciseVersionService = mock(ExerciseVersionService.class);
         AtomicBoolean leaseHeld = new AtomicBoolean();
-        doAnswer(invocation -> {
+        var selectedVersionService = doAnswer(invocation -> {
             assertThat(leaseHeld).isTrue();
             return null;
-        }).when(exerciseVersionService).createExerciseVersionSynchronously(authoritativeExercise, user);
-        ProgrammingExerciseMutationGuardService mutationGuard = trackingGuard(leaseHeld);
+        }).when(exerciseVersionService);
+        if (coordinated) {
+            selectedVersionService.createExerciseVersionSynchronously(authoritativeExercise, user);
+        }
+        else {
+            selectedVersionService.createExerciseVersion(authoritativeExercise, user);
+        }
+        ProgrammingExerciseMutationGuardService mutationGuard = trackingGuard(leaseHeld, coordinated);
         StaticCodeAnalysisResource resource = new StaticCodeAnalysisResource(mock(AuthorizationCheckService.class), repository, staticCodeAnalysisService,
                 mock(StaticCodeAnalysisCategoryRepository.class), mutationGuard, userRepository, exerciseVersionService);
 
-        var response = resource.updateStaticCodeAnalysisCategories(TARGET_EXERCISE_ID, java.util.List.of());
+        mutation.invoke(resource);
 
-        assertThat(response.getStatusCode().value()).isEqualTo(200);
-        assertThat(response.getBody()).isEmpty();
+        if (coordinated) {
+            verify(exerciseVersionService).createExerciseVersionSynchronously(authoritativeExercise, user);
+        }
+        else {
+            verify(exerciseVersionService).createExerciseVersion(authoritativeExercise, user);
+        }
+        verifyNoMoreInteractions(exerciseVersionService);
         assertThat(leaseHeld).isFalse();
+    }
+
+    private static Stream<Arguments> versionModes() {
+        return Stream.of(Mutation.values()).flatMap(mutation -> Stream.of(false, true).map(coordinated -> Arguments.of(mutation, coordinated)));
     }
 
     private static StaticCodeAnalysisResource resource(ProgrammingExerciseRepository repository, AuthorizationCheckService authorizationCheckService,
@@ -117,11 +137,11 @@ class StaticCodeAnalysisResourceMutationGuardTest {
                 mock(UserRepository.class), mock(ExerciseVersionService.class));
     }
 
-    private static ProgrammingExerciseMutationGuardService trackingGuard(AtomicBoolean leaseHeld) {
+    private static ProgrammingExerciseMutationGuardService trackingGuard(AtomicBoolean leaseHeld, boolean coordinated) {
         ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
         when(mutationGuard.claimExternalMutation(TARGET_EXERCISE_ID)).thenAnswer(invocation -> {
             assertThat(leaseHeld.compareAndSet(false, true)).isTrue();
-            return new ProgrammingExerciseMutationGuardService.MutationLease(() -> leaseHeld.set(false));
+            return new ProgrammingExerciseMutationGuardService.MutationLease(() -> leaseHeld.set(false), coordinated);
         });
         return mutationGuard;
     }

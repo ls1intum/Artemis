@@ -11,6 +11,8 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -72,7 +74,7 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
     }
 
     @Test
-    void setupCreatesTheInitialVersionBeforeReturningTheExercise() throws Exception {
+    void setupRequestsTheInitialVersionAfterCreatingTheExercise() throws Exception {
         Course course = mock(Course.class);
         ProgrammingExercise requestExercise = mock(ProgrammingExercise.class);
         ProgrammingExercise createdExercise = mock(ProgrammingExercise.class);
@@ -93,11 +95,13 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
         var order = inOrder(creationUpdateService, exerciseVersionService);
         order.verify(creationUpdateService).createProgrammingExercise(org.mockito.ArgumentMatchers.same(requestExercise),
                 org.mockito.ArgumentMatchers.any(ProgrammingExerciseBuildConfig.class), org.mockito.ArgumentMatchers.eq(false));
-        order.verify(exerciseVersionService).createExerciseVersionSynchronously(createdExercise, user);
+        order.verify(exerciseVersionService).createExerciseVersion(createdExercise, user);
     }
 
-    @Test
-    void generateStructureOracleRefetchesAuthoritativeMutationDataAndCreatesVersionSynchronously() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void generateStructureOracleVersionsAccordingToCoordination(boolean coordinated) throws Exception {
+        when(mutationGuard.claimExternalMutation(EXERCISE_ID)).thenReturn(new ProgrammingExerciseMutationGuardService.MutationLease(leaseRelease, coordinated));
         ProgrammingExercise authorizationExercise = exercise("authorization", false);
         ProgrammingExercise authoritativeExercise = exercise("authoritative", true);
         when(repository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(EXERCISE_ID)).thenReturn(authorizationExercise, authoritativeExercise);
@@ -110,7 +114,14 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
         verify(repository, times(2)).findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(EXERCISE_ID);
         verify(creationUpdateService).generateStructureOracleFile(authoritativeExercise.getVcsSolutionRepositoryUri(), authoritativeExercise.getVcsTemplateRepositoryUri(),
                 authoritativeExercise.getVcsTestRepositoryUri(), "structural/test/authoritative", user);
-        verify(exerciseVersionService).createExerciseVersionSynchronously(authoritativeExercise, user);
+        if (coordinated) {
+            verify(exerciseVersionService).createExerciseVersionSynchronously(authoritativeExercise, user);
+            verify(exerciseVersionService, org.mockito.Mockito.never()).createExerciseVersion(authoritativeExercise, user);
+        }
+        else {
+            verify(exerciseVersionService).createExerciseVersion(authoritativeExercise, user);
+            verify(exerciseVersionService, org.mockito.Mockito.never()).createExerciseVersionSynchronously(authoritativeExercise, user);
+        }
 
         var order = inOrder(repository, authCheckService, mutationGuard, creationUpdateService, exerciseVersionService, leaseRelease);
         order.verify(repository).findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(EXERCISE_ID);
@@ -119,7 +130,12 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
         order.verify(repository).findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(EXERCISE_ID);
         order.verify(creationUpdateService).generateStructureOracleFile(authoritativeExercise.getVcsSolutionRepositoryUri(), authoritativeExercise.getVcsTemplateRepositoryUri(),
                 authoritativeExercise.getVcsTestRepositoryUri(), "structural/test/authoritative", user);
-        order.verify(exerciseVersionService).createExerciseVersionSynchronously(authoritativeExercise, user);
+        if (coordinated) {
+            order.verify(exerciseVersionService).createExerciseVersionSynchronously(authoritativeExercise, user);
+        }
+        else {
+            order.verify(exerciseVersionService).createExerciseVersion(authoritativeExercise, user);
+        }
         order.verify(leaseRelease).run();
     }
 
