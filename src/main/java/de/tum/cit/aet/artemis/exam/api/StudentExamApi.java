@@ -82,6 +82,17 @@ public class StudentExamApi extends AbstractExamApi {
         return studentExamRepository.findWorkingTimeByExamIdAndUserId(examId, userId);
     }
 
+    /**
+     * Checks whether the student has an own student exam for the exam, ignoring instructor test runs.
+     *
+     * @param examId the id of the exam
+     * @param userId the id of the student
+     * @return true if a student exam exists
+     */
+    public boolean hasStudentExam(long examId, long userId) {
+        return studentExamRepository.findNewestWorkingPeriodByExamIdAndUserId(examId, userId).isPresent();
+    }
+
     public Set<Long> findRegisteredNonTestExamIdsByUserIdAndCourseIds(long userId, Collection<Long> courseIds) {
         return studentExamRepository.findRegisteredNonTestExamIdsByUserIdAndCourseIds(userId, courseIds);
     }
