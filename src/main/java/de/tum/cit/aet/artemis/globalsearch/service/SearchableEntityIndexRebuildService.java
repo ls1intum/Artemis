@@ -23,6 +23,7 @@ import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
+import io.weaviate.client6.v1.api.collections.vectorindex.Hnsw;
 
 /**
  * Keeps the {@code SearchableEntities} collection matching the configured embedding mode and model.
@@ -109,8 +110,9 @@ public class SearchableEntityIndexRebuildService {
         }
         log.warn("The global search index was built for '{}' but the configuration needs '{}'. Rebuilding it from the database; search results stay incomplete until the "
                 + "reconcile passes have re-indexed every entity.", stored, desired);
-        if (!newWeaviate) {
-            deleteIfExists(properties.collectionPrefix() + SearchableEntitySchema.COLLECTION_NAME);
+        String collectionName = properties.collectionPrefix() + SearchableEntitySchema.COLLECTION_NAME;
+        if (!newWeaviate || !hasCurrentVectorLayout(collectionName)) {
+            deleteIfExists(collectionName);
         }
         deleteIfExists(properties.collectionPrefix() + LEGACY_EXERCISES_COLLECTION);
         weaviateService.ensureAllCollectionsExist();
@@ -142,6 +144,25 @@ public class SearchableEntityIndexRebuildService {
         return stored.map(object -> object.properties().get(INDEX_SIGNATURE_PROPERTY)).map(Object::toString);
     }
 
+    /**
+     * Whether the collection is built for the vector layout the configuration needs: one vector per chunk when Artemis
+     * embeds, no multi-vector index otherwise. A collection without a version collection next to it was usually created by
+     * this startup, but one left behind by an earlier version that stopped before it wrote its version collection still
+     * has the old single-vector layout, and keeping it would make every write fail.
+     *
+     * @param collectionName the collection to check
+     * @return true if the collection does not exist or already has the needed layout
+     */
+    private boolean hasCurrentVectorLayout(String collectionName) throws IOException {
+        var config = client.collections.getConfig(collectionName);
+        if (config.isEmpty()) {
+            return true;
+        }
+        boolean multiVector = config.get().vectors().values().stream()
+                .anyMatch(vector -> vector.vectorIndex() instanceof Hnsw hnsw && hnsw.multiVector() != null && hnsw.multiVector().enabled());
+        return multiVector == SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(properties.vectorizerModule());
+    }
+
     private void deleteIfExists(String collectionName) throws IOException {
         if (client.collections.exists(collectionName)) {
             client.collections.delete(collectionName);
@@ -152,9 +173,9 @@ public class SearchableEntityIndexRebuildService {
     /**
      * Creates the version collection, or adds the signature property to one created before signatures existed.
      * <p>
-     * Every Artemis version with global search created this collection, so its absence means the Weaviate holds no
-     * Artemis index yet: the {@code SearchableEntities} collection was just created at startup with the current
-     * configuration, and the rebuild does not need to delete it.
+     * Every Artemis version with global search created this collection, so its absence usually means the Weaviate holds
+     * no Artemis index yet and the {@code SearchableEntities} collection was just created at startup. The rebuild still
+     * checks that collection's vector layout before keeping it (see {@link #hasCurrentVectorLayout}).
      *
      * @return whether the collection was created now, that is, whether this Weaviate holds no earlier Artemis index
      */

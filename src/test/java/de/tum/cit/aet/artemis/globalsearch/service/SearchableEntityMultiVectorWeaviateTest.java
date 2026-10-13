@@ -259,6 +259,25 @@ class SearchableEntityMultiVectorWeaviateTest {
     }
 
     @Test
+    void anOldSingleVectorCollectionWithoutAVersionCollectionIsRebuilt() throws Exception {
+        // An earlier version created the search collection at startup and stopped before it wrote its version collection.
+        dropCollections();
+        client = WeaviateClient.connectToLocal(config -> config.host(weaviate.getHost()).port(weaviate.getMappedPort(8080)).grpcPort(weaviate.getMappedPort(50051)));
+        client.collections.create(PREFIX + SearchableEntitySchema.COLLECTION_NAME,
+                config -> config.vectorConfig(io.weaviate.client6.v1.api.collections.VectorConfig.selfProvided()));
+        useModel("model-a");
+
+        assertThat(rebuildService("model-a").ensureIndexMatchesConfiguration()).isTrue();
+
+        var vectors = client.collections.getConfig(PREFIX + SearchableEntitySchema.COLLECTION_NAME).orElseThrow().vectors().values();
+        assertThat(vectors).as("the collection now has one vector per chunk")
+                .anyMatch(vector -> vector.vectorIndex() instanceof io.weaviate.client6.v1.api.collections.vectorindex.Hnsw hnsw && hnsw.multiVector() != null
+                        && hnsw.multiVector().enabled());
+        index(exercise(1L, "Sorting", "Bubble sort and merge sort."));
+        assertThat(stored(1L).orElseThrow().vectors()).isNotEmpty();
+    }
+
+    @Test
     void aRebuildAlsoReplacesTheIndexOfAnInstallationFromBeforeSignatures() throws Exception {
         // The first layout: an Exercises collection and a version object without a signature.
         dropCollections();
