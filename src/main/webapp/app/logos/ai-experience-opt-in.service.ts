@@ -1,5 +1,6 @@
 import { Service, inject } from '@angular/core';
 import { Observable, catchError, of } from 'rxjs';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/account/user/shared/user.service';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
@@ -14,6 +15,7 @@ export class AiExperienceOptInService {
     private readonly accountService = inject(AccountService);
     private readonly userService = inject(UserService);
     private readonly llmModalService = inject(LLMSelectionModalService);
+    private readonly alertService = inject(AlertService);
 
     /** Whether the current user has already opted into AI usage (cloud or local). */
     hasAcceptedAiUsage(): boolean {
@@ -45,11 +47,14 @@ export class AiExperienceOptInService {
             if (choice === LLM_MODAL_DISMISSED) {
                 return;
             }
-            this.userService.updateLLMSelectionDecision(choice).subscribe(() => {
-                this.accountService.setUserLLMSelectionDecision(choice);
-                if (isAcceptedLLMSelection(choice)) {
-                    onAccepted();
-                }
+            this.userService.updateLLMSelectionDecision(choice).subscribe({
+                next: () => {
+                    this.accountService.setUserLLMSelectionDecision(choice);
+                    if (isAcceptedLLMSelection(choice)) {
+                        onAccepted();
+                    }
+                },
+                error: () => this.alertService.error('artemisApp.exercise.aiExperienceSaveFailed'),
             });
         });
     }

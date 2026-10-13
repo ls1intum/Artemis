@@ -7,6 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { UserService } from 'app/account/user/shared/user.service';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { AlertService } from 'app/foundation/service/alert.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
 
 describe('AiExperienceOptInService', () => {
@@ -19,12 +20,15 @@ describe('AiExperienceOptInService', () => {
         updateLLMSelectionDecision: vi.fn().mockReturnValue(of(new HttpResponse<void>())),
     } as any;
 
+    const mockAlertService = { error: vi.fn() };
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
                 AiExperienceOptInService,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: UserService, useValue: mockUserService },
+                { provide: AlertService, useValue: mockAlertService },
                 LLMSelectionModalService,
             ],
         });
@@ -38,6 +42,7 @@ describe('AiExperienceOptInService', () => {
     afterEach(() => {
         vi.restoreAllMocks();
         mockUserService.updateLLMSelectionDecision.mockClear();
+        mockAlertService.error.mockClear();
     });
 
     describe('hasAcceptedAiUsage', () => {
@@ -128,6 +133,19 @@ describe('AiExperienceOptInService', () => {
             await vi.waitFor(() => expect(userService.updateLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI));
 
             expect(accountService.setUserLLMSelectionDecision).toHaveBeenCalledWith(LLMSelectionDecision.NO_AI);
+            expect(onAccepted).not.toHaveBeenCalled();
+        });
+
+        it('shows an alert and does not call onAccepted when persisting the decision fails', async () => {
+            vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
+            vi.spyOn(accountService, 'setUserLLMSelectionDecision');
+            mockUserService.updateLLMSelectionDecision.mockReturnValueOnce(throwError(() => new Error('save failed')));
+            const onAccepted = vi.fn();
+
+            service.promptForAiUsage(onAccepted);
+            await vi.waitFor(() => expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.exercise.aiExperienceSaveFailed'));
+
+            expect(accountService.setUserLLMSelectionDecision).not.toHaveBeenCalled();
             expect(onAccepted).not.toHaveBeenCalled();
         });
     });
