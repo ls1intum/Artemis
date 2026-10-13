@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import java.time.ZonedDateTime;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -15,10 +17,12 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
 import de.tum.cit.aet.artemis.hyperion.dto.HyperionCourseSettingsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolBuildStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
@@ -154,6 +158,28 @@ public class HyperionQuizQuestionPoolService {
      */
     public HyperionCourseSettingsDTO updateSettings(long courseId, HyperionCourseSettingsDTO settings) {
         return HyperionCourseSettingsDTO.of(settingsService.updateSettings(courseId, settings.toSettings()));
+    }
+
+    /**
+     * Records the review decision on one pool question.
+     *
+     * @param courseId    the course the question must belong to
+     * @param questionId  the pool item
+     * @param reviewState the decision
+     * @return the updated item
+     * @throws EntityNotFoundException if no such item exists in the course
+     */
+    public QuizQuestionPoolItemDTO updateReviewState(long courseId, long questionId, QuizQuestionReviewState reviewState) {
+        QuizQuestionPoolItem item = itemRepository.findByIdElseThrow(questionId);
+        if (!Objects.equals(item.getCourse().getId(), courseId)) {
+            throw new EntityNotFoundException("QuizQuestionPoolItem", questionId);
+        }
+        item.setReviewState(reviewState);
+        item.setUpdatedAt(ZonedDateTime.now());
+        QuizQuestionPoolItem saved = itemRepository.save(item);
+        String title = courseCompetencyApi.map(api -> api.findAllForCourse(courseId)).orElse(Set.of()).stream()
+                .filter(competency -> Objects.equals(competency.getId(), saved.getCompetencyId())).map(CourseCompetency::getTitle).findFirst().orElse(null);
+        return toDTO(saved, title, unitNamesOf(List.of(saved)).get(saved.getLectureUnitId()));
     }
 
     private static QuizQuestionPoolItemDTO toDTO(QuizQuestionPoolItem item, @Nullable String competencyTitle, @Nullable String lectureUnitName) {
