@@ -100,6 +100,24 @@ class GlobalSearchResultRankerTest {
     }
 
     @Test
+    void movesAChannelUpToItsItemWhenOtherResultsSeparateThem() {
+        var exercise = row("exercise", 1L, "Observer Pattern Implementation");
+        var lecture = row("lecture", 1L, "Design Patterns");
+        var channel = row("channel", 1L, "exercise-observer-pattern-imp");
+
+        assertThat(GlobalSearchResultRanker.rank(List.of(exercise, lecture, channel), true, courses, NOW)).containsExactly(exercise, channel, lecture);
+    }
+
+    @Test
+    void leavesAChannelAloneWhoseNameFitsSeveralItems() {
+        var channel = row("channel", 1L, "exercise-observer-pattern-imp");
+        var implications = row("exercise", 1L, "Observer Pattern Implications");
+        var implementation = row("exercise", 1L, "Observer Pattern Implementation");
+
+        assertThat(GlobalSearchResultRanker.rank(List.of(channel, implications, implementation), true, courses, NOW)).containsExactly(channel, implications, implementation);
+    }
+
+    @Test
     void leavesChannelsAloneThatBelongToNoItemInTheList() {
         var channel = row("channel", 1L, "tech-support");
         var otherCourseChannel = row("channel", 1L, "exercise-sorting");

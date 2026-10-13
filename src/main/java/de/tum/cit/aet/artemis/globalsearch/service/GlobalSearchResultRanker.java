@@ -122,20 +122,23 @@ public final class GlobalSearchResultRanker {
     private static List<Map<String, Object>> placeDefaultChannelsAfterTheirItem(List<Map<String, Object>> rows) {
         List<Map<String, Object>> result = new ArrayList<>(rows);
         for (Map<String, Object> channel : rows) {
-            int itemIndex = indexOfDefaultChannelItem(channel, result);
-            if (itemIndex > result.indexOf(channel)) {
-                result.remove(channel);
-                // The removal shifted the item one place up, so the channel lands directly behind it.
-                result.add(itemIndex, channel);
+            Map<String, Object> item = defaultChannelItem(channel, result);
+            if (item == null || result.indexOf(channel) == result.indexOf(item) + 1) {
+                continue;
             }
+            result.remove(channel);
+            result.add(result.indexOf(item) + 1, channel);
         }
         return result;
     }
 
-    /** Index of the exercise, lecture or exam a default channel row belongs to, or -1. */
-    private static int indexOfDefaultChannelItem(Map<String, Object> channel, List<Map<String, Object>> rows) {
+    /**
+     * The exercise, lecture or exam a default channel row belongs to, or null. A name that fits several items of the
+     * course is left alone: the channel name holds only the start of the title, which cannot tell such items apart.
+     */
+    private static @Nullable Map<String, Object> defaultChannelItem(Map<String, Object> channel, List<Map<String, Object>> rows) {
         if (!SearchableEntitySchema.TypeValues.CHANNEL.equals(channel.get(SearchableEntitySchema.Properties.TYPE))) {
-            return -1;
+            return null;
         }
         String name = normalizeCase(titleOf(channel));
         for (String type : DEFAULT_CHANNEL_TYPES) {
@@ -144,15 +147,11 @@ public final class GlobalSearchResultRanker {
             if (titleStart.length() < MIN_DEFAULT_CHANNEL_TITLE_LENGTH) {
                 continue;
             }
-            for (int index = 0; index < rows.size(); index++) {
-                Map<String, Object> row = rows.get(index);
-                if (type.equals(row.get(SearchableEntitySchema.Properties.TYPE)) && Objects.equals(courseId(row), courseId(channel))
-                        && compact(normalizeCase(titleOf(row))).startsWith(titleStart)) {
-                    return index;
-                }
-            }
+            List<Map<String, Object>> matches = rows.stream().filter(row -> type.equals(row.get(SearchableEntitySchema.Properties.TYPE))
+                    && Objects.equals(courseId(row), courseId(channel)) && compact(normalizeCase(titleOf(row))).startsWith(titleStart)).toList();
+            return matches.size() == 1 ? matches.getFirst() : null;
         }
-        return -1;
+        return null;
     }
 
     /** Keeps only the characters a channel name can hold, so a title such as "Einführung" matches its channel "einf-hrung". */

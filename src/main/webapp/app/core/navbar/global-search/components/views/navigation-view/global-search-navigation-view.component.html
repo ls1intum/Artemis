@@ -13,7 +13,7 @@
 <!-- One listbox holds only the selectable rows (the slides-and-videos row and the results); the search input points into it
      with aria-activedescendant. The Show more button and the empty, error and loading states stay outside it. -->
 @if (hasContentRow() || resultRowsShown()) {
-    <div role="listbox" class="contents" [id]="resultsListboxId" [attr.aria-label]="'global.search.resultsLabel' | artemisTranslate">
+    <div role="listbox" class="block" [id]="resultsListboxId" [attr.aria-label]="'global.search.resultsLabel' | artemisTranslate">
         <!-- Slide and video hits for the query: one row that switches to the slides-and-videos search, selectable like a result -->
         @if (hasContentRow()) {
             <div #selectableItem class="content-hits-row" [class.content-hits-row-spaced]="irisOccupiesSpace()">
