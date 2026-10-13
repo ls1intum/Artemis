@@ -778,8 +778,19 @@ code.password:hover {
     background: $displaycolor-background;
 }
 
-// Kit overlays (calendar, select panels, tooltips) open here. PrimeNG dialogs from DialogService stack from 1100 upwards, so the layer
-// has to sit above them for an overlay opened from inside such a dialog to be visible.
+// Kit overlays (dialogs, calendars, select panels, tooltips) open in this one container, so they all share one layer.
+// Stacking order of the layers an Artemis page can show, lowest first:
+//   1000       Bootstrap dropdowns, PrimeNG overlays and menus
+//   1050/1055  Bootstrap modal backdrop / NgbModal
+//   1060-1090  Iris onboarding overlay, Bootstrap popover, tooltip and toast
+//   1102+      PrimeNG dialogs (PrimeNG modal base 1100, +2 per stacked layer)
+//   1200       this container: kit dialogs and everything the kit opens above them
+//   1402+      PrimeNG confirmation dialogs (DeleteDialogService, baseZIndex CONFIRMATION_DIALOG_BASE_Z_INDEX 300 on top of 1100)
+//   100000     alert overlay
+// The container must stay above PrimeNG dialogs, so a calendar opened inside a PrimeNG dialog (competency import, submission and
+// repository export) is visible. A confirmation opened from inside a kit dialog (delete button in the presentation edit dialog)
+// has to stay above this container, which is why those PrimeNG dialogs carry an explicit base z-index instead of the default.
+// `delete-dialog-layering.spec.ts` compiles this file and checks the order.
 .cdk-overlay-container {
     z-index: 1200;
 }
