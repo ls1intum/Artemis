@@ -49,6 +49,7 @@
             "contentHitsRow": "Slides & videos: {{ count }} hits in {{ lectures }}",
             "contentHitsRowAction": "Show",
             "showMoreResults": "Show more results",
+            "resultsLabel": "Search results",
             "noResultsFound": "No results found",
             "searchPlaceholder": "Search...",
             "tooShortQueryHint": "Please enter a longer search term.",

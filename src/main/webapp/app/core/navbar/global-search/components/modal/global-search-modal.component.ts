@@ -17,7 +17,7 @@ import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
 import { SearchInputComponent } from './search-input/search-input.component';
 import { GlobalSearchFilterMenuComponent } from './filter-menu/global-search-filter-menu.component';
-import { filterOptionDomId } from '../../models/search-menu.model';
+import { SEARCH_RESULTS_LISTBOX_ID, filterOptionDomId, searchResultOptionDomId } from '../../models/search-menu.model';
 import { FilterToken } from '../../models/search-token.model';
 import { removeTokenAt } from '../../models/search-token.util';
 import { IrisSearchAvailabilityService } from '../../services/iris-search-availability.service';
@@ -113,6 +113,19 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly filterShortcutLabel = computed<string>(() => (this.osDetector.isMac() ? '⌘F' : 'Ctrl+F'));
     // DOM id of the highlighted filter-menu option, for the search input's aria-activedescendant (the menu now
     // renders in the results pane, so the combobox references it across components by id).
+    /** How many selectable rows the results listbox renders; it mirrors the navigation view's template. */
+    private readonly renderedResultRows = computed(() => {
+        const contentRow = !this.contentSearchActive() && this.contentPreview().length > 0 ? 1 : 0;
+        const resultRows = this.showResults() && !this.isLoading() && !this.searchError() ? this.results().length : 0;
+        return contentRow + resultRows;
+    });
+    /** The results listbox while it shows rows; the filter menu takes over the input's popup while it is open. */
+    protected readonly resultsListboxId = computed<string | undefined>(() => (!this.filterMenuOpen() && this.renderedResultRows() > 0 ? SEARCH_RESULTS_LISTBOX_ID : undefined));
+    /** The selected result row, so a screen reader announces it while the focus stays in the input; none while it is not rendered. */
+    protected readonly activeResultId = computed<string | undefined>(() => {
+        const index = this.selectedIndex();
+        return this.resultsListboxId() && index >= 0 && index < this.renderedResultRows() ? searchResultOptionDomId(index) : undefined;
+    });
     protected readonly activeOptionId = computed<string | undefined>(() => {
         const option = this.menuOptions()[this.menuActiveIndex()];
         return option ? filterOptionDomId(option.id) : undefined;
@@ -211,6 +224,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
             this.overlay.close();
         }
     }
+
+    /** The element that had the focus when the palette opened, and the page it was on. */
+    private focusOrigin?: { element: HTMLElement; url: string };
 
     /** The available tabs of the one course the search is scoped to, which decide the guarded course pages it may offer. */
     private readonly scopedCourseTabs = signal<{ courseId: number; tabs: CourseAvailableTabs } | undefined>(undefined);
@@ -401,6 +417,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
             const isOpen = this.overlay.isOpen();
             untracked(() => {
                 if (isOpen) {
+                    // The dialog is not rendered yet, so this is still the element the user opened the palette from.
+                    const active = this.document.activeElement;
+                    this.focusOrigin = active instanceof HTMLElement ? { element: active, url: this.router.url } : undefined;
                     this.applyContextFilters();
                     // Home screen: open the guided filter picker so filters are the first thing offered. When a course
                     // context was applied (tokens present), show its scoped results instead of the picker.
@@ -736,6 +755,15 @@ export class GlobalSearchModalComponent implements OnDestroy {
         }
         if (!this.overlay.isOpen()) return;
 
+        if (this.isTypedBeforeInputFocus(event)) {
+            // The dialog focuses the input only after its open animation, so the first letters of a fast typist arrive
+            // while the page still has focus. They go into the search box instead of getting lost.
+            event.preventDefault();
+            this.onSearchInput(this.searchQuery() + event.key);
+            this.focusInput();
+            return;
+        }
+
         // Cmd/Ctrl+F goes to the guided filter picker (OS-appropriate modifier, consistent with Cmd/Ctrl+K).
         // Always preventDefault, including where the shortcut is inert, so the browser find bar can never open
         // on top of the modal; acting only on the initial press keeps auto-repeat quiet.
@@ -826,12 +854,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
         return arrow && (event.metaKey || event.altKey || event.ctrlKey || event.shiftKey);
     }
 
-    /** Highlights a chip from the keyboard and remembers where focus and the cursor were at that moment. */
-    private highlightChip(index: number) {
-        this.selectedChip.set(index);
-        this.recordChipKeyOrigin();
-    }
-
     private recordChipKeyOrigin() {
         const target = this.document.activeElement;
         const input = target instanceof HTMLInputElement ? target : undefined;
@@ -853,7 +875,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         return (input?.selectionStart ?? null) === origin.selectionStart && (input?.selectionEnd ?? null) === origin.selectionEnd;
     }
 
-    /** Down walks the zones: search input -> chips row -> results list. */
+    /** Down walks the zones: search input -> results list; a highlighted chip goes to the results too. */
     private moveDown() {
         if (this.selectedChip() >= 0) {
             // Chips -> results.
@@ -862,19 +884,16 @@ export class GlobalSearchModalComponent implements OnDestroy {
             return;
         }
         if (this.selectedIndex() < 0) {
-            // Search input -> chips (if any), otherwise straight to results.
-            if (this.tokens().length > 0) {
-                this.highlightChip(0);
-            } else {
-                this.selectedIndex.set(this.maxIndex() >= 0 ? 0 : -1);
-            }
+            // Search input -> results, as in other command palettes. The chips are reached with Backspace or a click, so
+            // the course chip a course page adds does not cost an extra key press before the first result.
+            this.selectedIndex.set(this.maxIndex() >= 0 ? 0 : -1);
             return;
         }
         // Within results.
         this.selectedIndex.update((i) => Math.min(i + 1, this.maxIndex()));
     }
 
-    /** Up walks the zones: results list -> chips row -> search input. */
+    /** Up walks the zones: results list -> search input; a highlighted chip goes back to the search input. */
     private moveUp() {
         if (this.selectedChip() >= 0) {
             // Chips -> search input.
@@ -886,13 +905,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
             return;
         }
         if (this.selectedIndex() === 0) {
-            // Top of results -> chips (if any), otherwise back to the search input.
+            // Top of results -> back to the search input.
             this.selectedIndex.set(-1);
-            if (this.tokens().length > 0) {
-                this.highlightChip(this.tokens().length - 1);
-            } else {
-                this.focusInput();
-            }
+            this.focusInput();
         }
     }
 
@@ -911,6 +926,29 @@ export class GlobalSearchModalComponent implements OnDestroy {
         } else {
             this.selectedChip.set(Math.min(index, remaining - 1));
         }
+    }
+
+    /**
+     * Runs when the dialog has finished closing and released its focus trap. A palette closed without opening anything
+     * (Escape, the shortcut, a click outside) gives the focus back to where the user opened it from; after opening a
+     * result, the new page owns the focus.
+     */
+    protected onDialogHide(): void {
+        this.overlay.close();
+        const origin = this.focusOrigin;
+        this.focusOrigin = undefined;
+        if (origin && origin.url === this.router.url && origin.element.isConnected && origin.element !== this.document.body) {
+            origin.element.focus();
+        }
+    }
+
+    /** A printable key typed while the focus is still outside the open palette. */
+    private isTypedBeforeInputFocus(event: KeyboardEvent): boolean {
+        if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey || this.operator()) {
+            return false;
+        }
+        const active = this.document.activeElement;
+        return !active || !active.closest('.p-dialog');
     }
 
     private isToggleShortcut(event: KeyboardEvent): boolean {

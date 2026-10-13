@@ -3,6 +3,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faChevronUp, faCircleInfo, faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { Router, RouterLink } from '@angular/router';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -384,12 +385,15 @@ export class GlobalSearchIrisAnswerComponent {
                     return timer(IRIS_ANSWER_DEBOUNCE_MS).pipe(
                         switchMap(() =>
                             this.irisSearchAnswerService.ask(query, 5, courseIds, excludeCourseIds).pipe(
-                                catchError(() => {
-                                    // A failure is worth saying out loud: it is the one ending the reader can act on.
+                                catchError((error: unknown) => {
                                     // A reveal timer scheduled by an earlier partial on this same run must not keep
                                     // firing against a run the UI has already moved past.
                                     this.clearTimers();
-                                    this.phase.set('failed');
+                                    // Forbidden means Iris is off in every course in scope: there is nothing to answer, so the
+                                    // card stays hidden instead of reporting a problem the reader cannot fix with a retry.
+                                    const irisUnavailable = error instanceof HttpErrorResponse && error.status === HttpStatusCode.Forbidden;
+                                    // Any other failure is worth saying out loud: it is the one ending the reader can act on.
+                                    this.phase.set(irisUnavailable ? 'idle' : 'failed');
                                     return of(undefined);
                                 }),
                             ),
