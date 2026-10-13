@@ -536,7 +536,7 @@ that a creation which failed half-way left out is added by the next update of it
 programming exercise is the exception: the exercise module has no use for it after the creation, so no update repairs it,
 and a row that a failed creation left out, or that a node still running the previous version never wrote because it stored
 the exercise during a rolling deployment, reads as the defaults in the Metis module, which inserts it before it first
-writes one.
+writes one: saving the Metis settings or a tutorial-group window calls `MetisExerciseConfigRepository.ensureExistsFor`.
 
 Two of them carry a further constraint. `BuildPlan` is shared rather than owned: several
 programming exercises point at one build plan, so there is no single parent for it to name, and "at
