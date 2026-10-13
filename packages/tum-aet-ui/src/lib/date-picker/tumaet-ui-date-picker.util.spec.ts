@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { buildMonthMatrix, combineDateAndTime, formatDisplay, matchesDisplayFormat, parseDisplay, valuesEqual } from './tumaet-ui-date-picker.util';
+import { buildMonthMatrix, combineDateAndTime, formatDisplay, matchesDisplayFormat, normalizeDisplayText, parseDisplay, valuesEqual } from './tumaet-ui-date-picker.util';
 
 describe('tumaet-ui-date-picker util', () => {
     it('round-trips a valid date+time', () => {
@@ -22,17 +22,25 @@ describe('tumaet-ui-date-picker util', () => {
     it('reads pasted text whose whitespace differs from the plain space the picker displays', () => {
         const expected = '13.06.2026 08:30';
         for (const text of ['13.06.2026\u00a008:30', '13.06.2026  08:30', '13.06.2026\t08:30', ' 13.06.2026 08:30 ', '\u00a013.06.2026 08:30\u00a0']) {
+            expect(normalizeDisplayText(text)).toBe(expected);
             expect(formatDisplay(parseDisplay(text)!)).toBe(expected);
-            expect(matchesDisplayFormat(text, false)).toBe(true);
+            expect(matchesDisplayFormat(normalizeDisplayText(text), false)).toBe(true);
         }
         expect(parseDisplay('13.06.2026\u00a0', false, undefined, true)?.format('DD.MM.YYYY')).toBe('13.06.2026');
-        expect(matchesDisplayFormat('\u00a008:30', true)).toBe(true);
+        expect(matchesDisplayFormat(normalizeDisplayText('\u00a008:30'), true)).toBe(true);
+    });
+
+    it('normalizes whitespace without touching the characters in between', () => {
+        expect(normalizeDisplayText('')).toBe('');
+        expect(normalizeDisplayText(' \t\u00a0 ')).toBe('');
+        expect(normalizeDisplayText('a')).toBe('a');
+        expect(normalizeDisplayText('  a \u00a0 b\tc  ')).toBe('a b c');
     });
 
     it('still rejects text that only looks like a date once whitespace is ignored', () => {
         expect(parseDisplay('13.06.202 6 08:30')).toBeUndefined();
-        expect(matchesDisplayFormat('13.06.2026 0 8:30', false)).toBe(false);
-        expect(matchesDisplayFormat('13.06.2026 08:30', false, true)).toBe(false);
+        expect(matchesDisplayFormat(normalizeDisplayText('13.06.2026 0 8:30'), false)).toBe(false);
+        expect(matchesDisplayFormat(normalizeDisplayText('13.06.2026 08:30'), false, true)).toBe(false);
     });
 
     it('builds a 6x7 Monday-first month matrix including the boundaries', () => {

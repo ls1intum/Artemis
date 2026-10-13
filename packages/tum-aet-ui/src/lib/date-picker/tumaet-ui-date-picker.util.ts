@@ -24,7 +24,7 @@ export function displayFormat(timeOnly: boolean, dateOnly = false): string {
  * Trims the text and turns every run of whitespace into one space. Pasted dates often carry a non-breaking space between the date and
  * the time (Word, Outlook, web pages) or a doubled one, which the picker accepts as the plain space it displays.
  */
-function normalizeDisplayText(text: string): string {
+export function normalizeDisplayText(text: string): string {
     // A plain loop rather than a regular expression: the text is typed or pasted by the user.
     const words: string[] = [];
     let word = '';
@@ -44,9 +44,8 @@ function normalizeDisplayText(text: string): string {
     return words.join(' ');
 }
 
-/** Whether `text` is shaped like a complete entry for that format, used to flag an incomplete one on blur. */
-export function matchesDisplayFormat(entry: string, timeOnly: boolean, dateOnly = false): boolean {
-    const text = normalizeDisplayText(entry);
+/** Whether `text`, already passed through {@link normalizeDisplayText}, is shaped like a complete entry for that format, used to flag an incomplete one on blur. */
+export function matchesDisplayFormat(text: string, timeOnly: boolean, dateOnly = false): boolean {
     return dateOnly ? DATE_REGEX.test(text) : timeOnly ? TIME_REGEX.test(text) : DISPLAY_REGEX.test(text);
 }
 

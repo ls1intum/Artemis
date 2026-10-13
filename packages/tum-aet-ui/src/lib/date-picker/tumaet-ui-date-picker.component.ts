@@ -29,7 +29,7 @@ import { TumAetUiButtonComponent } from '../button/tumaet-ui-button.component';
 import { TumAetUiOverlayService } from '../overlay/tumaet-ui-overlay.service';
 import { TumAetUiTooltipDirective } from '../tooltip/tumaet-ui-tooltip.directive';
 import { TumAetUiCalendarComponent } from './tumaet-ui-calendar.component';
-import { TIME_REGEX, combineDateAndTime, formatDisplay, matchesDisplayFormat, parseDisplay, valuesEqual } from './tumaet-ui-date-picker.util';
+import { TIME_REGEX, combineDateAndTime, formatDisplay, matchesDisplayFormat, normalizeDisplayText, parseDisplay, valuesEqual } from './tumaet-ui-date-picker.util';
 import { TumAetUiTranslatePipe } from '../i18n/tumaet-ui-translate.pipe';
 
 let nextDatePickerId = 0;
@@ -230,7 +230,7 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     }
 
     protected onBlur(raw: string): void {
-        const trimmed = raw.trim();
+        const trimmed = normalizeDisplayText(raw);
         const current = this.value();
         if (trimmed && !matchesDisplayFormat(trimmed, this.timeOnly(), this.dateOnly())) {
             this.isInputValid.set(false);
