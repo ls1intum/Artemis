@@ -162,7 +162,7 @@ class GocastConnectorServiceTest {
 
     @ParameterizedTest
     @ValueSource(strings = { "Q0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQ0M", "685AEBD3-45BA-4D4C-91A5-B181932F2FF5", "{685aebd3-45ba-4d4c-91a5-b181932f2ff5}",
-            "urn:uuid:685aebd3-45ba-4d4c-91a5-b181932f2ff5", "685aebd3-45ba-1d4c-91a5-b181932f2ff5", "685aebd3-45ba-4d4c-c1a5-b181932f2ff5", "1-2-4-8-16" })
+            "urn:uuid:685aebd3-45ba-4d4c-91a5-b181932f2ff5", "685aebd3-45ba-1d4c-91a5-b181932f2ff5", "685aebd3-45ba-4d4c-c1a5-b181932f2ff5", "1-2-4000-8000-16" })
     void rejectsApprovalCodesThatAreNotCanonicalVersion4Uuids(String code) {
         assertThatThrownBy(() -> connector.redeemApproval(17, STATE, code)).isInstanceOf(IllegalArgumentException.class);
         server.verify();

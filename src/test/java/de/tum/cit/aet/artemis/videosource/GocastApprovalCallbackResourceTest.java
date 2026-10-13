@@ -103,6 +103,16 @@ class GocastApprovalCallbackResourceTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
+    void malformedApprovalCodeReturnsSafeGenericPageWithPrivacyHeaders() throws Exception {
+        when(gocastBindingService.completeApproval("state", "code")).thenThrow(new IllegalArgumentException("code must be a canonical version 4 UUID"));
+
+        var response = performCallback().andExpect(status().isOk()).andExpect(header().string("Cache-Control", "no-store"))
+                .andExpect(header().string("Referrer-Policy", "no-referrer")).andReturn().getResponse();
+
+        assertThat(response.getContentAsString()).contains("Connection not completed").doesNotContain("course-management");
+    }
+
+    @Test
     void unexpectedDatabaseFailureKeepsPrivacyHeadersOnTheActualHttpErrorResponse() throws Exception {
         when(gocastBindingService.completeApproval("state", "code")).thenThrow(new DataAccessResourceFailureException("database unavailable"));
 

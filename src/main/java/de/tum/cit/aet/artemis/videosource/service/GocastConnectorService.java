@@ -79,7 +79,7 @@ public class GocastConnectorService {
      *
      * @param integrationId the integration identity saved with the local attempt
      * @param state         the local opaque state
-     * @param code          the single-use redeem code
+     * @param code          the single-use redeem code, a canonical version 4 UUID
      * @return the verified integration, grant, and course data
      */
     public GocastVerifiedCourseDTO redeemApproval(long integrationId, String state, String code) {
