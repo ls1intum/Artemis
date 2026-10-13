@@ -5,6 +5,7 @@ import {
     faCalendarCheck,
     faCheckDouble,
     faComment,
+    faCompass,
     faFileUpload,
     faFont,
     faGraduationCap,
@@ -17,6 +18,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
+import { COURSE_PAGE_TYPE } from 'app/core/navbar/global-search/models/course-page-results.util';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -135,6 +137,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faHashtag = faHashtag;
 
     protected getIconForType(type?: string, badge?: string): IconDefinition {
+        if (type === COURSE_PAGE_TYPE) {
+            return faCompass;
+        }
         if (type === LECTURE_CONTENT_TYPE) {
             return faPhotoFilm;
         }
@@ -169,6 +174,15 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     }
 
     protected navigateToResult(result: GlobalSearchResult) {
+        // A course page carries its route, since the palette offers it itself and no entity stands behind it.
+        if (result.type === COURSE_PAGE_TYPE) {
+            const link = result.metadata?.['link'];
+            if (link) {
+                void this.router.navigate([link]);
+            }
+            this.overlay.close();
+            return;
+        }
         // A content hit points at a slide or a video timestamp, so it carries its own deep link instead of an entity id.
         if (result.type === LECTURE_CONTENT_TYPE) {
             const link = result.metadata?.['link'];

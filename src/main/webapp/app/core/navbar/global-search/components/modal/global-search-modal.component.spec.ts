@@ -1404,6 +1404,32 @@ describe('GlobalSearchModalComponent', () => {
             expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise', undefined, [42], undefined);
         });
 
+        it('offers a matching page of the one course in scope before the results', () => {
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 42, title: 'Intro to CS' });
+            Object.defineProperty(router, 'url', { get: () => '/courses/42', configurable: true });
+            mockSearchService.globalSearch.mockReturnValue(of([{ id: '1', type: 'exercise', title: 'Grade calculator' } as GlobalSearchResult]));
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            component['onSearchInput']('grades');
+            vi.advanceTimersByTime(300);
+
+            expect(component['results']().map((result) => result.type)).toEqual(['course_page', 'exercise']);
+            expect(component['results']()[0].metadata?.['link']).toBe('/courses/42/statistics');
+        });
+
+        it('offers no course page without a single course in scope', () => {
+            mockSearchService.globalSearch.mockReturnValue(of([]));
+            Object.defineProperty(router, 'url', { get: () => '/dashboard', configurable: true });
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            component['onSearchInput']('grades');
+            vi.advanceTimersByTime(300);
+
+            expect(component['results']()).toEqual([]);
+        });
+
         it('should pass excludeCourseIds to globalSearch for a negated course token', () => {
             mockSearchService.globalSearch.mockReturnValue(of([]));
             mockSearchOverlayService.isOpen.set(true);
