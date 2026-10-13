@@ -195,6 +195,16 @@
                     "tutorialPeriodEnd": "Ende Tutoriumsperiode",
                     "location": "Ort"
                 },
+                "placeholder": {
+                    "title": "z. B. Dienstag 14:00 Gruppe 3",
+                    "tutor": "Tutor auswählen",
+                    "language": "z. B. Englisch",
+                    "mode": "Modus auswählen",
+                    "campus": "z. B. Garching",
+                    "capacity": "z. B. 30",
+                    "additionalInformation": "z. B. Bring deinen Laptop mit",
+                    "location": "z. B. Raum 00.08.038"
+                },
                 "validationError": {
                     "titleContent": "Der Titel muss mit einem Buchstaben oder einer Ziffer anfangen und darf sonst nur Buchstaben, Ziffern, Strichpunkte, Leerzeichen und Bindestriche enthalten.",
                     "titleLength": "Titel darf eine maximale Länge von 19 Zeichen haben. Das sytsem entfernt automatisch führende und abschließende Whitespaces.",
@@ -203,16 +213,20 @@
                     "languageLength": "Sprache darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen.",
                     "additionalInformationLength": "Zusätzliche Information darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen.",
                     "firstSessionStartRequired": "Bitte wähle ein Zeitpunkt.",
+                    "firstSessionStartInvalid": "Bitte gib ein gültiges Datum mit Uhrzeit ein.",
                     "firstSessionEndRequired": "Bitte wähle ein Zeitpunkt.",
+                    "firstSessionEndInvalid": "Bitte gib ein gültiges Datum mit Uhrzeit ein.",
                     "firstSessionEndNotAfterStart": "Das Ende der Session muss nach dem Anfang liegen.",
                     "firstSessionEndNotOnSameDayAsStart": "Das Ende der ersten Session muss am selben Tag sein wie der Anfang.",
                     "teachingPeriodRequired": "Bitte wähle ein Zeitpunkt.",
+                    "tutorialPeriodEndInvalid": "Bitte gib ein gültiges Datum ein.",
                     "teachingPeriodNotAfterFirstSessionStart": "Das Ende der Tutoriumsperiode muss nach dem Anfang der ersten Session liegen.",
                     "teachingPeriodMoreThanTwoYearsAfterFirstSessionStart": "Das Ende der Tutoriumsperiode darf höchstens 2 Jahre nach dem Beginn der ersten Session liegen.",
                     "teachingPeriodNotAfterFirstSessionEnd": "Das Ende der Tutoriumsperiode muss nach dem Ende der ersten Session liegen.",
                     "tutorRequired": "Bitte wähle ein Tutor.",
                     "locationRequired": "Bitte wähle einen Ort.",
-                    "locationLength": "Ort darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen."
+                    "locationLength": "Ort darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen.",
+                    "noChanges": "Ändere etwas, bevor du speicherst."
                 },
                 "networkError": {
                     "updateGroup": "Beim Bearbeiten der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
