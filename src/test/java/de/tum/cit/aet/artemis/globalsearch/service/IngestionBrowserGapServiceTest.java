@@ -121,7 +121,7 @@ class IngestionBrowserGapServiceTest extends AbstractProgrammingIntegrationLocal
         Lecture lecture = lectureUtilService.createLecture(course);
         pdfUnit = seedUnitWithAttachment(attachmentVideoUnitRepository, attachmentRepository, lecture, "Slides unit", "attachments/attachment-unit/slides.pdf",
                 AttachmentType.FILE);
-        videoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, lecture, "Video unit", "https://video.example/lecture");
+        videoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, lecture, "Video unit", "https://www.youtube.com/watch?v=gapservice1");
 
         // Indexed: the course, the lecture, one of the two exercises, both units. The second exercise is deliberately
         // absent, so it is the one the browser must name.
