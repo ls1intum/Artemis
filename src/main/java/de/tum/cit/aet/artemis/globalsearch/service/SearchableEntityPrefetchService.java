@@ -62,11 +62,11 @@ public class SearchableEntityPrefetchService {
         if (!filterResult.hasAccess()) {
             return List.of();
         }
-        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchEntityCandidatesForAnswer(query, filterResult.filter(), limit);
-        Map<Long, String> courseNameById = resolveCourseNames(rawResults, filterResult);
-        List<SearchableEntityCandidateDTO> candidates = new ArrayList<>(rawResults.size());
-        for (Map<String, Object> properties : rawResults) {
-            candidates.add(toCandidate(properties, courseNameById, filterResult.editorCourseIds(), filterResult.staffCourseIds()));
+        List<SearchableEntityWeaviateService.AnswerCandidate> hits = searchableEntityWeaviateService.searchEntityCandidatesForAnswer(query, filterResult.filter(), limit);
+        Map<Long, String> courseNameById = resolveCourseNames(hits.stream().map(SearchableEntityWeaviateService.AnswerCandidate::properties).toList(), filterResult);
+        List<SearchableEntityCandidateDTO> candidates = new ArrayList<>(hits.size());
+        for (SearchableEntityWeaviateService.AnswerCandidate hit : hits) {
+            candidates.add(toCandidate(hit.properties(), hit.passage(), courseNameById, filterResult.editorCourseIds(), filterResult.staffCourseIds()));
         }
         return candidates;
     }
@@ -90,8 +90,8 @@ public class SearchableEntityPrefetchService {
         return names;
     }
 
-    private static SearchableEntityCandidateDTO toCandidate(Map<String, Object> properties, Map<Long, String> courseNameById, @Nullable Set<Long> editorCourseIds,
-            @Nullable Set<Long> staffCourseIds) {
+    private static SearchableEntityCandidateDTO toCandidate(Map<String, Object> properties, @Nullable String passage, Map<Long, String> courseNameById,
+            @Nullable Set<Long> editorCourseIds, @Nullable Set<Long> staffCourseIds) {
         String entityType = asString(properties.get(SearchableEntitySchema.Properties.TYPE));
         Long entityId = asLong(properties.get(SearchableEntitySchema.Properties.ENTITY_ID));
         Long courseId = asLong(properties.get(SearchableEntitySchema.Properties.COURSE_ID));
@@ -121,7 +121,7 @@ public class SearchableEntityPrefetchService {
                 asIsoDate(properties.get(SearchableEntitySchema.Properties.EXAM_END_DATE)), asDouble(properties.get(SearchableEntitySchema.Properties.MAX_POINTS)),
                 asLong(properties.get(SearchableEntitySchema.Properties.QUIZ_DURATION)), asString(properties.get(SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE)),
                 asString(properties.get(SearchableEntitySchema.Properties.EXERCISE_TYPE)), asString(properties.get(SearchableEntitySchema.Properties.UNIT_TYPE)),
-                asString(properties.get(SearchableEntitySchema.Properties.FAQ_STATE)), asBoolean(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC)));
+                asString(properties.get(SearchableEntitySchema.Properties.FAQ_STATE)), asBoolean(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC)), passage);
     }
 
     /**

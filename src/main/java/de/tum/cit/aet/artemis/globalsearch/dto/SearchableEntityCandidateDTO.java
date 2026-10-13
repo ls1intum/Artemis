@@ -30,10 +30,11 @@ import org.jspecify.annotations.Nullable;
  * @param unitType            the lecture unit type
  * @param faqState            the FAQ state (ACCEPTED, REJECTED, PROPOSED)
  * @param channelIsPublic     whether the channel is public (channels)
+ * @param passage             the passage of the entity that matched the query, when it could be determined; Iris shows it instead of the beginning of the description
  */
 public record SearchableEntityCandidateDTO(String entityType, @Nullable Long entityId, @Nullable Long courseId, @Nullable String courseName, @Nullable String title,
         @Nullable String description, @Nullable String shortName, @Nullable String link, @Nullable String releaseDate, @Nullable String startDate, @Nullable String dueDate,
         @Nullable String endDate, @Nullable String visibleDate, @Nullable String examStartDate, @Nullable String examEndDate, @Nullable Double maxPoints,
         @Nullable Long quizDurationSeconds, @Nullable String programmingLanguage, @Nullable String exerciseType, @Nullable String unitType, @Nullable String faqState,
-        @Nullable Boolean channelIsPublic) {
+        @Nullable Boolean channelIsPublic, @Nullable String passage) {
 }
