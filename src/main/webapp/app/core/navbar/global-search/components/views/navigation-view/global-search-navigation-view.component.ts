@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, viewChild, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChild, viewChildren } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
 import {
     faBook,
@@ -58,6 +58,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly excludeCourseIds = input<number[]>([]);
     /** True while the slides and videos filter is the active one, which searches content instead of metadata. */
     readonly contentSearchActive = input<boolean>(false);
+    /** Whether the list was cut at the result limit and more results can be loaded. */
+    readonly canShowMore = input<boolean>(false);
+    readonly showMore = output<void>();
 
     /**
      * True when the query is too short to send to the server (1-2 chars).
@@ -203,7 +206,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
                 if (result.id) this.navigateToExam(result, courseId);
                 break;
             case 'faq':
-                void this.router.navigate(['/courses', courseId, 'faq']);
+                // The FAQ page scrolls to the FAQ named by faqId.
+                void this.router.navigate(['/courses', courseId, 'faq'], result.id ? { queryParams: { faqId: result.id } } : undefined);
                 break;
             case 'channel':
                 if (result.id) this.navigateToChannel(courseId, result.id);
@@ -264,7 +268,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private navigateToLectureUnit(result: GlobalSearchResult, courseId: string) {
         const lectureId = result.metadata?.['lectureId'];
         if (lectureId) {
-            this.navigateToLecture(courseId, lectureId);
+            // The same deep link the slide and video hits use, so the lecture page opens at the unit.
+            void this.router.navigate(['/courses', courseId, 'lectures', lectureId], { queryParams: { unit: result.id }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
         }
     }
 
@@ -301,13 +306,14 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
-        // A modified Enter (Cmd/Ctrl+Enter) continues the Iris answer in the chat; it never opens a result.
+        // A modified Enter (Cmd/Ctrl+Enter) continues the Iris answer in the chat; it never opens a result. Enter on a
+        // focused control (the Iris card, or "Show more results" reached with Tab) belongs to that control.
         if (
             event.key !== 'Enter' ||
             event.metaKey ||
             event.ctrlKey ||
             event.defaultPrevented ||
-            (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))
+            (event.target instanceof Element && (event.target.closest('jhi-global-search-iris-answer') || event.target.closest('button')))
         ) {
             return;
         }

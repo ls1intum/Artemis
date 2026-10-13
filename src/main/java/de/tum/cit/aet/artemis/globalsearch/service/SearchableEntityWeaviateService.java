@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicLong;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -35,12 +37,15 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.FaqSearchableEnt
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
+import de.tum.cit.aet.artemis.globalsearch.exception.EmbeddingFailedException;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
-import io.weaviate.client6.v1.api.WeaviateApiException;
+import de.tum.cit.aet.artemis.globalsearch.service.embedding.SearchableEntityEmbeddingClient;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
 import io.weaviate.client6.v1.api.collections.query.Filter;
+import io.weaviate.client6.v1.api.collections.query.Hybrid;
+import io.weaviate.client6.v1.api.collections.query.NearVector;
 
 /**
  * Unified service for synchronizing and searching every indexable entity type (exercise, lecture,
@@ -75,6 +80,13 @@ public class SearchableEntityWeaviateService {
      * short-name matches (exercises only) count twice as much. Prevents long problem statements from
      * outscoring short, on-point titles.
      */
+    /**
+     * Weight of the vector score in hybrid search (1 = vectors only, 0 = keywords only), combined with relative score
+     * fusion; the values the chunked embeddings were evaluated with. It must be set explicitly: without it, the Weaviate
+     * client sends no alpha and the server falls back to 0, which silently turns hybrid search into keyword search.
+     */
+    static final float HYBRID_ALPHA = 0.75f;
+
     private static final String[] QUERY_PROPERTIES = { SearchableEntitySchema.Properties.TITLE + "^3", SearchableEntitySchema.Properties.SHORT_NAME + "^2",
             SearchableEntitySchema.Properties.DESCRIPTION + "^1" };
 
@@ -84,6 +96,8 @@ public class SearchableEntityWeaviateService {
      * than any real course while still terminating a pathological non-converging loop.
      */
     private static final int MAX_DELETE_ITERATIONS = 1000;
+
+    private static final long KEYWORD_FALLBACK_WARNING_INTERVAL_MILLIS = 60_000;
 
     private final WeaviateService weaviateService;
 
@@ -97,20 +111,36 @@ public class SearchableEntityWeaviateService {
 
     private final ApplicationEventPublisher eventPublisher;
 
-    private final boolean useHybridSearch;
+    private final SearchableEntityVectorWriter vectorWriter;
+
+    private final SearchableEntityEmbeddingClient embeddingClient;
+
+    private final AtomicLong lastKeywordFallbackWarning = new AtomicLong();
 
     public SearchableEntityWeaviateService(WeaviateService weaviateService, WeaviateOutboxRepository outboxRepository, SearchableEntityResolver resolver, JsonMapper objectMapper,
-            SearchableEntityContentHasher contentHasher, ApplicationEventPublisher eventPublisher) {
+            SearchableEntityContentHasher contentHasher, ApplicationEventPublisher eventPublisher, SearchableEntityVectorWriter vectorWriter,
+            SearchableEntityEmbeddingClient embeddingClient) {
         this.weaviateService = weaviateService;
         this.outboxRepository = outboxRepository;
         this.resolver = resolver;
         this.objectMapper = objectMapper;
         this.contentHasher = contentHasher;
         this.eventPublisher = eventPublisher;
-        this.useHybridSearch = weaviateService.isVectorizerAvailable();
+        this.vectorWriter = vectorWriter;
+        this.embeddingClient = embeddingClient;
     }
 
     // ----- Search path -----
+
+    /**
+     * A candidate of the Iris answer path: the hit's properties and, when it can be determined, the passage of the hit
+     * that matched the query.
+     *
+     * @param properties the hit's stored properties
+     * @param passage    the matched passage, or null
+     */
+    public record AnswerCandidate(Map<String, Object> properties, @Nullable String passage) {
+    }
 
     /**
      * Entity recall for the Iris ANSWER path. Unlike {@link #searchSearchableEntities(String, Filter, int)},
@@ -118,39 +148,26 @@ public class SearchableEntityWeaviateService {
      * neutrally: the answer path's queries are question-shaped ("what are some quizzes ..."), title
      * boosting drags in name-matches over meaning-matches, and the cross-encoder downstream is the
      * component that judges relevance. Recall here should be broad and dumb.
+     * <p>
+     * Each candidate also carries the passage that matched the query (see {@link SearchableEntityPassages}), which Iris
+     * shows its reranker instead of the beginning of a long description.
      *
      * @param query  the user's question
      * @param filter the compound access filter
      * @param limit  the maximum number of candidates
-     * @return the raw property maps of the candidates
+     * @return the candidates with their properties and matched passages
      */
-    public List<Map<String, Object>> searchEntityCandidatesForAnswer(String query, Filter filter, int limit) {
+    public List<AnswerCandidate> searchEntityCandidatesForAnswer(String query, Filter filter, int limit) {
         try {
             CollectionHandle<Map<String, Object>> collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-            List<WeaviateObject<Map<String, Object>>> objects;
-            if (useHybridSearch) {
-                var result = collection.query.hybrid(query, builder -> {
-                    builder.limit(limit);
-                    if (filter != null) {
-                        builder.filters(filter);
-                    }
-                    return builder;
-                });
-                objects = result.objects();
-            }
-            else {
-                var result = collection.query.bm25(query, builder -> {
-                    builder.limit(limit);
-                    if (filter != null) {
-                        builder.filters(filter);
-                    }
-                    return builder;
-                });
-                objects = result.objects();
-            }
-            List<Map<String, Object>> propertiesList = objects.stream().map(WeaviateObject::properties).toList();
-            propertiesList.forEach(WeaviateDateUtil::normalizeDateProperties);
-            return propertiesList;
+            Optional<float[]> queryVector = embedQuery(query);
+            List<WeaviateObject<Map<String, Object>>> objects = queryVector.isPresent() ? hybridOrKeyword(collection, query, queryVector.get(), filter, limit, null, true)
+                    : keyword(collection, query, filter, limit, null);
+            return objects.stream().map(object -> {
+                WeaviateDateUtil.normalizeDateProperties(object.properties());
+                String passage = queryVector.map(vector -> SearchableEntityPassages.matchedPassage(object.properties(), object.vectors(), vector)).orElse(null);
+                return new AnswerCandidate(object.properties(), passage);
+            }).toList();
         }
         catch (Exception e) {
             log.error("Failed to search entity candidates (query length={}): {}", query != null ? query.length() : 0, e.getMessage(), e);
@@ -161,9 +178,9 @@ public class SearchableEntityWeaviateService {
     /**
      * Performs a single unified search against the {@code SearchableEntities} collection.
      * <p>
-     * Uses hybrid (semantic + keyword) search when a vectorizer is available, BM25-only otherwise.
-     * The caller is responsible for passing a compound filter that already encodes the user's per-type
-     * access rules. Must be invoked exactly once per user search request.
+     * Uses hybrid (semantic + keyword) search when Artemis computes embeddings, keyword (BM25) search otherwise or
+     * when the query cannot be embedded in time. The caller is responsible for passing a compound filter that already
+     * encodes the user's per-type access rules. Must be invoked exactly once per user search request.
      *
      * @param query  the search query (may be empty to browse most recent items)
      * @param filter the compound access filter ({@code null} means admin / no filter)
@@ -173,10 +190,8 @@ public class SearchableEntityWeaviateService {
     public List<Map<String, Object>> searchSearchableEntities(String query, Filter filter, int limit) {
         try {
             CollectionHandle<Map<String, Object>> collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-            boolean browse = query == null || query.isBlank();
-
             List<WeaviateObject<Map<String, Object>>> objects;
-            if (browse) {
+            if (query == null || query.isBlank()) {
                 var result = collection.query.fetchObjects(builder -> {
                     builder.limit(limit);
                     if (filter != null) {
@@ -186,27 +201,11 @@ public class SearchableEntityWeaviateService {
                 });
                 objects = result.objects();
             }
-            else if (useHybridSearch) {
-                var result = collection.query.hybrid(query, builder -> {
-                    builder.limit(limit).queryProperties(QUERY_PROPERTIES);
-                    if (filter != null) {
-                        builder.filters(filter);
-                    }
-                    return builder;
-                });
-                objects = result.objects();
-            }
             else {
-                var result = collection.query.bm25(query, builder -> {
-                    builder.limit(limit).queryProperties(QUERY_PROPERTIES);
-                    if (filter != null) {
-                        builder.filters(filter);
-                    }
-                    return builder;
-                });
-                objects = result.objects();
+                Optional<float[]> queryVector = embedQuery(query);
+                objects = queryVector.isPresent() ? hybridOrKeyword(collection, query, queryVector.get(), filter, limit, QUERY_PROPERTIES, false)
+                        : keyword(collection, query, filter, limit, QUERY_PROPERTIES);
             }
-
             List<Map<String, Object>> propertiesList = objects.stream().map(WeaviateObject::properties).toList();
             propertiesList.forEach(WeaviateDateUtil::normalizeDateProperties);
             return propertiesList;
@@ -214,6 +213,80 @@ public class SearchableEntityWeaviateService {
         catch (Exception e) {
             log.error("Failed to search SearchableEntities (query length={}): {}", query != null ? query.length() : 0, e.getMessage(), e);
             throw new WeaviateException("Failed to search SearchableEntities in Weaviate: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Embeds a user query; empty when Artemis computes no embeddings or the embedding request fails or times out, in
+     * which case the search falls back to keyword search.
+     */
+    private Optional<float[]> embedQuery(String query) {
+        if (!embeddingClient.isEnabled()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(embeddingClient.embedQuery(query));
+        }
+        catch (EmbeddingFailedException e) {
+            logKeywordFallback("the query could not be embedded", e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Hybrid search with the given query vector (one vector against the rows' chunk vectors, so a row scores by its best
+     * chunk). If the hybrid request fails, for example while the collection is still the old single-vector one, the
+     * search falls back to keyword search.
+     */
+    private List<WeaviateObject<Map<String, Object>>> hybridOrKeyword(CollectionHandle<Map<String, Object>> collection, String query, float[] queryVector, Filter filter, int limit,
+            String @Nullable [] queryProperties, boolean includeVectors) {
+        try {
+            return collection.query.hybrid(query, builder -> {
+                builder.nearVector(NearVector.of(new float[][] { queryVector })).alpha(HYBRID_ALPHA).fusionType(Hybrid.FusionType.RELATIVE_SCORE).limit(limit);
+                if (queryProperties != null) {
+                    builder.queryProperties(queryProperties);
+                }
+                if (filter != null) {
+                    builder.filters(filter);
+                }
+                if (includeVectors) {
+                    builder.includeVector();
+                }
+                return builder;
+            }).objects();
+        }
+        catch (RuntimeException e) {
+            logKeywordFallback("the hybrid search failed", e);
+            return keyword(collection, query, filter, limit, queryProperties);
+        }
+    }
+
+    private List<WeaviateObject<Map<String, Object>>> keyword(CollectionHandle<Map<String, Object>> collection, String query, Filter filter, int limit,
+            String @Nullable [] queryProperties) {
+        return collection.query.bm25(query, builder -> {
+            builder.limit(limit);
+            if (queryProperties != null) {
+                builder.queryProperties(queryProperties);
+            }
+            if (filter != null) {
+                builder.filters(filter);
+            }
+            return builder;
+        }).objects();
+    }
+
+    /**
+     * Logs a fallback to keyword search at WARN at most once per minute and at DEBUG otherwise, so an outage of the
+     * embedding endpoint does not produce one warning per search.
+     */
+    private void logKeywordFallback(String reason, Exception cause) {
+        long now = System.currentTimeMillis();
+        long last = lastKeywordFallbackWarning.get();
+        if (now - last >= KEYWORD_FALLBACK_WARNING_INTERVAL_MILLIS && lastKeywordFallbackWarning.compareAndSet(last, now)) {
+            log.warn("Global search uses keyword search because {}: {}", reason, cause.getMessage());
+        }
+        else {
+            log.debug("Global search uses keyword search because {}: {}", reason, cause.getMessage());
         }
     }
 
@@ -583,72 +656,95 @@ public class SearchableEntityWeaviateService {
      * @return the SHA-256 of the property map written for an upsert, or empty when the entry resolved to a delete
      */
     Optional<String> applyOutboxEntry(WeaviateOutboxEntry entry) {
-        return switch (entry.getOperation()) {
-            case UPSERT -> applyUpsert(entry);
-            case DELETE_ENTITY -> applyReconcileDeleteOrDelete(entry);
-            case DELETE_POSTS_FOR_CHANNEL -> {
-                doDeletePostsForChannel(longParam(entry, "channelId"), entry.getId());
-                yield Optional.empty();
-            }
-            case DELETE_POSTS_FOR_COURSE -> {
-                doDeletePostsForCourse(longParam(entry, "courseId"), entry.getId());
-                yield Optional.empty();
-            }
-            case DELETE_ANSWER_POSTS_FOR_POST -> {
-                doDeleteAnswerPostsForPost(longParam(entry, "postId"), entry.getId());
-                yield Optional.empty();
-            }
-            case DELETE_ALL_FOR_COURSE -> {
-                doDeleteAllForCourse(longParam(entry, "courseId"), entry.getId());
-                yield Optional.empty();
-            }
-            case DELETE_LECTURE_UNITS_FOR_LECTURE -> {
-                doDeleteLectureUnitsForLecture(longParam(entry, "lectureId"), entry.getId());
-                yield Optional.empty();
-            }
-        };
+        PreparedEntry prepared = prepareOutboxEntry(entry);
+        if (prepared instanceof PreparedUpsert upsert) {
+            vectorWriter.embedAndWrite(upsert.row());
+            return Optional.of(upsert.contentHash());
+        }
+        return applyPrepared(prepared, Map.of());
     }
 
     /**
-     * Re-derives the entity and either upserts its current property map (returning the written content hash) or,
-     * when it no longer exists or is no longer indexable, converges to a delete (returning {@link Optional#empty()}).
+     * An outbox entry resolved against the database and ready to be applied. Separating this from the write lets the
+     * dispatcher embed the missing chunks of several background entries in one request, within its budget.
+     */
+    sealed interface PreparedEntry permits PreparedUpsert, PreparedOther {
+
+        WeaviateOutboxEntry entry();
+    }
+
+    /**
+     * An upsert whose row is ready except for the vectors of its missing chunks.
+     *
+     * @param entry       the outbox entry
+     * @param row         the prepared row
+     * @param contentHash the hash of the re-derived property map, recorded in the ledger after the write
+     */
+    record PreparedUpsert(WeaviateOutboxEntry entry, SearchableEntityVectorWriter.PreparedRow row, String contentHash) implements PreparedEntry {
+    }
+
+    /**
+     * Any other entry: a delete, or an upsert that re-derived to a delete. It needs no embedding.
+     *
+     * @param entry the outbox entry
+     */
+    record PreparedOther(WeaviateOutboxEntry entry) implements PreparedEntry {
+    }
+
+    /**
+     * Resolves an outbox entry against the database. An {@code UPSERT}, and a reconcile-origin {@code DELETE_ENTITY}, re-derive
+     * the entity's current desired state ({@link SearchableEntityResolver}); a present, indexable entity becomes a
+     * {@link PreparedUpsert}, anything else is applied as a delete. See {@link #applyOutboxEntry} for the semantics.
+     *
+     * @param entry the claimed outbox entry
+     * @return the prepared entry
+     */
+    PreparedEntry prepareOutboxEntry(WeaviateOutboxEntry entry) {
+        boolean rederives = entry.getOperation() == WeaviateOutboxOperation.UPSERT || (entry.getOperation() == WeaviateOutboxOperation.DELETE_ENTITY
+                && (entry.getOrigin() == WeaviateOutboxOrigin.RECONCILE_DRIFT || entry.getOrigin() == WeaviateOutboxOrigin.RECONCILE_ORPHAN));
+        if (!rederives) {
+            return new PreparedOther(entry);
+        }
+        Optional<Map<String, Object>> desired = resolver.resolve(entry.getEntityType(), entry.getEntityId());
+        if (desired.isEmpty()) {
+            return new PreparedOther(entry);
+        }
+        Map<String, Object> properties = desired.get();
+        String contentHash = contentHasher.hash(properties);
+        Map<String, Object> propertiesToWrite = new HashMap<>(properties);
+        propertiesToWrite.put(SearchableEntitySchema.Properties.SOURCE_SEQ, entry.getId());
+        propertiesToWrite.put(SearchableEntitySchema.Properties.CONTENT_HASH, contentHash);
+        return new PreparedUpsert(entry, vectorWriter.prepare(entry.getEntityType(), entry.getEntityId(), propertiesToWrite), contentHash);
+    }
+
+    /**
+     * Applies a prepared entry. For an upsert, the vectors of the row's missing chunks must be in {@code embedded}.
      * <p>
      * The written row carries two operational stamps that the re-derived property map does not:
      * {@link SearchableEntitySchema.Properties#SOURCE_SEQ}, equal to this entry's outbox id, so a later bulk delete
      * can fence it (see {@link #writtenBefore}); and {@link SearchableEntitySchema.Properties#CONTENT_HASH}, the
      * same hash recorded in the sync ledger, so a reconcile pass can compare what the index actually holds against
-     * what we believe we wrote instead of trusting the ledger alone.
-     * <p>
-     * Both stamps are added to a copy and are therefore excluded from the hash itself, which is computed over the
-     * re-derived map only. Including them would make the hash either self-referential or different on every write,
-     * and the ledger would flap instead of detecting real content drift.
+     * what we believe we wrote instead of trusting the ledger alone. Both are excluded from the hash itself, which
+     * would otherwise be self-referential or different on every write.
+     *
+     * @param prepared the prepared entry
+     * @param embedded the vectors of the missing chunks of an upsert, by chunk text
+     * @return the written content hash for an upsert, or empty when the entry resolved to a delete
      */
-    private Optional<String> applyUpsert(WeaviateOutboxEntry entry) {
-        Optional<Map<String, Object>> desired = resolver.resolve(entry.getEntityType(), entry.getEntityId());
-        if (desired.isPresent()) {
-            Map<String, Object> properties = desired.get();
-            String contentHash = contentHasher.hash(properties);
-            Map<String, Object> propertiesToWrite = new HashMap<>(properties);
-            propertiesToWrite.put(SearchableEntitySchema.Properties.SOURCE_SEQ, entry.getId());
-            propertiesToWrite.put(SearchableEntitySchema.Properties.CONTENT_HASH, contentHash);
-            upsertRow(entry.getEntityType(), entry.getEntityId(), propertiesToWrite);
-            return Optional.of(contentHash);
+    Optional<String> applyPrepared(PreparedEntry prepared, Map<String, float[]> embedded) {
+        if (prepared instanceof PreparedUpsert upsert) {
+            vectorWriter.write(upsert.row(), embedded);
+            return Optional.of(upsert.contentHash());
         }
-        deleteEntityInternal(entry.getEntityType(), entry.getEntityId());
-        return Optional.empty();
-    }
-
-    /**
-     * A reconcile pass may observe an obsolete removal candidate while a live publication or unarchive already
-     * succeeded. Re-derive those two reconcile origins at dispatch so the stale row converges to the source of
-     * truth. A live delete intentionally remains unconditional because several request paths queue it before
-     * deleting the source entity.
-     */
-    private Optional<String> applyReconcileDeleteOrDelete(WeaviateOutboxEntry entry) {
-        if (entry.getOrigin() == WeaviateOutboxOrigin.RECONCILE_DRIFT || entry.getOrigin() == WeaviateOutboxOrigin.RECONCILE_ORPHAN) {
-            return applyUpsert(entry);
+        WeaviateOutboxEntry entry = prepared.entry();
+        switch (entry.getOperation()) {
+            case UPSERT, DELETE_ENTITY -> deleteEntityInternal(entry.getEntityType(), entry.getEntityId());
+            case DELETE_POSTS_FOR_CHANNEL -> doDeletePostsForChannel(longParam(entry, "channelId"), entry.getId());
+            case DELETE_POSTS_FOR_COURSE -> doDeletePostsForCourse(longParam(entry, "courseId"), entry.getId());
+            case DELETE_ANSWER_POSTS_FOR_POST -> doDeleteAnswerPostsForPost(longParam(entry, "postId"), entry.getId());
+            case DELETE_ALL_FOR_COURSE -> doDeleteAllForCourse(longParam(entry, "courseId"), entry.getId());
+            case DELETE_LECTURE_UNITS_FOR_LECTURE -> doDeleteLectureUnitsForLecture(longParam(entry, "lectureId"), entry.getId());
         }
-        deleteEntityInternal(entry.getEntityType(), entry.getEntityId());
         return Optional.empty();
     }
 
@@ -673,45 +769,7 @@ public class SearchableEntityWeaviateService {
     // ----- Internal Weaviate writes -----
 
     /**
-     * Shared upsert implementation: uses a deterministic UUID derived from {@code (type, entity_id)}
-     * to replace an existing row or insert a new one.
-     * <br>
-     * The deterministic UUID prevents duplicate rows (Weaviate enforces UUID uniqueness), but
-     * the {@code exists()} + {@code insert()} sequence is subject to a TOCTOU race: two concurrent
-     * callers can both observe {@code exists() == false} and then one {@code insert()} fails with
-     * "already exists". We handle this by catching {@link WeaviateApiException} and falling back to
-     * {@code replace()}, consistent with the pattern used in {@code V0ToV1Migration} and
-     * {@code WeaviateMigrationService}. The deterministic UUID is also what makes re-applying an outbox
-     * row idempotent, so retries and duplicate enqueues converge to a single row.
-     */
-    private void upsertRow(String type, Long entityId, Map<String, Object> properties) {
-        try {
-            var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
-            String uuid = WeaviateUuidUtil.deterministicUuid(type, entityId);
-            if (collection.data.exists(uuid)) {
-                collection.data.replace(uuid, r -> r.properties(properties));
-            }
-            else {
-                try {
-                    collection.data.insert(properties, obj -> obj.uuid(uuid));
-                }
-                catch (WeaviateApiException e) {
-                    if (e.getMessage() != null && e.getMessage().contains("already exists")) {
-                        collection.data.replace(uuid, r -> r.properties(properties));
-                    }
-                    else {
-                        throw e;
-                    }
-                }
-            }
-        }
-        catch (IOException e) {
-            throw new WeaviateException("Failed to upsert " + type + " " + entityId + " in Weaviate: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Deletes the single row of one entity by the same deterministic UUID {@link #upsertRow} writes it under. A
+     * Deletes the single row of one entity by the same deterministic UUID {@link SearchableEntityVectorWriter} writes it under. A
      * {@code type} filter cannot be used here: the property is word-tokenized, so {@code type Equal "lecture"} also
      * matches {@code lecture_unit} rows (tokens {@code ["lecture", "unit"]}) and {@code type Equal "post"} also matches
      * {@code answer_post} rows, which would delete an unrelated entity that happens to share the numeric id.
