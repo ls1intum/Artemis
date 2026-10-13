@@ -151,6 +151,10 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
         if ((this.studentSubmission().isSynced && this.studentSubmission().filePath) || (this.examTimeline() && this.studentSubmission().filePath)) {
             // clear submitted file so that it is not displayed in the input (this might be confusing)
             this.submissionFile = undefined;
+            // submissions loaded from the server (e.g. in the exam timeline) only contain the file path, the template needs the download url
+            if (!this.studentSubmission().filePathUrl) {
+                this.studentSubmission().filePathUrl = addPublicFilePrefix(this.studentSubmission().filePath);
+            }
             const filePath = this.studentSubmission().filePath!.split('/');
             const submittedFileName = filePath.last()!;
             this.submittedFileName.set(submittedFileName);
