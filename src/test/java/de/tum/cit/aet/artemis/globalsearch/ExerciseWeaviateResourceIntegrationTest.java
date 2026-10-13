@@ -1198,7 +1198,12 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         void testInstructorSeesTheChannelOfAnUnreleasedExercise() throws Exception {
             indexChannelOfExercise(ZonedDateTime.now().plusDays(2), "staff-sees-exercise-channel");
 
-            assertThat(searchChannelTitles("staff-sees-exercise-channel")).contains("staff-sees-exercise-channel");
+            // The stored row can reach the keyword index a moment later, so the positive check waits for it.
+            var securityContext = SecurityContextHolder.getContext();
+            awaitIndexing(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                assertThat(searchChannelTitles("staff-sees-exercise-channel")).contains("staff-sees-exercise-channel");
+            });
         }
 
         /**
