@@ -1,18 +1,28 @@
 package de.tum.cit.aet.artemis.metis.repository;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import jakarta.persistence.LockModeType;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.metis.config.MetisEnabled;
+import de.tum.cit.aet.artemis.metis.domain.MetisExerciseConfig;
 import de.tum.cit.aet.artemis.metis.domain.MetisGroupWindow;
 import de.tum.cit.aet.artemis.metis.dto.MetisGroupMembershipDTO;
+import de.tum.cit.aet.artemis.metis.dto.MetisGroupWindowDTO;
 import de.tum.cit.aet.artemis.metis.dto.MetisStudentGroupWindowDTO;
 import de.tum.cit.aet.artemis.metis.dto.MetisTutorialGroupDTO;
 
@@ -36,6 +46,53 @@ public interface MetisGroupWindowRepository extends ArtemisJpaRepository<MetisGr
      * @return the windows, empty when every group uses the default window of the configuration
      */
     List<MetisGroupWindow> findAllByExerciseId(long exerciseId);
+
+    /**
+     * Reads the configuration of an exercise, which its windows reference, and locks its row for writing until the surrounding transaction ends.
+     *
+     * @param exerciseId the exercise
+     * @return the configuration, or empty if the exercise has none
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT cfg
+            FROM MetisExerciseConfig cfg
+            WHERE cfg.exerciseId = :exerciseId
+            """)
+    Optional<MetisExerciseConfig> findConfigOfExerciseForUpdate(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Replaces the windows of an exercise with the requested ones, under the lock of the configuration row they reference, so that two replacements never
+     * interleave: the second one reads what the first one stored and removes what it does not request, instead of both reading the windows before either writes
+     * and the result keeping the windows of both. A window of a group that stays keeps its row; the others are deleted or inserted.
+     *
+     * @param exerciseId the exercise
+     * @param requested  the windows to keep, by tutorial group; each tutorial group at most once
+     * @return the stored windows
+     */
+    @Transactional // ok because the read of the stored windows and their replacement have to happen under one lock of the configuration row
+    default List<MetisGroupWindow> replaceAllOfExercise(long exerciseId, List<MetisGroupWindowDTO> requested) {
+        findConfigOfExerciseForUpdate(exerciseId);
+        Map<Long, MetisGroupWindow> storedByGroup = new HashMap<>();
+        for (MetisGroupWindow stored : findAllByExerciseId(exerciseId)) {
+            storedByGroup.put(stored.getTutorialGroupId(), stored);
+        }
+        List<MetisGroupWindow> rows = new ArrayList<>(requested.size());
+        for (MetisGroupWindowDTO window : requested) {
+            MetisGroupWindow row = storedByGroup.remove(window.tutorialGroupId());
+            if (row == null) {
+                row = new MetisGroupWindow();
+                row.setExerciseId(exerciseId);
+                row.setTutorialGroupId(window.tutorialGroupId());
+            }
+            row.setWindowStart(window.windowStart());
+            row.setWindowEnd(window.windowEnd());
+            rows.add(row);
+        }
+        // What is left belongs to groups that are no longer requested
+        deleteAllInBatch(storedByGroup.values());
+        return saveAll(rows);
+    }
 
     /**
      * The windows of an exercise that apply to one student, because the student is registered in their tutorial groups.
