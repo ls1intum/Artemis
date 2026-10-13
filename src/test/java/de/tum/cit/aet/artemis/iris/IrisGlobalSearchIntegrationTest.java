@@ -255,6 +255,45 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     /**
+     * An unscoped administrator travels without a course list, so the courses with Iris switched off cannot be filtered out of one. They have to
+     * travel as exclusions instead, or the Iris answer would draw on them.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void ask_asAdminUnscoped_shouldExcludeTheCoursesWithIrisDisabled() throws Exception {
+        userUtilService.addAdmin(TEST_PREFIX);
+        userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "admin"), AiSelectionDecision.CLOUD_AI);
+        var enabledCourse = courseUtilService.createCourse();
+        var disabledCourse = courseUtilService.createCourse();
+        enableIrisFor(enabledCourse);
+        disableIrisFor(disabledCourse);
+
+        AtomicReference<PyrisGlobalSearchAnswerRequestDTO> sent = new AtomicReference<>();
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(sent::set);
+
+        request.postWithoutResponseBody("/api/iris/search-answer", new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID()), HttpStatus.ACCEPTED);
+
+        assertThat(sent.get().courseIds()).as("an unrestricted caller keeps its no-ceiling search").isNull();
+        assertThat(sent.get().excludeCourseIds()).contains(disabledCourse.getId()).doesNotContain(enabledCourse.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void search_asAdminUnscoped_shouldNotExcludeTheCoursesWithIrisDisabled() throws Exception {
+        userUtilService.addAdmin(TEST_PREFIX);
+        var disabledCourse = courseUtilService.createCourse();
+        disableIrisFor(disabledCourse);
+
+        AtomicReference<PyrisLectureSearchRequestDTO> sent = new AtomicReference<>();
+        irisRequestMockProvider.mockSearchLectures(List.of(), sent::set);
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, null, null), PyrisLectureSearchResultDTO.class,
+                HttpStatus.OK);
+
+        assertThat(sent.get().excludeCourseIds()).isNullOrEmpty();
+    }
+
+    /**
      * A course that never saved Iris settings has no row at all, and the default settings enable Iris. Narrowing must therefore drop only the courses that were explicitly
      * switched off, otherwise content search would silently stop working for every course that never opened the Iris settings page.
      */

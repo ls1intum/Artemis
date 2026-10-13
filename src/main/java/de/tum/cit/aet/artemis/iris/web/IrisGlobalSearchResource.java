@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.web;
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import jakarta.validation.Valid;
 
@@ -155,8 +156,11 @@ public class IrisGlobalSearchResource {
         boolean isUnscoped = requestedCourseIds == null || requestedCourseIds.isEmpty();
         if (isUnscoped && accessContext.unrestricted()) {
             // An unrestricted caller carries no course list to narrow, so Pyris keeps its own no-ceiling behaviour. With no
-            // ceiling to subtract from, it is also the only caller whose exclusions have to be applied by the query itself.
-            return LectureSearchScope.of(null, excludedCourseIds.isEmpty() ? null : excludedCourseIds);
+            // ceiling to subtract from, it is also the only caller whose exclusions have to be applied by the query itself,
+            // including the courses with Iris switched off when the Iris answer asks.
+            var hiddenCourseIds = onlyIrisEnabled ? Stream.concat(excludedCourseIds.stream(), irisSettingsService.findCourseIdsWithIrisDisabled().stream()).distinct().toList()
+                    : excludedCourseIds;
+            return LectureSearchScope.of(null, hiddenCourseIds.isEmpty() ? null : hiddenCourseIds);
         }
         // An unscoped request is narrowed from every course the caller can access, a scoped one from what it asked for.
         var candidateCourseIds = isUnscoped ? accessContext.courseIds() : requestedCourseIds;
