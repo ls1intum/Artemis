@@ -91,6 +91,10 @@ final class GenerationRecoverySlots {
         }
     }
 
+    static boolean isGenerationRecoveryOf(@Nullable JobInfo job, String jobId) {
+        return job != null && job.jobId().equals(GENERATION_RECOVERY_PREFIX + jobId);
+    }
+
     static boolean isGenerationRecovery(JobInfo job) {
         return job.jobId().startsWith(GENERATION_RECOVERY_PREFIX);
     }

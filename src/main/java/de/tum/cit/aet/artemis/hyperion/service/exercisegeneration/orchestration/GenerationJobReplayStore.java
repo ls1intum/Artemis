@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -145,6 +146,12 @@ final class GenerationJobReplayStore {
 
     StartedReplay initializeStart(long exerciseId, String jobId, String userLogin, GenerationMode mode, @Nullable String effortProfile,
             @Nullable ExerciseGenerationInputDTO input) {
+        return initializeStart(exerciseId, jobId, userLogin, mode, effortProfile, input, _ -> {
+        });
+    }
+
+    StartedReplay initializeStart(long exerciseId, String jobId, String userLogin, GenerationMode mode, @Nullable String effortProfile, @Nullable ExerciseGenerationInputDTO input,
+            Consumer<StartedReplay> registerRollback) {
         String key = key(exerciseId);
         jobMap().lock(key);
         try {
@@ -154,6 +161,7 @@ final class GenerationJobReplayStore {
                     effortProfile, input);
             GenerationJobService.JobFileChangeIndex currentFileChanges = new GenerationJobService.JobFileChangeIndex(jobId, userLogin, new ArrayList<>());
             StartedReplay replay = new StartedReplay(currentTranscript, currentFileChanges, previousTranscript, previousFileChanges, artifactMap().get(key));
+            registerRollback.accept(replay);
             try {
                 transcriptMap().put(key, currentTranscript);
                 fileChangeMap().put(key, currentFileChanges);

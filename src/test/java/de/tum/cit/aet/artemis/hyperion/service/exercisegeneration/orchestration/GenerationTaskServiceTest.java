@@ -729,7 +729,7 @@ class GenerationTaskServiceTest {
         assertThat(terminal.liveExerciseChanged()).isTrue();
         assertThat(terminal.savedRepositoryCommits()).containsExactlyInAnyOrderEntriesOf(Map.of("solution", "solution-commit", "tests", "tests-commit"));
         verify(jobService).retainIncompleteGenerationSlot(EXERCISE_ID, JOB_ID);
-        verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
+        verify(jobService, never()).clearJob(EXERCISE_ID, JOB_ID);
         verify(generationBudgetService).releaseReservation(null);
         verify(journal).beforeMutation(eq(JOB_ID), any(), eq(user), any(), any());
     }

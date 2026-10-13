@@ -14,6 +14,7 @@ import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -365,11 +366,11 @@ public class GenerationJobService {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, preparation == null, budgetReservationId, mode,
                 exercise.getTitle(), course == null ? null : course.getId());
-        GenerationJobReplayStore.StartedReplay startedReplay = null;
+        var startedReplay = new AtomicReference<GenerationJobReplayStore.StartedReplay>();
         boolean publicStatePublished = false;
         try {
             claimSlot(key, newJob, "Exercise generation is already running for this exercise", "exerciseGenerationRunning");
-            startedReplay = replayStore.initializeStart(exercise.getId(), jobId, user.getLogin(), mode, settings == null ? null : settings.name(), input);
+            replayStore.initializeStart(exercise.getId(), jobId, user.getLogin(), mode, settings == null ? null : settings.name(), input, startedReplay::set);
             if (!exactProviderUsage) {
                 replayStore.markUsageIncomplete(jobId);
             }
@@ -381,7 +382,7 @@ public class GenerationJobService {
             dispatch.accept(event);
         }
         catch (RejectedExecutionException e) {
-            cleanup.unpublished(newJob, startedReplay);
+            cleanup.unpublished(newJob, startedReplay.get());
             if (publicStatePublished) {
                 publishExerciseState(exercise.getId(), jobId, false);
             }
@@ -390,7 +391,7 @@ public class GenerationJobService {
                     "exerciseGenerationCapacityExceeded");
         }
         catch (RuntimeException e) {
-            cleanup.unpublished(newJob, startedReplay);
+            cleanup.unpublished(newJob, startedReplay.get());
             if (publicStatePublished) {
                 publishExerciseState(exercise.getId(), jobId, false);
             }
@@ -687,7 +688,7 @@ public class GenerationJobService {
      * @param jobId      exact completed generation job
      */
     public void retainIncompleteGenerationSlot(long exerciseId, String jobId) {
-        GenerationRecoverySlots.retainGeneration(jobMap, exerciseId, jobId, localNodeId);
+        cleanup.incomplete(exerciseId, jobId, localNodeId);
     }
 
     public void retainRevertRecoverySlot(long exerciseId, String token) {

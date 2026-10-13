@@ -581,7 +581,9 @@ public class GenerationTaskService {
             if (recoveryRequired) {
                 jobService.retainIncompleteGenerationSlot(exerciseId, jobId);
             }
-            jobService.clearJob(exerciseId, jobId);
+            else {
+                jobService.clearJob(exerciseId, jobId);
+            }
         }
         finally {
             if (tokenAccountingFailed) {

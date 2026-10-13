@@ -257,6 +257,15 @@ class GenerationRedisCoordinationTest {
                 jobs.retryPendingCleanup();
                 assertThat(slots.get("42")).isNull();
                 assertThat(jobs.getStatus(user, exercise)).hasValueSatisfying(status -> assertThat(status.running()).isFalse());
+                String partialJob = jobs.startJob(user, exercise, "partial save", GenerationMode.GENERATE);
+                jobs.enterNonCancellablePhase(42, partialJob);
+                doThrow(new IllegalStateException("conversion unavailable")).doCallRealMethod().when(slots).lock("42");
+                jobs.retainIncompleteGenerationSlot(42, partialJob);
+                assertThat(slots.get("42").jobId()).isEqualTo(partialJob);
+                jobs.retryPendingCleanup();
+                var recovery = slots.get("42");
+                assertThat(GenerationRecoverySlots.isGenerationRecoveryOf(recovery, partialJob)).isTrue();
+                assertThat(jobs.recoverWedgedSlot(42, recovery.jobId())).isTrue();
             }
             finally {
                 redis.shutdown();
