@@ -42,6 +42,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -407,8 +409,10 @@ class LocalVCServletServiceTest {
         assertThat(RepositoryActionType.CLONE_FAIL).isNotNull();
     }
 
-    @Test
-    void processNewPushCapturesTheExerciseVersionBeforeCreatingTheTestSubmission() {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void processNewPushVersionsBeforeCreatingTheTestSubmissionWithConfiguredDispatch(boolean coordinated) {
+        when(programmingExerciseMutationGuard.isCoordinationEnabled()).thenReturn(coordinated);
         Repository repository = mock(Repository.class);
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         ProgrammingSubmission submission = new ProgrammingSubmission();
@@ -422,7 +426,14 @@ class LocalVCServletServiceTest {
         localVCServletService.processNewPush("commit-hash", repository, testUser, Optional.of(testExercise), Optional.of(solutionParticipation), Optional.empty());
 
         InOrder inOrder = inOrder(exerciseVersionService, programmingSubmissionService);
-        inOrder.verify(exerciseVersionService).createExerciseVersion(testExercise, testUser, RepositoryType.TESTS, null, "commit-hash");
+        if (coordinated) {
+            inOrder.verify(exerciseVersionService).createExerciseVersionSynchronously(testExercise, testUser, RepositoryType.TESTS, null, "commit-hash");
+            verify(exerciseVersionService, never()).createExerciseVersion(testExercise, testUser, RepositoryType.TESTS, null, "commit-hash");
+        }
+        else {
+            inOrder.verify(exerciseVersionService).createExerciseVersion(testExercise, testUser, RepositoryType.TESTS, null, "commit-hash");
+            verify(exerciseVersionService, never()).createExerciseVersionSynchronously(testExercise, testUser, RepositoryType.TESTS, null, "commit-hash");
+        }
         inOrder.verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(testExercise.getId(), "commit-hash");
     }
 

@@ -148,7 +148,7 @@ public class GenerationExternalMutationService {
      * @param token      exact reservation token
      */
     public void clearParticipationSlot(long exerciseId, String token) {
-        release(new PendingRelease(exerciseId, token, true, null));
+        release(new PendingRelease(exerciseId, token, true, null, false));
     }
 
     private void clearParticipation(long exerciseId, String token) {
@@ -184,14 +184,21 @@ public class GenerationExternalMutationService {
         if (!token.startsWith(GenerationJobService.EXTERNAL_MUTATION_JOB_PREFIX)) {
             return;
         }
-        release(new PendingRelease(exerciseId, token, false, null));
+        release(new PendingRelease(exerciseId, token, false, null, false));
     }
 
     void releaseRevertSlot(long exerciseId, String token, @Nullable JobInfo previousRecovery) {
         if (!token.startsWith(GenerationJobService.REVERT_JOB_PREFIX)) {
             return;
         }
-        release(new PendingRelease(exerciseId, token, false, previousRecovery));
+        release(new PendingRelease(exerciseId, token, false, previousRecovery, false));
+    }
+
+    void retainRevertRecoverySlot(long exerciseId, String token) {
+        if (!token.startsWith(GenerationJobService.REVERT_JOB_PREFIX)) {
+            return;
+        }
+        release(new PendingRelease(exerciseId, token, false, null, true));
     }
 
     private void release(PendingRelease release) {
@@ -199,7 +206,15 @@ public class GenerationExternalMutationService {
             return;
         }
         try {
-            if (release.participation()) {
+            if (release.retainRecovery()) {
+                DistributedMap<String, JobInfo> jobs = distributedDataProvider.getMap(GenerationJobService.JOB_MAP_NAME);
+                GenerationRecoverySlots.retain(jobs, release.exerciseId(), release.token());
+                JobInfo current = jobs.get(String.valueOf(release.exerciseId()));
+                if (current != null && current.jobId().equals(release.token())) {
+                    throw new IllegalStateException("The completed undo reservation was not converted to a recovery guard");
+                }
+            }
+            else if (release.participation()) {
                 clearParticipation(release.exerciseId(), release.token());
             }
             else {
@@ -219,7 +234,7 @@ public class GenerationExternalMutationService {
         pendingReleases.forEach(this::release);
     }
 
-    private record PendingRelease(long exerciseId, String token, boolean participation, @Nullable JobInfo previousRecovery) {
+    private record PendingRelease(long exerciseId, String token, boolean participation, @Nullable JobInfo previousRecovery, boolean retainRecovery) {
     }
 
     /**

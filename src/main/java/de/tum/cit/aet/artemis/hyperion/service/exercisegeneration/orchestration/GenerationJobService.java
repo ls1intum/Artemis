@@ -663,7 +663,7 @@ public class GenerationJobService {
     }
 
     public void retainRevertRecoverySlot(long exerciseId, String token) {
-        GenerationRecoverySlots.retain(jobMap, exerciseId, token);
+        externalMutationService.retainRevertRecoverySlot(exerciseId, token);
     }
 
     public boolean isRevertRecoveryPending(long exerciseId) {
