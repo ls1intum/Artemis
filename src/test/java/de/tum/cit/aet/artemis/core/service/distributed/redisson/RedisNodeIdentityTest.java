@@ -8,8 +8,8 @@ class RedisNodeIdentityTest {
 
     @Test
     void repeatedDisplayNameDoesNotReuseProcessIdentity() {
-        var first = new RedisNodeIdentity("artemis-core");
-        var replacement = new RedisNodeIdentity("artemis-core");
+        var first = new RedisNodeIdentity("artemis-core", true, false);
+        var replacement = new RedisNodeIdentity("artemis-core", true, false);
         assertThat(first.connectionName()).isNotEqualTo(replacement.connectionName());
         assertThat(first.connectionName()).isEqualTo(first.connectionName());
         assertThat(RedisNodeIdentity.isCoordinationName(first.connectionName())).isTrue();
