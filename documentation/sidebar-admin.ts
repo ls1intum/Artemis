@@ -29,6 +29,7 @@ const sidebars: SidebarsConfig = {
         'aiworker',
         'hyperion',
         'deimos',
+        'metis',
         'adaptive-learning',
         'user-registration',
         'user-deletion',
