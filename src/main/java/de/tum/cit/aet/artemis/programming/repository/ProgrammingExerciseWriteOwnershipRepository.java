@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
@@ -37,7 +38,7 @@ public interface ProgrammingExerciseWriteOwnershipRepository extends Repository<
     @Query(value = """
             UPDATE exercise SET write_owner_token = :token, write_owner = :owner,
                 write_owner_purpose = :purpose, write_owner_started_at = :startedAt, write_owner_tests_commit = NULL
-            WHERE id = :exerciseId AND discriminator = 'P' AND write_owner_token IS NULL
+            WHERE id = :exerciseId AND discriminator = 'P' AND write_owner_token IS NULL AND write_owner_reader_count = 0
             """, nativeQuery = true)
     int claim(@Param("exerciseId") long exerciseId, @Param("token") String token, @Param("owner") String owner, @Param("purpose") String purpose,
             @Param("startedAt") Instant startedAt);
@@ -118,6 +119,69 @@ public interface ProgrammingExerciseWriteOwnershipRepository extends Repository<
             FROM exercise WHERE id = :exerciseId AND write_owner_token IS NOT NULL
             """, nativeQuery = true)
     Optional<OwnershipProjection> findOwnership(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Reserves a coherent source copy without excluding other readers.
+     *
+     * @param exerciseId source exercise
+     * @param token      exact copy token
+     * @param owner      process incarnation
+     * @param startedAt  start time
+     * @return one for a successful claim, otherwise zero
+     */
+    @Transactional
+    default int claimReader(long exerciseId, String token, String owner, Instant startedAt) {
+        if (incrementReaders(exerciseId) != 1) {
+            return 0;
+        }
+        if (insertReader(exerciseId, token, owner, startedAt) != 1) {
+            throw new IllegalStateException("Could not store the exercise copy reservation");
+        }
+        return 1;
+    }
+
+    @Modifying
+    @Query(value = "UPDATE exercise SET write_owner_reader_count = write_owner_reader_count + 1 WHERE id = :exerciseId AND discriminator = 'P' AND write_owner_token IS NULL", nativeQuery = true)
+    int incrementReaders(@Param("exerciseId") long exerciseId);
+
+    @Modifying
+    @Query(value = "INSERT INTO exercise_write_reader (token, exercise_id, owner, started_at) VALUES (:token, :exerciseId, :owner, :startedAt)", nativeQuery = true)
+    int insertReader(@Param("exerciseId") long exerciseId, @Param("token") String token, @Param("owner") String owner, @Param("startedAt") Instant startedAt);
+
+    /**
+     * A duplicate or delayed release cannot decrement another reader's reservation.
+     *
+     * @param exerciseId source exercise
+     * @param token      exact copy token
+     * @return one for a successful release, otherwise zero
+     */
+    @Transactional
+    default int releaseReader(long exerciseId, String token) {
+        if (deleteReader(exerciseId, token) != 1) {
+            return 0;
+        }
+        if (decrementReaders(exerciseId) != 1) {
+            throw new IllegalStateException("Exercise copy reservation count is inconsistent");
+        }
+        return 1;
+    }
+
+    @Modifying
+    @Query(value = "DELETE FROM exercise_write_reader WHERE exercise_id = :exerciseId AND token = :token", nativeQuery = true)
+    int deleteReader(@Param("exerciseId") long exerciseId, @Param("token") String token);
+
+    @Modifying
+    @Query(value = "UPDATE exercise SET write_owner_reader_count = write_owner_reader_count - 1 WHERE id = :exerciseId AND write_owner_reader_count > 0", nativeQuery = true)
+    int decrementReaders(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Returns durable copy owners for exact-token operator reconciliation.
+     *
+     * @param exerciseId source exercise
+     * @return current copy owners
+     */
+    @Query(value = "SELECT token, owner, 'COPY' AS purpose, started_at AS startedAt, NULL AS expectedTestsCommitHash FROM exercise_write_reader WHERE exercise_id = :exerciseId ORDER BY token", nativeQuery = true)
+    List<OwnershipProjection> findReaders(@Param("exerciseId") long exerciseId);
 
     /** Database-only projection; it is not part of an exercise response. */
     interface OwnershipProjection {

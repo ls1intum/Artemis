@@ -275,8 +275,8 @@ work starts. An instructor can edit during authoring. Before saving, core claims
 an exclusive database reservation and compares the frozen repository heads,
 exercise metadata, build configuration, test cases and task bindings. A changed
 baseline rejects the save before any live write and keeps the verified candidate
-available for inspection. Saving, undo and participation copies use exclusive
-reservations; participation copies for one exercise are serialized.
+available for inspection. Saving and undo use exclusive write reservations. Participation copies use
+shared read reservations: copies can run in parallel, but a write cannot overlap them.
 
 The nullable write-ownership columns are deliberately not mapped to mutable
 exercise entities. A stale entity save cannot clear them. Claim and release are
@@ -570,7 +570,7 @@ separately, even when core also runs the `buildagent` profile.
 ### Participation copies and interrupted undo
 
 A programming participation reserves the exercise until its repository copy completes.
-Copies for the same exercise are serialized. Generation persistence, undo and
+Copies for the same exercise can run in parallel. Generation persistence, undo and
 ordinary exercise writes cannot overlap a copy. The reservation does not expire.
 After a writer crashes, confirm that its repository operations have stopped and
 reconcile the exercise before using exact-token operator recovery.

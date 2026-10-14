@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -168,6 +169,55 @@ public class ProgrammingExerciseWriteOwnershipService {
     public Optional<Ownership> get(long exerciseId) {
         return repository.findOwnership(exerciseId)
                 .map(row -> new Ownership(row.getToken(), row.getOwner(), row.getPurpose(), row.getStartedAt(), row.getExpectedTestsCommitHash()));
+    }
+
+    /**
+     * Claims a durable source-copy reservation while allowing other copies.
+     *
+     * @param exerciseId source exercise
+     * @return exact copy token
+     */
+    public String claimReader(long exerciseId) {
+        String token = UUID.randomUUID().toString();
+        try {
+            if (repository.claimReader(exerciseId, token, processIncarnation, Instant.now()) == 1) {
+                return token;
+            }
+        }
+        catch (RuntimeException uncertainClaim) {
+            try {
+                if (readers(exerciseId).stream().anyMatch(reader -> reader.token().equals(token) && reader.owner().equals(processIncarnation))) {
+                    return token;
+                }
+            }
+            catch (RuntimeException unavailableReadback) {
+                uncertainClaim.addSuppressed(unavailableReadback);
+            }
+            throw new ServiceUnavailableAlertException("Exercise copy ownership could not be confirmed.", "programmingExercise", "exerciseWriteOwnershipUnavailable");
+        }
+        throw new ConflictException("The exercise is reserved for a write.", "programmingExercise", "exerciseGenerationRunning");
+    }
+
+    /**
+     * Releases only the exact copy operation; there is no time-based takeover.
+     *
+     * @param exerciseId source exercise
+     * @param token      exact copy token
+     * @return whether this copy was released
+     */
+    public boolean releaseReader(long exerciseId, String token) {
+        validateToken(token);
+        return repository.releaseReader(exerciseId, token) == 1;
+    }
+
+    /**
+     * Reads durable copy owners without consulting cache membership.
+     *
+     * @param exerciseId source exercise
+     * @return current copy reservations
+     */
+    public List<Ownership> readers(long exerciseId) {
+        return repository.findReaders(exerciseId).stream().map(row -> new Ownership(row.getToken(), row.getOwner(), row.getPurpose(), row.getStartedAt(), null)).toList();
     }
 
     /** Values identifying one write operation and the process that claimed it. */

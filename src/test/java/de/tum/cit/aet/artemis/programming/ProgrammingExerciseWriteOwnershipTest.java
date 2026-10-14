@@ -202,4 +202,44 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
         assertThat(ownershipRepository.claim(Long.MAX_VALUE, "missing", "process", "persist", Instant.now())).isZero();
         assertThat(ownershipService.get(Long.MAX_VALUE)).isEmpty();
     }
+
+    @Test
+    void parallelCopiesExcludeWritesUntilTheLastExactReaderCloses() throws Exception {
+        long id = exercise.getId();
+        var start = new CountDownLatch(1);
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            var one = executor.submit(() -> {
+                start.await();
+                return ownershipService.claimReader(id);
+            });
+            var two = executor.submit(() -> {
+                start.await();
+                return ownershipService.claimReader(id);
+            });
+            start.countDown();
+            String first = one.get(10, TimeUnit.SECONDS);
+            String second = two.get(10, TimeUnit.SECONDS);
+            assertThat(ownershipService.readers(id)).hasSize(2);
+            assertThatThrownBy(() -> ownershipService.claim(id, "SAVE")).isInstanceOf(ConflictException.class);
+            assertThat(ownershipService.releaseReader(id, first)).isTrue();
+            assertThat(ownershipService.releaseReader(id, first)).isFalse();
+            assertThatThrownBy(() -> ownershipService.claim(id, "SAVE")).isInstanceOf(ConflictException.class);
+            assertThat(ownershipService.releaseReader(id, second)).isTrue();
+            String writer = ownershipService.claim(id, "SAVE");
+            assertThatThrownBy(() -> ownershipService.claimReader(id)).isInstanceOf(ConflictException.class);
+            assertThat(ownershipService.release(id, writer)).isTrue();
+        }
+    }
+
+    @Test
+    void aFailedReaderInsertRollsBackItsCounter() {
+        long id = exercise.getId();
+        String token = UUID.randomUUID().toString();
+        assertThat(ownershipRepository.claimReader(id, token, "owner", Instant.now())).isOne();
+        assertThatThrownBy(() -> ownershipRepository.claimReader(id, token, "owner", Instant.now())).isInstanceOf(RuntimeException.class);
+        assertThat(ownershipRepository.releaseReader(id, token)).isOne();
+        String writer = ownershipService.claim(id, "SAVE");
+        assertThat(ownershipService.release(id, writer)).isTrue();
+    }
+
 }
