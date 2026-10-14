@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.protocol.GradingContext;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationAuthoringBaselineService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -50,10 +49,6 @@ public class GenerationSeedService {
 
     private final GenerationRequestService requests;
 
-    private final GenerationAuthoringBaselineService baselines;
-
-    private final de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository auxiliaryRepositories;
-
     private final String branch;
 
     private final ProgrammingExerciseTestCaseRepository testCases;
@@ -62,10 +57,7 @@ public class GenerationSeedService {
 
     public GenerationSeedService(ProgrammingExerciseBuildConfigRepository buildConfigRepository, GitService gitService, TempFileUtilService temporaryFiles,
             GenerationRequestService requests, ProgrammingExerciseTestCaseRepository testCases, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            GenerationAuthoringBaselineService baselines, de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository auxiliaryRepositories,
             @Value("${artemis.version-control.default-branch:main}") String branch) {
-        this.baselines = baselines;
-        this.auxiliaryRepositories = auxiliaryRepositories;
         this.buildConfigRepository = buildConfigRepository;
         this.gitService = gitService;
         this.temporaryFiles = temporaryFiles;
@@ -80,8 +72,6 @@ public class GenerationSeedService {
      * @return bounded immutable files and the core-only compare-and-set heads
      */
     public Seed capture(ProgrammingExercise exercise) {
-        exercise = reload(exercise.getId());
-        var authoringBaseline = baselines.capture(exercise);
         String configuredBranch = buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
         String repositoryBranch = configuredBranch == null || configuredBranch.isBlank() ? branch : configuredBranch;
         List<WorkspaceFile> files = new ArrayList<>();
@@ -96,22 +86,7 @@ public class GenerationSeedService {
                 .filter(test -> test.getType() != ProgrammingExerciseTestCaseType.STRUCTURAL)
                 .filter(test -> test.getBonusPoints() > 0 || (test.getWeight() != null && test.getWeight() > 0 && test.getBonusMultiplier() > 0)).map(test -> test.getTestName())
                 .filter(name -> name != null && !name.isBlank()).collect(Collectors.toSet());
-        return new Seed(new WorkspaceSnapshot(files), Map.copyOf(heads), new GradingContext(exercise.getDueDate() != null, baseline), authoringBaseline);
-    }
-
-    /**
-     * Reloads the seed inputs inside the caller's short database write reservation.
-     *
-     * @param exerciseId exercise being seeded
-     * @return fresh authoring inputs
-     */
-    public ProgrammingExercise reload(long exerciseId) {
-        ProgrammingExercise current = baselines.requireCurrentExercise(exerciseId);
-        if (!de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile.isSupported(current,
-                buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId), !auxiliaryRepositories.findByExerciseId(exerciseId).isEmpty())) {
-            throw new GenerationAuthoringBaselineService.AuthoringConflictException("The exercise configuration changed and is no longer supported.");
-        }
-        return current;
+        return new Seed(new WorkspaceSnapshot(files), Map.copyOf(heads), new GradingContext(exercise.getDueDate() != null, baseline));
     }
 
     /**
@@ -180,7 +155,6 @@ public class GenerationSeedService {
     }
 
     /** File transport and optimistic concurrency evidence are deliberately kept separate. */
-    public record Seed(WorkspaceSnapshot snapshot, Map<RepositoryType, String> heads, GradingContext gradingContext,
-            GenerationAuthoringBaselineService.Snapshot authoringBaseline) {
+    public record Seed(WorkspaceSnapshot snapshot, Map<RepositoryType, String> heads, GradingContext gradingContext) {
     }
 }

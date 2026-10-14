@@ -213,7 +213,7 @@ public class RedissonDistributedDataProviderService implements DistributedDataPr
         if (!snapshot.complete() || !snapshot.coordinationNodeIds().contains(localNodeId)) {
             return Optional.empty();
         }
-        return Optional.of(new CoordinationSnapshot(snapshot.coordinationNodeIds()));
+        return Optional.of(new CoordinationSnapshot(snapshot.coordinationNodeIds(), false, snapshot.allWritersFenced()));
     }
 
     /**

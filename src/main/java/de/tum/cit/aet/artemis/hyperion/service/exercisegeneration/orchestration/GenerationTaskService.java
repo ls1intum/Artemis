@@ -263,11 +263,6 @@ public class GenerationTaskService {
                         .withTerminationReason(TerminationReason.DEADLINE_EXCEEDED));
                 return;
             }
-            if (event.variantPreparation() != null && !jobService.enterNonCancellablePhase(exerciseId, jobId)) {
-                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Variant preparation did not start. Nothing was changed.")
-                        .withTerminationReason(TerminationReason.NOT_STARTED));
-                return;
-            }
             deadlineFuture = scheduleDeadline(deadlineExceeded, event.deadlineAt());
             heartbeatFuture = scheduleHeartbeat(exerciseId, jobId, heartbeatLost);
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise authoring"));
@@ -276,19 +271,12 @@ public class GenerationTaskService {
                 shutdownGuard.enterPointOfNoReturn();
                 try {
                     variants.prepareInfrastructure(event);
-                    if (!jobService.allowCancellationAfterPreparation(exerciseId, jobId)) {
-                        throw new IllegalStateException("The destination reservation could not be released after preparation");
-                    }
-                }
-                catch (RuntimeException | LinkageError preparationFailure) {
-                    recoveryRequired.set(true);
-                    emitter.milestone(ExerciseGenerationEventDTO.done("Variant preparation may have changed the destination. Manual recovery is required.",
-                            ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, null, true).withTerminationReason(TerminationReason.RUN_FAILED));
-                    log.error("Variant preparation for job {} requires recovery", jobId, preparationFailure);
-                    return;
                 }
                 finally {
                     shutdownGuard.leavePointOfNoReturn();
+                }
+                if (!jobService.allowCancellationAfterPreparation(exerciseId, jobId)) {
+                    throw new IllegalStateException("Variant preparation lost its destination reservation");
                 }
             }
             // The event's exercise was loaded on the request thread, so on this executor thread its lazy associations (buildConfig, template/solution participations) are
@@ -394,18 +382,12 @@ public class GenerationTaskService {
                         GenerationPersistenceService.PersistResult persistResult;
                         try {
                             exerciseToPersist = reloadDraftExerciseBeforeLiveMutation(exerciseId);
-                            persistResult = persistenceService.persist(exerciseToPersist, user, outcome, outcome.authoringBaseline().metadata().get("getProblemStatement"),
-                                    outcome.authoringBaseline().metadata().get("getTitle"), jobId, event.mode(),
-                                    () -> canContinueSave(exerciseId, jobId, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId), () -> {
+                            persistResult = persistenceService.persist(exerciseToPersist, user, outcome, event.expectedProblemStatement(), event.expectedTitle(), jobId,
+                                    event.mode(), () -> canContinueSave(exerciseId, jobId, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId), () -> {
                                         journal.beforeMutation(jobId, exerciseToPersist, user, outcome.seedRepositoryHeads(),
                                                 persistenceService.repositoryBranch(exerciseToPersist));
                                     });
                             savedToExercise = true;
-                        }
-                        catch (de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationAuthoringBaselineService.AuthoringConflictException e) {
-                            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
-                                    "The exercise changed during generation. Nothing was saved. The verified candidate is retained for review."));
-                            return;
                         }
                         catch (GenerationIncompleteException e) {
                             log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
@@ -815,10 +797,6 @@ public class GenerationTaskService {
         }
         if (exercise.isExamExercise() && !isStillDraftWithoutParticipations(exerciseId)) {
             throw new IllegalStateException("Hyperion generation cannot modify an exercise assigned to a student exam or test run.");
-        }
-        if (!auxiliaryRepositoryRepository.findByExerciseId(exerciseId).isEmpty()) {
-            throw new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationAuthoringBaselineService.AuthoringConflictException(
-                    "Auxiliary repositories were added during authoring. Nothing was saved.");
         }
         Set<StudentParticipation> studentParticipations = exercise.getStudentParticipations();
         if (studentParticipations != null && !studentParticipations.isEmpty()) {

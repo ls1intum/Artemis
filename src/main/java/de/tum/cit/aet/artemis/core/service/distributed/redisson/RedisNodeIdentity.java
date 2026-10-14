@@ -1,10 +1,16 @@
 package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
+
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.config.RedisCondition;
@@ -19,8 +25,15 @@ public class RedisNodeIdentity {
 
     private final String connectionName;
 
-    public RedisNodeIdentity(@Value("${spring.data.redis.client-name:artemis-node}") String displayName) {
-        connectionName = PREFIX + UUID.randomUUID() + ":node:" + displayName;
+    @Autowired
+    public RedisNodeIdentity(@Value("${spring.data.redis.client-name:artemis-node}") String displayName, Environment environment,
+            @Value("${artemis.hyperion.generation.cluster-fencing-enabled:${artemis.hyperion.exercise-generation.enabled:false}}") boolean fencingEnabled) {
+        this(displayName, environment.acceptsProfiles(Profiles.of(PROFILE_CORE, PROFILE_LOCALVC)), fencingEnabled);
+    }
+
+    public RedisNodeIdentity(String displayName, boolean writer, boolean fencingEnabled) {
+        String role = writer ? (fencingEnabled ? "fenced" : "unfenced") : "observer";
+        connectionName = PREFIX + UUID.randomUUID() + ":" + role + ":" + displayName;
     }
 
     /** @return the unique connection name Redis observes for this process incarnation */
@@ -57,7 +70,15 @@ public class RedisNodeIdentity {
         return roleEnd >= 0 && isRole(suffix.substring(0, roleEnd)) ? suffix.substring(roleEnd + 1) : suffix;
     }
 
+    static boolean declaresSafeWriterRole(String name) {
+        if (!isCoordinationName(name)) {
+            return false;
+        }
+        String suffix = name.substring(PREFIX.length() + 37);
+        return suffix.startsWith("fenced:") || suffix.startsWith("observer:");
+    }
+
     private static boolean isRole(String role) {
-        return role.equals("node") || role.equals("fenced") || role.equals("unfenced") || role.equals("observer");
+        return role.equals("fenced") || role.equals("unfenced") || role.equals("observer");
     }
 }

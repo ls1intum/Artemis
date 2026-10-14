@@ -78,6 +78,9 @@ class GenerationJobServiceClusterTest {
 
     private static Config clusterConfig(String clusterName, List<String> seedMembers, int expectedMembers) {
         Config config = new Config();
+        config.getMemberAttributeConfig().setAttribute(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.WRITER_FENCING_MEMBER_ATTRIBUTE, "true");
+        config.getMemberAttributeConfig().setAttribute(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.WRITER_FENCING_MEMBERS_ATTRIBUTE,
+                String.valueOf(expectedMembers));
         config.setClusterName(clusterName);
         NetworkConfig network = config.getNetworkConfig();
         network.setPortAutoIncrement(true);
@@ -108,8 +111,7 @@ class GenerationJobServiceClusterTest {
 
     private static GenerationJobService nodeOn(HazelcastInstance member) {
         GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(member), event -> {
-        }, mock(GenerationTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, EXPECTED_DATA_MEMBERS,
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, EXPECTED_DATA_MEMBERS);
         service.init();
         return service;
     }
@@ -218,7 +220,7 @@ class GenerationJobServiceClusterTest {
 
     /** A slot wedged in the non-cancellable phase stays claimed while its owner is alive and becomes recoverable from the surviving node only once the owner has left. */
     @Test
-    void auditedExactDatabaseTokenSurvivesOwningNodeDeparture() {
+    void recoverWedgedSlot_becomesPossibleFromTheSurvivingNodeOnlyAfterTheOwnerLeavesTheCluster() {
         long exerciseId = 905L;
         var recoveryMembers = new ArrayList<HazelcastInstance>();
         try {
@@ -230,21 +232,20 @@ class GenerationJobServiceClusterTest {
             recoveryMembers.add(Hazelcast.newHazelcastInstance(clusterConfig(cluster, List.of(seed), 3)));
             HazelcastInstance doomedMember = recoveryMembers.getLast();
             await().atMost(Duration.ofSeconds(60)).untilAsserted(() -> assertThat(survivor.getCluster().getMembers()).hasSize(3));
-            var ownership = new GenerationWriteOwnershipTestFixture().service;
-            GenerationJobService doomedNode = clusterNodeExpecting(doomedMember, 3, ownership);
-            GenerationJobService survivingNode = clusterNodeExpecting(survivor, 3, ownership);
+            GenerationJobService doomedNode = clusterNodeExpecting(doomedMember, 3);
+            GenerationJobService survivingNode = clusterNodeExpecting(survivor, 3);
             String jobId = doomedNode.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
             assertThat(doomedNode.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
 
-            assertThat(survivingNode.recoverWedgedSlot(exerciseId, "wrong-token")).isFalse();
+            assertThat(survivingNode.recoverWedgedSlot(exerciseId, jobId)).isFalse();
             assertThat(survivingNode.getWedgedSlotInfo(exerciseId)).hasValueSatisfying(info -> assertThat(info.ownerLeftCluster()).isFalse());
 
             doomedMember.getLifecycleService().terminate();
             await().atMost(Duration.ofSeconds(60)).untilAsserted(() -> assertThat(survivor.getCluster().getMembers()).hasSize(2));
             await().atMost(Duration.ofSeconds(30))
-                    .untilAsserted(() -> assertThat(survivingNode.getWedgedSlotInfo(exerciseId)).hasValueSatisfying(info -> assertThat(info.ownerLeftCluster()).isFalse()));
+                    .untilAsserted(() -> assertThat(survivingNode.getWedgedSlotInfo(exerciseId)).hasValueSatisfying(info -> assertThat(info.ownerLeftCluster()).isTrue()));
 
-            // The owner was explicitly stopped; recovery uses the exact database token, not a cache-majority claim.
+            // Two of an expected three is a majority, so audited recovery does not require the dead node to return.
             assertThat(survivingNode.recoverWedgedSlot(exerciseId, jobId)).isTrue();
             assertThat(survivingNode.hasActiveJob(exerciseId)).isFalse();
         }
@@ -253,9 +254,9 @@ class GenerationJobServiceClusterTest {
         }
     }
 
-    private static GenerationJobService clusterNodeExpecting(HazelcastInstance member, int expectedDataMembers, GenerationExternalMutationService ownership) {
+    private static GenerationJobService clusterNodeExpecting(HazelcastInstance member, int expectedDataMembers) {
         GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(member), event -> {
-        }, mock(GenerationTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, expectedDataMembers, ownership);
+        }, mock(GenerationTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, expectedDataMembers);
         service.init();
         return service;
     }

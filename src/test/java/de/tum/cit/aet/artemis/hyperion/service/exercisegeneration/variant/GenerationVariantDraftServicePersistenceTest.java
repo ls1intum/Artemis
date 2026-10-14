@@ -53,12 +53,6 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
     private GenerationVariantDraftService drafts;
 
     @Autowired
-    private de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService mutations;
-
-    @Autowired
-    private de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider data;
-
-    @Autowired
     private ProgrammingExerciseUtilService programmingExercises;
 
     @Autowired
@@ -85,34 +79,6 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
     private ProgrammingExercise source;
 
     private final VariantGenerationRequestDTO request = new VariantGenerationRequestDTO(DifficultyLevel.HARD, "Library", null, null, null);
-
-    @Test
-    void variantPreparationBlocksDestinationWritersUntilConfirmedCompletion() {
-        var destination = drafts.prepare(source.getId(), request, exercise -> exercise);
-        var user = userTestRepository.findOneByLogin("hypvariantdraftinstructor1").orElseThrow();
-        var jobs = new GenerationJobService(data, _ -> {
-        }, org.mockito.Mockito.mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run, mutations);
-        jobs.init();
-        String jobId = jobs.startJob(user, destination, "Change the domain", de.tum.cit.aet.artemis.hyperion.dto.GenerationMode.ADAPT);
-        try {
-            assertThat(jobs.enterNonCancellablePhase(destination.getId(), jobId)).isTrue();
-            org.assertj.core.api.Assertions.assertThatThrownBy(() -> mutations.claimExternalMutationSlot(destination.getId()))
-                    .isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
-            org.assertj.core.api.Assertions.assertThatThrownBy(() -> mutations.claimParticipationSlot(destination.getId()))
-                    .isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
-            assertThat(jobs.allowCancellationAfterPreparation(destination.getId(), jobId)).isTrue();
-            String seed = jobs.claimSeedSlot(destination.getId());
-            try {
-                assertThat(seed).isNotBlank();
-            }
-            finally {
-                jobs.clearSeedSlot(destination.getId(), seed);
-            }
-        }
-        finally {
-            jobs.clearJob(destination.getId(), jobId);
-        }
-    }
 
     @BeforeEach
     void setup() {
@@ -259,8 +225,7 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
             if (event instanceof GenerationStartedEvent) {
                 throw new AssertionError("An untracked variant must never dispatch");
             }
-        }, org.mockito.Mockito.mock(GenerationTokenUsageService.class), null, java.time.Duration.ofMinutes(35), java.time.Duration.ofMinutes(30), Runnable::run,
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, org.mockito.Mockito.mock(GenerationTokenUsageService.class), null, java.time.Duration.ofMinutes(35), java.time.Duration.ofMinutes(30), Runnable::run);
         jobs.init();
         var user = userTestRepository.findOneByLogin("hypvariantdraftinstructor1").orElseThrow();
 

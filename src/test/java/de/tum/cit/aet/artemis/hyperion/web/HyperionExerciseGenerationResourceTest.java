@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEFAULTS;
@@ -276,7 +275,7 @@ class HyperionExerciseGenerationResourceTest {
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
         when(generationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
-        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class), anyString())).thenReturn(
+        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class))).thenReturn(
                 Optional.of(new ExerciseGenerationRevertService.RevertResult(true, List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS), true)));
 
         ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L, "adapt-job");
@@ -298,7 +297,7 @@ class HyperionExerciseGenerationResourceTest {
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
         when(generationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
-        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class), anyString()))
+        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
                 .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(false, List.of(RepositoryType.SOLUTION), true)));
 
         ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L, "adapt-job");
@@ -319,7 +318,7 @@ class HyperionExerciseGenerationResourceTest {
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
         when(jobService.isRevertRecoveryRetry("revert-slot")).thenReturn(recovering);
         when(generationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
-        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class), anyString()))
+        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class)))
                 .thenReturn(Optional.of(new ExerciseGenerationRevertService.RevertResult(false, List.of(), false)));
 
         assertThat(resource.revertExerciseGeneration(1L, "adapt-job").getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
@@ -347,7 +346,7 @@ class HyperionExerciseGenerationResourceTest {
         var ordered = org.mockito.Mockito.inOrder(jobService, generationRevertService);
         ordered.verify(jobService).claimRevertSlot(testUser, 1L);
         ordered.verify(generationRevertService).findRevertibleJobId(1L);
-        verify(generationRevertService, never()).revert(any(), any(), any(), anyString());
+        verify(generationRevertService, never()).revert(any(), any(), any());
         verify(jobService).clearRevertSlot(1L, "revert-slot");
     }
 
@@ -358,7 +357,7 @@ class HyperionExerciseGenerationResourceTest {
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
         when(jobService.isRevertRecoveryRetry("revert-slot")).thenReturn(recovering);
-        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class), anyString())).thenReturn(Optional.empty());
+        when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class))).thenReturn(Optional.empty());
 
         ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L, "adapt-job");
 
@@ -381,7 +380,7 @@ class HyperionExerciseGenerationResourceTest {
 
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.revertExerciseGeneration(1L, "adapt-job"));
 
-        verify(generationRevertService, never()).revert(any(), any(), any(), anyString());
+        verify(generationRevertService, never()).revert(any(), any(), any());
         verify(jobService, never()).clearRevertSlot(eq(1L), any());
     }
 

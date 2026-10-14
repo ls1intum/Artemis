@@ -79,7 +79,7 @@ class ExerciseGenerationRevertServiceTest {
         tempFileUtilService = new TempFileUtilService(Path.of("build/tmp/hyperion-adaptation-revert-test"));
         when(persistenceService.canRestoreGrading(any(Long.class), any(), any())).thenReturn(true);
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(true);
-        when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any(), eq("undo-token"))).thenReturn(true);
+        when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any())).thenReturn(true);
         revertService = new ExerciseGenerationRevertService(recovery, metadata, testCases, new GenerationRepositoryRevertService(gitService, tempFileUtilService),
                 persistenceService, DEFAULT_BRANCH);
 
@@ -112,7 +112,7 @@ class ExerciseGenerationRevertServiceTest {
     @Test
     void restoresCanonicalMetadataWithoutRequiringThePreviousDraftToBuild() {
         recordBaseline("job-empty-draft", GenerationMode.GENERATE, preRunHeads(), postRunHeads(), "old statement", "Old Title");
-        var result = revertService.revert(exercise, user, () -> true, "undo-token").orElseThrow();
+        var result = revertService.revert(exercise, user, () -> true).orElseThrow();
         assertThat(result.fullyReverted()).isTrue();
         verify(persistenceService, never()).prepareTestsBuildSignal(any(), any());
         verify(persistenceService, never()).triggerTestsBuild(any(), any());
@@ -131,7 +131,7 @@ class ExerciseGenerationRevertServiceTest {
         recordBaseline("job-1", GenerationMode.ADAPT, onlySolutionAndTests, postRunHeads(RepositoryType.SOLUTION, "adapted-solution", RepositoryType.TESTS, "adapted-tests"),
                 "old statement", "Old Title");
 
-        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true, "undo-token");
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true);
 
         assertThat(result).isPresent();
         assertThat(result.get().revertedRepositories()).containsExactly(RepositoryType.SOLUTION, RepositoryType.TESTS);
@@ -145,7 +145,7 @@ class ExerciseGenerationRevertServiceTest {
         recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
         when(persistenceService.canRestoreGrading(any(Long.class), any(), any())).thenReturn(false);
 
-        assertThat(revertService.revert(exercise, user, () -> true, "undo-token")).hasValueSatisfying(result -> assertThat(result.fullyReverted()).isFalse());
+        assertThat(revertService.revert(exercise, user, () -> true)).hasValueSatisfying(result -> assertThat(result.fullyReverted()).isFalse());
 
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
         assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
@@ -155,7 +155,7 @@ class ExerciseGenerationRevertServiceTest {
     void noRepositoryCanChangeWithoutADurableRestorationObligation() throws Exception {
         recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
         org.mockito.Mockito.doThrow(new IllegalStateException("journal unavailable")).when(recovery).started(any());
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> revertService.revert(exercise, user, () -> true, "undo-token")).isInstanceOf(IllegalStateException.class);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> revertService.revert(exercise, user, () -> true)).isInstanceOf(IllegalStateException.class);
         verify(gitService, never()).getOrCheckoutRepositoryOnBranch(any(), any(Path.class), any());
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
     }
@@ -165,7 +165,7 @@ class ExerciseGenerationRevertServiceTest {
         recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
         when(testCases.canRestore(org.mockito.ArgumentMatchers.anyLong(), any())).thenReturn(false);
 
-        assertThat(revertService.revert(exercise, user, () -> true, "undo-token")).hasValueSatisfying(result -> {
+        assertThat(revertService.revert(exercise, user, () -> true)).hasValueSatisfying(result -> {
             assertThat(result.fullyReverted()).isFalse();
             assertThat(result.mutationAttempted()).isFalse();
         });
@@ -191,7 +191,7 @@ class ExerciseGenerationRevertServiceTest {
         recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
         assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
 
-        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true, "undo-token");
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true);
 
         assertThat(result).isPresent();
         assertThat(result.get().fullyReverted()).isTrue();
@@ -200,9 +200,9 @@ class ExerciseGenerationRevertServiceTest {
         verify(gitService).resetToCommitAndForcePush(solutionRepo, "sha-solution", "adapted-solution", DEFAULT_BRANCH);
         verify(gitService).resetToCommitAndForcePush(testsRepo, "sha-tests", "adapted-tests", DEFAULT_BRANCH);
         verify(persistenceService).resyncAfterRevertWithSignal(eq(exercise), eq(user), eq(null), eq("old statement"), eq("Old Title"), eq("adapted statement"), eq("Adapted Title"),
-                eq(preRunHeads()), any(), any(), any(), eq("undo-token"));
+                eq(preRunHeads()), any(), any(), any());
         assertThat(revertService.findRevertibleJobId(77L)).isEmpty();
-        assertThat(revertService.revert(exercise, user, () -> true, "undo-token")).isEmpty();
+        assertThat(revertService.revert(exercise, user, () -> true)).isEmpty();
     }
 
     @Test
@@ -215,13 +215,12 @@ class ExerciseGenerationRevertServiceTest {
         recordBaseline("job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
                 "Old Title", "release");
 
-        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true, "undo-token");
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true);
 
         assertThat(result).hasValueSatisfying(value -> assertThat(value.fullyReverted()).isTrue());
         verify(gitService).resetToCommitAndForcePush(releaseTemplateRepo, "sha-template", "adapted-template", "release");
         verify(persistenceService).resyncAfterRevertWithSignal(eq(exercise), eq(user), eq(null), eq("old statement"), eq("Old Title"), eq("adapted statement"), eq("Adapted Title"),
-                eq(Map.of(RepositoryType.TEMPLATE, "sha-template", RepositoryType.SOLUTION, "release-solution", RepositoryType.TESTS, "release-tests")), any(), any(), any(),
-                eq("undo-token"));
+                eq(Map.of(RepositoryType.TEMPLATE, "sha-template", RepositoryType.SOLUTION, "release-solution", RepositoryType.TESTS, "release-tests")), any(), any(), any());
     }
 
     @Test
@@ -232,7 +231,7 @@ class ExerciseGenerationRevertServiceTest {
         recordBaseline("job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
                 "Old Title");
 
-        revertService.revert(exercise, user, () -> true, "undo-token");
+        revertService.revert(exercise, user, () -> true);
 
         ArgumentCaptor<Path> checkoutPath = ArgumentCaptor.forClass(Path.class);
         verify(gitService).getOrCheckoutRepositoryOnBranch(eq(templateUri), checkoutPath.capture(), eq(DEFAULT_BRANCH));
@@ -253,7 +252,7 @@ class ExerciseGenerationRevertServiceTest {
         recordBaseline("job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
                 "Old Title");
 
-        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true, "undo-token");
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true);
 
         assertThat(result).hasValueSatisfying(revertResult -> assertThat(revertResult.fullyReverted()).isTrue());
         verify(gitService).deleteLocalRepository(templateUri);
@@ -265,11 +264,10 @@ class ExerciseGenerationRevertServiceTest {
         when(gitService.getLastCommitHash(solutionUri, DEFAULT_BRANCH)).thenReturn("adapted-solution", "sha-solution");
         when(gitService.getLastCommitHash(testsUri, DEFAULT_BRANCH)).thenReturn("adapted-tests", "sha-tests");
         recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
-        when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any(), eq("undo-token"))).thenReturn(false,
-                true);
+        when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any())).thenReturn(false, true);
 
-        Optional<ExerciseGenerationRevertService.RevertResult> partial = revertService.revert(exercise, user, () -> true, "undo-token");
-        Optional<ExerciseGenerationRevertService.RevertResult> retry = revertService.revert(exercise, user, () -> true, "undo-token");
+        Optional<ExerciseGenerationRevertService.RevertResult> partial = revertService.revert(exercise, user, () -> true);
+        Optional<ExerciseGenerationRevertService.RevertResult> retry = revertService.revert(exercise, user, () -> true);
 
         assertThat(partial).isPresent();
         assertThat(partial.get().fullyReverted()).isFalse();
@@ -287,8 +285,8 @@ class ExerciseGenerationRevertServiceTest {
         when(gitService.getOrCheckoutRepositoryOnBranch(eq(solutionUri), any(Path.class), eq(DEFAULT_BRANCH))).thenThrow(new IllegalStateException("checkout failed"))
                 .thenReturn(solutionRepo);
 
-        Optional<ExerciseGenerationRevertService.RevertResult> partial = revertService.revert(exercise, user, () -> true, "undo-token");
-        Optional<ExerciseGenerationRevertService.RevertResult> retry = revertService.revert(exercise, user, () -> true, "undo-token");
+        Optional<ExerciseGenerationRevertService.RevertResult> partial = revertService.revert(exercise, user, () -> true);
+        Optional<ExerciseGenerationRevertService.RevertResult> retry = revertService.revert(exercise, user, () -> true);
 
         assertThat(partial).isPresent();
         assertThat(partial.get().fullyReverted()).isFalse();
@@ -298,7 +296,7 @@ class ExerciseGenerationRevertServiceTest {
         verify(gitService, times(1)).resetToCommitAndForcePush(testsRepo, "sha-tests", "adapted-tests", DEFAULT_BRANCH);
         verify(persistenceService, never()).triggerTestsBuild(eq(exercise), any());
         verify(persistenceService).resyncAfterRevertWithSignal(eq(exercise), eq(user), eq(null), eq("old statement"), eq("Old Title"), eq("adapted statement"), eq("Adapted Title"),
-                anyMap(), any(), any(), any(), eq("undo-token"));
+                anyMap(), any(), any(), any());
     }
 
     @Test
@@ -309,13 +307,13 @@ class ExerciseGenerationRevertServiceTest {
         recordBaseline("job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
                 "Old Title");
 
-        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true, "undo-token");
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true);
 
         assertThat(result).isPresent();
         assertThat(result.get().fullyReverted()).isTrue();
         assertThat(result.get().revertedRepositories()).containsExactly(RepositoryType.TEMPLATE);
         verify(persistenceService).resyncAfterRevertWithSignal(eq(exercise), eq(user), eq(null), eq("old statement"), eq("Old Title"), eq("adapted statement\r\n"),
-                eq(" Adapted Title "), anyMap(), any(), any(), any(), eq("undo-token"));
+                eq(" Adapted Title "), anyMap(), any(), any(), any());
     }
 
     @Test
@@ -324,14 +322,14 @@ class ExerciseGenerationRevertServiceTest {
         recordBaseline("job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
                 "Old Title");
 
-        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true, "undo-token");
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true);
 
         assertThat(result).isPresent();
         assertThat(result.get().fullyReverted()).isFalse();
         assertThat(result.get().revertedRepositories()).isEmpty();
         assertThat(result.get().mutationAttempted()).isFalse();
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
-        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any(), eq("undo-token"));
+        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any());
         ArgumentCaptor<Path> checkoutPath = ArgumentCaptor.forClass(Path.class);
         verify(gitService).getOrCheckoutRepositoryOnBranch(eq(templateUri), checkoutPath.capture(), eq(DEFAULT_BRANCH));
         assertThat(checkoutPath.getValue().getParent()).doesNotExist();
@@ -346,13 +344,13 @@ class ExerciseGenerationRevertServiceTest {
         recordBaseline("job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
                 "Old Title");
 
-        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true, "undo-token");
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true);
 
         assertThat(result).isPresent();
         assertThat(result.get().fullyReverted()).isFalse();
         assertThat(result.get().revertedRepositories()).isEmpty();
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
-        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any(), eq("undo-token"));
+        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any());
     }
 
     @Test
@@ -363,21 +361,21 @@ class ExerciseGenerationRevertServiceTest {
         recordBaseline("job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",
                 "Old Title");
 
-        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true, "undo-token");
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> true);
 
         assertThat(result).isPresent();
         assertThat(result.get().fullyReverted()).isFalse();
         assertThat(result.get().revertedRepositories()).isEmpty();
         verify(gitService, never()).getOrCheckoutRepositoryOnBranch(any(), any(Path.class), any());
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
-        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any(), eq("undo-token"));
+        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any());
     }
 
     @Test
     void revert_whenOwnershipIsLostBeforeFirstReset_doesNotMutateAndKeepsBaseline() throws Exception {
         recordBaseline("job-1", GenerationMode.GENERATE, preRunHeads(), postRunHeads(), "old statement", "Old Title");
 
-        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> false, "undo-token");
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, () -> false);
 
         assertThat(result).hasValueSatisfying(value -> {
             assertThat(value.fullyReverted()).isFalse();
@@ -386,7 +384,7 @@ class ExerciseGenerationRevertServiceTest {
         assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
         verify(gitService, never()).getOrCheckoutRepositoryOnBranch(any(), any(Path.class), any());
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
-        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any(), eq("undo-token"));
+        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any());
     }
 
     @Test
@@ -400,7 +398,7 @@ class ExerciseGenerationRevertServiceTest {
             return null;
         }).when(gitService).resetToCommitAndForcePush(templateRepo, "sha-template", "adapted-template", DEFAULT_BRANCH);
 
-        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, owned::get, "undo-token");
+        Optional<ExerciseGenerationRevertService.RevertResult> result = revertService.revert(exercise, user, owned::get);
 
         assertThat(result).hasValueSatisfying(value -> {
             assertThat(value.fullyReverted()).isFalse();
@@ -409,12 +407,12 @@ class ExerciseGenerationRevertServiceTest {
         assertThat(revertService.findRevertibleJobId(77L)).contains("job-1");
         verify(gitService).resetToCommitAndForcePush(templateRepo, "sha-template", "adapted-template", DEFAULT_BRANCH);
         verify(gitService, never()).resetToCommitAndForcePush(eq(solutionRepo), any(), any(), any());
-        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any(), eq("undo-token"));
+        verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any());
     }
 
     @Test
     void revert_whenNoBaselineRetained_returnsEmpty() {
-        assertThat(revertService.revert(exercise, user, () -> true, "undo-token")).isEmpty();
+        assertThat(revertService.revert(exercise, user, () -> true)).isEmpty();
     }
 
     /** Records a baseline the way a completed run does: what the exercise carries right now is what that run wrote, on the default branch. */
