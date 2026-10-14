@@ -238,6 +238,62 @@ describe('HyperionRunPageComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('Roman Numerals');
     });
 
+    it('refreshes a saved exercise when terminal status arrives before the refresh effect starts', () => {
+        const find = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValue(of(new HttpResponse({ body: { ...exercise(), title: 'Replayed saved title' } })));
+        render(status({ events: [event({ type: 'DONE', completionStatus: 'SUCCESS', liveExerciseChanged: true })] }));
+
+        expect(find).toHaveBeenCalledWith(EXERCISE_ID);
+        expect(testId('hyperion-run-title')!.textContent).toBe('Replayed saved title');
+    });
+
+    it('keeps the restored snapshot when an older save refresh arrives after undo', () => {
+        render(status({ revertAvailable: true, revertJobId: 'j1', revertMode: 'GENERATE', mode: 'GENERATE' }));
+        const saved = new Subject<HttpResponse<ProgrammingExercise>>();
+        const restored = new Subject<HttpResponse<ProgrammingExercise>>();
+        const find = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValueOnce(saved).mockReturnValueOnce(restored);
+        const facade = fixture.debugElement.injector.get(HyperionGenerationActivityFacade);
+
+        facade.generationCompleted.next({ jobId: 'j1', liveExerciseChanged: true });
+        clickButton('hyperion-run-undo');
+        clickButton('hyperion-run-undo-confirm');
+        expect(find).toHaveBeenNthCalledWith(1, EXERCISE_ID);
+        expect(find).toHaveBeenNthCalledWith(2, EXERCISE_ID);
+        expect(service.revertExerciseGeneration).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID, 'j1');
+
+        restored.next(new HttpResponse({ body: { ...exercise(), title: 'Restored draft' } }));
+        fixture.detectChanges();
+        expect(testId('hyperion-run-title')!.textContent).toBe('Restored draft');
+        expect(testId('hyperion-run-undone')).not.toBeNull();
+
+        saved.next(new HttpResponse({ body: { ...exercise(), title: 'Obsolete saved draft', releaseDate: dayjs().subtract(1, 'day') } }));
+        fixture.detectChanges();
+        expect(testId('hyperion-run-title')!.textContent).toBe('Restored draft');
+        expect(fixture.componentInstance['startBlockedReason']()).toBeUndefined();
+    });
+
+    it('keeps the restored snapshot when the initial inspector load arrives after undo', () => {
+        service.response = of(status({ revertAvailable: true, revertJobId: 'j1', revertMode: 'GENERATE', mode: 'GENERATE' }));
+        const initial = new Subject<HttpResponse<ProgrammingExercise>>();
+        const restored = new Subject<HttpResponse<ProgrammingExercise>>();
+        const find = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValueOnce(initial).mockReturnValueOnce(restored);
+        fixture = TestBed.createComponent(HyperionRunPageComponent);
+        fixture.componentRef.setInput('inspectedExerciseId', EXERCISE_ID);
+        fixture.detectChanges();
+        TestBed.tick();
+        fixture.detectChanges();
+
+        clickButton('hyperion-run-undo');
+        clickButton('hyperion-run-undo-confirm');
+        expect(find).toHaveBeenCalledTimes(2);
+        restored.next(new HttpResponse({ body: { ...exercise(), title: 'Restored inspector draft' } }));
+        fixture.detectChanges();
+        expect(testId('hyperion-run-title')!.textContent).toBe('Restored inspector draft');
+
+        initial.next(new HttpResponse({ body: { ...exercise(), title: 'Obsolete initial draft' } }));
+        fixture.detectChanges();
+        expect(testId('hyperion-run-title')!.textContent).toBe('Restored inspector draft');
+    });
+
     it('requires confirmation before undo and refreshes the restored exercise afterwards', () => {
         render(status({ revertAvailable: true, revertJobId: 'j1', revertMode: 'GENERATE', mode: 'GENERATE' }));
         const find = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValue(of(new HttpResponse({ body: { ...exercise(), title: 'Restored draft' } })));
@@ -249,6 +305,23 @@ describe('HyperionRunPageComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('Restored draft');
         expect(testId('hyperion-run-undone')).not.toBeNull();
         expect(testId('hyperion-run-undo')).toBeNull();
+    });
+
+    it('still refreshes after an earlier exercise read fails', () => {
+        render(status({ running: true }));
+        const failed = new Subject<HttpResponse<ProgrammingExercise>>();
+        const restored = new Subject<HttpResponse<ProgrammingExercise>>();
+        const find = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValueOnce(failed).mockReturnValueOnce(restored);
+        const facade = fixture.debugElement.injector.get(HyperionGenerationActivityFacade);
+
+        facade.generationCompleted.next({ jobId: 'job-1', liveExerciseChanged: true });
+        failed.error(new HttpErrorResponse({ status: 503 }));
+        facade.generationReverted.next('2026-09-08T12:00:00Z');
+        restored.next(new HttpResponse({ body: { ...exercise(), title: 'Restored after failed read' } }));
+        fixture.detectChanges();
+
+        expect(find).toHaveBeenCalledTimes(2);
+        expect(testId('hyperion-run-title')!.textContent).toBe('Restored after failed read');
     });
 
     it('keeps the exercise unchanged when the undo confirmation is dismissed', () => {

@@ -1,7 +1,7 @@
 import { HyperionStatusState } from 'app/hyperion/shared/status/hyperion-status.component';
 import { generationCapabilityBlocker, injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { HyperionRunInputComponent } from './hyperion-run-input.component';
-import { filter, merge } from 'rxjs';
+import { EMPTY, catchError, filter, merge, of, switchMap } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
 import { HYPERION_GENERATION_BLOCKER_KEY, hyperionGenerationBlocker } from 'app/hyperion/exercise-generation/hyperion-generation-support';
@@ -392,16 +392,6 @@ export class HyperionRunPageComponent {
 
     constructor() {
         this.facade.connect({ exerciseId: this.exerciseId, runId: this.runId, refreshingEditor: signal(false) });
-        effect((onCleanup) => {
-            const id = this.inspectedExerciseId();
-            if (id === undefined) return;
-            const subscription = this.programmingExerciseService.find(id).subscribe({
-                next: ({ body }) => this.refreshedExercise.set(body ?? undefined),
-                error: () => this.refreshedExercise.set(undefined),
-            });
-            onCleanup(() => subscription.unsubscribe());
-        });
-
         effect(() => {
             const announcement = this.announcement();
             if (announcement) {
@@ -418,22 +408,28 @@ export class HyperionRunPageComponent {
             }
         });
 
-        // A save or undo changes the exercise this page is describing, so re-read it.
-        merge(this.facade.generationCompleted.pipe(filter((event) => event.liveExerciseChanged === true)), this.facade.generationReverted)
-            .pipe(takeUntilDestroyed())
-            .subscribe(() => {
-                const exerciseId = this.exerciseId();
-                if (exerciseId !== undefined) {
-                    this.programmingExerciseService
-                        .find(exerciseId)
-                        .pipe(takeUntilDestroyed(this.destroyRef))
-                        .subscribe({
-                            next: ({ body }) => this.refreshedExercise.set(body ?? undefined),
-                            // A stale title is not worth an error banner; the artifacts panel reports what it could not load.
-                            error: () => undefined,
-                        });
-                }
-            });
+        // Initial inspection, save, and undo share one latest-response boundary for this exercise.
+        effect((onCleanup) => {
+            const exerciseId = this.exerciseId();
+            const refreshInitially = this.inspectedExerciseId() !== undefined || untracked(() => this.facade.liveExerciseChanged() === true);
+            this.refreshedExercise.set(undefined);
+            if (exerciseId === undefined) return;
+            const subscription = merge(
+                refreshInitially ? of(undefined) : EMPTY,
+                this.facade.generationCompleted.pipe(filter((event) => event.liveExerciseChanged === true)),
+                this.facade.generationReverted,
+            )
+                .pipe(
+                    switchMap(() =>
+                        this.programmingExerciseService.find(exerciseId).pipe(
+                            // Keep later refreshes available after a failed read; the artifacts panel reports load failures.
+                            catchError(() => EMPTY),
+                        ),
+                    ),
+                )
+                .subscribe(({ body }) => this.refreshedExercise.set(body ?? undefined));
+            onCleanup(() => subscription.unsubscribe());
+        });
     }
 
     protected confirmRevert(): void {
