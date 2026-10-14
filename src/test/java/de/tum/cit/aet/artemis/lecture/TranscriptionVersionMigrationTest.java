@@ -16,8 +16,9 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 
 class TranscriptionVersionMigrationTest {
 
+    // MySQL initializes its data directory with many fsyncs on first start, which exceeds the container startup timeout on a busy CI runner, so it lives in memory
     @ParameterizedTest
-    @ValueSource(strings = { "jdbc:tc:postgresql:18.4-alpine:///iris_version_upgrade", "jdbc:tc:mysql:8.4:///iris_version_upgrade" })
+    @ValueSource(strings = { "jdbc:tc:postgresql:18.4-alpine:///iris_version_upgrade", "jdbc:tc:mysql:8.4:///iris_version_upgrade?TC_TMPFS=/var/lib/mysql:rw" })
     void initializesOnlyExistingCompletedTranscriptionsWithoutChangingKnownVersions(String url) throws Exception {
         try (var connection = DriverManager.getConnection(url); var statement = connection.createStatement()) {
             statement.execute("CREATE TABLE lecture_unit_processing_state (lecture_unit_id BIGINT PRIMARY KEY, transcription_version INT, transcription_content_hash VARCHAR(64))");

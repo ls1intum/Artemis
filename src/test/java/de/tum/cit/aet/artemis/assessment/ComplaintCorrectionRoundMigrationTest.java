@@ -26,8 +26,9 @@ import liquibase.resource.ClassLoaderResourceAccessor;
  */
 class ComplaintCorrectionRoundMigrationTest {
 
+    // MySQL initializes its data directory with many fsyncs on first start, which exceeds the container startup timeout on a busy CI runner, so it lives in memory
     @ParameterizedTest
-    @ValueSource(strings = { "jdbc:tc:postgresql:18.4-alpine:///complaint_round_upgrade", "jdbc:tc:mysql:8.4:///complaint_round_upgrade" })
+    @ValueSource(strings = { "jdbc:tc:postgresql:18.4-alpine:///complaint_round_upgrade", "jdbc:tc:mysql:8.4:///complaint_round_upgrade?TC_TMPFS=/var/lib/mysql:rw" })
     void givesResultsWithoutRoundTheirRoundAndKeepsTheOriginalBeforeItsAnswer(String url) throws Exception {
         try (var connection = DriverManager.getConnection(url); var statement = connection.createStatement()) {
             statement.execute("CREATE TABLE result (id BIGINT PRIMARY KEY, submission_id BIGINT, correction_round SMALLINT, assessment_type VARCHAR(25))");
