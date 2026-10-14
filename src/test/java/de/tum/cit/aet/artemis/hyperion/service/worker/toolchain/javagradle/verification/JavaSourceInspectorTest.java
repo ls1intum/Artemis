@@ -318,4 +318,30 @@ class JavaSourceInspectorTest {
         assertThat(JavaSourceInspector.sourceDeclaresType(source, "MissingRecord")).isFalse();
         assertThat(JavaSourceInspector.sourceDeclaresType(source, "PresentClass")).isTrue();
     }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "\"{ class Missing {}\"", "\"\\\"; class Missing {}\"", "\"\"\"\nclass Missing {}\n\"\"\"" })
+    void sourceDeclaresType_ignoresLiteralDeclarationsAndKeepsFollowingCode(String literal) {
+        String source = "class Host { String example = " + literal + "; class Visible {} }";
+
+        assertThat(JavaSourceInspector.sourceDeclaresType(source, "Missing")).isFalse();
+        assertThat(JavaSourceInspector.sourceDeclaresType(source, "Visible")).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "'\"'", "'\\''", "'\\\\'" })
+    void sourceDeclaresType_keepsDeclarationsAfterCharacterLiterals(String literal) {
+        String source = "class Host { char example = " + literal + "; class Visible {} }";
+
+        assertThat(JavaSourceInspector.sourceDeclaresType(source, "Visible")).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "trait", "struct", "protocol" })
+    void sourceDeclaresType_preservesNonJavaDeclarationKeywords(String keyword) {
+        String source = "String example = \"{ " + keyword + " Missing {}\"; " + keyword + " Visible {}";
+
+        assertThat(JavaSourceInspector.sourceDeclaresType(source, "Missing")).isFalse();
+        assertThat(JavaSourceInspector.sourceDeclaresType(source, "Visible")).isTrue();
+    }
 }

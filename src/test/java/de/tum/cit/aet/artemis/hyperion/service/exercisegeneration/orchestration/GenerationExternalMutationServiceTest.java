@@ -85,7 +85,7 @@ class GenerationExternalMutationServiceTest {
         var guard = new GenerationExternalMutationService(provider, 1, true);
         var jobs = new GenerationJobService(provider, _ -> {
         }, org.mockito.Mockito.mock(GenerationTokenUsageService.class), null, new HyperionAgentProperties(), org.mockito.Mockito.mock(HyperionEffortProfileService.class),
-                Runnable::run, 1, Duration.ofHours(4), 0, guard);
+                Runnable::run, 1, Duration.ofHours(4), 0, null, guard);
         jobs.init();
         var user = new User();
         user.setLogin("editor");
@@ -122,7 +122,7 @@ class GenerationExternalMutationServiceTest {
         var guard = new GenerationExternalMutationService(provider, 1, true);
         var jobs = new GenerationJobService(provider, _ -> {
         }, org.mockito.Mockito.mock(GenerationTokenUsageService.class), null, new HyperionAgentProperties(), org.mockito.Mockito.mock(HyperionEffortProfileService.class),
-                Runnable::run, 1, Duration.ofHours(4), 0, guard);
+                Runnable::run, 1, Duration.ofHours(4), 0, null, guard);
         jobs.init();
         var user = new User();
         user.setLogin("editor");
@@ -151,7 +151,7 @@ class GenerationExternalMutationServiceTest {
         var guard = new GenerationExternalMutationService(provider, 1, true);
         var jobs = new GenerationJobService(provider, _ -> {
         }, org.mockito.Mockito.mock(GenerationTokenUsageService.class), null, new HyperionAgentProperties(), org.mockito.Mockito.mock(HyperionEffortProfileService.class),
-                Runnable::run, 1, Duration.ofHours(4), 0, guard);
+                Runnable::run, 1, Duration.ofHours(4), 0, null, guard);
         jobs.init();
         var user = new User();
         user.setLogin("editor");
@@ -200,7 +200,7 @@ class GenerationExternalMutationServiceTest {
         var guard = new GenerationExternalMutationService(provider, 1, true);
         var jobs = new GenerationJobService(provider, _ -> {
         }, org.mockito.Mockito.mock(GenerationTokenUsageService.class), null, new HyperionAgentProperties(), org.mockito.Mockito.mock(HyperionEffortProfileService.class),
-                Runnable::run, 1, Duration.ofHours(4), 0, guard);
+                Runnable::run, 1, Duration.ofHours(4), 0, null, guard);
         jobs.init();
         var user = new User();
         user.setLogin("editor");

@@ -14,6 +14,7 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -125,20 +126,18 @@ class SearchableEntityPrefetchServiceTest {
     }
 
     @Test
-    void buildsFocusedLinksForPostsAndReplies() {
-        // Mirrors the palette's own click handler (GlobalSearchNavigationViewComponent), which opens a
-        // post via focusPostId and a reply via messageId (the parent post) + focusReplyId. Without these
-        // query params the citation opens the channel but not the specific cited message.
-        Map<String, Object> post = new HashMap<>(Map.of(SearchableEntitySchema.Properties.TYPE, "post", SearchableEntitySchema.Properties.ENTITY_ID, 77L,
-                SearchableEntitySchema.Properties.COURSE_ID, 9L, SearchableEntitySchema.Properties.CHANNEL_ID, 61L));
-        Map<String, Object> answerPost = new HashMap<>(Map.of(SearchableEntitySchema.Properties.TYPE, "answer_post", SearchableEntitySchema.Properties.ENTITY_ID, 88L,
-                SearchableEntitySchema.Properties.COURSE_ID, 9L, SearchableEntitySchema.Properties.CHANNEL_ID, 61L, SearchableEntitySchema.Properties.POST_ID, 77L));
-        givenAccessibleRows(List.of(post, answerPost));
+    void requestsTheSearchableTypesAndNeverPostsOrReplies() {
+        // Posts and answer posts are indexed but stale, so they must never reach Pyris as answer candidates: the
+        // answer path asks for exactly the palette's searchable types.
+        givenAccessibleRows(List.of());
 
-        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "q", 10, null, List.of());
+        prefetchService.prefetchCandidates(new User(), "q", 10, null, List.of());
 
-        assertThat(candidates).extracting(SearchableEntityCandidateDTO::link).containsExactly("/courses/9/communication?conversationId=61&focusPostId=77",
-                "/courses/9/communication?conversationId=61&messageId=77&focusReplyId=88");
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Set<String>> requestedTypes = ArgumentCaptor.forClass(Set.class);
+        verify(accessFilterService).buildSearchableItemFilter(any(), any(), any(), requestedTypes.capture());
+        assertThat(requestedTypes.getValue()).isEqualTo(SearchableEntityAccessFilterService.SEARCHABLE_TYPES).doesNotContain(SearchableEntitySchema.TypeValues.POST,
+                SearchableEntitySchema.TypeValues.ANSWER_POST);
     }
 
     @Test

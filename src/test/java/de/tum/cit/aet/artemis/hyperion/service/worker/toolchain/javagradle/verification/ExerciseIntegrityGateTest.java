@@ -787,6 +787,21 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void approvedSpecification_doesNotMistakeATextBlockExampleForAStudentCreatedType() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `PlaybackStrategy` | abstraction students design | student-creates |
+                """;
+        String help = String.join("\n", "class Help {", "    String example = \"\"\"", "        interface PlaybackStrategy {}", "        \"\"\";", "}");
+        Map<String, String> solution = map("src/PlaybackStrategy.java", "public interface PlaybackStrategy {}", "src/Help.java", help);
+        Map<String, String> template = map("src/Help.java", help);
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).isEmpty();
+    }
+
+    @Test
     void approvedSpecification_rejectsANamedTypeArtifactAndASameLineNestedDeclaration() {
         String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| `Track` | supplied data type | given |\n"
                 + "| `PlaybackStrategy` | students create it | student-creates |\n";
