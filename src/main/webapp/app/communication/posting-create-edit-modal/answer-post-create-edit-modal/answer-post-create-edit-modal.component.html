@@ -1,7 +1,8 @@
 <ng-template #postingEditor>
-    <form [formGroup]="formGroup" (ngSubmit)="confirm()">
+    <form [formGroup]="formGroup" (ngSubmit)="markdownEditor.flushPendingTextChange(); confirm()">
         <div class="me-2">
             <jhi-posting-markdown-editor
+                #markdownEditor
                 formControlName="content"
                 [editorHeight]="editorHeight"
                 [maxContentLength]="maxContentLength"
@@ -14,7 +15,7 @@
                 (closeEditor)="close()"
             />
             @if (editType === EditType.UPDATE) {
-                <div class="answer-post-edit-actions">
+                <div class="mt-2 flex justify-end gap-2">
                     <tumaet-ui-button severity="secondary" size="small" variant="outlined" data-testid="answer-post-edit-cancel" [disabled]="isLoading()" (clicked)="close()">
                         {{ 'entity.action.cancel' | artemisTranslate }}
                     </tumaet-ui-button>

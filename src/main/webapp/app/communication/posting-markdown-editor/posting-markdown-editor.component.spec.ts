@@ -347,6 +347,12 @@ describe('PostingsMarkdownEditor', () => {
         expect(flushSpy).toHaveBeenCalledOnce();
     });
 
+    it('should flush the pending editor text when the host form asks for it', () => {
+        const flushSpy = vi.spyOn(mockMarkdownEditorComponent, 'flushPendingTextChange');
+        component.flushPendingTextChange();
+        expect(flushSpy).toHaveBeenCalledOnce();
+    });
+
     it('should not flush the pending editor text when enter only inserts a newline', () => {
         const flushSpy = vi.spyOn(mockMarkdownEditorComponent, 'flushPendingTextChange');
         component.onKeyDown(new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true }));

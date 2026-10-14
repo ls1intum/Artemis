@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockInstance, MockModule, MockPipe } from 'ng-mocks';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -159,6 +159,7 @@ describe('AnswerPostCreateEditModalComponent editor template', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        MockInstance.restore();
     });
 
     function renderEditor() {
@@ -193,6 +194,25 @@ describe('AnswerPostCreateEditModalComponent editor template', () => {
 
         expect(closeSpy).toHaveBeenCalledOnce();
         expect(updateSpy).not.toHaveBeenCalled();
+        view.destroy();
+    });
+
+    it('should flush the pending editor text before Save submits the reply', () => {
+        component.posting.set(communicationAnswerPostUser2);
+        const updateSpy = vi.spyOn(TestBed.inject(CommunicationService), 'updateAnswerPost');
+        // the editor debounces its text changes, so the form control only receives the latest text once the editor is flushed
+        const flushSpy = vi.fn(() => component.formGroup.get('content')!.setValue('latest text typed right before Save'));
+        MockInstance(PostingMarkdownEditorComponent, 'flushPendingTextChange', flushSpy);
+        const view = renderEditor();
+        const form = view.rootNodes[0] as HTMLElement;
+        document.body.appendChild(form);
+
+        (form.querySelector('[data-testid="answer-post-edit-save"] button') as HTMLButtonElement).click();
+
+        expect(flushSpy).toHaveBeenCalledOnce();
+        expect(updateSpy).toHaveBeenCalledOnce();
+        expect(updateSpy.mock.calls[0][0].content).toBe('latest text typed right before Save');
+        form.remove();
         view.destroy();
     });
 
