@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
@@ -134,7 +133,7 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
         var channels = mock(ChannelService.class);
         var participations = mock(ParticipationDeletionService.class);
         var programmingDeletion = mock(ProgrammingExerciseDeletionService.class);
-        var guard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(new GenerationExternalMutationService(ownershipService))));
+        var guard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(ownershipService)));
         var deletion = new ExerciseDeletionService(deletionRepository, participations, programmingDeletion, mock(QuizExerciseService.class),
                 mock(TutorParticipationTestRepository.class), mock(ExampleSubmissionService.class), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
                 channels, Optional.empty(), Optional.empty(), Optional.empty(), guard);

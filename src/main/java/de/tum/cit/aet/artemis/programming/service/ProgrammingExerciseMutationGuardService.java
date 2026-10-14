@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 
-/** Acquires Hyperion's distributed exercise mutation slot for external programming REST mutations. */
+/** Acquires durable database write reservations for programming exercise mutations. */
 @Lazy
 @Service
 // Both profiles are named, rather than relying on every deployment pairing localvc with core, so the bean exists wherever an injection point does.
@@ -30,16 +30,16 @@ public class ProgrammingExerciseMutationGuardService {
         this.hyperionExerciseMutationApi = hyperionExerciseMutationApi;
     }
 
-    /** @return whether external mutations use the distributed generation fence */
+    /** @return whether external mutations use database write reservations */
     public boolean isCoordinationEnabled() {
         return hyperionExerciseMutationApi.map(HyperionExerciseMutationApi::isCoordinationEnabled).orElse(false);
     }
 
     /**
-     * Claims the distributed mutation slot for an exercise, including on writer nodes where generation is disabled.
+     * Claims the database write reservation, including on writer nodes where generation is disabled.
      *
      * @param exerciseId the exercise whose generated artifacts will be mutated
-     * @return a lease that releases the slot when closed
+     * @return a lease that releases the exact reservation when closed
      */
     public MutationLease claimExternalMutation(long exerciseId) {
         if (!isCoordinationEnabled()) {

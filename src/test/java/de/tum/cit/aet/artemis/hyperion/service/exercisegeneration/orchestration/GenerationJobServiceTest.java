@@ -93,6 +93,8 @@ class GenerationJobServiceTest {
 
     private GenerationExternalMutationService ownership;
 
+    private de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi mutationApi;
+
     @BeforeAll
     void startHazelcast() {
         Config config = new Config();
@@ -105,7 +107,9 @@ class GenerationJobServiceTest {
     @BeforeEach
     void setUp() {
         hazelcastInstance.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
-        ownership = new GenerationWriteOwnershipTestFixture().service;
+        var ownershipFixture = new GenerationWriteOwnershipTestFixture();
+        ownership = ownershipFixture.service;
+        mutationApi = new de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi(ownershipFixture.database);
         jobService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
         }, mock(GenerationTokenUsageService.class), ownership);
         jobService.init();
@@ -673,11 +677,11 @@ class GenerationJobServiceTest {
         String token = jobService.claimExternalMutationSlot(229L);
         jobService.clearStaleJobs();
         assertThat(jobService.hasActiveJob(229L)).isFalse();
-        assertThat(ownership.isGenerationActive(229L)).isTrue();
+        assertThat(mutationApi.isGenerationActive(229L)).isTrue();
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimSeedSlot(229L));
         assertThat(jobService.recoverWedgedSlot(229L, "wrong-token")).isFalse();
         assertThat(jobService.recoverWedgedSlot(229L, token)).isTrue();
-        assertThat(ownership.isGenerationActive(229L)).isFalse();
+        assertThat(mutationApi.isGenerationActive(229L)).isFalse();
     }
 
     /**
@@ -732,7 +736,7 @@ class GenerationJobServiceTest {
         assertThat(jobService.recoverWedgedSlot(467L, "wrong-token")).isFalse();
         assertThat(ownership.owns(467L, token)).isTrue();
         assertThat(jobService.recoverWedgedSlot(467L, token)).isTrue();
-        assertThat(ownership.isGenerationActive(467L)).isFalse();
+        assertThat(mutationApi.isGenerationActive(467L)).isFalse();
     }
 
     @Test
@@ -1735,11 +1739,11 @@ class GenerationJobServiceTest {
         String token = jobService.claimRevertSlot(user("owner"), 229L);
         jobService.clearStaleJobs();
         assertThat(jobService.hasActiveJob(229L)).isFalse();
-        assertThat(ownership.isGenerationActive(229L)).isTrue();
+        assertThat(mutationApi.isGenerationActive(229L)).isTrue();
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimSeedSlot(229L));
         assertThat(jobService.recoverWedgedSlot(229L, "wrong-token")).isFalse();
         assertThat(jobService.recoverWedgedSlot(229L, token)).isTrue();
-        assertThat(ownership.isGenerationActive(229L)).isFalse();
+        assertThat(mutationApi.isGenerationActive(229L)).isFalse();
     }
 
     @Test
