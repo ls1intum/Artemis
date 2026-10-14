@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.hyperion.api.dtos.ParticipationReservation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
-class StudentExamPreparationServiceTest {
+class StudentExamAssignmentVariantServiceTest {
 
     private final ExamTestRepository exams = mock();
 
@@ -57,7 +57,7 @@ class StudentExamPreparationServiceTest {
 
     private final HyperionExerciseMutationApi mutations = mock();
 
-    private final StudentExamPreparationService service = new StudentExamPreparationService(exams, users, studentExams, Optional.of(mutations), mock(), mock());
+    private final StudentExamAssignmentService service = new StudentExamAssignmentService(exams, users, studentExams, Optional.of(mutations));
 
     private final Exam exam = new Exam();
 
@@ -133,17 +133,17 @@ class StudentExamPreparationServiceTest {
     void preparationProgressDoesNotRegressAndCanBeInvalidated() {
         var cache = new ConcurrentMapCacheManager(Constants.EXAM_EXERCISE_START_STATUS);
         WebsocketMessagingService messages = mock();
-        var preparation = new StudentExamPreparationService(exams, users, studentExams, Optional.empty(), cache, messages);
+        var preparation = new ExamExercisePreparationStatusService(cache, messages);
         var start = ZonedDateTime.now();
         var lock = new ReentrantLock();
-        preparation.sendAndCacheExercisePreparationStatus(42L, 5, 2, 10, 20, start, lock);
-        preparation.sendAndCacheExercisePreparationStatus(42L, 3, 1, 8, 12, start, lock);
+        preparation.update(42L, 5, 2, 10, 20, start, lock);
+        preparation.update(42L, 3, 1, 8, 12, start, lock);
         var expected = new ExamExerciseStartPreparationStatus(5, 2, 10, 20, start);
-        assertThat(preparation.getExerciseStartStatusOfExam(42L)).contains(expected);
+        assertThat(preparation.get(42L)).contains(expected);
         verify(messages, times(2)).sendMessage(EXERCISE_START_STATUS.at(42), expected);
         assertThat(lock.isLocked()).isFalse();
-        preparation.invalidateExerciseStartStatus(42L);
-        assertThat(preparation.getExerciseStartStatusOfExam(42L)).isEmpty();
+        preparation.invalidate(42L);
+        assertThat(preparation.get(42L)).isEmpty();
     }
 
     @BeforeEach
@@ -219,17 +219,17 @@ class StudentExamPreparationServiceTest {
             calls.add("lock");
             Function<Exam, StudentExam> assignment = invocation.getArgument(1);
             StudentExam saved = assignment.apply(exam);
-            assertThat(calls).containsExactly("reserve1", "reserve2", "lock", "save");
+            assertThat(calls).containsExactly("lock", "reserve1", "reserve2", "save");
             calls.add("commit");
             return saved;
         }).when(exams).withExerciseSelectionLock(anyLong(), any());
         when(studentExams.saveAndFlush(testRun)).thenAnswer(ignored -> {
-            assertThat(calls).containsExactly("reserve1", "reserve2", "lock");
+            assertThat(calls).containsExactly("lock", "reserve1", "reserve2");
             calls.add("save");
             return testRun;
         });
         assertThat(service.assignTestRun(testRun)).isSameAs(testRun);
-        assertThat(calls).containsExactly("reserve1", "reserve2", "lock", "save", "commit", "release2", "release1");
+        assertThat(calls).containsExactly("lock", "reserve1", "reserve2", "save", "commit", "release2", "release1");
     }
 
     @Test
@@ -248,7 +248,7 @@ class StudentExamPreparationServiceTest {
 
         assertThatThrownBy(() -> service.assignTestRun(testRun)).isInstanceOf(IllegalStateException.class).hasMessage("The selected exercises no longer belong to this exam.");
         verifyNoInteractions(studentExams);
-        assertThat(calls).containsExactly("reserve1", "reserve2", "release2", "release1");
+        assertThat(calls).isEmpty();
     }
 
     @Test
@@ -262,7 +262,7 @@ class StudentExamPreparationServiceTest {
 
     @Test
     void absentHyperionApiPreservesAssignment() {
-        var withoutHyperion = new StudentExamPreparationService(exams, users, studentExams, Optional.empty(), mock(), mock());
+        var withoutHyperion = new StudentExamAssignmentService(exams, users, studentExams, Optional.empty());
         withoutHyperion.assignRegisteredStudents(10L, false);
         verifyNoInteractions(mutations);
         assertThat(calls).containsExactly("save");

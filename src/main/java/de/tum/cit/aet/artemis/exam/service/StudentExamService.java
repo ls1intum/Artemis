@@ -9,6 +9,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,7 @@ import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -119,9 +121,13 @@ public class StudentExamService {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final StudentExamAssignmentService assignmentService;
+
     private final ExamRepository examRepository;
 
-    private final StudentExamPreparationService preparationService;
+    private final ExamUserRepository examUserRepository;
+
+    private final ExamExercisePreparationStatusService preparationStatus;
 
     private final TaskScheduler scheduler;
 
@@ -133,10 +139,10 @@ public class StudentExamService {
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
             Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository,
-            StudentExamPreparationService preparationService, @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService,
-            StudentExamSubmitMapper studentExamSubmitMapper, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            CourseAthenaConfigRepository courseAthenaConfigRepository) {
+            ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository, ExamUserRepository examUserRepository,
+            ExamExercisePreparationStatusService preparationStatus, StudentExamAssignmentService assignmentService, @Qualifier("taskScheduler") TaskScheduler scheduler,
+            ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -153,7 +159,9 @@ public class StudentExamService {
         this.programmingTriggerService = programmingTriggerService;
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
-        this.preparationService = preparationService;
+        this.assignmentService = assignmentService;
+        this.examUserRepository = examUserRepository;
+        this.preparationStatus = preparationStatus;
         this.scheduler = scheduler;
         this.examService = examService;
         this.studentExamSubmitMapper = studentExamSubmitMapper;
@@ -572,7 +580,7 @@ public class StudentExamService {
         testRun.setUser(userRepository.getUser());
         testRun.setTestRun(true);
         testRun.setSubmitted(false);
-        testRun = preparationService.assignTestRun(testRun);
+        testRun = assignmentService.isProtectionEnabled() ? assignmentService.assignTestRun(testRun) : studentExamRepository.save(testRun);
         return testRun;
     }
 
@@ -738,7 +746,7 @@ public class StudentExamService {
         var failedExamsCounter = new AtomicInteger(0);
         var startedAt = ZonedDateTime.now();
         var lock = new ReentrantLock();
-        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExamCount, 0, startedAt, lock);
+        preparationStatus.update(examId, 0, 0, studentExamCount, 0, startedAt, lock);
 
         try (var threadPool = Executors.newFixedThreadPool(10)) {
             var futures = rowsByStudentExamId.entrySet().stream().map(entry -> {
@@ -752,19 +760,18 @@ public class StudentExamService {
                 return CompletableFuture
                         .runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, testExam, false, startedExerciseIds, generatedParticipations,
                                 true), threadPool)
-                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
+                        .thenRun(() -> preparationStatus.update(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
                                 generatedParticipations.size(), startedAt, lock))
                         .exceptionally(throwable -> {
                             log.error("Exception while preparing exercises for student exam {}", studentExamId, throwable);
-                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExamCount,
-                                    generatedParticipations.size(), startedAt, lock);
+                            preparationStatus.update(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExamCount, generatedParticipations.size(),
+                                    startedAt, lock);
                             return null;
                         });
             }).toArray(CompletableFuture[]::new);
             return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
                 threadPool.shutdown();
-                sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExamCount, generatedParticipations.size(), startedAt,
-                        lock);
+                preparationStatus.update(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExamCount, generatedParticipations.size(), startedAt, lock);
                 return generatedParticipations.size();
             });
         }
@@ -813,16 +820,12 @@ public class StudentExamService {
         return startedStudentIdsByExerciseId;
     }
 
-    private void sendAndCacheExercisePreparationStatus(Long examId, int finished, int failed, int overall, int participations, ZonedDateTime startTime, ReentrantLock lock) {
-        preparationService.sendAndCacheExercisePreparationStatus(examId, finished, failed, overall, participations, startTime, lock);
-    }
-
     public Optional<ExamExerciseStartPreparationStatus> getExerciseStartStatusOfExam(Long examId) {
-        return preparationService.getExerciseStartStatusOfExam(examId);
+        return preparationStatus.get(examId);
     }
 
     public void invalidateExerciseStartStatus(Long examId) {
-        preparationService.invalidateExerciseStartStatus(examId);
+        preparationStatus.invalidate(examId);
     }
 
     /**
@@ -835,7 +838,14 @@ public class StudentExamService {
      */
     public StudentExam generateIndividualStudentExam(Exam exam, User student) {
         long start = System.nanoTime();
-        StudentExam studentExam = preparationService.assignStudent(exam.getId(), student.getId());
+        StudentExam studentExam;
+        if (assignmentService.isProtectionEnabled()) {
+            studentExam = assignmentService.assignStudent(exam.getId(), student.getId());
+        }
+        else {
+            Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+            studentExam = studentExamRepository.createRandomStudentExams(examWithExercises, Set.of(student.getId())).getFirst();
+        }
         // The bulk paths never read the user back, so creation only writes the foreign key and leaves a stub behind.
         // This one hands its student exam to a caller that returns it to the client, so it gets the real user it
         // already holds. Safe to set here: the save ran in its own transaction, so this entity is detached and no
@@ -857,18 +867,43 @@ public class StudentExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam exam) {
-        return preparationService.assignRegisteredStudents(exam.getId(), false);
+        if (assignmentService.isProtectionEnabled()) {
+            return assignmentService.assignRegisteredStudents(exam.getId(), false);
+        }
+        // The caller has already deleted the existing student exams and invalidated the exercise start status, and
+        // hands over an exam that carries its exercise groups. Re-reading the exam graph here loaded it a second time
+        // and re-ran a delete that had nothing left to remove. Only the registered students are still missing, and
+        // those are read as ids: ExamUser holds an eager association to User, so assembling them from the graph cost
+        // one select per student.
+        Set<Long> registeredUserIds = examUserRepository.findUserIdsByExamId(exam.getId());
+
+        // StudentExams are saved in the called method
+        return studentExamRepository.createRandomStudentExams(exam, registeredUserIds);
     }
 
     /**
      * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
      * The difference between all registered users and the users who already have an individual exam is the set of users for which student exams will be created.
+     * <p>
+     * Authoring protection uses the shared selection lock. When it is disabled, the existing unguarded assignment
+     * behavior remains: concurrent calls can both observe a missing student exam, and a group move can race selection.
      *
      * @param exam the exam to generate student exams for
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
         this.invalidateExerciseStartStatus(exam.getId());
-        return preparationService.assignRegisteredStudents(exam.getId(), true);
+        if (assignmentService.isProtectionEnabled()) {
+            return assignmentService.assignRegisteredStudents(exam.getId(), true);
+        }
+        Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+
+        // Both sides of this subtraction are only ever compared, so ids are enough. Reading them as users loaded one
+        // entity per registered student and one per student who already has an exam.
+        Set<Long> missingUserIds = new HashSet<>(examUserRepository.findUserIdsByExamId(examWithExercises.getId()));
+        missingUserIds.removeAll(studentExamRepository.findUserIdsWithStudentExamsForExam(examWithExercises.getId()));
+
+        // StudentExams are saved in the called method
+        return studentExamRepository.createRandomStudentExams(examWithExercises, missingUserIds);
     }
 }

@@ -28,6 +28,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -43,6 +44,9 @@ import com.openai.errors.RateLimitException;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport.Kind;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
@@ -77,6 +81,34 @@ class SpecFidelityCriticTest {
             Map.of("src/Graphemes.java", "class Graphemes { int count(String value) { return value.length(); } }"), RepositoryRole.TEMPLATE,
             Map.of("src/Graphemes.java", "class Graphemes { int count(String value) { return 0; } }"), RepositoryRole.TESTS,
             Map.of("test/GraphemesTest.java", "class GraphemesTest { void cjk() { assertEquals(2, count(\"漢字\")); } }"));
+
+    @Test
+    void providerFailureDoesNotExposePrivateMessagesInCriticCallerLogsOrSpecificationAudit() {
+        ChatModel model = mock(ChatModel.class);
+        when(model.getOptions()).thenReturn(ChatOptions.builder().build());
+        var serverFailure = InternalServerException.builder().statusCode(500).headers(Headers.builder().build()).build();
+        String privateMarker = "private-review-provider-body-marker";
+        when(model.call(any(Prompt.class))).thenThrow(new IllegalStateException(privateMarker, serverFailure));
+        var critic = criticWithModel(ChatClient.create(model), "review-model");
+        Logger logger = (Logger) LoggerFactory.getLogger(SpecFidelityCritic.class.getPackageName());
+        var appender = new ListAppender<ILoggingEvent>();
+        appender.start();
+        logger.addAppender(appender);
+        try {
+            var specification = critic.reviewSpecification(UNICODE_BRIEF, "R1: count Unicode grapheme clusters.", null, () -> false);
+            var report = critique(critic, UNICODE_BRIEF, "Count graphemes.", List.of("cjk"), COMPLETE_ARTIFACTS, null);
+            assertThat(specification.complete()).isFalse();
+            assertThat(specification.auditSummary()).doesNotContain(privateMarker).contains("IllegalStateException", "HTTP 500");
+            assertThat(report.findings()).noneMatch(finding -> finding.detail().contains(privateMarker));
+            assertThat(appender.list).filteredOn(event -> event.getThreadName().equals(Thread.currentThread().getName()))
+                    .anyMatch(event -> event.getLoggerName().equals(SpecFidelityCritic.class.getName()))
+                    .allSatisfy(event -> assertThat(event.getFormattedMessage()).doesNotContain(privateMarker));
+        }
+        finally {
+            logger.detachAppender(appender);
+            appender.stop();
+        }
+    }
 
     private static ChatResponse jsonResponse(String body) {
         if (body.startsWith("{") && body.endsWith("}")) {

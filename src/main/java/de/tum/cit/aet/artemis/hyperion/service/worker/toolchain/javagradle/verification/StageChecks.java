@@ -1,9 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,6 +25,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.verification.GeneratedTestPlan;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.GenerationStage;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.WorkspaceArchive;
 
 /**
  * The mechanical per-stage gates enforced by the staged generation workflow
@@ -121,12 +120,7 @@ public class StageChecks {
         if (approved.isEmpty() || approved.get().equals(readSpec(sandbox, sessionId))) {
             return Optional.empty();
         }
-        String encoded = Base64.getEncoder().encodeToString(approved.get().getBytes(StandardCharsets.UTF_8));
-        SandboxExecResultDTO restore = sandbox.exec(sessionId, GenerationWorkspace.SANDBOX_READ_TIMEOUT, "sh", "-c",
-                "echo '" + encoded + "' | base64 -d > '" + GenerationWorkspace.WORKSPACE + "/SPEC.md'");
-        if (!restore.isSuccess()) {
-            throw new IllegalStateException("A shell command changed the approved specification and it could not be restored");
-        }
+        sandbox.copyIn(sessionId, GenerationWorkspace.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(Map.of("SPEC.md", approved.get()), Map.of()));
         return Optional.of("ERROR: the shell command changed read-only SPEC.md. Artemis restored the approved specification. Use bash only for inspection and temporary "
                 + "calculations outside /workspace; edit executable artifacts through write_file/edit_file.");
     }

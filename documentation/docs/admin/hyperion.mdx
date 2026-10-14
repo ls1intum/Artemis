@@ -451,6 +451,14 @@ worker is not a drain mechanism. Re-enable admission only after capacity and the
 controlled workflow pass. Retain the prior application and sandbox digests for
 rollback; do not roll back only one side of the protocol.
 
+The shared job record includes the cancellation decision. Before this release,
+stop admission and canonical-write traffic on every core/LocalVC writer, drain
+all generation, undo, ordinary-write and source-copy reservations, and reconcile
+any retained partial-write slots. Update all writers before traffic resumes.
+Do not mix older and newer writer processes: an older record reader can discard
+the cancellation field and overwrite that decision. This is a cache protocol
+change, not a database schema migration.
+
 ### Inspect runs and worker capacity
 
 Open **Administration → AI generations** to see active generation/adaptation

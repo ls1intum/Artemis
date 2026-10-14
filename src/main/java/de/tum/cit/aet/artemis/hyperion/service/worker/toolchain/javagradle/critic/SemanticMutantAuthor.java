@@ -24,6 +24,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
 
 /**
  * Independent authoring pass for complete semantic mutants and the counterexamples that should kill them. It receives no graded test bodies: the environment, not model
@@ -110,7 +111,7 @@ class SemanticMutantAuthor {
             return parse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, cancelled, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles, visibleTargets);
         }
         catch (RuntimeException exception) {
-            log.warn("Semantic-mutant authoring failed: {}", exception.getMessage());
+            log.warn("Semantic-mutant authoring failed: {}", ProviderFailureClass.describe(exception));
             return List.of();
         }
     }

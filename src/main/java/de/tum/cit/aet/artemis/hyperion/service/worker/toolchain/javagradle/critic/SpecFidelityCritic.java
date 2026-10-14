@@ -34,6 +34,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureCooldown;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.PromptTemplates;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
@@ -622,7 +623,7 @@ public class SpecFidelityCritic {
                     usageSink, cancelled);
         }
         catch (RuntimeException e) {
-            log.warn("{} exercise review failed: {}", pass, e.getMessage());
+            log.warn("{} exercise review failed: {}", pass, ProviderFailureClass.describe(e));
             // A missing provider response is not a malformed verdict. Only the latter can be corrected with another prompt;
             // transport retries and usage uncertainty belong to ReviewerClient.
             String detail = "The " + pass + " reviewer request failed; no verdict was returned.";
