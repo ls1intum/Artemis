@@ -26,7 +26,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.service.StudentExamPreparationService;
+import de.tum.cit.aet.artemis.exam.service.StudentExamAssignmentService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -71,7 +71,7 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
     private ExamUtilService examUtil;
 
     @Autowired
-    private StudentExamPreparationService assignment;
+    private StudentExamAssignmentService assignment;
 
     @Autowired
     private DataSource dataSource;

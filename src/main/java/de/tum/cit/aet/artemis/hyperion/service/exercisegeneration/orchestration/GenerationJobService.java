@@ -617,8 +617,8 @@ public class GenerationJobService {
      * @return whether this node still owns an uncancelled job
      */
     public boolean enterNonCancellablePhase(long exerciseId, String jobId) {
-        if (!withOwnedJob(exerciseId, jobId, job -> !job.cancellationRequested() && !isCancelled(jobId)
-                && jobMap.replace(key(exerciseId), job, job.withHeartbeat(Instant.now()).withCancellable(false)))) {
+        if (!withOwnedJob(exerciseId, jobId,
+                job -> !job.cancellationRequested() && !isCancelled(jobId) && jobMap.replace(key(exerciseId), job, job.withHeartbeat(Instant.now()).withCancellable(false)))) {
             return false;
         }
         cancelHooks.deregister(jobId);

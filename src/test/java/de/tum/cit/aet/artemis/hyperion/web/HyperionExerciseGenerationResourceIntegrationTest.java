@@ -21,7 +21,7 @@ import tools.jackson.databind.json.JsonMapper;
 import de.tum.cit.aet.artemis.aiworker.domain.WorkerState;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerStatusDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exam.service.StudentExamPreparationService;
+import de.tum.cit.aet.artemis.exam.service.StudentExamAssignmentService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
@@ -65,7 +65,7 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     private StudentExamTestRepository studentExamRepository;
 
     @Autowired
-    private StudentExamPreparationService assignmentService;
+    private StudentExamAssignmentService assignmentService;
 
     @Autowired
     private HyperionExerciseMutationApi mutationApi;
