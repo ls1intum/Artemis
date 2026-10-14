@@ -1,9 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.cit.aet.artemis.exam.service.ExamSubmissionService.isContentEqualTo;
-import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.EXERCISE_START_STATUS;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -29,7 +27,6 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
@@ -37,7 +34,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -131,9 +127,7 @@ public class StudentExamService {
 
     private final ExamUserRepository examUserRepository;
 
-    private final CacheManager cacheManager;
-
-    private final WebsocketMessagingService websocketMessagingService;
+    private final ExamExercisePreparationStatusService preparationStatus;
 
     private final TaskScheduler scheduler;
 
@@ -146,8 +140,8 @@ public class StudentExamService {
             Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository, ExamUserRepository examUserRepository,
-            CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, StudentExamAssignmentService assignmentService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper,
+            ExamExercisePreparationStatusService preparationStatus, StudentExamAssignmentService assignmentService, @Qualifier("taskScheduler") TaskScheduler scheduler,
+            ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
@@ -167,8 +161,7 @@ public class StudentExamService {
         this.examRepository = examRepository;
         this.assignmentService = assignmentService;
         this.examUserRepository = examUserRepository;
-        this.cacheManager = cacheManager;
-        this.websocketMessagingService = websocketMessagingService;
+        this.preparationStatus = preparationStatus;
         this.scheduler = scheduler;
         this.examService = examService;
         this.studentExamSubmitMapper = studentExamSubmitMapper;
@@ -753,7 +746,7 @@ public class StudentExamService {
         var failedExamsCounter = new AtomicInteger(0);
         var startedAt = ZonedDateTime.now();
         var lock = new ReentrantLock();
-        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExamCount, 0, startedAt, lock);
+        preparationStatus.update(examId, 0, 0, studentExamCount, 0, startedAt, lock);
 
         try (var threadPool = Executors.newFixedThreadPool(10)) {
             var futures = rowsByStudentExamId.entrySet().stream().map(entry -> {
@@ -767,19 +760,18 @@ public class StudentExamService {
                 return CompletableFuture
                         .runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, testExam, false, startedExerciseIds, generatedParticipations,
                                 true), threadPool)
-                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
+                        .thenRun(() -> preparationStatus.update(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
                                 generatedParticipations.size(), startedAt, lock))
                         .exceptionally(throwable -> {
                             log.error("Exception while preparing exercises for student exam {}", studentExamId, throwable);
-                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExamCount,
-                                    generatedParticipations.size(), startedAt, lock);
+                            preparationStatus.update(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExamCount, generatedParticipations.size(),
+                                    startedAt, lock);
                             return null;
                         });
             }).toArray(CompletableFuture[]::new);
             return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
                 threadPool.shutdown();
-                sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExamCount, generatedParticipations.size(), startedAt,
-                        lock);
+                preparationStatus.update(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExamCount, generatedParticipations.size(), startedAt, lock);
                 return generatedParticipations.size();
             });
         }
@@ -828,50 +820,12 @@ public class StudentExamService {
         return startedStudentIdsByExerciseId;
     }
 
-    private void sendAndCacheExercisePreparationStatus(Long examId, int finished, int failed, int overall, int participations, ZonedDateTime startTime, ReentrantLock lock) {
-        // Synchronizing and comparing to avoid race conditions here
-        // Otherwise it can happen that a status with less completed exams is sent after one with a higher value
-        try {
-            lock.lock();
-            ExamExerciseStartPreparationStatus status = null;
-            var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
-            if (cache != null) {
-                var oldValue = cache.get(examId);
-                if (oldValue != null) {
-                    var oldStatus = (ExamExerciseStartPreparationStatus) oldValue.get();
-                    if (oldStatus != null) {
-                        status = new ExamExerciseStartPreparationStatus(Math.max(finished, oldStatus.finished()), Math.max(failed, oldStatus.failed()),
-                                Math.max(overall, oldStatus.overall()), Math.max(participations, oldStatus.participationCount()), startTime);
-                    }
-                }
-                if (status == null) {
-                    status = new ExamExerciseStartPreparationStatus(finished, failed, overall, participations, startTime);
-                }
-                cache.put(examId, status);
-            }
-            else {
-                log.warn("Unable to add exam exercise start status to distributed cache because it is null");
-            }
-            websocketMessagingService.sendMessage(EXERCISE_START_STATUS.at(examId), status);
-        }
-        catch (Exception e) {
-            log.warn("Failed to send exercise preparation status", e);
-        }
-        finally {
-            lock.unlock();
-        }
-    }
-
     public Optional<ExamExerciseStartPreparationStatus> getExerciseStartStatusOfExam(Long examId) {
-        return Optional.ofNullable(cacheManager.getCache(EXAM_EXERCISE_START_STATUS)).map(cache -> cache.get(examId))
-                .map(wrapper -> (ExamExerciseStartPreparationStatus) wrapper.get());
+        return preparationStatus.get(examId);
     }
 
     public void invalidateExerciseStartStatus(Long examId) {
-        var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
-        if (cache != null) {
-            cache.evict(examId);
-        }
+        preparationStatus.invalidate(examId);
     }
 
     /**
