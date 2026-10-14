@@ -118,15 +118,15 @@ class StudentExamAssignmentServiceTest {
         testRun.setExam(exam);
         testRun.setExercises(new ArrayList<>(exam.getExerciseGroups().getFirst().getExercises()));
         when(studentExams.saveAndFlush(testRun)).thenAnswer(ignored -> {
-            assertThat(calls).containsExactly("reserve1", "reserve2", "lock");
+            assertThat(calls).containsExactly("lock", "reserve1", "reserve2");
             return testRun;
         });
         assertThat(service.assignTestRun(testRun)).isSameAs(testRun);
-        assertThat(calls).containsExactly("reserve1", "reserve2", "lock", "commit", "release2", "release1");
+        assertThat(calls).containsExactly("lock", "reserve1", "reserve2", "commit", "release2", "release1");
     }
 
     @Test
-    void disabledHyperionPreservesAssignment() {
+    void assignmentWithoutMutationApiHasNoProgrammingReservations() {
         var withoutHyperion = new StudentExamAssignmentService(exams, users, studentExams, Optional.empty());
         withoutHyperion.assignRegisteredStudents(10L, false);
         verifyNoInteractions(mutations);

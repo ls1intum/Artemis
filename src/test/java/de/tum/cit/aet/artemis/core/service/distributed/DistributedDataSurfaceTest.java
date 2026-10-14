@@ -125,7 +125,9 @@ class DistributedDataSurfaceTest {
      * Loaded by name so that they are still covered rather than quietly left out.
      */
     // Hyperion and AI Worker use new map/topic names; aiworker-presence never reads the retired Hyperion worker maps.
-    // No existing stored representation changes, so no epoch bump is needed.
+    // JobInfo is a JDK-serialized map value: the added cancellation flag defaults to false in older streams.
+    // Upgrade only after draining generation slots and stopping all writers (see the Hyperion admin guide);
+    // mixed writers could discard this decision even though the record remains readable. No positional type changed.
     private static final List<String> ROOTS_BY_NAME = List.of("de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService$RunInfo",
             "de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationCancelHooks$CancelRequest",
             "de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobReplayStore$JobUsage",

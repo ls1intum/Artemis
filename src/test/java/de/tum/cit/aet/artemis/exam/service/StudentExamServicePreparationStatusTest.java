@@ -16,21 +16,33 @@ import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 
-class ExamExercisePreparationStatusServiceTest {
+class StudentExamServicePreparationStatusTest {
 
     private final WebsocketMessagingService websocket = mock();
 
-    private final ExamExercisePreparationStatusService service = new ExamExercisePreparationStatusService(new ConcurrentMapCacheManager(), websocket);
+    private final StudentExamService service = mock(StudentExamService.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "cacheManager",
+                new ConcurrentMapCacheManager(de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS));
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "websocketMessagingService", websocket);
+    }
+
+    private void update(Long examId, int finished, int failed, int overall, int participations, ZonedDateTime started, ReentrantLock lock) {
+        org.springframework.test.util.ReflectionTestUtils.invokeMethod(service, "sendAndCacheExercisePreparationStatus", examId, finished, failed, overall, participations, started,
+                lock);
+    }
 
     @Test
     void lateUpdatesCannotMoveRetainedOrPublishedProgressBackwards() {
         ZonedDateTime started = ZonedDateTime.now();
         ReentrantLock lock = new ReentrantLock();
-        service.update(1L, 5, 2, 10, 15, started, lock);
-        service.update(1L, 3, 1, 8, 9, started, lock);
+        update(1L, 5, 2, 10, 15, started, lock);
+        update(1L, 3, 1, 8, 9, started, lock);
 
         var expected = new ExamExerciseStartPreparationStatus(5, 2, 10, 15, started);
-        assertThat(service.get(1L)).contains(expected);
+        assertThat(service.getExerciseStartStatusOfExam(1L)).contains(expected);
         verify(websocket, org.mockito.Mockito.times(2)).sendMessage(EXERCISE_START_STATUS.at(1), expected);
         assertThat(lock.isLocked()).isFalse();
     }
@@ -38,13 +50,13 @@ class ExamExercisePreparationStatusServiceTest {
     @Test
     void invalidationStartsANewBatchWithoutInheritingItsPredecessorsCounters() {
         ZonedDateTime started = ZonedDateTime.now();
-        service.update(1L, 5, 2, 10, 15, started, new ReentrantLock());
-        service.invalidate(1L);
-        assertThat(service.get(1L)).isEmpty();
+        update(1L, 5, 2, 10, 15, started, new ReentrantLock());
+        service.invalidateExerciseStartStatus(1L);
+        assertThat(service.getExerciseStartStatusOfExam(1L)).isEmpty();
 
-        service.update(1L, 0, 0, 4, 0, started.plusMinutes(1), new ReentrantLock());
+        update(1L, 0, 0, 4, 0, started.plusMinutes(1), new ReentrantLock());
 
-        assertThat(service.get(1L)).contains(new ExamExerciseStartPreparationStatus(0, 0, 4, 0, started.plusMinutes(1)));
+        assertThat(service.getExerciseStartStatusOfExam(1L)).contains(new ExamExerciseStartPreparationStatus(0, 0, 4, 0, started.plusMinutes(1)));
     }
 
     @Test
@@ -54,9 +66,9 @@ class ExamExercisePreparationStatusServiceTest {
         doThrow(new IllegalStateException("disconnected")).when(websocket).sendMessage(eq(EXERCISE_START_STATUS.at(1)), eq(expected));
         ReentrantLock lock = new ReentrantLock();
 
-        service.update(1L, 1, 0, 1, 1, started, lock);
+        update(1L, 1, 0, 1, 1, started, lock);
 
-        assertThat(service.get(1L)).contains(expected);
+        assertThat(service.getExerciseStartStatusOfExam(1L)).contains(expected);
         assertThat(lock.isLocked()).isFalse();
     }
 }

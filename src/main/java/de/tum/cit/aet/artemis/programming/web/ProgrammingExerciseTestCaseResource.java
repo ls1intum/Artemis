@@ -123,10 +123,6 @@ public class ProgrammingExerciseTestCaseResource {
                 programmingExerciseCreationScheduleService.scheduleOperations(programmingExercise.getId());
             }
 
-            // We don't need the linked exercise here.
-            for (ProgrammingExerciseTestCase testCase : updatedTests) {
-                testCase.setExercise(null);
-            }
             if (lease.coordinated()) {
                 exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
             }

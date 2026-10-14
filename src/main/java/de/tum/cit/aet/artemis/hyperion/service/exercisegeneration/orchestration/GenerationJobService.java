@@ -504,8 +504,20 @@ public class GenerationJobService {
             if (replayState == null || (user != null && !replayState.userLogin().equals(user.getLogin()))) {
                 return false;
             }
+            topology.verifyAllMembers();
             if (replayState.done()) {
-                return user != null && isCancelled(jobId);
+                return user != null && (job.cancellationRequested() || isCancelled(jobId));
+            }
+            if (!job.cancellationRequested()) {
+                try {
+                    if (!jobMap.replace(key, job, job.withCancellationRequested())) {
+                        return false;
+                    }
+                }
+                catch (RuntimeException unavailable) {
+                    log.warn("Could not confirm cancellation of generation job {}", jobId, unavailable);
+                    throw new ServiceUnavailableAlertException("Cancellation could not be confirmed. Please retry.", ENTITY_NAME, "exerciseGenerationCancellationUnavailable");
+                }
             }
             cancellationMap.put(job.jobId(), Boolean.TRUE);
             cancellationEvent = replayStore.appendCancellation(job, message);
@@ -556,7 +568,7 @@ public class GenerationJobService {
             if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
                 return false;
             }
-            if (isCancelled(jobId)) {
+            if (job.cancellationRequested() || isCancelled(jobId)) {
                 // Cancellation already won this job under the same lock: the run is terminal as CANCELLED, so this must not flip it non-cancellable or let the caller persist.
                 return false;
             }
@@ -616,17 +628,14 @@ public class GenerationJobService {
      * @return true if the heartbeat was recorded
      */
     public boolean heartbeat(long exerciseId, String jobId) {
-        if (!topology.permitsOwnership()) {
-            return false;
-        }
         String key = key(exerciseId);
         lockJobSlot(key);
         try {
-            if (!topology.permitsOwnership()) {
-                return false;
-            }
             JobInfo job = jobMap.get(key);
             if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
+                return false;
+            }
+            if (!(job.cancellable() ? topology.permitsAuthoringHeartbeat() : topology.permitsOwnership())) {
                 return false;
             }
             if (generationBudgetService != null && !generationBudgetService.refreshReservation(job.budgetReservationId())) {
@@ -868,7 +877,7 @@ public class GenerationJobService {
      */
     public record JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Instant deadlineAt, @Nullable String ownerNodeId,
             @Nullable Instant lastHeartbeatAt, boolean cancellable, @Nullable String budgetReservationId, @Nullable GenerationMode mode, @Nullable String exerciseTitle,
-            @Nullable Long courseId, @Nullable Map<String, String> participationOwners) implements Serializable {
+            @Nullable Long courseId, @Nullable Map<String, String> participationOwners, boolean cancellationRequested) implements Serializable {
 
         @Serial
         private static final long serialVersionUID = 1L;
@@ -879,10 +888,22 @@ public class GenerationJobService {
             this(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, cancellable, budgetReservationId, mode, exerciseTitle, courseId, null);
         }
 
+        public JobInfo(String jobId, String userLogin, long exerciseId, Instant startedAt, @Nullable Instant deadlineAt, @Nullable String ownerNodeId,
+                @Nullable Instant lastHeartbeatAt, boolean cancellable, @Nullable String budgetReservationId, @Nullable GenerationMode mode, @Nullable String exerciseTitle,
+                @Nullable Long courseId, @Nullable Map<String, String> participationOwners) {
+            this(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, cancellable, budgetReservationId, mode, exerciseTitle, courseId,
+                    participationOwners, false);
+        }
+
+        JobInfo withCancellationRequested() {
+            return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, cancellable, budgetReservationId, mode, exerciseTitle, courseId,
+                    participationOwners, true);
+        }
+
         JobInfo withParticipationOwners(Map<String, String> owners) {
             // Stable serialization is required for Hazelcast binary compare-and-set across JVMs.
             return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, cancellable, budgetReservationId, mode, exerciseTitle, courseId,
-                    Collections.unmodifiableSortedMap(new TreeMap<>(owners)));
+                    Collections.unmodifiableSortedMap(new TreeMap<>(owners)), cancellationRequested);
         }
 
         boolean ownersAbsentFrom(Set<String> nodes) {
@@ -902,12 +923,12 @@ public class GenerationJobService {
 
         JobInfo withHeartbeat(Instant heartbeatAt) {
             return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, heartbeatAt, cancellable, budgetReservationId, mode, exerciseTitle, courseId,
-                    participationOwners);
+                    participationOwners, cancellationRequested);
         }
 
         JobInfo withCancellable(boolean newCancellable) {
             return new JobInfo(jobId, userLogin, exerciseId, startedAt, deadlineAt, ownerNodeId, lastHeartbeatAt, newCancellable, budgetReservationId, mode, exerciseTitle,
-                    courseId, participationOwners);
+                    courseId, participationOwners, cancellationRequested);
         }
     }
 

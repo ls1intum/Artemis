@@ -117,6 +117,45 @@ class GenerationJobServiceTest {
         hazelcastInstance.shutdown();
     }
 
+    @Test
+    void expiredCancellationLockCannotAcknowledgeCancellationAfterSaveWins() throws Exception {
+        long id = 707L;
+        var owner = user("owner");
+        String job = jobService.startJob(owner, exercise(id), "draft", GenerationMode.GENERATE);
+        @SuppressWarnings("unchecked")
+        var original = (de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap<String, GenerationJobService.JobInfo>) ReflectionTestUtils.getField(jobService,
+                "jobMap");
+        var observed = spy(original);
+        ReflectionTestUtils.setField(jobService, "jobMap", observed);
+        var readBeforeExpiry = new CountDownLatch(1);
+        var resume = new CountDownLatch(1);
+        var firstRead = new AtomicBoolean(true);
+        doAnswer(call -> {
+            var snapshot = call.callRealMethod();
+            if (firstRead.getAndSet(false)) {
+                // Release the actual key lock to model watchdog expiry, then resume with the stale read after SAVE has won.
+                observed.unlock(String.valueOf(id));
+                readBeforeExpiry.countDown();
+                assertThat(resume.await(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                observed.lock(String.valueOf(id));
+            }
+            return snapshot;
+        }).when(observed).get(String.valueOf(id));
+        try (var callers = Executors.newVirtualThreadPerTaskExecutor()) {
+            var cancellation = callers.submit(() -> jobService.requestCancellation(id, job, owner));
+            try {
+                assertThat(readBeforeExpiry.await(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                assertThat(callers.submit(() -> jobService.enterNonCancellablePhase(id, job)).get(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+            }
+            finally {
+                resume.countDown();
+            }
+            assertThat(cancellation.get(10, java.util.concurrent.TimeUnit.SECONDS)).isFalse();
+            assertThat(jobService.isCancelled(job)).isFalse();
+            assertThat(original.get(String.valueOf(id)).cancellable()).isFalse();
+        }
+    }
+
     private static User user(String login) {
         User user = new User();
         user.setLogin(login);

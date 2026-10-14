@@ -53,9 +53,24 @@ final class GenerationClusterTopology {
         }
     }
 
+    /** Unknown presence does not prove that an authoring slot changed; the caller must still read and CAS that exact slot. */
+    boolean permitsAuthoringHeartbeat() {
+        try {
+            var observed = distributedDataProvider.getCoordinationSnapshot();
+            return observed.isEmpty() || permitsOwnership(observed.get());
+        }
+        catch (RuntimeException unavailable) {
+            return true;
+        }
+    }
+
+    private boolean permitsOwnership(CoordinationSnapshot snapshot) {
+        return snapshot.permitsAdmission(expectedDataMemberCount) && snapshot.ownerNodeIds().contains(distributedDataProvider.getLocalNodeId()) && snapshot.allWritersFenced();
+    }
+
     void verifyAllMembers() {
         CoordinationSnapshot snapshot = snapshot();
-        if (!snapshot.permitsAdmission(expectedDataMemberCount) || !snapshot.ownerNodeIds().contains(distributedDataProvider.getLocalNodeId()) || !snapshot.allWritersFenced()) {
+        if (!permitsOwnership(snapshot)) {
             throw new ServiceUnavailableAlertException("Authoring requires a connected owner and a complete configured store view: expected " + expectedDataMemberCount
                     + " data members, observed " + snapshot.ownerNodeIds().size() + " owner processes (member-hosted store: " + snapshot.memberQuorumRequired()
                     + ", all writers fenced: " + snapshot.allWritersFenced() + ").", ENTITY_NAME, "hyperionDataMemberTopologyMismatch");
