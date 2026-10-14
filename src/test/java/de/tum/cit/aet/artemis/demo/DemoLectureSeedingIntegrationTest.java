@@ -28,19 +28,20 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
+import de.tum.cit.aet.artemis.account.api.UserApi;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
-import de.tum.cit.aet.artemis.atlas.api.AtlasDemoApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
-import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
+import de.tum.cit.aet.artemis.course.api.CourseApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.CourseDemoService;
 import de.tum.cit.aet.artemis.demo.service.DemoCourseContentSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoDataSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.lecture.api.LectureDemoApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.lecture.api.dtos.DemoLectures;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
@@ -81,16 +82,16 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
     private DemoDataSeedingService demoDataSeedingService;
 
     @Autowired
-    private AccountDemoApi accountDemoApi;
+    private UserApi userApi;
 
     @Autowired
-    private CourseDemoApi courseDemoApi;
+    private CourseApi courseApi;
 
     @Autowired
     private DemoExerciseSeedingService demoExerciseSeedingService;
 
     @Autowired
-    private LectureDemoApi lectureDemoApi;
+    private LectureApi lectureApi;
 
     @Autowired
     private AssessmentDemoApi assessmentDemoApi;
@@ -219,7 +220,7 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
             Lecture afterReseeding = demoLecture(ARCHITECTURE);
             assertThat(unitIds(afterReseeding)).as("the added unit is kept").contains(addedUnit.getId());
             // Without exercises, seeding only looks up the other units of the existing lectures.
-            DemoLectures seededUnits = lectureDemoApi.createDemo(demoCourse(), List.of(), List.of(), List.of());
+            DemoLectures seededUnits = lectureApi.createDemo(demoCourse(), List.of(), List.of(), List.of());
             assertThat(seededUnits.architecture()).extracting(LectureUnit::getId).as("only the seeded units of the lecture are returned")
                     .containsExactlyInAnyOrderElementsOf(nonExerciseUnitIds(afterReseeding).stream().filter(id -> !id.equals(addedUnit.getId())).toList());
         }
@@ -232,14 +233,14 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
     void seedsWithoutLectureModule() {
         seed();
         Map<Long, List<Long>> lecturesBefore = snapshotLectures();
-        AtlasDemoApi atlasDemoApi = mock(AtlasDemoApi.class);
-        DemoDataSeedingService withoutLectures = new DemoDataSeedingService(accountDemoApi, courseDemoApi, demoExerciseSeedingService,
-                new DemoCourseContentSeedingService(Optional.empty(), Optional.of(atlasDemoApi), assessmentDemoApi, Optional.empty(), communicationDemoApi));
+        CompetencyApi competencyApi = mock(CompetencyApi.class);
+        DemoDataSeedingService withoutLectures = new DemoDataSeedingService(userApi, courseApi, demoExerciseSeedingService,
+                new DemoCourseContentSeedingService(Optional.empty(), Optional.of(competencyApi), assessmentDemoApi, Optional.empty(), communicationDemoApi));
 
         DemoSeeding.seed(withoutLectures);
 
         // The competencies are still seeded, with the exercises of their topics alone.
-        verify(atlasDemoApi).createDemo(any(Course.class), argThat(DemoLectureSeedingIntegrationTest::onlyExercises), argThat(DemoLectureSeedingIntegrationTest::onlyExercises),
+        verify(competencyApi).createDemo(any(Course.class), argThat(DemoLectureSeedingIntegrationTest::onlyExercises), argThat(DemoLectureSeedingIntegrationTest::onlyExercises),
                 argThat(DemoLectureSeedingIntegrationTest::onlyExercises), argThat(DemoLectureSeedingIntegrationTest::onlyExercises), anyList());
         assertThat(snapshotLectures()).as("a disabled lecture module leaves the existing lectures alone").isEqualTo(lecturesBefore);
     }
@@ -249,7 +250,7 @@ class DemoLectureSeedingIntegrationTest extends AbstractSpringIntegrationIndepen
     }
 
     private Course demoCourse() {
-        return courseRepository.findAllByShortName(CourseDemoApi.DEMO_COURSE_SHORT_NAME).getFirst();
+        return courseRepository.findAllByShortName(CourseDemoService.DEMO_COURSE_SHORT_NAME).getFirst();
     }
 
     private Lecture demoLecture(String title) {

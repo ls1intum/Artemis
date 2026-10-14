@@ -10,15 +10,15 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.account.api.AccountDemoApi.DemoUsers;
+import de.tum.cit.aet.artemis.account.api.dtos.DemoUsers;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
-import de.tum.cit.aet.artemis.atlas.api.AtlasDemoApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService.DemoExercises;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.lecture.api.LectureDemoApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.lecture.api.dtos.DemoLectures;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupDemoApi;
@@ -36,9 +36,9 @@ public class DemoCourseContentSeedingService {
      */
     private static final DemoLectures NO_LECTURES = new DemoLectures(List.of(), List.of(), List.of());
 
-    private final Optional<LectureDemoApi> lectureDemoApi;
+    private final Optional<LectureApi> lectureApi;
 
-    private final Optional<AtlasDemoApi> atlasDemoApi;
+    private final Optional<CompetencyApi> competencyApi;
 
     private final AssessmentDemoApi assessmentDemoApi;
 
@@ -46,10 +46,10 @@ public class DemoCourseContentSeedingService {
 
     private final CommunicationDemoApi communicationDemoApi;
 
-    public DemoCourseContentSeedingService(Optional<LectureDemoApi> lectureDemoApi, Optional<AtlasDemoApi> atlasDemoApi, AssessmentDemoApi assessmentDemoApi,
+    public DemoCourseContentSeedingService(Optional<LectureApi> lectureApi, Optional<CompetencyApi> competencyApi, AssessmentDemoApi assessmentDemoApi,
             Optional<TutorialGroupDemoApi> tutorialGroupDemoApi, CommunicationDemoApi communicationDemoApi) {
-        this.lectureDemoApi = lectureDemoApi;
-        this.atlasDemoApi = atlasDemoApi;
+        this.lectureApi = lectureApi;
+        this.competencyApi = competencyApi;
         this.assessmentDemoApi = assessmentDemoApi;
         this.tutorialGroupDemoApi = tutorialGroupDemoApi;
         this.communicationDemoApi = communicationDemoApi;
@@ -64,11 +64,11 @@ public class DemoCourseContentSeedingService {
      */
     void seed(Course course, DemoUsers users, DemoExercises exercises) {
         DemoLectures lectures = DemoAreas.seed("lectures",
-                () -> lectureDemoApi.map(api -> api.createDemo(course, exercises.architecture(), exercises.algorithms(), exercises.modeling())).orElse(NO_LECTURES), NO_LECTURES);
+                () -> lectureApi.map(api -> api.createDemo(course, exercises.architecture(), exercises.algorithms(), exercises.modeling())).orElse(NO_LECTURES), NO_LECTURES);
         // Before the competencies, which update the progress of the demo students once everything is linked.
-        DemoAreas.seed("lecture unit completions", () -> lectureDemoApi.ifPresent(api -> api.completeDemoUnits(lectures, users.student())));
+        DemoAreas.seed("lecture unit completions", () -> lectureApi.ifPresent(api -> api.completeDemoUnits(lectures, users.student())));
         DemoAreas.seed("competencies",
-                () -> atlasDemoApi.ifPresent(api -> api.createDemo(course, learningObjects(exercises.architecture(), lectures.architecture()),
+                () -> competencyApi.ifPresent(api -> api.createDemo(course, learningObjects(exercises.architecture(), lectures.architecture()),
                         learningObjects(exercises.algorithms(), lectures.algorithms()), learningObjects(exercises.modeling(), lectures.modeling()), exercises.communication(),
                         users.students())));
         DemoAreas.seed("grading scale", () -> assessmentDemoApi.createDemoGradingScale(course));

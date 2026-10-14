@@ -27,16 +27,16 @@ import com.github.dockerjava.api.DockerClient;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
-import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.CourseDemoService;
 import de.tum.cit.aet.artemis.demo.service.DemoDataSeedingService;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localci.service.DockerClientTestService;
-import de.tum.cit.aet.artemis.programming.api.ProgrammingDemoApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingDemoService;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -54,7 +54,7 @@ class DemoProgrammingExerciseSeedingIntegrationTest extends AbstractSpringIntegr
     /**
      * The project key the demo exercise ends up with. It is fixed, so leftover repositories of an earlier run would make the creation fail with an existing project.
      */
-    private static final String DEMO_PROJECT_KEY = (CourseDemoApi.DEMO_COURSE_SHORT_NAME + ProgrammingDemoApi.DEMO_EXERCISE_SHORT_NAME).toUpperCase(Locale.ROOT);
+    private static final String DEMO_PROJECT_KEY = (CourseDemoService.DEMO_COURSE_SHORT_NAME + ProgrammingDemoService.DEMO_EXERCISE_SHORT_NAME).toUpperCase(Locale.ROOT);
 
     /**
      * The Docker client of the builds this test triggers. Its own rather than the shared static one of the base class, so that its builds cannot use up the stubs of a
@@ -141,12 +141,12 @@ class DemoProgrammingExerciseSeedingIntegrationTest extends AbstractSpringIntegr
 
         assertThat(demoProgrammingExercise()).as("an existing demo programming exercise is neither duplicated nor replaced").map(ProgrammingExercise::getId)
                 .contains(exercise.getId());
-        assertThat(programmingExerciseRepository.countByShortNameAndCourse(ProgrammingDemoApi.DEMO_EXERCISE_SHORT_NAME, course)).isOne();
+        assertThat(programmingExerciseRepository.countByShortNameAndCourse(ProgrammingDemoService.DEMO_EXERCISE_SHORT_NAME, course)).isOne();
     }
 
     private Optional<ProgrammingExercise> demoProgrammingExercise() {
-        return courseRepository.findAllByShortName(CourseDemoApi.DEMO_COURSE_SHORT_NAME).stream().findFirst()
-                .flatMap(course -> programmingExerciseRepository.findByShortNameAndCourseIdWithCompetencies(ProgrammingDemoApi.DEMO_EXERCISE_SHORT_NAME, course.getId()));
+        return courseRepository.findAllByShortName(CourseDemoService.DEMO_COURSE_SHORT_NAME).stream().findFirst()
+                .flatMap(course -> programmingExerciseRepository.findByShortNameAndCourseIdWithCompetencies(ProgrammingDemoService.DEMO_EXERCISE_SHORT_NAME, course.getId()));
     }
 
     private void deleteDemoRepositories() throws IOException {

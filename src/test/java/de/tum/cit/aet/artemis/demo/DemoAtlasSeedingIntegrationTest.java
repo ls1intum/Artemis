@@ -21,8 +21,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
+import de.tum.cit.aet.artemis.account.api.UserApi;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.user.UserDemoService;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
@@ -40,16 +41,17 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
-import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
+import de.tum.cit.aet.artemis.course.api.CourseApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
 import de.tum.cit.aet.artemis.course.service.CourseAvailableTabsService;
+import de.tum.cit.aet.artemis.course.service.CourseDemoService;
 import de.tum.cit.aet.artemis.demo.service.DemoCourseContentSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoDataSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.lecture.api.LectureDemoApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -96,16 +98,16 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
     private DemoDataSeedingService demoDataSeedingService;
 
     @Autowired
-    private AccountDemoApi accountDemoApi;
+    private UserApi userApi;
 
     @Autowired
-    private CourseDemoApi courseDemoApi;
+    private CourseApi courseApi;
 
     @Autowired
     private DemoExerciseSeedingService demoExerciseSeedingService;
 
     @Autowired
-    private LectureDemoApi lectureDemoApi;
+    private LectureApi lectureApi;
 
     @Autowired
     private AssessmentDemoApi assessmentDemoApi;
@@ -144,7 +146,7 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
     private CourseAvailableTabsService courseAvailableTabsService;
 
     @Test
-    @WithMockUser(username = AccountDemoApi.DEMO_STUDENT_LOGIN, roles = "USER")
+    @WithMockUser(username = UserDemoService.DEMO_STUDENT_LOGIN, roles = "USER")
     void demoStudentSeesTheCompetenciesWithTheirProgress() throws Exception {
         seed();
         Course course = demoCourse();
@@ -235,7 +237,7 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = AccountDemoApi.DEMO_STUDENT_LOGIN, roles = "USER")
+    @WithMockUser(username = UserDemoService.DEMO_STUDENT_LOGIN, roles = "USER")
     void enablesLearningPathsForEveryStudent() throws Exception {
         seed();
 
@@ -260,7 +262,7 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     @Test
-    @WithMockUser(username = AccountDemoApi.DEMO_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = UserDemoService.DEMO_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void recreatesAndRelinksDeletedCompetency() throws Exception {
         seed();
         long courseId = demoCourse().getId();
@@ -309,8 +311,8 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
         seed();
         AtlasSnapshot beforeRun = snapshot();
 
-        DemoDataSeedingService withoutAtlas = new DemoDataSeedingService(accountDemoApi, courseDemoApi, demoExerciseSeedingService,
-                new DemoCourseContentSeedingService(Optional.of(lectureDemoApi), Optional.empty(), assessmentDemoApi, Optional.of(tutorialGroupDemoApi), communicationDemoApi));
+        DemoDataSeedingService withoutAtlas = new DemoDataSeedingService(userApi, courseApi, demoExerciseSeedingService,
+                new DemoCourseContentSeedingService(Optional.of(lectureApi), Optional.empty(), assessmentDemoApi, Optional.of(tutorialGroupDemoApi), communicationDemoApi));
         DemoSeeding.seed(withoutAtlas);
 
         assertThat(snapshot()).as("a disabled atlas module leaves the existing competencies alone").isEqualTo(beforeRun);
@@ -321,18 +323,18 @@ class DemoAtlasSeedingIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     private Course demoCourse() {
-        return courseRepository.findAllByShortName(CourseDemoApi.DEMO_COURSE_SHORT_NAME).getFirst();
+        return courseRepository.findAllByShortName(CourseDemoService.DEMO_COURSE_SHORT_NAME).getFirst();
     }
 
     private User demoStudent() {
-        return userTestRepository.findOneByLogin(AccountDemoApi.DEMO_STUDENT_LOGIN).orElseThrow();
+        return userTestRepository.findOneByLogin(UserDemoService.DEMO_STUDENT_LOGIN).orElseThrow();
     }
 
     /**
      * The demo student followed by their classmates, who already exist because every test seeds first.
      */
     private List<User> demoStudents() {
-        return accountDemoApi.createDemoUsers().students();
+        return userApi.createDemoUsers().students();
     }
 
     private Lecture demoLecture(String title) {

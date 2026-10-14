@@ -24,20 +24,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
+import de.tum.cit.aet.artemis.account.api.UserApi;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.ConductAgreementService;
+import de.tum.cit.aet.artemis.account.service.user.UserDemoService;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
+import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
-import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
+import de.tum.cit.aet.artemis.course.api.CourseApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.CourseDemoService;
 import de.tum.cit.aet.artemis.demo.service.DemoCourseContentSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoDataSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService;
@@ -57,7 +63,7 @@ import de.tum.cit.aet.artemis.text.api.TextDemoApi;
 /**
  * Tests the demo course seeding routine of the {@code demo} profile.
  * <p>
- * The test context activates the {@code demo} profile, so the seeding service and the demo APIs of the modules exist as beans. The startup event that triggers seeding is never
+ * The test context activates the {@code demo} profile, so the seeding service exists as a bean. The startup event that triggers seeding is never
  * published in tests, so the tests invoke the listener directly. That exercises the real APIs against the real database.
  * <p>
  * Seeding deliberately uses fixed identifiers, so these tests write a course named {@code demo} and the demo users into the shared test database instead of prefixed test data.
@@ -71,10 +77,10 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     private DemoDataSeedingService demoDataSeedingService;
 
     @Autowired
-    private AccountDemoApi accountDemoApi;
+    private UserApi userApi;
 
     @Autowired
-    private CourseDemoApi courseDemoApi;
+    private CourseApi courseApi;
 
     @Autowired
     private QuizDemoApi quizDemoApi;
@@ -133,10 +139,10 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         });
 
         assertThat(users.stream().filter(user -> hasRole(user, course, CourseRole.STUDENT)).map(User::getLogin)).as("the demo student and their classmates are students")
-                .containsExactlyInAnyOrderElementsOf(Stream.concat(Stream.of(AccountDemoApi.DEMO_STUDENT_LOGIN), peerLogins()).toList());
-        assertThat(hasRole(user(AccountDemoApi.DEMO_TUTOR_LOGIN), course, CourseRole.TEACHING_ASSISTANT)).as("demo tutor is a tutor").isTrue();
-        assertThat(hasRole(user(AccountDemoApi.DEMO_EDITOR_LOGIN), course, CourseRole.EDITOR)).as("demo editor is an editor").isTrue();
-        assertThat(hasRole(user(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN), course, CourseRole.INSTRUCTOR)).as("demo instructor is an instructor").isTrue();
+                .containsExactlyInAnyOrderElementsOf(Stream.concat(Stream.of(UserDemoService.DEMO_STUDENT_LOGIN), peerLogins()).toList());
+        assertThat(hasRole(user(UserDemoService.DEMO_TUTOR_LOGIN), course, CourseRole.TEACHING_ASSISTANT)).as("demo tutor is a tutor").isTrue();
+        assertThat(hasRole(user(UserDemoService.DEMO_EDITOR_LOGIN), course, CourseRole.EDITOR)).as("demo editor is an editor").isTrue();
+        assertThat(hasRole(user(UserDemoService.DEMO_INSTRUCTOR_LOGIN), course, CourseRole.INSTRUCTOR)).as("demo instructor is an instructor").isTrue();
     }
 
     @Test
@@ -205,6 +211,28 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     @Test
+    void recreatesMissingChannels() {
+        seed();
+        long courseId = demoCourse().orElseThrow().getId();
+        DemoDataSnapshot seeded = snapshotDemoData();
+        // Deleting the channels leaves the same state as a channel creation that failed after its course or lecture was saved.
+        long lectureId = demoLectures(courseId).iterator().next().getId();
+        Channel lectureChannel = channelRepository.findChannelByLectureId(lectureId);
+        Channel defaultChannel = channelRepository.findChannelByCourseIdAndName(courseId, DefaultChannelType.RANDOM.getName()).iterator().next();
+        channelService.deleteChannel(lectureChannel);
+        channelService.deleteChannel(defaultChannel);
+        Set<Long> untouchedChannelIds = snapshotDemoData().channelIds();
+
+        seed();
+
+        DemoDataSnapshot afterReseeding = snapshotDemoData();
+        assertThat(afterReseeding.channelIds()).as("missing channels are recreated and existing ones are left alone").hasSameSizeAs(seeded.channelIds())
+                .containsAll(untouchedChannelIds).doesNotContain(lectureChannel.getId(), defaultChannel.getId());
+        assertThat(channelRepository.findChannelByLectureId(lectureId)).as("the demo lecture has its channel again").isNotNull();
+        assertThat(channelRepository.findChannelByCourseIdAndName(courseId, DefaultChannelType.RANDOM.getName())).as("the default channel exists again").hasSize(1);
+    }
+
+    @Test
     void seedingTwiceCreatesNothingNew() {
         seed();
         DemoDataSnapshot afterFirstRun = snapshotDemoData();
@@ -220,7 +248,7 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         DemoDataSnapshot beforeRun = snapshotDemoData();
         deleteGradingScale();
 
-        DemoDataSeedingService withoutOptionalModules = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
+        DemoDataSeedingService withoutOptionalModules = new DemoDataSeedingService(userApi, courseApi,
                 new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi, Optional.empty()),
                 new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
         DemoSeeding.seed(withoutOptionalModules);
@@ -238,8 +266,8 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         when(failingTextDemoApi.createDemo(any(), any(), any())).thenThrow(new IllegalStateException("simulated failure of the text exercises"));
 
         DemoDataSeedingService withFailingArea = new DemoDataSeedingService(
-                accountDemoApi, courseDemoApi, new DemoExerciseSeedingService(Optional.of(failingTextDemoApi), Optional.of(modelingDemoApi), Optional.empty(), quizDemoApi,
-                        programmingDemoApi, assessmentDemoApi, Optional.empty()),
+                userApi, courseApi, new DemoExerciseSeedingService(Optional.of(failingTextDemoApi), Optional.of(modelingDemoApi), Optional.empty(), quizDemoApi, programmingDemoApi,
+                        assessmentDemoApi, Optional.empty()),
                 new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
         List<String> errors = DemoSeeding.seedAndCollectErrors(withFailingArea);
 
@@ -253,10 +281,10 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         seed();
         DemoDataSnapshot beforeRun = snapshotDemoData();
         deleteGradingScale();
-        AccountDemoApi failingAccountDemoApi = mock(AccountDemoApi.class);
-        when(failingAccountDemoApi.createDemoUsers()).thenThrow(new IllegalStateException("simulated failure of the users"));
+        UserApi failingUserApi = mock(UserApi.class);
+        when(failingUserApi.createDemoUsers()).thenThrow(new IllegalStateException("simulated failure of the users"));
 
-        List<String> errors = DemoSeeding.seedAndCollectErrors(new DemoDataSeedingService(failingAccountDemoApi, courseDemoApi,
+        List<String> errors = DemoSeeding.seedAndCollectErrors(new DemoDataSeedingService(failingUserApi, courseApi,
                 new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi, Optional.empty()),
                 new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi)));
 
@@ -286,12 +314,13 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     private static Stream<String> demoLogins() {
-        return Stream.concat(Stream.of(AccountDemoApi.DEMO_STUDENT_LOGIN, AccountDemoApi.DEMO_TUTOR_LOGIN, AccountDemoApi.DEMO_EDITOR_LOGIN, AccountDemoApi.DEMO_INSTRUCTOR_LOGIN),
+        return Stream.concat(
+                Stream.of(UserDemoService.DEMO_STUDENT_LOGIN, UserDemoService.DEMO_TUTOR_LOGIN, UserDemoService.DEMO_EDITOR_LOGIN, UserDemoService.DEMO_INSTRUCTOR_LOGIN),
                 peerLogins());
     }
 
     private static Stream<String> peerLogins() {
-        return IntStream.rangeClosed(1, 10).mapToObj(number -> AccountDemoApi.DEMO_PEER_LOGIN_PREFIX + number);
+        return IntStream.rangeClosed(1, 10).mapToObj(number -> UserDemoService.DEMO_PEER_LOGIN_PREFIX + number);
     }
 
     private User user(String login) {
@@ -303,7 +332,7 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     private Optional<Course> demoCourse() {
-        return courseRepository.findAllByShortName(CourseDemoApi.DEMO_COURSE_SHORT_NAME).stream().findFirst();
+        return courseRepository.findAllByShortName(CourseDemoService.DEMO_COURSE_SHORT_NAME).stream().findFirst();
     }
 
     private Set<Lecture> demoLectures(long courseId) {
@@ -326,19 +355,20 @@ class DemoDataSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
      */
     private DemoDataSnapshot snapshotDemoData() {
         Set<Long> userIds = demoLogins().flatMap(login -> userTestRepository.findOneByLogin(login).stream()).map(User::getId).collect(Collectors.toSet());
-        Set<Long> courseIds = courseRepository.findAllByShortName(CourseDemoApi.DEMO_COURSE_SHORT_NAME).stream().map(Course::getId).collect(Collectors.toSet());
+        Set<Long> courseIds = courseRepository.findAllByShortName(CourseDemoService.DEMO_COURSE_SHORT_NAME).stream().map(Course::getId).collect(Collectors.toSet());
         Optional<Course> course = demoCourse();
         if (course.isEmpty()) {
-            return new DemoDataSnapshot(courseIds, userIds, Set.of(), Set.of(), Set.of(), Set.of(), Set.of());
+            return new DemoDataSnapshot(courseIds, userIds, Set.of(), Set.of(), Set.of(), Set.of(), Set.of(), Set.of());
         }
         long courseId = course.get().getId();
         Set<Competency> competencies = competencyRepository.findAllByCourseId(courseId);
         return new DemoDataSnapshot(courseIds, userIds, demoLectures(courseId).stream().map(Lecture::getId).collect(Collectors.toSet()),
                 demoLectureUnits(courseId).stream().map(LectureUnit::getId).collect(Collectors.toSet()), competencies.stream().map(Competency::getId).collect(Collectors.toSet()),
-                linkedLectureUnitIds(competencies), demoExercises(courseId).stream().map(Exercise::getId).collect(Collectors.toSet()));
+                linkedLectureUnitIds(competencies), demoExercises(courseId).stream().map(Exercise::getId).collect(Collectors.toSet()),
+                channelRepository.findChannelsByCourseId(courseId).stream().map(Channel::getId).collect(Collectors.toSet()));
     }
 
     private record DemoDataSnapshot(Set<Long> courseIds, Set<Long> userIds, Set<Long> lectureIds, Set<Long> lectureUnitIds, Set<Long> competencyIds, Set<Long> linkedLectureUnitIds,
-            Set<Long> exerciseIds) {
+            Set<Long> exerciseIds, Set<Long> channelIds) {
     }
 }
