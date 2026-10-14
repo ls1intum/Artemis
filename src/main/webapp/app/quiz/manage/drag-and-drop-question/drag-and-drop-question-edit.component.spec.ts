@@ -382,9 +382,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(removeFileSpy).not.toHaveBeenCalled();
     });
 
-    it.each([false, true])('should let instructors correct over-limit text during re-evaluation: %s', async (reEvaluationInProgress) => {
+    it.each([false, true])('should show and clear text overflow errors during re-evaluation: %s', async (reEvaluationInProgress) => {
         const question = new DragAndDropQuestion();
-        question.dragItems = [{ text: 'a'.repeat(256), invalid: false }];
+        question.dragItems = [{ text: 'a'.repeat(255), invalid: false }];
         fixture.componentRef.setInput('question', question);
         fixture.componentRef.setInput('reEvaluationInProgress', reEvaluationInProgress);
         fixture.detectChanges();
@@ -394,10 +394,19 @@ describe('DragAndDropQuestionEditComponent', () => {
         const textarea: HTMLTextAreaElement = textareaElement.nativeElement;
         const model = textareaElement.injector.get(NgModel);
         const counter: HTMLElement = fixture.nativeElement.querySelector('[data-testid="drag-item-character-count"]');
+        expect(counter.textContent?.trim()).toBe('255/255');
+        expect(model.valid).toBe(true);
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
+
+        textarea.value += 'b';
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
         expect(counter.textContent?.trim()).toBe('256/255');
         expect(counter.classList.contains('text-state-danger')).toBe(true);
-        expect(model.hasError('maxlength')).toBe(true);
-        expect(textarea.value).toBe('a'.repeat(256));
+        expect(model.hasError('customMaxLength')).toBe(true);
+        expect(question.dragItems![0].text).toBe('a'.repeat(255) + 'b');
         expect(textarea.getAttribute('aria-invalid')).toBe('true');
         expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).not.toBeNull();
         expect(textarea.getAttribute('aria-describedby')).toBe('drag-item-text-limit-1-0');
@@ -407,7 +416,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         fixture.detectChanges();
         await Promise.resolve();
 
-        expect(model.hasError('maxlength')).toBe(false);
+        expect(model.valid).toBe(true);
         expect(question.dragItems![0].text).toBe('a'.repeat(255));
         expect(textarea.getAttribute('aria-invalid')).toBe('false');
         expect(textarea.hasAttribute('aria-describedby')).toBe(false);

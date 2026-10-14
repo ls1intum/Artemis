@@ -70,6 +70,7 @@ import {
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FileService } from 'app/foundation/service/file.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-length-validator/custom-max-length-validator.directive';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -80,6 +81,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     imports: [
         FaIconComponent,
         FormsModule,
+        CustomMaxLengthDirective,
         TranslateDirective,
         NgbTooltip,
         NgbCollapse,

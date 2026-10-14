@@ -445,7 +445,7 @@
                                         <textarea
                                             id="drag-item-{{ i }}-text"
                                             [(ngModel)]="dragItem.text"
-                                            [maxlength]="MAX_DRAG_ITEM_TEXT_LENGTH"
+                                            [customMaxLength]="MAX_DRAG_ITEM_TEXT_LENGTH"
                                             [attr.aria-invalid]="(dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH"
                                             [attr.aria-describedby]="
                                                 (dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH ? 'drag-item-text-limit-' + questionIndex() + '-' + i : undefined
