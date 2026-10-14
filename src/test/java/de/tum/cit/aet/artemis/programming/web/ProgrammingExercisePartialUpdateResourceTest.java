@@ -40,11 +40,14 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProgrammingExercisePartialUpdateResourceTest {
 
+    private de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService ownership;
+
     private GenerationExternalMutationService mutations;
 
     @BeforeEach
     void setUp() {
-        mutations = new GenerationExternalMutationService(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipTestFixture.create());
+        ownership = de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipTestFixture.create();
+        mutations = new GenerationExternalMutationService(ownership);
     }
 
     @Test
@@ -166,7 +169,7 @@ class ProgrammingExercisePartialUpdateResourceTest {
     }
 
     private ProgrammingExerciseMutationGuardService realGuard() {
-        return new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(mutations)));
+        return new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(ownership)));
     }
 
     private void assertSaveCannotClaim(long exerciseId) {

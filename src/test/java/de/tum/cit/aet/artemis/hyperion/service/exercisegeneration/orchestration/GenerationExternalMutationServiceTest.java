@@ -17,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService.Ownership;
 
@@ -26,6 +27,8 @@ class GenerationExternalMutationServiceTest {
     private final ProgrammingExerciseWriteOwnershipService ownership = mock(ProgrammingExerciseWriteOwnershipService.class);
 
     private final GenerationExternalMutationService service = new GenerationExternalMutationService(ownership);
+
+    private final HyperionExerciseMutationApi api = new HyperionExerciseMutationApi(ownership);
 
     @Test
     void ordinaryWritesUseAnExactCallerAllocatedToken() {
@@ -40,8 +43,8 @@ class GenerationExternalMutationServiceTest {
     void copiesAndSeedCaptureUseShortDatabaseReservations() {
         when(ownership.claimReader(42)).thenReturn("copy-token");
         when(ownership.claim(42, "SEED")).thenReturn("seed-token");
-        assertThat(service.claimParticipationSlot(42)).isEqualTo("copy-token");
-        service.clearParticipationSlot(42, "copy-token");
+        assertThat(api.claimParticipationSlot(42)).isEqualTo("copy-token");
+        api.clearParticipationSlot(42, "copy-token");
         assertThat(service.claimSeedSlot(42)).isEqualTo("seed-token");
         service.clearSeedSlot(42, "seed-token");
         verify(ownership).releaseReader(42, "copy-token");
@@ -109,10 +112,10 @@ class GenerationExternalMutationServiceTest {
     @Test
     void activeStatusAndRecoveryReadOnlyAuthoritativeDatabaseOwnership() {
         when(ownership.get(42)).thenReturn(Optional.empty());
-        assertThat(service.isGenerationActive(42)).isFalse();
+        assertThat(api.isGenerationActive(42)).isFalse();
         assertThat(service.getWedgedSlotInfo(42)).isEmpty();
         when(ownership.get(42)).thenReturn(Optional.of(slot("retained", "SAVE_RECOVERY")));
-        assertThat(service.isGenerationActive(42)).isTrue();
+        assertThat(api.isGenerationActive(42)).isTrue();
         assertThat(service.getWedgedSlotInfo(42)).hasValueSatisfying(info -> {
             assertThat(info.token()).isEqualTo("retained");
             assertThat(info.ownerLeftCluster()).isFalse();
@@ -128,7 +131,7 @@ class GenerationExternalMutationServiceTest {
         when(ownership.readers(42)).thenReturn(java.util.List.of(slot("reader-token", "COPY")));
         when(ownership.releaseReader(42, "reader-token")).thenReturn(true);
 
-        assertThat(service.isGenerationActive(42)).isTrue();
+        assertThat(api.isGenerationActive(42)).isTrue();
         assertThat(service.getWedgedSlotInfo(42)).hasValueSatisfying(info -> assertThat(info.token()).isEqualTo("reader-token"));
         assertThat(service.recoverWedgedSlot(42, "reader-token")).isTrue();
         verify(ownership).releaseReader(42, "reader-token");

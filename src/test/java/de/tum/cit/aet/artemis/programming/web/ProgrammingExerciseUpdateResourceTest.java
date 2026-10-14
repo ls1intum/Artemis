@@ -52,11 +52,14 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationS
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProgrammingExerciseUpdateResourceTest {
 
+    private de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService ownership;
+
     private GenerationExternalMutationService mutations;
 
     @BeforeEach
     void setUp() {
-        mutations = new GenerationExternalMutationService(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipTestFixture.create());
+        ownership = de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipTestFixture.create();
+        mutations = new GenerationExternalMutationService(ownership);
     }
 
     @Test
@@ -160,7 +163,7 @@ class ProgrammingExerciseUpdateResourceTest {
         CourseService courseService = mock(CourseService.class);
         when(courseService.retrieveCourseOverExerciseGroupOrCourseId(org.mockito.ArgumentMatchers.any()))
                 .thenAnswer(invocation -> invocation.getArgument(0, ProgrammingExercise.class).getCourseViaExerciseGroupOrCourseMember());
-        ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(mutations)));
+        ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(ownership)));
         var buildConfigRepository = mock(de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository.class);
         when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(org.mockito.ArgumentMatchers.anyLong()))
                 .thenReturn(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
