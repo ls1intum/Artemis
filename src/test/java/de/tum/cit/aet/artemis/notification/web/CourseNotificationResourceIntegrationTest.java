@@ -122,12 +122,18 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
         mockServiceMap.put(NotificationChannelOption.PUSH, noopService);
         mockServiceMap.put(NotificationChannelOption.EMAIL, noopService);
 
-        ReflectionTestUtils.setField(courseNotificationService, "serviceMap", mockServiceMap);
+        var originalServiceMap = ReflectionTestUtils.getField(courseNotificationService, "serviceMap");
+        try {
+            ReflectionTestUtils.setField(courseNotificationService, "serviceMap", mockServiceMap);
 
-        var notification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), 1L, "test test", "test test", "Test Author", "image.url", 1L,
-                1L);
+            var notification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), 1L, "test test", "test test", "Test Author", "image.url",
+                    1L, 1L);
 
-        courseNotificationService.sendCourseNotification(notification, List.of(user));
+            courseNotificationService.sendCourseNotification(notification, List.of(user));
+        }
+        finally {
+            ReflectionTestUtils.setField(courseNotificationService, "serviceMap", originalServiceMap);
+        }
     }
 
     @Test

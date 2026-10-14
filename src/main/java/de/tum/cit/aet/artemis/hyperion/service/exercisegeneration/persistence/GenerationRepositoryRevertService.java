@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.function.BooleanSupplier;
 
 import org.apache.commons.io.FileUtils;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -53,6 +52,7 @@ public class GenerationRepositoryRevertService {
      */
     public RepositoryRevertResult revert(ProgrammingExercise exercise, ExerciseGenerationBaseline baseline, String repositoryBranch, BooleanSupplier stillOwnsMutationSlot) {
         List<RepositoryType> reverted = new ArrayList<>();
+        boolean mutationAttempted = false;
         for (RepositoryType repositoryType : REVERT_ORDER) {
             String head = baseline.headFor(repositoryType);
             LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
@@ -62,14 +62,16 @@ public class GenerationRepositoryRevertService {
             if (!stillOwnsMutationSlot.getAsBoolean()) {
                 log.error("Stopped reverting generated changes for exercise {} because this node lost the exercise mutation slot before resetting {}", exercise.getId(),
                         repositoryType);
-                return new RepositoryRevertResult(false, List.copyOf(reverted));
+                return new RepositoryRevertResult(false, List.copyOf(reverted), mutationAttempted);
             }
-            if (!revertRepository(exercise.getId(), repositoryType, uri, head, baseline.expectedCurrentHeadFor(repositoryType), repositoryBranch)) {
-                return new RepositoryRevertResult(false, List.copyOf(reverted));
+            var resetResult = revertRepository(exercise.getId(), repositoryType, uri, head, baseline.expectedCurrentHeadFor(repositoryType), repositoryBranch);
+            mutationAttempted |= resetResult.mutationAttempted();
+            if (!resetResult.successful()) {
+                return new RepositoryRevertResult(false, List.copyOf(reverted), mutationAttempted);
             }
             reverted.add(repositoryType);
         }
-        return new RepositoryRevertResult(true, List.copyOf(reverted));
+        return new RepositoryRevertResult(true, List.copyOf(reverted), mutationAttempted);
     }
 
     /**
@@ -99,23 +101,35 @@ public class GenerationRepositoryRevertService {
         return Map.copyOf(heads);
     }
 
-    private boolean revertRepository(long exerciseId, RepositoryType repositoryType, LocalVCRepositoryUri uri, String head, String expectedCurrentHead, String repositoryBranch) {
+    private RepositoryResetResult revertRepository(long exerciseId, RepositoryType repositoryType, LocalVCRepositoryUri uri, String head, String expectedCurrentHead,
+            String repositoryBranch) {
         Repository repository = null;
         Path temporaryCheckout = null;
+        boolean mutationAttempted = false;
         try {
             temporaryCheckout = tempFileUtilService.createTempDirectory("hyperion-revert-");
             repository = gitService.getOrCheckoutRepositoryOnBranch(uri, temporaryCheckout.resolve("repository"), repositoryBranch);
             if (repository == null) {
                 throw new IllegalStateException("Could not check out the repository to revert it");
             }
-            resetToBaseline(repository, uri, head, expectedCurrentHead, repositoryBranch);
+            String currentHead = gitService.getLastCommitHash(uri, repositoryBranch);
+            if (!head.equals(currentHead)) {
+                if (expectedCurrentHead == null) {
+                    throw new IllegalStateException("No post-run HEAD was captured for this repository; refusing to force-push without clobber protection");
+                }
+                if (!expectedCurrentHead.equals(currentHead)) {
+                    throw new IllegalStateException("Current repository HEAD " + currentHead + " differs from the generated commit " + expectedCurrentHead);
+                }
+                mutationAttempted = true;
+                gitService.resetToCommitAndForcePush(repository, head, expectedCurrentHead, repositoryBranch);
+            }
             refreshCachedCheckout(uri, repositoryBranch);
             log.info("Reverted the {} repository of exercise {} back to its pre-generated commit {}", repositoryType, exerciseId, head);
-            return true;
+            return new RepositoryResetResult(true, mutationAttempted);
         }
         catch (Exception e) {
             log.error("Failed to revert the {} repository of exercise {} back to {}; the exercise may be inconsistent", repositoryType, exerciseId, head, e);
-            return false;
+            return new RepositoryResetResult(false, mutationAttempted);
         }
         finally {
             if (repository != null) {
@@ -125,20 +139,6 @@ public class GenerationRepositoryRevertService {
                 log.warn("Could not delete temporary Hyperion generation-revert checkout {}", temporaryCheckout);
             }
         }
-    }
-
-    private void resetToBaseline(Repository repository, LocalVCRepositoryUri uri, String head, String expectedCurrentHead, String repositoryBranch) throws GitAPIException {
-        String currentHead = gitService.getLastCommitHash(uri, repositoryBranch);
-        if (head.equals(currentHead)) {
-            return;
-        }
-        if (expectedCurrentHead == null) {
-            throw new IllegalStateException("No post-run HEAD was captured for this repository; refusing to force-push without clobber protection");
-        }
-        if (!expectedCurrentHead.equals(currentHead)) {
-            throw new IllegalStateException("Current repository HEAD " + currentHead + " differs from the generated commit " + expectedCurrentHead);
-        }
-        gitService.resetToCommitAndForcePush(repository, head, expectedCurrentHead, repositoryBranch);
     }
 
     private void refreshCachedCheckout(LocalVCRepositoryUri uri, String repositoryBranch) {
@@ -155,6 +155,9 @@ public class GenerationRepositoryRevertService {
         }
     }
 
-    public record RepositoryRevertResult(boolean fullyReverted, List<RepositoryType> revertedRepositories) {
+    private record RepositoryResetResult(boolean successful, boolean mutationAttempted) {
+    }
+
+    public record RepositoryRevertResult(boolean fullyReverted, List<RepositoryType> revertedRepositories, boolean mutationAttempted) {
     }
 }

@@ -354,6 +354,7 @@ class ExerciseGenerationRevertServiceTest {
         assertThat(result).isPresent();
         assertThat(result.get().fullyReverted()).isFalse();
         assertThat(result.get().revertedRepositories()).isEmpty();
+        assertThat(result.get().mutationAttempted()).isFalse();
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
         verify(persistenceService, never()).resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any());
         ArgumentCaptor<Path> checkoutPath = ArgumentCaptor.forClass(Path.class);
