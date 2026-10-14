@@ -95,8 +95,14 @@ public class GenerationOrchestrationService {
         HyperionGenerationSettings resolved = settings == null ? profiles.resolve(null) : settings;
         String seedToken = jobs.claimSeedSlot(exercise.getId());
         GenerationSeedService.Seed seed;
+        ExerciseBrief brief;
         try {
-            seed = seeds.capture(exercise);
+            ProgrammingExercise capturedExercise = seeds.reload(exercise.getId());
+            seed = seeds.capture(capturedExercise);
+            String statement = seed.snapshot().files().stream().filter(file -> file.path().equals("problem-statement.md"))
+                    .map(file -> new String(file.content(), StandardCharsets.UTF_8)).findFirst().orElse("");
+            brief = new ExerciseBrief(capturedExercise.getTitle(), capturedExercise.getShortName(), capturedExercise.getPackageName(), statement, prompt,
+                    ExerciseBrief.Mode.valueOf(mode.name()), sourceBrief, LanguageGenerationProfile.toolchainFor(capturedExercise));
         }
         finally {
             jobs.clearSeedSlot(exercise.getId(), seedToken);
@@ -104,10 +110,6 @@ public class GenerationOrchestrationService {
         var latest = new AtomicReference<GenerationOutput>();
         var terminal = new AtomicReference<WorkerEvent>();
         Set<Long> processed = new HashSet<>();
-        String statement = seed.snapshot().files().stream().filter(file -> file.path().equals("problem-statement.md"))
-                .map(file -> new String(file.content(), StandardCharsets.UTF_8)).findFirst().orElse("");
-        var brief = new ExerciseBrief(exercise.getTitle(), exercise.getShortName(), exercise.getPackageName(), statement, prompt, ExerciseBrief.Mode.valueOf(mode.name()),
-                sourceBrief, LanguageGenerationProfile.toolchainFor(exercise));
         var parameters = parameters(resolved);
         var claim = workers.claim(jobId, exercise.getId(), brief.toolchain());
         boolean accountingComplete = false;

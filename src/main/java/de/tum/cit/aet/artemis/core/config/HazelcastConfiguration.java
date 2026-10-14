@@ -57,7 +57,6 @@ import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.localci.service.LocalCIPriorityQueueComparator;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.binder.cache.HazelcastCacheMetrics;
@@ -602,11 +601,6 @@ public class HazelcastConfiguration {
         joinConfig.getTcpIpConfig().setEnabled(true);
     }
 
-    private boolean generationWriterFencingEnabled() {
-        return env.getProperty("artemis.hyperion.generation.cluster-fencing-enabled", Boolean.class,
-                env.getProperty("artemis.hyperion.exercise-generation.enabled", Boolean.class, false));
-    }
-
     /**
      * Configures member attributes for identification in the cluster.
      *
@@ -627,9 +621,7 @@ public class HazelcastConfiguration {
      * @param config the Hazelcast configuration to modify
      */
     private void configureMemberAttributes(Config config) {
-        config.getMemberAttributeConfig().setAttribute(DistributedDataProvider.WRITER_FENCING_MEMBER_ATTRIBUTE, String.valueOf(generationWriterFencingEnabled()));
-        config.getMemberAttributeConfig().setAttribute(DistributedDataProvider.WRITER_FENCING_MEMBERS_ATTRIBUTE,
-                env.getProperty("jhipster.cache.hazelcast.expected-data-member-count", "1"));
+
         String buildAgentDisplayName = env.getProperty("artemis.continuous-integration.build-agent.display-name", "");
         String instanceId = env.getProperty("eureka.instance.instanceId", "");
         String displayName = !buildAgentDisplayName.isBlank() && !buildAgentDisplayName.equals("Unnamed Artemis Node") ? buildAgentDisplayName : instanceId;
@@ -815,8 +807,7 @@ public class HazelcastConfiguration {
     }
 
     /**
-     * Registers split-brain policies and non-evicting generation slots. Enabled generation deployments protect slot access with a strict majority;
-     * application-level fencing additionally requires complete membership for normal admission and ownership. Recovery retains its audited majority contract.
+     * Registers general split-brain policies and non-evicting generation activity entries. Canonical write ownership is stored in the database.
      *
      * @param config the member configuration
      */
@@ -828,14 +819,8 @@ public class HazelcastConfiguration {
 
         config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
         config.addSplitBrainProtectionConfig(splitBrainConfig);
-        int expectedMembers = env.getProperty("jhipster.cache.hazelcast.expected-data-member-count", Integer.class, 1);
         var generationSlots = new MapConfig(Constants.HYPERION_GENERATION_JOBS_MAP).setBackupCount(config.getMapConfig("default").getBackupCount())
                 .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.NONE).setMaxSizePolicy(MaxSizePolicy.PER_NODE));
-        if (generationWriterFencingEnabled() && expectedMembers > 1) {
-            String protection = "hyperion-generation-slot-majority";
-            config.addSplitBrainProtectionConfig(new SplitBrainProtectionConfig(protection, true, expectedMembers / 2 + 1));
-            generationSlots.setSplitBrainProtectionName(protection);
-        }
         config.addMapConfig(generationSlots);
         config.setProperty(ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.getName(), "30");
         config.setProperty(ClusterProperty.MERGE_NEXT_RUN_DELAY_SECONDS.getName(), "30");
