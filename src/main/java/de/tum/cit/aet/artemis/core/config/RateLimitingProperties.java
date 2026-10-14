@@ -80,6 +80,12 @@ public class RateLimitingProperties {
     private Integer struggleInterventionRequestsPerMinute;
 
     /**
+     * Requests per minute for the slides-and-videos search endpoint.
+     * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#CONTENT_SEARCH}.
+     */
+    private Integer contentSearchRequestsPerMinute;
+
+    /**
      * Requests per minute for the build agent clone-token check on the git https path.
      * If not specified, uses the default from {@link de.tum.cit.aet.artemis.core.security.RateLimitType#BUILD_AGENT_CLONE_TOKEN}.
      */
@@ -155,5 +161,13 @@ public class RateLimitingProperties {
 
     public void setStruggleInterventionRequestsPerMinute(Integer struggleInterventionRequestsPerMinute) {
         this.struggleInterventionRequestsPerMinute = struggleInterventionRequestsPerMinute;
+    }
+
+    public Integer getContentSearchRequestsPerMinute() {
+        return contentSearchRequestsPerMinute;
+    }
+
+    public void setContentSearchRequestsPerMinute(Integer contentSearchRequestsPerMinute) {
+        this.contentSearchRequestsPerMinute = contentSearchRequestsPerMinute;
     }
 }

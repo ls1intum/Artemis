@@ -77,7 +77,7 @@ describe('search menu builders', () => {
 
         it('never offers the last remaining type in exclude mode', () => {
             // Slides and videos are not excludable, so the exclude menu counts down from the six metadata types.
-            const excludedFive = ['course', 'exercise', 'lecture', 'communication', 'faq'].map((value) => type(value, true));
+            const excludedFive = ['course', 'exercise', 'lecture', 'channel', 'faq'].map((value) => type(value, true));
             expect(buildFilterMenuOptions({ ...base, operator: typeOp('', true), tokens: excludedFive })).toEqual([]);
         });
 
@@ -89,13 +89,19 @@ describe('search menu builders', () => {
             expect(options[1].label).toBe('global.search.showAllTypes');
         });
 
+        it('treats the retired communication value as unknown rather than as an alias for channels', () => {
+            // Filter tokens live only in memory, so no stored search can still carry it: a typed value is a dead end like any other.
+            const options = buildFilterMenuOptions({ ...base, operator: typeOp('communication'), searchQuery: 'type:communication' });
+            expect(options.map((option) => option.action.kind)).toEqual(['literal', 'clearValue']);
+        });
+
         it('names the recovery row after the facet, so "type" is made concrete rather than assumed', () => {
             const options = buildFilterMenuOptions({ ...base, operator: courseOp('candle'), searchQuery: 'course:candle' });
             expect(options[1].label).toBe('global.search.showYourCourses');
         });
 
         it('offers no literal row for an exhausted list, which is an empty menu rather than a wrong word', () => {
-            const excludedFive = ['course', 'exercise', 'lecture', 'communication', 'faq'].map((value) => type(value, true));
+            const excludedFive = ['course', 'exercise', 'lecture', 'channel', 'faq'].map((value) => type(value, true));
             expect(buildFilterMenuOptions({ ...base, operator: typeOp('', true), tokens: excludedFive, searchQuery: '-type:' })).toEqual([]);
         });
 
@@ -104,6 +110,47 @@ describe('search menu builders', () => {
             const options = buildFilterMenuOptions({ ...base, operator: courseOp(), courses: () => courseList });
 
             expect(options.map((option) => option.id)).toEqual(['2', '3', '1', '4']);
+        });
+
+        it('ranks active courses above past ones, and sorts by title within each group', () => {
+            const courseList: MenuCourse[] = [
+                { id: 1, title: 'Algorithms', active: false },
+                { id: 2, title: 'Zoology', active: true },
+                { id: 3, title: 'Databases', active: true },
+                { id: 4, title: 'Compilers', active: false },
+            ];
+            const options = buildFilterMenuOptions({ ...base, operator: courseOp(), courses: () => courseList });
+
+            expect(options.map((option) => option.id)).toEqual(['3', '2', '1', '4']);
+        });
+
+        it('still offers a past course when no active course matches the typed value', () => {
+            const courseList: MenuCourse[] = [
+                { id: 1, title: 'Databases 2023', active: false },
+                { id: 2, title: 'Zoology', active: true },
+            ];
+            const options = buildFilterMenuOptions({ ...base, operator: courseOp('databases'), searchQuery: 'course:databases', courses: () => courseList });
+
+            expect(options.map((option) => option.action)).toEqual([{ kind: 'value', value: '1' }]);
+        });
+
+        it('gives the capped slots to active courses before any past one', () => {
+            const past: MenuCourse[] = Array.from({ length: 8 }, (_, i) => ({ id: i + 1, title: `A past ${i + 1}`, active: false }));
+            const courseList: MenuCourse[] = [...past, { id: 100, title: 'Z current', active: true }];
+            const options = buildFilterMenuOptions({ ...base, operator: courseOp(), courses: () => courseList });
+
+            expect(options).toHaveLength(8);
+            expect(options[0].id).toBe('100');
+        });
+
+        it('ranks a course with an unknown active flag like an active one', () => {
+            const courseList: MenuCourse[] = [
+                { id: 1, title: 'Algorithms', active: false },
+                { id: 2, title: 'Zoology' },
+            ];
+            const options = buildFilterMenuOptions({ ...base, operator: courseOp(), courses: () => courseList });
+
+            expect(options.map((option) => option.id)).toEqual(['2', '1']);
         });
 
         it('filters course options by title and caps the list at eight', () => {

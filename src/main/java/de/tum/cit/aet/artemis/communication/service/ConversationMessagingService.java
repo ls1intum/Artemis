@@ -231,15 +231,7 @@ public class ConversationMessagingService extends PostingService {
 
             // Announcements are always sent, even for hidden/muted channels
             courseNotificationService.sendCourseNotification(newAnnouncementNotification,
-                    recipientSummaries.stream().filter((summary) -> summary.userId() != author.getId()).map((summary) -> {
-                        var user = new User(summary.userId());
-                        user.setLogin(summary.userLogin());
-                        user.setEmail(summary.userEmail());
-                        user.setFirstName(summary.firstName());
-                        user.setLastName(summary.lastName());
-                        user.setLangKey(summary.userLangKey());
-                        return user;
-                    }).toList());
+                    recipientSummaries.stream().filter((summary) -> summary.userId() != author.getId()).map(ConversationNotificationRecipientSummary::toUser).toList());
         }
         else {
             var newPostNotification = new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
@@ -256,11 +248,7 @@ public class ConversationMessagingService extends PostingService {
                             .filter((summary) -> summary.userId() != author.getId() && !summary.isConversationHidden() && !summary.isConversationMuted()
                                     && (isVisibleToStudents || summary.isAtLeastTutorInCourse())
                                     && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> summary.userId() == mentionedUser.getId()))
-                            .map((summary) -> {
-                                var user = new User(summary.userId());
-                                user.setLogin(summary.userLogin());
-                                return user;
-                            }).toList());
+                            .map(ConversationNotificationRecipientSummary::toUser).toList());
         }
 
         var mentionCourseNotification = new NewMentionNotification(course.getId(), conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(), post.getContent(),
@@ -285,9 +273,7 @@ public class ConversationMessagingService extends PostingService {
      * @return Set of users meant to receive WebSocket messages
      */
     private static Set<User> mapToUsers(Set<ConversationNotificationRecipientSummary> webSocketRecipients) {
-        return webSocketRecipients.stream()
-                .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
-                .collect(Collectors.toSet());
+        return webSocketRecipients.stream().map(ConversationNotificationRecipientSummary::toUser).collect(Collectors.toSet());
     }
 
     /**

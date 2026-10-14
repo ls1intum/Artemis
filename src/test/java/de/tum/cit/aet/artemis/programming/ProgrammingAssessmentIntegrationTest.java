@@ -32,9 +32,11 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
@@ -57,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingAssessmentResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingAssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingManualResultRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingManualResultRequestDTO.ProgrammingManualFeedbackDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -179,6 +182,51 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
             assertThat(feedback.getDetailText()).isEqualTo("typed complaint failure message");
         });
         assertThat(updatedResult.getFeedbacks()).anySatisfy(feedback -> assertThat(feedback.getDetailText()).isEqualTo("nice submission 1"));
+    }
+
+    /**
+     * The whole flow of a complaint about an automatic result: the complaint turns the result into the manual result of the first correction round, the answer follows as
+     * the second, and the tutor who reopens the accepted complaint, which the client opens through round 1, receives the answer and not the original.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
+    void complaintAboutAutomaticResult_reopeningTheAcceptedComplaintReturnsTheAnswer() throws Exception {
+        ProgrammingSubmission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student3");
+        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise.setAllowComplaintsForAutomaticAssessments(true);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        exerciseUtilService.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        exerciseUtilService.updateAssessmentDueDate(programmingExercise.getId(), ZonedDateTime.now().minusDays(1));
+        Result automaticResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), submission);
+
+        request.post("/api/assessment/complaints", new ComplaintRequestDTO(automaticResult.getId(), "The tests are wrong", ComplaintType.COMPLAINT, Optional.empty()),
+                HttpStatus.CREATED);
+
+        userUtilService.changeUser(TEST_PREFIX + "tutor2");
+        Complaint complaint = complaintRepo.findByResultId(automaticResult.getId()).orElseThrow();
+        ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
+        complaintResponse.getComplaint().setAccepted(true);
+        complaintResponse.setResponseText("accepted");
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().credits(10.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("the tests were wrong"));
+        Result answer = request.putWithResponseBody("/api/programming/programming-submissions/" + submission.getId() + "/assessment-after-complaint",
+                assessmentUpdateDTO(feedbacks, complaintResponse), Result.class, HttpStatus.OK);
+
+        assertThat(resultRepository.findById(automaticResult.getId()).orElseThrow().getCorrectionRound()).as("the original is the result of the first round").isZero();
+        assertThat(resultRepository.findById(answer.getId()).orElseThrow().getCorrectionRound()).as("the answer follows the original").isEqualTo(1);
+
+        // the list of complaints opens an accepted complaint through the round after the one of the result it is about
+        var paramMap = new LinkedMultiValueMap<String, String>();
+        paramMap.add("correction-round", "1");
+        var response = request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, ProgrammingSubmissionForTutorAssessmentDTO.class,
+                paramMap);
+
+        assertThat(response.results()).as("exactly the answer is returned").hasSize(1);
+        var returnedResult = response.results().getFirst();
+        assertThat(returnedResult.id()).isEqualTo(answer.getId());
+        assertThat(returnedResult.correctionRound()).isEqualTo(1);
+        assertThat(returnedResult.feedbacks()).anySatisfy(feedback -> assertThat(feedback.detailText()).isEqualTo("the tests were wrong"));
     }
 
     @Test

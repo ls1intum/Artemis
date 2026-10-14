@@ -400,8 +400,7 @@ public abstract class PostingService {
         Map<Long, User> recipientsById = new LinkedHashMap<>();
         mentionedUserRecipients.forEach(user -> recipientsById.put(user.getId(), user));
         conversationRecipients.stream().filter(summary -> summary.shouldNotifyRecipient() && !Objects.equals(summary.userId(), authorId))
-                .forEach(summary -> recipientsById.computeIfAbsent(summary.userId(),
-                        userId -> new User(userId, summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail())));
+                .forEach(summary -> recipientsById.computeIfAbsent(summary.userId(), userId -> summary.toUser()));
         return new ArrayList<>(recipientsById.values());
     }
 
