@@ -929,7 +929,7 @@ class HyperionExerciseGenerationResourceTest {
         when(jobService.isOwnedActiveJob(1L, "revert-slot")).thenReturn(true);
         when(jobService.isRevertRecoveryRetry("revert-slot")).thenReturn(recovering);
 
-        var response = resource.revertExerciseGeneration(1L);
+        var response = resource.revertExerciseGeneration(1L, "adapt-job");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
         assertThat(response.getBody()).isNotNull();
