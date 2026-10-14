@@ -96,6 +96,18 @@ public class ProgrammingExerciseWriteOwnershipService {
     }
 
     /**
+     * Releases an active save without clearing a retained same-token recovery reservation.
+     *
+     * @param exerciseId protected exercise
+     * @param token      expected operation token
+     * @return whether the matching active save was released
+     */
+    public boolean releaseActiveSave(long exerciseId, String token) {
+        validateToken(token);
+        return repository.releaseActiveSave(exerciseId, token) == 1;
+    }
+
+    /**
      * Retains the current token for partial-write or uncertain-write reconciliation.
      *
      * @param exerciseId protected exercise

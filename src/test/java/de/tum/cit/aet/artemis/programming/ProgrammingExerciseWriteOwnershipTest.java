@@ -96,6 +96,20 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
     }
 
     @Test
+    void delayedSaveCleanupCannotReleaseSameTokenRecovery() {
+        long id = exercise.getId();
+        String token = ownershipService.claim(id, "SAVE");
+        assertThat(ownershipService.releaseActiveSave(id, "wrong-token")).isFalse();
+        assertThat(ownershipService.retain(id, token, "SAVE_RECOVERY")).isTrue();
+        assertThat(ownershipService.releaseActiveSave(id, token)).isFalse();
+        assertThat(ownershipService.get(id).orElseThrow().purpose()).isEqualTo("SAVE_RECOVERY");
+        assertThat(ownershipService.release(id, token)).isTrue();
+        String active = ownershipService.claim(id, "SAVE");
+        assertThat(ownershipService.releaseActiveSave(id, active)).isTrue();
+        assertThat(ownershipService.get(id)).isEmpty();
+    }
+
+    @Test
     void concurrentIndependentTransactionsHaveExactlyOneWinner() throws Exception {
         var start = new CountDownLatch(1);
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
