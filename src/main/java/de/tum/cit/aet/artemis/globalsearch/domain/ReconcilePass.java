@@ -27,5 +27,12 @@ public enum ReconcilePass {
      * Scans the index itself, removing rows whose entity is gone and repairing rows whose stored content
      * disagrees with what was last written. The only pass that deletes.
      */
-    ORPHAN
+    ORPHAN,
+
+    /**
+     * Queues every post and answer post once after the index was rebuilt. Those types are not managed by the other
+     * passes, so nothing else would bring them back; the position is persisted page by page and the pass ends when both
+     * types are exhausted.
+     */
+    REFILL
 }

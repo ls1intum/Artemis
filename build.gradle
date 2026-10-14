@@ -113,7 +113,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.3"
+version = "10.4"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -606,6 +606,8 @@ dependencies {
 
     // Weaviate vector database client for semantic search
     implementation "io.weaviate:client6:${weaviate_client_version}"
+    // Token counting that bounds each global search embedding input (also used by Spring AI)
+    implementation "com.knuddels:jtokkit:${jtokkit_version}"
     constraints {
         implementation("com.google.code.gson:gson:2.14.0") {
             because("Required by Weaviate client v6 for JSON serialization")
