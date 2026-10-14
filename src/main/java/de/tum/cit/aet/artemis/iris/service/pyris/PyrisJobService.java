@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -26,6 +29,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.dto.IrisStruggleInterventionRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
@@ -438,6 +442,38 @@ public class PyrisJobService {
     public void addGlobalSearchAnswerJob(String userLogin, String runId) {
         var job = new GlobalSearchAnswerJob(runId, userLogin);
         getPyrisJobMap().put(runId, job);
+    }
+
+    /**
+     * Captures the material a global search answer may cite, before its request is dispatched to Pyris, so that continuing the answer in the chat pins its citations to
+     * the material the answer was written from, as a chat run does.
+     *
+     * @param userLogin the login of the user who initiated the search
+     * @param runId     the global search answer run
+     * @param courseIds the courses the answer is scoped to
+     */
+    public void captureGlobalSearchMaterialVersions(String userLogin, String runId, Collection<Long> courseIds) {
+        materialVersionService.captureForGlobalSearch(runId, userLogin, courseIds);
+    }
+
+    /**
+     * Removes a finished global search answer job. An answer that can be continued in the chat keeps the material versions of the lecture units it cites; any other
+     * ending drops them.
+     *
+     * @param job       the finished job
+     * @param sources   the lecture sources of the answer
+     * @param hasAnswer whether the run ended with an answer that can be continued in the chat
+     */
+    public void finishGlobalSearchAnswerJob(GlobalSearchAnswerJob job, @Nullable List<PyrisLectureSearchResultDTO> sources, boolean hasAnswer) {
+        var citedSources = sources == null ? List.<PyrisLectureSearchResultDTO>of()
+                : sources.stream().filter(Objects::nonNull).filter(source -> source.lectureUnit() != null && source.course() != null).toList();
+        if (hasAnswer && !citedSources.isEmpty()) {
+            materialVersionService.keepCitedForGlobalSearch(job.jobId(), job.userLogin(), citedSources.stream().map(source -> source.lectureUnit().id()).toList());
+        }
+        else {
+            materialVersionService.removeGlobalSearch(job.jobId(), job.userLogin());
+        }
+        removeJob(job);
     }
 
     /**

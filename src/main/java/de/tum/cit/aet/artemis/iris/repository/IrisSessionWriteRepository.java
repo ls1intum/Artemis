@@ -39,6 +39,16 @@ public interface IrisSessionWriteRepository {
     IrisMessage appendMessage(long sessionId, IrisMessage message, IrisMessageSender sender);
 
     /**
+     * Append a question and the answer to it under one write lock, so a session never holds the question without its answer.
+     *
+     * @param sessionId the session to append to
+     * @param question  the question, appended as a {@link IrisMessageSender#USER} message
+     * @param answer    the answer, appended right after it as an {@link IrisMessageSender#LLM} message
+     */
+    @Transactional // ok: the question and its answer are only meaningful as one unit
+    void appendQuestionAndAnswer(long sessionId, IrisMessage question, IrisMessage answer);
+
+    /**
      * Move the session to a new context and append the CTXSWAP marker recording the transition, under one write lock.
      * The marker is built here rather than by the caller because it records the mode the session is moving away from,
      * which is only known from the projection read under the lock.

@@ -213,7 +213,7 @@ describe('GlobalSearchFilterService', () => {
                 { facet: 'type', value: 'course', negate: true },
                 { facet: 'type', value: 'exercise', negate: true },
                 { facet: 'type', value: 'lecture', negate: true },
-                { facet: 'type', value: 'communication', negate: true },
+                { facet: 'type', value: 'channel', negate: true },
                 { facet: 'type', value: 'faq', negate: true },
             ]);
             service.searchQuery.set('-type:');
@@ -806,11 +806,8 @@ describe('GlobalSearchFilterService', () => {
             expect(service.deriveContextTokens('/courses/42')).toEqual([{ facet: 'course', value: '42' }]);
         });
 
-        it('adds a type token for a known tab segment', () => {
-            expect(service.deriveContextTokens('/course-management/7/exercises')).toEqual([
-                { facet: 'course', value: '7' },
-                { facet: 'type', value: 'exercise' },
-            ]);
+        it('adds no type token for a tab segment, so results of other types stay visible', () => {
+            expect(service.deriveContextTokens('/course-management/7/exercises')).toEqual([{ facet: 'course', value: '7' }]);
         });
 
         it('returns undefined for a non course-scoped URL', () => {
