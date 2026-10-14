@@ -38,7 +38,7 @@ class IngestionBrowserServiceBehaviourTest {
         // Unit 10 remains a valid, indexed database unit after its PDF source was removed. Unit 12 has no database row
         // left. Summaries are present-only, so 10 remains valid even though no slide or transcript is expected for it.
         ExpectedSets expected = new ExpectedSets(Map.of(), Map.of(COURSE_ID, Set.of(20L)), Map.of(COURSE_ID, Set.of(10L, 11L)), Map.of(), Map.of(), Map.of(), Map.of(),
-                Map.of(COURSE_ID, Set.of(11L)));
+                Map.of(COURSE_ID, Set.of(11L)), Set.of(COURSE_ID));
         PresentSets present = new PresentSets(Map.of(), Map.of(), Map.of(COURSE_ID, Set.of(10L, 12L)), Map.of(COURSE_ID, Set.of(11L)), Map.of(COURSE_ID, Set.of(10L, 12L)),
                 Map.of(COURSE_ID, Set.of(10L, 12L)));
         given(setLoader.loadExpected(List.of(COURSE_ID))).willReturn(expected);
@@ -74,7 +74,7 @@ class IngestionBrowserServiceBehaviourTest {
         IngestionBrowserService service = new IngestionBrowserService(setLoader, browserReadService, gapService, coverageRecomputeService);
         Course course = mock(Course.class);
         given(course.getId()).willReturn(COURSE_ID);
-        ExpectedSets expected = new ExpectedSets(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+        ExpectedSets expected = new ExpectedSets(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of());
         PresentSets present = new PresentSets(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
         given(setLoader.loadExpected(List.of(COURSE_ID))).willReturn(expected);
         given(setLoader.loadPresent(List.of(COURSE_ID))).willReturn(present);

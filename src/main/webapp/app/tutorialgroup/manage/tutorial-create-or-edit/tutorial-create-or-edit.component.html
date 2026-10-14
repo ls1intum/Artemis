@@ -1,6 +1,5 @@
-<!-- Still PrimeNG here, each for a gap the package has yet to close: the tutor picker needs a filterable
-     select, and the three date fields need a picker that can sit inside an input group beside its own label
-     and error addon. Everything else on this page is TUM AET UI. -->
+<!-- Still PrimeNG here for a gap the package has yet to close: the tutor picker needs a filterable select.
+     Everything else on this page is TUM AET UI. -->
 <div class="frame">
     <section>
         <h3 jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.sectionTitle.generalInformation"></h3>
@@ -151,44 +150,50 @@
             <div class="label-and-input-row">
                 <div class="label-and-input">
                     <label for="first-session-start-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart' | artemisTranslate }} *</label>
-                    <tumaet-ui-input-group>
-                        @let firstSessionStartValidation = firstSessionStartValidationResult();
-                        <p-datepicker
+                    @let firstSessionStartValidation = firstSessionStartValidationResult();
+                    @let firstSessionStartInvalid = firstSessionStartValidation.status === ValidationStatus.INVALID && firstSessionStartInputTouched();
+                    <div class="input-cell">
+                        <tumaet-ui-date-picker
                             inputId="first-session-start-input"
-                            hourFormat="24"
-                            [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart' | artemisTranslate"
-                            [(ngModel)]="firstSessionStart"
-                            [showTime]="true"
-                            [invalid]="firstSessionStartValidation.status === ValidationStatus.INVALID && firstSessionStartInputTouched()"
-                            (onBlur)="firstSessionStartInputTouched.set(true)"
+                            [hideLabelName]="true"
+                            [shouldDisplayTimeZoneWarning]="false"
+                            [ariaRequired]="true"
+                            [(value)]="firstSessionStart"
+                            [invalid]="firstSessionStartInvalid"
+                            [ariaDescribedBy]="firstSessionStartInvalid && firstSessionStartTextValid() ? 'first-session-start-error' : undefined"
+                            (inputValidityChange)="firstSessionStartTextValid.set($event)"
+                            (touch)="firstSessionStartInputTouched.set(true)"
                         />
-                        @if (firstSessionStartValidation.status === ValidationStatus.INVALID && firstSessionStartInputTouched()) {
-                            <tumaet-ui-input-group-addon [tumAetUiTooltip]="firstSessionStartValidation.message | artemisTranslate" tumAetUiTooltipPlacement="bottom">
-                                <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-                            </tumaet-ui-input-group-addon>
+                        @if (firstSessionStartInvalid && firstSessionStartTextValid()) {
+                            <span id="first-session-start-error" class="field-error" role="alert" data-testid="first-session-start-error">{{
+                                firstSessionStartValidation.message | artemisTranslate
+                            }}</span>
                         }
-                    </tumaet-ui-input-group>
+                    </div>
                 </div>
 
                 <div class="label-and-input">
                     <label for="first-session-end-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionEnd' | artemisTranslate }} *</label>
-                    <tumaet-ui-input-group>
-                        @let firstSessionEndValidation = firstSessionEndValidationResult();
-                        <p-datepicker
+                    @let firstSessionEndValidation = firstSessionEndValidationResult();
+                    @let firstSessionEndInvalid = firstSessionEndValidation.status === ValidationStatus.INVALID && firstSessionEndInputTouched();
+                    <div class="input-cell">
+                        <tumaet-ui-date-picker
                             inputId="first-session-end-input"
-                            hourFormat="24"
-                            [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionEnd' | artemisTranslate"
-                            [(ngModel)]="firstSessionEnd"
-                            [showTime]="true"
-                            [invalid]="firstSessionEndValidation.status === ValidationStatus.INVALID && firstSessionEndInputTouched()"
-                            (onBlur)="firstSessionEndInputTouched.set(true)"
+                            [hideLabelName]="true"
+                            [shouldDisplayTimeZoneWarning]="false"
+                            [ariaRequired]="true"
+                            [(value)]="firstSessionEnd"
+                            [invalid]="firstSessionEndInvalid"
+                            [ariaDescribedBy]="firstSessionEndInvalid && firstSessionEndTextValid() ? 'first-session-end-error' : undefined"
+                            (inputValidityChange)="firstSessionEndTextValid.set($event)"
+                            (touch)="firstSessionEndInputTouched.set(true)"
                         />
-                        @if (firstSessionEndValidation.status === ValidationStatus.INVALID && firstSessionEndInputTouched()) {
-                            <tumaet-ui-input-group-addon [tumAetUiTooltip]="firstSessionEndValidation.message | artemisTranslate" tumAetUiTooltipPlacement="bottom">
-                                <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-                            </tumaet-ui-input-group-addon>
+                        @if (firstSessionEndInvalid && firstSessionEndTextValid()) {
+                            <span id="first-session-end-error" class="field-error" role="alert" data-testid="first-session-end-error">{{
+                                firstSessionEndValidation.message | artemisTranslate
+                            }}</span>
                         }
-                    </tumaet-ui-input-group>
+                    </div>
                 </div>
             </div>
 
@@ -211,23 +216,27 @@
 
                 <div class="label-and-input">
                     <label for="tutorial-period-end-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutorialPeriodEnd' | artemisTranslate }} *</label>
-                    <tumaet-ui-input-group>
-                        @let tutorialPeriodEndValidation = tutorialPeriodEndValidationResult();
-                        <p-datepicker
+                    @let tutorialPeriodEndValidation = tutorialPeriodEndValidationResult();
+                    @let tutorialPeriodEndInvalid = tutorialPeriodEndValidation.status === ValidationStatus.INVALID && tutorialPeriodEndInputTouched();
+                    <div class="input-cell">
+                        <tumaet-ui-date-picker
                             inputId="tutorial-period-end-input"
-                            hourFormat="24"
-                            [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutorialPeriodEnd' | artemisTranslate"
-                            [(ngModel)]="tutorialPeriodEnd"
-                            [showButtonBar]="true"
-                            [invalid]="tutorialPeriodEndValidation.status === ValidationStatus.INVALID && tutorialPeriodEndInputTouched()"
-                            (onBlur)="tutorialPeriodEndInputTouched.set(true)"
+                            [dateOnly]="true"
+                            [hideLabelName]="true"
+                            [shouldDisplayTimeZoneWarning]="false"
+                            [ariaRequired]="true"
+                            [(value)]="tutorialPeriodEnd"
+                            [invalid]="tutorialPeriodEndInvalid"
+                            [ariaDescribedBy]="tutorialPeriodEndInvalid && tutorialPeriodEndTextValid() ? 'tutorial-period-end-error' : undefined"
+                            (inputValidityChange)="tutorialPeriodEndTextValid.set($event)"
+                            (touch)="tutorialPeriodEndInputTouched.set(true)"
                         />
-                        @if (tutorialPeriodEndValidation.status === ValidationStatus.INVALID && tutorialPeriodEndInputTouched()) {
-                            <tumaet-ui-input-group-addon [tumAetUiTooltip]="tutorialPeriodEndValidation.message | artemisTranslate" tumAetUiTooltipPlacement="left">
-                                <fa-icon class="danger" [icon]="faCircleInfo" aria-hidden="true" />
-                            </tumaet-ui-input-group-addon>
+                        @if (tutorialPeriodEndInvalid && tutorialPeriodEndTextValid()) {
+                            <span id="tutorial-period-end-error" class="field-error" role="alert" data-testid="tutorial-period-end-error">{{
+                                tutorialPeriodEndValidation.message | artemisTranslate
+                            }}</span>
                         }
-                    </tumaet-ui-input-group>
+                    </div>
                 </div>
             </div>
 

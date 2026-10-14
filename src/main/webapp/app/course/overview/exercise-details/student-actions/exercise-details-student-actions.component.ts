@@ -192,7 +192,7 @@ export class ExerciseDetailsStudentActionsComponent {
      * Practicing an exercise is not possible in the exam, otherwise see exercise.utils -> isStartPracticeAvailable
      */
     isStartPracticeAvailable(): boolean {
-        return !this.examMode() && isStartPracticeAvailable(this.exercise(), this._practiceParticipation());
+        return !this.examMode() && isStartPracticeAvailable(this.exercise(), this._practiceParticipation(), this._gradedParticipation());
     }
 
     startExercise() {

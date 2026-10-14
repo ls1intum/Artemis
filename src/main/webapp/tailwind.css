@@ -58,13 +58,13 @@
 
 /* Scanning may precede a module becoming fully Bootstrap-free; the migration rule checks locked paths are covered. */
 @source './app/admin';
+@source './app/presentation';
 @source './app/atlas/shared/standardized-competencies';
 @source './app/atlas/manage/import-standardized-competencies';
 @source './app/exercise/feedback';
 @source './app/exercise/result';
 @source './app/iris/manage/settings';
 @source './app/editor/markdown-editor';
-@source './app/shared-ui/date-time-picker';
 
 /* The whole exam mode, and the example solution that only its summary shows. */
 @source './app/exam';
@@ -140,6 +140,10 @@
 @source inline("sm:inline");
 @source inline("aria-disabled:opacity-60");
 @source inline("aria-disabled:cursor-not-allowed");
+
+/* The drag-and-drop question editor is still Bootstrap-heavy; its text drag-item length hint is capped to the item's
+   text area with this utility. */
+@source inline("max-w-[150px]");
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';

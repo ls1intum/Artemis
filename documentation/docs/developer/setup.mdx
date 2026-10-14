@@ -39,7 +39,7 @@ Before installing Artemis, install and configure the following dependencies:
    Download from [Node.js](https://nodejs.org/en/download).
    Required for compiling and running the Angular client.
 
-4. **[pnpm](https://pnpm.io) (≥ 12.8.1) — the package manager Artemis uses for the Angular client**
+4. **[pnpm](https://pnpm.io) (≥ 12.11.2) — the package manager Artemis uses for the Angular client**
 
    The official pnpm website is [pnpm.io](https://pnpm.io/); the CLI reference for `pnpm install` is at [pnpm.io/cli/install](https://pnpm.io/cli/install) and the installation guide at [pnpm.io/installation](https://pnpm.io/installation).
    Artemis uses pnpm instead of npm. We do **not** use `npm` / `npx` anywhere; please don't run `npm install` in this repo — it will create a `package-lock.json` that conflicts with the committed `pnpm-lock.yaml`. The exact pnpm version is pinned in `package.json` via the `packageManager` field, so every developer and every CI job uses the same version.
@@ -53,7 +53,7 @@ Before installing Artemis, install and configure the following dependencies:
    After that, any `pnpm` command run inside the Artemis repository automatically uses the pinned version. Verify the setup with:
 
    ```bash
-   pnpm --version          # should print 12.8.1 (matches packageManager in package.json)
+   pnpm --version          # should print 12.11.2 (matches packageManager in package.json)
    which pnpm              # should point at the Corepack shim, e.g. ~/.nvm/.../bin/pnpm
    ```
 
@@ -145,9 +145,9 @@ The server configuration does not cover the connection. MySQL Connector/J connec
 For the development environment, the default MySQL user is `root` with an empty password.
 (In case you want to use a different password, make sure to change the value in `application-local.yml` *(spring > datasource > password)* and in `liquibase.gradle` *(within the 'liquibaseCommand' as argument password)*).
 
-#### Set empty root password for MySQL 9
+#### Set empty root password for MySQL 9 and later
 
-If you have problems connecting to the MySQL 9 database using an empty root password, you can try the following command to reset the root password to an empty password:
+If you have problems connecting to a MySQL 9 or later database using an empty root password, you can try the following command to reset the root password to an empty password:
 
 ```bash
 mysql -u root --execute "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY ''";
