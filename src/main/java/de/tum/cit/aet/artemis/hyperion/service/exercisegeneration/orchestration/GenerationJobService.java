@@ -766,11 +766,7 @@ public class GenerationJobService {
     }
 
     /**
-     * Returns the slot currently blocking an exercise when it is one the stale-job reaper refuses to release on its own, so an operator can read the exact token that
-     * {@link #recoverWedgedSlot(long, String)} requires.
-     * <p>
-     * That is every non-cancellable slot: an external REST mutation, an adaptation revert or its retained recovery state, and a generation past its point of no return. All of
-     * them block generation, revert <em>and</em> ordinary REST edits of the exercise, the map has no TTL, and nothing else ever clears them.
+     * Returns the durable writer or reader reservation for audited, exact-token recovery.
      *
      * @param exerciseId the exercise id
      * @return the blocking slot, if the exercise currently has one that cannot be reclaimed automatically
@@ -780,17 +776,12 @@ public class GenerationJobService {
     }
 
     /**
-     * Value-guarded recovery for a non-cancellable slot whose owning JVM has been confirmed terminated. Cluster departure alone is insufficient because a partitioned request may
-     * still be writing, so this is an audited operator action rather than something the stale-job scan does.
-     * <p>
-     * Accepts a generation, revert, or external-mutation token. A recovered generation slot is terminalized like a stale one, so the instructor is told the run stopped and is
-     * warned to review the repositories rather than left with a job that reports as running forever. The one slot recoverable while its owner is still a member is the
-     * recovery state a partial undo leaves behind ({@link WedgedSlotKind#REVERT_RECOVERY}): nothing is writing any more, so the operator's job is to reconcile the
-     * repositories, not to confirm a JVM has stopped.
+     * Recovers the exact database reservation after the operator confirms that its writer has stopped.
+     * Retained SAVE and UNDO recovery states have no active writer and can be reconciled without JVM termination.
      *
      * @param exerciseId the exercise id
      * @param token      the exact slot token to recover, as reported by {@link #getWedgedSlotInfo(long)}
-     * @return whether a departed owner's matching slot was recovered
+     * @return whether the exact reservation was recovered
      */
     public boolean recoverWedgedSlot(long exerciseId, String token) {
         if (token == null || token.isBlank() || !externalMutationService.recoverWedgedSlot(exerciseId, token)) {
