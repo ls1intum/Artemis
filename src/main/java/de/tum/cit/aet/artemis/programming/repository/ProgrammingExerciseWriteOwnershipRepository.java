@@ -63,6 +63,22 @@ public interface ProgrammingExerciseWriteOwnershipRepository extends ArtemisJpaR
     int release(@Param("exerciseId") long exerciseId, @Param("token") String token);
 
     /**
+     * Releases a completed save only while its exact token is still an active SAVE reservation.
+     *
+     * @param exerciseId protected exercise
+     * @param token      expected operation token
+     * @return one if the active save was released, otherwise zero
+     */
+    @Transactional
+    @Modifying
+    @Query(value = """
+            UPDATE exercise SET write_owner_token = NULL, write_owner = NULL,
+                write_owner_purpose = NULL, write_owner_started_at = NULL, write_owner_tests_commit = NULL
+            WHERE id = :exerciseId AND write_owner_token = :token AND write_owner_purpose = 'SAVE'
+            """, nativeQuery = true)
+    int releaseActiveSave(@Param("exerciseId") long exerciseId, @Param("token") String token);
+
+    /**
      * Changes a retained reservation without releasing its exclusive ownership.
      *
      * @param exerciseId protected exercise

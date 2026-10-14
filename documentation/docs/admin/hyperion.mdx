@@ -458,7 +458,7 @@ is stopped before recovery. External-edit slot diagnostics and recovery remain
 available when generation is disabled. Recover generation and revert slots on a
 generation-enabled core node so their job state is reconciled too:
 
-1. Confirm that the owning JVM is stopped, not merely disconnected from the cluster.
+1. Locate the owner UUID in the core log entry `Exercise write owner incarnation`. Confirm that this JVM and its repository operations have stopped, not merely disconnected from the cluster.
 2. Reconcile the exercise's repository heads and metadata before allowing new edits.
 3. As an administrator, read `GET /api/hyperion/admin/exercises/{id}/hyperion-wedged-slot`.
 4. Release that exact token with `DELETE /api/hyperion/admin/exercises/{id}/hyperion-wedged-slots/{token}?reason=...`, supplying a nonblank incident reason of at most 500 characters.
@@ -551,7 +551,7 @@ the saved state is uncertain. Ordinary edits, another generation, and participat
 are blocked. The completed run still releases its admission budget; the recovery guard
 does not expire. An administrator must reconcile repositories, metadata and grading, then
 use the audited exact-token recovery endpoint. This quiescent guard has kind `GENERATION`
-and a `generation-recovery-` token; unlike an in-flight generation reservation, it can be
+and the original save token; unlike an in-flight generation reservation, it can be
 released while its owner is still present. A fully compensated failure leaves no recovery
 guard. A first undo refused before any write also releases its temporary reservation, but
 such a refusal during a recovery retry preserves the existing guard.
