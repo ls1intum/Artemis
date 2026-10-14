@@ -52,28 +52,35 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void request_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
-        this.testJustForInstructorEndpoints();
+        this.testEndpointsAreForbidden();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void request_asTutor_shouldReturnForbidden() throws Exception {
-        this.testJustForInstructorEndpoints();
+        this.testEndpointsAreForbidden();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void request_asStudent_shouldReturnForbidden() throws Exception {
-        this.testJustForInstructorEndpoints();
+        this.testEndpointsAreForbidden();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void request_asEditor_shouldReturnForbidden() throws Exception {
-        this.testJustForInstructorEndpoints();
+    void request_asEditor_shouldManageFreePeriods() throws Exception {
+        var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
+        var freePeriodId = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriodDTO.class, HttpStatus.CREATED).id();
+        request.get(getTutorialGroupFreePeriodsPath(freePeriodId), HttpStatus.OK, TutorialGroupFreePeriodDTO.class);
+        var updated = request.putWithResponseBody(getTutorialGroupFreePeriodsPath(freePeriodId),
+                createTutorialGroupFreePeriodDTO(SECOND_AUGUST_MONDAY_00_00, SECOND_AUGUST_MONDAY_23_59, "Another Holiday"), TutorialGroupFreePeriodDTO.class, HttpStatus.OK);
+        assertThat(updated.reason()).isEqualTo("Another Holiday");
+        request.delete(getTutorialGroupFreePeriodsPath(freePeriodId), HttpStatus.NO_CONTENT);
+        assertThat(tutorialGroupFreePeriodRepository.findById(freePeriodId)).isEmpty();
     }
 
-    void testJustForInstructorEndpoints() throws Exception {
+    void testEndpointsAreForbidden() throws Exception {
         var freePeriod = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
         request.get(getTutorialGroupFreePeriodsPath(freePeriod.getId()), HttpStatus.FORBIDDEN, TutorialGroupFreePeriodDTO.class);
         request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday"),

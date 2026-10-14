@@ -51,6 +51,19 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
     // ==================== /api/iris/lecture-search (synchronous) ====================
 
+    /**
+     * The query is processed by AI models in Pyris, so content search needs the same AI opt-in as the Iris answer.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "nooptin", roles = "USER")
+    void search_withoutAiOptIn_shouldBeForbidden() throws Exception {
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "nooptin");
+        userUtilService.setAiSelectionDecision(user, AiSelectionDecision.NO_AI);
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, null, null), PyrisLectureSearchResultDTO.class,
+                HttpStatus.FORBIDDEN);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void search_shouldReturnResults() throws Exception {
@@ -96,27 +109,17 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     /**
-     * Instructors can switch Iris off per course, and content search has to honor that toggle like every other Iris feature. Disabling a course does not remove what was already
-     * ingested, so the scope has to be narrowed on the way out rather than relying on the index being empty.
+     * Switching Iris off in a course only switches off the Iris chat and the other interactive Iris features. Content search is search, so it
+     * still covers the course.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void search_whenIrisIsDisabledForTheOnlyRequestedCourse_shouldNotReachPyris() throws Exception {
-        var course = courseUtilService.createCourse();
-        disableIrisFor(course);
-
-        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, List.of(course.getId()), null);
-        request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void search_whenIrisIsDisabledForOneOfTheRequestedCourses_shouldForwardOnlyTheEnabledCourse() throws Exception {
+    void search_whenIrisIsDisabledForARequestedCourse_shouldStillSearchIt() throws Exception {
         var enabledCourse = courseUtilService.createCourse();
         var disabledCourse = courseUtilService.createCourse();
         enableIrisFor(enabledCourse);
         disableIrisFor(disabledCourse);
-        irisRequestMockProvider.mockSearchLectures(List.of(), List.of(enabledCourse.getId()));
+        irisRequestMockProvider.mockSearchLectures(List.of(), List.of(enabledCourse.getId(), disabledCourse.getId()));
 
         var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, List.of(enabledCourse.getId(), disabledCourse.getId()), null);
         List<PyrisLectureSearchResultDTO> response = request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
@@ -124,40 +127,9 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(response).isEmpty();
     }
 
-    /**
-     * The normal Lectures selection sends no course filter at all. Pyris then falls back to the access context, which is
-     * built from course roles and knows nothing about Iris settings, so an unscoped search has to be narrowed here or a
-     * course whose instructor switched Iris off would still return its already-ingested content.
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "unscoped", roles = "USER")
-    void search_whenUnscopedAndAnAccessibleCourseHasIrisDisabled_shouldNotForwardThatCourse() throws Exception {
-        var enabledCourse = courseUtilService.addEmptyCourse();
-        var disabledCourse = courseUtilService.addEmptyCourse();
-        enableIrisFor(enabledCourse);
-        disableIrisFor(disabledCourse);
-
-        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "unscoped");
-        userUtilService.enrollUserInCourse(user, enabledCourse, CourseRole.STUDENT);
-        userUtilService.enrollUserInCourse(user, disabledCourse, CourseRole.STUDENT);
-
-        AtomicReference<List<Long>> forwardedCourseIds = new AtomicReference<>();
-        irisRequestMockProvider.mockSearchLectures(List.of(), dto -> forwardedCourseIds.set(dto.courseIds()));
-
-        var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, null, null);
-        request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
-
-        assertThat(forwardedCourseIds.get()).as("an unscoped search must carry an explicit, Iris-enabled scope instead of null").isNotNull().contains(enabledCourse.getId())
-                .doesNotContain(disabledCourse.getId());
-    }
-
-    /**
-     * When every accessible course has Iris switched off, the narrowed scope is empty. An empty list is omitted on the wire and Pyris reads an absent list as unscoped, which
-     * would search exactly the disabled courses through the access context, so the request has to be refused before it reaches Pyris.
-     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "allirisoff", roles = "USER")
-    void search_whenUnscopedAndEveryAccessibleCourseHasIrisDisabled_shouldNotReachPyris() throws Exception {
+    void search_whenUnscopedAndEveryAccessibleCourseHasIrisDisabled_shouldSearchThoseCourses() throws Exception {
         var firstDisabledCourse = courseUtilService.addEmptyCourse();
         var secondDisabledCourse = courseUtilService.addEmptyCourse();
         disableIrisFor(firstDisabledCourse);
@@ -167,13 +139,58 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
         userUtilService.enrollUserInCourse(user, firstDisabledCourse, CourseRole.STUDENT);
         userUtilService.enrollUserInCourse(user, secondDisabledCourse, CourseRole.STUDENT);
 
+        AtomicReference<List<Long>> forwardedCourseIds = new AtomicReference<>();
+        irisRequestMockProvider.mockSearchLectures(List.of(), dto -> forwardedCourseIds.set(dto.courseIds()));
+
         var requestDTO = new GlobalSearchLectureRequestDTO("machine learning", 5, null, null);
-        request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.FORBIDDEN);
+        request.postListWithResponseBody("/api/iris/lecture-search", requestDTO, PyrisLectureSearchResultDTO.class, HttpStatus.OK);
+
+        assertThat(forwardedCourseIds.get()).contains(firstDisabledCourse.getId(), secondDisabledCourse.getId());
+    }
+
+    /**
+     * The Iris answer is an interactive Iris feature, like the chat it can be continued in, so it must not draw on a course whose instructor
+     * switched Iris off. Switching Iris off does not remove what was already ingested, so the scope has to be narrowed on the way out.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ask_whenIrisIsDisabledForTheOnlyRequestedCourse_shouldNotReachPyris() throws Exception {
+        var course = courseUtilService.createCourse();
+        disableIrisFor(course);
+
+        var requestDTO = new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID(), List.of(course.getId()), null);
+        request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * An unscoped answer request sends no course filter. Pyris then falls back to the access context, which is built from course roles and knows
+     * nothing about Iris settings, so the scope has to be narrowed here.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "unscoped", roles = "USER")
+    void ask_whenUnscopedAndAnAccessibleCourseHasIrisDisabled_shouldNotForwardThatCourse() throws Exception {
+        var enabledCourse = courseUtilService.addEmptyCourse();
+        var disabledCourse = courseUtilService.addEmptyCourse();
+        enableIrisFor(enabledCourse);
+        disableIrisFor(disabledCourse);
+
+        User user = userUtilService.createAndSaveUser(TEST_PREFIX + "unscoped");
+        userUtilService.enrollUserInCourse(user, enabledCourse, CourseRole.STUDENT);
+        userUtilService.enrollUserInCourse(user, disabledCourse, CourseRole.STUDENT);
+        userUtilService.setAiSelectionDecision(user, AiSelectionDecision.CLOUD_AI);
+
+        AtomicReference<List<Long>> forwardedCourseIds = new AtomicReference<>();
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> forwardedCourseIds.set(dto.courseIds()));
+
+        request.postWithoutResponseBody("/api/iris/search-answer", new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID()), HttpStatus.ACCEPTED);
+
+        assertThat(forwardedCourseIds.get()).as("an unscoped answer must carry an explicit, Iris-enabled scope instead of null").isNotNull().contains(enabledCourse.getId())
+                .doesNotContain(disabledCourse.getId());
     }
 
     /**
      * A course hidden by a chip must not be searched. Every caller that travels with a course ceiling has its exclusions subtracted here, so Pyris is never told the course
-     * exists: the exclusion and the Iris-settings narrowing act on the same list, one after the other.
+     * exists.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -248,6 +265,45 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
         assertThat(sent.get().courseIds()).as("an unrestricted caller keeps its no-ceiling search").isNull();
         assertThat(sent.get().excludeCourseIds()).containsExactly(hiddenCourse.getId());
+    }
+
+    /**
+     * An unscoped administrator travels without a course list, so the courses with Iris switched off cannot be filtered out of one. They have to
+     * travel as exclusions instead, or the Iris answer would draw on them.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void ask_asAdminUnscoped_shouldExcludeTheCoursesWithIrisDisabled() throws Exception {
+        userUtilService.addAdmin(TEST_PREFIX);
+        userUtilService.setAiSelectionDecision(userUtilService.getUserByLogin(TEST_PREFIX + "admin"), AiSelectionDecision.CLOUD_AI);
+        var enabledCourse = courseUtilService.createCourse();
+        var disabledCourse = courseUtilService.createCourse();
+        enableIrisFor(enabledCourse);
+        disableIrisFor(disabledCourse);
+
+        AtomicReference<PyrisGlobalSearchAnswerRequestDTO> sent = new AtomicReference<>();
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(sent::set);
+
+        request.postWithoutResponseBody("/api/iris/search-answer", new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID()), HttpStatus.ACCEPTED);
+
+        assertThat(sent.get().courseIds()).as("an unrestricted caller keeps its no-ceiling search").isNull();
+        assertThat(sent.get().excludeCourseIds()).contains(disabledCourse.getId()).doesNotContain(enabledCourse.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void search_asAdminUnscoped_shouldNotExcludeTheCoursesWithIrisDisabled() throws Exception {
+        userUtilService.addAdmin(TEST_PREFIX);
+        var disabledCourse = courseUtilService.createCourse();
+        disableIrisFor(disabledCourse);
+
+        AtomicReference<PyrisLectureSearchRequestDTO> sent = new AtomicReference<>();
+        irisRequestMockProvider.mockSearchLectures(List.of(), sent::set);
+
+        request.postListWithResponseBody("/api/iris/lecture-search", new GlobalSearchLectureRequestDTO("machine learning", 5, null, null), PyrisLectureSearchResultDTO.class,
+                HttpStatus.OK);
+
+        assertThat(sent.get().excludeCourseIds()).isNullOrEmpty();
     }
 
     /**

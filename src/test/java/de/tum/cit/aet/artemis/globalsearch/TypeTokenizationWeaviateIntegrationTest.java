@@ -39,7 +39,8 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
  * <li>{@code "lecture"} vs {@code "lecture_unit"} - the unit rows would be dragged into the
  * release-unguarded lecture branch and leak unreleased lecture units. An access problem.</li>
  * <li>{@code "post"} vs {@code "answer_post"} - replies would be returned to a caller asking for posts.
- * Both are gated by the same course membership, so this one is a correctness problem.</li>
+ * Neither is searchable today, so no filter needs this guard yet; the case is kept so that whoever makes posts
+ * searchable again starts from the evidence that they need it.</li>
  * </ul>
  * Each test reproduces the leak ("without the fix") and then verifies the {@code type NotEqual <narrower>}
  * guard ("with the fix") removes only the narrower rows, because the narrower value needs ALL its tokens.
