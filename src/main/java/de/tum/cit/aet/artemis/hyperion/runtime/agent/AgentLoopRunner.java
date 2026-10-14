@@ -726,8 +726,7 @@ public class AgentLoopRunner {
         if (response == null || response.getMetadata() == null || response.getMetadata().getUsage() == null) {
             return 0;
         }
-        Number promptTokens = response.getMetadata().getUsage().getPromptTokens();
-        return promptTokens == null ? 0 : promptTokens.longValue();
+        return response.getMetadata().getUsage().getPromptTokens().longValue();
     }
 
     /**

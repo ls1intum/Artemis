@@ -155,6 +155,11 @@
             </div>
         </div>
 
+        <!-- Footer, right after the sources: where the reader ends up once the answer is read. -->
+        @if (canContinueInIris()) {
+            <jhi-global-search-iris-handoff [question]="searchQuery()" [answer]="irisResult()?.answer ?? ''" [citedSources]="citedSources()" [runId]="answerRunId()" />
+        }
+
         @if (citationPopover(); as popover) {
             <div class="iris-cite-popover" role="tooltip" data-testid="iris-citation-popover" [style.left.px]="popover.left" [style.top.px]="popover.top">
                 <fa-icon
