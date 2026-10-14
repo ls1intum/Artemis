@@ -186,7 +186,7 @@ describe('TutorialEditContainerComponent', () => {
         expect(component.isScheduleLoading()).toBe(false);
     });
 
-    it('should update the tutorial group, refresh it, and navigate back on success', async () => {
+    it('should update the tutorial group, refresh it, and return to the tutorial groups overview on success', async () => {
         const update$ = new Subject<void>();
         const updateEvent = createUpdateEvent();
         const router = TestBed.inject(Router);
@@ -210,7 +210,7 @@ describe('TutorialEditContainerComponent', () => {
         expect(tutorialGroupCourseAndGroupService.isTutorialGroupLoading()).toBe(false);
         expect(tutorialGroupCourseAndGroupService.fetchTutorialGroup).toHaveBeenCalledOnce();
         expect(tutorialGroupCourseAndGroupService.fetchTutorialGroup).toHaveBeenCalledWith(2, 17);
-        expect(router.navigate).toHaveBeenCalledWith(['..'], { relativeTo: activatedRoute });
+        expect(router.navigate).toHaveBeenCalledWith(['/course-management', 2, 'tutorial-groups']);
         expect(alertService.addErrorAlert).not.toHaveBeenCalled();
     });
 
