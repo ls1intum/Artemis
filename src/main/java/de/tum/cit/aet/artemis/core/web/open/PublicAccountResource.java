@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,6 +61,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.SessionFreshnessService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
@@ -118,10 +120,12 @@ public class PublicAccountResource {
 
     private final EmailChangeService emailChangeService;
 
+    private final SessionFreshnessService sessionFreshnessService;
+
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
             Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService,
             UserVcsAccessTokenService userVcsAccessTokenService, UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService,
-            AccountSecurityEventService accountSecurityEventService, EmailChangeService emailChangeService) {
+            AccountSecurityEventService accountSecurityEventService, EmailChangeService emailChangeService, SessionFreshnessService sessionFreshnessService) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
@@ -134,6 +138,7 @@ public class PublicAccountResource {
         this.userAiPreferenceService = userAiPreferenceService;
         this.accountSecurityEventService = accountSecurityEventService;
         this.emailChangeService = emailChangeService;
+        this.sessionFreshnessService = sessionFreshnessService;
     }
 
     /**
@@ -267,12 +272,26 @@ public class PublicAccountResource {
         userDTO.setSelectedLLMUsage(userAiPreferenceService.findDecision(user.getId()));
         userDTO.setSelectedLLMUsageTimestamp(userAiPreferenceService.findDecisionDate(user.getId()));
         userDTO.setMemirisEnabled(userAiPreferenceService.isMemirisEnabled(user.getId()));
-        userDTO.setVcsAccessToken(userVcsAccessTokenService.findToken(user.getId()));
-        userDTO.setVcsAccessTokenExpiryDate(userVcsAccessTokenService.findExpiryDate(user.getId()));
+        addPersonalVcsAccessToken(userDTO, user.getId());
         userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
         userDTO.setLoggedInWithPasskey(isLoggedInWithPasskey);
         userDTO.setPasskeySuperAdminApproved(isPasskeySuperAdminApproved);
         return userDTO;
+    }
+
+    /**
+     * Adds the secret of the user's personal VCS access token, unless the session predates the last change of the account's credentials.
+     * <p>
+     * An outdated session is not refused here, because the client reads the account on every page load and would otherwise be signed out of a session that may still read.
+     * It only does not get the secret: it could otherwise copy a token that was created after the change and keep using it once its own session has expired.
+     * The check only runs for an account that has a token.
+     */
+    private void addPersonalVcsAccessToken(UserDTO userDTO, long userId) {
+        String token = userVcsAccessTokenService.findToken(userId);
+        if (token != null && sessionFreshnessService.isCurrentSession(SecurityContextHolder.getContext().getAuthentication())) {
+            userDTO.setVcsAccessToken(token);
+            userDTO.setVcsAccessTokenExpiryDate(userVcsAccessTokenService.findExpiryDate(userId));
+        }
     }
 
     /**
