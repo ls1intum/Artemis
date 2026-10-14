@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
+import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -25,6 +26,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseWriteOwn
 @Service
 @Profile({ PROFILE_CORE, PROFILE_LOCALVC })
 public class ProgrammingExerciseWriteOwnershipService {
+
+    private static final Pattern TOKEN_PATTERN = Pattern.compile("[a-z0-9-]{1,64}");
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseWriteOwnershipService.class);
 
@@ -182,7 +185,7 @@ public class ProgrammingExerciseWriteOwnershipService {
     }
 
     private static void validateToken(String token) {
-        if (token == null || !token.matches("[a-z0-9-]{1,64}")) {
+        if (token == null || !TOKEN_PATTERN.matcher(token).matches()) {
             throw new IllegalArgumentException("Write ownership token must contain 1 to 64 lowercase ASCII letters, digits or hyphens");
         }
     }
