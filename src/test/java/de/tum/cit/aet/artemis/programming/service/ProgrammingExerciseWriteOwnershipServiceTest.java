@@ -78,6 +78,7 @@ class ProgrammingExerciseWriteOwnershipServiceTest {
         var service = new ProgrammingExerciseWriteOwnershipService(repository);
         assertThatThrownBy(() -> service.claim(42, "SAVE", token)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.release(42, token)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.releaseActiveSave(42, token)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.releaseReader(42, token)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.retain(42, token, "SAVE_RECOVERY")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.authorizeTestsBuild(42, token, "a".repeat(40))).isInstanceOf(IllegalArgumentException.class);

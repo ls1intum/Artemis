@@ -11,7 +11,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.Duration;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -21,15 +20,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-
-import com.hazelcast.config.Config;
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -44,11 +37,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
-import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.localci.service.AutomaticAfterDueDateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -63,38 +52,15 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationS
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProgrammingExerciseUpdateResourceTest {
 
-    private HazelcastInstance hazelcastInstance;
-
-    private GenerationJobService generationJobService;
-
-    @BeforeAll
-    void startHazelcast() {
-        Config config = new Config();
-        config.getMemberAttributeConfig().setAttribute(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.WRITER_FENCING_MEMBER_ATTRIBUTE, "true");
-        config.getMemberAttributeConfig().setAttribute(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.WRITER_FENCING_MEMBERS_ATTRIBUTE, "1");
-        config.setClusterName("full-update-mutation-test-" + System.nanoTime());
-        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
-        hazelcastInstance = Hazelcast.newHazelcastInstance(config);
-    }
+    private GenerationExternalMutationService mutations;
 
     @BeforeEach
     void setUp() {
-        hazelcastInstance.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
-        generationJobService = new GenerationJobService(new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance),
-                event -> {
-                }, mock(GenerationTokenUsageService.class), mock(HyperionGenerationBudgetService.class), Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run,
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
-        generationJobService.init();
-    }
-
-    @AfterAll
-    void stopHazelcast() {
-        hazelcastInstance.shutdown();
+        mutations = new GenerationExternalMutationService(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipTestFixture.create());
     }
 
     @Test
-    void updateProgrammingExercise_refetchesInsideLeaseAndBlocksGenerationBeforeFirstMutation() {
+    void updateProgrammingExercise_refetchesInsideLeaseAndBlocksSaveBeforeFirstMutation() {
         long exerciseId = 51L;
         ProgrammingExerciseRepository repository = mock(ProgrammingExerciseRepository.class);
         ProgrammingExercise stale = exerciseForAuthorization(exerciseId);
@@ -102,7 +68,7 @@ class ProgrammingExerciseUpdateResourceTest {
         when(repository.findForUpdateByIdElseThrow(exerciseId)).thenReturn(stale, fresh);
         UpdateProgrammingExerciseDTO dto = updateDto(exerciseId);
         doAnswer(invocation -> {
-            assertGenerationCannotClaim(exerciseId);
+            assertSaveCannotClaim(exerciseId);
             throw new MutationReached();
         }).when(fresh).setTitle("updated");
         ProgrammingExerciseUpdateResource resource = resource(repository);
@@ -110,11 +76,11 @@ class ProgrammingExerciseUpdateResourceTest {
         assertThatExceptionOfType(MutationReached.class).isThrownBy(() -> resource.updateProgrammingExercise(dto, null, Set.of()));
 
         verify(stale, never()).setTitle(anyString());
-        assertGenerationCanClaim(exerciseId);
+        assertSaveCanClaim(exerciseId);
     }
 
     @Test
-    void reEvaluateProgrammingExercise_refetchesInsideLeaseAndBlocksGenerationBeforeFirstMutation() {
+    void reEvaluateProgrammingExercise_refetchesInsideLeaseAndBlocksSaveBeforeFirstMutation() {
         long exerciseId = 52L;
         ProgrammingExerciseRepository repository = mock(ProgrammingExerciseRepository.class);
         ProgrammingExercise stale = exerciseForAuthorization(exerciseId);
@@ -122,7 +88,7 @@ class ProgrammingExerciseUpdateResourceTest {
         when(repository.findForUpdateByIdElseThrow(exerciseId)).thenReturn(stale, fresh);
         UpdateProgrammingExerciseDTO dto = updateDto(exerciseId);
         doAnswer(invocation -> {
-            assertGenerationCannotClaim(exerciseId);
+            assertSaveCannotClaim(exerciseId);
             throw new MutationReached();
         }).when(fresh).setTitle("updated");
         ProgrammingExerciseUpdateResource resource = resource(repository);
@@ -130,7 +96,7 @@ class ProgrammingExerciseUpdateResourceTest {
         assertThatExceptionOfType(MutationReached.class).isThrownBy(() -> resource.reEvaluateAndUpdateProgrammingExercise(exerciseId, dto, false, Set.of()));
 
         verify(stale, never()).setTitle(anyString());
-        assertGenerationCanClaim(exerciseId);
+        assertSaveCanClaim(exerciseId);
     }
 
     @Test
@@ -166,15 +132,15 @@ class ProgrammingExerciseUpdateResourceTest {
         try {
             Future<?> update = executor.submit(() -> resource.reEvaluateAndUpdateProgrammingExercise(exerciseId, dto, false, Set.of()));
             assertThat(scoreTailEntered.await(5, TimeUnit.SECONDS)).isTrue();
-            assertGenerationCannotClaim(exerciseId);
+            assertSaveCannotClaim(exerciseId);
 
             finishScoreTail.countDown();
             assertThat(versionTailEntered.await(5, TimeUnit.SECONDS)).isTrue();
-            assertGenerationCannotClaim(exerciseId);
+            assertSaveCannotClaim(exerciseId);
 
             finishVersionTail.countDown();
             update.get(5, TimeUnit.SECONDS);
-            assertGenerationCanClaim(exerciseId);
+            assertSaveCanClaim(exerciseId);
         }
         finally {
             finishScoreTail.countDown();
@@ -194,9 +160,7 @@ class ProgrammingExerciseUpdateResourceTest {
         CourseService courseService = mock(CourseService.class);
         when(courseService.retrieveCourseOverExerciseGroupOrCourseId(org.mockito.ArgumentMatchers.any()))
                 .thenAnswer(invocation -> invocation.getArgument(0, ProgrammingExercise.class).getCourseViaExerciseGroupOrCourseMember());
-        ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(
-                Optional.of(new HyperionExerciseMutationApi(new GenerationExternalMutationService(
-                        new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance), 1, true))));
+        ProgrammingExerciseMutationGuardService guard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(mutations)));
         var buildConfigRepository = mock(de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository.class);
         when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(org.mockito.ArgumentMatchers.anyLong()))
                 .thenReturn(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
@@ -227,20 +191,14 @@ class ProgrammingExerciseUpdateResourceTest {
         return exercise;
     }
 
-    private void assertGenerationCannotClaim(long exerciseId) {
-        assertThatExceptionOfType(ConflictException.class)
-                .isThrownBy(() -> generationJobService.startJob(user("generator"), generatedExercise(exerciseId), "generate", GenerationMode.GENERATE));
+    private void assertSaveCannotClaim(long exerciseId) {
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> mutations.claimSaveSlot(exerciseId, java.util.UUID.randomUUID().toString()));
     }
 
-    private void assertGenerationCanClaim(long exerciseId) {
-        String jobId = generationJobService.startJob(user("generator"), generatedExercise(exerciseId), "generate", GenerationMode.GENERATE);
-        generationJobService.clearJob(exerciseId, jobId);
-    }
-
-    private static ProgrammingExercise generatedExercise(long exerciseId) {
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        exercise.setId(exerciseId);
-        return exercise;
+    private void assertSaveCanClaim(long exerciseId) {
+        String token = java.util.UUID.randomUUID().toString();
+        mutations.claimSaveSlot(exerciseId, token);
+        mutations.releaseSaveSlot(exerciseId, token);
     }
 
     private static User user(String login) {

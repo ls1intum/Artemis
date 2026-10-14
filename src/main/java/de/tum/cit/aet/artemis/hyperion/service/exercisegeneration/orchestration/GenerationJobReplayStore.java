@@ -186,6 +186,13 @@ final class GenerationJobReplayStore {
         jobMap().lock(key);
         try {
             String jobId = replay.currentTranscript().jobId();
+            var transcript = transcriptMap().get(key);
+            var files = fileChangeMap().get(key);
+            var artifacts = artifactMap().get(key);
+            if (transcript != null && transcript.jobId().equals(jobId) && !transcript.equals(replay.currentTranscript())
+                    || files != null && files.jobId().equals(jobId) && !files.equals(replay.currentFileChanges()) || artifacts != null && artifacts.jobId().equals(jobId)) {
+                return;
+            }
             usageMap().remove(jobId);
             usageWriteFailures.invalidate(jobId);
             restoreReplayIfStillCurrent(key, replay);
