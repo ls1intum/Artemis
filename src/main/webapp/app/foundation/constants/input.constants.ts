@@ -43,6 +43,12 @@ export const EXERCISE_TITLE_NAME_PATTERN = '^[a-zA-Z0-9-_ ]+';
 export const EXERCISE_TITLE_NAME_REGEX = new RegExp(EXERCISE_TITLE_NAME_PATTERN);
 /** Prefixes must follow the login pattern **/
 export const LOGIN_PATTERN = /^[_'.@A-Za-z0-9-]*$/;
+/** Maximum length of the user prefix of an online course. Keep in sync with OnlineCourseConfiguration.MAX_USER_PREFIX_LENGTH in Java. **/
+export const LTI_USER_PREFIX_MAX_LENGTH = 30;
+/** Maximum length of the registration id, client id and URIs of an LTI platform. Keep in sync with LtiPlatformConfiguration.MAX_FIELD_LENGTH in Java. **/
+export const LTI_PLATFORM_FIELD_MAX_LENGTH = 255;
+/** Maximum length of the custom name of an LTI platform. Keep in sync with LtiPlatformConfiguration.MAX_CUSTOM_NAME_LENGTH in Java. **/
+export const LTI_PLATFORM_CUSTOM_NAME_MAX_LENGTH = 50;
 export const MAX_QUIZ_QUESTION_POINTS = 9999;
 export const MAX_QUIZ_QUESTION_LENGTH_THRESHOLD = 250;
 export const MAX_QUIZ_QUESTION_EXPLANATION_LENGTH_THRESHOLD = 500;

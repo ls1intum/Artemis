@@ -9,16 +9,15 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLe
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostNotInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.countRowsForEntity;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryCourseProperties;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.seedRow;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
@@ -107,7 +106,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     void testUpsert_isDispatchedWritesSyncStateAndRemovesOutboxRow() {
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryCourseProperties(weaviateService, course.getId());
             assertThat(properties).as("course indexed in Weaviate").isNotNull();
             assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("sync ledger row written").isPresent()
@@ -128,13 +127,12 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         // must not feed the hash. If they did, every write would produce a new hash and a reconcile pass would see
         // permanent drift on entities that never changed.
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
-        await().atMost(Duration.ofSeconds(30))
-                .untilAsserted(() -> assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("first write recorded").isPresent());
+        awaitIndexing(() -> assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("first write recorded").isPresent());
         String firstHash = syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId()).orElseThrow().getContentHash();
 
         searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             assertThat(hasOutboxRowFor(COURSE_TYPE, course.getId())).as("second write dispatched").isFalse();
             assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).isPresent()
                     .hasValueSatisfying(state -> assertThat(state.getContentHash()).as("hash unchanged for an unchanged entity").isEqualTo(firstHash));
@@ -154,8 +152,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         searchableEntityWeaviateService.deleteEntityAsync(COURSE_TYPE, course.getId());
 
         assertCourseNotInWeaviate(weaviateService, course.getId());
-        await().atMost(Duration.ofSeconds(30))
-                .untilAsserted(() -> assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("sync ledger row cleared on delete").isEmpty());
+        awaitIndexing(() -> assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).as("sync ledger row cleared on delete").isEmpty());
     }
 
     @ParameterizedTest
@@ -169,7 +166,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         WeaviateOutboxEntry staleDelete = outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(COURSE_TYPE, absentCourseId, origin));
         weaviateOutboxDispatcher.drain();
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             assertThat(queryCourseProperties(weaviateService, absentCourseId)).as("an absent source remains a deletion").isNull();
             assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, absentCourseId)).isEmpty();
             assertThat(outboxRepository.existsById(staleDelete.getId())).as("the confirmed reconcile row is acknowledged").isFalse();
@@ -180,18 +177,16 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @EnumSource(value = WeaviateOutboxOrigin.class, names = { "RECONCILE_DRIFT", "RECONCILE_ORPHAN" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReconcileDeleteQueuedBeforeALaterLiveUpsert_keepsTheLaterLiveWrite(WeaviateOutboxOrigin origin) {
-        WeaviateOutboxEntry[] queuedDelete = new WeaviateOutboxEntry[1];
-        weaviateOutboxDispatcher.runWithDrainsPaused(() -> {
-            queuedDelete[0] = outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(COURSE_TYPE, course.getId(), origin));
-            searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
-        });
+        // Whether a drain runs between the two enqueues or not, the later live write must win.
+        WeaviateOutboxEntry queuedDelete = outboxRepository.save(WeaviateOutboxEntry.forDeleteEntity(COURSE_TYPE, course.getId(), origin));
+        searchableEntityWeaviateService.upsertCourseAsync(CourseSearchableEntityDTO.fromCourse(course));
 
         weaviateOutboxDispatcher.drain();
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             var properties = queryCourseProperties(weaviateService, course.getId());
             assertThat(properties).as("the later live upsert must remain indexed").isNotNull();
-            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.SOURCE_SEQ)).longValue()).isGreaterThan(queuedDelete[0].getId());
+            assertThat(((Number) properties.get(SearchableEntitySchema.Properties.SOURCE_SEQ)).longValue()).isGreaterThan(queuedDelete.getId());
             assertThat(syncStateRepository.findByEntityTypeAndEntityId(COURSE_TYPE, course.getId())).isPresent()
                     .hasValueSatisfying(state -> assertThat(properties.get(SearchableEntitySchema.Properties.CONTENT_HASH)).isEqualTo(state.getContentHash()));
         });
@@ -205,7 +200,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         searchableEntityWeaviateService.upsertCourseAsync(dto);
         searchableEntityWeaviateService.upsertCourseAsync(dto);
 
-        await().atMost(Duration.ofSeconds(30)).untilAsserted(() -> {
+        awaitIndexing(() -> {
             assertThat(queryCourseProperties(weaviateService, course.getId())).isNotNull();
             assertThat(countRowsForEntity(weaviateService, COURSE_TYPE, course.getId())).isEqualTo(1);
             assertThat(hasOutboxRowFor(COURSE_TYPE, course.getId())).isFalse();
@@ -288,7 +283,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         long courseId = 990400, otherCourseId = 990409, channelId = 990401, lectureId = 990404, postId = 990402, unitId = 990403, otherPostId = 990408;
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, postId, new PostSearchableEntityDTO(postId, courseId, channelId, "title", "content").toPropertyMap());
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId,
-                new LectureUnitSearchableEntityDTO(unitId, courseId, lectureId, "unit", "desc", "text", null).toPropertyMap());
+                new LectureUnitSearchableEntityDTO(unitId, courseId, lectureId, null, "unit", "desc", "text", null).toPropertyMap());
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.POST, otherPostId,
                 new PostSearchableEntityDTO(otherPostId, otherCourseId, channelId, "title", "content").toPropertyMap());
         assertPostExistsInWeaviate(weaviateService, postId);
@@ -307,9 +302,9 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
     void testDeleteAllLectureUnitsForLecture_removesUnitsAndLeavesOthers() throws Exception {
         long courseId = 990500, lectureId = 990501, otherLectureId = 990509, unitId = 990502, otherUnitId = 990508;
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE_UNIT, unitId,
-                new LectureUnitSearchableEntityDTO(unitId, courseId, lectureId, "unit", "desc", "text", null).toPropertyMap());
+                new LectureUnitSearchableEntityDTO(unitId, courseId, lectureId, null, "unit", "desc", "text", null).toPropertyMap());
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE_UNIT, otherUnitId,
-                new LectureUnitSearchableEntityDTO(otherUnitId, courseId, otherLectureId, "unit", "desc", "text", null).toPropertyMap());
+                new LectureUnitSearchableEntityDTO(otherUnitId, courseId, otherLectureId, null, "unit", "desc", "text", null).toPropertyMap());
         assertLectureUnitExistsInWeaviate(weaviateService, unitId);
         assertLectureUnitExistsInWeaviate(weaviateService, otherUnitId);
 
@@ -353,7 +348,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE, sharedId,
                 new LectureSearchableEntityDTO(sharedId, courseId, "lecture", "desc", null, null).toPropertyMap());
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE_UNIT, sharedId,
-                new LectureUnitSearchableEntityDTO(sharedId, courseId, 990702L, "unit", "desc", "text", null).toPropertyMap());
+                new LectureUnitSearchableEntityDTO(sharedId, courseId, 990702L, null, "unit", "desc", "text", null).toPropertyMap());
         assertLectureUnitExistsInWeaviate(weaviateService, sharedId);
 
         searchableEntityWeaviateService.deleteEntityAsync(SearchableEntitySchema.TypeValues.LECTURE, sharedId);
@@ -387,7 +382,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE, sharedId,
                 new LectureSearchableEntityDTO(sharedId, courseId, "lecture", "desc", null, null).toPropertyMap());
         seedRow(weaviateService, SearchableEntitySchema.TypeValues.LECTURE_UNIT, sharedId,
-                new LectureUnitSearchableEntityDTO(sharedId, courseId, 990902L, "unit", "desc", "text", null).toPropertyMap());
+                new LectureUnitSearchableEntityDTO(sharedId, courseId, 990902L, null, "unit", "desc", "text", null).toPropertyMap());
         assertLectureUnitExistsInWeaviate(weaviateService, sharedId);
 
         searchableEntityWeaviateService.upsertLectureAsync(new LectureSearchableEntityDTO(sharedId, courseId, "lecture", "desc", null, null));
@@ -406,7 +401,7 @@ class WeaviateOutboxIntegrationTest extends AbstractProgrammingIntegrationLocalC
         entry.setNextAttemptAt(enqueuedAt);
         entry = outboxRepository.save(entry);
         try {
-            assertThat(outboxRepository.findDueForDispatch(enqueuedAt, 1_000)).extracting(WeaviateOutboxEntry::getId).contains(entry.getId());
+            assertThat(outboxRepository.findDueLiveForDispatch(enqueuedAt, 1_000)).extracting(WeaviateOutboxEntry::getId).contains(entry.getId());
         }
         finally {
             outboxRepository.delete(entry);

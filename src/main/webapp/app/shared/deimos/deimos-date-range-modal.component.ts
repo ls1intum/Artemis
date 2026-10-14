@@ -1,11 +1,8 @@
 import { Component, computed, input, output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import dayjs, { Dayjs } from 'dayjs/esm';
-import { DialogModule } from 'primeng/dialog';
-import { DatePickerModule } from 'primeng/datepicker';
-import { ButtonModule } from 'primeng/button';
-import { MessageModule } from 'primeng/message';
+import { Dayjs } from 'dayjs/esm';
+import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export interface DeimosDateRangeSelection {
     from: Dayjs;
@@ -15,7 +12,7 @@ export interface DeimosDateRangeSelection {
 @Component({
     selector: 'jhi-deimos-date-range-modal',
     templateUrl: './deimos-date-range-modal.component.html',
-    imports: [FormsModule, DialogModule, DatePickerModule, ButtonModule, MessageModule, TranslateDirective],
+    imports: [TumAetUiDialogComponent, TumAetUiDatePickerComponent, TumAetUiButtonDirective, TumAetUiMessageComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class DeimosDateRangeModalComponent {
     titleTranslationKey = input.required<string>();
@@ -25,32 +22,42 @@ export class DeimosDateRangeModalComponent {
     confirmSelection = output<DeimosDateRangeSelection>();
 
     visible = signal(false);
-    fromDate = signal<Date | undefined>(undefined);
-    toDate = signal<Date | undefined>(undefined);
+    fromDate = signal<Dayjs | undefined>(undefined);
+    toDate = signal<Dayjs | undefined>(undefined);
+    // A picker keeps its last committed value while its text is not a date, so a submit must wait for the text to parse.
+    readonly fromTextValid = signal(true);
+    readonly toTextValid = signal(true);
 
     readonly hasRequiredDates = computed(() => !!this.fromDate() && !!this.toDate());
 
     readonly isOrderInvalid = computed(() => {
-        if (!this.hasRequiredDates()) {
-            return false;
-        }
-        return dayjs(this.fromDate()).isAfter(dayjs(this.toDate()));
+        const from = this.fromDate();
+        const to = this.toDate();
+        return !!from && !!to && from.isAfter(to);
     });
 
     readonly isWindowTooLarge = computed(() => {
         const maxDays = this.maxWindowDays();
-        if (!maxDays || !this.hasRequiredDates() || this.isOrderInvalid()) {
+        const from = this.fromDate();
+        const to = this.toDate();
+        if (!maxDays || !from || !to || this.isOrderInvalid()) {
             return false;
         }
-        const rangeInDays = dayjs(this.toDate()).diff(dayjs(this.fromDate()), 'day', true);
-        return rangeInDays > maxDays;
+        return to.diff(from, 'day', true) > maxDays;
     });
 
-    readonly isSubmitDisabled = computed(() => !this.hasRequiredDates() || this.isOrderInvalid() || this.isWindowTooLarge() || this.isSubmitting());
+    /** Ids of the messages that explain a rejected range, for the pickers to point at. */
+    protected readonly describedBy = computed(() => (this.isOrderInvalid() ? 'deimos-order-error' : this.isWindowTooLarge() ? 'deimos-window-error' : undefined));
+
+    readonly isSubmitDisabled = computed(
+        () => !this.hasRequiredDates() || !this.fromTextValid() || !this.toTextValid() || this.isOrderInvalid() || this.isWindowTooLarge() || this.isSubmitting(),
+    );
 
     open(defaultFrom?: Dayjs, defaultTo?: Dayjs): void {
-        this.fromDate.set(defaultFrom?.toDate());
-        this.toDate.set(defaultTo?.toDate());
+        this.fromDate.set(defaultFrom);
+        this.toDate.set(defaultTo);
+        this.fromTextValid.set(true);
+        this.toTextValid.set(true);
         this.visible.set(true);
     }
 
@@ -59,14 +66,13 @@ export class DeimosDateRangeModalComponent {
     }
 
     submit(): void {
-        if (this.isSubmitDisabled()) {
+        const from = this.fromDate();
+        const to = this.toDate();
+        if (this.isSubmitDisabled() || !from || !to) {
             return;
         }
 
-        this.confirmSelection.emit({
-            from: dayjs(this.fromDate()),
-            to: dayjs(this.toDate()),
-        });
+        this.confirmSelection.emit({ from, to });
         this.visible.set(false);
     }
 }

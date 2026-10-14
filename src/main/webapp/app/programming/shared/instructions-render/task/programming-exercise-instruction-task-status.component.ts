@@ -27,9 +27,10 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
 
     readonly taskName = input.required<string>();
     readonly testIds = input<number[]>([]);
-    readonly exercise = input.required<Exercise>();
+    // Both are only forwarded to the feedback dialog, and the instructions render without an exercise or a participation too.
+    readonly exercise = input.required<Exercise | undefined>();
     readonly latestResult = input<Result | undefined>(undefined);
-    readonly participation = input.required<Participation>();
+    readonly participation = input.required<Participation | undefined>();
 
     private readonly testStatus = computed(() => this.programmingExerciseInstructionService.testStatusForTask(this.testIds() ?? [], this.latestResult()));
     readonly testCaseState = computed(() => this.testStatus().testCaseState);

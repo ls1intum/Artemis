@@ -94,6 +94,28 @@ or already described next to it (`@angular-eslint/template/alt-text`). Keep keyb
 order; do not use a positive `tabindex` to reorder controls
 (`@angular-eslint/template/no-positive-tabindex`). Move markup when the DOM order is wrong.
 
+## Components created in code
+
+Do not call `ComponentRef.setInput` in production code. It takes the input name as a plain string
+and accepts any value, so a misspelled input only logs NG0303 at runtime (no exception) and the
+component silently keeps its default. For a closed set of components, declare them in a template
+with a `@switch`; the template compiler checks the inputs (`SidebarCardComponent`). When a
+component has to be created in code, use `setInputs(ref, { ... })` from
+`app/foundation/util/set-inputs.util`, which checks names and value types at compile time; a
+value must have the declared type of its input, so `undefined` needs an input that allows it.
+Inputs are named by class member, and an aliased input is set under its alias. When the component is chosen
+from data, `switch` on the discriminant and pass component and data to one generic method
+(`ExerciseDetailDirective.render`), because `InputSignal` is invariant and a lookup table cannot
+tie a component to its data. `packages/tum-aet-ui` keeps an internal copy of the helper in
+`packages/tum-aet-ui/src/lib/internal/set-inputs.ts`, because it must not import from the application.
+
+`localRules/no-component-ref-set-input` bans any use of the `setInput` member, also aliased or
+destructured, at error level in production code of the application and the UI kit; specs are
+exempt. The helpers are the only places that disable it. Pass `setInputs` a plain object and a ref to
+one component type; a union of components is rejected.
+`inputBinding`, `ngComponentOutlet` inputs and the PrimeNG `DialogService` `inputValues` use
+string names too and are no substitute; the rule does not cover them.
+
 ## Redirecting from guards and resolvers
 
 A guard returns or emits `router.createUrlTree(...)`, or `new RedirectCommand(urlTree, options)`
@@ -160,6 +182,27 @@ child-input identity boundary, read the cloning section of `reference/migration-
 
 `packages/tum-aet-ui` is outside these application rules and must not import `app/` utilities.
 Choose copying behavior appropriate to the package's data and identity requirements.
+
+## Exercise update forms
+
+The text, modeling and file upload exercise forms keep the exercise in an `ExerciseFormState`
+(`src/main/webapp/app/exercise/util/exercise-form-state.ts`). It notifies on every write and keeps
+the object, so what the form derives (footer reasons, status bar sections) is a `computed()`.
+
+- Write only through the state: `[ngModel]="exercise.maxPoints"` with
+  `(ngModelChange)="exerciseState.patch('maxPoints', $event)"`, never `[(ngModel)]="exercise.maxPoints"`;
+  `exerciseState.update(...)` in code, also in HTTP callbacks.
+- A child that writes a field the form derives state from emits `exerciseChange` with the same
+  object; the form binds `[(exercise)]` to a setter that calls `set`, or
+  `(exerciseChange)="exerciseState.set($event)"`.
+- Derive validity from the model with `src/main/webapp/app/exercise/util/exercise-validation.util.ts`,
+  never from `NgModel.valid` or `control.errors`, and never keep it in sync with a `valueChanges`
+  subscription. A child exposes what only it knows as a signal (`isTitleDisallowed`, `invalidControlNames`).
+- Do not copy the exercise per edit: a new reference re-runs what every child derives from it and
+  re-creates rows tracked by identity.
+
+Details: the _Exercise update forms_ subsection of
+`documentation/docs/developer/guidelines/client-development.mdx`.
 
 ## Styling
 

@@ -5,6 +5,7 @@ import { MockDirective, MockPipe } from 'ng-mocks';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject, throwError } from 'rxjs';
 import { Router, provideRouter } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { faFile, faFilePdf, faFileVideo, faKeyboard, faVideo } from '@fortawesome/free-solid-svg-icons';
@@ -1446,6 +1447,16 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(component['phase']()).toBe('idle');
             expect(fixture.nativeElement.querySelector('[data-testid="iris-no-answer"]')).toBeNull();
             expect(fixture.nativeElement.querySelector('.iris-inline-answer')).toBeNull();
+        });
+
+        it('stays hidden when Iris is off in every course in scope', () => {
+            startQuery();
+
+            askSubject.error(new HttpErrorResponse({ status: 403 }));
+            fixture.detectChanges();
+
+            expect(component['phase']()).toBe('idle');
+            expect(component.occupiesSpace()).toBe(false);
         });
 
         it('clears a pending reveal timer when the stream fails after a partial already arrived', () => {

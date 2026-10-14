@@ -97,8 +97,4 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
     public List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithPdfAttachmentForCourses(Collection<Long> courseIds) {
         return lectureUnitRepository.findUnitIdCourseIdPairsWithPdfAttachmentForCourses(courseIds);
     }
-
-    public List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithVideoForCourses(Collection<Long> courseIds) {
-        return lectureUnitRepository.findUnitIdCourseIdPairsWithVideoForCourses(courseIds);
-    }
 }
