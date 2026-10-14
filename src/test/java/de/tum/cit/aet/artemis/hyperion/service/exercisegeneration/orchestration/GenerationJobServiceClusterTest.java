@@ -111,7 +111,8 @@ class GenerationJobServiceClusterTest {
 
     private static GenerationJobService nodeOn(HazelcastInstance member) {
         GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(member), event -> {
-        }, mock(GenerationTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, EXPECTED_DATA_MEMBERS);
+        }, mock(GenerationTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, EXPECTED_DATA_MEMBERS,
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
         service.init();
         return service;
     }
@@ -256,7 +257,8 @@ class GenerationJobServiceClusterTest {
 
     private static GenerationJobService clusterNodeExpecting(HazelcastInstance member, int expectedDataMembers) {
         GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(member), event -> {
-        }, mock(GenerationTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, expectedDataMembers);
+        }, mock(GenerationTokenUsageService.class), null, STALE_JOB_TIMEOUT, MAX_JOB_DURATION, Runnable::run, expectedDataMembers,
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
         service.init();
         return service;
     }

@@ -101,6 +101,7 @@ class GenerationOrchestrationServiceTest {
         exercise.setShortName("stack");
         exercise.setPackageName("de.example.stack");
         user.setLogin("editor");
+        when(seeds.reload(42L)).thenReturn(exercise);
         when(seeds.capture(exercise)).thenReturn(new GenerationSeedService.Seed(snapshot, Map.of(), new GradingContext(false, Set.of()), null));
         when(workers.claim("job", 42, GenerationToolchain.JAVA_GRADLE)).thenReturn(claim);
         when(workers.renew(claim)).thenReturn(true);

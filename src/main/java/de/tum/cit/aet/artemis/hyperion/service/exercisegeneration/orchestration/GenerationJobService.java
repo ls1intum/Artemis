@@ -736,16 +736,6 @@ public class GenerationJobService {
         return true;
     }
 
-    private static WedgedSlotKind slotKind(JobInfo job) {
-        if (job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX)) {
-            return WedgedSlotKind.EXTERNAL_MUTATION;
-        }
-        if (GenerationRecoverySlots.isPending(job)) {
-            return WedgedSlotKind.REVERT_RECOVERY;
-        }
-        return job.jobId().startsWith(REVERT_JOB_PREFIX) ? WedgedSlotKind.REVERT : WedgedSlotKind.GENERATION;
-    }
-
     /**
      * Releases a revert slot claimed with {@link #claimRevertSlot(User, long)}. Value-guarded so a delayed cleanup cannot clear a newer generation job.
      *

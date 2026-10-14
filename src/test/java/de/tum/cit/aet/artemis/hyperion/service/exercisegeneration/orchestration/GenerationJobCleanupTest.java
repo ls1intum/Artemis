@@ -38,7 +38,8 @@ class GenerationJobCleanupTest {
         var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
         doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
         var events = new ArrayList<Object>();
-        var jobs = new GenerationJobService(provider, events::add, mock(GenerationTokenUsageService.class));
+        var jobs = new GenerationJobService(provider, events::add, mock(GenerationTokenUsageService.class),
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
         jobs.init();
         var failure = new IllegalStateException("acquisition response lost");
         if (lostWriteResponse) {
@@ -72,7 +73,8 @@ class GenerationJobCleanupTest {
         var files = spy(provider.<String, GenerationJobService.JobFileChangeIndex>getExpiringMap(GenerationJobReplayStore.FILE_CHANGE_MAP_NAME, Duration.ofHours(4)));
         doReturn(files).when(provider).getExpiringMap(GenerationJobReplayStore.FILE_CHANGE_MAP_NAME, Duration.ofHours(4));
         var jobs = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class));
+        }, mock(GenerationTokenUsageService.class),
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
         jobs.init();
         String previousJob = jobs.startJob(user(), exercise(), "first", GenerationMode.GENERATE);
         var file = ExerciseGenerationFileChangeDTO.of("solution/Stack.java", "write", 1);
@@ -93,7 +95,8 @@ class GenerationJobCleanupTest {
                 }
                 throw failure;
             }
-        }, mock(GenerationTokenUsageService.class));
+        }, mock(GenerationTokenUsageService.class),
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
         rejecting.init();
         assertThatThrownBy(() -> rejecting.startJob(user(), exercise(), "second", GenerationMode.GENERATE)).isSameAs(failure);
         assertThat(slots.get("42")).isNotNull();
@@ -122,7 +125,8 @@ class GenerationJobCleanupTest {
                 }
                 throw failure;
             }
-        }, mock(GenerationTokenUsageService.class));
+        }, mock(GenerationTokenUsageService.class),
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
         reference.set(jobs);
         jobs.init();
         assertThatThrownBy(() -> jobs.startJob(user(), exercise(), "brief", GenerationMode.GENERATE)).isSameAs(failure);
@@ -147,7 +151,8 @@ class GenerationJobCleanupTest {
         var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
         doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
         var events = new ArrayList<Object>();
-        var jobs = new GenerationJobService(provider, events::add, mock(GenerationTokenUsageService.class));
+        var jobs = new GenerationJobService(provider, events::add, mock(GenerationTokenUsageService.class),
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
         jobs.init();
         String previousJob = jobs.startJob(user(), exercise(), "first", GenerationMode.GENERATE);
         var file = ExerciseGenerationFileChangeDTO.of("solution/Stack.java", "write", 1);
@@ -183,7 +188,8 @@ class GenerationJobCleanupTest {
         var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
         doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
         var jobs = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class));
+        }, mock(GenerationTokenUsageService.class),
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
         jobs.init();
         String job = jobs.startJob(user(), exercise(), "brief", GenerationMode.GENERATE);
         jobs.enterNonCancellablePhase(42, job);
@@ -213,7 +219,8 @@ class GenerationJobCleanupTest {
         var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
         doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
         var jobs = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class));
+        }, mock(GenerationTokenUsageService.class),
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
         jobs.init();
         String job = jobs.startJob(user(), exercise(), "brief", GenerationMode.GENERATE);
         jobs.enterNonCancellablePhase(42, job);
@@ -235,7 +242,8 @@ class GenerationJobCleanupTest {
         var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
         doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
         var jobs = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class));
+        }, mock(GenerationTokenUsageService.class),
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
         jobs.init();
         String job = jobs.startJob(user(), exercise(), "brief", GenerationMode.GENERATE);
         var file = ExerciseGenerationFileChangeDTO.of("solution/Stack.java", "write", 1);
@@ -259,7 +267,8 @@ class GenerationJobCleanupTest {
         var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
         doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
         var jobs = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class));
+        }, mock(GenerationTokenUsageService.class),
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
         jobs.init();
         String job = jobs.startJob(user(), exercise(), "brief", GenerationMode.GENERATE);
         doThrow(new IllegalStateException("store unavailable")).doCallRealMethod().when(slots).lock("42");
