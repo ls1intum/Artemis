@@ -65,6 +65,7 @@
 @source './app/exercise/result';
 @source './app/exercise/review';
 @source './app/programming/manage/code-editor/instructor-and-editor-container';
+@source './app/programming/manage/code-editor/legacy-code-generation';
 @source './app/iris/manage/settings';
 @source './app/hyperion';
 @source './app/editor/markdown-editor';

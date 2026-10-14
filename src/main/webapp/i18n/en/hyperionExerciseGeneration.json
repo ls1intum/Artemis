@@ -112,7 +112,7 @@
                     "elapsed": "Elapsed",
                     "progressTitle": "Progress",
                     "otherInstructor": "Another instructor started this run. You can follow it, but only they can cancel it.",
-                    "statusUnavailable": "The generation status could not be loaded. Nothing has been changed in your exercise.",
+                    "statusUnavailable": "The generation status could not be loaded. Try again to check the current exercise state.",
                     "retryStatus": "Try again",
                     "notStartedTitle": "No generation has run for this exercise",
                     "notStartedHint": "Generating writes a problem statement, starter code, a sample solution and tests into this exercise. It takes about 10 to 25 minutes and uses a large language model.",

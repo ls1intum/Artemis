@@ -135,6 +135,31 @@ describe('LegacyCodeGenerationComponent', () => {
         expect(comp.isGeneratingCode()).toBe(true);
     });
 
+    it.each(['absent', 'failed'])('defers reconnect restoration while the start is pending and status is %s', (status) => {
+        const start = new Subject<{ jobId: string }>();
+        api.generateCode.mockReturnValueOnce(start).mockReturnValueOnce(of({ jobId: 'job-2' }));
+        comp.setCodeGenerationRepositoryEnabled(RepositoryType.SOLUTION, true);
+        comp.generateCode();
+        const readsBeforeReconnect = api.getActiveCodeGenerationJob.mock.calls.length;
+        api.getActiveCodeGenerationJob.mockReturnValue(status === 'absent' ? of(undefined) : throwError(() => new Error('Unavailable')));
+        connection.next(new ConnectionState(true, false));
+        expect(api.getActiveCodeGenerationJob).toHaveBeenCalledTimes(readsBeforeReconnect);
+        expect(api.generateCode).toHaveBeenCalledTimes(1);
+        expect(comp.isGeneratingCode()).toBe(true);
+
+        api.getActiveCodeGenerationJob.mockReturnValue(of({ jobId: 'accepted', repositoryType: RepositoryType.SOLUTION }));
+        start.next({ jobId: 'accepted' });
+        start.complete();
+        expect(streams.get('accepted')?.observed).toBe(true);
+        expect(api.generateCode).toHaveBeenCalledTimes(1);
+        expect(comp.isGeneratingCode()).toBe(true);
+
+        api.getActiveCodeGenerationJob.mockReturnValue(of(undefined));
+        streams.get('accepted')!.next({ type: 'DONE', success: true, attempts: 1 });
+        expect(api.generateCode).toHaveBeenCalledTimes(2);
+        expect(api.generateCode).toHaveBeenLastCalledWith(42, { repositoryType: RepositoryType.TEMPLATE });
+    });
+
     it('does not claim a terminal outcome when reconnect finds no active job and no replay', () => {
         comp.generateCode();
         connection.next(new ConnectionState(true, false));

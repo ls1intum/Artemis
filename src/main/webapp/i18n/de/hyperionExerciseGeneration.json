@@ -112,7 +112,7 @@
                     "elapsed": "Vergangen",
                     "progressTitle": "Fortschritt",
                     "otherInstructor": "Eine andere Lehrperson hat diesen Durchlauf gestartet. Du kannst ihn verfolgen, abbrechen kann ihn nur sie.",
-                    "statusUnavailable": "Der Generierungsstatus konnte nicht geladen werden. An deiner Aufgabe wurde nichts geändert.",
+                    "statusUnavailable": "Der Generierungsstatus konnte nicht geladen werden. Versuche es erneut, um den aktuellen Aufgabenstatus zu prüfen.",
                     "retryStatus": "Erneut versuchen",
                     "notStartedTitle": "Für diese Aufgabe lief noch keine Generierung",
                     "notStartedHint": "Beim Generieren schreibt Artemis Aufgabenstellung, Startcode, Musterlösung und Tests in diese Aufgabe. Das dauert etwa 10 bis 25 Minuten und nutzt ein großes Sprachmodell.",

@@ -697,6 +697,13 @@ describe('HyperionRunPageComponent', () => {
         expect(announced).toContain('artemisApp.hyperion.generation.run.stalledAnnouncement');
     });
 
+    it('does not claim unchanged exercise contents when status is unavailable in either language', () => {
+        expect(hyperionGenerationEn.artemisApp.hyperion.generation.run.statusUnavailable).not.toContain('Nothing has been changed');
+        expect(hyperionGenerationDe.artemisApp.hyperion.generation.run.statusUnavailable).not.toContain('nichts geändert');
+        expect(hyperionGenerationEn.artemisApp.hyperion.generation.run.statusUnavailable).toContain('Try again');
+        expect(hyperionGenerationDe.artemisApp.hyperion.generation.run.statusUnavailable).toContain('Versuche es erneut');
+    });
+
     it('offers a retry that asks the server again when the status could not be loaded', () => {
         service.response = throwError(() => new HttpErrorResponse({ status: 400 }));
         fixture = TestBed.createComponent(HyperionRunPageComponent);
