@@ -1,3 +1,4 @@
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 import { Service, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import * as Y from 'yjs';
@@ -56,6 +57,8 @@ export class ProblemStatementSyncService {
     private syncService = inject(ExerciseEditorSyncService);
     private accountService = inject(AccountService);
 
+    private isolateCanonicalBase = false;
+    private queuedCanonicalRequests: ProblemStatementSyncFullContentRequestEvent[] = [];
     private exerciseId?: number;
     private incomingMessageSubscription?: Subscription;
     private yDoc?: Y.Doc;
@@ -77,7 +80,7 @@ export class ProblemStatementSyncService {
     private pendingInitialSync?: {
         requestId: string;
         responses: ProblemStatementSyncFullContentResponseEvent[];
-        bufferedUpdates: Uint8Array[];
+        bufferedUpdates: ProblemStatementSyncUpdateEvent[];
         timeoutId?: ReturnType<typeof setTimeout>;
     };
 
@@ -118,17 +121,62 @@ export class ProblemStatementSyncService {
      * @param initialContent The current problem statement content used as fallback if no leader responds.
      * @returns The Yjs document, shared text, and awareness instance.
      */
-    init(exerciseId: number, initialContent: string): ProblemStatementSyncState {
+    init(exerciseId: number, initialContent: string, isolateCanonicalBase = false): ProblemStatementSyncState {
         this.reset();
         this.exerciseId = exerciseId;
+        this.isolateCanonicalBase = isolateCanonicalBase;
         this.localLeaderTimestamp = Date.now();
         this.activeLeaderTimestamp = this.localLeaderTimestamp;
-        this.fallbackInitialContent = initialContent ?? '';
+        this.fallbackInitialContent = this.isolateCanonicalBase ? (initialContent ?? '').replace(/\r\n/g, '\n') : (initialContent ?? '');
         this.awaitingInitialSync = true;
         this.incomingMessageSubscription = this.syncService.subscribeToUpdates().subscribe((message) => this.handleRemoteMessage(message));
         this.initializeYjsDocument();
         this.requestInitialSync();
         return { doc: this.yDoc!, text: this.yText!, awareness: this.awareness! };
+    }
+
+    /** Advance the persisted baseline without replacing concurrent shared edits. */
+    acknowledgeCanonicalSave(exerciseId: number, canonicalContent: string | undefined, expectedDoc?: Y.Doc) {
+        if (!this.isolateCanonicalBase || exerciseId !== this.exerciseId || (expectedDoc && expectedDoc !== this.yDoc) || this.awaitingInitialSync || !this.yDoc) {
+            return;
+        }
+        this.canonicalMetadata().set('content', (canonicalContent ?? '').replace(/\r\n/g, '\n'));
+    }
+
+    private canonicalMetadata(): Y.Map<string> {
+        return this.yDoc!.getMap<string>('problem-statement-canonical');
+    }
+
+    private matchesCanonicalResponse(message: ProblemStatementSyncFullContentResponseEvent): boolean {
+        const expectedCanonical = this.awaitingInitialSync ? this.fallbackInitialContent : (this.canonicalMetadata().get('content') ?? this.fallbackInitialContent);
+        if ((message.canonicalBase !== undefined && message.canonicalBase !== expectedCanonical) || !message.documentEpoch) {
+            return false;
+        }
+        const remote = new Y.Doc();
+        try {
+            Y.applyUpdate(remote, decodeBase64ToUint8Array(message.yjsUpdate));
+            const metadata = remote.getMap<string>('problem-statement-canonical');
+            return metadata.get('content') === expectedCanonical && metadata.get('epoch') === message.documentEpoch;
+        } catch {
+            return false;
+        } finally {
+            remote.destroy();
+        }
+    }
+
+    private flushCanonicalRequests() {
+        if (!this.isolateCanonicalBase || !this.yDoc) {
+            return;
+        }
+        const pending = this.queuedCanonicalRequests;
+        this.queuedCanonicalRequests = [];
+        pending.forEach((request) => {
+            if (request.canonicalBase === this.canonicalMetadata().get('content')) {
+                this.handleFullContentRequest(request.requestId);
+            } else {
+                this.queuedCanonicalRequests.push(request);
+            }
+        });
     }
 
     /**
@@ -161,6 +209,8 @@ export class ProblemStatementSyncService {
         this.latestInitialSyncRequestId = undefined;
         this.activeLeaderSessionId = undefined;
         this.queuedFullContentRequests = [];
+        this.queuedCanonicalRequests = [];
+        this.isolateCanonicalBase = false;
         clearRemoteSelectionStyles();
     }
 
@@ -180,6 +230,9 @@ export class ProblemStatementSyncService {
             target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
             requestId,
         };
+        if (this.isolateCanonicalBase) {
+            requestEvent.canonicalBase = this.fallbackInitialContent;
+        }
         this.syncService.sendSynchronizationUpdate(this.exerciseId, requestEvent);
         // 500ms collection window for initial sync responses. This balances responsiveness with
         // giving peers enough time to respond. On slow networks, late responses are still handled
@@ -210,6 +263,9 @@ export class ProblemStatementSyncService {
             yjsUpdate: encodeUint8ArrayToBase64(update),
             leaderTimestamp: this.localLeaderTimestamp,
         };
+        if (this.isolateCanonicalBase) {
+            responseEvent.documentEpoch = this.canonicalMetadata().get('epoch');
+        }
         this.syncService.sendSynchronizationUpdate(this.exerciseId, responseEvent);
     }
 
@@ -241,7 +297,15 @@ export class ProblemStatementSyncService {
         }
         switch (message.eventType) {
             case ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST:
-                this.handleFullContentRequest(message.requestId);
+                if (this.isolateCanonicalBase && message.canonicalBase !== this.canonicalMetadata().get('content')) {
+                    this.queuedCanonicalRequests.push(message);
+                    this.queuedCanonicalRequests = this.queuedCanonicalRequests.slice(-64);
+                    while (this.queuedCanonicalRequests.reduce((size, request) => size + (request.canonicalBase?.length ?? 0), 0) > 262144) {
+                        this.queuedCanonicalRequests.shift();
+                    }
+                } else {
+                    this.handleFullContentRequest(message.requestId);
+                }
                 break;
             case ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_RESPONSE:
                 this.handleSyncResponse(message);
@@ -278,6 +342,9 @@ export class ProblemStatementSyncService {
                 target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
                 yjsUpdate: encodeUint8ArrayToBase64(update),
             };
+            if (this.isolateCanonicalBase) {
+                updateEvent.documentEpoch = doc.getMap<string>('problem-statement-canonical').get('epoch');
+            }
             this.syncService.sendSynchronizationUpdate(this.exerciseId, updateEvent);
         });
         awareness.on('update', ({ added, updated, removed }: AwarenessUpdatePayload, origin: ProblemStatementSyncOrigin | unknown) => {
@@ -290,8 +357,14 @@ export class ProblemStatementSyncService {
                 target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
                 awarenessUpdate: encodeUint8ArrayToBase64(update),
             };
+            if (this.isolateCanonicalBase) {
+                awarenessEvent.documentEpoch = doc.getMap<string>('problem-statement-canonical').get('epoch');
+            }
             this.syncService.sendSynchronizationUpdate(this.exerciseId, awarenessEvent);
         });
+        if (this.isolateCanonicalBase) {
+            doc.getMap<string>('problem-statement-canonical').observe(() => this.flushCanonicalRequests());
+        }
         this.initializeLocalAwareness(awareness);
         this.yDoc = doc;
         this.yText = text;
@@ -305,6 +378,9 @@ export class ProblemStatementSyncService {
      * @param message The incoming full-content response.
      */
     private handleSyncResponse(message: ProblemStatementSyncFullContentResponseEvent) {
+        if (this.isolateCanonicalBase && !this.matchesCanonicalResponse(message)) {
+            return;
+        }
         if (this.pendingInitialSync) {
             if (message.responseTo !== this.pendingInitialSync.requestId) {
                 return;
@@ -313,6 +389,9 @@ export class ProblemStatementSyncService {
             return;
         }
         if (message.responseTo !== this.latestInitialSyncRequestId) {
+            return;
+        }
+        if (this.isolateCanonicalBase && this.yText?.toJSON() !== this.fallbackInitialContent) {
             return;
         }
         if (!this.shouldReplaceWithRemoteLeader(message.leaderTimestamp, message.sessionId)) {
@@ -335,11 +414,13 @@ export class ProblemStatementSyncService {
         const update = decodeBase64ToUint8Array(message.yjsUpdate);
         if (this.awaitingInitialSync) {
             if (this.pendingInitialSync) {
-                this.pendingInitialSync.bufferedUpdates.push(update);
+                this.pendingInitialSync.bufferedUpdates.push(message);
             }
             return;
         }
-        Y.applyUpdate(this.yDoc, update, ProblemStatementSyncOrigin.Remote);
+        if (!this.isolateCanonicalBase || message.documentEpoch === this.canonicalMetadata().get('epoch')) {
+            Y.applyUpdate(this.yDoc, update, ProblemStatementSyncOrigin.Remote);
+        }
     }
 
     /**
@@ -370,16 +451,22 @@ export class ProblemStatementSyncService {
             }
             this.activeLeaderTimestamp = selected.leaderTimestamp;
             this.activeLeaderSessionId = selected.sessionId;
-        } else if (this.fallbackInitialContent && this.yDoc && this.yText) {
+        } else if (this.yDoc && this.yText) {
             this.yDoc.transact(() => {
                 this.yText?.insert(0, this.fallbackInitialContent);
+                if (this.isolateCanonicalBase) {
+                    this.canonicalMetadata().set('content', this.fallbackInitialContent);
+                    this.canonicalMetadata().set('epoch', generateUuid());
+                }
             }, ProblemStatementSyncOrigin.Seed);
             this.activeLeaderTimestamp = this.localLeaderTimestamp;
             this.activeLeaderSessionId = this.syncService.sessionId;
         }
         if (this.pendingInitialSync.bufferedUpdates.length && this.yDoc) {
-            this.pendingInitialSync.bufferedUpdates.forEach((update) => {
-                Y.applyUpdate(this.yDoc!, update, ProblemStatementSyncOrigin.Remote);
+            this.pendingInitialSync.bufferedUpdates.forEach((message) => {
+                if (!this.isolateCanonicalBase || message.documentEpoch === this.canonicalMetadata().get('epoch')) {
+                    Y.applyUpdate(this.yDoc!, decodeBase64ToUint8Array(message.yjsUpdate), ProblemStatementSyncOrigin.Remote);
+                }
             });
         }
         // scenario for high network latency
@@ -405,7 +492,7 @@ export class ProblemStatementSyncService {
      * @param message The incoming awareness update.
      */
     private handleAwarenessUpdate(message: ProblemStatementAwarenessUpdateEvent) {
-        if (!this.awareness || !message.awarenessUpdate) {
+        if (!this.awareness || !message.awarenessUpdate || (this.isolateCanonicalBase && message.documentEpoch !== this.canonicalMetadata().get('epoch'))) {
             return;
         }
         const update = decodeBase64ToUint8Array(message.awarenessUpdate);
