@@ -383,7 +383,7 @@ final class JavaSourceInspector {
         String declarationStart = "(?:^|[;{}])\\s*";
         String modifiers = "(?:(?:public|protected|private|static|abstract|final|sealed|non-sealed)\\s+)*";
         return Pattern.compile(declarationStart + modifiers + "(?:class|interface|enum|record|trait|struct|protocol)\\s+" + Pattern.quote(type) + "\\b", Pattern.MULTILINE)
-                .matcher(stripJavaComments(content)).find();
+                .matcher(stripJavaTrivia(content, true)).find();
     }
 
     /**
