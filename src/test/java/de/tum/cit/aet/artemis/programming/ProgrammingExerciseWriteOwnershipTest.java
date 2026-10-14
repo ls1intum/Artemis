@@ -53,6 +53,9 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
     private ProgrammingExerciseWriteOwnershipService ownershipService;
 
     @Autowired
+    private ProgrammingExerciseMutationGuardService springMutationGuard;
+
+    @Autowired
     private DataSource dataSource;
 
     private ProgrammingExercise exercise;
@@ -95,6 +98,17 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
         assertThat(ownershipService.isOwned(exercise.getId(), token)).isTrue();
         assertThat(ownershipService.get(exercise.getId())).hasValueSatisfying(owner -> assertThat(owner.purpose()).isEqualTo("persist"));
         ownershipService.release(exercise.getId(), token);
+    }
+
+    @Test
+    void springInjectedMutationGuardResolvesDurableOwnershipOnWrite() {
+        long id = exercise.getId();
+        assertThat(springMutationGuard.isCoordinationEnabled()).isTrue();
+        try (var lease = springMutationGuard.claimExternalMutation(id)) {
+            assertThat(lease.coordinated()).isTrue();
+            assertThat(ownershipService.get(id)).hasValueSatisfying(owner -> assertThat(owner.purpose()).isEqualTo("WRITE"));
+        }
+        assertThat(ownershipService.get(id)).isEmpty();
     }
 
     @Test
