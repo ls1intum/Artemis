@@ -73,12 +73,29 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
                 mutationGuard);
     }
 
-    @Test
-    void setupRequestsTheInitialVersionAfterCreatingTheExercise() throws Exception {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void setupRequestsTheInitialVersionAfterCreatingTheExercise(boolean coordinated) throws Exception {
         Course course = mock(Course.class);
         ProgrammingExercise requestExercise = mock(ProgrammingExercise.class);
         ProgrammingExercise createdExercise = mock(ProgrammingExercise.class);
         when(createdExercise.getId()).thenReturn(EXERCISE_ID);
+        when(createdExercise.getExerciseType()).thenReturn(de.tum.cit.aet.artemis.exercise.domain.ExerciseType.PROGRAMMING);
+        var held = new java.util.concurrent.atomic.AtomicBoolean(false);
+        var queued = new java.util.ArrayList<Runnable>();
+        var reads = new java.util.ArrayList<Boolean>();
+        when(mutationGuard.claimExternalMutation(EXERCISE_ID)).thenAnswer(ignored -> {
+            held.set(coordinated);
+            return new ProgrammingExerciseMutationGuardService.MutationLease(() -> held.set(false), coordinated);
+        });
+        var versions = mock(ExerciseVersionService.class, org.mockito.Mockito.CALLS_REAL_METHODS);
+        org.springframework.test.util.ReflectionTestUtils.setField(versions, "exerciseVersionExecutor", (java.util.concurrent.Executor) queued::add);
+        org.springframework.test.util.ReflectionTestUtils.setField(versions, "programmingExerciseRepository", repository);
+        when(repository.findForVersioningById(EXERCISE_ID)).thenAnswer(ignored -> {
+            reads.add(held.get());
+            throw new IllegalStateException("controlled snapshot failure");
+        });
+        org.springframework.test.util.ReflectionTestUtils.setField(resource, "exerciseVersionService", versions);
         when(courseService.retrieveCourseOverExerciseGroupOrCourseId(requestExercise)).thenReturn(course);
         when(creationUpdateService.createProgrammingExercise(org.mockito.ArgumentMatchers.same(requestExercise),
                 org.mockito.ArgumentMatchers.any(ProgrammingExerciseBuildConfig.class), org.mockito.ArgumentMatchers.eq(false))).thenReturn(createdExercise);
@@ -92,10 +109,17 @@ class ProgrammingExerciseCreationResourceMutationGuardTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getBody().id()).isEqualTo(EXERCISE_ID);
-        var order = inOrder(creationUpdateService, exerciseVersionService);
-        order.verify(creationUpdateService).createProgrammingExercise(org.mockito.ArgumentMatchers.same(requestExercise),
-                org.mockito.ArgumentMatchers.any(ProgrammingExerciseBuildConfig.class), org.mockito.ArgumentMatchers.eq(false));
-        order.verify(exerciseVersionService).createExerciseVersion(createdExercise, user);
+        assertThat(held.get()).isFalse();
+        if (coordinated) {
+            assertThat(queued).isEmpty();
+            assertThat(reads).containsExactly(true);
+        }
+        else {
+            assertThat(reads).isEmpty();
+            assertThat(queued).hasSize(1);
+            queued.removeFirst().run();
+            assertThat(reads).containsExactly(false);
+        }
     }
 
     @ParameterizedTest

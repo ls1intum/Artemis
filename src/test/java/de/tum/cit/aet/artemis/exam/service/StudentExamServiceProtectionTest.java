@@ -47,7 +47,8 @@ class StudentExamServiceProtectionTest {
         ReflectionTestUtils.setField(service, "studentExamRepository", students);
         ReflectionTestUtils.setField(service, "examUserRepository", registered);
         ReflectionTestUtils.setField(service, "userRepository", users);
-        ReflectionTestUtils.setField(service, "cacheManager", new ConcurrentMapCacheManager(Constants.EXAM_EXERCISE_START_STATUS));
+        ReflectionTestUtils.setField(service, "preparationStatus",
+                new ExamExercisePreparationStatusService(new ConcurrentMapCacheManager(Constants.EXAM_EXERCISE_START_STATUS), mock()));
     }
 
     @Test
