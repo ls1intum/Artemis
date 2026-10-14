@@ -52,6 +52,8 @@ public class GenerationSeedService {
 
     private final GenerationAuthoringBaselineService baselines;
 
+    private final de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository auxiliaryRepositories;
+
     private final String branch;
 
     private final ProgrammingExerciseTestCaseRepository testCases;
@@ -60,8 +62,10 @@ public class GenerationSeedService {
 
     public GenerationSeedService(ProgrammingExerciseBuildConfigRepository buildConfigRepository, GitService gitService, TempFileUtilService temporaryFiles,
             GenerationRequestService requests, ProgrammingExerciseTestCaseRepository testCases, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            GenerationAuthoringBaselineService baselines, @Value("${artemis.version-control.default-branch:main}") String branch) {
+            GenerationAuthoringBaselineService baselines, de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository auxiliaryRepositories,
+            @Value("${artemis.version-control.default-branch:main}") String branch) {
         this.baselines = baselines;
+        this.auxiliaryRepositories = auxiliaryRepositories;
         this.buildConfigRepository = buildConfigRepository;
         this.gitService = gitService;
         this.temporaryFiles = temporaryFiles;
@@ -102,7 +106,12 @@ public class GenerationSeedService {
      * @return fresh authoring inputs
      */
     public ProgrammingExercise reload(long exerciseId) {
-        return baselines.requireCurrentExercise(exerciseId);
+        ProgrammingExercise current = baselines.requireCurrentExercise(exerciseId);
+        if (!de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile.isSupported(current,
+                buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId), !auxiliaryRepositories.findByExerciseId(exerciseId).isEmpty())) {
+            throw new GenerationAuthoringBaselineService.AuthoringConflictException("The exercise configuration changed and is no longer supported.");
+        }
+        return current;
     }
 
     /**

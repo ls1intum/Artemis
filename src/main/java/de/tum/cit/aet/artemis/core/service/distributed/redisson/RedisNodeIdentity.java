@@ -2,11 +2,9 @@ package de.tum.cit.aet.artemis.core.service.distributed.redisson;
 
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.config.RedisCondition;
@@ -21,14 +19,8 @@ public class RedisNodeIdentity {
 
     private final String connectionName;
 
-    @Autowired
-    public RedisNodeIdentity(@Value("${spring.data.redis.client-name:artemis-node}") String displayName, Environment environment) {
-        this(displayName, false, false);
-    }
-
-    public RedisNodeIdentity(String displayName, boolean writer, boolean fencingEnabled) {
-        String role = writer ? (fencingEnabled ? "fenced" : "unfenced") : "observer";
-        connectionName = PREFIX + UUID.randomUUID() + ":" + role + ":" + displayName;
+    public RedisNodeIdentity(@Value("${spring.data.redis.client-name:artemis-node}") String displayName) {
+        connectionName = PREFIX + UUID.randomUUID() + ":node:" + displayName;
     }
 
     /** @return the unique connection name Redis observes for this process incarnation */
@@ -65,15 +57,7 @@ public class RedisNodeIdentity {
         return roleEnd >= 0 && isRole(suffix.substring(0, roleEnd)) ? suffix.substring(roleEnd + 1) : suffix;
     }
 
-    static boolean declaresSafeWriterRole(String name) {
-        if (!isCoordinationName(name)) {
-            return false;
-        }
-        String suffix = name.substring(PREFIX.length() + 37);
-        return suffix.startsWith("fenced:") || suffix.startsWith("observer:");
-    }
-
     private static boolean isRole(String role) {
-        return role.equals("fenced") || role.equals("unfenced") || role.equals("observer");
+        return role.equals("node") || role.equals("fenced") || role.equals("unfenced") || role.equals("observer");
     }
 }

@@ -49,6 +49,15 @@ class GenerationExternalMutationServiceTest {
     }
 
     @Test
+    void releaseSaveSlotIfOwnedReturnsOnlyTheAtomicDatabaseResult() {
+        when(ownership.releaseActiveSave(42, "generation-job")).thenReturn(true, false);
+        assertThat(service.releaseSaveSlotIfOwned(42, "generation-job")).isTrue();
+        assertThat(service.releaseSaveSlotIfOwned(42, "generation-job")).isFalse();
+        verify(ownership, never()).get(42);
+        verify(ownership, never()).release(eq(42L), anyString());
+    }
+
+    @Test
     void finalSaveUsesTheGenerationJobToken() {
         service.claimSaveSlot(42, "generation-job");
         verify(ownership).claim(42, "SAVE", "generation-job");
@@ -56,7 +65,7 @@ class GenerationExternalMutationServiceTest {
         assertThat(service.owns(42, "generation-job")).isTrue();
         assertThat(service.owns(42, "wrong")).isFalse();
         service.releaseSaveSlot(42, "generation-job");
-        verify(ownership).release(42, "generation-job");
+        verify(ownership).releaseActiveSave(42, "generation-job");
     }
 
     @ParameterizedTest
@@ -65,6 +74,7 @@ class GenerationExternalMutationServiceTest {
         when(ownership.get(42)).thenReturn(Optional.of(slot("generation-job", purpose)));
         assertThat(service.owns(42, "generation-job")).isFalse();
         service.releaseSaveSlot(42, "generation-job");
+        verify(ownership).releaseActiveSave(42L, "generation-job");
         verify(ownership, never()).release(eq(42L), anyString());
     }
 

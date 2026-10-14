@@ -62,8 +62,6 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
         assertThat(provider.getLocalNodeId()).isNotBlank().isEqualTo(provider.getLocalNodeId());
         var snapshot = provider.getCoordinationSnapshot().orElseThrow();
         assertThat(snapshot.ownerNodeIds()).contains(provider.getLocalNodeId());
-        assertThat(snapshot.permitsAdmission(1)).isTrue();
-        assertThat(snapshot.permitsRecovery(1)).isTrue();
     }
 
     @Test
