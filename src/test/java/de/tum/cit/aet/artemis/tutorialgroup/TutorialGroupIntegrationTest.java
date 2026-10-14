@@ -1071,6 +1071,30 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void importTutorialGroupsWithRegistrations_asEditor_shouldCreateTutorialGroup() throws Exception {
+            var freshTitle = "editor-import";
+            assertTutorialWithTitleDoesNotExistInDb(freshTitle);
+            var registration = new TutorialGroupImportDataDTO(freshTitle, new StudentDTO(firstCourseStudent4), null, null, null, null, null);
+
+            var importResult = request.postListWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/import", List.of(registration),
+                    TutorialGroupImportDataDTO.class, HttpStatus.OK);
+
+            assertThat(importResult).hasSize(1);
+            assertThat(importResult.getFirst().importSuccessful()).isTrue();
+            assertImportedTutorialGroupWithTitleInDb(freshTitle, Set.of(firstCourseStudent4), FIRST_COURSE_EDITOR1_LOGIN);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void importTutorialGroupsWithRegistrations_asTutor_shouldReturnForbidden() throws Exception {
+            var registration = new TutorialGroupImportDataDTO("tutor-import", new StudentDTO(firstCourseStudent4), null, null, null, null, null);
+            request.postListWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/import", List.of(registration), TutorialGroupImportDataDTO.class,
+                    HttpStatus.FORBIDDEN);
+            assertTutorialWithTitleDoesNotExistInDb("tutor-import");
+        }
+
+        @Test
         @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
         void importTutorialGroupsWithRegistrations_withoutTitle_shouldNotCreateTutorialGroup() throws Exception {
             assertUserIsRegisteredInTutorialWithTitle(firstCourseTutorialGroup1.getTitle(), firstCourseStudent1);

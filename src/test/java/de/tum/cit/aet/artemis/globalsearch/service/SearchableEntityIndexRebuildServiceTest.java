@@ -12,6 +12,7 @@ import org.springframework.mock.env.MockEnvironment;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityReconcileStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
+import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
 
 /**
  * Unit tests for {@link SearchableEntityIndexRebuildService}; the rebuild itself is tested against a real Weaviate in
@@ -30,19 +31,19 @@ class SearchableEntityIndexRebuildServiceTest {
         var syncStateRepository = mock(SearchableEntitySyncStateRepository.class);
         var reconcileStateRepository = mock(SearchableEntityReconcileStateRepository.class);
 
-        assertThatThrownBy(
-                () -> new SearchableEntityIndexRebuildService(Optional.empty(), properties, new MockEnvironment(), weaviateService, syncStateRepository, reconcileStateRepository))
-                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> new SearchableEntityIndexRebuildService(Optional.empty(), properties, new MockEnvironment(), weaviateService, syncStateRepository,
+                reconcileStateRepository, mock(WeaviateOutboxRepository.class))).isInstanceOf(IllegalStateException.class);
         var openApiDocsGeneration = new MockEnvironment().withProperty("artemis.openapi-docs-generation", "true");
-        assertThat(new SearchableEntityIndexRebuildService(Optional.empty(), properties, openApiDocsGeneration, weaviateService, syncStateRepository, reconcileStateRepository)
-                .desiredSignature()).isEqualTo("layout=2;mode=none");
+        assertThat(new SearchableEntityIndexRebuildService(Optional.empty(), properties, openApiDocsGeneration, weaviateService, syncStateRepository, reconcileStateRepository,
+                mock(WeaviateOutboxRepository.class)).desiredSignature()).isEqualTo("layout=2;mode=none");
     }
 
     @Test
     void theSignatureNamesTheModelOnlyWhenArtemisEmbeds() {
         var openApiDocsGeneration = new MockEnvironment().withProperty("artemis.openapi-docs-generation", "true");
         var embedding = new SearchableEntityIndexRebuildService(Optional.empty(), properties("text2vec-openai", "Qwen/Qwen3-Embedding-8B"), openApiDocsGeneration,
-                mock(WeaviateService.class), mock(SearchableEntitySyncStateRepository.class), mock(SearchableEntityReconcileStateRepository.class));
+                mock(WeaviateService.class), mock(SearchableEntitySyncStateRepository.class), mock(SearchableEntityReconcileStateRepository.class),
+                mock(WeaviateOutboxRepository.class));
 
         assertThat(embedding.desiredSignature()).isEqualTo("layout=2;mode=text2vec-openai;model=Qwen/Qwen3-Embedding-8B");
     }

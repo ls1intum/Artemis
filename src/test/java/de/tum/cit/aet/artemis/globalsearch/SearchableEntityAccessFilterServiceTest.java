@@ -234,6 +234,21 @@ class SearchableEntityAccessFilterServiceTest {
     }
 
     @Test
+    void studentChannelFilterRequiresTheDateFromWhichStudentsMaySeeTheChannel() {
+        // Every channel row carries that date; a row without it predates the field and may belong to an unreleased
+        // exercise or exam, so students must not match it (no null branch).
+        User user = new User();
+        user.setId(1L);
+        when(courseRepository.findAllAccessibleCoursesForUser(1L, false)).thenReturn(List.of(courseWithId(9L)));
+
+        var result = filterService.buildSearchableItemFilter(user, null, List.of(), Set.of(SearchableEntitySchema.TypeValues.CHANNEL));
+
+        String filter = result.filter().toString();
+        assertThat(filter).contains("type Equal channel").contains("release_date LessThenEqual");
+        assertThat(filter).doesNotContainIgnoringCase("release_date IsNull");
+    }
+
+    @Test
     void adminTypeOnlyFilterNeverMatchesPostsOrRepliesEvenWhenAskedFor() {
         // The admin fast path turns each requested type into a bare type filter with no access rule behind it, so it is
         // the path a non-searchable type would slip through if the service trusted its caller.
