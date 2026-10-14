@@ -22,7 +22,7 @@ public class GenerationExternalMutationService {
     private final ProgrammingExerciseWriteOwnershipService ownership;
 
     @org.springframework.beans.factory.annotation.Autowired
-    public GenerationExternalMutationService(ProgrammingExerciseWriteOwnershipService ownership) {
+    public GenerationExternalMutationService(@Lazy ProgrammingExerciseWriteOwnershipService ownership) {
         this.ownership = ownership;
     }
 
