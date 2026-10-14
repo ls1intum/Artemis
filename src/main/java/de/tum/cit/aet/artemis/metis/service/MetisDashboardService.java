@@ -231,11 +231,12 @@ public class MetisDashboardService {
     }
 
     /**
-     * Whether a row waits for the review, by the rule of the review page: a skipped or failed check has nothing to review, and every other check waits until it
-     * has main questions and all of them are approved. Follow-ups are never reviewed, so they do not count, and a check without questions yet waits as well.
+     * Whether a row waits for the review, by the rule of the review page: only a check in review does, until it has main questions and all of them are approved.
+     * Without a review the questions are released at once, a check the student has started is past its review, and a check without questions yet, skipped or
+     * failed has nothing to review. Follow-ups are never reviewed, so they do not count.
      */
     private static boolean isAwaitingReview(MetisDashboardRowDTO row) {
-        if (SKIPPED_OR_FAILED_STATES.contains(row.check().status())) {
+        if (row.check().status() != MetisCheckStatus.IN_REVIEW) {
             return false;
         }
         List<MetisQuestionDTO> mainQuestions = row.questions().stream().filter(question -> question.parentQuestionId() == null).toList();
