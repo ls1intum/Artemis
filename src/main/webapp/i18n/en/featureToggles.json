@@ -124,6 +124,10 @@
                 "passkey-admin": {
                     "name": "Passkey Required for Admin Features",
                     "description": "When enabled, administrators must authenticate with a passkey to access admin features. Requires Passkey Authentication to be active."
+                },
+                "metis": {
+                    "name": "Metis comprehension checks",
+                    "description": "Asks students comprehension questions about their own solution after the due date of a programming exercise"
                 }
             },
             "toggles": {

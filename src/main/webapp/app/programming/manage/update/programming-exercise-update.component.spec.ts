@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
-import { IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseMode, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { Subject, of, throwError } from 'rxjs';
@@ -28,7 +28,9 @@ import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_METIS, MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { MetisService } from 'app/metis/shared/services/metis.service';
+import { METIS_DEFAULT_CONFIG } from 'app/metis/shared/entities/metis.model';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import {
     APP_NAME_PATTERN_FOR_SWIFT,
@@ -130,6 +132,17 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     },
                 },
                 MockProvider(DialogService),
+                // The Metis section reads the configuration of the exercise it edits; an enabled one, so its validity counts.
+                {
+                    provide: MetisService,
+                    useValue: {
+                        config: vi.fn((exerciseId: number) => of({ ...METIS_DEFAULT_CONFIG, exerciseId, enabled: true })),
+                        groupWindows: vi.fn(() => of([])),
+                        tutorialGroups: vi.fn(() => of([])),
+                        saveConfig: vi.fn((config) => of(config)),
+                        saveGroupWindows: vi.fn((_exerciseId: number, windows) => of(windows)),
+                    },
+                },
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
@@ -2045,6 +2058,95 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         for (const subscription of comp.inputFieldSubscriptions) {
             expect(subscription?.closed ?? true).toBe(true);
         }
+    });
+
+    it('should add a valid Metis section when editing a course exercise while the Metis module is active', () => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_METIS);
+        vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(Utils, 'loadCourseExerciseCategories').mockReturnValue(of([]));
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.id = 42;
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId, exerciseId: 42 });
+        route.url = of([{ path: 'edit' } as UrlSegment]);
+        route.data = of({ programmingExercise });
+
+        const getFeaturesStub = vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        // Renders the real section on a stubbed MetisService, which reports the configuration of exercise 42 as enabled; the
+        // section reports its validity through the view child and adds no subscription to inputFieldSubscriptions.
+        fixture.detectChanges();
+        comp.calculateFormStatusSections();
+
+        expect(comp.isEdit).toBe(true);
+        expect(comp.metisEnabled()).toBe(true);
+        expect(comp.isMetisSectionDisplayed()).toBe(true);
+        expect(fixture.nativeElement.querySelector('jhi-metis-exercise-settings')).not.toBeNull();
+        expect(TestBed.inject(MetisService).config).toHaveBeenCalledWith(42);
+        expect(comp.inputFieldSubscriptions).toHaveLength(4);
+        expect(comp.formStatusSections()).toHaveLength(6);
+        const metisSection = comp.formStatusSections().find((section) => section.title === 'artemisApp.programmingExercise.wizardMode.detailedSteps.metisStepTitle');
+        expect(metisSection?.valid).toBe(true);
+        expect(metisSection?.empty).toBe(false);
+        expect(comp.getInvalidReasons()).not.toContainEqual({ translateKey: 'artemisApp.metis.settings.invalid', translateValues: {} });
+
+        // Breaking the section through its own API (the shortest limit above the longest) must reach the status bar and the footer.
+        const metisComponent = comp.exerciseMetisComponent()!;
+        metisComponent['updateConfig']({ minSecondsPerQuestion: 400 });
+        fixture.detectChanges();
+        comp.calculateFormStatusSections();
+
+        expect(metisComponent.isFormValid()).toBe(false);
+        expect(comp.formStatusSections().find((section) => section.title === 'artemisApp.programmingExercise.wizardMode.detailedSteps.metisStepTitle')?.valid).toBe(false);
+        expect(comp.getInvalidReasons()).toContainEqual({ translateKey: 'artemisApp.metis.settings.invalid', translateValues: {} });
+    });
+
+    it('should leave the Metis section out while creating an exercise', () => {
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => feature === MODULE_FEATURE_METIS);
+        vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+        vi.spyOn(Utils, 'loadCourseExerciseCategories').mockReturnValue(of([]));
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'new' } as UrlSegment]);
+        route.data = of({ programmingExercise: new ProgrammingExercise(undefined, undefined) });
+        vi.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        comp.calculateFormStatusSections();
+
+        expect(comp.metisEnabled()).toBe(true);
+        expect(comp.isCreate).toBe(true);
+        expect(comp.isMetisSectionDisplayed()).toBe(false);
+        expect(fixture.nativeElement.querySelector('jhi-metis-exercise-settings')).toBeNull();
+        expect(comp.formStatusSections().some((section) => section.title === 'artemisApp.programmingExercise.wizardMode.detailedSteps.metisStepTitle')).toBe(false);
+        expect(TestBed.inject(MetisService).config).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['creating or importing an individual exercise', false, ExerciseMode.INDIVIDUAL, false],
+        ['editing an individual exercise', true, ExerciseMode.INDIVIDUAL, true],
+        ['editing an exercise without a mode', true, undefined, true],
+        ['editing a team exercise', true, ExerciseMode.TEAM, false],
+    ])('should decide on the Metis section when %s', (_, isEdit, mode, expected) => {
+        comp.metisEnabled.set(true);
+        comp.isExamMode.set(false);
+        comp.programmingExercise = new ProgrammingExercise(course, undefined);
+        comp.programmingExercise.mode = mode;
+        comp.isEdit = isEdit;
+
+        expect(comp.isMetisSectionDisplayed()).toBe(expected);
+    });
+
+    it('should leave the Metis section out of the status bar while the Metis module is inactive', () => {
+        comp.programmingExercise = new ProgrammingExercise(course, undefined);
+        comp.isExamMode.set(false);
+
+        comp.calculateFormStatusSections();
+
+        expect(comp.isMetisSectionDisplayed()).toBe(false);
+        expect(comp.formStatusSections().some((section) => section.title === 'artemisApp.programmingExercise.wizardMode.detailedSteps.metisStepTitle')).toBe(false);
     });
 
     function verifyImport(importedProgrammingExercise: ProgrammingExercise) {

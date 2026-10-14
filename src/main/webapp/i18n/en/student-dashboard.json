@@ -315,6 +315,7 @@
                 "fileUploadEditor": "File Upload",
                 "quizEditor": "Quiz",
                 "iris": "Iris",
+                "metis": "Comprehension check",
                 "collapsePanel": "Collapse panel",
                 "noResults": "You have no results yet",
                 "instructorActions": {

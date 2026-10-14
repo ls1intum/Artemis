@@ -38,6 +38,7 @@ import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/mod
 import { AccountService } from 'app/core/auth/account.service';
 import { TeamPracticeHintComponent } from 'app/course/overview/exercise-details/team-practice-hint/team-practice-hint.component';
 import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelectionDecision.dto';
+import { ComprehensionCheckPanelComponent } from 'app/metis/overview/comprehension-check-panel/comprehension-check-panel.component';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -64,6 +65,7 @@ import { LLMSelectionDecision } from 'app/account/user/shared/dto/updateLLMSelec
         DiscussionSectionComponent,
         PanelModule,
         TeamPracticeHintComponent,
+        ComprehensionCheckPanelComponent,
     ],
 })
 export class ExerciseSplitPanelComponent {
@@ -114,6 +116,8 @@ export class ExerciseSplitPanelComponent {
     readonly exercise = input.required<Exercise>();
     readonly studentParticipation = input<StudentParticipation>();
     readonly irisEnabled = input<boolean>(false);
+    /** Whether the exercise runs a Metis comprehension check; the panel itself handles a student who opted out of AI. */
+    readonly metisEnabled = input<boolean>(false);
     readonly courseId = input.required<number>();
     readonly gradedStudentParticipation = input<StudentParticipation>();
     /** The practice participation of the student, which tells the details whether practice can still be started. */
@@ -171,6 +175,9 @@ export class ExerciseSplitPanelComponent {
     readonly irisPanelStartsCollapsed = computed(
         () => this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.NO_AI && this.showIris() && !this.showEditorPanel(),
     );
+
+    /** The comprehension check exists for programming course exercises only; exam exercises never get one. */
+    readonly showMetis = computed(() => this.metisEnabled() && this.exercise().type === ExerciseType.PROGRAMMING && !this.exercise().exerciseGroup);
 
     readonly showCodeEditor = computed(() => {
         const exercise = this.exercise();
