@@ -86,6 +86,14 @@ class TextBlockServiceTest {
     }
 
     @Test
+    void doNotFailForTextsAroundNotEqualsBoundaries() {
+        assertThat(textBlockService.splitSubmissionIntoBlocks(new TextSubmission(0L).text(""))).isEmpty();
+        assertThat(textBlockService.splitSubmissionIntoBlocks(new TextSubmission(0L).text("=")).stream().map(TextBlock::getText)).containsExactly("=");
+        assertThat(textBlockService.splitSubmissionIntoBlocks(new TextSubmission(0L).text("!=")).stream().map(TextBlock::getText)).containsExactly("!=");
+        assertThat(textBlockService.splitSubmissionIntoBlocks(new TextSubmission(0L).text("!= x")).stream().map(TextBlock::getText)).containsExactly("!= x");
+    }
+
+    @Test
     void stillSplitSentencesEndingWithExclamationMark() {
         final TextSubmission submission = new TextSubmission(0L).text("Hello World! This is a Test! Really!");
         final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);

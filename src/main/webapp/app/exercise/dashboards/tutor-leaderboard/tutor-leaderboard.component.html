@@ -69,7 +69,7 @@
         <tbody>
             @for (tutor of sortedTutorsData(); track tutor) {
                 <tr>
-                    <td class="w-12">{{ ranks().get(tutor) }}</td>
+                    <td class="w-12">{{ ranks().get(tutor.userId) }}</td>
                     <td class="min-w-[12rem] whitespace-normal break-words">
                         <span class="break-words whitespace-normal">{{ tutor.name }}</span>
                         @if (course()?.isAtLeastInstructor && tutor.hasIssuesWithPerformance) {

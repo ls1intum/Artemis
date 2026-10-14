@@ -115,7 +115,7 @@ public class TextBlockService {
      */
     private static int nextSentenceEnd(BreakIterator breakIterator, String text) {
         int end = breakIterator.next();
-        while (end != BreakIterator.DONE && end < text.length() && text.charAt(end - 1) == '!' && text.charAt(end) == '=') {
+        while (end > 0 && end < text.length() && text.charAt(end - 1) == '!' && text.charAt(end) == '=') {
             end = breakIterator.next();
         }
         return end;

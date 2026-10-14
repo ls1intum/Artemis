@@ -146,6 +146,16 @@ describe('TutorLeaderboardComponent', () => {
             expect(ranksByName).toEqual({ Carla: '1', Berta: '1', Dora: '1', Anton: '4', Emil: '5', Fritz: '5' });
         });
 
+        it('keys the ranks by user id so that re-created tutor objects keep their rank', () => {
+            fixture.componentRef.setInput('tutorsData', [tutor('Carla', 1, 10), tutor('Anton', 2, 5), tutor('Berta', 3, 10)]);
+            fixture.detectChanges();
+            expect(Object.fromEntries(comp.ranks())).toEqual({ 1: 1, 2: 3, 3: 1 });
+
+            fixture.componentRef.setInput('tutorsData', [tutor('Carla', 1, 10), tutor('Anton', 2, 5), tutor('Berta', 3, 10)]);
+            fixture.detectChanges();
+            expect(renderedRanks().map((row) => row.rank)).toEqual(['1', '1', '3']);
+        });
+
         it('keeps the rank of a tutor when the table is sorted by another column', () => {
             comp.sortPredicate.set('name');
             comp.reverseOrder.set(true); // ascending
