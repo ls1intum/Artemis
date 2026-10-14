@@ -66,6 +66,8 @@ class GenerationSeedServiceTest {
 
     private GenerationSeedService service;
 
+    private de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationAuthoringBaselineService baselines;
+
     private FileMode sourceMode = FileMode.REGULAR_FILE;
 
     private byte[] sourceBytes = "class App {}".getBytes(StandardCharsets.UTF_8);
@@ -74,12 +76,29 @@ class GenerationSeedServiceTest {
     void setup() throws Exception {
         org.mockito.Mockito.when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(org.mockito.ArgumentMatchers.anyLong()))
                 .thenReturn(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
-        service = new GenerationSeedService(buildConfigRepository, git, new TempFileUtilService(temporary), requests, testCases, taskService, "main");
+        baselines = org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationAuthoringBaselineService.class);
+        when(baselines.requireCurrentExercise(org.mockito.ArgumentMatchers.anyLong())).thenReturn(exercise);
+        service = new GenerationSeedService(buildConfigRepository, git, new TempFileUtilService(temporary), requests, testCases, taskService, baselines, "main");
         when(exercise.getRepositoryURI(any())).thenReturn(uri);
         when(exercise.getId()).thenReturn(42L);
         when(exercise.getProblemStatement()).thenReturn("The instructor's specification.");
         when(requests.isAuthoritativeProblemStatement(any())).thenReturn(true);
         when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenAnswer(invocation -> createRepository(invocation.getArgument(1)));
+    }
+
+    @Test
+    void reloadsExerciseAfterAcquiringSeedReservation() {
+        baselines = org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationAuthoringBaselineService.class);
+        var fresh = mock(ProgrammingExercise.class);
+        when(fresh.getId()).thenReturn(42L);
+        when(fresh.getRepositoryURI(any())).thenReturn(uri);
+        when(fresh.getProblemStatement()).thenReturn("Changed before seed acquisition");
+        when(baselines.requireCurrentExercise(42L)).thenReturn(fresh);
+        service = new GenerationSeedService(buildConfigRepository, git, new TempFileUtilService(temporary), requests, testCases, taskService, baselines, "main");
+        var seed = service.capture(exercise);
+        assertThat(seed.snapshot().files()).filteredOn(file -> file.path().equals("problem-statement.md")).extracting(file -> new String(file.content(), StandardCharsets.UTF_8))
+                .containsExactly("Changed before seed acquisition");
+        verify(baselines).capture(fresh);
     }
 
     @Test
@@ -153,6 +172,7 @@ class GenerationSeedServiceTest {
         loaded.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         loaded.setProjectType(ProjectType.PLAIN_GRADLE);
         doReturn(uri).when(loaded).getRepositoryURI(any());
+        when(baselines.requireCurrentExercise(42L)).thenReturn(loaded);
         ArgumentCaptor<ProgrammingExercise> rendered = ArgumentCaptor.forClass(ProgrammingExercise.class);
         doAnswer(invocation -> {
             ProgrammingExercise copy = invocation.getArgument(0);
