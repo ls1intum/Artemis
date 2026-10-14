@@ -411,18 +411,18 @@ public class GenerationPersistenceService {
     /**
      * Restores metadata and grading while authorizing the tests callback with the exact undo reservation.
      *
-     * @param exercise exercise being restored
-     * @param user instructor performing the undo
-     * @param testsBuildSignal expected tests build
-     * @param problemStatement prior statement
-     * @param title prior title
+     * @param exercise                 exercise being restored
+     * @param user                     instructor performing the undo
+     * @param testsBuildSignal         expected tests build
+     * @param problemStatement         prior statement
+     * @param title                    prior title
      * @param expectedProblemStatement statement expected before undo
-     * @param expectedTitle title expected before undo
-     * @param repositoryCommitIds restored repository heads
-     * @param previousGrading grading to restore
-     * @param savedGrading generation grading expected before undo
-     * @param stillOwnsMutationSlot exact ownership check
-     * @param ownershipToken database undo reservation token
+     * @param expectedTitle            title expected before undo
+     * @param repositoryCommitIds      restored repository heads
+     * @param previousGrading          grading to restore
+     * @param savedGrading             generation grading expected before undo
+     * @param stillOwnsMutationSlot    exact ownership check
+     * @param ownershipToken           database undo reservation token
      * @return whether metadata and grading were restored completely
      */
     public boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,

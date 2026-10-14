@@ -149,7 +149,7 @@ public class GenerationAuthoringBaselineService {
      * Compare after acquiring the final-save DB guard and before any canonical repository or metadata write.
      *
      * @param exerciseId exercise being saved
-     * @param expected frozen seed values; missing evidence fails closed
+     * @param expected   frozen seed values; missing evidence fails closed
      */
     public void assertMatches(long exerciseId, @Nullable Snapshot expected) {
         ProgrammingExercise current = requireCurrentExercise(exerciseId);
