@@ -394,8 +394,9 @@ public class GenerationTaskService {
                         GenerationPersistenceService.PersistResult persistResult;
                         try {
                             exerciseToPersist = reloadDraftExerciseBeforeLiveMutation(exerciseId);
-                            persistResult = persistenceService.persist(exerciseToPersist, user, outcome, outcome.authoringBaseline().metadata().get("getProblemStatement"), outcome.authoringBaseline().metadata().get("getTitle"), jobId,
-                                    event.mode(), () -> canContinueSave(exerciseId, jobId, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId), () -> {
+                            persistResult = persistenceService.persist(exerciseToPersist, user, outcome, outcome.authoringBaseline().metadata().get("getProblemStatement"),
+                                    outcome.authoringBaseline().metadata().get("getTitle"), jobId, event.mode(),
+                                    () -> canContinueSave(exerciseId, jobId, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId), () -> {
                                         journal.beforeMutation(jobId, exerciseToPersist, user, outcome.seedRepositoryHeads(),
                                                 persistenceService.repositoryBranch(exerciseToPersist));
                                     });

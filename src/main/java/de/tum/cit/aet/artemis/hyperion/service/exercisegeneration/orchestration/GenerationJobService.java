@@ -16,7 +16,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import jakarta.annotation.PostConstruct;
 
@@ -358,8 +357,8 @@ public class GenerationJobService {
         Instant startedAt = Instant.now();
         Instant deadlineAt = startedAt.plus(settings == null ? maxJobDuration : settings.maxJobDuration());
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, true, budgetReservationId, mode,
-                exercise.getTitle(), course == null ? null : course.getId());
+        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, true, budgetReservationId, mode, exercise.getTitle(),
+                course == null ? null : course.getId());
         var startedReplay = new AtomicReference<GenerationJobReplayStore.StartedReplay>();
         boolean publicStatePublished = false;
         try {

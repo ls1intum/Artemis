@@ -87,7 +87,8 @@ public class ExerciseGenerationRevertService {
         return Optional.of(result);
     }
 
-    private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, GenerationVersionRecoveryService.Recovery pair, BooleanSupplier stillOwnsMutationSlot, String ownershipToken) {
+    private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, GenerationVersionRecoveryService.Recovery pair, BooleanSupplier stillOwnsMutationSlot,
+            String ownershipToken) {
         ExerciseGenerationBaseline baseline = pair.baseline();
         if (!metadata.canRestore(exercise.getId(), pair) || !testCases.canRestore(exercise.getId(), pair)) {
             return new RevertResult(false, List.of(), false);

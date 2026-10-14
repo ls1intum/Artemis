@@ -273,7 +273,6 @@ reservation. Redis client membership is not proof that a writer has stopped.
 The selected distributed-data provider still carries worker messages and active
 job state; it does not hold the durable write reservation.
 
-
 A short reservation protects the source snapshot. It is released before model
 work starts. An instructor can edit during authoring. Before saving, core claims
 an exclusive database reservation and compares the frozen repository heads,
@@ -329,15 +328,14 @@ unrelated exercise versions, and an older successful run is never substituted
 for an expired or incomplete latest mutation. Saved exercise versions remain
 available through normal version history after activity expires.
 
-Non-expiring exercise mutation slots continue to protect interrupted saves and
-restores while distributed state is retained. Expiring activity does not release
-those slots. If undo references expire, use the audited operator reconciliation
-path rather than offering an unsafe automatic restore. There is no SQL recovery
-journal or database startup reconstruction. Complete loss of distributed state
-requires stopping writers and manually reconciling potentially interrupted
-operations against repository state and exercise versions before reopening
-writes. Preserve the configured provider's state across restarts and follow the
-Redis durability and coordinated shutdown requirements above.
+The non-expiring database reservation protects an interrupted save or restore,
+even when distributed activity state expires or is lost. If undo references expire,
+use audited operator reconciliation rather than automatic restoration. There is
+no SQL activity journal or automatic reconstruction of lost undo references.
+Before releasing an interrupted writer's reservation, stop that writer and
+reconcile repository state, exercise metadata and exercise versions. Keep the
+configured provider's state when activity replay and undo references must survive
+provider restarts; provider state does not determine canonical write ownership.
 
 Restoration uses captured test metadata and rebuilds task bindings from the saved
 statement. It does not require the previous draft to compile or pass a build.

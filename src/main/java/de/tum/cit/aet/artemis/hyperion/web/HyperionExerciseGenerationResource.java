@@ -268,9 +268,8 @@ public class HyperionExerciseGenerationResource {
                 consistent.set(!jobService.isRevertRecoveryRetry(revertSlot));
                 return revertibleJobId.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.status(HttpStatus.CONFLICT).build();
             }
-            return generationRevertService
-                    .revert(exercise, user,
-                            () -> jobService.isOwnedActiveJob(exerciseId, revertSlot) && programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId), revertSlot)
+            return generationRevertService.revert(exercise, user,
+                    () -> jobService.isOwnedActiveJob(exerciseId, revertSlot) && programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId), revertSlot)
                     .map(result -> {
                         if (result.fullyReverted()) {
                             consistent.set(true);

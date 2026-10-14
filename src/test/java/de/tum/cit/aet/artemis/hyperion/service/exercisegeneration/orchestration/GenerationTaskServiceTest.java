@@ -676,8 +676,8 @@ class GenerationTaskServiceTest {
 
         taskService.runAsync(event);
 
-        verify(persistenceService).persist(eq(exercise), eq(user), any(GenerationOutcome.class), eq("Manual edit while Hyperion was running"), eq("Manual title edit while Hyperion was running"), eq(JOB_ID),
-                eq(GenerationMode.ADAPT), any(), any());
+        verify(persistenceService).persist(eq(exercise), eq(user), any(GenerationOutcome.class), eq("Manual edit while Hyperion was running"),
+                eq("Manual title edit while Hyperion was running"), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any());
         verify(journal).afterMutation(eq(JOB_ID), any(), eq(user), any());
         assertThat(sentEvents().getLast().message()).contains("adapted and saved").doesNotContain("generated and saved");
     }
