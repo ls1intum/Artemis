@@ -10,6 +10,19 @@
                 padding: 134px 4px 20px;
             }
 
+            .drag-item-text-field {
+                position: absolute;
+                top: 30px;
+                left: 0;
+                width: 158px;
+                height: 98px;
+
+                textarea {
+                    top: 0;
+                    height: calc(100% - 1.75rem);
+                }
+            }
+
             img {
                 max-height: 100%;
                 max-width: 100%;

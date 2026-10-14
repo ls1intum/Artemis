@@ -393,6 +393,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         const textareaElement = fixture.debugElement.query(By.css('#drag-item-0-text'));
         const textarea: HTMLTextAreaElement = textareaElement.nativeElement;
         const model = textareaElement.injector.get(NgModel);
+        const counter: HTMLElement = fixture.nativeElement.querySelector('[data-testid="drag-item-character-count"]');
+        expect(counter.textContent?.trim()).toBe('256/255');
+        expect(counter.classList.contains('text-state-danger')).toBe(true);
         expect(model.hasError('maxlength')).toBe(true);
         expect(textarea.value).toBe('a'.repeat(256));
         expect(textarea.getAttribute('aria-invalid')).toBe('true');
@@ -409,6 +412,8 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(textarea.getAttribute('aria-invalid')).toBe('false');
         expect(textarea.hasAttribute('aria-describedby')).toBe(false);
         expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
+        expect(counter.textContent?.trim()).toBe('255/255');
+        expect(counter.classList.contains('text-state-danger')).toBe(false);
 
         textarea.value = 'Short item';
         textarea.dispatchEvent(new Event('input'));
@@ -417,6 +422,14 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(question.dragItems![0].text).toBe('Short item');
         expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
+        expect(counter.textContent?.trim()).toBe('10/255');
+
+        textarea.value = '';
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(counter.textContent?.trim()).toBe('0/255');
     });
 
     it('should create image item', () => {
