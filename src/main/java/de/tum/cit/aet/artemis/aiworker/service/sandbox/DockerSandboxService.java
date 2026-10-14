@@ -295,7 +295,7 @@ public class DockerSandboxService implements InteractiveSandbox, SandboxApi {
         try (final var createCommand = dockerClient.createContainerCmd(immutableImageId)) {
             // The main process only keeps the container warm; the session is driven by separate `docker exec` calls and removed explicitly at teardown.
             var response = createCommand.withName(containerName).withLabels(Map.of(settings.ownerLabel(), settings.id())).withUser("1000:1000").withWorkingDir(WORKING_DIRECTORY)
-                    .withHostConfig(hostConfig).withEntrypoint().withCmd("sh", "-c", "mkdir -p " + WORKING_DIRECTORY + "; while :; do sleep 3600; done").exec();
+                    .withHostConfig(hostConfig).withEntrypoint(List.of()).withCmd("sh", "-c", "mkdir -p " + WORKING_DIRECTORY + "; while :; do sleep 3600; done").exec();
             String containerId = response.getId();
             try {
                 try (final var startCommand = dockerClient.startContainerCmd(containerId)) {
