@@ -129,7 +129,7 @@ class GenerationTokenUsageServiceTest {
     }
 
     @Test
-    void persistsBlendedCacheCostButReportsOriginalRates() {
+    void persistsCacheUsageAndOriginalRates() {
         var config = new GenerationModelCostConfiguration();
         var rate = new GenerationModelCostConfiguration.ModelCostProperties();
         rate.setInputCostPerMillionEur(2f);
@@ -155,7 +155,15 @@ class GenerationTokenUsageServiceTest {
         assertThat(saved.getValue()).singleElement().satisfies(request -> {
             assertThat(request.numInputTokens()).isEqualTo(10);
             assertThat(request.numOutputTokens()).isEqualTo(3);
-            assertThat(request.costPerMillionInputToken()).isCloseTo(0.8f, org.assertj.core.api.Assertions.within(0.00001f));
+            assertThat(request.numCachedInputTokens()).isEqualTo(8);
+            assertThat(request.costPerMillionInputToken()).isEqualTo(2f);
+            assertThat(request.costPerMillionCachedInputToken()).isEqualTo(0.5f);
+            assertThat(request.costPerMillionOutputToken()).isEqualTo(4f);
+            assertThat(request.numCacheWriteInputTokens()).isZero();
+            double persistedCost = ((request.numInputTokens() - request.numCachedInputTokens()) * request.costPerMillionInputToken()
+                    + request.numCachedInputTokens() * request.costPerMillionCachedInputToken() + request.numOutputTokens() * request.costPerMillionOutputToken()) / 1_000_000.0;
+            assertThat(persistedCost).isCloseTo(0.000020, org.assertj.core.api.Assertions.within(0.000000001));
+            assertThat(persistedCost).isEqualTo(GenerationTokenUsageService.estimatedCostEur(observed.get()));
         });
         assertThat(observed.get().costPerMillionInputToken()).isEqualTo(2f);
         assertThat(observed.get().numCachedInputTokens()).isEqualTo(8L);

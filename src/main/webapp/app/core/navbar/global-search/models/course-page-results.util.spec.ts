@@ -12,9 +12,10 @@ describe('matchCoursePages', () => {
         }
     });
 
-    it('does not offer the lectures page, which a course can block', () => {
-        expect(matchCoursePages('lectures', 42, 'Algorithms', translate)).toEqual([]);
+    it('offers a guarded page only when the course has it', () => {
         expect(matchCoursePages('vorlesungen', 42, 'Algorithms', translate)).toEqual([]);
+        expect(matchCoursePages('vorlesungen', 42, 'Algorithms', translate, (segment) => segment === 'lectures')[0]).toMatchObject({ metadata: { link: '/courses/42/lectures' } });
+        expect(matchCoursePages('faq', 42, 'Algorithms', translate, (segment) => segment === 'lectures')).toEqual([]);
     });
 
     it('matches nothing for a short or unrelated query', () => {

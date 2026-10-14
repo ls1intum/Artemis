@@ -30,6 +30,10 @@ export class SearchInputComponent {
     menuVisible = input<boolean>(false);
     /** DOM id of the highlighted filter-menu option, for aria-activedescendant (the menu renders in the results pane). */
     activeOptionId = input<string | undefined>(undefined);
+    /** Id of the results listbox while results are shown; the input then controls it like the filter menu. */
+    resultsListboxId = input<string | undefined>(undefined);
+    /** Id of the selected result row, announced through aria-activedescendant. */
+    activeResultId = input<string | undefined>(undefined);
     /** OS-aware label for the filter-picker shortcut, e.g. "⌘F" on Mac / "Ctrl+F" elsewhere. */
     filterShortcutLabel = input<string>('⌘F');
     /** True on the filter home screen, where the button has nowhere to take you and the shortcut is inert too. */

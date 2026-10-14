@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 @Conditional(HyperionExerciseGenerationEnabled.class)
 public class GenerationTokenUsageService {
 
-    /** Transient provider and cache accounting; the shared usage ledger keeps its existing contract. */
+    /** Provider correlation and generation pricing completeness supplement the shared usage ledger. */
     public record GenerationUsage(String model, int numInputTokens, float costPerMillionInputToken, int numOutputTokens, float costPerMillionOutputToken, String pipelineId,
             @Nullable String providerRequestId, @Nullable Long numCachedInputTokens, float costPerMillionCachedInputToken, boolean costEstimateComplete) {
     }
@@ -72,7 +72,7 @@ public class GenerationTokenUsageService {
     }
 
     /**
-     * Builds an LLM request with provider correlation and cache usage kept in memory while preserving the existing persistence schema.
+     * Builds usage with provider correlation and cache pricing without changing the shared persistence schema.
      *
      * @param model             model identifier
      * @param inputTokens       number of input tokens
@@ -80,7 +80,7 @@ public class GenerationTokenUsageService {
      * @param pipelineId        pipeline identifier
      * @param providerRequestId provider response identifier, when available
      * @param cachedInputTokens cache-read input tokens, when reported
-     * @return request with configured costs and transient provider metadata
+     * @return request with configured costs, cache usage and transient provider metadata
      */
     public GenerationUsage buildLLMRequest(String model, int inputTokens, int outputTokens, String pipelineId, @Nullable String providerRequestId,
             @Nullable Long cachedInputTokens) {
@@ -125,15 +125,6 @@ public class GenerationTokenUsageService {
         throw new IllegalStateException(message);
     }
 
-    private static float effectiveInputCost(GenerationUsage request) {
-        if (request.numCachedInputTokens() == null || request.numInputTokens() == 0) {
-            return request.costPerMillionInputToken();
-        }
-        long cachedTokens = Math.min(request.numInputTokens(), request.numCachedInputTokens());
-        long uncachedTokens = request.numInputTokens() - cachedTokens;
-        return (uncachedTokens * request.costPerMillionInputToken() + cachedTokens * request.costPerMillionCachedInputToken()) / request.numInputTokens();
-    }
-
     /**
      * Persists known provider token counts and publishes the richer, transient generation accounting record.
      * Missing counts fail accounting; missing prices remain incomplete estimates, not known-free usage.
@@ -165,7 +156,8 @@ public class GenerationTokenUsageService {
             }
             String model = metadata.getModel() != null ? metadata.getModel() : "";
             GenerationUsage llmRequest = buildLLMRequest(model, promptTokens, completionTokens, pipelineId, metadata.getId(), cachedInputTokens);
-            LLMRequest persisted = new LLMRequest(model, promptTokens, effectiveInputCost(llmRequest), completionTokens, llmRequest.costPerMillionOutputToken(), pipelineId);
+            LLMRequest persisted = new LLMRequest(model, promptTokens, llmRequest.costPerMillionInputToken(), completionTokens, llmRequest.costPerMillionOutputToken(), pipelineId,
+                    cachedInputTokens == null ? 0 : cachedInputTokens.intValue(), llmRequest.costPerMillionCachedInputToken(), 0, 0f);
             tokenUsageService.saveLLMTokenUsage(List.of(persisted), serviceType, builderFunction);
             recordedUsageSink.accept(llmRequest);
             return true;

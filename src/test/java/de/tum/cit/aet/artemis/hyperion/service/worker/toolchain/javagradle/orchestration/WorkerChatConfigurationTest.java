@@ -41,7 +41,7 @@ class WorkerChatConfigurationTest {
                 .withInitializer(context -> context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance()))
                 .withConfiguration(AutoConfigurations.of(OpenAiChatAutoConfiguration.class, ToolCallingAutoConfiguration.class))
                 .withUserConfiguration(JavaGradleGenerationAdapterService.class).withBean(SandboxApi.class, () -> mock(SandboxApi.class))
-                .withBean(ObservationRegistry.class, () -> ObservationRegistry.NOOP)
+                .withBean(JsonMapper.class, () -> JsonMapper.builder().build()).withBean(ObservationRegistry.class, () -> ObservationRegistry.NOOP)
                 .withPropertyValues("artemis.aiworker.workload=hyperion-generation", "spring.ai.model.chat=openai", "spring.ai.openai.api-key=test-key",
                         "spring.ai.openai.chat.model=test-model", "spring.ai.openai.timeout=10m", "spring.ai.openai.max-retries=0")
                 .withBean(OpenAiHttpClientBuilderCustomizer.class, () -> builder -> builder.interceptor(chain -> {
