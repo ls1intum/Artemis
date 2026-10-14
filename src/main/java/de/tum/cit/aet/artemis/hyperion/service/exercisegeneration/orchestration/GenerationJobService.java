@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderRetryPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.agent.GenerationFileUpdate;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService.GenerationUsage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -123,11 +124,12 @@ public class GenerationJobService {
             HyperionGenerationBudgetService generationBudgetService, HyperionAgentProperties agentProperties, HyperionEffortProfileService effortProfiles,
             @Qualifier("taskExecutor") Executor cancellationExecutor, @Value("${jhipster.cache.hazelcast.expected-data-member-count:1}") int expectedDataMemberCount,
             @Value("${artemis.hyperion.generation.terminal-replay-ttl:PT4H}") Duration terminalReplayTtl, @Value("${spring.ai.openai.max-retries:1}") int providerMaxRetries,
-            GenerationExternalMutationService externalMutationService) {
+            @Value("${spring.ai.openai.chat.max-retries:#{null}}") @Nullable Integer chatProviderMaxRetries, GenerationExternalMutationService externalMutationService) {
         // The stale-job timeout is validated against the longest deadline ANY configured effort profile can hand a run, not against the deployment default: a profile that raises
         // the deadline above the stale timeout would otherwise have its slot reclaimed by another node while it is still legitimately running.
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, agentProperties.getStaleJobTimeout(), agentProperties.getMaxJobDuration(),
-                cancellationExecutor, expectedDataMemberCount, terminalReplayTtl, providerMaxRetries == 0, effortProfiles.longestMaxJobDuration(), externalMutationService);
+                cancellationExecutor, expectedDataMemberCount, terminalReplayTtl, ProviderRetryPolicy.effectiveSdkRetries(providerMaxRetries, chatProviderMaxRetries) == 0,
+                effortProfiles.longestMaxJobDuration(), externalMutationService);
     }
 
     GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,

@@ -83,6 +83,22 @@ public class SearchableEntityResolver {
     }
 
     /**
+     * The channel of an exercise or exam, whose row carries the date from which students may see it and therefore has
+     * to be written again when that date changes.
+     *
+     * @param type     {@code exercise} or {@code exam}
+     * @param entityId the exercise or exam id
+     * @return the channel id, or empty if the item has no channel or another type was given
+     */
+    public Optional<Long> findChannelIdOf(String type, long entityId) {
+        return Optional.ofNullable(switch (type) {
+            case SearchableEntitySchema.TypeValues.EXERCISE -> channelRepository.findChannelIdByExerciseId(entityId);
+            case SearchableEntitySchema.TypeValues.EXAM -> channelRepository.findChannelIdByExamId(entityId);
+            default -> null;
+        });
+    }
+
+    /**
      * Resolves the current property map an entity should have in the {@code SearchableEntities} collection.
      *
      * @param type     the {@code SearchableEntitySchema.TypeValues} discriminator

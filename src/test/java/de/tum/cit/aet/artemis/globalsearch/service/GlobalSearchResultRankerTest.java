@@ -58,6 +58,75 @@ class GlobalSearchResultRankerTest {
     }
 
     @Test
+    void prefersTheRunningCourseAmongEquallyRelevantCopiesInAnyOrder() {
+        // Identical copies get the same relevance, so Weaviate may return the running course's copy last.
+        var previous = row("exercise", 2L, "Bumpers");
+        var old = row("exercise", 3L, "Bumpers");
+        var current = row("exercise", 1L, "Bumpers");
+
+        assertThat(GlobalSearchResultRanker.rank(List.of(previous, old, current), true, courses, NOW)).containsExactly(current);
+    }
+
+    @Test
+    void keepsAMuchBetterMatchOfAnEndedCopyThatIsNotNextToTheRunningCopy() {
+        var ended = row("exercise", 2L, "Bumpers");
+        var filler = List.of(row("lecture", 4L, "a"), row("lecture", 4L, "b"), row("lecture", 4L, "c"), row("lecture", 4L, "d"), row("lecture", 4L, "e"), row("lecture", 4L, "f"));
+        var current = row("exercise", 1L, "Bumpers");
+        var rows = new java.util.ArrayList<Map<String, Object>>();
+        rows.add(ended);
+        rows.addAll(filler);
+        rows.add(current);
+
+        var ranked = GlobalSearchResultRanker.rank(rows, true, courses, NOW);
+
+        assertThat(ranked).contains(ended).doesNotContain(current);
+    }
+
+    @Test
+    void placesTheDefaultChannelOfAnExerciseDirectlyBehindTheExercise() {
+        var channel = row("channel", 1L, "exercise-observer-pattern-imp");
+        var lecture = row("lecture", 1L, "Design Patterns");
+        var exercise = row("exercise", 1L, "Observer Pattern Implementation");
+
+        assertThat(GlobalSearchResultRanker.rank(List.of(channel, lecture, exercise), true, courses, NOW)).containsExactly(lecture, exercise, channel);
+    }
+
+    @Test
+    void matchesTheDefaultChannelOfAnItemWithAccentedTitle() {
+        var channel = row("channel", 1L, "exercise-einf-hrung-in-java");
+        var exercise = row("exercise", 1L, "Einführung in Java");
+
+        assertThat(GlobalSearchResultRanker.rank(List.of(channel, exercise), true, courses, NOW)).containsExactly(exercise, channel);
+    }
+
+    @Test
+    void movesAChannelUpToItsItemWhenOtherResultsSeparateThem() {
+        var exercise = row("exercise", 1L, "Observer Pattern Implementation");
+        var lecture = row("lecture", 1L, "Design Patterns");
+        var channel = row("channel", 1L, "exercise-observer-pattern-imp");
+
+        assertThat(GlobalSearchResultRanker.rank(List.of(exercise, lecture, channel), true, courses, NOW)).containsExactly(exercise, channel, lecture);
+    }
+
+    @Test
+    void leavesAChannelAloneWhoseNameFitsSeveralItems() {
+        var channel = row("channel", 1L, "exercise-observer-pattern-imp");
+        var implications = row("exercise", 1L, "Observer Pattern Implications");
+        var implementation = row("exercise", 1L, "Observer Pattern Implementation");
+
+        assertThat(GlobalSearchResultRanker.rank(List.of(channel, implications, implementation), true, courses, NOW)).containsExactly(channel, implications, implementation);
+    }
+
+    @Test
+    void leavesChannelsAloneThatBelongToNoItemInTheList() {
+        var channel = row("channel", 1L, "tech-support");
+        var otherCourseChannel = row("channel", 1L, "exercise-sorting");
+        var exercise = row("exercise", 4L, "Sorting Algorithms");
+
+        assertThat(GlobalSearchResultRanker.rank(List.of(channel, otherCourseChannel, exercise), true, courses, NOW)).containsExactly(channel, otherCourseChannel, exercise);
+    }
+
+    @Test
     void keepsItemsWithTheSameTitleWithinOneCourse() {
         var first = row("exercise", 1L, "Bonus");
         var second = new java.util.HashMap<>(row("exercise", 1L, "Bonus"));

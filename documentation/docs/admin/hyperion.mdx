@@ -498,7 +498,14 @@ not as zero usage.
 
 A rate-limit rejection (HTTP 429) or a request that never left the worker can be
 retried with a bounded backoff of up to five retries over about five minutes.
-Keep SDK retries disabled when exact accounting is required. A server or gateway
+For exact accounting, set both `spring.ai.openai.max-retries=0` and
+`spring.ai.openai.chat.max-retries=0` on each core and worker node. The chat setting
+can override the common retry count. Spring AI treats its default chat retry count
+as a fallback to the common setting; Hyperion uses the same rule when it reports
+accounting completeness. These settings change SDK retry behavior, not Hyperion's
+bounded retries for requests that provably produced no completion.
+
+A server or gateway
 failure (HTTP 5xx), HTTP 408, or a read timeout after sending the request leaves
 usage unknown: the model may have run before the error was returned. Hyperion
 does not automatically replay these calls and marks accounting incomplete.
