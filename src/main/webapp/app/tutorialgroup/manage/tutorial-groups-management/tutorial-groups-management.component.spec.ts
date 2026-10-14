@@ -394,4 +394,28 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(fixture.debugElement.query(By.css('[data-testid="empty-create-tutorial-group-btn"]'))).not.toBeNull();
         expect(fixture.debugElement.query(By.directive(TutorialGroupsImportButtonComponent))).not.toBeNull();
     });
+
+    describe('as an editor', () => {
+        beforeEach(() => {
+            course.isAtLeastInstructor = false;
+        });
+
+        afterEach(() => {
+            course.isAtLeastInstructor = true;
+        });
+
+        it('should offer import and holidays but not configuration or export', async () => {
+            await setUp([tutorialGroupOne]);
+            const actions = renderTitleBarActions();
+            expect(actions.query(By.directive(TutorialGroupsImportButtonComponent))).not.toBeNull();
+            expect(actions.query(By.css('[data-testid="free-periods-btn"]'))).not.toBeNull();
+            expect(actions.query(By.css('[data-testid="edit-configuration-btn"]'))).toBeNull();
+            expect(actions.query(By.directive(TutorialGroupsExportButtonComponent))).toBeNull();
+        });
+
+        it('should offer import in the empty state', async () => {
+            await setUp([]);
+            expect(fixture.debugElement.query(By.directive(TutorialGroupsImportButtonComponent))).not.toBeNull();
+        });
+    });
 });
