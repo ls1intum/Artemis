@@ -11,8 +11,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
-import java.util.Optional;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
@@ -81,6 +81,8 @@ class ProgrammingExerciseWriteOwnershipServiceTest {
         assertThatThrownBy(() -> service.releaseReader(42, token)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.retain(42, token, "SAVE_RECOVERY")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.authorizeTestsBuild(42, token, "a".repeat(40))).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.stopTestsBuildAuthorization(42, token)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> service.executeAuthorizedTestsBuild(42, token, "a".repeat(40), () -> true)).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.replaceRecovery(42, token, "UNDO_RECOVERY", "retry", "UNDO")).isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> service.replaceRecovery(42, "current", "UNDO_RECOVERY", token, "UNDO")).isInstanceOf(IllegalArgumentException.class);
         verifyNoInteractions(repository);

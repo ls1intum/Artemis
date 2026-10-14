@@ -279,6 +279,7 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
             }
         }
     }
+
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
     void tokenCaseAndWhitespaceVariantsCannotReleaseTheActualReservation(boolean reader) {
@@ -299,6 +300,61 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
             assertThat(ownershipService.releaseReader(id, token)).isTrue();
         }
         else {
+            assertThat(ownershipService.isOwned(id, token)).isTrue();
+            assertThat(ownershipService.release(id, token)).isTrue();
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "close", "retain", "release" })
+    void admittedCallbackFinishesItsSqlBeforeClosingOrChangingOwnership(String operation) throws Exception {
+        long id = exercise.getId();
+        String token = ownershipService.claim(id, "SAVE");
+        String hash = "a".repeat(40);
+        assertThat(ownershipService.authorizeTestsBuild(id, token, hash)).isTrue();
+        var admitted = new CountDownLatch(1);
+        var finish = new CountDownLatch(1);
+        grantTestLockObserverPrivilege();
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            var callback = executor.submit(() -> ownershipService.executeAuthorizedTestsBuild(id, token, hash, () -> {
+                admitted.countDown();
+                try {
+                    if (!finish.await(15, TimeUnit.SECONDS)) {
+                        throw new IllegalStateException("Test did not finish the admitted callback");
+                    }
+                }
+                catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException(interrupted);
+                }
+                return ownershipRepository.updateCallbackTitle(id, "Callback SQL finished") == 1;
+            }));
+            try {
+                assertThat(admitted.await(10, TimeUnit.SECONDS)).isTrue();
+                var close = executor.submit(() -> switch (operation) {
+                    case "close" -> ownershipService.stopTestsBuildAuthorization(id, token);
+                    case "retain" -> ownershipService.retain(id, token, "SAVE_RECOVERY");
+                    case "release" -> ownershipService.release(id, token);
+                    default -> throw new IllegalArgumentException(operation);
+                });
+                await().atMost(Duration.ofSeconds(10)).until(this::ownershipUpdateIsWaitingOnRowLock);
+                assertThat(close.isDone()).isFalse();
+                finish.countDown();
+                assertThat(callback.get(10, TimeUnit.SECONDS)).contains(true);
+                assertThat(close.get(10, TimeUnit.SECONDS)).isTrue();
+                assertThat(programmingExerciseRepository.findById(id).orElseThrow().getTitle()).isEqualTo("Callback SQL finished");
+                var lateCalls = new java.util.concurrent.atomic.AtomicInteger();
+                assertThat(ownershipService.executeAuthorizedTestsBuild(id, token, hash, () -> {
+                    lateCalls.incrementAndGet();
+                    return true;
+                })).isEmpty();
+                assertThat(lateCalls).hasValue(0);
+            }
+            finally {
+                finish.countDown();
+            }
+        }
+        if (!operation.equals("release")) {
             assertThat(ownershipService.isOwned(id, token)).isTrue();
             assertThat(ownershipService.release(id, token)).isTrue();
         }
