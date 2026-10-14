@@ -134,7 +134,7 @@ public class LocalDataProviderService implements DistributedDataProvider {
 
     @Override
     public Optional<CoordinationSnapshot> getCoordinationSnapshot() {
-        return Optional.of(new CoordinationSnapshot(Set.of(LOCAL_NODE_ID)));
+        return Optional.of(new CoordinationSnapshot(Set.of(LOCAL_NODE_ID), true));
     }
 
     @Override

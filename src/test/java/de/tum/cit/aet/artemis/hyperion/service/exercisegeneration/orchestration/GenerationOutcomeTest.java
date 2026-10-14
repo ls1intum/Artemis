@@ -113,7 +113,7 @@ class GenerationOutcomeTest {
     }
 
     private static GenerationSeedService.Seed seed(List<WorkspaceFile> files) {
-        return new GenerationSeedService.Seed(new WorkspaceSnapshot(files), Map.of(RepositoryType.TEMPLATE, "core-only-head"), new GradingContext(false, Set.of()), null);
+        return new GenerationSeedService.Seed(new WorkspaceSnapshot(files), Map.of(RepositoryType.TEMPLATE, "core-only-head"), new GradingContext(false, Set.of()));
     }
 
     private static GenerationOutput unverifiedOutput(List<WorkspaceFile> files) {

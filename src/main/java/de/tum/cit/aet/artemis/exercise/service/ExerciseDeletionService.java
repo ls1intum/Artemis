@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.text.api.TextApi;
@@ -82,14 +81,12 @@ public class ExerciseDeletionService {
 
     private final Optional<IrisChatSessionApi> irisChatSessionApi;
 
-    private final ProgrammingExerciseMutationGuardService mutationGuard;
-
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationDeletionService participationDeletionService,
             ProgrammingExerciseDeletionService programmingExerciseDeletionService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi,
             Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelService channelService,
             Optional<CompetencyProgressApi> competencyProgressApi, Optional<SearchableEntityWeaviateService> searchableItemWeaviateService,
-            Optional<IrisChatSessionApi> irisChatSessionApi, ProgrammingExerciseMutationGuardService mutationGuard) {
+            Optional<IrisChatSessionApi> irisChatSessionApi) {
         this.exerciseRepository = exerciseRepository;
         this.participationDeletionService = participationDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
@@ -104,7 +101,6 @@ public class ExerciseDeletionService {
         this.competencyProgressApi = competencyProgressApi;
         this.searchableItemWeaviateService = searchableItemWeaviateService;
         this.irisChatSessionApi = irisChatSessionApi;
-        this.mutationGuard = mutationGuard;
     }
 
     /**
@@ -155,19 +151,6 @@ public class ExerciseDeletionService {
      */
     public void delete(long exerciseId, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
-        if (exercise instanceof ProgrammingExercise) {
-            try (var lease = mutationGuard.claimExternalMutation(exerciseId)) {
-                deleteUnderMutationGuard(exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId), deleteBaseReposBuildPlans);
-            }
-        }
-        else {
-            deleteUnderMutationGuard(exercise, deleteBaseReposBuildPlans);
-        }
-    }
-
-    /** Programming callers must hold the mutation guard through all synchronous cleanup. */
-    private void deleteUnderMutationGuard(Exercise exercise, boolean deleteBaseReposBuildPlans) {
-        long exerciseId = exercise.getId();
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
 
