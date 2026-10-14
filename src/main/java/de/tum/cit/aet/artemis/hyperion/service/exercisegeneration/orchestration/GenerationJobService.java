@@ -504,6 +504,7 @@ public class GenerationJobService {
             if (replayState == null || (user != null && !replayState.userLogin().equals(user.getLogin()))) {
                 return false;
             }
+            topology.verifyAllMembers();
             if (replayState.done()) {
                 return user != null && isCancelled(jobId);
             }
@@ -616,17 +617,14 @@ public class GenerationJobService {
      * @return true if the heartbeat was recorded
      */
     public boolean heartbeat(long exerciseId, String jobId) {
-        if (!topology.permitsOwnership()) {
-            return false;
-        }
         String key = key(exerciseId);
         lockJobSlot(key);
         try {
-            if (!topology.permitsOwnership()) {
-                return false;
-            }
             JobInfo job = jobMap.get(key);
             if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
+                return false;
+            }
+            if (!(job.cancellable() ? topology.permitsAuthoringHeartbeat() : topology.permitsOwnership())) {
                 return false;
             }
             if (generationBudgetService != null && !generationBudgetService.refreshReservation(job.budgetReservationId())) {
