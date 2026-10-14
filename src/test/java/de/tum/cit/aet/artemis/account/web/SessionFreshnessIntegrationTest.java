@@ -153,6 +153,42 @@ class SessionFreshnessIntegrationTest extends AbstractSpringIntegrationIndepende
     }
 
     /**
+     * The account response is read on every page load, so an outdated session is not refused there. It must not carry the secret of a
+     * personal token that was created after the change, which the session could otherwise copy and use after it expired.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void anOutdatedSessionDoesNotReadAReplacementPersonalTokenFromTheAccount() throws Exception {
+        Instant sessionStartedBeforeTheReset = Instant.now().minus(Duration.ofHours(2));
+        PasswordResetKeyDTO resetKey = userService.prepareUserForPasswordReset(user).orElseThrow();
+        userService.completePasswordReset("a-new-password-12", resetKey.id(), resetKey.secret(), new CredentialRevocationChoiceDTO(true, true, true)).orElseThrow();
+
+        SessionTestUtil.actAsSessionStartedAt(LOGIN, Instant.now().plus(Duration.ofMinutes(5)));
+        UserDTO created = request.putWithResponseBody(createUserVcsAccessTokenPath(), null, UserDTO.class, HttpStatus.OK);
+        assertThat(created.getVcsAccessToken()).isNotNull();
+
+        SessionTestUtil.actAsSessionStartedAt(LOGIN, sessionStartedBeforeTheReset);
+        UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
+
+        assertThat(account.getLogin()).isEqualTo(LOGIN);
+        assertThat(account.getVcsAccessToken()).isNull();
+        assertThat(account.getVcsAccessTokenExpiryDate()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aCurrentSessionReadsItsPersonalTokenFromTheAccount() throws Exception {
+        userActivityService.recordCredentialsChanged(user.getId(), Instant.now().minus(Duration.ofHours(1)));
+        userVcsAccessTokenService.store(user.getId(), "vcpat-" + "b".repeat(44), ZonedDateTime.now().plusMonths(1));
+        SessionTestUtil.actAsSessionStartedAt(LOGIN, Instant.now().minus(Duration.ofMinutes(5)));
+
+        UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
+
+        assertThat(account.getVcsAccessToken()).isEqualTo("vcpat-" + "b".repeat(44));
+        assertThat(account.getVcsAccessTokenExpiryDate()).isNotNull();
+    }
+
+    /**
      * The participation token is minted when a participation is started, so a session could otherwise get a credential that outlives it
      * just by reading it back.
      */
