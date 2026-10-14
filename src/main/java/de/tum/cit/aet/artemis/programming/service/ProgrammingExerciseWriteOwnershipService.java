@@ -10,6 +10,8 @@ import java.util.UUID;
 import java.util.function.BooleanSupplier;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -24,12 +26,15 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseWriteOwn
 @Profile({ PROFILE_CORE, PROFILE_LOCALVC })
 public class ProgrammingExerciseWriteOwnershipService {
 
+    private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseWriteOwnershipService.class);
+
     private final ProgrammingExerciseWriteOwnershipRepository repository;
 
     private final String processIncarnation = UUID.randomUUID().toString();
 
     public ProgrammingExerciseWriteOwnershipService(ProgrammingExerciseWriteOwnershipRepository repository) {
         this.repository = repository;
+        log.info("Exercise write owner incarnation: {}", processIncarnation);
     }
 
     /**
