@@ -150,6 +150,9 @@
 @source './app/course/manage/user-management-dropdown';
 @source './app/videosource/gocast';
 
+/* Metis comprehension checks: a new module, built on TUM AET UI and Tailwind from the start. */
+@source './app/metis';
+
 /* The submit-button forms describe why they are blocked, and dim the blocked button, with these utilities. They are
    still Bootstrap-heavy, so scanning them would also emit .col-11/.col-12/.bg-primary as Tailwind utilities on top of
    Bootstrap's own. Emit just the ones they use instead. A blocked button is aria-disabled rather than disabled, so it

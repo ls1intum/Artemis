@@ -14,7 +14,15 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_IRIS, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN, PROFILE_JENKINS } from 'app/app.constants';
+import {
+    MODULE_FEATURE_ATHENA,
+    MODULE_FEATURE_ATLAS,
+    MODULE_FEATURE_EXAM,
+    MODULE_FEATURE_IRIS,
+    MODULE_FEATURE_METIS,
+    MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN,
+    PROFILE_JENKINS,
+} from 'app/app.constants';
 
 describe('AdminFeatureToggleComponentTest', () => {
     let fixture: ComponentFixture<AdminFeatureToggleComponent>;
@@ -146,7 +154,7 @@ describe('AdminFeatureToggleComponentTest', () => {
             expect(comp.featureToggles()).toHaveLength(0);
             // Profile and module features load independently and must still be populated despite the toggle failure.
             expect(comp.profileFeatures()).toHaveLength(3);
-            expect(comp.moduleFeatures()).toHaveLength(22);
+            expect(comp.moduleFeatures()).toHaveLength(23);
         });
 
         it('should set documentation links for features that have them', () => {
@@ -204,7 +212,7 @@ describe('AdminFeatureToggleComponentTest', () => {
         it('ngOnInit should load module features', () => {
             expect(comp.moduleFeatures()).toHaveLength(0);
             comp.ngOnInit();
-            expect(comp.moduleFeatures()).toHaveLength(22);
+            expect(comp.moduleFeatures()).toHaveLength(23);
         });
 
         it('should set isActive based on active module features', () => {
@@ -230,6 +238,9 @@ describe('AdminFeatureToggleComponentTest', () => {
             const iris = modules.find((m) => m.feature === MODULE_FEATURE_IRIS);
             expect(iris?.documentationLink).toBeDefined();
             expect(iris?.documentationLink).toContain('docs.artemis.tum.de');
+
+            const metis = modules.find((m) => m.feature === MODULE_FEATURE_METIS);
+            expect(metis?.documentationLink).toBe('https://docs.artemis.tum.de/admin/metis');
         });
 
         it('should include the passkey admin requirement module feature', () => {

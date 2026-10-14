@@ -11,6 +11,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
 
+import { MetisGuard } from 'app/metis/shared/metis-guard.service';
 import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
 import {
@@ -70,6 +71,35 @@ export const routes: Routes = [
             pageTitle: 'exercise-statistics.title',
         },
         canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'programming-exercises/:exerciseId/comprehension-check',
+        loadComponent: () => import('app/metis/manage/dashboard/metis-dashboard.component').then((m) => m.MetisDashboardComponent),
+        resolve: {
+            exercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: IS_AT_LEAST_TUTOR,
+            pageTitle: 'artemisApp.metis.dashboard.title',
+            // the page reads the exercise the route resolved once, so a move to another exercise creates it anew instead of reusing it
+            dontReuseOnParamChange: true,
+        },
+        // the comprehension check is a module of its own, so a direct URL must not load it when the module is off
+        canActivate: [UserRouteAccessService, MetisGuard],
+    },
+    {
+        path: 'programming-exercises/:exerciseId/comprehension-check/review',
+        loadComponent: () => import('app/metis/manage/question-review/metis-question-review.component').then((m) => m.MetisQuestionReviewComponent),
+        resolve: {
+            exercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.metis.review.title',
+            // the page reads the exercise the route resolved once, so a move to another exercise creates it anew instead of reusing it
+            dontReuseOnParamChange: true,
+        },
+        canActivate: [UserRouteAccessService, MetisGuard],
     },
     programmingExerciseBuildPlanRoute('programming-exercises/:exerciseId/edit-build-plan'),
     {
