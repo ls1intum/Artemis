@@ -59,7 +59,7 @@
                                     </div>
                                 </header>
 
-                                <div class="presentation-summary text-(--text-body-secondary)">{{ presentationAssessment.description || '-' }}</div>
+                                <div class="presentation-summary text-(--text-body-secondary)">{{ presentationAssessment.description }}</div>
 
                                 <div class="presentation-grading-toolbar">
                                     <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
@@ -136,7 +136,7 @@
                                                                 [value]="row.instance!.resultPoints + ' / ' + presentationAssessment.maxPoints"
                                                             />
                                                         } @else {
-                                                            <span class="text-muted-color">-</span>
+                                                            -
                                                         }
                                                     </td>
                                                     <td>{{ row.instance.presentationDate ? (row.instance.presentationDate | artemisDate) : '-' }}</td>
@@ -387,7 +387,7 @@
                                                             [value]="row.instance.resultPoints + ' / ' + row.presentationAssessment.maxPoints"
                                                         />
                                                     } @else {
-                                                        <span class="text-muted-color">—</span>
+                                                        -
                                                     }
                                                 </td>
                                                 <td>
