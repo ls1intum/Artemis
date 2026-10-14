@@ -44,6 +44,11 @@ public class StudentExamAssignmentService {
         this.mutationApi = mutationApi;
     }
 
+    /** @return whether the existing Hyperion API protects exercise selection */
+    public boolean isProtectionEnabled() {
+        return mutationApi.map(HyperionExerciseMutationApi::isCoordinationEnabled).orElse(false);
+    }
+
     /**
      * Assigns registered users under the exam-row lock.
      *
@@ -98,14 +103,21 @@ public class StudentExamAssignmentService {
      * @return persisted test run
      */
     public StudentExam assignTestRun(StudentExam testRun) {
-        return withReservations(testRun.getExercises(), () -> examRepository.withExerciseSelectionLock(testRun.getExam().getId(), exam -> {
-            Set<Long> currentExercises = exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).map(Exercise::getId)
-                    .collect(java.util.stream.Collectors.toSet());
-            if (!testRun.getExercises().stream().allMatch(exercise -> currentExercises.contains(exercise.getId()))) {
-                throw new IllegalStateException("The selected exercises no longer belong to this exam.");
-            }
-            return studentExamRepository.saveAndFlush(testRun);
-        }));
+        List<HyperionExerciseMutationApi.ParticipationReservation> reservations = new ArrayList<>();
+        try {
+            return examRepository.withExerciseSelectionLock(testRun.getExam().getId(), exam -> {
+                Set<Long> currentExercises = exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).map(Exercise::getId)
+                        .collect(java.util.stream.Collectors.toSet());
+                if (!testRun.getExercises().stream().allMatch(exercise -> currentExercises.contains(exercise.getId()))) {
+                    throw new IllegalStateException("The selected exercises no longer belong to this exam.");
+                }
+                reserve(testRun.getExercises(), reservations);
+                return studentExamRepository.saveAndFlush(testRun);
+            });
+        }
+        finally {
+            close(reservations);
+        }
     }
 
     private <T> T assign(long examId, Function<Exam, T> assignment) {
@@ -118,17 +130,6 @@ public class StudentExamAssignmentService {
         }
         finally {
             // Outside the repository proxy: keep generation excluded until commit (or rollback), not merely until saveAll returns.
-            close(reservations);
-        }
-    }
-
-    private <T> T withReservations(Collection<Exercise> exercises, java.util.function.Supplier<T> assignment) {
-        List<HyperionExerciseMutationApi.ParticipationReservation> reservations = new ArrayList<>();
-        try {
-            reserve(exercises, reservations);
-            return assignment.get();
-        }
-        finally {
             close(reservations);
         }
     }
