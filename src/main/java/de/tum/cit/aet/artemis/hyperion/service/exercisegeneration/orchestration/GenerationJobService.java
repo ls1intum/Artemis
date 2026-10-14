@@ -662,8 +662,12 @@ public class GenerationJobService {
      * @param jobId      exact completed generation job
      */
     public void retainIncompleteGenerationSlot(long exerciseId, String jobId) {
-        externalMutationService.retainSaveRecovery(exerciseId, jobId);
-        cleanup.incomplete(exerciseId, jobId, localNodeId);
+        try {
+            externalMutationService.retainSaveRecovery(exerciseId, jobId);
+        }
+        finally {
+            cleanup.finished(exerciseId, jobId);
+        }
     }
 
     public void retainRevertRecoverySlot(long exerciseId, String token) {
