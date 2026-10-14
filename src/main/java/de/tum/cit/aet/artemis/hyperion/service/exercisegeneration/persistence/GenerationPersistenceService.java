@@ -24,6 +24,9 @@ import java.util.function.BooleanSupplier;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
+import org.eclipse.jgit.lib.ObjectInserter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -633,9 +636,11 @@ public class GenerationPersistenceService {
             }
             mirrorProducedFilesIntoWorkingCopy(exercise, repository, repositoryType, producedFiles, candidatePaths, mode);
             if (gitService.isWorkingCopyClean(repository)) {
+                verifyGitIndexMatchesWorkingTree(repository);
                 return null;
             }
             gitService.stageAllChanges(repository);
+            verifyGitIndexMatchesWorkingTree(repository);
             String postHash = gitService.commitStagedChanges(repository, commitMessage, user);
             // The ownership guard must stay adjacent to the push: if eligibility changes while it is in flight, the post-push check throws into the reconciliation path, which
             // resets this exact leased commit before the outer compensation handles the earlier repositories.
@@ -768,6 +773,34 @@ public class GenerationPersistenceService {
             repositoryService.createFile(repository, path, new ByteArrayInputStream(entry.getValue().getBytes(StandardCharsets.UTF_8)));
             if (executable && !repositoryRoot.resolve(path).toFile().setExecutable(true, false)) {
                 throw new IOException("Could not restore executable mode for " + path);
+            }
+        }
+    }
+
+    void verifyGitIndexMatchesWorkingTree(Repository repository) throws IOException {
+        Path root = repository.getLocalPath();
+        var index = repository.readDirCache();
+        Path metadata = root.resolve(".git");
+        try (var paths = Files.walk(root); var formatter = new ObjectInserter.Formatter()) {
+            List<Path> files = paths.filter(path -> !path.startsWith(metadata) && Files.isRegularFile(path)).toList();
+            if (files.size() != index.getEntryCount()) {
+                throw new IllegalStateException("The staged Git tree differs from the verified candidate: file set mismatch");
+            }
+            for (Path file : files) {
+                String relative = root.relativize(file).toString().replace('\\', '/');
+                var entry = index.getEntry(relative);
+                if (entry == null || entry.getStage() != 0) {
+                    throw new IllegalStateException("The staged Git tree differs from the verified candidate: missing " + relative);
+                }
+                try (var input = Files.newInputStream(file)) {
+                    if (!entry.getObjectId().equals(formatter.idFor(Constants.OBJ_BLOB, Files.size(file), input))) {
+                        throw new IllegalStateException("The staged Git tree differs from the verified candidate: content mismatch for " + relative);
+                    }
+                }
+                var expectedMode = repository.getFS().supportsExecute() && Files.isExecutable(file) ? FileMode.EXECUTABLE_FILE : FileMode.REGULAR_FILE;
+                if (!entry.getFileMode().equals(expectedMode)) {
+                    throw new IllegalStateException("The staged Git tree differs from the verified candidate: mode mismatch for " + relative);
+                }
             }
         }
     }

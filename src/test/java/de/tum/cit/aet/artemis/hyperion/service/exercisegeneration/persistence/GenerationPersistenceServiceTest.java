@@ -133,7 +133,7 @@ class GenerationPersistenceServiceTest {
     private final User user = new User();
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         org.mockito.Mockito.when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(org.mockito.ArgumentMatchers.anyLong()))
                 .thenReturn(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
         gitService = mock(GitService.class);
@@ -184,11 +184,84 @@ class GenerationPersistenceServiceTest {
     }
 
     /** Builds the service with a shrunken test-case sync wait, so the build-completion wait runs without sleeping. */
-    private GenerationPersistenceService newService(Duration testCaseSyncTimeout) {
-        return new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
-                exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService,
-                programmingExerciseCreationScheduleService, new ProblemStatementMetadataUpdateService(programmingExerciseRepository, programmingExerciseTaskService),
-                tempFileUtilService, testCaseSyncTimeout, Duration.ofMillis(5), buildConfigRepository);
+    private GenerationPersistenceService newService(Duration testCaseSyncTimeout) throws Exception {
+        GenerationPersistenceService mockedGitBoundary = Mockito
+                .spy(new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService,
+                        programmingSubmissionService, exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService,
+                        programmingExerciseCreationScheduleService, new ProblemStatementMetadataUpdateService(programmingExerciseRepository, programmingExerciseTaskService),
+                        tempFileUtilService, testCaseSyncTimeout, Duration.ofMillis(5), buildConfigRepository));
+        org.mockito.Mockito.doNothing().when(mockedGitBoundary).verifyGitIndexMatchesWorkingTree(any());
+        return mockedGitBoundary;
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "ignored-only", "mixed", "valid", "valid-noop", "tracked-ignored", "content-mismatch", "mode-mismatch", "index-extra" })
+    void persistRequiresTheCompleteVerifiedGitTree(String candidate) throws Exception {
+        Path root = temporaryDirectory.resolve("real-repository");
+        FileUtils.forceMkdir(root.toFile());
+        try (var initialized = org.eclipse.jgit.api.Git.init().setDirectory(root.toFile()).call()) {
+            if ("tracked-ignored".equals(candidate)) {
+                FileUtils.writeStringToFile(root.resolve("src/sample.log").toFile(), "seed fixture\n", StandardCharsets.UTF_8);
+                initialized.add().addFilepattern(".").call();
+            }
+            FileUtils.writeStringToFile(root.resolve(".gitignore").toFile(), "*.log\n", StandardCharsets.UTF_8);
+            initialized.add().addFilepattern(".").call();
+            GitService.commit(initialized).setMessage("Seed").setAuthor("Editor", "editor@example.org").call();
+        }
+        var builder = new org.eclipse.jgit.storage.file.FileRepositoryBuilder().setGitDir(root.resolve(".git").toFile()).setWorkTree(root.toFile()).setup();
+        Repository realRepository = new Repository(builder, root, templateUri);
+        org.mockito.Mockito.doCallRealMethod().when(service).verifyGitIndexMatchesWorkingTree(realRepository);
+        when(gitService.getOrCheckoutRepositoryOnBranch(any(), any(), eq("main"))).thenReturn(realRepository);
+        when(gitService.getLocalHeadHash(realRepository)).thenAnswer(_ -> realRepository.resolve("HEAD").name());
+        when(repositoryService.getFiles(realRepository)).thenReturn(Map.of(".gitignore", FileType.FILE));
+        doAnswer(call -> {
+            FileUtils.writeByteArrayToFile(root.resolve(call.getArgument(1, String.class)).toFile(), call.getArgument(2, InputStream.class).readAllBytes());
+            return null;
+        }).when(repositoryService).createFile(eq(realRepository), anyString(), any());
+        when(gitService.isWorkingCopyClean(realRepository)).thenAnswer(_ -> {
+            try (var git = new org.eclipse.jgit.api.Git(realRepository)) {
+                return git.status().call().isClean();
+            }
+        });
+        when(gitService.stageAllChanges(realRepository)).thenAnswer(call -> {
+            boolean staged = (boolean) call.callRealMethod();
+            if ("content-mismatch".equals(candidate)) {
+                FileUtils.writeStringToFile(root.resolve("src/Main.java").toFile(), "not the staged source", StandardCharsets.UTF_8);
+            }
+            else if ("mode-mismatch".equals(candidate)) {
+                assertThat(root.resolve("src/Main.java").toFile().setExecutable(true, false)).isTrue();
+            }
+            else if ("index-extra".equals(candidate)) {
+                FileUtils.forceDelete(root.resolve(".gitignore").toFile());
+            }
+            return staged;
+        });
+        when(gitService.commitStagedChanges(eq(realRepository), anyString(), any())).thenReturn("would-publish");
+        Map<String, String> files = switch (candidate) {
+            case "valid-noop" -> Map.of(".gitignore", "*.log\n");
+            case "ignored-only" -> Map.of("src/sample.log", "verified fixture\n");
+            case "mixed", "tracked-ignored" -> Map.of("src/sample.log", "verified fixture\n", "src/Main.java", "class Main {}\n");
+            default -> Map.of("src/Main.java", "class Main {}\n");
+        };
+        java.util.concurrent.Callable<String> persist = () -> ReflectionTestUtils.invokeMethod(service, "commitRepository", exercise, user, RepositoryType.TEMPLATE, files,
+                Set.of(".gitignore", "src/sample.log", "src/Main.java"), null, "main", GenerationMode.GENERATE, "Generate", new java.util.EnumMap<>(RepositoryType.class),
+                new java.util.EnumMap<>(RepositoryType.class), (java.util.function.BooleanSupplier) () -> true, (Runnable) () -> {
+                });
+        if ("valid-noop".equals(candidate)) {
+            assertThat(persist.call()).isNull();
+            verify(gitService, never()).commitStagedChanges(any(), anyString(), any());
+            verify(gitService, never()).pushCommitWithLease(any(), any(), any(), any());
+        }
+        else if (Set.of("valid", "tracked-ignored").contains(candidate)) {
+            assertThat(persist.call()).isEqualTo("would-publish");
+            verify(gitService).commitStagedChanges(eq(realRepository), eq("Generate"), eq(user));
+            verify(gitService).pushCommitWithLease(eq(realRepository), eq("would-publish"), eq("main"), anyString());
+        }
+        else {
+            assertThatThrownBy(persist::call).isInstanceOf(IllegalStateException.class).hasMessageContaining("verified candidate");
+            verify(gitService, never()).commitStagedChanges(any(), anyString(), any());
+            verify(gitService, never()).pushCommitWithLease(any(), any(), any(), any());
+        }
     }
 
     private static Result resultWithId(long id) {

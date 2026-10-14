@@ -9,6 +9,7 @@ import java.util.HexFormat;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -41,7 +42,7 @@ public class WorkerTransport {
 
     private final DistributedDataProvider provider;
 
-    private volatile Maps cachedMaps;
+    private final AtomicReference<Maps> cachedMaps = new AtomicReference<>();
 
     private final Map<String, DistributedMap<String, String>> commandMaps = new ConcurrentHashMap<>();
 
@@ -53,15 +54,15 @@ public class WorkerTransport {
     }
 
     private Maps maps() {
-        Maps current = cachedMaps;
+        Maps current = cachedMaps.get();
         if (current == null) {
             synchronized (this) {
-                current = cachedMaps;
+                current = cachedMaps.get();
                 if (current == null) {
                     current = new Maps(provider.getMap("aiworker-event-chunks"), provider.getExpiringMap("aiworker-event-acknowledgements", ACKNOWLEDGEMENT_TTL),
                             provider.getExpiringMap("aiworker-heartbeats", HEARTBEAT_TTL), provider.getExpiringMap("aiworker-dead-commands", Duration.ofHours(24)),
                             provider.getExpiringMap("aiworker-command-failures", COMMAND_TTL));
-                    cachedMaps = current;
+                    cachedMaps.set(current);
                 }
             }
         }

@@ -155,7 +155,14 @@ public class ProgrammingExerciseCreationResource {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
 
-            exerciseVersionService.createExerciseVersion(newProgrammingExercise, user);
+            try (var mutationLease = programmingExerciseMutationGuard.claimExternalMutation(newProgrammingExercise.getId())) {
+                if (mutationLease.coordinated()) {
+                    exerciseVersionService.createExerciseVersionSynchronously(newProgrammingExercise, user);
+                }
+                else {
+                    exerciseVersionService.createExerciseVersion(newProgrammingExercise, user);
+                }
+            }
 
             return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId()))
                     .body(ProgrammingExerciseResponseDTO.of(newProgrammingExercise, buildConfig));
