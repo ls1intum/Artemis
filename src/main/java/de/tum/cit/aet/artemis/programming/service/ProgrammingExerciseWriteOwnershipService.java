@@ -165,8 +165,8 @@ public class ProgrammingExerciseWriteOwnershipService {
     }
 
     private static void validateToken(String token) {
-        if (token == null || token.isBlank() || token.length() > 64) {
-            throw new IllegalArgumentException("Write ownership token must contain 1 to 64 characters");
+        if (token == null || !token.matches("[a-z0-9-]{1,64}")) {
+            throw new IllegalArgumentException("Write ownership token must contain 1 to 64 lowercase ASCII letters, digits or hyphens");
         }
     }
 

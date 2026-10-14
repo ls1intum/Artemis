@@ -9,6 +9,7 @@ import java.sql.DriverManager;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -18,6 +19,8 @@ import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.testcontainers.DockerClientFactory;
 
@@ -242,4 +245,62 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
         assertThat(ownershipService.release(id, writer)).isTrue();
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void readerAndWriterContendOnTheSameActualRowLock(boolean readerFirst) throws Exception {
+        var acquired = new CountDownLatch(1);
+        var release = new CountDownLatch(1);
+        grantTestLockObserverPrivilege();
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            var first = executor.submit(() -> readerFirst ? ownershipRepository.claimReaderAndHold(exercise.getId(), "held-reader", acquired, release)
+                    : ownershipRepository.claimAndHold(exercise.getId(), "held-writer", acquired, release));
+            try {
+                assertThat(acquired.await(10, TimeUnit.SECONDS)).isTrue();
+                var second = executor.submit(() -> readerFirst ? ownershipRepository.claim(exercise.getId(), "waiting-writer", "other-process", "SAVE", Instant.now())
+                        : ownershipRepository.claimReader(exercise.getId(), "waiting-reader", "other-process", Instant.now()));
+                await().atMost(Duration.ofSeconds(10)).until(this::ownershipUpdateIsWaitingOnRowLock);
+                assertThat(second.isDone()).isFalse();
+                release.countDown();
+                assertThat(first.get(10, TimeUnit.SECONDS)).isOne();
+                assertThat(second.get(10, TimeUnit.SECONDS)).isZero();
+                if (readerFirst) {
+                    assertThat(ownershipService.readers(exercise.getId())).hasSize(1);
+                    assertThat(ownershipService.get(exercise.getId())).isEmpty();
+                    assertThat(ownershipService.releaseReader(exercise.getId(), "held-reader")).isTrue();
+                }
+                else {
+                    assertThat(ownershipService.readers(exercise.getId())).isEmpty();
+                    assertThat(ownershipService.isOwned(exercise.getId(), "held-writer")).isTrue();
+                    assertThat(ownershipService.release(exercise.getId(), "held-writer")).isTrue();
+                }
+            }
+            finally {
+                release.countDown();
+            }
+        }
+    }
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void tokenCaseAndWhitespaceVariantsCannotReleaseTheActualReservation(boolean reader) {
+        long id = exercise.getId();
+        String token = reader ? ownershipService.claimReader(id) : ownershipService.claim(id, "SAVE");
+        for (String variant : new String[] { token.toUpperCase(Locale.ROOT), token + " " }) {
+            assertThatThrownBy(() -> {
+                if (reader) {
+                    ownershipService.releaseReader(id, variant);
+                }
+                else {
+                    ownershipService.release(id, variant);
+                }
+            }).isInstanceOf(IllegalArgumentException.class);
+        }
+        if (reader) {
+            assertThat(ownershipService.readers(id)).hasSize(1).allSatisfy(owner -> assertThat(owner.token()).isEqualTo(token));
+            assertThat(ownershipService.releaseReader(id, token)).isTrue();
+        }
+        else {
+            assertThat(ownershipService.isOwned(id, token)).isTrue();
+            assertThat(ownershipService.release(id, token)).isTrue();
+        }
+    }
 }

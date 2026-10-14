@@ -31,4 +31,20 @@ public interface ProgrammingExerciseWriteOwnershipTestRepository extends Program
         }
         return result;
     }
+
+    @Transactional
+    default int claimReaderAndHold(long exerciseId, String token, CountDownLatch claimed, CountDownLatch release) {
+        int result = claimReader(exerciseId, token, "held-reader-process", Instant.now());
+        claimed.countDown();
+        try {
+            if (!release.await(15, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("Test did not release the reader transaction");
+            }
+        }
+        catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(interrupted);
+        }
+        return result;
+    }
 }
