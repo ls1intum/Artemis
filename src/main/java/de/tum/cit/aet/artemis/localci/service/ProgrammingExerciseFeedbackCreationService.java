@@ -23,6 +23,7 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -38,6 +39,7 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
@@ -110,10 +112,14 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private final ProgrammingExerciseWriteOwnershipService writeOwnership;
 
+    private final GitService gitService;
+
+    private final String defaultBranch;
+
     public ProgrammingExerciseFeedbackCreationService(ProgrammingExerciseTestCaseRepository testCaseRepository, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService,
-            ProgrammingExerciseWriteOwnershipService writeOwnership) {
+            ProgrammingExerciseWriteOwnershipService writeOwnership, GitService gitService, @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
         this.testCaseRepository = testCaseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
@@ -121,6 +127,8 @@ public class ProgrammingExerciseFeedbackCreationService {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.feedbackMessageService = feedbackMessageService;
         this.writeOwnership = writeOwnership;
+        this.gitService = gitService;
+        this.defaultBranch = defaultBranch;
     }
 
     /**
@@ -364,7 +372,8 @@ public class ProgrammingExerciseFeedbackCreationService {
         }
         String token = writeOwnership.claim(exerciseId, "LOCALCI");
         try {
-            boolean changed = synchronizeTestCases(buildResult, programmingExerciseRepository.findByIdElseThrow(exerciseId));
+            ProgrammingExercise current = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            boolean changed = matchesCurrentTestsHead(buildResult, current) && synchronizeTestCases(buildResult, current);
             if (!writeOwnership.release(exerciseId, token)) {
                 throw new IllegalStateException("Lost exercise write reservation after LocalCI synchronization");
             }
@@ -379,6 +388,16 @@ public class ProgrammingExerciseFeedbackCreationService {
             }
             throw failure;
         }
+    }
+
+    private boolean matchesCurrentTestsHead(BuildResultNotification buildResult, ProgrammingExercise exercise) {
+        String reportedHead = buildResult.testsRepoCommitHash();
+        if (StringUtils.isBlank(reportedHead) || exercise.getVcsTestRepositoryUri() == null) {
+            return false;
+        }
+        String configuredBranch = programmingExerciseRepository.findBranchByExerciseId(exercise.getId());
+        String branch = StringUtils.isBlank(configuredBranch) ? defaultBranch : configuredBranch;
+        return reportedHead.equals(gitService.getLastCommitHash(exercise.getVcsTestRepositoryUri(), branch));
     }
 
     private boolean synchronizeTestCases(BuildResultNotification buildResult, ProgrammingExercise exercise) {

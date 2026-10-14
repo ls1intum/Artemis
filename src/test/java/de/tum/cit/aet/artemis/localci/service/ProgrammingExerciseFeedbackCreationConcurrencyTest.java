@@ -24,16 +24,17 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.localci.dto.BuildJobInterface;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.dto.BuildResultNotification;
 import de.tum.cit.aet.artemis.programming.dto.TestCaseBase;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 /**
  * The recovery from a second result for the same exercise inserting the same test cases first.
@@ -56,6 +57,7 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
+        exercise.setTestRepositoryUri("http://localhost/git/PROJECT/project-tests.git");
         return exercise;
     }
 
@@ -70,6 +72,7 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
         doReturn(tests).when(job).successfulTests();
         BuildResultNotification buildResult = mock(BuildResultNotification.class);
         doReturn(List.of(job)).when(buildResult).jobs();
+        when(buildResult.testsRepoCommitHash()).thenReturn("current-commit");
         return buildResult;
     }
 
@@ -81,19 +84,22 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
     }
 
     private record Fixture(ProgrammingExerciseFeedbackCreationService service, ProgrammingExerciseTestCaseTestRepository testCaseRepository,
-            ProgrammingExerciseWriteOwnershipService ownership) {
+            ProgrammingExerciseWriteOwnershipService ownership, GitService gitService, ProgrammingExerciseTestRepository exerciseRepository) {
     }
 
     private static Fixture fixture() {
         ProgrammingExerciseTestCaseTestRepository testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
-        var exerciseRepository = mock(ProgrammingExerciseRepository.class);
+        var exerciseRepository = mock(ProgrammingExerciseTestRepository.class);
         when(exerciseRepository.findByIdElseThrow(EXERCISE_ID)).thenAnswer(ignored -> exercise());
+        when(exerciseRepository.findBranchByExerciseId(EXERCISE_ID)).thenReturn("main");
+        var gitService = mock(GitService.class);
+        when(gitService.getLastCommitHash(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq("main"))).thenReturn("current-commit");
         var ownership = mock(ProgrammingExerciseWriteOwnershipService.class);
         when(ownership.claim(EXERCISE_ID, "LOCALCI")).thenReturn("test-token");
         when(ownership.release(EXERCISE_ID, "test-token")).thenReturn(true);
         var service = new ProgrammingExerciseFeedbackCreationService(testCaseRepository, mock(WebsocketMessagingService.class), mock(ProgrammingExerciseTaskService.class),
-                exerciseRepository, mock(StaticCodeAnalysisCategoryRepository.class), mock(FeedbackMessageService.class), ownership);
-        return new Fixture(service, testCaseRepository, ownership);
+                exerciseRepository, mock(StaticCodeAnalysisCategoryRepository.class), mock(FeedbackMessageService.class), ownership, gitService, "main");
+        return new Fixture(service, testCaseRepository, ownership, gitService, exerciseRepository);
     }
 
     /**
@@ -205,6 +211,38 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
 
         verify(fixture.ownership()).retain(EXERCISE_ID, "test-token", "LOCALCI_RECOVERY");
         verify(fixture.ownership(), never()).release(EXERCISE_ID, "test-token");
+    }
+
+    @Test
+    void staleResultAfterSaveReleaseCannotReplaceCurrentTestCases() {
+        var fixture = fixture();
+        var build = buildResultWith("oldTest");
+        when(build.testsRepoCommitHash()).thenReturn("old-commit");
+        assertThat(fixture.service().generateTestCasesFromBuildResult(build, exercise())).isFalse();
+        verify(fixture.testCaseRepository(), never()).findByExerciseId(anyLong());
+        verify(fixture.testCaseRepository(), never()).saveAll(anySet());
+        verify(fixture.ownership()).release(EXERCISE_ID, "test-token");
+    }
+
+    @Test
+    void missingTestsCommitCannotSynchronizeMetadata() {
+        var fixture = fixture();
+        var build = buildResultWith("unknownTest");
+        when(build.testsRepoCommitHash()).thenReturn(null);
+        assertThat(fixture.service().generateTestCasesFromBuildResult(build, exercise())).isFalse();
+        verify(fixture.testCaseRepository(), never()).saveAll(anySet());
+        org.mockito.Mockito.verifyNoInteractions(fixture.gitService());
+        verify(fixture.ownership()).release(EXERCISE_ID, "test-token");
+    }
+
+    @Test
+    void currentCommitOnConfiguredBranchSynchronizesUnderItsOwnReservation() {
+        var fixture = fixture();
+        when(fixture.exerciseRepository().findBranchByExerciseId(EXERCISE_ID)).thenReturn("exercise-branch");
+        when(fixture.gitService().getLastCommitHash(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq("exercise-branch"))).thenReturn("current-commit");
+        assertThat(fixture.service().generateTestCasesFromBuildResult(buildResultWith("newTest"), exercise())).isTrue();
+        verify(fixture.testCaseRepository()).saveAll(anySet());
+        verify(fixture.ownership()).release(EXERCISE_ID, "test-token");
     }
 
 }
