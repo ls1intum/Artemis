@@ -23,16 +23,20 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class GenerationAuthoringBaselineServiceTest {
 
     private GenerationAuthoringBaselineService service;
+
     private ProgrammingExercise exercise;
+
     private ProgrammingExerciseBuildConfig configuration;
+
     private ProgrammingExerciseTestCase testCase;
+
     private ProgrammingExerciseTask task;
 
     @BeforeEach

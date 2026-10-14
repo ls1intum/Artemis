@@ -59,8 +59,8 @@ public class GenerationSeedService {
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     public GenerationSeedService(ProgrammingExerciseBuildConfigRepository buildConfigRepository, GitService gitService, TempFileUtilService temporaryFiles,
-            GenerationRequestService requests, ProgrammingExerciseTestCaseRepository testCases, ProgrammingExerciseTaskService programmingExerciseTaskService, GenerationAuthoringBaselineService baselines,
-            @Value("${artemis.version-control.default-branch:main}") String branch) {
+            GenerationRequestService requests, ProgrammingExerciseTestCaseRepository testCases, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            GenerationAuthoringBaselineService baselines, @Value("${artemis.version-control.default-branch:main}") String branch) {
         this.baselines = baselines;
         this.buildConfigRepository = buildConfigRepository;
         this.gitService = gitService;
@@ -166,6 +166,7 @@ public class GenerationSeedService {
     }
 
     /** File transport and optimistic concurrency evidence are deliberately kept separate. */
-    public record Seed(WorkspaceSnapshot snapshot, Map<RepositoryType, String> heads, GradingContext gradingContext, GenerationAuthoringBaselineService.Snapshot authoringBaseline) {
+    public record Seed(WorkspaceSnapshot snapshot, Map<RepositoryType, String> heads, GradingContext gradingContext,
+            GenerationAuthoringBaselineService.Snapshot authoringBaseline) {
     }
 }

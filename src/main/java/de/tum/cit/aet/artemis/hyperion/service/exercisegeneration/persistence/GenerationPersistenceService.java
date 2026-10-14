@@ -58,9 +58,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService;
 
 /**
  * Saves verified repositories, metadata and grading, then records an exercise version.
@@ -135,7 +135,8 @@ public class GenerationPersistenceService {
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository, ResultRepository resultRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService,
-            TempFileUtilService tempFileUtilService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll, ProgrammingExerciseBuildConfigRepository buildConfigRepository, GenerationAuthoringBaselineService authoringBaselines, ProgrammingExerciseWriteOwnershipService writeOwnership) {
+            TempFileUtilService tempFileUtilService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll, ProgrammingExerciseBuildConfigRepository buildConfigRepository,
+            GenerationAuthoringBaselineService authoringBaselines, ProgrammingExerciseWriteOwnershipService writeOwnership) {
         this.writeOwnership = writeOwnership;
         this.authoringBaselines = authoringBaselines;
         this.defaultBranch = defaultBranch;
@@ -403,8 +404,8 @@ public class GenerationPersistenceService {
     boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,
             String expectedProblemStatement, String expectedTitle, Map<RepositoryType, String> repositoryCommitIds, GenerationGrading.Snapshot previousGrading,
             GenerationGrading.Snapshot savedGrading, BooleanSupplier stillOwnsMutationSlot) {
-        return resyncAfterRevertWithSignal(exercise, user, testsBuildSignal, problemStatement, title, expectedProblemStatement, expectedTitle, repositoryCommitIds,
-                previousGrading, savedGrading, stillOwnsMutationSlot, null);
+        return resyncAfterRevertWithSignal(exercise, user, testsBuildSignal, problemStatement, title, expectedProblemStatement, expectedTitle, repositoryCommitIds, previousGrading,
+                savedGrading, stillOwnsMutationSlot, null);
     }
 
     public boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,

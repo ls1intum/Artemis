@@ -216,6 +216,7 @@ class GenerationPersistenceServiceTest {
     @Test
     void missingExactTestsBuildAuthorizationDoesNotTriggerCallback() throws Exception {
         stubSuccessfulCheckoutAndCommits();
+        when(gitService.getLastCommitHash(testsUri, "main")).thenReturn("hash-template");
         when(ownership.authorizeTestsBuild(anyLong(), any(), any())).thenReturn(false);
         GenerationOutcome outcome = outcomeWith(Map.of(), Map.of(), Map.of("Test.java", "class Test {}"), "");
         assertThatThrownBy(() -> service.persist(exercise, user, outcome, exercise.getProblemStatement(), exercise.getTitle(), "job-token",

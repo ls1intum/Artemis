@@ -96,8 +96,8 @@ class GenerationSeedServiceTest {
         when(baselines.requireCurrentExercise(42L)).thenReturn(fresh);
         service = new GenerationSeedService(buildConfigRepository, git, new TempFileUtilService(temporary), requests, testCases, taskService, baselines, "main");
         var seed = service.capture(exercise);
-        assertThat(seed.snapshot().files()).filteredOn(file -> file.path().equals("problem-statement.md"))
-                .extracting(file -> new String(file.content(), StandardCharsets.UTF_8)).containsExactly("Changed before seed acquisition");
+        assertThat(seed.snapshot().files()).filteredOn(file -> file.path().equals("problem-statement.md")).extracting(file -> new String(file.content(), StandardCharsets.UTF_8))
+                .containsExactly("Changed before seed acquisition");
         verify(baselines).capture(fresh);
     }
 

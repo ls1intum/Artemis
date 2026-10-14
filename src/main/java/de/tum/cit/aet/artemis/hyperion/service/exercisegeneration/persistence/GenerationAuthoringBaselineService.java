@@ -27,8 +27,11 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 public class GenerationAuthoringBaselineService {
 
     private final ProgrammingExerciseRepository exercises;
+
     private final ProgrammingExerciseBuildConfigRepository buildConfigurations;
+
     private final ProgrammingExerciseTestCaseRepository tests;
+
     private final ProgrammingExerciseTaskRepository tasks;
 
     public GenerationAuthoringBaselineService(ProgrammingExerciseRepository exercises, ProgrammingExerciseBuildConfigRepository buildConfigurations,
@@ -41,6 +44,7 @@ public class GenerationAuthoringBaselineService {
 
     /** Detached values used only for final-save comparison. Nullable metadata values remain distinct from empty values. */
     public record Snapshot(Map<String, String> metadata, Map<String, String> buildConfiguration, List<TestCase> tests, List<Task> tasks) {
+
         public Snapshot {
             metadata = Collections.unmodifiableMap(new LinkedHashMap<>(metadata));
             buildConfiguration = Collections.unmodifiableMap(new LinkedHashMap<>(buildConfiguration));
@@ -49,11 +53,12 @@ public class GenerationAuthoringBaselineService {
         }
     }
 
-    public record TestCase(Long id, @Nullable String name, @Nullable String weight, @Nullable String bonusMultiplier, @Nullable String bonusPoints,
-            @Nullable String visibility, @Nullable Boolean active, @Nullable String type) {
+    public record TestCase(Long id, @Nullable String name, @Nullable String weight, @Nullable String bonusMultiplier, @Nullable String bonusPoints, @Nullable String visibility,
+            @Nullable Boolean active, @Nullable String type) {
     }
 
     public record Task(Long id, @Nullable String name, List<Long> testIds) {
+
         public Task {
             testIds = List.copyOf(testIds);
         }
@@ -145,6 +150,7 @@ public class GenerationAuthoringBaselineService {
 
     /** Signals a retained verified candidate without any canonical writes. */
     public static class AuthoringConflictException extends IllegalStateException {
+
         public AuthoringConflictException() {
             this("The exercise changed during authoring. The verified candidate was retained; nothing was saved.");
         }
