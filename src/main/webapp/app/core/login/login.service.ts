@@ -101,6 +101,11 @@ export class LoginService {
         this.logoutOnServer(() => this.sessionStorageService.store('previousUrl', previousUrl));
     }
 
+    /**
+     * Asks the server to end the session and then removes the local traces of it. The local logout runs even if the request fails: the browser must not keep presenting
+     * a user as signed in whose session the server just rejected or who asked to leave. What an outdated session may do is decided by the server on every request that
+     * creates a credential, not by the cookie, so a cookie that stays after a failed request grants nothing new and the next refused request ends the session again.
+     */
     private logoutOnServer(afterLogout?: () => void): void {
         this.authServerProvider
             .logout()
@@ -110,7 +115,11 @@ export class LoginService {
                     afterLogout?.();
                 }),
             )
-            .subscribe();
+            .subscribe({
+                error: () => {
+                    // the local logout in finalize is the handling, a failed request is not rethrown as an unhandled error
+                },
+            });
     }
 
     private onLogout(): void {

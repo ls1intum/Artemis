@@ -95,6 +95,22 @@ describe('LoginService', () => {
         expect(sessionStorageService.retrieve<string>('previousUrl')).toBe('/user-settings/ssh/add');
     });
 
+    it('should still end the local session and keep the previous url when the server logout fails', () => {
+        const sessionStorageService = TestBed.inject(SessionStorageService);
+        navigateByUrlStub.mockReturnValue(Promise.resolve(true));
+        authServerProviderLogoutStub.mockReturnValue(throwError(() => new Error('network down')));
+        authServerProviderClearStub.mockImplementation(() => {
+            sessionStorageService.clear();
+            return of(undefined);
+        });
+
+        loginService.logoutWithServerSession('/courses');
+
+        commonExpects();
+        expect(loginService.lastLogoutWasForceful()).toBe(true);
+        expect(sessionStorageService.retrieve<string>('previousUrl')).toBe('/courses');
+    });
+
     describe('test login', () => {
         it('should login successfully with valid credentials', async () => {
             const credentials = new Credentials('testuser', 'password', true);
