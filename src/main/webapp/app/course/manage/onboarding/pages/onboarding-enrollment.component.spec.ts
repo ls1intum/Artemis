@@ -100,6 +100,20 @@ describe('OnboardingEnrollmentComponent', () => {
             expect(picker.componentInstance.value().isSame(course.unenrollmentEndDate)).toBe(true);
         });
 
+        // jsdom does not apply the stylesheet, so this asserts the structure: a fixed `ms-4` indent on every viewport would push
+        // the 15rem date picker past the clipping edge of the wizard card on a phone. `step-indent` drops the indent there.
+        it('should indent the settings below the toggles with the responsive step-indent instead of a fixed ms-4', () => {
+            course.enrollmentEnabled = true;
+            course.unenrollmentEnabled = true;
+            fixture.componentRef.setInput('course', Course.from(course));
+            fixture.detectChanges();
+
+            const nested = pickerById('onboarding-unenrollmentEndDate').nativeElement.closest('.step-indent');
+            expect(nested).not.toBeNull();
+            expect(nested.parentElement.closest('.step-indent')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('.ms-4')).toBeNull();
+        });
+
         describe('text validity reported to the wizard', () => {
             let emitSpy: ReturnType<typeof vi.spyOn>;
 

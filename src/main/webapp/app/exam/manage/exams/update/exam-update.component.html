@@ -277,7 +277,7 @@
                     <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment"></h5>
                     <h6 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessmentEmptyDates"></h6>
                     @if (!exam.testExam) {
-                        <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="mb-4 grid gap-4 grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
                             <div class="flex flex-col gap-1">
                                 <label for="numberOfCorrectionRoundsInExam" jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam"></label>
                                 <input
@@ -311,7 +311,7 @@
                                 }
                             </div>
                         </div>
-                        <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <div class="mb-4 grid gap-4 grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
                             <div>
                                 <tumaet-ui-date-picker
                                     inputId="examSummaryPublicationDate"
@@ -330,7 +330,7 @@
                             </div>
                         </div>
                     }
-                    <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div class="mb-4 grid gap-4 grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
                         <div>
                             <tumaet-ui-date-picker
                                 inputId="examStudentReviewStart"
@@ -362,7 +362,7 @@
             }
             <hr class="my-4 border-(--border-color)" />
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.examSolutions"></h5>
-            <div class="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div class="mb-4 grid gap-4 grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
                 <div>
                     <tumaet-ui-date-picker
                         inputId="exampleSolutionPublicationDate"
