@@ -447,11 +447,11 @@
                                         [maxlength]="MAX_DRAG_ITEM_TEXT_LENGTH"
                                         [attr.aria-invalid]="(dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH"
                                         [attr.aria-describedby]="
-                                            (dragItem.text?.length ?? 0) >= MAX_DRAG_ITEM_TEXT_LENGTH ? 'drag-item-text-limit-' + questionIndex() + '-' + i : undefined
+                                            (dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH ? 'drag-item-text-limit-' + questionIndex() + '-' + i : undefined
                                         "
                                         (ngModelChange)="questionUpdated.emit()"
                                     ></textarea>
-                                    @if ((dragItem.text?.length ?? 0) >= MAX_DRAG_ITEM_TEXT_LENGTH) {
+                                    @if ((dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH) {
                                         <small
                                             id="drag-item-text-limit-{{ questionIndex() }}-{{ i }}"
                                             class="drag-item-text-limit block max-w-[150px] whitespace-normal text-state-danger"

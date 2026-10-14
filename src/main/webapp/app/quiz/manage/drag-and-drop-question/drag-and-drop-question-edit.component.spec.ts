@@ -397,6 +397,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(textarea.value).toBe('a'.repeat(256));
         expect(textarea.getAttribute('aria-invalid')).toBe('true');
         expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).not.toBeNull();
+        expect(textarea.getAttribute('aria-describedby')).toBe('drag-item-text-limit-1-0');
 
         textarea.value = 'a'.repeat(255);
         textarea.dispatchEvent(new Event('input'));
@@ -406,6 +407,8 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(model.hasError('maxlength')).toBe(false);
         expect(question.dragItems![0].text).toBe('a'.repeat(255));
         expect(textarea.getAttribute('aria-invalid')).toBe('false');
+        expect(textarea.hasAttribute('aria-describedby')).toBe(false);
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
 
         textarea.value = 'Short item';
         textarea.dispatchEvent(new Event('input'));
