@@ -73,6 +73,8 @@ const courseRoutes: { name: string; routes: Routes; expectedPaths: string[] }[] 
             'programming-exercises/:exerciseId/plagiarism',
             'programming-exercises/:exerciseId/grading/:tab',
             'programming-exercises/:exerciseId/exercise-statistics',
+            'programming-exercises/:exerciseId/comprehension-check',
+            'programming-exercises/:exerciseId/comprehension-check/review',
             'programming-exercises/:exerciseId/edit-build-plan',
             'programming-exercises/:exerciseId/repository/:repositoryType',
             'programming-exercises/:exerciseId/repository/:repositoryType/:repositoryId',

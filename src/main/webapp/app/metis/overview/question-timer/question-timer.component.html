@@ -1,0 +1,7 @@
+<div class="question-timer flex flex-col gap-1 rounded-md p-2" data-testid="question-timer" [class.critical]="critical()">
+    <div class="flex items-center justify-between gap-2 text-sm">
+        <span jhiTranslate="artemisApp.metis.student.timeLeft"></span>
+        <span class="font-semibold tabular-nums" role="timer" data-testid="question-timer-display">{{ display() }}</span>
+    </div>
+    <tumaet-ui-progress-bar size="small" [value]="progress()" [severity]="severity()" [showValue]="false" [ariaLabel]="'artemisApp.metis.student.timeLeft' | artemisTranslate" />
+</div>

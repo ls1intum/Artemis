@@ -1,0 +1,51 @@
+// The colours of a step, its background and the colour of the digits on it, come from the rating-scale theme properties, which keep the digits
+// readable on every step in both themes; the rest is the square's own geometry.
+.rating-square {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--body-color);
+    vertical-align: middle;
+
+    &--small {
+        width: 1.25rem;
+        height: 1.25rem;
+        font-size: 0.75rem;
+    }
+
+    &--lowest {
+        background: var(--rating-scale-lowest);
+        color: var(--rating-scale-lowest-contrast);
+    }
+
+    &--low {
+        background: var(--rating-scale-low);
+        color: var(--rating-scale-low-contrast);
+    }
+
+    &--neutral {
+        background: var(--rating-scale-neutral);
+        color: var(--rating-scale-neutral-contrast);
+    }
+
+    &--high {
+        background: var(--rating-scale-high);
+        color: var(--rating-scale-high-contrast);
+    }
+
+    &--highest {
+        background: var(--rating-scale-highest);
+        color: var(--rating-scale-highest-contrast);
+    }
+
+    &--unrated {
+        border: 1px dashed var(--border-color);
+        color: var(--text-body-secondary);
+    }
+}
