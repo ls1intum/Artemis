@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.junit.jupiter.api.Test;
@@ -44,6 +45,20 @@ class SemanticMutantExecutionTest {
                 @Test void existing() { assertEquals(1, new Scheduler().choose(), "existing behavior"); }
             }
             """);
+
+    @Test
+    void rechecksEveryRetainedMutantWhenOnlyTheFirstFourAreKilled() {
+        List<SemanticMutant> retained = IntStream.rangeClosed(1, 6).mapToObj(index -> new SemanticMutant("R" + index, PATH, ORIGINAL, MUTANT_SOURCE, COUNTEREXAMPLE)).toList();
+        AtomicInteger builds = new AtomicInteger();
+        List<SemanticMutantOutcome> outcomes = SemanticMutantExecution.recheck(Map.of(PATH, ORIGINAL), retained, (_, _) -> {
+            boolean killed = builds.incrementAndGet() <= 4;
+            return new BuildSummary(1, killed ? 1 : 0, killed ? 1 : 0, false, List.of("graded"), killed ? List.of("graded") : List.of(), List.of(), "");
+        });
+        assertThat(builds).hasValue(6);
+        assertThat(outcomes).extracting(SemanticMutantOutcome::mutant).containsExactlyElementsOf(retained);
+        assertThat(outcomes.subList(0, 4)).extracting(SemanticMutantOutcome::disposition).containsOnly(Disposition.KILLED_BY_GRADED_SUITE);
+        assertThat(outcomes.subList(4, 6)).extracting(SemanticMutantOutcome::disposition).containsExactly(Disposition.SURVIVED_GRADED_SUITE, Disposition.SURVIVED_GRADED_SUITE);
+    }
 
     @Test
     void validatesOnlyAfterAllThreeEnvironmentProbesAndRestoresAroundEach() {

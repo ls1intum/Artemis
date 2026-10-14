@@ -80,7 +80,7 @@ final class SemanticMutantExecution {
 
     static List<SemanticMutantOutcome> recheck(Map<String, String> solutionFiles, List<SemanticMutant> mutants, ProbeRunner runner) {
         List<SemanticMutantOutcome> outcomes = new ArrayList<>();
-        for (SemanticMutant mutant : mutants.stream().limit(MAX_MUTANTS).toList()) {
+        for (SemanticMutant mutant : mutants) {
             if (!mutant.originalSolutionSource().equals(solutionFiles.get(mutant.solutionPath()))) {
                 // This exact replacement was proven only against another reference revision. It is neither a survivor nor a kill against the current candidate; the orchestration
                 // review authors a fresh mutant against the new source instead of making an unexecuted stale probe block acceptance.
