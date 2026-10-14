@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.metis.config.MetisEnabled;
@@ -55,11 +56,12 @@ public class MetisAnswerRatingService {
 
     /**
      * The instruction for a rating that may come with a follow-up question: the threshold and the time range are formatted into it before it is rendered,
-     * because the prompt renderer never fills a placeholder inside a value.
+     * because the prompt renderer never fills a placeholder inside a value. It names the properties of the output, and it has the model decide the score
+     * before anything else, since whether a follow-up is due depends on the score.
      */
-    static final String FOLLOW_UP_INSTRUCTION = "If your rating is %d or lower, also write one short follow-up question that lets the student show "
-            + "their understanding of the same aspect, without revealing the answer, and a time limit between %d and %d seconds. "
-            + "Otherwise leave the follow-up question empty and its time limit 0.";
+    static final String FOLLOW_UP_INSTRUCTION = "First decide the score, then write the rationale. If the score is %d or lower, followUpQuestion must contain one short "
+            + "follow-up question that lets the student show their understanding of the same aspect, without revealing the answer, and followUpTimeLimitSeconds "
+            + "must be between %d and %d. If the score is higher, leave followUpQuestion empty and followUpTimeLimitSeconds 0.";
 
     /** The instruction for a rating that must not come with a follow-up question, because the cap is reached or the window leaves no time. */
     static final String NO_FOLLOW_UP_INSTRUCTION = "Do not write a follow-up question: leave it empty and its time limit 0.";
@@ -187,12 +189,17 @@ public class MetisAnswerRatingService {
 
     /**
      * The output the model is asked for: the rating, its rationale and an optional follow-up question.
+     * <p>
+     * The model writes the properties in the order in which the schema of the prompt lists them, and whether a follow-up is due depends on the score. The
+     * schema therefore lists the score first and the follow-up last. Without the explicit order the schema generator sorts the properties alphabetically, and
+     * the model wrote the follow-up before it had decided the score and left it empty.
      *
      * @param score                    the rating
      * @param rationale                the explanation for the instructor
      * @param followUpQuestion         the follow-up question, empty for none
      * @param followUpTimeLimitSeconds the time limit of the follow-up question, 0 for none
      */
+    @JsonPropertyOrder({ "score", "rationale", "followUpQuestion", "followUpTimeLimitSeconds" })
     record RatingOutput(@JsonPropertyDescription("The rating, an integer from 1 to the maximum of the scale") int score,
             @JsonPropertyDescription("One to three sentences for the instructor that explain the rating") String rationale,
             @JsonPropertyDescription("A short follow-up question when one is requested, otherwise an empty string") String followUpQuestion,

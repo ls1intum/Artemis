@@ -585,7 +585,7 @@ class MetisStudentCheckIntegrationTest extends AbstractProgrammingIntegrationInd
             assertThat(followUp.focusFilePath()).isNull();
             assertThat(reload(check.first()).getLlmScore()).isEqualTo(2);
             assertThat(reload(check.second()).getShownAt()).isNull();
-            assertThat(capturedPrompts(1).systemPrompt()).contains("If your rating is 3 or lower").contains("a time limit between 60 and 120 seconds");
+            assertThat(capturedPrompts(1).systemPrompt()).contains("If the score is 3 or lower").contains("followUpTimeLimitSeconds must be between 60 and 120.");
         }
 
         @Test

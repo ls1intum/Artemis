@@ -31,7 +31,10 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import tools.jackson.databind.JsonNode;
+
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.core.util.TimeUtil;
 import de.tum.cit.aet.artemis.metis.config.MetisProperties;
 import de.tum.cit.aet.artemis.metis.domain.MetisCheckStatus;
@@ -54,8 +57,8 @@ import de.tum.cit.aet.artemis.metis.util.MetisTestProperties;
 
 /**
  * Unit tests of the generation of a claimed check where the integration test cannot steer the input: the budget of the generation prompt for many changed
- * files and for a small configured budget, a database that refuses the generated questions, and the clean-up of the question texts. The diff, the
- * repositories and the transport are mocks; the prompt templates are the real ones.
+ * files and for a small configured budget, the order of the output schema in the prompt, a database that refuses the generated questions, and the clean-up
+ * of the question texts. The diff, the repositories and the transport are mocks; the prompt templates are the real ones.
  */
 class MetisQuestionGenerationServiceTest {
 
@@ -244,6 +247,29 @@ class MetisQuestionGenerationServiceTest {
 
             verify(checkRepository, never()).markUnavailable(anyLong(), any(), any(), any());
             verify(checkRepository, never()).markGenerated(anyLong(), any(), any(), any(), any(), any());
+        }
+    }
+
+    @Nested
+    class OutputFormat {
+
+        /**
+         * The model writes the properties in the order of the schema, and the time limit of a question depends on the question, so the schema must list the
+         * question before its time limit. The schema generator sorts the properties alphabetically, which keeps this order only as long as the names do.
+         */
+        @Test
+        void shouldListEachQuestionBeforeItsTimeLimitInTheSchemaOfThePrompt() {
+            List<FileChange> focusFiles = List.of(file("src/A.java", 20, 400), file("src/B.java", 20, 400), file("src/C.java", 20, 400));
+            stubDiff(focusFiles, focusFiles);
+
+            assertThat(service(MetisTestProperties.defaults()).generate(CHECK_ID, false)).isEqualTo(Outcome.GENERATED);
+
+            String prompt = capturedUserPrompt();
+            int heading = prompt.indexOf("Produce JSON that strictly follows this schema:");
+            assertThat(heading).isNotNegative();
+            JsonNode schema = JsonObjectMapper.get().readTree(prompt.substring(prompt.indexOf('{', heading), prompt.lastIndexOf('}') + 1));
+            JsonNode question = schema.get("properties").get("questions").get("items");
+            assertThat(question.get("properties").propertyNames()).containsExactly("number", "question", "timeLimitSeconds");
         }
     }
 
