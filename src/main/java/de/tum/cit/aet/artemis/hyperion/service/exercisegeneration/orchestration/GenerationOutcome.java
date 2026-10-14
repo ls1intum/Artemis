@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.AgentLoopResult;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationAuthoringBaselineService.Snapshot;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationSeedService.Seed;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.BinaryContent;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -35,10 +36,14 @@ public final class GenerationOutcome {
 
     private final Map<String, String> documents;
 
+    @Nullable
+    private final Snapshot authoringBaseline;
+
     private GenerationOutcome(AgentLoopResult.Status status, @Nullable GenerationOutput output, Seed seed, String message) {
         this.output = output;
         this.loopResult = AgentLoopResult.outsideSession(status, message);
         this.heads = seed.heads();
+        this.authoringBaseline = seed.authoringBaseline();
         Map<RepositoryType, Map<String, String>> repositories = new EnumMap<>(RepositoryType.class);
         Map<String, String> rootFiles = new HashMap<>();
         Map<String, WorkspaceFile> original = seed.snapshot().files().stream().collect(Collectors.toMap(WorkspaceFile::path, file -> file));
@@ -158,6 +163,11 @@ public final class GenerationOutcome {
 
     public Map<RepositoryType, Map<String, String>> capturedProducedFiles() {
         return files;
+    }
+
+    @Nullable
+    public Snapshot authoringBaseline() {
+        return authoringBaseline;
     }
 
     public Map<RepositoryType, String> seedRepositoryHeads() {

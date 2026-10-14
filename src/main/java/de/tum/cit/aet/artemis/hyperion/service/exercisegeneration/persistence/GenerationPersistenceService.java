@@ -58,6 +58,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -72,6 +73,10 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 public class GenerationPersistenceService {
 
     private final ProgrammingExerciseBuildConfigRepository buildConfigRepository;
+
+    private final GenerationAuthoringBaselineService authoringBaselines;
+
+    private final ProgrammingExerciseWriteOwnershipService writeOwnership;
 
     private static final Logger log = LoggerFactory.getLogger(GenerationPersistenceService.class);
 
@@ -118,10 +123,10 @@ public class GenerationPersistenceService {
             ProgrammingSubmissionService programmingSubmissionService, ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             ResultRepository resultRepository, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService,
-            TempFileUtilService tempFileUtilService) {
+            TempFileUtilService tempFileUtilService, GenerationAuthoringBaselineService authoringBaselines, ProgrammingExerciseWriteOwnershipService writeOwnership) {
         this(defaultBranch, gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService,
                 testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService, programmingExerciseCreationScheduleService,
-                problemStatementMetadataUpdateService, tempFileUtilService, testCaseSyncTimeout, testCaseSyncPoll, buildConfigRepository);
+                problemStatementMetadataUpdateService, tempFileUtilService, testCaseSyncTimeout, testCaseSyncPoll, buildConfigRepository, authoringBaselines, writeOwnership);
     }
 
     // Package-private so tests can shrink the sync wait instead of sleeping for seconds.
@@ -130,7 +135,10 @@ public class GenerationPersistenceService {
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository, ResultRepository resultRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService,
-            TempFileUtilService tempFileUtilService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll, ProgrammingExerciseBuildConfigRepository buildConfigRepository) {
+            TempFileUtilService tempFileUtilService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll, ProgrammingExerciseBuildConfigRepository buildConfigRepository,
+            GenerationAuthoringBaselineService authoringBaselines, ProgrammingExerciseWriteOwnershipService writeOwnership) {
+        this.writeOwnership = writeOwnership;
+        this.authoringBaselines = authoringBaselines;
         this.defaultBranch = defaultBranch;
         this.buildConfigRepository = buildConfigRepository;
         this.gitService = gitService;
@@ -165,7 +173,7 @@ public class GenerationPersistenceService {
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle) {
         return persistWithCommitMessage(exercise, user, outcome, expectedProblemStatement, expectedTitle, GenerationMode.GENERATE, "Generate exercise with Hyperion", () -> true,
                 () -> {
-                });
+                }, null);
     }
 
     public PersistResult persist(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle, String jobId,
@@ -183,15 +191,17 @@ public class GenerationPersistenceService {
             GenerationMode mode, BooleanSupplier stillOwnsMutationSlot, Runnable beforeDurableMutation) {
         String operation = mode == GenerationMode.ADAPT ? "Adapt" : "Generate";
         return persistWithCommitMessage(exercise, user, outcome, expectedProblemStatement, expectedTitle, mode, operation + " exercise with Hyperion (" + jobId + ")",
-                stillOwnsMutationSlot, beforeDurableMutation);
+                stillOwnsMutationSlot, beforeDurableMutation, jobId);
     }
 
     private PersistResult persistWithCommitMessage(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
-            GenerationMode mode, String commitMessage, BooleanSupplier stillOwnsMutationSlot, Runnable beforeDurableMutation) {
+            GenerationMode mode, String commitMessage, BooleanSupplier stillOwnsMutationSlot, Runnable beforeDurableMutation, String ownershipToken) {
         if (!outcome.isMechanicallyVerified()) {
             throw new IllegalArgumentException("Refusing to persist an exercise that did not pass mechanical verification");
         }
         requirePersistenceInputsSafe(outcome);
+        assertStillOwnsMutationSlot(stillOwnsMutationSlot);
+        authoringBaselines.assertMatches(exercise.getId(), outcome.authoringBaseline());
         GenerationGrading.Snapshot previousGrading = gradingService.capture(exercise.getId());
         Runnable beforeFirstDurableMutation = oneShot(beforeDurableMutation);
         String repositoryBranch = repositoryBranch(exercise);
@@ -214,6 +224,13 @@ public class GenerationPersistenceService {
         assertStillOwnsMutationSlot(stillOwnsMutationSlot);
         assertMetadataMatches(exercise, expectedProblemStatement, expectedTitle);
         try {
+            assertRepositoryHeadsStillMatch(exercise, repositoryBranch, outcome.seedRepositoryHeads(), Map.of());
+        }
+        catch (IllegalStateException conflict) {
+            throw new GenerationAuthoringBaselineService.AuthoringConflictException(
+                    "The exercise repositories changed during authoring. The verified candidate was retained; nothing was saved.");
+        }
+        try {
             for (RepositoryType repositoryType : PERSIST_ORDER) {
                 assertStillOwnsMutationSlot(stillOwnsMutationSlot);
                 Map<String, String> producedFiles = outcome.producedFiles(repositoryType);
@@ -234,7 +251,7 @@ public class GenerationPersistenceService {
             assertRepositoryHeadsStillMatch(exercise, repositoryBranch, outcome.seedRepositoryHeads(), postPersistHashes);
         }
         catch (RuntimeException e) {
-            boolean fullyReverted = compensateAndResyncBaseline(exercise, user, repositoryBranch, committed, prePersistHashes, postPersistHashes);
+            boolean fullyReverted = compensateAndResyncBaseline(exercise, user, repositoryBranch, committed, prePersistHashes, postPersistHashes, ownershipToken);
             // The ambiguous push is not in `committed`; report it separately from compensated repositories.
             boolean ambiguousRemoteState = e instanceof AmbiguousCommitFailure;
             boolean liveExerciseChanged = ambiguousRemoteState || !fullyReverted;
@@ -288,7 +305,7 @@ public class GenerationPersistenceService {
         try {
             // Internal LocalVC pushes bypass the HTTP/SSH post-receive hook, so the canonical tests build must be triggered explicitly before waiting for test-case sync.
             savedExerciseVersionId = syncTestCasesAndRecordVersion(exercise, user, testsCommitHash != null ? testsBuildSignal : null, true, finalizationGuard,
-                    persistedRepositoryHeads, () -> gradingService.apply(exercise, outcome.testPlanJson(), beforeFirstDurableMutation));
+                    persistedRepositoryHeads, () -> gradingService.apply(exercise, outcome.testPlanJson(), beforeFirstDurableMutation), ownershipToken);
             savedGrading = gradingService.capture(exercise.getId());
         }
         catch (RuntimeException e) {
@@ -321,7 +338,7 @@ public class GenerationPersistenceService {
     }
 
     private boolean compensateAndResyncBaseline(ProgrammingExercise exercise, User user, String repositoryBranch, List<RepositoryType> committed,
-            Map<RepositoryType, String> prePersistHashes, Map<RepositoryType, String> postPersistHashes) {
+            Map<RepositoryType, String> prePersistHashes, Map<RepositoryType, String> postPersistHashes, String ownershipToken) {
         boolean testsCommitted = committed.contains(RepositoryType.TESTS);
         TestsBuildSignal compensationSignal = null;
         boolean signalPrepared = true;
@@ -335,7 +352,7 @@ public class GenerationPersistenceService {
             }
         }
         boolean repositoriesReverted = compensate(exercise, repositoryBranch, committed, prePersistHashes, postPersistHashes);
-        return repositoriesReverted && (!testsCommitted || (signalPrepared && resyncBaselineTestsAfterCompensation(exercise, user, compensationSignal)));
+        return repositoriesReverted && (!testsCommitted || (signalPrepared && resyncBaselineTestsAfterCompensation(exercise, user, compensationSignal, ownershipToken)));
     }
 
     private static Map<RepositoryType, String> nonNullCopy(Map<RepositoryType, String> source) {
@@ -393,13 +410,37 @@ public class GenerationPersistenceService {
     boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,
             String expectedProblemStatement, String expectedTitle, Map<RepositoryType, String> repositoryCommitIds, GenerationGrading.Snapshot previousGrading,
             GenerationGrading.Snapshot savedGrading, BooleanSupplier stillOwnsMutationSlot) {
+        return resyncAfterRevertWithSignal(exercise, user, testsBuildSignal, problemStatement, title, expectedProblemStatement, expectedTitle, repositoryCommitIds, previousGrading,
+                savedGrading, stillOwnsMutationSlot, null);
+    }
+
+    /**
+     * Restores metadata and grading while authorizing the tests callback with the exact undo reservation.
+     *
+     * @param exercise                 exercise being restored
+     * @param user                     instructor performing the undo
+     * @param testsBuildSignal         expected tests build
+     * @param problemStatement         prior statement
+     * @param title                    prior title
+     * @param expectedProblemStatement statement expected before undo
+     * @param expectedTitle            title expected before undo
+     * @param repositoryCommitIds      restored repository heads
+     * @param previousGrading          grading to restore
+     * @param savedGrading             generation grading expected before undo
+     * @param stillOwnsMutationSlot    exact ownership check
+     * @param ownershipToken           database undo reservation token
+     * @return whether metadata and grading were restored completely
+     */
+    public boolean resyncAfterRevertWithSignal(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String problemStatement, String title,
+            String expectedProblemStatement, String expectedTitle, Map<RepositoryType, String> repositoryCommitIds, GenerationGrading.Snapshot previousGrading,
+            GenerationGrading.Snapshot savedGrading, BooleanSupplier stillOwnsMutationSlot, String ownershipToken) {
         assertStillOwnsMutationSlot(stillOwnsMutationSlot);
         if (!restoreProblemStatementIfUnchanged(exercise, problemStatement, title, expectedProblemStatement, expectedTitle)) {
             return false;
         }
         try {
             syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, true, () -> assertStillOwnsMutationSlot(stillOwnsMutationSlot), repositoryCommitIds,
-                    () -> gradingService.restore(exercise.getId(), previousGrading, savedGrading));
+                    () -> gradingService.restore(exercise.getId(), previousGrading, savedGrading), ownershipToken);
             log.info("Re-synchronised exercise {} after reverting an adaptation", exercise.getId());
             return true;
         }
@@ -423,11 +464,21 @@ public class GenerationPersistenceService {
      *         {@code failOnFinalizationFailure == false}, or a snapshot the version service judged unchanged)
      */
     private Long syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure,
-            Runnable finalizationGuard, Map<RepositoryType, String> repositoryCommitIds, Runnable updateGrading) {
+            Runnable finalizationGuard, Map<RepositoryType, String> repositoryCommitIds, Runnable updateGrading, String ownershipToken) {
         finalizationGuard.run();
         if (testsBuildSignal != null) {
-            triggerTestsBuild(exercise, testsBuildSignal);
-            awaitTestCaseSynchronization(exercise.getId(), testsBuildSignal, failOnFinalizationFailure);
+            if (!writeOwnership.authorizeTestsBuild(exercise.getId(), ownershipToken, testsBuildSignal.testsCommitHash())) {
+                throw new IllegalStateException("Test build authorization lost its exact exercise write token");
+            }
+            try {
+                triggerTestsBuild(exercise, testsBuildSignal);
+                awaitTestCaseSynchronization(exercise.getId(), testsBuildSignal, failOnFinalizationFailure);
+            }
+            finally {
+                if (!writeOwnership.stopTestsBuildAuthorization(exercise.getId(), ownershipToken)) {
+                    throw new IllegalStateException("Test build synchronization lost its exact exercise write token");
+                }
+            }
         }
         // Grading-only changes still need the finalization guard, even without a new tests commit.
         finalizationGuard.run();
@@ -446,11 +497,11 @@ public class GenerationPersistenceService {
         }
     }
 
-    private boolean resyncBaselineTestsAfterCompensation(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal) {
+    private boolean resyncBaselineTestsAfterCompensation(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, String ownershipToken) {
         try {
             syncTestCasesAndRecordVersion(exercise, user, testsBuildSignal, true, () -> {
             }, Map.of(), () -> {
-            });
+            }, ownershipToken);
             return true;
         }
         catch (RuntimeException e) {

@@ -71,7 +71,8 @@ class ProgrammingExercisePartialUpdateResourceTest {
         hazelcastInstance.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
         generationJobService = new GenerationJobService(new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance),
                 event -> {
-                }, mock(GenerationTokenUsageService.class), mock(HyperionGenerationBudgetService.class), Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
+                }, mock(GenerationTokenUsageService.class), mock(HyperionGenerationBudgetService.class), Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run,
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
         generationJobService.init();
     }
 

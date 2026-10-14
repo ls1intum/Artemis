@@ -65,14 +65,15 @@ public class ExerciseGenerationRevertService {
      * @param exercise              the exercise to revert
      * @param user                  the instructor performing the revert (exercise-version author)
      * @param stillOwnsMutationSlot re-checked before each durable mutation, so a lost slot stops the revert instead of finishing it
+     * @param ownershipToken        exact durable undo token used to authorize grading synchronization
      * @return the revert result, or empty when there is no retained baseline to revert to
      */
-    public Optional<RevertResult> revert(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot) {
+    public Optional<RevertResult> revert(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot, String ownershipToken) {
         var pair = recovery.find(exercise.getId());
         if (pair.isEmpty()) {
             return Optional.empty();
         }
-        RevertResult result = revertToBaseline(exercise, user, pair.get(), stillOwnsMutationSlot);
+        RevertResult result = revertToBaseline(exercise, user, pair.get(), stillOwnsMutationSlot, ownershipToken);
         // Consumed only once every captured repository was reset; a partial failure keeps it so a retry can finish instead of stranding the exercise half-reverted.
         if (result.fullyReverted()) {
             try {
@@ -86,7 +87,7 @@ public class ExerciseGenerationRevertService {
         return Optional.of(result);
     }
 
-    private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, GenerationVersionRecoveryService.Recovery pair, BooleanSupplier stillOwnsMutationSlot) {
+    private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, GenerationVersionRecoveryService.Recovery pair, BooleanSupplier stillOwnsMutationSlot, String ownershipToken) {
         ExerciseGenerationBaseline baseline = pair.baseline();
         if (!metadata.canRestore(exercise.getId(), pair) || !testCases.canRestore(exercise.getId(), pair)) {
             return new RevertResult(false, List.of(), false);
@@ -124,7 +125,7 @@ public class ExerciseGenerationRevertService {
                 testCases.restore(exercise.getId(), pair, stillOwnsMutationSlot);
                 fullyReverted = persistenceService.resyncAfterRevertWithSignal(exercise, user, null, baseline.problemStatement(), baseline.title(),
                         baseline.expectedProblemStatement(), baseline.expectedTitle(), revertedRepositoryHeads, baseline.previousGrading(), baseline.savedGrading(),
-                        stillOwnsMutationSlot);
+                        stillOwnsMutationSlot, ownershipToken);
             }
             catch (RuntimeException e) {
                 log.error("Failed to restore version metadata for exercise {}; retaining the baseline for retry", exercise.getId(), e);

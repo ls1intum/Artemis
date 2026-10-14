@@ -86,7 +86,8 @@ class RepositoryResourceMutationGuardTest {
     void saveFilesAndCommitChanges_blocksGenerationDuringUncommittedWrites_andDoesNotClaimANestedLease() throws Exception {
         GenerationJobService jobService = new GenerationJobService(
                 new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance), event -> {
-                }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
+                }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run,
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
         jobService.init();
         ProgrammingExerciseMutationGuardService mutationGuard = new ProgrammingExerciseMutationGuardService(
                 Optional.of(new HyperionExerciseMutationApi(new GenerationExternalMutationService(
