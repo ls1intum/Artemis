@@ -3,6 +3,9 @@ package de.tum.cit.aet.artemis.programming;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.net.URI;
 import java.sql.DriverManager;
@@ -10,6 +13,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -24,10 +28,21 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.testcontainers.DockerClientFactory;
 
+import de.tum.cit.aet.artemis.assessment.service.ExampleSubmissionService;
+import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseWriteOwnershipTestRepository;
+import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 
 class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrationIndependentTest {
 
@@ -93,6 +108,35 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
         assertThat(ownershipService.release(exercise.getId(), first)).isFalse();
         assertThat(ownershipService.isOwned(exercise.getId(), retry)).isTrue();
         ownershipService.release(exercise.getId(), retry);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "SAVE", "COPY" })
+    void durableOwnershipBlocksTheSharedDeletionEntryBeforeAnyDestructiveCall(String purpose) {
+        long id = exercise.getId();
+        String token = purpose.equals("COPY") ? ownershipService.claimReader(id) : ownershipService.claim(id, purpose);
+        var deletionRepository = mock(ExerciseTestRepository.class);
+        when(deletionRepository.findWithCompetenciesByIdElseThrow(id)).thenReturn(exercise);
+        var channels = mock(ChannelService.class);
+        var participations = mock(ParticipationDeletionService.class);
+        var programmingDeletion = mock(ProgrammingExerciseDeletionService.class);
+        var guard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(new GenerationExternalMutationService(ownershipService))));
+        var deletion = new ExerciseDeletionService(deletionRepository, participations, programmingDeletion, mock(QuizExerciseService.class),
+                mock(TutorParticipationTestRepository.class), mock(ExampleSubmissionService.class), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                channels, Optional.empty(), Optional.empty(), Optional.empty(), guard);
+        try {
+            assertThatThrownBy(() -> deletion.delete(id, true)).isInstanceOf(ConflictException.class);
+            verifyNoInteractions(channels, participations, programmingDeletion);
+            assertThat(ownershipRepository.existsById(id)).isTrue();
+        }
+        finally {
+            if (purpose.equals("COPY")) {
+                ownershipService.releaseReader(id, token);
+            }
+            else {
+                ownershipService.release(id, token);
+            }
+        }
     }
 
     @Test

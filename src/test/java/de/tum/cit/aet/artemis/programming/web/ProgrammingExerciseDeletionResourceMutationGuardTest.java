@@ -2,14 +2,13 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,6 +48,7 @@ class ProgrammingExerciseDeletionResourceMutationGuardTest {
     void setUp() {
         ProgrammingExercise exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
+        exercise.setTitle("Delete exercise");
         exercise.setCourse(new Course());
         when(repository.findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesElseThrow(EXERCISE_ID)).thenReturn(exercise);
         when(repository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(EXERCISE_ID)).thenReturn(exercise);
@@ -63,9 +63,9 @@ class ProgrammingExerciseDeletionResourceMutationGuardTest {
 
     @Test
     void deleteRejectsBeforeMutationWhenGenerationOwnsTheExercise() {
+        doThrow(new ConflictException("Reserved", "programmingExercise", "generationRunning")).when(exerciseDeletionService).delete(EXERCISE_ID, true);
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.deleteProgrammingExercise(EXERCISE_ID, true));
-
-        verifyNoInteractions(exerciseDeletionService);
+        verify(exerciseDeletionService).delete(EXERCISE_ID, true);
     }
 
     @Test
@@ -88,29 +88,8 @@ class ProgrammingExerciseDeletionResourceMutationGuardTest {
     }
 
     @Test
-    void deleteReleasesTheLeaseAfterDeletionServiceFailsSoASubsequentClaimSucceeds() {
-        ProgrammingExercise exercise = new ProgrammingExercise();
-        exercise.setId(EXERCISE_ID);
-        exercise.setCourse(new Course());
-        ProgrammingExerciseTestRepository deletionRepository = mock(ProgrammingExerciseTestRepository.class);
-        when(deletionRepository.findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesElseThrow(EXERCISE_ID)).thenReturn(exercise);
-        UserTestRepository deletionUserTestRepository = mock(UserTestRepository.class);
-        when(deletionUserTestRepository.getUserWithAuthorities()).thenReturn(new User());
-        ExerciseDeletionService deletionService = mock(ExerciseDeletionService.class);
-        IllegalStateException failure = new IllegalStateException("delete failed");
-        doThrow(failure).when(deletionService).delete(EXERCISE_ID, true);
-        AtomicBoolean leaseHeld = new AtomicBoolean();
-        ProgrammingExerciseMutationGuardService mutationGuard = mock(ProgrammingExerciseMutationGuardService.class);
-        when(mutationGuard.claimExternalMutation(EXERCISE_ID)).thenAnswer(invocation -> {
-            assertThat(leaseHeld.compareAndSet(false, true)).isTrue();
-            return new ProgrammingExerciseMutationGuardService.MutationLease(() -> leaseHeld.set(false));
-        });
-        ProgrammingExerciseDeletionResource deletionResource = new ProgrammingExerciseDeletionResource(deletionRepository, deletionUserTestRepository,
-                mock(AuthorizationCheckService.class), Optional.empty(), mock(ExerciseService.class), deletionService, mock(ProgrammingExerciseDeletionService.class),
-                mock(ExerciseVersionService.class), mutationGuard);
-
-        assertThatThrownBy(() -> deletionResource.deleteProgrammingExercise(EXERCISE_ID, true)).isSameAs(failure);
-
-        assertThat(leaseHeld).isFalse();
+    void deleteDelegatesGuardAcquisitionToTheCommonServiceOnly() {
+        assertThat(resource.deleteProgrammingExercise(EXERCISE_ID, true).getStatusCode().value()).isEqualTo(200);
+        verify(exerciseDeletionService).delete(EXERCISE_ID, true);
     }
 }
