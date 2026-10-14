@@ -112,11 +112,13 @@ final class GenerationJobReaper {
             signalStaleLiveOwner(current, now);
             return false;
         }
-        stopActiveJob(key, current, now);
-        return true;
+        return stopActiveJob(key, current, now);
     }
 
     private void signalStaleLiveOwner(GenerationJobService.JobInfo current, Instant now) {
+        if (!jobMap.replace(String.valueOf(current.exerciseId()), current, current.withCancellationRequested())) {
+            return;
+        }
         boolean alreadyCancelled = Boolean.TRUE.equals(cancellationMap.get(current.jobId()));
         cancellationMap.put(current.jobId(), Boolean.TRUE);
         replayStore.terminalizeStoppedJob(current, stoppedMessage(current, now), stoppedTerminationReason(current, now));
@@ -127,10 +129,14 @@ final class GenerationJobReaper {
 
     /** @return whether this call was the one that removed the slot */
     boolean stopActiveJob(String key, GenerationJobService.JobInfo current, Instant now) {
+        var cancelled = current.withCancellationRequested();
+        if (!jobMap.replace(key, current, cancelled)) {
+            return false;
+        }
         cancellationMap.put(current.jobId(), Boolean.TRUE, maxJobDuration.isZero() || maxJobDuration.isNegative() ? Duration.ofSeconds(1) : maxJobDuration);
         replayStore.terminalizeStoppedJob(current, stoppedMessage(current, now), stoppedTerminationReason(current, now));
         replayStore.sealUsageIncomplete(current.jobId());
-        boolean released = jobMap.remove(key, current);
+        boolean released = jobMap.remove(key, cancelled);
         if (released) {
             replayStore.retainAfterJobCleared(current.exerciseId(), current.jobId());
         }

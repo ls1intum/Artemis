@@ -15,7 +15,7 @@ import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -35,7 +35,7 @@ class StudentExamServiceProtectionTest {
 
     private final ExamUserRepository registered = mock();
 
-    private final UserRepository users = mock();
+    private final UserTestRepository users = mock();
 
     private final Exam supplied = new Exam();
 
