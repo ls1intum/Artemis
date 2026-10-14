@@ -77,7 +77,18 @@ public class GenerationExternalMutationService {
     }
 
     public void releaseSaveSlot(long exerciseId, String token) {
-        ownership.get(exerciseId).filter(slot -> slot.token().equals(token) && !slot.purpose().endsWith("_RECOVERY")).ifPresent(_ -> ownership.release(exerciseId, token));
+        releaseSaveSlotIfOwned(exerciseId, token);
+    }
+
+    /**
+     * Releases only an active save; a recovery reservation with the same token remains held.
+     *
+     * @param exerciseId protected exercise
+     * @param token      exact save token
+     * @return whether the active save was released
+     */
+    public boolean releaseSaveSlotIfOwned(long exerciseId, String token) {
+        return ownership.releaseActiveSave(exerciseId, token);
     }
 
     public void retainSaveRecovery(long exerciseId, String token) {

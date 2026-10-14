@@ -46,8 +46,8 @@ class WorkerRegistryRedisTest {
     void concurrentCoordinatorsFenceReplacementsAndLateCompletion() throws Exception {
         try (var store = ValkeyTestContainerFactory.create()) {
             store.start();
-            var firstIdentity = new RedisNodeIdentity("aiworker-core", true, false);
-            var secondIdentity = new RedisNodeIdentity("aiworker-core", true, false);
+            var firstIdentity = new RedisNodeIdentity("aiworker-core");
+            var secondIdentity = new RedisNodeIdentity("aiworker-core");
             String address = "redis://" + store.getHost() + ":" + store.getMappedPort(6379);
             var firstClient = client(address, firstIdentity);
             var secondClient = client(address, secondIdentity);

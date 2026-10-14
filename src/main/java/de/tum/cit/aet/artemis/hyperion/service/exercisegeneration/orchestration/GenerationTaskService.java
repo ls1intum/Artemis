@@ -732,6 +732,10 @@ public class GenerationTaskService {
         if (exercise.isExamExercise() && !isStillDraftWithoutParticipations(exerciseId)) {
             throw new IllegalStateException("Hyperion generation cannot modify an exercise assigned to a student exam or test run.");
         }
+        if (!auxiliaryRepositoryRepository.findByExerciseId(exerciseId).isEmpty()) {
+            throw new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationAuthoringBaselineService.AuthoringConflictException(
+                    "Auxiliary repositories were added during authoring. Nothing was saved.");
+        }
         Set<StudentParticipation> studentParticipations = exercise.getStudentParticipations();
         if (studentParticipations != null && !studentParticipations.isEmpty()) {
             throw new IllegalStateException("Hyperion generation can only modify exercises without student participations.");

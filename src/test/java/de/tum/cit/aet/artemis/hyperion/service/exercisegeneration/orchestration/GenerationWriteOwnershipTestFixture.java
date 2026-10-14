@@ -34,6 +34,11 @@ public class GenerationWriteOwnershipTestFixture {
             var current = writers.get(id);
             return current != null && current.token().equals(call.getArgument(1)) && writers.remove(id, current);
         });
+        when(database.releaseActiveSave(anyLong(), anyString())).thenAnswer(call -> {
+            long id = call.getArgument(0);
+            var current = writers.get(id);
+            return current != null && current.token().equals(call.getArgument(1)) && current.purpose().equals("SAVE") && writers.remove(id, current);
+        });
         when(database.retain(anyLong(), anyString(), anyString())).thenAnswer(call -> {
             long id = call.getArgument(0);
             var current = writers.get(id);
