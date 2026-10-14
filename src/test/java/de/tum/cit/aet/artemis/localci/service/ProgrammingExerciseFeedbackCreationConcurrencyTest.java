@@ -163,7 +163,9 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
         when(build.testsRepoCommitHash()).thenReturn("expected-commit");
         when(fixture.ownership().get(EXERCISE_ID))
                 .thenReturn(Optional.of(new ProgrammingExerciseWriteOwnershipService.Ownership("save-token", "owner", "SAVE", Instant.now(), "expected-commit")));
-        when(fixture.ownership().isOwned(EXERCISE_ID, "save-token")).thenReturn(true);
+        when(fixture.ownership().executeAuthorizedTestsBuild(org.mockito.ArgumentMatchers.eq(EXERCISE_ID), org.mockito.ArgumentMatchers.eq("save-token"),
+                org.mockito.ArgumentMatchers.eq("expected-commit"), org.mockito.ArgumentMatchers.any(java.util.function.BooleanSupplier.class)))
+                .thenAnswer(call -> Optional.of(call.getArgument(3, java.util.function.BooleanSupplier.class).getAsBoolean()));
 
         assertThat(fixture.service().generateTestCasesFromBuildResult(build, exercise())).isTrue();
 
@@ -193,7 +195,8 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
         when(build.testsRepoCommitHash()).thenReturn("expected-commit");
         when(fixture.ownership().get(EXERCISE_ID))
                 .thenReturn(Optional.of(new ProgrammingExerciseWriteOwnershipService.Ownership("old-token", "owner", "SAVE", Instant.now(), "expected-commit")));
-        when(fixture.ownership().isOwned(EXERCISE_ID, "old-token")).thenReturn(false);
+        when(fixture.ownership().executeAuthorizedTestsBuild(org.mockito.ArgumentMatchers.eq(EXERCISE_ID), org.mockito.ArgumentMatchers.eq("old-token"),
+                org.mockito.ArgumentMatchers.eq("expected-commit"), org.mockito.ArgumentMatchers.any(java.util.function.BooleanSupplier.class))).thenReturn(Optional.empty());
         assertThat(fixture.service().generateTestCasesFromBuildResult(build, exercise())).isFalse();
         verify(fixture.ownership(), never()).claim(EXERCISE_ID, "LOCALCI");
 
@@ -260,6 +263,21 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> fixture.service().generateTestCasesFromBuildResult(buildResultWith("newTest"), exercise()));
         verify(fixture.testCaseRepository(), never()).saveAll(anySet());
         verify(fixture.ownership(), never()).release(EXERCISE_ID, "test-token");
+    }
+
+    @Test
+    void retainedSameTokenCannotUseAnEarlierAuthorizationSnapshot() {
+        var fixture = fixture();
+        var build = buildResultWith("oldTest");
+        when(build.testsRepoCommitHash()).thenReturn("expected-commit");
+        when(fixture.ownership().get(EXERCISE_ID))
+                .thenReturn(Optional.of(new ProgrammingExerciseWriteOwnershipService.Ownership("save-token", "owner", "SAVE", Instant.now(), "expected-commit")));
+        when(fixture.ownership().executeAuthorizedTestsBuild(org.mockito.ArgumentMatchers.eq(EXERCISE_ID), org.mockito.ArgumentMatchers.eq("save-token"),
+                org.mockito.ArgumentMatchers.eq("expected-commit"), org.mockito.ArgumentMatchers.any(java.util.function.BooleanSupplier.class))).thenReturn(Optional.empty());
+        assertThat(fixture.service().generateTestCasesFromBuildResult(build, exercise())).isFalse();
+        verify(fixture.testCaseRepository(), never()).saveAll(anySet());
+        verify(fixture.ownership(), never()).claim(EXERCISE_ID, "LOCALCI");
+        verify(fixture.ownership(), never()).release(EXERCISE_ID, "save-token");
     }
 
 }

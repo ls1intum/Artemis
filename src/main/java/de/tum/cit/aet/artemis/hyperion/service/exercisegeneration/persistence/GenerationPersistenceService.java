@@ -464,8 +464,15 @@ public class GenerationPersistenceService {
             if (!writeOwnership.authorizeTestsBuild(exercise.getId(), ownershipToken, testsBuildSignal.testsCommitHash())) {
                 throw new IllegalStateException("Test build authorization lost its exact exercise write token");
             }
-            triggerTestsBuild(exercise, testsBuildSignal);
-            awaitTestCaseSynchronization(exercise.getId(), testsBuildSignal, failOnFinalizationFailure);
+            try {
+                triggerTestsBuild(exercise, testsBuildSignal);
+                awaitTestCaseSynchronization(exercise.getId(), testsBuildSignal, failOnFinalizationFailure);
+            }
+            finally {
+                if (!writeOwnership.stopTestsBuildAuthorization(exercise.getId(), ownershipToken)) {
+                    throw new IllegalStateException("Test build synchronization lost its exact exercise write token");
+                }
+            }
         }
         // Grading-only changes still need the finalization guard, even without a new tests commit.
         finalizationGuard.run();

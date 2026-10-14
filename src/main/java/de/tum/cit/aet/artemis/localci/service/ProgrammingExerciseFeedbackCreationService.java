@@ -368,9 +368,9 @@ public class ProgrammingExerciseFeedbackCreationService {
         long exerciseId = exercise.getId();
         var reservation = writeOwnership.get(exerciseId);
         if (reservation.isPresent()) {
-            if (buildResult.testsRepoCommitHash() != null && Objects.equals(reservation.get().expectedTestsCommitHash(), buildResult.testsRepoCommitHash())
-                    && writeOwnership.isOwned(exerciseId, reservation.get().token())) {
-                return synchronizeTestCases(buildResult, programmingExerciseRepository.findByIdElseThrow(exerciseId));
+            if (buildResult.testsRepoCommitHash() != null && Objects.equals(reservation.get().expectedTestsCommitHash(), buildResult.testsRepoCommitHash())) {
+                return writeOwnership.executeAuthorizedTestsBuild(exerciseId, reservation.get().token(), buildResult.testsRepoCommitHash(),
+                        () -> synchronizeTestCases(buildResult, programmingExerciseRepository.findByIdElseThrow(exerciseId))).orElse(false);
             }
             return false;
         }

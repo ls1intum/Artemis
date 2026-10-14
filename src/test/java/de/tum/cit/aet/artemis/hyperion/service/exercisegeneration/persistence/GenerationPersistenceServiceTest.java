@@ -191,6 +191,7 @@ class GenerationPersistenceServiceTest {
     /** Builds the service with a shrunken test-case sync wait, so the build-completion wait runs without sleeping. */
     private GenerationPersistenceService newService(Duration testCaseSyncTimeout) {
         ownership = mock(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService.class);
+        when(ownership.stopTestsBuildAuthorization(anyLong(), org.mockito.ArgumentMatchers.nullable(String.class))).thenReturn(true);
         when(ownership.authorizeTestsBuild(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.nullable(String.class), org.mockito.ArgumentMatchers.anyString()))
                 .thenReturn(true);
         return new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
@@ -225,6 +226,16 @@ class GenerationPersistenceServiceTest {
         verify(ownership).authorizeTestsBuild(eq(exercise.getId()), eq("job-token"), any());
         verify(programmingSubmissionService, never()).createSolutionParticipationSubmissionWithTypeTest(anyLong(), any());
         verify(continuousIntegrationTriggerService, never()).triggerRestrictedBuild(any(), any(), any());
+    }
+
+    @Test
+    void synchronizationAuthorizationEndsWhenTestsBuildTriggerFails() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        org.mockito.Mockito.doThrow(new IllegalStateException("Queue unavailable")).when(continuousIntegrationTriggerService).triggerRestrictedBuild(any(), anyString(), any());
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "");
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("Queue unavailable");
+        verify(ownership).stopTestsBuildAuthorization(eq(exercise.getId()), org.mockito.ArgumentMatchers.isNull());
+        verify(exerciseVersionService, never()).createExerciseVersionOrThrow(any(), any(), anyMap());
     }
 
     private static Result resultWithId(long id) {
@@ -390,7 +401,7 @@ class GenerationPersistenceServiceTest {
 
         GenerationPersistenceService.PersistResult persistResult = service.persist(exercise, user, outcome, "old statement", null, "job-1", () -> true);
 
-        InOrder order = Mockito.inOrder(gitService, resultRepository, programmingSubmissionService, exerciseVersionService);
+        InOrder order = Mockito.inOrder(gitService, resultRepository, programmingSubmissionService, exerciseVersionService, ownership);
         order.verify(gitService).getLocalHeadHash(templateRepository);
         order.verify(gitService).commitStagedChanges(templateRepository, "Generate exercise with Hyperion (job-1)", user);
         order.verify(gitService).pushCommitWithLease(templateRepository, "hash-template", "main", "pre-template");
@@ -401,7 +412,9 @@ class GenerationPersistenceServiceTest {
         order.verify(gitService).getLocalHeadHash(testsRepository);
         order.verify(gitService).commitStagedChanges(testsRepository, "Generate exercise with Hyperion (job-1)", user);
         order.verify(gitService).pushCommitWithLease(testsRepository, "hash-tests", "main", "pre-tests");
+        order.verify(ownership).authorizeTestsBuild(1L, "job-1", "hash-tests");
         order.verify(programmingSubmissionService).existsNewerSuccessfulTestResultForParticipationAndCommitHash(anyLong(), eq("hash-tests"), any());
+        order.verify(ownership).stopTestsBuildAuthorization(1L, "job-1");
         order.verify(exerciseVersionService).createExerciseVersionOrThrow(exercise, user,
                 Map.of(RepositoryType.TEMPLATE, "hash-template", RepositoryType.SOLUTION, "hash-solution", RepositoryType.TESTS, "hash-tests"));
         verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(1L, "hash-tests");
@@ -1033,6 +1046,7 @@ class GenerationPersistenceServiceTest {
 
         assertThat(elapsed).as("terminated at the bounded deadline, did not hang").isLessThan(Duration.ofSeconds(5));
         assertThat(matchingResultPolls.get()).as("kept polling for the matching TEST build result until the deadline").isGreaterThan(1);
+        verify(ownership).stopTestsBuildAuthorization(eq(exercise.getId()), org.mockito.ArgumentMatchers.isNull());
     }
 
     @Test
