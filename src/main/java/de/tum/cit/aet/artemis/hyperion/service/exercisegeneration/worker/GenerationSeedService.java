@@ -95,7 +95,12 @@ public class GenerationSeedService {
         return new Seed(new WorkspaceSnapshot(files), Map.copyOf(heads), new GradingContext(exercise.getDueDate() != null, baseline), authoringBaseline);
     }
 
-    /** Reloads the seed inputs inside the caller's short database write reservation. */
+    /**
+     * Reloads the seed inputs inside the caller's short database write reservation.
+     *
+     * @param exerciseId exercise being seeded
+     * @return fresh authoring inputs
+     */
     public ProgrammingExercise reload(long exerciseId) {
         return baselines.requireCurrentExercise(exerciseId);
     }

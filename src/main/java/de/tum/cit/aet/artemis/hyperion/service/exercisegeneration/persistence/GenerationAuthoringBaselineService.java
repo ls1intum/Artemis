@@ -64,7 +64,12 @@ public class GenerationAuthoringBaselineService {
         }
     }
 
-    /** Capture while the caller owns the exercise DB write guard. */
+    /**
+     * Capture while the caller owns the exercise DB write guard.
+     *
+     * @param exercise fresh exercise loaded under the reservation
+     * @return detached authoring inputs
+     */
     public Snapshot capture(ProgrammingExercise exercise) {
         ProgrammingExerciseBuildConfig configuration = buildConfigurations.getProgrammingExerciseBuildConfigElseThrow(exercise.getId());
         Map<String, String> metadata = new LinkedHashMap<>();
@@ -129,13 +134,23 @@ public class GenerationAuthoringBaselineService {
         return new Snapshot(metadata, build, capturedTests, capturedTasks);
     }
 
-    /** Load fresh persisted authoring values while the caller holds its seed or save reservation. */
+    /**
+     * Load fresh persisted authoring values while the caller holds its seed or save reservation.
+     *
+     * @param exerciseId exercise to reload
+     * @return current exercise with repository participations
+     */
     public ProgrammingExercise requireCurrentExercise(long exerciseId) {
         return exercises.findWithAllParticipationsById(exerciseId)
                 .orElseThrow(() -> new IllegalStateException("The exercise no longer exists; the verified candidate was not saved"));
     }
 
-    /** Compare after acquiring the final-save DB guard and before any canonical repository or metadata write. */
+    /**
+     * Compare after acquiring the final-save DB guard and before any canonical repository or metadata write.
+     *
+     * @param exerciseId exercise being saved
+     * @param expected frozen seed values; missing evidence fails closed
+     */
     public void assertMatches(long exerciseId, @Nullable Snapshot expected) {
         ProgrammingExercise current = requireCurrentExercise(exerciseId);
         if (expected == null || !expected.equals(capture(current))) {
