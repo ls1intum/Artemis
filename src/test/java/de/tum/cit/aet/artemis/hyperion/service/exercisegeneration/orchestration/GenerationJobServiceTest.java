@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -54,6 +55,8 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.task.TaskRejectedException;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.hazelcast.cluster.Cluster;
+import com.hazelcast.cluster.Member;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
@@ -90,13 +93,11 @@ class GenerationJobServiceTest {
 
     private GenerationJobService jobService;
 
-    private GenerationExternalMutationService ownership;
-
-    private de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi mutationApi;
-
     @BeforeAll
     void startHazelcast() {
         Config config = new Config();
+        config.getMemberAttributeConfig().setAttribute(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.WRITER_FENCING_MEMBER_ATTRIBUTE, "true");
+        config.getMemberAttributeConfig().setAttribute(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.WRITER_FENCING_MEMBERS_ATTRIBUTE, "1");
         config.setClusterName("hyperion-job-service-test-" + System.nanoTime());
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
@@ -106,11 +107,8 @@ class GenerationJobServiceTest {
     @BeforeEach
     void setUp() {
         hazelcastInstance.getDistributedObjects().forEach(distributedObject -> distributedObject.destroy());
-        var ownershipFixture = new GenerationWriteOwnershipTestFixture();
-        ownership = ownershipFixture.service;
-        mutationApi = new de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi(ownershipFixture.database);
         jobService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), ownership);
+        }, mock(GenerationTokenUsageService.class));
         jobService.init();
     }
 
@@ -133,82 +131,6 @@ class GenerationJobServiceTest {
 
     private static ExerciseGenerationEventDTO progress(String message) {
         return ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.PROGRESS, message);
-    }
-
-    @Test
-    void authoringHeartbeatDoesNotRequireCanonicalWriteOwnership() {
-        String jobId = jobService.startJob(user("owner"), exercise(42L), "draft", GenerationMode.GENERATE);
-        org.mockito.Mockito.when(ownership.owns(42L, jobId)).thenThrow(new IllegalStateException("No write reservation during authoring"));
-
-        assertThat(jobService.heartbeat(42L, jobId)).isTrue();
-        assertThat(jobService.isOwnedActiveJob(42L, jobId)).isTrue();
-        verify(ownership, never()).owns(42L, jobId);
-    }
-
-    @Test
-    void coordinationLookupFailureDoesNotCancelOwnedAuthoring() {
-        var provider = spy(HyperionDistributedDataTestProvider.provider(hazelcastInstance));
-        doThrow(new IllegalStateException("Redis CLIENT LIST unavailable")).when(provider).getCoordinationSnapshot();
-        var service = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class), ownership);
-        service.init();
-        String jobId = service.startJob(user("owner"), exercise(42L), "draft", GenerationMode.GENERATE);
-
-        assertThat(service.heartbeat(42L, jobId)).isTrue();
-        assertThat(service.isOwnedActiveJob(42L, jobId)).isTrue();
-        verify(provider, never()).getCoordinationSnapshot();
-    }
-
-    @Test
-    void saveHeartbeatFailsClosedWhenDatabaseTokenIsLost() {
-        String jobId = jobService.startJob(user("owner"), exercise(42L), "draft", GenerationMode.GENERATE);
-        assertThat(jobService.enterNonCancellablePhase(42L, jobId)).isTrue();
-        org.mockito.Mockito.when(ownership.owns(42L, jobId)).thenReturn(false);
-
-        assertThat(jobService.heartbeat(42L, jobId)).isFalse();
-        assertThat(jobService.isOwnedActiveJob(42L, jobId)).isFalse();
-    }
-
-    @Test
-    void completedWorkerClearsActivityEvenWhenDatabaseReleaseIsUncertain() {
-        String jobId = jobService.startJob(user("owner"), exercise(42L), "draft", GenerationMode.GENERATE);
-        assertThat(jobService.enterNonCancellablePhase(42L, jobId)).isTrue();
-        doThrow(new IllegalStateException("release acknowledgement lost")).when(ownership).releaseSaveSlot(42L, jobId);
-
-        assertThatThrownBy(() -> jobService.clearJob(42L, jobId)).hasMessage("release acknowledgement lost");
-        assertThat(jobService.hasActiveJob(42L)).isFalse();
-    }
-
-    @Test
-    void unknownPersistencePhaseTransitionRetainsDatabaseGuard() {
-        var provider = spy(new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService());
-        var slots = spy(provider.<String, GenerationJobService.JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
-        doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
-        var service = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class), ownership);
-        service.init();
-        String jobId = service.startJob(user("owner"), exercise(42L), "draft", GenerationMode.GENERATE);
-        doThrow(new IllegalStateException("phase acknowledgement lost")).when(slots).replace(eq("42"), any(), any());
-
-        assertThatThrownBy(() -> service.enterNonCancellablePhase(42L, jobId)).hasMessage("phase acknowledgement lost");
-        verify(ownership).retainSaveRecovery(42L, jobId);
-        verify(ownership, never()).releaseSaveSlot(42L, jobId);
-    }
-
-    @Test
-    void failedPhaseLockBeforeAnyTransitionReleasesConfirmedUnusedDatabaseGuard() {
-        var provider = spy(new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService());
-        var slots = spy(provider.<String, GenerationJobService.JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
-        doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
-        var service = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class), ownership);
-        service.init();
-        String jobId = service.startJob(user("owner"), exercise(42L), "draft", GenerationMode.GENERATE);
-        doThrow(new IllegalStateException("phase lock unavailable")).when(slots).lock("42");
-
-        assertThatThrownBy(() -> service.enterNonCancellablePhase(42L, jobId)).hasMessage("phase lock unavailable");
-        verify(ownership).releaseSaveSlot(42L, jobId);
-        verify(ownership, never()).retainSaveRecovery(42L, jobId);
     }
 
     @Test
@@ -241,7 +163,7 @@ class GenerationJobServiceTest {
     void terminalStatusIncludesTransientCompleteJobUsageOnlyForOwner() {
         GenerationTokenUsageService tokenUsageService = mock(GenerationTokenUsageService.class);
         GenerationJobService meteredJobService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, tokenUsageService, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, tokenUsageService);
         meteredJobService.init();
         ProgrammingExercise exercise = exercise(47L);
         User owner = user("owner");
@@ -274,7 +196,7 @@ class GenerationJobServiceTest {
         // An instructor watching a run has to be able to see what it is spending; withholding the figure until the run is terminal leaves the expensive part invisible.
         GenerationTokenUsageService tokenUsageService = mock(GenerationTokenUsageService.class);
         GenerationJobService meteredJobService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, tokenUsageService, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, tokenUsageService);
         meteredJobService.init();
         ProgrammingExercise exercise = exercise(51L);
         User owner = user("owner");
@@ -327,8 +249,7 @@ class GenerationJobServiceTest {
     @Test
     void providerRetriesMakeRunLevelAccountingIncompleteFromTheStart() {
         GenerationJobService retryingProviderService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run, 1, Duration.ofHours(4), false,
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run, 1, Duration.ofHours(4), false);
         retryingProviderService.init();
         ProgrammingExercise exercise = exercise(49L);
         User owner = user("owner");
@@ -368,10 +289,9 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void concurrentTemplateCopiesExcludeFinalSaveUntilBothReservationsClose() throws Exception {
-        var copies = ownership;
+    void concurrentTemplateCopiesExcludeGenerationUntilBothReservationsClose() throws Exception {
+        var copies = new GenerationExternalMutationService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), 1, true);
         String first = copies.claimParticipationSlot(43);
-        String generation = jobService.startJob(user("owner"), exercise(43), "generate", GenerationMode.GENERATE);
         var entered = new CountDownLatch(1);
         var release = new CountDownLatch(1);
         try (var executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
@@ -390,16 +310,17 @@ class GenerationJobServiceTest {
             });
             try {
                 assertThat(entered.await(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
-                assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.enterNonCancellablePhase(43, generation));
+                assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise(43), "generate", GenerationMode.GENERATE));
                 copies.clearParticipationSlot(43, first);
-                assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.enterNonCancellablePhase(43, generation));
+                assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise(43), "generate", GenerationMode.GENERATE));
             }
             finally {
                 release.countDown();
             }
             assertThat(second.get(5, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
         }
-        assertThat(jobService.enterNonCancellablePhase(43, generation)).isTrue();
+        assertThat(HyperionDistributedDataTestProvider.provider(hazelcastInstance).getMap(GenerationJobService.JOB_MAP_NAME).get("43")).isNull();
+        String generation = jobService.startJob(user("owner"), exercise(43), "generate", GenerationMode.GENERATE);
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> copies.claimParticipationSlot(43));
         copies.clearParticipationSlot(43, first);
         assertThat(jobService.isOwnedActiveJob(43, generation)).isTrue();
@@ -407,12 +328,11 @@ class GenerationJobServiceTest {
 
     @Test
     void partialUndoKeepsEveryWriterExcludedUntilAuthorizedRetryCompletes() {
-        var copies = ownership;
+        var copies = new GenerationExternalMutationService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), 1, true);
         String original = jobService.claimRevertSlot(user("owner"), 43);
         jobService.retainRevertRecoverySlot(43, original);
         assertThat(jobService.isRevertRecoveryPending(43)).isTrue();
-        String generation = jobService.startJob(user("owner"), exercise(43), "generate", GenerationMode.GENERATE);
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.enterNonCancellablePhase(43, generation));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise(43), "generate", GenerationMode.GENERATE));
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> copies.claimParticipationSlot(43));
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> copies.claimExternalMutationSlot(43));
 
@@ -423,34 +343,39 @@ class GenerationJobServiceTest {
         assertThat(jobService.isOwnedActiveJob(43, retry)).isTrue();
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimRevertSlot(user("owner"), 43));
         jobService.clearRevertSlot(43, retry);
-        assertThat(jobService.enterNonCancellablePhase(43, generation)).isTrue();
+        assertThat(jobService.startJob(user("owner"), exercise(43), "generate", GenerationMode.GENERATE)).isNotBlank();
     }
 
     @Test
-    void claimRevertSlot_blocksFinalSaveUntilCleared() {
-        String token = jobService.claimRevertSlot(user("owner"), 43L);
-        String job = jobService.startJob(user("owner"), exercise(43L), "draft", GenerationMode.GENERATE);
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.enterNonCancellablePhase(43L, job));
-        jobService.clearRevertSlot(43L, token);
-        assertThat(jobService.enterNonCancellablePhase(43L, job)).isTrue();
+    void claimRevertSlot_blocksGenerationUntilCleared() {
+        ProgrammingExercise exercise = exercise(43L);
+        User owner = user("owner");
+
+        String token = jobService.claimRevertSlot(owner, exercise.getId());
+
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(owner, exercise, "again", GenerationMode.GENERATE));
+        jobService.clearRevertSlot(exercise.getId(), token);
+        assertThat(jobService.startJob(owner, exercise, "after revert", GenerationMode.GENERATE)).isNotBlank();
     }
 
     @Test
-    void undoCanRunDuringAuthoringButExcludesFinalSave() {
-        String job = jobService.startJob(user("owner"), exercise(44L), "draft", GenerationMode.GENERATE);
-        String undo = jobService.claimRevertSlot(user("owner"), 44L);
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.enterNonCancellablePhase(44L, job));
-        jobService.clearRevertSlot(44L, undo);
-        assertThat(jobService.enterNonCancellablePhase(44L, job)).isTrue();
+    void claimRevertSlot_whenGenerationRuns_throwsConflict() {
+        ProgrammingExercise exercise = exercise(44L);
+        User owner = user("owner");
+        jobService.startJob(owner, exercise, "do it", GenerationMode.GENERATE);
+
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimRevertSlot(owner, exercise.getId()));
     }
 
     @Test
-    void ordinaryEditCanRunDuringAuthoringButExcludesFinalSave() {
-        String token = jobService.claimExternalMutationSlot(440L);
-        String job = jobService.startJob(user("owner"), exercise(440L), "draft", GenerationMode.GENERATE);
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.enterNonCancellablePhase(440L, job));
-        jobService.clearExternalMutationSlot(440L, token);
-        assertThat(jobService.enterNonCancellablePhase(440L, job)).isTrue();
+    void claimExternalMutationSlot_blocksGenerationUntilReleased() {
+        ProgrammingExercise exercise = exercise(440L);
+
+        String token = jobService.claimExternalMutationSlot(exercise.getId());
+
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(user("owner"), exercise, "generate", GenerationMode.GENERATE));
+        jobService.clearExternalMutationSlot(exercise.getId(), token);
+        assertThat(jobService.startJob(user("owner"), exercise, "generate", GenerationMode.GENERATE)).isNotBlank();
     }
 
     @Test
@@ -466,7 +391,7 @@ class GenerationJobServiceTest {
         var provider = spy(HyperionDistributedDataTestProvider.provider(hazelcastInstance));
         var service = new GenerationJobService(provider, event -> {
         }, mock(GenerationTokenUsageService.class), null, Duration.ofHours(3).plusMinutes(1), Duration.ofMinutes(30), Runnable::run, 1, Duration.ofHours(4), true,
-                Duration.ofHours(3), org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+                Duration.ofHours(3));
         service.init();
 
         String jobId = service.startJob(user("owner"), exercise(446L), "generate", GenerationMode.GENERATE);
@@ -481,8 +406,7 @@ class GenerationJobServiceTest {
     void activeGenerationSlot_doesNotExpireForSupportedLongRunningJobs() {
         long exerciseId = 447L;
         GenerationJobService longRunningJobService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), Duration.ofHours(3).plusMinutes(1), Duration.ofHours(3),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), Duration.ofHours(3).plusMinutes(1), Duration.ofHours(3));
         longRunningJobService.init();
 
         String jobId = longRunningJobService.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
@@ -548,6 +472,59 @@ class GenerationJobServiceTest {
         assertThat(transcriptMap().getEntryView(String.valueOf(exerciseId)).getTtl()).isEqualTo(GenerationJobService.DEFAULT_TERMINAL_REPLAY_TTL.toMillis());
     }
 
+    @Test
+    void claimSlot_whenDataMemberCountDiffersFromConfiguredTopology_failsClosed() {
+        GenerationJobService mismatchedTopologyService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run, 2);
+        mismatchedTopologyService.init();
+
+        assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> mismatchedTopologyService.rejectIfActiveJobCannotBeReclaimed(446L))
+                .withMessageContaining("expected 2").withMessageContaining("observed 1");
+        assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> mismatchedTopologyService.claimExternalMutationSlot(446L))
+                .withMessageContaining("expected 2").withMessageContaining("observed 1");
+        assertThat(mismatchedTopologyService.hasActiveJob(446L)).isFalse();
+    }
+
+    @Test
+    void claimSlot_rechecksTopologyAfterAcquiringTheExerciseLock() throws Exception {
+        long exerciseId = 449L;
+        String key = String.valueOf(exerciseId);
+        IMap<String, GenerationJobService.JobInfo> jobMap = jobMap();
+        HazelcastInstance observedHazelcast = spy(hazelcastInstance);
+        Cluster cluster = mock(Cluster.class);
+        Member firstMember = hazelcastInstance.getCluster().getLocalMember();
+        Member secondMember = mock(Member.class);
+        AtomicBoolean topologyChanged = new AtomicBoolean(false);
+        when(cluster.getMembers()).thenAnswer(invocation -> topologyChanged.get() ? Set.of(firstMember, secondMember) : Set.of(firstMember));
+        when(secondMember.isLiteMember()).thenReturn(false);
+        when(cluster.getLocalMember()).thenReturn(firstMember);
+        doReturn(cluster).when(observedHazelcast).getCluster();
+        GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(observedHazelcast), event -> {
+        }, mock(GenerationTokenUsageService.class));
+        service.init();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        CountDownLatch lockAttempted = captureNextJobLockAttempt(service, key);
+        AtomicBoolean lockHeld = new AtomicBoolean(true);
+
+        jobMap.lock(key);
+        try {
+            Future<String> claim = executor.submit(() -> service.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE));
+            assertThat(lockAttempted.await(5, TimeUnit.SECONDS)).isTrue();
+            topologyChanged.set(true);
+            jobMap.unlock(key);
+            lockHeld.set(false);
+
+            assertThatThrownBy(() -> claim.get(5, TimeUnit.SECONDS)).hasCauseInstanceOf(ServiceUnavailableAlertException.class);
+            assertThat(service.hasActiveJob(exerciseId)).isFalse();
+        }
+        finally {
+            if (lockHeld.get()) {
+                jobMap.unlock(key);
+            }
+            executor.shutdownNow();
+        }
+    }
+
     /** Interposes on the map to verify the value guard still fails closed if ownership changes unexpectedly. */
     @Test
     void claimSlot_failsClosedWhenAnotherNodeFilledTheSlotAfterTheEmptyRead() {
@@ -560,8 +537,7 @@ class GenerationJobServiceTest {
         // The claimant reads an empty slot; by the time it writes, another owner already owns the exercise.
         doReturn(null).when(observedJobMap).get(key);
         GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(observedHazelcast), event -> {
-        }, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class));
         service.init();
         jobService.startJob(user("winner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
         GenerationJobService.JobInfo winner = realJobMap.get(key);
@@ -580,8 +556,7 @@ class GenerationJobServiceTest {
         IMap<String, GenerationJobService.JobInfo> observedJobMap = spy(realJobMap);
         doReturn(observedJobMap).when(observedHazelcast).getMap("hyperion-exercise-generation-jobs");
         GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(observedHazelcast), event -> {
-        }, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class));
         service.init();
         String jobId = service.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
         GenerationJobService.JobInfo owned = realJobMap.get(key);
@@ -595,15 +570,27 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void activityReaperCannotReleaseOrdinaryDatabaseWriter() {
-        String token = jobService.claimExternalMutationSlot(229L);
-        jobService.clearStaleJobs();
-        assertThat(jobService.hasActiveJob(229L)).isFalse();
-        assertThat(mutationApi.isGenerationActive(229L)).isTrue();
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimSeedSlot(229L));
-        assertThat(jobService.recoverWedgedSlot(229L, "wrong-token")).isFalse();
-        assertThat(jobService.recoverWedgedSlot(229L, token)).isTrue();
-        assertThat(mutationApi.isGenerationActive(229L)).isFalse();
+    void clearStaleJobs_keepsExternalMutationAfterOwnerLeavesClusterUntilValueGuardedRecovery() {
+        long exerciseId = 445L;
+        String token = jobService.claimExternalMutationSlot(exerciseId);
+        forceJobHeartbeat(exerciseId, token, Instant.now().minus(Duration.ofMinutes(10)));
+        forceJobOwner(exerciseId, "departed-node");
+        GenerationJobService scanner = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
+        }, mock(GenerationTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30));
+        scanner.init();
+
+        scanner.clearStaleJobs();
+
+        assertThat(scanner.hasActiveJob(exerciseId)).isTrue();
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> scanner.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE));
+        assertThat(scanner.getWedgedSlotInfo(exerciseId)).hasValueSatisfying(info -> {
+            assertThat(info.token()).isEqualTo(token);
+            assertThat(info.ownerNodeId()).isEqualTo("departed-node");
+        });
+        assertThat(scanner.recoverWedgedSlot(exerciseId, "external-mutation-wrong")).isFalse();
+        assertThat(scanner.hasActiveJob(exerciseId)).isTrue();
+        assertThat(scanner.recoverWedgedSlot(exerciseId, token)).isTrue();
+        assertThat(scanner.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE)).isNotBlank();
     }
 
     /**
@@ -612,16 +599,34 @@ class GenerationJobServiceTest {
      */
     @Test
     void recoverWedgedSlot_releasesAGenerationSlotStuckInThePersistencePhaseAfterItsOwnerLeftTheCluster() {
-        String job = jobService.startJob(user("owner"), exercise(463L), "draft", GenerationMode.GENERATE);
-        assertThat(jobService.enterNonCancellablePhase(463L, job)).isTrue();
-        forceJobOwner(463L, "departed-node");
-        assertThat(jobService.getWedgedSlotInfo(463L)).hasValueSatisfying(info -> {
-            assertThat(info.token()).isEqualTo(job);
-            assertThat(info.ownerNodeId()).isEqualTo("fixture-process");
-            assertThat(info.ownerLeftCluster()).isFalse();
+        long exerciseId = 460L;
+        String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
+        assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
+        forceJobOwner(exerciseId, "departed-node");
+
+        // No automatic or interactive lever releases this slot, which is what makes the operator path necessary.
+        jobService.clearStaleJobs();
+        assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
+        assertThat(jobService.requestSystemCancellation(exerciseId, jobId)).isFalse();
+
+        assertThat(jobService.getWedgedSlotInfo(exerciseId)).hasValueSatisfying(info -> {
+            assertThat(info.token()).isEqualTo(jobId);
+            assertThat(info.kind()).isEqualTo(GenerationJobService.WedgedSlotKind.GENERATION);
+            assertThat(info.ownerNodeId()).isEqualTo("departed-node");
+            assertThat(info.ownerLeftCluster()).isTrue();
         });
-        assertThat(jobService.recoverWedgedSlot(463L, job)).isTrue();
-        assertThat(jobService.hasActiveJob(463L)).isFalse();
+        assertThat(jobService.recoverWedgedSlot(exerciseId, "not-the-token")).isFalse();
+        assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
+
+        assertThat(jobService.recoverWedgedSlot(exerciseId, jobId)).isTrue();
+
+        // Usable again on all three axes the wedged slot blocked.
+        assertThat(jobService.getWedgedSlotInfo(exerciseId)).isEmpty();
+        String mutationToken = jobService.claimExternalMutationSlot(exerciseId);
+        jobService.clearExternalMutationSlot(exerciseId, mutationToken);
+        String revertToken = jobService.claimRevertSlot(user("owner"), exerciseId);
+        jobService.clearRevertSlot(exerciseId, revertToken);
+        assertThat(jobService.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE)).isNotBlank();
     }
 
     /** A recovered generation run must be reported as over, not left polling as running forever with the instructor told nothing. */
@@ -643,53 +648,65 @@ class GenerationJobServiceTest {
 
     /** Cluster departure alone never justifies recovery, so a live owner must keep its slot even for a non-cancellable generation. */
     @Test
-    void wrongRecoveryTokenCannotReleaseFinalSave() {
-        String job = jobService.startJob(user("owner"), exercise(466L), "draft", GenerationMode.GENERATE);
-        assertThat(jobService.enterNonCancellablePhase(466L, job)).isTrue();
-        assertThat(jobService.getWedgedSlotInfo(466L)).hasValueSatisfying(info -> assertThat(info.ownerLeftCluster()).isFalse());
-        assertThat(jobService.recoverWedgedSlot(466L, "wrong-token")).isFalse();
-        assertThat(jobService.isOwnedActiveJob(466L, job)).isTrue();
+    void recoverWedgedSlot_refusesAGenerationSlotWhoseOwnerIsStillAClusterMember() {
+        long exerciseId = 462L;
+        String jobId = jobService.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE);
+        assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
+
+        assertThat(jobService.recoverWedgedSlot(exerciseId, jobId)).isFalse();
+        assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
     }
 
     @Test
     void recoverWedgedSlot_releasesAWedgedRevertSlot() {
-        String token = jobService.claimRevertSlot(user("owner"), 467L);
-        assertThat(jobService.getWedgedSlotInfo(467L)).hasValueSatisfying(info -> assertThat(info.token()).isEqualTo(token));
-        assertThat(jobService.recoverWedgedSlot(467L, "wrong-token")).isFalse();
-        assertThat(ownership.owns(467L, token)).isTrue();
-        assertThat(jobService.recoverWedgedSlot(467L, token)).isTrue();
-        assertThat(mutationApi.isGenerationActive(467L)).isFalse();
+        long exerciseId = 463L;
+        String token = jobService.claimRevertSlot(user("owner"), exerciseId);
+        forceJobOwner(exerciseId, "departed-node");
+
+        assertThat(jobService.getWedgedSlotInfo(exerciseId)).hasValueSatisfying(info -> assertThat(info.kind()).isEqualTo(GenerationJobService.WedgedSlotKind.REVERT));
+        assertThat(jobService.recoverWedgedSlot(exerciseId, token)).isTrue();
+        assertThat(jobService.hasActiveJob(exerciseId)).isFalse();
     }
 
+    /** A retained partial undo is quiescent, so an operator who reconciled the repositories can release it while the node that ran the undo is still a member. */
     @Test
     void recoverWedgedSlot_releasesARetainedPartialUndoWhileItsOwnerIsStillAClusterMember() {
-        String token = jobService.claimRevertSlot(user("owner"), 468L);
-        jobService.retainRevertRecoverySlot(468L, token);
-        assertThat(jobService.getWedgedSlotInfo(468L)).hasValueSatisfying(info -> {
-            assertThat(info.kind()).isEqualTo(GenerationJobService.WedgedSlotKind.REVERT_RECOVERY);
-            assertThat(info.ownerLeftCluster()).isFalse();
-        });
-        assertThat(jobService.recoverWedgedSlot(468L, "wrong-token")).isFalse();
-        assertThat(jobService.recoverWedgedSlot(468L, token)).isTrue();
-        assertThat(jobService.getWedgedSlotInfo(468L)).isEmpty();
+        long exerciseId = 468L;
+        String token = jobService.claimRevertSlot(user("owner"), exerciseId);
+        jobService.retainRevertRecoverySlot(exerciseId, token);
+
+        var info = jobService.getWedgedSlotInfo(exerciseId).orElseThrow();
+        assertThat(info.kind()).isEqualTo(GenerationJobService.WedgedSlotKind.REVERT_RECOVERY);
+        assertThat(info.ownerLeftCluster()).isFalse();
+        assertThat(jobService.recoverWedgedSlot(exerciseId, token)).isFalse();
+
+        assertThat(jobService.recoverWedgedSlot(exerciseId, info.token())).isTrue();
+        assertThat(jobService.hasActiveJob(exerciseId)).isFalse();
+        assertThat(jobService.startJob(user("owner"), exercise(exerciseId), "generate", GenerationMode.GENERATE)).isNotBlank();
     }
 
+    /** The in-flight undo that precedes the retained state is still a writer, so it keeps the owner-absence fence. */
     @Test
-    void incompleteSaveClearsActivityButExcludesSeedAndCanonicalWritesUntilAuditedRecovery() {
-        String job = jobService.startJob(user("owner"), exercise(470L), "draft", GenerationMode.GENERATE);
-        assertThat(jobService.enterNonCancellablePhase(470L, job)).isTrue();
-        jobService.retainIncompleteGenerationSlot(470L, job);
-        jobService.clearJob(470L, job);
+    void incompleteSaveGuardBlocksNewGenerationAndParticipationUntilAuditedRecovery() {
+        long exerciseId = 470L;
+        User owner = user("owner");
+        String jobId = jobService.startJob(owner, exercise(exerciseId), "generate", GenerationMode.GENERATE);
+        assertThat(jobService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
+        jobService.retainIncompleteGenerationSlot(exerciseId, jobId);
+        jobService.clearJob(exerciseId, jobId);
         jobService.clearStaleJobs();
-        assertThat(jobService.hasActiveJob(470L)).isFalse();
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimSeedSlot(470L));
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> ownership.claimParticipationSlot(470L));
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimExternalMutationSlot(470L));
-        assertThat(jobService.getWedgedSlotInfo(470L)).hasValueSatisfying(info -> assertThat(info.token()).isEqualTo(job));
-        assertThat(jobService.recoverWedgedSlot(470L, "wrong-token")).isFalse();
-        assertThat(jobService.recoverWedgedSlot(470L, job)).isTrue();
-        String next = jobService.startJob(user("owner"), exercise(470L), "next", GenerationMode.GENERATE);
-        assertThat(jobService.enterNonCancellablePhase(470L, next)).isTrue();
+
+        assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(owner, exercise(exerciseId), "again", GenerationMode.GENERATE));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimExternalMutationSlot(exerciseId));
+        var copies = new GenerationExternalMutationService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), 1, true);
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> copies.claimParticipationSlot(exerciseId));
+        var info = jobService.getWedgedSlotInfo(exerciseId).orElseThrow();
+        assertThat(info.kind()).isEqualTo(GenerationJobService.WedgedSlotKind.GENERATION);
+        assertThat(info.ownerLeftCluster()).isFalse();
+        assertThat(jobService.recoverWedgedSlot(exerciseId, jobId)).isFalse();
+        assertThat(jobService.recoverWedgedSlot(exerciseId, info.token())).isTrue();
+        assertThat(jobService.startJob(owner, exercise(exerciseId), "again", GenerationMode.GENERATE)).isNotBlank();
     }
 
     @Test
@@ -705,15 +722,17 @@ class GenerationJobServiceTest {
         jobService.retainIncompleteGenerationSlot(exerciseId, oldJob);
 
         assertThat(jobMap().get(String.valueOf(exerciseId)).jobId()).isEqualTo(newJob);
-        assertThat(jobService.recoverWedgedSlot(exerciseId, oldJob)).isFalse();
-        assertThat(jobService.isOwnedActiveJob(exerciseId, newJob)).isTrue();
+        assertThat(jobService.recoverWedgedSlot(exerciseId, newJob)).isFalse();
     }
 
     @Test
-    void wrongRecoveryTokenCannotReleaseUndo() {
-        String token = jobService.claimRevertSlot(user("owner"), 469L);
-        assertThat(jobService.recoverWedgedSlot(469L, "wrong-token")).isFalse();
-        assertThat(ownership.owns(469L, token)).isTrue();
+    void recoverWedgedSlot_refusesAnInFlightRevertWhoseOwnerIsStillAClusterMember() {
+        long exerciseId = 469L;
+        String token = jobService.claimRevertSlot(user("owner"), exerciseId);
+
+        assertThat(jobService.getWedgedSlotInfo(exerciseId)).hasValueSatisfying(info -> assertThat(info.kind()).isEqualTo(GenerationJobService.WedgedSlotKind.REVERT));
+        assertThat(jobService.recoverWedgedSlot(exerciseId, token)).isFalse();
+        assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
     }
 
     /** Diagnosis must not offer a healthy, still-cancellable run to an operator as something to yank. */
@@ -725,36 +744,38 @@ class GenerationJobServiceTest {
         assertThat(jobService.getWedgedSlotInfo(exerciseId)).isEmpty();
     }
 
+    /**
+     * A minority island must never recover: the owner may merely be partitioned away rather than stopped. The two-member case is a minority once one member is lost, which is
+     * inherent to the majority quorum these maps are configured with — a two-node deployment cannot self-recover. The surviving-majority case needs two real members and lives in
+     * {@code GenerationJobServiceClusterTest}.
+     */
     @ParameterizedTest
     @ValueSource(ints = { 2, 3, 5 })
-    void auditedExactTokenRecoveryDoesNotDependOnCacheMembership(int expectedDataMemberCount) {
-        long id = 465L + expectedDataMemberCount;
-        String token = jobService.claimExternalMutationSlot(id);
-        var provider = spy(HyperionDistributedDataTestProvider.provider(hazelcastInstance));
-        doThrow(new IllegalStateException("membership unavailable")).when(provider).getCoordinationSnapshot();
-        var service = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run, expectedDataMemberCount, ownership);
-        service.init();
-        assertThat(service.recoverWedgedSlot(id, "wrong-token")).isFalse();
-        assertThat(service.recoverWedgedSlot(id, token)).isTrue();
-        verify(provider, never()).getCoordinationSnapshot();
+    void recoverWedgedSlot_failsClosedWhenTheVisibleMembersAreNotAMajority(int expectedDataMemberCount) {
+        long exerciseId = 465L + expectedDataMemberCount;
+        String token = jobService.claimExternalMutationSlot(exerciseId);
+        forceJobOwner(exerciseId, "departed-node");
+        GenerationJobService island = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run, expectedDataMemberCount);
+        island.init();
+
+        assertThatExceptionOfType(ServiceUnavailableAlertException.class).isThrownBy(() -> island.recoverWedgedSlot(exerciseId, token)).withMessageContaining("majority");
+        assertThat(jobService.hasActiveJob(exerciseId)).isTrue();
     }
 
     @Test
-    void ordinaryEditIsRejectedAfterGenerationEntersFinalSave() {
-        String job = jobService.startJob(user("owner"), exercise(441L), "draft", GenerationMode.GENERATE);
-        String edit = jobService.claimExternalMutationSlot(441L);
-        jobService.clearExternalMutationSlot(441L, edit);
-        assertThat(jobService.enterNonCancellablePhase(441L, job)).isTrue();
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimExternalMutationSlot(441L));
+    void claimExternalMutationSlot_whenGenerationOwnsSlot_rejectsMutation() {
+        ProgrammingExercise exercise = exercise(441L);
+        jobService.startJob(user("owner"), exercise, "generate", GenerationMode.GENERATE);
+
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimExternalMutationSlot(exercise.getId())).withMessageContaining("generation");
     }
 
     @Test
     void startAndClearJob_publishPublicExerciseStateWithoutPrivateTranscript() {
         List<Object> publishedEvents = new CopyOnWriteArrayList<>();
         GenerationJobService publishingService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), publishedEvents::add,
-                mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+                mock(GenerationTokenUsageService.class));
         publishingService.init();
         ProgrammingExercise exercise = exercise(442L);
 
@@ -770,8 +791,7 @@ class GenerationJobServiceTest {
     void startJob_carriesOriginalSourceBriefToTheWorkerWithoutPersistence() {
         List<Object> publishedEvents = new CopyOnWriteArrayList<>();
         GenerationJobService publishingService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), publishedEvents::add,
-                mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+                mock(GenerationTokenUsageService.class));
         publishingService.init();
         ProgrammingExercise exercise = exercise(443L);
 
@@ -797,8 +817,7 @@ class GenerationJobServiceTest {
             }
         };
         GenerationJobService publishingService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), publisher,
-                mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+                mock(GenerationTokenUsageService.class));
         serviceReference.set(publishingService);
         publishingService.init();
         ProgrammingExercise exercise = exercise(444L);
@@ -1137,8 +1156,7 @@ class GenerationJobServiceTest {
         doReturn(failingCancelTopic).when(failingProvider).getTopic("hyperion-exercise-generation-cancel-requests");
         doThrow(new IllegalStateException("cancel topic unavailable")).when(failingCancelTopic).publish(any());
         GenerationJobService failingPublishJobService = new GenerationJobService(failingProvider, event -> {
-        }, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class));
         failingPublishJobService.init();
         ProgrammingExercise exercise = exercise(115L);
         User owner = user("owner");
@@ -1153,8 +1171,7 @@ class GenerationJobServiceTest {
     void requestCancellation_publishesTheExactRetainedTerminalEventForLiveClients() {
         AtomicReference<Object> publishedEvent = new AtomicReference<>();
         GenerationJobService publishingJobService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), publishedEvent::set,
-                mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+                mock(GenerationTokenUsageService.class));
         publishingJobService.init();
         ProgrammingExercise exercise = exercise(114L);
         User owner = user("owner");
@@ -1175,7 +1192,7 @@ class GenerationJobServiceTest {
         }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), task -> {
             submissions.incrementAndGet();
             submittedCleanup.set(task);
-        }, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        });
         asyncJobService.init();
         String jobId = asyncJobService.startJob(user("owner"), exercise(113L), "go", GenerationMode.GENERATE);
         AtomicInteger hookRuns = new AtomicInteger();
@@ -1232,8 +1249,7 @@ class GenerationJobServiceTest {
     @Test
     void initRejectsFailOpenDeadlineAndStaleTimeoutConfiguration() {
         GenerationJobService invalid = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), Duration.ofMinutes(1), Duration.ofMinutes(1),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), Duration.ofMinutes(1), Duration.ofMinutes(1));
 
         assertThatThrownBy(invalid::init).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("stale-job-timeout");
     }
@@ -1242,14 +1258,12 @@ class GenerationJobServiceTest {
     void initRejectsAnEffortProfileDeadlineThatOutlastsTheStaleJobTimeout() {
         // The deployment default (45m) fits inside the 50m stale timeout, but the run a profile hands out lasts 55m and its slot would be reclaimed before it can finish.
         GenerationJobService raisedByProfile = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, 1, Duration.ofHours(4), true, Duration.ofMinutes(55),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, 1, Duration.ofHours(4), true, Duration.ofMinutes(55));
 
         assertThatThrownBy(raisedByProfile::init).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("stale-job-timeout").hasMessageContaining("profiles");
 
         GenerationJobService withinTheTimeout = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, 1, Duration.ofHours(4), true, Duration.ofMinutes(48),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(50), Duration.ofMinutes(45), Runnable::run, 1, Duration.ofHours(4), true, Duration.ofMinutes(48));
 
         assertThatCode(withinTheTimeout::init).doesNotThrowAnyException();
     }
@@ -1258,8 +1272,7 @@ class GenerationJobServiceTest {
     void requestCancellation_publishesCancelToOtherServiceInstances() {
         GenerationJobService ownerNode = jobService;
         GenerationJobService apiNode = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class));
         apiNode.init();
         String jobId = ownerNode.startJob(user("owner"), exercise(111L), "go", GenerationMode.GENERATE);
         AtomicInteger ownerHookRuns = new AtomicInteger(0);
@@ -1402,8 +1415,7 @@ class GenerationJobServiceTest {
         HyperionGenerationBudgetService budgetService = mock(HyperionGenerationBudgetService.class);
         when(budgetService.refreshReservation("reservation-224")).thenReturn(true);
         GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), budgetService, Duration.ofMinutes(35), Duration.ofMinutes(30),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), budgetService, Duration.ofMinutes(35), Duration.ofMinutes(30));
         service.init();
         String jobId = service.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE, "reservation-224");
 
@@ -1418,8 +1430,7 @@ class GenerationJobServiceTest {
         HyperionGenerationBudgetService budgetService = mock(HyperionGenerationBudgetService.class);
         when(budgetService.refreshReservation("reservation-225")).thenReturn(false);
         GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), budgetService, Duration.ofMinutes(35), Duration.ofMinutes(30),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), budgetService, Duration.ofMinutes(35), Duration.ofMinutes(30));
         service.init();
         String jobId = service.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE, "reservation-225");
         @SuppressWarnings("unchecked")
@@ -1443,8 +1454,7 @@ class GenerationJobServiceTest {
         budgetService.init();
         HyperionGenerationBudgetService.BudgetReservation reservation = budgetService.reserveGenerationBudget(1L, 2L, 300);
         GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), budgetService, Duration.ofMinutes(35), Duration.ofMinutes(30),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), budgetService, Duration.ofMinutes(35), Duration.ofMinutes(30));
         service.init();
         String jobId = service.startJob(user("owner"), exercise(exerciseId), "go", GenerationMode.GENERATE, reservation.id());
 
@@ -1466,8 +1476,7 @@ class GenerationJobServiceTest {
         jobMap.put(String.valueOf(exerciseId), new GenerationJobService.JobInfo(jobId, "owner", exerciseId, Instant.now().minus(Duration.ofMinutes(10)), null, "departed-node",
                 Instant.now().minus(Duration.ofMinutes(10)), true, null));
         GenerationJobService shortTimeoutService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30));
         shortTimeoutService.init();
 
         shortTimeoutService.clearStaleJobs();
@@ -1507,8 +1516,7 @@ class GenerationJobServiceTest {
         forceJobHeartbeat(exerciseId, jobId, Instant.now().minus(Duration.ofMinutes(10)));
         HyperionGenerationBudgetService budgetService = mock(HyperionGenerationBudgetService.class);
         GenerationJobService scannerNode = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), budgetService, Duration.ofMinutes(1), Duration.ofSeconds(30),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), budgetService, Duration.ofMinutes(1), Duration.ofSeconds(30));
         scannerNode.init();
 
         scannerNode.clearStaleJobs();
@@ -1535,8 +1543,7 @@ class GenerationJobServiceTest {
         forceJobHeartbeat(exerciseId, jobId, Instant.now().minus(Duration.ofMinutes(10)));
         forceJobOwner(exerciseId, "departed-node");
         GenerationJobService scannerNode = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30));
         scannerNode.init();
 
         scannerNode.clearStaleJobs();
@@ -1563,8 +1570,7 @@ class GenerationJobServiceTest {
         forceJobOwner(exerciseId, "departed-node");
         HyperionGenerationBudgetService budgetService = mock(HyperionGenerationBudgetService.class);
         GenerationJobService scannerNode = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), budgetService, Duration.ofMinutes(1), Duration.ofSeconds(30),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), budgetService, Duration.ofMinutes(1), Duration.ofSeconds(30));
         scannerNode.init();
 
         scannerNode.clearStaleJobs();
@@ -1582,8 +1588,7 @@ class GenerationJobServiceTest {
         forceJobHeartbeat(exerciseId, staleJobId, Instant.now().minus(Duration.ofMinutes(10)));
         forceJobOwner(exerciseId, "departed-node");
         GenerationJobService shortTimeoutService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30));
         shortTimeoutService.init();
 
         String freshJobId = shortTimeoutService.startJob(owner, exercise, "new", GenerationMode.GENERATE);
@@ -1600,8 +1605,7 @@ class GenerationJobServiceTest {
         ProgrammingExercise exercise = exercise(exerciseId);
         User owner = user("owner");
         GenerationJobService shortDeadlineService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), Duration.ofHours(1), Duration.ofMillis(1),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), Duration.ofHours(1), Duration.ofMillis(1));
         shortDeadlineService.init();
         String jobId = shortDeadlineService.startJob(owner, exercise, "old", GenerationMode.GENERATE);
         assertThat(shortDeadlineService.enterNonCancellablePhase(exerciseId, jobId)).isTrue();
@@ -1639,8 +1643,7 @@ class GenerationJobServiceTest {
         forceJobOwner(exerciseId, "departed-node");
         HyperionGenerationBudgetService budgetService = mock(HyperionGenerationBudgetService.class);
         GenerationJobService shortTimeoutService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, mock(GenerationTokenUsageService.class), budgetService, Duration.ofMinutes(1), Duration.ofSeconds(30),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class), budgetService, Duration.ofMinutes(1), Duration.ofSeconds(30));
         shortTimeoutService.init();
 
         shortTimeoutService.clearStaleJobs();
@@ -1657,15 +1660,23 @@ class GenerationJobServiceTest {
     }
 
     @Test
-    void activityReaperCannotReleaseDatabaseUndoWriter() {
-        String token = jobService.claimRevertSlot(user("owner"), 229L);
-        jobService.clearStaleJobs();
-        assertThat(jobService.hasActiveJob(229L)).isFalse();
-        assertThat(mutationApi.isGenerationActive(229L)).isTrue();
-        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.claimSeedSlot(229L));
-        assertThat(jobService.recoverWedgedSlot(229L, "wrong-token")).isFalse();
-        assertThat(jobService.recoverWedgedSlot(229L, token)).isTrue();
-        assertThat(mutationApi.isGenerationActive(229L)).isFalse();
+    void staleHeartbeat_retainsNonCancellableRevertSlotAfterOwnerLeavesCluster() {
+        long exerciseId = 229L;
+        ProgrammingExercise exercise = exercise(exerciseId);
+        User owner = user("owner");
+        String token = jobService.claimRevertSlot(owner, exerciseId);
+        forceJobHeartbeat(exerciseId, token, Instant.now().minus(Duration.ofMinutes(10)));
+        forceJobOwner(exerciseId, "departed-node");
+        GenerationJobService shortTimeoutService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
+        }, mock(GenerationTokenUsageService.class), Duration.ofMinutes(1), Duration.ofSeconds(30));
+        shortTimeoutService.init();
+
+        shortTimeoutService.clearStaleJobs();
+
+        // Same fail-closed rule as the persistence barrier: a departed owner mid force-reset may still be writing to the Git server.
+        assertThat(shortTimeoutService.hasActiveJob(exerciseId)).isTrue();
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> shortTimeoutService.startJob(owner, exercise, "new", GenerationMode.GENERATE));
+        assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> shortTimeoutService.claimRevertSlot(owner, exerciseId));
     }
 
     @Test
@@ -1727,7 +1738,7 @@ class GenerationJobServiceTest {
         GenerationTokenUsageService tokenUsageService = mock(GenerationTokenUsageService.class);
         when(tokenUsageService.trackChatResponseTokenUsage(any(), any(), anyString(), any(), any())).thenReturn(recorded);
         GenerationJobService accountingService = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), event -> {
-        }, tokenUsageService, org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, tokenUsageService);
         accountingService.init();
         Consumer<ChatResponse> sink = accountingService.tokenUsageSink(3L, 4L, 5L);
         ThrowingCallable recordOneResponse = () -> sink.accept(mock(ChatResponse.class));
@@ -1913,8 +1924,7 @@ class GenerationJobServiceTest {
             }
         };
         GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), rejectingPublisher,
-                mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+                mock(GenerationTokenUsageService.class));
         service.init();
 
         ProgrammingExercise exercise = exercise(77L);
@@ -1943,8 +1953,8 @@ class GenerationJobServiceTest {
                 throw new IllegalStateException("misconfigured listener");
             }
         };
-        GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), publisher, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        GenerationJobService service = new GenerationJobService(HyperionDistributedDataTestProvider.provider(hazelcastInstance), publisher,
+                mock(GenerationTokenUsageService.class));
         service.init();
         ProgrammingExercise exercise = exercise(78L);
         User owner = user("owner");
@@ -1978,8 +1988,7 @@ class GenerationJobServiceTest {
                 throw new TaskRejectedException("executor is saturated");
             }
             throw new IllegalStateException("publish failed");
-        }, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class));
         failingService.init();
 
         assertThatExceptionOfType(executorRejected ? ServiceUnavailableAlertException.class : IllegalStateException.class)
@@ -2038,8 +2047,7 @@ class GenerationJobServiceTest {
             if (event instanceof GenerationStartedEvent started) {
                 published.add(started);
             }
-        }, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class));
         service.init();
         HyperionGenerationSettings narrowed = new HyperionGenerationSettings("draft", "Quick draft", 20, Duration.ofMinutes(12), 600_000L, true, "CONTINUOUS", 128_000, null, false,
                 false);

@@ -10,14 +10,21 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+
+import com.hazelcast.config.Config;
+import com.hazelcast.core.Hazelcast;
+import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
@@ -28,7 +35,10 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
+import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCServletService;
@@ -54,11 +64,33 @@ class RepositoryResourceMutationGuardTest {
 
     private static final long EXERCISE_ID = 42L;
 
+    private HazelcastInstance hazelcastInstance;
+
+    @BeforeAll
+    void startHazelcast() {
+        Config config = new Config();
+        config.getMemberAttributeConfig().setAttribute(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.WRITER_FENCING_MEMBER_ATTRIBUTE, "true");
+        config.getMemberAttributeConfig().setAttribute(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.WRITER_FENCING_MEMBERS_ATTRIBUTE, "1");
+        config.setClusterName("repository-mutation-guard-test-" + System.nanoTime());
+        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+        config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
+        hazelcastInstance = Hazelcast.newHazelcastInstance(config);
+    }
+
+    @AfterAll
+    void stopHazelcast() {
+        hazelcastInstance.shutdown();
+    }
+
     @Test
-    void saveFilesAndCommitChanges_blocksSaveDuringUncommittedWrites_andDoesNotClaimANestedLease() throws Exception {
-        var ownership = de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipTestFixture.create();
-        var mutations = new GenerationExternalMutationService(ownership);
-        ProgrammingExerciseMutationGuardService mutationGuard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(ownership)));
+    void saveFilesAndCommitChanges_blocksGenerationDuringUncommittedWrites_andDoesNotClaimANestedLease() throws Exception {
+        GenerationJobService jobService = new GenerationJobService(
+                new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance), event -> {
+                }, mock(GenerationTokenUsageService.class), null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
+        jobService.init();
+        ProgrammingExerciseMutationGuardService mutationGuard = new ProgrammingExerciseMutationGuardService(
+                Optional.of(new HyperionExerciseMutationApi(new GenerationExternalMutationService(
+                        new de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService(hazelcastInstance), 1, true))));
         UserRepository userRepository = mock(UserRepository.class);
         User user = user("instructor");
         when(userRepository.getUser()).thenReturn(user);
@@ -67,7 +99,7 @@ class RepositoryResourceMutationGuardTest {
         AtomicInteger guardedMutationStages = new AtomicInteger();
         TestRepositoryResource resource = new TestRepositoryResource(userRepository, repositoryService, localVCServletService, mutationGuard, () -> {
             guardedMutationStages.incrementAndGet();
-            assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> mutations.claimSaveSlot(EXERCISE_ID, java.util.UUID.randomUUID().toString()));
+            assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> jobService.startJob(user("generator"), exercise(), "generate", GenerationMode.GENERATE));
         });
         Repository repository = mock(Repository.class);
 
@@ -75,9 +107,7 @@ class RepositoryResourceMutationGuardTest {
 
         assertThat(guardedMutationStages).hasValue(2);
         verify(repositoryService).commitChanges(repository, user);
-        String token = java.util.UUID.randomUUID().toString();
-        mutations.claimSaveSlot(EXERCISE_ID, token);
-        mutations.releaseSaveSlot(EXERCISE_ID, token);
+        assertThat(jobService.startJob(user("generator"), exercise(), "generate after save", GenerationMode.GENERATE)).isNotBlank();
     }
 
     @Test

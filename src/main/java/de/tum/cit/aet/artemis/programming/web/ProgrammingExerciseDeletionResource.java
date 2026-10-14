@@ -105,10 +105,13 @@ public class ProgrammingExerciseDeletionResource {
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
-        exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
-        exerciseDeletionService.delete(exerciseId, deleteBaseReposBuildPlans);
+        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
+            programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesAndCompetenciesElseThrow(exerciseId);
+            exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user);
+            exerciseDeletionService.delete(exerciseId, deleteBaseReposBuildPlans);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
+        }
     }
 
     /**

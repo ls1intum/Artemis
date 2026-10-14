@@ -354,16 +354,10 @@ public class GenerationTaskService {
                         GenerationPersistenceService.PersistResult persistResult;
                         try {
                             exerciseToPersist = reloadDraftExerciseBeforeLiveMutation(exerciseId);
-                            persistResult = persistenceService.persist(exerciseToPersist, user, outcome, outcome.authoringBaseline().metadata().get("getProblemStatement"),
-                                    outcome.authoringBaseline().metadata().get("getTitle"), jobId, event.mode(),
-                                    () -> canContinueSave(exerciseId, jobId, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId),
+                            persistResult = persistenceService.persist(exerciseToPersist, user, outcome, event.expectedProblemStatement(), event.expectedTitle(), jobId,
+                                    event.mode(), () -> canContinueSave(exerciseId, jobId, heartbeatLost) && isStillDraftWithoutParticipations(exerciseId),
                                     () -> generationRevertService.invalidateBaseline(exerciseId));
                             savedToExercise = true;
-                        }
-                        catch (de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationAuthoringBaselineService.AuthoringConflictException e) {
-                            emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.ERROR,
-                                    "The exercise changed during generation. Nothing was saved. The verified candidate is retained for review."));
-                            return;
                         }
                         catch (GenerationIncompleteException e) {
                             log.error("Persisting verified generated exercise {} left the save incomplete", exerciseId, e);
@@ -423,9 +417,8 @@ public class GenerationTaskService {
                             return;
                         }
                         boolean revertUnavailable = !generationRevertService.recordBaseline(exerciseToPersist, jobId, event.mode(), persistResult.prePersistHeads(),
-                                persistResult.postPersistHeads(), outcome.authoringBaseline().metadata().get("getProblemStatement"),
-                                outcome.authoringBaseline().metadata().get("getTitle"), persistResult.persistedProblemStatement(), persistResult.persistedTitle(),
-                                persistResult.repositoryBranch(), persistResult.previousGrading(), persistResult.savedGrading());
+                                persistResult.postPersistHeads(), event.expectedProblemStatement(), event.expectedTitle(), persistResult.persistedProblemStatement(),
+                                persistResult.persistedTitle(), persistResult.repositoryBranch(), persistResult.previousGrading(), persistResult.savedGrading());
                         if (!canContinueSave(exerciseId, jobId, heartbeatLost)) {
                             reportUncertainLiveSave(verdict, emitter, terminationReason);
                             return;
@@ -731,10 +724,6 @@ public class GenerationTaskService {
         }
         if (exercise.isExamExercise() && !isStillDraftWithoutParticipations(exerciseId)) {
             throw new IllegalStateException("Hyperion generation cannot modify an exercise assigned to a student exam or test run.");
-        }
-        if (!auxiliaryRepositoryRepository.findByExerciseId(exerciseId).isEmpty()) {
-            throw new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationAuthoringBaselineService.AuthoringConflictException(
-                    "Auxiliary repositories were added during authoring. Nothing was saved.");
         }
         Set<StudentParticipation> studentParticipations = exercise.getStudentParticipations();
         if (studentParticipations != null && !studentParticipations.isEmpty()) {

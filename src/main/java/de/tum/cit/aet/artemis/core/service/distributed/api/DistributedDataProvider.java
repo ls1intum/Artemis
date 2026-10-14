@@ -29,6 +29,12 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopi
  */
 public interface DistributedDataProvider {
 
+    /** Advertises that a data owner applies deployment-wide writer admission fencing. */
+    String WRITER_FENCING_MEMBER_ATTRIBUTE = "artemis.coordination.writer-fencing";
+
+    /** Expected membership advertised by a fenced data owner; mixed deployment counts reject admission. */
+    String WRITER_FENCING_MEMBERS_ATTRIBUTE = "artemis.coordination.writer-fencing-members";
+
     /**
      * Returns a distributed queue with the given name.
      *
@@ -149,7 +155,8 @@ public interface DistributedDataProvider {
     String getLocalNodeId();
 
     /**
-     * Returns observed process incarnations from the store serving this node. An unavailable or incomplete lookup returns empty, never an empty membership guess.
+     * Returns a complete coordination view from the store serving this node. An unavailable or incomplete lookup returns empty, never an empty membership guess.
+     * Member-hosted stores require a configured data-member quorum; external stores report connected process incarnations without pretending clients host the data.
      * Absence never proves that Git or database writes stopped. Destructive recovery additionally requires exact ownership and operator-confirmed quiescence.
      *
      * @return the observed coordination membership, or empty when it cannot be established

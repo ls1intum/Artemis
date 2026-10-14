@@ -316,8 +316,9 @@ public class HyperionExerciseGenerationResource {
         String revertSlot = jobService.claimRevertSlot(user, exerciseId);
         var consistent = new java.util.concurrent.atomic.AtomicBoolean();
         try {
-            return generationRevertService.revert(exercise, user,
-                    () -> jobService.isOwnedActiveJob(exerciseId, revertSlot) && programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId), revertSlot)
+            return generationRevertService
+                    .revert(exercise, user,
+                            () -> jobService.isOwnedActiveJob(exerciseId, revertSlot) && programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId))
                     .map(result -> {
                         if (result.fullyReverted()) {
                             consistent.set(true);

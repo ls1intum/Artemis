@@ -38,8 +38,7 @@ class GenerationJobCleanupTest {
         var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
         doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
         var events = new ArrayList<Object>();
-        var jobs = new GenerationJobService(provider, events::add, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        var jobs = new GenerationJobService(provider, events::add, mock(GenerationTokenUsageService.class));
         jobs.init();
         var failure = new IllegalStateException("acquisition response lost");
         if (lostWriteResponse) {
@@ -73,8 +72,7 @@ class GenerationJobCleanupTest {
         var files = spy(provider.<String, GenerationJobService.JobFileChangeIndex>getExpiringMap(GenerationJobReplayStore.FILE_CHANGE_MAP_NAME, Duration.ofHours(4)));
         doReturn(files).when(provider).getExpiringMap(GenerationJobReplayStore.FILE_CHANGE_MAP_NAME, Duration.ofHours(4));
         var jobs = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class));
         jobs.init();
         String previousJob = jobs.startJob(user(), exercise(), "first", GenerationMode.GENERATE);
         var file = ExerciseGenerationFileChangeDTO.of("solution/Stack.java", "write", 1);
@@ -95,8 +93,7 @@ class GenerationJobCleanupTest {
                 }
                 throw failure;
             }
-        }, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class));
         rejecting.init();
         assertThatThrownBy(() -> rejecting.startJob(user(), exercise(), "second", GenerationMode.GENERATE)).isSameAs(failure);
         assertThat(slots.get("42")).isNotNull();
@@ -110,9 +107,6 @@ class GenerationJobCleanupTest {
     @ValueSource(booleans = { false, true })
     void publicationFailureDoesNotRollBackAnAdvancedWorkerOrRecoveryGuard(boolean recoveryGuard) {
         var provider = new LocalDataProviderService();
-        var ownershipFixture = new GenerationWriteOwnershipTestFixture();
-        var ownership = ownershipFixture.service;
-        var mutationApi = new de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi(ownershipFixture.database);
         var reference = new AtomicReference<GenerationJobService>();
         var failure = new IllegalStateException("publication failed after dispatch");
         var file = ExerciseGenerationFileChangeDTO.of("solution/Stack.java", "write", 1);
@@ -128,20 +122,15 @@ class GenerationJobCleanupTest {
                 }
                 throw failure;
             }
-        }, mock(GenerationTokenUsageService.class), ownership);
+        }, mock(GenerationTokenUsageService.class));
         reference.set(jobs);
         jobs.init();
         assertThatThrownBy(() -> jobs.startJob(user(), exercise(), "brief", GenerationMode.GENERATE)).isSameAs(failure);
         var slots = provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME);
         JobInfo reservation = slots.get("42");
-        if (recoveryGuard) {
-            assertThat(reservation).isNull();
-            assertThat(mutationApi.isGenerationActive(42)).isTrue();
-        }
-        else {
-            assertThat(reservation).isNotNull();
-            assertThat(reservation.cancellable()).isFalse();
-        }
+        assertThat(reservation).isNotNull();
+        assertThat(reservation.cancellable()).isFalse();
+        assertThat(GenerationRecoverySlots.isGenerationRecovery(reservation)).isEqualTo(recoveryGuard);
         var status = jobs.getStatus(user(), exercise());
         assertThat(status).hasValueSatisfying(candidate -> assertThat(candidate.fileChanges()).containsExactly(file));
         var artifacts = jobs.getRetainedArtifacts(user(), exercise());
@@ -158,8 +147,7 @@ class GenerationJobCleanupTest {
         var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
         doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
         var events = new ArrayList<Object>();
-        var jobs = new GenerationJobService(provider, events::add, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        var jobs = new GenerationJobService(provider, events::add, mock(GenerationTokenUsageService.class));
         jobs.init();
         String previousJob = jobs.startJob(user(), exercise(), "first", GenerationMode.GENERATE);
         var file = ExerciseGenerationFileChangeDTO.of("solution/Stack.java", "write", 1);
@@ -190,32 +178,33 @@ class GenerationJobCleanupTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
-    void partialSaveRetainsDatabaseGuardWhileFinishedActivityIsCleared(boolean lostConversionResponse) {
-        var provider = new LocalDataProviderService();
-        var ownershipFixture = new GenerationWriteOwnershipTestFixture();
-        var ownership = ownershipFixture.service;
-        var mutationApi = new de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi(ownershipFixture.database);
+    void partialSaveRecoveryConversionRetriesWithoutReleasingTheExercise(boolean lostConversionResponse) {
+        var provider = spy(new LocalDataProviderService());
+        var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+        doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
         var jobs = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class), ownership);
+        }, mock(GenerationTokenUsageService.class));
         jobs.init();
         String job = jobs.startJob(user(), exercise(), "brief", GenerationMode.GENERATE);
-        assertThat(jobs.enterNonCancellablePhase(42, job)).isTrue();
+        jobs.enterNonCancellablePhase(42, job);
         if (lostConversionResponse) {
-            doAnswer(call -> {
-                call.callRealMethod();
-                throw new IllegalStateException("retention acknowledgement lost");
-            }).when(ownership).retainSaveRecovery(42, job);
-            assertThatThrownBy(() -> jobs.retainIncompleteGenerationSlot(42, job)).hasMessage("retention acknowledgement lost");
+            doAnswer(invocation -> {
+                invocation.callRealMethod();
+                throw new IllegalStateException("conversion response lost");
+            }).doCallRealMethod().when(slots).replace(eq("42"), any(JobInfo.class), any(JobInfo.class));
         }
         else {
-            jobs.retainIncompleteGenerationSlot(42, job);
+            doThrow(new IllegalStateException("store unavailable")).doCallRealMethod().when(slots).lock("42");
         }
+        jobs.retainIncompleteGenerationSlot(42, job);
+        assertThat(slots.get("42")).isNotNull();
+        assertThat(slots.get("42").cancellable()).isFalse();
         jobs.retryPendingCleanup();
-        assertThat(jobs.hasActiveJob(42)).isFalse();
-        assertThat(mutationApi.isGenerationActive(42)).isTrue();
-        assertThatThrownBy(() -> jobs.claimSeedSlot(42)).isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
-        assertThat(jobs.recoverWedgedSlot(42, "wrong-token")).isFalse();
-        assertThat(jobs.recoverWedgedSlot(42, job)).isTrue();
+        JobInfo recovery = slots.get("42");
+        assertThat(GenerationRecoverySlots.isGenerationRecoveryOf(recovery, job)).isTrue();
+        assertThat(jobs.hasActiveJob(42)).isTrue();
+        assertThat(jobs.recoverWedgedSlot(42, job)).isFalse();
+        assertThat(jobs.recoverWedgedSlot(42, recovery.jobId())).isTrue();
     }
 
     @Test
@@ -224,8 +213,7 @@ class GenerationJobCleanupTest {
         var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
         doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
         var jobs = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class));
         jobs.init();
         String job = jobs.startJob(user(), exercise(), "brief", GenerationMode.GENERATE);
         jobs.enterNonCancellablePhase(42, job);
@@ -247,8 +235,7 @@ class GenerationJobCleanupTest {
         var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
         doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
         var jobs = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class));
         jobs.init();
         String job = jobs.startJob(user(), exercise(), "brief", GenerationMode.GENERATE);
         var file = ExerciseGenerationFileChangeDTO.of("solution/Stack.java", "write", 1);
@@ -272,8 +259,7 @@ class GenerationJobCleanupTest {
         var slots = spy(provider.<String, JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
         doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
         var jobs = new GenerationJobService(provider, _ -> {
-        }, mock(GenerationTokenUsageService.class),
-                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService.class));
+        }, mock(GenerationTokenUsageService.class));
         jobs.init();
         String job = jobs.startJob(user(), exercise(), "brief", GenerationMode.GENERATE);
         doThrow(new IllegalStateException("store unavailable")).doCallRealMethod().when(slots).lock("42");

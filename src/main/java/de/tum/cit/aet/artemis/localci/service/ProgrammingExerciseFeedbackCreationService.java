@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -23,7 +22,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -39,8 +37,6 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCaseType;
@@ -56,7 +52,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService;
 
 /**
  * Service for creating feedback for programming exercises.
@@ -111,25 +106,15 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private final FeedbackMessageService feedbackMessageService;
 
-    private final ProgrammingExerciseWriteOwnershipService writeOwnership;
-
-    private final GitService gitService;
-
-    private final String defaultBranch;
-
     public ProgrammingExerciseFeedbackCreationService(ProgrammingExerciseTestCaseRepository testCaseRepository, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService,
-            ProgrammingExerciseWriteOwnershipService writeOwnership, GitService gitService, @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService) {
         this.testCaseRepository = testCaseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.feedbackMessageService = feedbackMessageService;
-        this.writeOwnership = writeOwnership;
-        this.gitService = gitService;
-        this.defaultBranch = defaultBranch;
     }
 
     /**
@@ -365,52 +350,6 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @return Returns true if the test cases have changed, false if they haven't.
      */
     public boolean generateTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise) {
-        long exerciseId = exercise.getId();
-        var reservation = writeOwnership.get(exerciseId);
-        if (reservation.isPresent()) {
-            if (buildResult.testsRepoCommitHash() != null && Objects.equals(reservation.get().expectedTestsCommitHash(), buildResult.testsRepoCommitHash())) {
-                return writeOwnership.executeAuthorizedTestsBuild(exerciseId, reservation.get().token(), buildResult.testsRepoCommitHash(),
-                        () -> synchronizeTestCases(buildResult, programmingExerciseRepository.findByIdElseThrow(exerciseId))).orElse(false);
-            }
-            return false;
-        }
-        String token;
-        try {
-            token = writeOwnership.claim(exerciseId, "LOCALCI");
-        }
-        catch (ConflictException anotherWriterClaimedFirst) {
-            return false;
-        }
-        try {
-            ProgrammingExercise current = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-            boolean changed = matchesCurrentTestsHead(buildResult, current) && synchronizeTestCases(buildResult, current);
-            if (!writeOwnership.release(exerciseId, token)) {
-                throw new IllegalStateException("Lost exercise write reservation after LocalCI synchronization");
-            }
-            return changed;
-        }
-        catch (RuntimeException failure) {
-            try {
-                writeOwnership.retain(exerciseId, token, "LOCALCI_RECOVERY");
-            }
-            catch (RuntimeException retentionFailure) {
-                failure.addSuppressed(retentionFailure);
-            }
-            throw failure;
-        }
-    }
-
-    private boolean matchesCurrentTestsHead(BuildResultNotification buildResult, ProgrammingExercise exercise) {
-        String reportedHead = buildResult.testsRepoCommitHash();
-        if (StringUtils.isBlank(reportedHead) || exercise.getVcsTestRepositoryUri() == null) {
-            return false;
-        }
-        String configuredBranch = programmingExerciseRepository.findBranchByExerciseId(exercise.getId());
-        String branch = StringUtils.isBlank(configuredBranch) ? defaultBranch : configuredBranch;
-        return reportedHead.equals(gitService.getLastCommitHash(exercise.getVcsTestRepositoryUri(), branch));
-    }
-
-    private boolean synchronizeTestCases(BuildResultNotification buildResult, ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
         // Do not generate test cases for static code analysis feedback
         Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = getTestCasesFromBuildResult(buildResult, exercise);
