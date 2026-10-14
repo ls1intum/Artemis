@@ -32,12 +32,6 @@ import de.tum.cit.aet.artemis.globalsearch.dto.SearchableEntityCandidateDTO;
 @Conditional(WeaviateEnabled.class)
 public class SearchableEntityPrefetchService {
 
-    /** All indexed types take part in the answer path. */
-    private static final Set<String> PREFETCH_TYPES = Set.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.LECTURE,
-            SearchableEntitySchema.TypeValues.LECTURE_UNIT, SearchableEntitySchema.TypeValues.EXAM, SearchableEntitySchema.TypeValues.FAQ,
-            SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.TypeValues.COURSE, SearchableEntitySchema.TypeValues.POST,
-            SearchableEntitySchema.TypeValues.ANSWER_POST);
-
     private final SearchableEntityAccessFilterService accessFilterService;
 
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
@@ -63,15 +57,16 @@ public class SearchableEntityPrefetchService {
      * @return the candidates, empty when the user has no accessible courses
      */
     public List<SearchableEntityCandidateDTO> prefetchCandidates(User user, String query, int limit, @Nullable List<Long> courseIds, List<Long> excludeCourseIds) {
-        var filterResult = accessFilterService.buildSearchableItemFilter(user, courseIds, excludeCourseIds, PREFETCH_TYPES);
+        // Every searchable type takes part in the answer path, and only those: the palette and the answer draw on the same pool.
+        var filterResult = accessFilterService.buildSearchableItemFilter(user, courseIds, excludeCourseIds, SearchableEntityAccessFilterService.SEARCHABLE_TYPES);
         if (!filterResult.hasAccess()) {
             return List.of();
         }
-        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchEntityCandidatesForAnswer(query, filterResult.filter(), limit);
-        Map<Long, String> courseNameById = resolveCourseNames(rawResults, filterResult);
-        List<SearchableEntityCandidateDTO> candidates = new ArrayList<>(rawResults.size());
-        for (Map<String, Object> properties : rawResults) {
-            candidates.add(toCandidate(properties, courseNameById, filterResult.editorCourseIds(), filterResult.staffCourseIds()));
+        List<SearchableEntityWeaviateService.AnswerCandidate> hits = searchableEntityWeaviateService.searchEntityCandidatesForAnswer(query, filterResult.filter(), limit);
+        Map<Long, String> courseNameById = resolveCourseNames(hits.stream().map(SearchableEntityWeaviateService.AnswerCandidate::properties).toList(), filterResult);
+        List<SearchableEntityCandidateDTO> candidates = new ArrayList<>(hits.size());
+        for (SearchableEntityWeaviateService.AnswerCandidate hit : hits) {
+            candidates.add(toCandidate(hit.properties(), hit.passage(), courseNameById, filterResult.editorCourseIds(), filterResult.staffCourseIds()));
         }
         return candidates;
     }
@@ -95,15 +90,13 @@ public class SearchableEntityPrefetchService {
         return names;
     }
 
-    private static SearchableEntityCandidateDTO toCandidate(Map<String, Object> properties, Map<Long, String> courseNameById, @Nullable Set<Long> editorCourseIds,
-            @Nullable Set<Long> staffCourseIds) {
+    private static SearchableEntityCandidateDTO toCandidate(Map<String, Object> properties, @Nullable String passage, Map<Long, String> courseNameById,
+            @Nullable Set<Long> editorCourseIds, @Nullable Set<Long> staffCourseIds) {
         String entityType = asString(properties.get(SearchableEntitySchema.Properties.TYPE));
         Long entityId = asLong(properties.get(SearchableEntitySchema.Properties.ENTITY_ID));
         Long courseId = asLong(properties.get(SearchableEntitySchema.Properties.COURSE_ID));
         Long lectureId = asLong(properties.get(SearchableEntitySchema.Properties.LECTURE_ID));
         Long examId = asLong(properties.get(SearchableEntitySchema.Properties.EXAM_ID));
-        Long channelId = asLong(properties.get(SearchableEntitySchema.Properties.CHANNEL_ID));
-        Long postId = asLong(properties.get(SearchableEntitySchema.Properties.POST_ID));
         // null editor/staffCourseIds is the admin-with-no-course-scope fast path in the access filter
         // (FilterBuildResult carries no per-course map there): an admin has instructor-equivalent access
         // to every course, so treat it as "at least editor"/"at least staff" everywhere rather than NPE.
@@ -121,14 +114,14 @@ public class SearchableEntityPrefetchService {
         return new SearchableEntityCandidateDTO(entityType, entityId, courseId, courseId != null ? courseNameById.get(courseId) : null,
                 asString(properties.get(SearchableEntitySchema.Properties.TITLE)), asString(properties.get(SearchableEntitySchema.Properties.DESCRIPTION)),
                 asString(properties.get(SearchableEntitySchema.Properties.SHORT_NAME)),
-                buildLink(entityType, entityId, courseId, lectureId, examId, channelId, postId, isAtLeastEditor, isAtLeastStaff),
+                buildLink(entityType, entityId, courseId, lectureId, examId, isAtLeastEditor, isAtLeastStaff),
                 asIsoDate(properties.get(SearchableEntitySchema.Properties.RELEASE_DATE)), asIsoDate(properties.get(SearchableEntitySchema.Properties.START_DATE)),
                 asIsoDate(properties.get(SearchableEntitySchema.Properties.DUE_DATE)), asIsoDate(properties.get(SearchableEntitySchema.Properties.END_DATE)),
                 asIsoDate(properties.get(examVisibleDateProperty)), asIsoDate(properties.get(SearchableEntitySchema.Properties.EXAM_START_DATE)),
                 asIsoDate(properties.get(SearchableEntitySchema.Properties.EXAM_END_DATE)), asDouble(properties.get(SearchableEntitySchema.Properties.MAX_POINTS)),
                 asLong(properties.get(SearchableEntitySchema.Properties.QUIZ_DURATION)), asString(properties.get(SearchableEntitySchema.Properties.PROGRAMMING_LANGUAGE)),
                 asString(properties.get(SearchableEntitySchema.Properties.EXERCISE_TYPE)), asString(properties.get(SearchableEntitySchema.Properties.UNIT_TYPE)),
-                asString(properties.get(SearchableEntitySchema.Properties.FAQ_STATE)), asBoolean(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC)));
+                asString(properties.get(SearchableEntitySchema.Properties.FAQ_STATE)), asBoolean(properties.get(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC)), passage);
     }
 
     /**
@@ -141,7 +134,7 @@ public class SearchableEntityPrefetchService {
      */
     @Nullable
     private static String buildLink(@Nullable String entityType, @Nullable Long entityId, @Nullable Long courseId, @Nullable Long lectureId, @Nullable Long examId,
-            @Nullable Long channelId, @Nullable Long postId, boolean isAtLeastEditor, boolean isAtLeastStaff) {
+            boolean isAtLeastEditor, boolean isAtLeastStaff) {
         if (entityType == null) {
             return null;
         }
@@ -163,15 +156,6 @@ public class SearchableEntityPrefetchService {
             }
             case SearchableEntitySchema.TypeValues.FAQ -> courseId != null ? "/courses/" + courseId + "/faq" : null;
             case SearchableEntitySchema.TypeValues.CHANNEL -> courseId != null && entityId != null ? "/courses/" + courseId + "/communication?conversationId=" + entityId : null;
-            // Mirrors the palette's own click handler (GlobalSearchNavigationViewComponent): a post is
-            // focused by its own id, a reply additionally names its parent post so the client can open
-            // the right thread. Without these, the citation opens the channel but not the cited message.
-            case SearchableEntitySchema.TypeValues.POST ->
-                courseId != null && channelId != null && entityId != null ? "/courses/" + courseId + "/communication?conversationId=" + channelId + "&focusPostId=" + entityId
-                        : null;
-            case SearchableEntitySchema.TypeValues.ANSWER_POST -> courseId != null && channelId != null && postId != null && entityId != null
-                    ? "/courses/" + courseId + "/communication?conversationId=" + channelId + "&messageId=" + postId + "&focusReplyId=" + entityId
-                    : null;
             default -> null;
         };
     }

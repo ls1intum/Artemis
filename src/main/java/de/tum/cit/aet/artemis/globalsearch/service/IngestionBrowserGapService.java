@@ -121,8 +121,9 @@ public class IngestionBrowserGapService {
      * The lecture units of a course that should have ingested content but do not: a PDF attachment with no slides
      * indexed, or a video source with no transcript indexed. Sorted by kind then unit id.
      * <p>
-     * Empty when Iris is not enabled. Without Iris nothing ingests lecture content in the first place, so reporting
-     * every unit with a PDF as a gap would describe a feature that is switched off rather than a problem to fix.
+     * Empty when Iris is not enabled, and for a course outside the ingestion window. Without Iris nothing ingests lecture
+     * content in the first place, and the ingestion path does not catch up on older courses, so reporting their units
+     * with a PDF as gaps would describe content nobody is going to write rather than a problem to fix.
      *
      * @param courseId the course to inspect
      * @param expected what the database expects indexed, already loaded
@@ -130,7 +131,7 @@ public class IngestionBrowserGapService {
      * @return the per-unit content gaps, named
      */
     public List<MissingContentDTO> contentGaps(long courseId, ExpectedSets expected, PresentSets present) {
-        if (!artemisConfigHelper.isIrisEnabled(environment)) {
+        if (!artemisConfigHelper.isIrisEnabled(environment) || !expected.requiresContent(courseId)) {
             return List.of();
         }
         Set<Long> missingSlides = difference(expected.pdfUnits().get(courseId), present.slides().get(courseId));
