@@ -38,13 +38,13 @@ class GenerationExternalMutationServiceTest {
 
     @Test
     void copiesAndSeedCaptureUseShortDatabaseReservations() {
-        when(ownership.claim(42, "COPY")).thenReturn("copy-token");
+        when(ownership.claimReader(42)).thenReturn("copy-token");
         when(ownership.claim(42, "SEED")).thenReturn("seed-token");
         assertThat(service.claimParticipationSlot(42)).isEqualTo("copy-token");
         service.clearParticipationSlot(42, "copy-token");
         assertThat(service.claimSeedSlot(42)).isEqualTo("seed-token");
         service.clearSeedSlot(42, "seed-token");
-        verify(ownership).release(42, "copy-token");
+        verify(ownership).releaseReader(42, "copy-token");
         verify(ownership).release(42, "seed-token");
     }
 
@@ -110,6 +110,18 @@ class GenerationExternalMutationServiceTest {
         when(ownership.release(42, "retained")).thenReturn(true);
         assertThat(service.recoverWedgedSlot(42, "retained")).isTrue();
         verify(ownership).release(42, "retained");
+    }
+
+    @Test
+    void exactCopyReaderRemainsVisibleAndRecoverableWithoutAWriter() {
+        when(ownership.get(42)).thenReturn(Optional.empty());
+        when(ownership.readers(42)).thenReturn(java.util.List.of(slot("reader-token", "COPY")));
+        when(ownership.releaseReader(42, "reader-token")).thenReturn(true);
+
+        assertThat(service.isGenerationActive(42)).isTrue();
+        assertThat(service.getWedgedSlotInfo(42)).hasValueSatisfying(info -> assertThat(info.token()).isEqualTo("reader-token"));
+        assertThat(service.recoverWedgedSlot(42, "reader-token")).isTrue();
+        verify(ownership).releaseReader(42, "reader-token");
     }
 
     private static Ownership slot(String token, String purpose) {

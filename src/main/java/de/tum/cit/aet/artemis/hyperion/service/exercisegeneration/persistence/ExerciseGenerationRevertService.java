@@ -145,12 +145,9 @@ public class ExerciseGenerationRevertService {
      * @param exercise              the exercise to revert
      * @param user                  the instructor performing the revert (exercise-version author)
      * @param stillOwnsMutationSlot re-checked before each durable mutation, so a lost slot stops the revert instead of finishing it
+     * @param ownershipToken        exact durable undo token used to authorize grading synchronization
      * @return the revert result, or empty when there is no retained baseline to revert to
      */
-    public Optional<RevertResult> revert(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot) {
-        return revert(exercise, user, stillOwnsMutationSlot, null);
-    }
-
     public Optional<RevertResult> revert(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot, String ownershipToken) {
         ExerciseGenerationBaseline baseline = baselineMap.get(exercise.getId());
         if (baseline == null) {

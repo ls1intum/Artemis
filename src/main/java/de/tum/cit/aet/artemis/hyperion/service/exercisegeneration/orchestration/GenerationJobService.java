@@ -765,8 +765,12 @@ public class GenerationJobService {
      * @param jobId      the completed job identifier
      */
     public void clearJob(long exerciseId, String jobId) {
-        externalMutationService.releaseSaveSlot(exerciseId, jobId);
-        cleanup.finished(exerciseId, jobId);
+        try {
+            externalMutationService.releaseSaveSlot(exerciseId, jobId);
+        }
+        finally {
+            cleanup.finished(exerciseId, jobId);
+        }
     }
 
     @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.SECONDS)

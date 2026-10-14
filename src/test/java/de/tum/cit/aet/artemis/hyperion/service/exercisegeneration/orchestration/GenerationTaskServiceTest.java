@@ -404,6 +404,22 @@ class GenerationTaskServiceTest {
     }
 
     @Test
+    void authoringConflictRetainsVerifiedCandidateAndReleasesOnlyUnusedSaveGuard() {
+        when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
+                .thenThrow(new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationAuthoringBaselineService.AuthoringConflictException());
+        GenerationOutcome outcome = outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()), SpecFidelityReport.empty(),
+                Map.of(RepositoryType.SOLUTION, Map.of("src/Stack.java", "class Stack {}")), "# Bounded stack", "");
+
+        run(GenerationMode.GENERATE, outcome);
+
+        verify(jobService).retainUnsavedArtifacts(eq(EXERCISE_ID), eq(JOB_ID), eq(user.getLogin()), any());
+        verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
+        verify(jobService, never()).retainIncompleteGenerationSlot(EXERCISE_ID, JOB_ID);
+        verify(generationRevertService, never()).invalidateBaseline(EXERCISE_ID);
+        assertThat(sentEvents().getLast().message()).contains("changed during generation", "Nothing was saved", "retained");
+    }
+
+    @Test
     void savedRun_retainsNothingBecauseTheWorkIsAlreadyInTheExercise() {
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
                 .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(),

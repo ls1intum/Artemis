@@ -53,11 +53,11 @@ public class GenerationExternalMutationService {
     }
 
     public String claimParticipationSlot(long exerciseId) {
-        return ownership.claim(exerciseId, "COPY");
+        return ownership.claimReader(exerciseId);
     }
 
     public void clearParticipationSlot(long exerciseId, String token) {
-        ownership.release(exerciseId, token);
+        ownership.releaseReader(exerciseId, token);
     }
 
     public void clearExternalMutationSlot(long exerciseId, String token) {
@@ -105,11 +105,17 @@ public class GenerationExternalMutationService {
     }
 
     public boolean isGenerationActive(long exerciseId) {
-        return ownership.get(exerciseId).isPresent();
+        return ownership.get(exerciseId).isPresent() || !ownership.readers(exerciseId).isEmpty();
     }
 
+    /**
+     * Reads the current durable writer or source-copy reservation for operator reconciliation.
+     *
+     * @param exerciseId protected exercise
+     * @return one exact reservation, or empty when none is held
+     */
     public Optional<GenerationJobService.WedgedSlotInfo> getWedgedSlotInfo(long exerciseId) {
-        return ownership.get(exerciseId)
+        return ownership.get(exerciseId).or(() -> ownership.readers(exerciseId).stream().findFirst())
                 .map(slot -> new GenerationJobService.WedgedSlotInfo(exerciseId, slot.token(),
                         slot.purpose().equals("UNDO_RECOVERY") ? GenerationJobService.WedgedSlotKind.REVERT_RECOVERY
                                 : slot.purpose().startsWith("SAVE") ? GenerationJobService.WedgedSlotKind.GENERATION
@@ -117,8 +123,14 @@ public class GenerationExternalMutationService {
                         slot.owner(), slot.startedAt(), false));
     }
 
-    /** The administrator must establish quiescence; cache presence does not prove it. */
+    /**
+     * Releases an exact reservation after the administrator establishes writer or reader quiescence.
+     *
+     * @param exerciseId protected exercise
+     * @param token      exact reservation token
+     * @return whether the matching reservation was released
+     */
     public boolean recoverWedgedSlot(long exerciseId, String token) {
-        return ownership.release(exerciseId, token);
+        return ownership.release(exerciseId, token) || ownership.releaseReader(exerciseId, token);
     }
 }
