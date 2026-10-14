@@ -24,6 +24,8 @@ import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/ser
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'src/test/javascript/spec/helpers/mocks/service/mock-theme.service';
 import type { Mock } from 'vitest';
+import { By } from '@angular/platform-browser';
+import { NgModel } from '@angular/forms';
 
 /**
  * Helper function to set up canvas and Image mocks for image processing tests.
@@ -186,6 +188,75 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(eventUpSpy).toHaveBeenCalledOnce();
         expect(eventDownSpy).toHaveBeenCalledOnce();
         expect(eventDeleteSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should only remove its own files from the shared file pool when the question is deleted', () => {
+        // The pool is shared by all drag and drop questions of the quiz and already holds the files of another question.
+        const otherQuestionFiles = new Map<string, { path?: string; file: File }>([
+            ['other-background.png', { file: new File(['bg'], 'other-background.png') }],
+            ['other-item.png', { file: new File(['item'], 'other-item.png') }],
+        ]);
+        fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        component = fixture.componentInstance;
+        const newQuestion = new DragAndDropQuestion();
+        newQuestion.dragItems = [];
+        fixture.componentRef.setInput('question', newQuestion);
+        fixture.componentRef.setInput('questionIndex', 2);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
+        fixture.componentRef.setInput('filePool', otherQuestionFiles);
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        fixture.detectChanges();
+
+        component.deleteQuestion();
+
+        expect(removeFileSpy).not.toHaveBeenCalled();
+    });
+
+    it('should remove the background and drag item files of the deleted question', () => {
+        fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        component = fixture.componentInstance;
+        const filePool = new Map<string, { path?: string; file: File }>([['other-background.png', { file: new File(['bg'], 'other-background.png') }]]);
+        fixture.componentRef.setInput('question', clone(question3));
+        fixture.componentRef.setInput('questionIndex', 1);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
+        fixture.componentRef.setInput('filePool', filePool);
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        fixture.detectChanges();
+
+        component.deleteQuestion();
+
+        expect(removeFileSpy).toHaveBeenCalledTimes(4);
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/1/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/2/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/3/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/4/image.jpg');
+        expect(removeFileSpy).not.toHaveBeenCalledWith('other-background.png');
+    });
+
+    it('should realign the click layer of every drag and drop question when the window is resized', () => {
+        const secondFixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        const secondComponent = secondFixture.componentInstance;
+        secondFixture.componentRef.setInput('question', clone(question2));
+        secondFixture.componentRef.setInput('questionIndex', 2);
+        secondFixture.componentRef.setInput('reEvaluationInProgress', false);
+        secondFixture.detectChanges();
+        const firstAdjustSpy = vi.spyOn(component, 'adjustClickLayerWidth');
+        const secondAdjustSpy = vi.spyOn(secondComponent, 'adjustClickLayerWidth');
+
+        window.dispatchEvent(new Event('resize'));
+
+        // The drop locations are percentages of the click layer, so a layer that keeps its old width makes them drift away from the background image.
+        expect(firstAdjustSpy).toHaveBeenCalledOnce();
+        expect(secondAdjustSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should stop reacting to window resizes once the question is destroyed', () => {
+        const adjustSpy = vi.spyOn(component, 'adjustClickLayerWidth');
+
+        fixture.destroy();
+        window.dispatchEvent(new Event('resize'));
+
+        expect(adjustSpy).not.toHaveBeenCalled();
     });
 
     it('should set background file', () => {
@@ -378,6 +449,40 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.filePreviewPaths().size).toBe(0);
         expect(addFileSpy).not.toHaveBeenCalled();
         expect(removeFileSpy).not.toHaveBeenCalled();
+    });
+
+    it.each([false, true])('should let instructors correct over-limit text during re-evaluation: %s', async (reEvaluationInProgress) => {
+        const question = new DragAndDropQuestion();
+        question.dragItems = [{ text: 'a'.repeat(256), invalid: false }];
+        fixture.componentRef.setInput('question', question);
+        fixture.componentRef.setInput('reEvaluationInProgress', reEvaluationInProgress);
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        const textareaElement = fixture.debugElement.query(By.css('#drag-item-0-text'));
+        const textarea: HTMLTextAreaElement = textareaElement.nativeElement;
+        const model = textareaElement.injector.get(NgModel);
+        expect(model.hasError('maxlength')).toBe(true);
+        expect(textarea.value).toBe('a'.repeat(256));
+        expect(textarea.getAttribute('aria-invalid')).toBe('true');
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).not.toBeNull();
+
+        textarea.value = 'a'.repeat(255);
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(model.hasError('maxlength')).toBe(false);
+        expect(question.dragItems![0].text).toBe('a'.repeat(255));
+        expect(textarea.getAttribute('aria-invalid')).toBe('false');
+
+        textarea.value = 'Short item';
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(question.dragItems![0].text).toBe('Short item');
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
     });
 
     it('should create image item', () => {
