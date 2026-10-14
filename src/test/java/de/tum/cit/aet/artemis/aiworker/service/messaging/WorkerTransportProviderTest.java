@@ -75,9 +75,9 @@ class WorkerTransportProviderTest {
             try {
                 verifyDelivery(
                         new RedissonDistributedDataProviderService(first, new RedisClientListResolver(new RedissonConnectionFactory(first)),
-                                new RedisNodeIdentity("aiworker-test", false, false)),
+                                new RedisNodeIdentity("aiworker-test")),
                         new RedissonDistributedDataProviderService(second, new RedisClientListResolver(new RedissonConnectionFactory(second)),
-                                new RedisNodeIdentity("aiworker-test", false, false)));
+                                new RedisNodeIdentity("aiworker-test")));
             }
             finally {
                 first.shutdown();
@@ -94,7 +94,7 @@ class WorkerTransportProviderTest {
         var config = new Config();
         config.useSingleServer().setAddress(address).setConnectionMinimumIdleSize(1).setConnectionPoolSize(2).setSubscriptionConnectionMinimumIdleSize(1)
                 .setSubscriptionConnectionPoolSize(2);
-        new RedissonCodecConfiguration().artemisRedissonSerializationCodecCustomizer(new RedisNodeIdentity("aiworker-test", false, false)).customize(config);
+        new RedissonCodecConfiguration().artemisRedissonSerializationCodecCustomizer(new RedisNodeIdentity("aiworker-test")).customize(config);
         return Redisson.create(config);
     }
 

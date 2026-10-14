@@ -290,9 +290,7 @@ public class HazelcastDistributedDataProviderService implements DistributedDataP
             return Optional.empty();
         }
         var members = getClusterMembers().stream().filter(member -> !member.isLiteMember()).toList();
-        return Optional.of(new CoordinationSnapshot(members.stream().map(Member::getUuid).map(UUID::toString).collect(Collectors.toUnmodifiableSet()), true,
-                members.stream().allMatch(member -> Boolean.parseBoolean(member.getAttribute(WRITER_FENCING_MEMBER_ATTRIBUTE))
-                        && String.valueOf(members.size()).equals(member.getAttribute(WRITER_FENCING_MEMBERS_ATTRIBUTE)))));
+        return Optional.of(new CoordinationSnapshot(members.stream().map(Member::getUuid).map(UUID::toString).collect(Collectors.toUnmodifiableSet())));
     }
 
     /**
