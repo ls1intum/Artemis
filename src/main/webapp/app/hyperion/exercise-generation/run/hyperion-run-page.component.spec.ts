@@ -10,6 +10,7 @@ import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxj
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import hyperionGenerationEn from 'src/main/webapp/i18n/en/hyperionExerciseGeneration.json';
+import hyperionGenerationDe from 'src/main/webapp/i18n/de/hyperionExerciseGeneration.json';
 import programmingExerciseEn from 'src/main/webapp/i18n/en/programmingExercise.json';
 import programmingExerciseDe from 'src/main/webapp/i18n/de/programmingExercise.json';
 import programmingLanguageEn from 'src/main/webapp/i18n/en/programmingLanguage.json';
@@ -539,6 +540,13 @@ describe('HyperionRunPageComponent', () => {
 
         expect(fact('elapsed')?.textContent?.trim()).toBe('1:30');
         expect(announced).toContain('artemisApp.hyperion.generation.run.stalledAnnouncement');
+    });
+
+    it('does not claim unchanged exercise contents when status is unavailable in either language', () => {
+        expect(hyperionGenerationEn.artemisApp.hyperion.generation.run.statusUnavailable).not.toContain('Nothing has been changed');
+        expect(hyperionGenerationDe.artemisApp.hyperion.generation.run.statusUnavailable).not.toContain('nichts geändert');
+        expect(hyperionGenerationEn.artemisApp.hyperion.generation.run.statusUnavailable).toContain('Try again');
+        expect(hyperionGenerationDe.artemisApp.hyperion.generation.run.statusUnavailable).toContain('Versuche es erneut');
     });
 
     it('offers a retry that asks the server again when the status could not be loaded', () => {

@@ -170,7 +170,7 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.changeDetectorRef.detectChanges();
         await new Promise(process.nextTick);
 
-        expect(selectFileInEditorStub).toHaveBeenCalledWith('file1.java');
+        expect(selectFileInEditorStub).toHaveBeenCalledWith('file1.java', expect.any(Number));
         expect(updateInteractionModeStub).toHaveBeenCalled();
     });
 
@@ -702,28 +702,28 @@ describe('CodeEditorMonacoComponent', () => {
             expect(errorCallbackStub).not.toHaveBeenCalled();
         });
 
-        it('should revoke the previous URL when two in-flight loads for the same file resolve back-to-back', async () => {
+        it('ignores the superseded same-path image response without replacing the newest preview', async () => {
             const fileName = 'assets/logo.png';
             const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'image/png' });
             const firstSubject = new Subject<Blob>();
             const secondSubject = new Subject<Blob>();
             const getFileAsBlobSpy = vi.spyOn(codeEditorRepositoryFileService, 'getFileAsBlob').mockReturnValueOnce(firstSubject).mockReturnValueOnce(secondSubject);
-            createObjectURLMock.mockReturnValueOnce('blob:first-url').mockReturnValueOnce('blob:second-url');
+            createObjectURLMock.mockReturnValueOnce('blob:newest-url');
             fixture.componentRef.setInput('selectedFile', fileName);
 
             // Kick off two loads for the same file before either resolves (mirrors the editorWasRefreshed re-entry path).
             const firstPending = comp.selectFileInEditor(fileName);
             const secondPending = comp.selectFileInEditor(fileName);
-            firstSubject.next(blob);
-            firstSubject.complete();
             secondSubject.next(blob);
-            secondSubject.complete();
-            await Promise.all([firstPending, secondPending]);
+            await secondPending;
+            expect(comp.imagePreviewUrl()).toBe('blob:newest-url');
+            firstSubject.next(blob);
+            await firstPending;
 
             expect(getFileAsBlobSpy).toHaveBeenCalledTimes(2);
-            expect(createObjectURLMock).toHaveBeenCalledTimes(2);
-            expect(revokeObjectURLMock).toHaveBeenCalledWith('blob:first-url');
-            expect(comp.imagePreviewUrl()).toBe('blob:second-url');
+            expect(createObjectURLMock).toHaveBeenCalledTimes(1);
+            expect(revokeObjectURLMock).not.toHaveBeenCalled();
+            expect(comp.imagePreviewUrl()).toBe('blob:newest-url');
         });
 
         it('should revoke the previously generated image preview URL when switching files', async () => {
@@ -815,12 +815,13 @@ describe('CodeEditorMonacoComponent', () => {
         expect(changeModelSpy).toHaveBeenCalledExactlyOnceWith('file2', 'code2');
     });
 
-    it('rejects a stale same-path load after an A-B-A selection sequence', async () => {
-        const resolvers: Array<() => void> = [];
-        vi.spyOn(comp, 'selectFileInEditor').mockImplementation(() => new Promise<void>((resolve) => resolvers.push(resolve)));
-        const fileLoadSpy = vi.spyOn(comp.onFileLoad, 'emit');
+    it('rejects a stale same-path response before changing cached content or Monaco', async () => {
+        const responses = [new Subject<{ fileContent: string }>(), new Subject<{ fileContent: string }>(), new Subject<{ fileContent: string }>()];
+        const getFile = vi.spyOn(codeEditorRepositoryFileService, 'getFile');
+        for (const response of responses) getFile.mockReturnValueOnce(response);
+        const changeModel = vi.spyOn(comp.editor(), 'changeModel');
         const cascade = (previous: string | undefined) =>
-            (comp as any).handleInputChangeCascade({
+            comp['handleInputChangeCascade']({
                 editorWasRefreshed: false,
                 editorWasReset: false,
                 selectedFileChanged: true,
@@ -834,15 +835,18 @@ describe('CodeEditorMonacoComponent', () => {
         const b = cascade('A.java');
         fixture.componentRef.setInput('selectedFile', 'A.java');
         const latestA = cascade('B.java');
-
-        resolvers[2]();
+        responses[2].next({ fileContent: 'new A' });
         await latestA;
-        resolvers[0]();
+        comp.fileSession.update((files) => ({ ...files, 'A.java': { ...files['A.java'], code: 'local edit' } }));
+        changeModel.mockClear();
+        responses[0].next({ fileContent: 'old A' });
         await firstA;
-        resolvers[1]();
+        responses[1].next({ fileContent: 'old B' });
         await b;
 
-        expect(fileLoadSpy).toHaveBeenCalledExactlyOnceWith('A.java');
+        expect(comp.fileSession()['A.java'].code).toBe('local edit');
+        expect(comp.fileSession()['B.java']).toBeUndefined();
+        expect(changeModel).not.toHaveBeenCalled();
     });
 
     it('should use the code and cursor position of the selected file', async () => {
@@ -1234,7 +1238,7 @@ describe('CodeEditorMonacoComponent', () => {
         fixture.componentRef.setInput('selectedFile', selectedFile);
         fixture.changeDetectorRef.detectChanges();
 
-        expect(selectFileInEditorSpy).toHaveBeenCalledWith(selectedFile);
+        expect(selectFileInEditorSpy).toHaveBeenCalledWith(selectedFile, expect.any(Number));
         expect(renderReviewCommentWidgetsSpy).not.toHaveBeenCalled();
 
         isFileAwaitingInitialSync.mockReturnValue(false);

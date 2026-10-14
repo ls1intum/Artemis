@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, computed, ef
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription, catchError, of, take } from 'rxjs';
+import { Subscription, catchError, finalize, of, take } from 'rxjs';
 import {
     TumAetUiButtonDirective,
     TumAetUiCheckboxComponent,
@@ -101,6 +101,8 @@ export class LegacyCodeGenerationComponent implements OnDestroy {
     private statusSubscription?: Subscription;
     private startSubscription?: Subscription;
     private restoreRequestId = 0;
+    private startPending = false;
+    private restoreAfterStart = false;
     private slotReleasePollTimeoutHandle?: number;
     private codeGenerationPullTimeoutHandles = new Map<SupportedCodeGenerationRepositoryType, number>();
     private codeGenerationPullSubscriptions = new Map<SupportedCodeGenerationRepositoryType, Subscription>();
@@ -173,6 +175,10 @@ export class LegacyCodeGenerationComponent implements OnDestroy {
         effect(() => this.runningChanged.emit(this.isGeneratingCode()));
         this.websocket.connectionState.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((state) => {
             if (state.connected && this.contextExerciseId) {
+                if (this.startPending) {
+                    this.restoreAfterStart = true;
+                    return;
+                }
                 if (this.isGeneratingCode() && !this.activeCodeGenerationRepository && this.queuedCodeGenerationRepositories.length) this.waitForCodeGenerationSlotRelease();
                 else this.restoreCodeGenerationState(true);
             }
@@ -219,6 +225,8 @@ export class LegacyCodeGenerationComponent implements OnDestroy {
         this.confirmations.close(undefined);
         this.startSubscription?.unsubscribe();
         this.startSubscription = undefined;
+        this.startPending = false;
+        this.restoreAfterStart = false;
         this.clearJobSubscription(true);
         this.clearCodeGenerationStatusSubscription();
         this.clearSlotReleasePoll();
@@ -242,7 +250,7 @@ export class LegacyCodeGenerationComponent implements OnDestroy {
     }
 
     private runNextCodeGeneration() {
-        if (this.blockedReason()) return;
+        if (this.startPending || this.blockedReason()) return;
         const repositoryType = this.queuedCodeGenerationRepositories.shift();
         const exerciseId = this.exercise().id;
         if (!repositoryType || !exerciseId) {
@@ -256,9 +264,21 @@ export class LegacyCodeGenerationComponent implements OnDestroy {
 
         const request = this.createCodeGenerationRequest(repositoryType, this.currentCodeGenerationUsesInitialIterationLimit);
         const requestId = this.restoreRequestId;
+        this.startPending = true;
         this.startSubscription = this.hyperionCodeGenerationApi
             .generateCode(exerciseId, request)
-            .pipe(takeUntilDestroyed(this.destroyRef))
+            .pipe(
+                takeUntilDestroyed(this.destroyRef),
+                finalize(() => {
+                    if (requestId !== this.restoreRequestId) return;
+                    this.startPending = false;
+                    const restore = this.restoreAfterStart;
+                    this.restoreAfterStart = false;
+                    if (restore && this.isGeneratingCode()) this.restoreCodeGenerationState(true);
+                    else if (this.isGeneratingCode() && !this.activeCodeGenerationRepository && this.queuedCodeGenerationRepositories.length)
+                        this.waitForCodeGenerationSlotRelease();
+                }),
+            )
             .subscribe({
                 next: (res) => {
                     if (requestId !== this.restoreRequestId) return;
@@ -296,6 +316,10 @@ export class LegacyCodeGenerationComponent implements OnDestroy {
     }
 
     private restoreCodeGenerationState(force = false) {
+        if (this.startPending) {
+            this.restoreAfterStart ||= force;
+            return;
+        }
         const exerciseId = this.exercise().id;
         if (!exerciseId) {
             return;
