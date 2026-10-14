@@ -49,7 +49,7 @@
         "emptyFile": "The uploaded file {{ fileName }} is empty. Please check the file and try again.",
         "externalSubmissionBeforeDueDate": "External submissions are not supported before the exercise due date.",
         "externalSubmissionForQuizExercise": "External submissions are not supported for Quiz exercises.",
-        "studentExamNotFound": "This student has no individual exam. Generate the student exams first.",
+        "noWorkingPeriod": "This student has no working period in this exam, because no student exam exists for them. Generate the student exams first.",
         "noSubmissions": "No existing user was specified, or no submission exists.",
         "feedbackCreditsNull": "Error! If feedback is present, all elements must contain points.",
         "faqRewriteFailed": "Could not rewrite FAQ. Please try again.",

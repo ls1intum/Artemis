@@ -299,9 +299,9 @@ public class ResultResource {
         // Without a student exam the student has no working period, which the participation and the result of an exam exercise depend on
         if (exercise.isExamExercise()) {
             StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
-            if (!api.hasStudentExam(exercise.getExerciseGroup().getExam().getId(), student.get().getId())) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "studentExamNotFound",
-                        "This student has no individual exam. Generate the student exams first.")).build();
+            if (!api.hasWorkingPeriod(exercise.getExerciseGroup().getExam().getId(), student.get().getId())) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "noWorkingPeriod",
+                        "This student has no working period in this exam, because no student exam exists for them. Generate the student exams first.")).build();
             }
         }
 

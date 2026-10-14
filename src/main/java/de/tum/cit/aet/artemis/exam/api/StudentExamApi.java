@@ -83,13 +83,14 @@ public class StudentExamApi extends AbstractExamApi {
     }
 
     /**
-     * Checks whether the student has an own student exam for the exam, ignoring instructor test runs.
+     * Checks whether a working period can be determined for the student in the exam. That is the case when the student has a student exam
+     * of their own (the newest one for test exams), instructor test runs are ignored.
      *
      * @param examId the id of the exam
      * @param userId the id of the student
-     * @return true if a student exam exists
+     * @return true if the student has a student exam to read the working period from
      */
-    public boolean hasStudentExam(long examId, long userId) {
+    public boolean hasWorkingPeriod(long examId, long userId) {
         return studentExamRepository.findNewestWorkingPeriodByExamIdAndUserId(examId, userId).isPresent();
     }
 
