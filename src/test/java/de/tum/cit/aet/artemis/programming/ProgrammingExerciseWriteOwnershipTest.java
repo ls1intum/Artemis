@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
+import java.net.URI;
+import java.sql.DriverManager;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -16,6 +19,7 @@ import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.testcontainers.DockerClientFactory;
 
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -112,6 +116,7 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
             var first = executor.submit(() -> ownershipRepository.claimAndHold(exercise.getId(), "held", acquired, release));
             try {
                 assertThat(acquired.await(10, TimeUnit.SECONDS)).isTrue();
+                grantTestLockObserverPrivilege();
                 var second = executor.submit(() -> ownershipRepository.claim(exercise.getId(), "waiting", "other-process", "persist", Instant.now()));
                 await().atMost(Duration.ofSeconds(10)).until(this::ownershipUpdateIsWaitingOnRowLock);
                 assertThat(second.isDone()).isFalse();
@@ -125,6 +130,33 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
             }
         }
         ownershipService.release(exercise.getId(), "held");
+    }
+
+    private void grantTestLockObserverPrivilege() throws Exception {
+        try (var connection = dataSource.getConnection()) {
+            if (connection.getMetaData().getDatabaseProductName().equals("PostgreSQL")) {
+                return;
+            }
+            String url = connection.getMetaData().getURL();
+            int port = URI.create(url.substring("jdbc:".length())).getPort();
+            var docker = DockerClientFactory.instance().client();
+            var container = docker.listContainersCmd().exec().stream()
+                    .filter(candidate -> Arrays.stream(candidate.getPorts()).anyMatch(binding -> Integer.valueOf(port).equals(binding.getPublicPort()))).findFirst().orElseThrow();
+            String password = Arrays.stream(docker.inspectContainerCmd(container.getId()).exec().getConfig().getEnv()).filter(value -> value.startsWith("MYSQL_ROOT_PASSWORD="))
+                    .map(value -> value.substring("MYSQL_ROOT_PASSWORD=".length())).findFirst().orElseThrow();
+            String account;
+            try (var query = connection.createStatement(); var rows = query.executeQuery("SELECT CURRENT_USER()")) {
+                rows.next();
+                account = rows.getString(1);
+            }
+            int at = account.lastIndexOf('@');
+            String user = account.substring(0, at).replace("'", "''");
+            String host = account.substring(at + 1).replace("'", "''");
+            // Only this owned test container receives observer permission; the application needs none.
+            try (var admin = DriverManager.getConnection(url, "root", password); var grant = admin.createStatement()) {
+                grant.execute("GRANT PROCESS ON *.* TO '" + user + "'@'" + host + "'");
+            }
+        }
     }
 
     private boolean ownershipUpdateIsWaitingOnRowLock() throws Exception {
