@@ -72,13 +72,13 @@ class ExerciseGenerationRevertServiceTest {
         recovery = mock(GenerationVersionRecoveryService.class);
         metadata = mock(GenerationRestoreMetadataService.class);
         testCases = mock(GenerationRestoreTestCasesService.class);
-        when(testCases.canRestore(org.mockito.ArgumentMatchers.anyLong(), any(), eq("undo-token"))).thenReturn(true);
-        when(metadata.canRestore(org.mockito.ArgumentMatchers.anyLong(), any(), eq("undo-token"))).thenReturn(true);
+        when(testCases.canRestore(org.mockito.ArgumentMatchers.anyLong(), any())).thenReturn(true);
+        when(metadata.canRestore(org.mockito.ArgumentMatchers.anyLong(), any())).thenReturn(true);
         gitService = mock(GitService.class);
         persistenceService = mock(GenerationPersistenceService.class);
         tempFileUtilService = new TempFileUtilService(Path.of("build/tmp/hyperion-adaptation-revert-test"));
-        when(persistenceService.canRestoreGrading(any(Long.class), any(), any(), eq("undo-token"))).thenReturn(true);
-        when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any(), eq("undo-token"))).thenReturn(true);
+        when(persistenceService.canRestoreGrading(any(Long.class), any(), any())).thenReturn(true);
+        when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(true);
         when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any(), eq("undo-token"))).thenReturn(true);
         revertService = new ExerciseGenerationRevertService(recovery, metadata, testCases, new GenerationRepositoryRevertService(gitService, tempFileUtilService),
                 persistenceService, DEFAULT_BRANCH);
@@ -112,7 +112,7 @@ class ExerciseGenerationRevertServiceTest {
     @Test
     void restoresCanonicalMetadataWithoutRequiringThePreviousDraftToBuild() {
         recordBaseline("job-empty-draft", GenerationMode.GENERATE, preRunHeads(), postRunHeads(), "old statement", "Old Title");
-        var result = revertService.revert(exercise, user, () -> true).orElseThrow();
+        var result = revertService.revert(exercise, user, () -> true, "undo-token").orElseThrow();
         assertThat(result.fullyReverted()).isTrue();
         verify(persistenceService, never()).prepareTestsBuildSignal(any(), any());
         verify(persistenceService, never()).triggerTestsBuild(any(), any());
@@ -155,7 +155,7 @@ class ExerciseGenerationRevertServiceTest {
     void noRepositoryCanChangeWithoutADurableRestorationObligation() throws Exception {
         recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
         org.mockito.Mockito.doThrow(new IllegalStateException("journal unavailable")).when(recovery).started(any());
-        org.assertj.core.api.Assertions.assertThatThrownBy(() -> revertService.revert(exercise, user, () -> true)).isInstanceOf(IllegalStateException.class);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> revertService.revert(exercise, user, () -> true, "undo-token")).isInstanceOf(IllegalStateException.class);
         verify(gitService, never()).getOrCheckoutRepositoryOnBranch(any(), any(Path.class), any());
         verify(gitService, never()).resetToCommitAndForcePush(any(), any(), any(), any());
     }
@@ -165,7 +165,7 @@ class ExerciseGenerationRevertServiceTest {
         recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
         when(testCases.canRestore(org.mockito.ArgumentMatchers.anyLong(), any())).thenReturn(false);
 
-        assertThat(revertService.revert(exercise, user, () -> true)).hasValueSatisfying(result -> {
+        assertThat(revertService.revert(exercise, user, () -> true, "undo-token")).hasValueSatisfying(result -> {
             assertThat(result.fullyReverted()).isFalse();
             assertThat(result.mutationAttempted()).isFalse();
         });
@@ -298,7 +298,7 @@ class ExerciseGenerationRevertServiceTest {
         verify(gitService, times(1)).resetToCommitAndForcePush(testsRepo, "sha-tests", "adapted-tests", DEFAULT_BRANCH);
         verify(persistenceService, never()).triggerTestsBuild(eq(exercise), any());
         verify(persistenceService).resyncAfterRevertWithSignal(eq(exercise), eq(user), eq(null), eq("old statement"), eq("Old Title"), eq("adapted statement"), eq("Adapted Title"),
-                anyMap(), any(), any(), any());
+                anyMap(), any(), any(), any(), eq("undo-token"));
     }
 
     @Test
@@ -357,7 +357,7 @@ class ExerciseGenerationRevertServiceTest {
 
     @Test
     void revert_refusesBeforeRepositoryResetWhenPersistedMetadataChanged() throws Exception {
-        when(persistenceService.canRestoreGrading(any(Long.class), any(), any(), eq("undo-token"))).thenReturn(true);
+        when(persistenceService.canRestoreGrading(any(Long.class), any(), any())).thenReturn(true);
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(false);
         when(gitService.getLastCommitHash(templateUri, DEFAULT_BRANCH)).thenReturn("adapted-template");
         recordBaseline("job-1", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "sha-template"), Map.of(RepositoryType.TEMPLATE, "adapted-template"), "old statement",

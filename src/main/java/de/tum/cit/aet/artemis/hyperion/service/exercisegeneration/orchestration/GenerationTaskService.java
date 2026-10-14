@@ -263,6 +263,11 @@ public class GenerationTaskService {
                         .withTerminationReason(TerminationReason.DEADLINE_EXCEEDED));
                 return;
             }
+            if (event.variantPreparation() != null && !jobService.enterNonCancellablePhase(exerciseId, jobId)) {
+                emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.CANCELLED, "Variant preparation did not start. Nothing was changed.")
+                        .withTerminationReason(TerminationReason.NOT_STARTED));
+                return;
+            }
             deadlineFuture = scheduleDeadline(deadlineExceeded, event.deadlineAt());
             heartbeatFuture = scheduleHeartbeat(exerciseId, jobId, heartbeatLost);
             emitter.milestone(ExerciseGenerationEventDTO.of(ExerciseGenerationEventDTO.Type.STARTED, "Starting exercise authoring"));
@@ -271,12 +276,19 @@ public class GenerationTaskService {
                 shutdownGuard.enterPointOfNoReturn();
                 try {
                     variants.prepareInfrastructure(event);
+                    if (!jobService.allowCancellationAfterPreparation(exerciseId, jobId)) {
+                        throw new IllegalStateException("The destination reservation could not be released after preparation");
+                    }
+                }
+                catch (RuntimeException | LinkageError preparationFailure) {
+                    recoveryRequired.set(true);
+                    emitter.milestone(ExerciseGenerationEventDTO.done("Variant preparation may have changed the destination. Manual recovery is required.",
+                            ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, null, true).withTerminationReason(TerminationReason.RUN_FAILED));
+                    log.error("Variant preparation for job {} requires recovery", jobId, preparationFailure);
+                    return;
                 }
                 finally {
                     shutdownGuard.leavePointOfNoReturn();
-                }
-                if (!jobService.allowCancellationAfterPreparation(exerciseId, jobId)) {
-                    throw new IllegalStateException("Variant preparation lost its destination reservation");
                 }
             }
             // The event's exercise was loaded on the request thread, so on this executor thread its lazy associations (buildConfig, template/solution participations) are

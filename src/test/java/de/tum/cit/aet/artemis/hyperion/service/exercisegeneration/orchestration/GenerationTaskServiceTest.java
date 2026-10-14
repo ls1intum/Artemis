@@ -188,6 +188,7 @@ class GenerationTaskServiceTest {
         variantTask(variants).runAsync(event);
 
         var order = org.mockito.Mockito.inOrder(variants, jobService, orchestrator, persistenceService);
+        order.verify(jobService).enterNonCancellablePhase(EXERCISE_ID, JOB_ID);
         order.verify(variants).prepareInfrastructure(event);
         order.verify(jobService).allowCancellationAfterPreparation(EXERCISE_ID, JOB_ID);
         order.verify(orchestrator).generate(any(), eq(user), eq("Change the domain"), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), any(), any(), any(), any(), any());
@@ -207,8 +208,22 @@ class GenerationTaskServiceTest {
 
         verify(orchestrator, never()).generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(variants).releaseSource(event);
-        verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
-        assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+        verify(jobService).retainIncompleteGenerationSlot(EXERCISE_ID, JOB_ID);
+        assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
+    }
+
+    @Test
+    void variantPreparationReleaseFailureRetainsRecoveryAndDoesNotSeedTheWorker() {
+        var variants = mock(GenerationVariantService.class);
+        when(jobService.allowCancellationAfterPreparation(EXERCISE_ID, JOB_ID)).thenReturn(false);
+        var event = variantEvent();
+
+        variantTask(variants).runAsync(event);
+
+        verify(variants).prepareInfrastructure(event);
+        verify(orchestrator, never()).generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
+        verify(jobService).retainIncompleteGenerationSlot(EXERCISE_ID, JOB_ID);
+        assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.PARTIAL);
     }
 
     @Test
@@ -481,7 +496,6 @@ class GenerationTaskServiceTest {
         verify(jobService).retainUnsavedArtifacts(eq(EXERCISE_ID), eq(JOB_ID), eq(user.getLogin()), any());
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
         verify(jobService, never()).retainIncompleteGenerationSlot(EXERCISE_ID, JOB_ID);
-        verify(generationRevertService, never()).invalidateBaseline(EXERCISE_ID);
         assertThat(sentEvents().getLast().message()).contains("changed during generation", "Nothing was saved", "retained");
     }
 

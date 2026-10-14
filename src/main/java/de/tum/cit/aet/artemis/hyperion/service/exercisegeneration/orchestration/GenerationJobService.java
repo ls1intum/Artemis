@@ -358,7 +358,7 @@ public class GenerationJobService {
         Instant startedAt = Instant.now();
         Instant deadlineAt = startedAt.plus(settings == null ? maxJobDuration : settings.maxJobDuration());
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, preparation == null, budgetReservationId, mode,
+        JobInfo newJob = new JobInfo(jobId, user.getLogin(), exercise.getId(), startedAt, deadlineAt, localNodeId, startedAt, true, budgetReservationId, mode,
                 exercise.getTitle(), course == null ? null : course.getId());
         var startedReplay = new AtomicReference<GenerationJobReplayStore.StartedReplay>();
         boolean publicStatePublished = false;
@@ -821,7 +821,18 @@ public class GenerationJobService {
         lockJobSlot(key);
         try {
             JobInfo current = jobMap.get(key);
-            return current != null && current.jobId().equals(jobId) && localNodeId.equals(current.ownerNodeId()) && jobMap.replace(key, current, current.withCancellable(true));
+            if (current == null || !current.jobId().equals(jobId) || !localNodeId.equals(current.ownerNodeId()) || !externalMutationService.owns(exerciseId, jobId)) {
+                return false;
+            }
+            if (!jobMap.replace(key, current, current.withCancellable(true))) {
+                externalMutationService.retainSaveRecovery(exerciseId, jobId);
+                return false;
+            }
+            if (!externalMutationService.releaseSaveSlotIfOwned(exerciseId, jobId)) {
+                externalMutationService.retainSaveRecovery(exerciseId, jobId);
+                return false;
+            }
+            return true;
         }
         finally {
             unlockJobSlot(key);
