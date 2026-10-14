@@ -612,6 +612,46 @@ examples.forEach((activeConversation) => {
             });
         });
 
+        describe('an empty direct message that receives its first message', () => {
+            let emptyChat: ConversationDTO;
+            let usedChat: ConversationDTO;
+            let conversationsOfUser$: BehaviorSubject<ConversationDTO[]>;
+
+            beforeEach(() => {
+                emptyChat = { id: 101, type: ConversationType.ONE_TO_ONE } as ConversationDTO;
+                usedChat = { id: 102, type: ConversationType.ONE_TO_ONE, lastMessageDate: dayjs() } as ConversationDTO;
+                conversationsOfUser$ = new BehaviorSubject<ConversationDTO[]>([emptyChat, usedChat]);
+                Object.defineProperty(courseConversationsService, 'conversationsOfUser$', { get: () => conversationsOfUser$.asObservable() });
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
+                vi.mocked(courseOverviewService.mapConversationsToSidebarCardElements).mockImplementation((conversations) =>
+                    conversations.map((conversation) => ({ id: conversation.id!, title: 'chat', size: 'S', conversation })),
+                );
+                fixture.detectChanges();
+                component.prepareSidebarData();
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockClear();
+                vi.mocked(courseOverviewService.groupConversationsByChannelType).mockClear();
+            });
+
+            it('should add the chat to the sidebar when the other participant sends the first message', () => {
+                expect(component.sidebarConversations().map((card) => card.id)).toEqual([usedChat.id]);
+
+                // the service updates the cached chat in place when the message event arrives
+                emptyChat.lastMessageDate = dayjs();
+                conversationsOfUser$.next([emptyChat, usedChat]);
+
+                expect(component.sidebarConversations().map((card) => card.id)).toEqual([emptyChat.id, usedChat.id]);
+                expect(vi.mocked(courseOverviewService.groupConversationsByChannelType).mock.lastCall?.[1]).toContain(emptyChat);
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
+            it('should keep the chat out of the sidebar while it is still empty', () => {
+                conversationsOfUser$.next([emptyChat, usedChat]);
+
+                expect(courseOverviewService.groupConversationsByChannelType).not.toHaveBeenCalled();
+                expect(component.sidebarConversations().map((card) => card.id)).toEqual([usedChat.id]);
+            });
+        });
+
         describe('opening a conversation that the sidebar does not list yet', () => {
             const newChannel = { id: 201, type: ConversationType.CHANNEL } as ConversationDTO;
             const knownChannel = { id: 202, type: ConversationType.CHANNEL } as ConversationDTO;

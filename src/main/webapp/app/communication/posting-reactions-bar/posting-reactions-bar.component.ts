@@ -309,8 +309,8 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      */
     readonly reactionMetaDataMap = signal<ReactionMetaDataMap>({});
 
-    /** emoji ids with a create or delete request that has not finished yet */
-    private readonly emojiIdsWithPendingRequest = new Set<string>();
+    /** keys (posting id and emoji id) of the create or delete requests that have not finished yet */
+    private readonly pendingRequestKeys = new Set<string>();
 
     /**
      * builds and returns a Reaction model out of an emojiId and thereby sets the answerPost property properly
@@ -360,26 +360,34 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
      * @param emojiId emojiId representing the reaction to be added/removed
      */
     addOrRemoveReaction(emojiId: string): void {
+        // The posting is captured now: the thread sidebar reuses this component for another posting, so the response may arrive while another one is shown.
+        const targetPosting = this.posting() as Posting;
+        const isTargetStillShown = () => this.posting()?.id === targetPosting.id;
         // The decision below relies on the reactions of the posting, which only change once the server answered. A second click before that would
         // act on stale data and send the same request twice, which the server rejects, so the click would seem to have no effect.
-        if (this.emojiIdsWithPendingRequest.has(emojiId)) {
+        const requestKey = `${targetPosting.id}-${emojiId}`;
+        if (this.pendingRequestKeys.has(requestKey)) {
             return;
         }
-        const existingReactionIdx = (this.posting() as Posting).reactions
-            ? (this.posting() as Posting).reactions!.findIndex((reaction) => reaction.user?.id === this.communicationService.getUser().id && reaction.emojiId === emojiId)
+        const existingReactionIdx = targetPosting.reactions
+            ? targetPosting.reactions.findIndex((reaction) => reaction.user?.id === this.communicationService.getUser().id && reaction.emojiId === emojiId)
             : -1;
-        this.emojiIdsWithPendingRequest.add(emojiId);
-        if ((this.posting() as Posting).reactions && existingReactionIdx > -1) {
-            const reactionToDelete = (this.posting() as Posting).reactions![existingReactionIdx];
+        this.pendingRequestKeys.add(requestKey);
+        if (targetPosting.reactions && existingReactionIdx > -1) {
+            const reactionToDelete = targetPosting.reactions[existingReactionIdx];
             this.communicationService
                 .deleteReaction(reactionToDelete)
-                .pipe(finalize(() => this.emojiIdsWithPendingRequest.delete(emojiId)))
+                .pipe(finalize(() => this.pendingRequestKeys.delete(requestKey)))
                 .subscribe({
                     next: () => {
-                        (this.posting() as Posting).reactions = (this.posting() as Posting).reactions?.filter((reaction) => reaction.id !== reactionToDelete.id);
+                        if (!isTargetStillShown()) {
+                            return;
+                        }
+                        const posting = this.posting() as Posting;
+                        posting.reactions = posting.reactions?.filter((reaction) => reaction.id !== reactionToDelete.id);
                         this.updatePostingWithReactions();
                         this.showReactionSelector.set(false);
-                        this.reactionsUpdated.emit((this.posting() as Posting).reactions!);
+                        this.reactionsUpdated.emit(posting.reactions!);
                     },
                     // the error handler interceptor already reports failed requests
                     error: () => {},
@@ -388,9 +396,12 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
             const reactionToCreate = this.buildReaction(emojiId);
             this.communicationService
                 .createReaction(reactionToCreate)
-                .pipe(finalize(() => this.emojiIdsWithPendingRequest.delete(emojiId)))
+                .pipe(finalize(() => this.pendingRequestKeys.delete(requestKey)))
                 .subscribe({
                     next: (createdReaction) => {
+                        if (!isTargetStillShown()) {
+                            return;
+                        }
                         // The websocket update that carries the new reaction can arrive after the response. Add the reaction here so that the next click
                         // already sees it, unless the websocket update was faster.
                         const posting = this.posting() as Posting;

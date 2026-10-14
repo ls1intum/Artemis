@@ -291,6 +291,57 @@ describe('CourseConversationsService', () => {
         });
     });
 
+    it('should not open a refreshed channel after the user selected another conversation meanwhile', () => {
+        const newChannel = generateExampleChannelDTO({ id: 10, isCourseWide: true } as ChannelDTO);
+        const refreshResponse = new Subject<HttpResponse<ConversationDTO[]>>();
+        return new Promise((done) => {
+            courseConversationsService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(refreshResponse.asObservable());
+                    courseConversationsService.setActiveConversation(newChannel.id);
+
+                    // the user picks a cached conversation while the refresh for the channel is still running
+                    courseConversationsService.setActiveConversation(groupChat);
+                    refreshResponse.next(new HttpResponse({ body: [groupChat, oneToOneChat, channel, newChannel] }));
+                    refreshResponse.complete();
+
+                    courseConversationsService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                        expect(activeConversation?.id).toBe(groupChat.id);
+                        done({});
+                    });
+                },
+            });
+        });
+    });
+
+    it('should only open the latest selection when refreshes for two uncached channels finish out of order', () => {
+        const olderChannel = generateExampleChannelDTO({ id: 10, isCourseWide: true } as ChannelDTO);
+        const newerChannel = generateExampleChannelDTO({ id: 11, isCourseWide: true } as ChannelDTO);
+        const olderRefresh = new Subject<HttpResponse<ConversationDTO[]>>();
+        const newerRefresh = new Subject<HttpResponse<ConversationDTO[]>>();
+        const allConversations = new HttpResponse({ body: [groupChat, oneToOneChat, channel, olderChannel, newerChannel] });
+        return new Promise((done) => {
+            courseConversationsService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValueOnce(olderRefresh.asObservable()).mockReturnValueOnce(newerRefresh.asObservable());
+                    courseConversationsService.setActiveConversation(olderChannel.id);
+                    courseConversationsService.setActiveConversation(newerChannel.id);
+
+                    // the answer for the newer selection arrives first, the older one afterwards
+                    newerRefresh.next(allConversations);
+                    newerRefresh.complete();
+                    olderRefresh.next(allConversations);
+                    olderRefresh.complete();
+
+                    courseConversationsService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                        expect(activeConversation?.id).toBe(newerChannel.id);
+                        done({});
+                    });
+                },
+            });
+        });
+    });
+
     it('should still clear the active conversation when it is cleared on purpose', () => {
         return new Promise((done) => {
             courseConversationsService.setUpConversationService(course).subscribe({

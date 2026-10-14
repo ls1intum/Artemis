@@ -526,6 +526,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
     private subscribeToConversationsOfUser() {
         this.courseConversationsService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
             this.conversationsOfUser.set(conversations ?? []);
+            if (this.sidebarData() && this.conversationsToShowInSidebar().some((conversation) => !this.isListedInSidebar(conversation.id!) && isOneToOneChatDTO(conversation))) {
+                // A direct message that was left out of the sidebar because it was empty has received its first message.
+                this.rebuildSidebarData();
+            }
         });
     }
 

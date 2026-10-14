@@ -471,6 +471,57 @@ describe('PostingReactionsBarComponent', () => {
             expect(createReactionSpy).toHaveBeenCalledTimes(2);
         });
 
+        it('should not add a created reaction to the posting that is shown after the request was sent', () => {
+            const otherPost = new Post();
+            otherPost.id = 2;
+            otherPost.reactions = [];
+            const createSubject = new Subject<Reaction>();
+            vi.spyOn(communicationService, 'createReaction').mockReturnValue(createSubject);
+            const reactionsUpdatedSpy = vi.spyOn(component.reactionsUpdated, 'emit');
+
+            component.updateReaction('+1');
+            // the thread sidebar reuses the component for another post before the response arrives
+            fixture.componentRef.setInput('posting', otherPost);
+            createSubject.next(createdReaction('+1', 10));
+            createSubject.complete();
+
+            expect(otherPost.reactions).toHaveLength(0);
+            expect(reactionsUpdatedSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not remove a reaction from the posting that is shown after the request was sent', () => {
+            const ownReaction = createdReaction('+1', 10);
+            post.reactions = [ownReaction];
+            const otherPost = new Post();
+            otherPost.id = 2;
+            const otherReaction = createdReaction('smile', 10);
+            otherPost.reactions = [otherReaction];
+            const deleteSubject = new Subject<void>();
+            vi.spyOn(communicationService, 'deleteReaction').mockReturnValue(deleteSubject);
+            const reactionsUpdatedSpy = vi.spyOn(component.reactionsUpdated, 'emit');
+
+            component.updateReaction('+1');
+            fixture.componentRef.setInput('posting', otherPost);
+            deleteSubject.next();
+            deleteSubject.complete();
+
+            expect(otherPost.reactions).toEqual([otherReaction]);
+            expect(reactionsUpdatedSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not block the same emoji on another posting while a request for the previous posting is running', () => {
+            const otherPost = new Post();
+            otherPost.id = 2;
+            otherPost.reactions = [];
+            const createReactionSpy = vi.spyOn(communicationService, 'createReaction').mockReturnValue(new Subject<Reaction>());
+
+            component.updateReaction('+1');
+            fixture.componentRef.setInput('posting', otherPost);
+            component.updateReaction('+1');
+
+            expect(createReactionSpy).toHaveBeenCalledTimes(2);
+        });
+
         function createdReaction(emojiId: string, id: number): Reaction {
             const reaction = new Reaction();
             reaction.id = id;
