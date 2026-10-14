@@ -206,7 +206,7 @@ describe('Landing informational sections', () => {
 
             const hrefs = Array.from<HTMLAnchorElement>(fixture.nativeElement.querySelectorAll('a.community-card')).map((card) => card.getAttribute('href'));
             expect(hrefs).toContain('https://github.com/ls1intum/Artemis');
-            expect(hrefs).toContain('https://github.com/ls1intum/Artemis/blob/develop/CONTRIBUTING.md');
+            expect(hrefs).toContain('https://github.com/ls1intum/Artemis/blob/develop/.github/CONTRIBUTING.md');
         });
     });
 });

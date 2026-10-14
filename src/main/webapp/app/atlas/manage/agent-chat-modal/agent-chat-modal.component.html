@@ -224,6 +224,7 @@
         <div class="input-container w-100">
             <div class="d-flex">
                 <textarea
+                    [attr.aria-label]="'accessibility.message' | artemisTranslate"
                     #messageInput
                     class="form-control message-input"
                     [ngModel]="currentMessage()"

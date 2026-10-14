@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
@@ -61,8 +62,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
-            ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService, Optional<CompetencyProgressApi> competencyProgressApi) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
+            ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService, Optional<CompetencyProgressApi> competencyProgressApi,
+            ExerciseConfigurationService exerciseConfigurationService) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService, exerciseConfigurationService);
         this.quizExerciseService = quizExerciseService;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
@@ -93,6 +95,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         // The first save is identity-preserving (the id was cleared, so Spring Data persists newExercise itself), so we
         // keep operating on the single newExercise reference instead of juggling the returned instances.
         quizExerciseService.save(newExercise);
+        initializeConfigurations(newExercise, newExercise);
 
         channelService.createExerciseChannel(newExercise, Optional.ofNullable(newExercise.getChannelName()));
 

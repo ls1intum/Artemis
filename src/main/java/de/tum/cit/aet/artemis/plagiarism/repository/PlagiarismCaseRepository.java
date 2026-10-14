@@ -123,7 +123,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN plagiarismCase.student student
                 LEFT JOIN plagiarismCase.verdictBy verdictBy
                 LEFT JOIN plagiarismCase.exercise exercise
-                LEFT JOIN exercise.plagiarismDetectionConfig plagiarismDetectionConfig
+                LEFT JOIN PlagiarismDetectionConfig plagiarismDetectionConfig ON plagiarismDetectionConfig.exercise = exercise
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup exerciseGroup
                 LEFT JOIN exerciseGroup.exam exam
@@ -177,7 +177,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN plagiarismCase.student student
                 LEFT JOIN plagiarismCase.verdictBy verdictBy
                 LEFT JOIN plagiarismCase.exercise exercise
-                LEFT JOIN exercise.plagiarismDetectionConfig plagiarismDetectionConfig
+                LEFT JOIN PlagiarismDetectionConfig plagiarismDetectionConfig ON plagiarismDetectionConfig.exercise = exercise
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup exerciseGroup
                 LEFT JOIN exerciseGroup.exam exam
@@ -399,7 +399,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
                 LEFT JOIN plagiarismCase.student student
                 LEFT JOIN plagiarismCase.verdictBy verdictBy
                 LEFT JOIN plagiarismCase.exercise exercise
-                LEFT JOIN exercise.plagiarismDetectionConfig plagiarismDetectionConfig
+                LEFT JOIN PlagiarismDetectionConfig plagiarismDetectionConfig ON plagiarismDetectionConfig.exercise = exercise
                 LEFT JOIN exercise.course course
                 LEFT JOIN exercise.exerciseGroup exerciseGroup
                 LEFT JOIN exerciseGroup.exam exam

@@ -692,7 +692,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             })
             .forEach((exercise) => {
                 const participation = exercise.studentParticipations![0] as ProgrammingExerciseStudentParticipation;
-                const latestSubmission = participation.submissions!.reduce((current, next) => (current.id! > next.id! ? current : next)) as ProgrammingSubmission;
+                const latestSubmission = participation.submissions!.reduce(
+                    (current, next) => (current.id! > next.id! ? current : next),
+                    participation.submissions![0],
+                ) as ProgrammingSubmission;
                 const latestResult = findLatestResult(getAllResultsOfAllSubmissions(participation.submissions));
                 const isPendingSubmission = !!latestSubmission && (!latestResult || (latestResult.submission && latestResult.submission.id !== latestSubmission.id));
 

@@ -10,6 +10,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
+import { UserCourseRolesComponent } from 'app/admin/user-management/course-roles/user-course-roles.component';
 
 /**
  * Component for displaying user details in the admin user management.
@@ -30,6 +31,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         ArtemisTranslatePipe,
         ProfilePictureComponent,
         AdminTitleBarTitleDirective,
+        UserCourseRolesComponent,
     ],
 })
 export class UserManagementDetailComponent implements OnInit {

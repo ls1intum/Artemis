@@ -14,11 +14,12 @@ import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseImportDialogData } from '../exercise-import.component';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-exercise-import-from-file',
     templateUrl: './exercise-import-from-file.component.html',
-    imports: [ButtonComponent, HelpIconComponent],
+    imports: [ButtonComponent, HelpIconComponent, ArtemisTranslatePipe],
 })
 export class ExerciseImportFromFileComponent implements OnInit {
     private dialogRef = inject(DynamicDialogRef, { optional: true });

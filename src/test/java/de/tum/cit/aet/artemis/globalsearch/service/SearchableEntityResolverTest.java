@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityPostRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.embedding.SearchableEntityChunker;
 
 /**
  * Unit tests for {@link SearchableEntityResolver}.
@@ -52,7 +53,10 @@ class SearchableEntityResolverTest {
         PostSearchableEntityDTO dto = new PostSearchableEntityDTO(11L, 2L, 3L, "title", "content");
         when(searchableEntityPostRepository.findIndexablePostProjection(11L)).thenReturn(Optional.of(dto));
 
-        assertThat(resolver.resolve(SearchableEntitySchema.TypeValues.POST, 11L)).contains(dto.toPropertyMap());
+        assertThat(resolver.resolve(SearchableEntitySchema.TypeValues.POST, 11L)).hasValueSatisfying(properties -> assertThat(properties).containsAllEntriesOf(dto.toPropertyMap())
+                .containsEntry(SearchableEntitySchema.Properties.CHUNK_HASHES,
+                        SearchableEntityChunker.chunk(dto.toPropertyMap()).stream().map(SearchableEntityChunker::hash).toList())
+                .containsEntry(SearchableEntitySchema.Properties.CHUNKER_VERSION, SearchableEntityChunker.CHUNKER_VERSION));
         verifyNoMoreInteractions(courseRepository);
     }
 
@@ -72,7 +76,11 @@ class SearchableEntityResolverTest {
         AnswerPostSearchableEntityDTO dto = new AnswerPostSearchableEntityDTO(21L, 11L, 2L, 3L, "reply");
         when(searchableEntityPostRepository.findIndexableAnswerPostProjection(21L)).thenReturn(Optional.of(dto));
 
-        assertThat(resolver.resolve(SearchableEntitySchema.TypeValues.ANSWER_POST, 21L)).contains(dto.toPropertyMap());
+        assertThat(resolver.resolve(SearchableEntitySchema.TypeValues.ANSWER_POST, 21L))
+                .hasValueSatisfying(properties -> assertThat(properties).containsAllEntriesOf(dto.toPropertyMap())
+                        .containsEntry(SearchableEntitySchema.Properties.CHUNK_HASHES,
+                                SearchableEntityChunker.chunk(dto.toPropertyMap()).stream().map(SearchableEntityChunker::hash).toList())
+                        .containsEntry(SearchableEntitySchema.Properties.CHUNKER_VERSION, SearchableEntityChunker.CHUNKER_VERSION));
         verifyNoMoreInteractions(courseRepository);
     }
 

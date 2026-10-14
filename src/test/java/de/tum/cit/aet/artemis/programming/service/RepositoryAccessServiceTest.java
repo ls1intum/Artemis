@@ -161,4 +161,14 @@ class RepositoryAccessServiceTest {
 
         assertThat(repositoryAccessService.checkHasAccessToForcePush(exercise, user, RepositoryType.TEMPLATE.toString())).isTrue();
     }
+
+    @Test
+    void checkHasAccessToPlagiarismSubmission_withoutExercise_failsClosed() {
+        var participation = new ProgrammingExerciseStudentParticipation();
+
+        assertThatExceptionOfType(AccessForbiddenException.class)
+                .isThrownBy(() -> repositoryAccessService.checkHasAccessToPlagiarismSubmission(participation, user, RepositoryActionType.READ));
+        verifyNoInteractions(authorizationCheckService);
+    }
+
 }

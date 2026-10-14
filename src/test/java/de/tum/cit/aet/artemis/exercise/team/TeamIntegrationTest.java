@@ -117,13 +117,12 @@ class TeamIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testTeamAssignmentConfig() {
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exercise);
-        assertThat(teamAssignmentConfig.getExercise()).isEqualTo(exercise);
         teamAssignmentConfig.setMinTeamSize(1);
         teamAssignmentConfig.setMaxTeamSize(10);
-        exercise.setTeamAssignmentConfig(teamAssignmentConfig);
         exercise = exerciseRepository.save(exercise);
-        exercise = exerciseRepository.findWithEagerCategoriesAndTeamAssignmentConfigById(exercise.getId()).orElseThrow();
+        exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig);
+        exercise = exerciseRepository.findWithEagerCategoriesById(exercise.getId()).orElseThrow();
+        exerciseUtilService.attachTeamAssignmentConfig(exercise);
         assertThat(exercise.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(1);
         assertThat(exercise.getTeamAssignmentConfig().getMaxTeamSize()).isEqualTo(10);
         assertThat(exercise.getTeamAssignmentConfig().getId()).isNotNull();

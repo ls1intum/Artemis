@@ -2116,11 +2116,12 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * Used as the data-loading step after the paginated ID query.
      *
      * @param ids the participation IDs to load
-     * @return participations with team, team students, and latest submission eagerly fetched
+     * @return participations with team, team students, student, and latest submission eagerly fetched; the student is the one of a practice participation, which has no team
      */
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
+                LEFT JOIN FETCH p.student
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
                 LEFT JOIN FETCH p.submissions s
@@ -2163,6 +2164,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     /**
      * Returns a page of participation IDs for the given exercise for the management view, applying search, filter, and score-range predicates.
      * Uses {@link StudentParticipationSpecs} to build the query dynamically via the Criteria API.
+     * <p>
+     * An individual exercise yields the participations of students. A team exercise yields the participations of teams and the practice participations of single students.
      *
      * @param exerciseId       the exercise to query
      * @param teamMode         whether the exercise uses teams
@@ -2178,8 +2181,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff,
             Integer scoreRangeLower, Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn) {
-        Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forMode(teamMode))
-                .and(StudentParticipationSpecs.searchByName(searchTerm, teamMode)).and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff))
+        Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forManagementMode(teamMode))
+                .and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode)).and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff))
                 .and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
                 .and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
 

@@ -126,6 +126,20 @@ describe('ProgrammingExercise Service', () => {
             req.flush(returnedFromService);
         });
 
+        it('should persist Hyperion checklist link provenance after creating an exercise', () => {
+            const course = Object.assign(new Course(), { id: 7 });
+            const exercise = new ProgrammingExercise(course, undefined);
+            const competency = Object.assign(new Competency(), { id: 5 });
+            exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+            const createdExercise = Object.assign(new ProgrammingExercise(course, undefined), { id: 11 });
+
+            service.automaticSetup(exercise).subscribe((response) => expect(response.body).toEqual(createdExercise));
+
+            const request = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/setup?emptyRepositories=false&hyperionCompetencyId=5` });
+            expect(request.request.body.competencyLinks).toHaveLength(1);
+            request.flush(createdExercise);
+        });
+
         it('should reconnect template submission with result', () => {
             const templateParticipation = new TemplateProgrammingExerciseParticipation();
             const tempSubmission = new ProgrammingSubmission();
@@ -238,6 +252,19 @@ describe('ProgrammingExercise Service', () => {
             req.flush(exercise);
         });
 
+        it('should persist Hyperion checklist link provenance after updating', () => {
+            const exercise = new ProgrammingExercise(Object.assign(new Course(), { id: 7 }), undefined);
+            exercise.id = 11;
+            const competency = Object.assign(new Competency(), { id: 5 });
+            exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+
+            service.update(exercise).subscribe((response) => expect(response.body).toEqual(exercise));
+
+            const request = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}?hyperionCompetencyId=5` });
+            expect(request.request.body.competencyLinks).toEqual([{ competency: { id: 5 }, weight: 1 }]);
+            request.flush(exercise);
+        });
+
         it('should update the Timeline of a ProgrammingExercise', () => {
             const returnedFromService = {
                 ...defaultProgrammingExercise,
@@ -308,6 +335,19 @@ describe('ProgrammingExercise Service', () => {
         const url = `api/programming/courses/1/programming-exercises/import-from-file`;
         const req = httpMock.expectOne({ method: 'POST', url: url });
         req.flush(request);
+    });
+
+    it('should persist Hyperion checklist link provenance when importing from file', () => {
+        const course = Object.assign(new Course(), { id: 1 });
+        const exercise = new ProgrammingExercise(course, undefined);
+        exercise.zipFileForImport = new File([''], 'dummyFile');
+        const competency = Object.assign(new Competency(), { id: 5 });
+        exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+
+        service.importFromFile(exercise, course.id!).subscribe();
+
+        const request = httpMock.expectOne({ method: 'POST', url: `api/programming/courses/1/programming-exercises/import-from-file?hyperionCompetencyId=5` });
+        request.flush(exercise);
     });
 
     it('should generate Structure Oracle', () => {
@@ -439,6 +479,20 @@ describe('ProgrammingExercise Service', () => {
         const url = `${resourceUrl}/${exercise.id}/re-evaluate`;
         const req = httpMock.expectOne({ method: 'PUT', url });
         req.flush(expected);
+    });
+
+    it('should persist Hyperion checklist link provenance after reevaluating an exercise', () => {
+        const course = Object.assign(new Course(), { id: 7 });
+        const exercise = new ProgrammingExercise(course, undefined);
+        exercise.id = 123;
+        const competency = Object.assign(new Competency(), { id: 5 });
+        exercise.competencyLinks = [new CompetencyExerciseLink(competency, exercise, 1, true)];
+
+        service.reevaluateAndUpdate(exercise).subscribe((response) => expect(response.body).toEqual(exercise));
+
+        const request = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/${exercise.id}/re-evaluate?hyperionCompetencyId=5` });
+        expect(request.request.body.competencyLinks).toEqual([{ competency: { id: 5 }, weight: 1 }]);
+        request.flush(exercise);
     });
 
     it('should get theia config', () => {

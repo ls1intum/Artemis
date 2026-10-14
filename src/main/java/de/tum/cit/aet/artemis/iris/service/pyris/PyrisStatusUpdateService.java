@@ -247,7 +247,8 @@ public class PyrisStatusUpdateService {
         else if (isTerminal) {
             irisWebsocketService.send(job.userLogin(), GLOBAL_SEARCH_ANSWER.at(), new IrisGlobalSearchAnswerWebsocketDTO(job.jobId(), false, statusUpdate.answer(),
                     statusUpdate.sources(), null, null, statusUpdate.entitySources(), false, runState == PyrisRunState.FAILED, null, null, statusUpdate.citationSourceTypes()));
-            pyrisJobService.removeJob(job);
+            boolean hasAnswer = runState == PyrisRunState.FINISHED && statusUpdate.answer() != null && !statusUpdate.answer().isBlank();
+            pyrisJobService.finishGlobalSearchAnswerJob(job, statusUpdate.sources(), hasAnswer);
         }
         else {
             pyrisJobService.updateJob(job);
@@ -316,8 +317,11 @@ public class PyrisStatusUpdateService {
         else {
             pyrisJobService.updateJob(job);
             // Update lastUpdated on every non-terminal callback so stuck detection
-            // can use "time since last callback" instead of "time since phase started"
-            processingStateCallbackApi.ifPresent(api -> api.handleHeartbeat(job.lectureUnitId(), job.jobId()));
+            // can use "time since last callback" instead of "time since phase started".
+            // The optional stage fields feed the stage ledger, which distinguishes a
+            // stalled run (heartbeats without progress) from a merely slow one.
+            processingStateCallbackApi
+                    .ifPresent(api -> api.handleHeartbeat(job.lectureUnitId(), job.jobId(), statusUpdate.stageName(), statusUpdate.stageProgress(), statusUpdate.stageTotal()));
         }
     }
 
@@ -376,7 +380,7 @@ public class PyrisStatusUpdateService {
         }
         return new PyrisChatStatusUpdateDTO(statusUpdate.result(), runState, statusUpdate.error(), statusUpdate.sessionTitle(), statusUpdate.suggestions(), statusUpdate.tokens(),
                 statusUpdate.accessedMemories(), statusUpdate.createdMemories(), statusUpdate.partialResult(), statusUpdate.partialSeq(), statusUpdate.activities(),
-                statusUpdate.activitySeq(), statusUpdate.finalResult(), statusUpdate.compaction());
+                statusUpdate.activitySeq(), statusUpdate.finalResult(), statusUpdate.suggestedContext(), statusUpdate.compaction());
     }
 
     private PyrisCompetencyStatusUpdateDTO withRunState(PyrisCompetencyStatusUpdateDTO statusUpdate, PyrisRunState runState) {

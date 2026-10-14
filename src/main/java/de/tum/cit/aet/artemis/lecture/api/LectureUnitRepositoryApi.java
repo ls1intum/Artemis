@@ -78,6 +78,10 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
         return lectureUnitRepository.findAllByIdsWithLecture(ids);
     }
 
+    public Optional<LectureUnit> findWithLectureById(long lectureUnitId) {
+        return lectureUnitRepository.findWithLectureById(lectureUnitId);
+    }
+
     public List<LectureUnitIngestedVersionsDTO> findIngestedVersionsByCourseId(long courseId) {
         return lectureUnitRepository.findIngestedVersionsByCourseId(courseId);
     }
@@ -92,9 +96,5 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
 
     public List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithPdfAttachmentForCourses(Collection<Long> courseIds) {
         return lectureUnitRepository.findUnitIdCourseIdPairsWithPdfAttachmentForCourses(courseIds);
-    }
-
-    public List<CourseEntityIdDTO> findUnitIdCourseIdPairsWithVideoForCourses(Collection<Long> courseIds) {
-        return lectureUnitRepository.findUnitIdCourseIdPairsWithVideoForCourses(courseIds);
     }
 }

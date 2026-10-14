@@ -12,6 +12,8 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -147,7 +149,7 @@ describe('ExamResultOverviewComponent', () => {
                 set: {
                     imports: [
                         MockComponent(FaIconComponent),
-                        MockPipe(ArtemisTranslatePipe),
+                        MockPipe(ArtemisTranslatePipe, (key: string) => key),
                         MockDirective(TranslateDirective),
                         TumAetUiTableDirective,
                         MockComponent(NoDataComponent),
@@ -399,6 +401,172 @@ describe('ExamResultOverviewComponent', () => {
 
         it('should not style regular exercises', () => {
             expect(component.rowClass({ includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY } as Exercise)).toBe('');
+        });
+    });
+
+    describe('rendering', () => {
+        const textOf = (testId: string) => fixture.nativeElement.querySelector(`[data-testid="${testId}"]`)?.textContent?.replace(/\s+/g, ' ').trim();
+        const sentences = () => Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('[data-testid="exam-result-points-sentence"]'));
+
+        /** Renders the overview for an exam with one published, assessed exercise. */
+        function render(resultOverrides: Partial<StudentExamWithGradeDTO['studentResult']> = {}, dtoOverrides: Partial<StudentExamWithGradeDTO> = {}) {
+            const submission = { id: 1, results: [{ id: 1, score: 50 } as Result] } as Submission;
+            const assessedExercise = { ...textExercise, studentParticipations: [{ ...textParticipation, submissions: [submission] }] } as TextExercise;
+            fixture.componentRef.setInput('studentExamWithGrade', {
+                ...studentExamWithGrade,
+                studentExam: { exercises: [assessedExercise], exam, numberOfExamSessions: 0 },
+                ...dtoOverrides,
+                studentResult: { ...studentExamWithGrade.studentResult, ...resultOverrides },
+            });
+            fixture.detectChanges();
+        }
+
+        it('should style its heading like the other section headings of the summary', () => {
+            render();
+
+            const heading: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-summary-heading"]');
+            // the important modifiers are needed because the unlayered Bootstrap heading rules would win otherwise
+            expect(heading.classList).toContain('text-base!');
+            expect(heading.classList).toContain('font-semibold!');
+        });
+
+        describe('points and grade summary', () => {
+            it('should show only the bonus sentence when the exam has bonus points', () => {
+                render();
+
+                expect(sentences()).toHaveLength(1);
+                expect(sentences()[0].textContent?.trim()).toBe('artemisApp.exam.examSummary.points.youAchievedWithBonus');
+            });
+
+            it('should show the plain sentence when the exam has no bonus points', () => {
+                render({}, { maxBonusPoints: 0 });
+
+                expect(sentences()).toHaveLength(1);
+                expect(sentences()[0].textContent?.trim()).toBe('artemisApp.exam.examSummary.points.youAchieved');
+            });
+
+            it('should show the plain sentence when the max bonus points are not set', () => {
+                render({}, { maxBonusPoints: undefined });
+
+                expect(sentences()).toHaveLength(1);
+                expect(sentences()[0].textContent?.trim()).toBe('artemisApp.exam.examSummary.points.youAchieved');
+            });
+
+            it('should show the grade in a single semibold line when a grading scale exists', () => {
+                render({ overallGrade: '1.7' });
+
+                const grade = fixture.nativeElement.querySelector('[data-testid="exam-result-grade"]') as HTMLElement;
+                expect(grade.querySelector('[jhiTranslate="artemisApp.exam.examSummary.grade"]')).not.toBeNull();
+                expect(textOf('exam-result-grade')).toContain('1.7');
+                expect(grade.classList).toContain('font-semibold');
+                expect(fixture.nativeElement.querySelector('[data-testid="exam-result-grade-before-bonus"]')).toBeNull();
+            });
+
+            it('should not show a dangling grade label when there is no grading scale', () => {
+                render({ overallGrade: undefined });
+
+                expect(component.gradingScaleExists()).toBe(false);
+                expect(fixture.nativeElement.querySelector('[data-testid="exam-result-grade"]')).toBeNull();
+                expect(fixture.nativeElement.querySelector('[jhiTranslate="artemisApp.exam.examSummary.grade"]')).toBeNull();
+                // the points sentence is still there
+                expect(sentences()).toHaveLength(1);
+            });
+
+            it('should show the grades before and after the bonus when a bonus was applied', () => {
+                render({
+                    overallGrade: '2.0',
+                    gradeWithBonus: { bonusStrategy: BonusStrategy.GRADES_DISCRETE, bonusGrade: '1.0', bonusFromTitle: 'Bonus Exam', finalGrade: '1.7' },
+                });
+
+                expect(fixture.nativeElement.querySelector('[data-testid="exam-result-grade"]')).toBeNull();
+                expect(textOf('exam-result-grade-before-bonus')).toContain('2.0');
+                expect(textOf('exam-result-grade-after-bonus')).toContain('1.7');
+                expect(textOf('exam-result-bonus-sentence')).toBe('artemisApp.exam.examSummary.points.youAchievedFromBonus.GRADES_DISCRETE');
+            });
+
+            it('should style the sentences small and line the block up with the table text', () => {
+                render();
+
+                const block = fixture.nativeElement.querySelector('[data-testid="exam-result-points-summary"]') as HTMLElement;
+                expect(block.classList).toContain('px-2');
+                expect(block.classList).not.toContain('mx-6!');
+                expect(sentences()[0].classList).toContain('text-sm');
+                expect(sentences()[0].classList).not.toContain('text-xl');
+            });
+        });
+
+        describe('result table', () => {
+            const table = () => fixture.nativeElement.querySelector('#result-overview-table') as HTMLTableElement;
+
+            it('should scroll horizontally inside the card instead of being clipped', () => {
+                render();
+
+                const wrapper = fixture.nativeElement.querySelector('[data-testid="result-overview-table-scroll"]') as HTMLElement;
+                expect(wrapper.classList).toContain('overflow-x-auto');
+                expect(wrapper.contains(table())).toBe(true);
+                expect(fixture.nativeElement.querySelector('.exam-points-summary-container').classList).not.toContain('max-w-[1140px]');
+            });
+
+            it('should use the compact table size and let the headers wrap', () => {
+                render();
+
+                expect(table().classList).toContain('tumaet:[&_tbody_td]:py-1.5');
+                expect(table().classList).toContain('[&_thead_th]:whitespace-normal!');
+            });
+
+            it('should not make the rows look clickable', () => {
+                render();
+
+                const classes = table().className;
+                expect(classes).not.toContain('cursor-pointer');
+                expect(classes).not.toContain('scale-');
+                expect(table().classList).toContain('tumaet:[&_tbody_tr:hover]:bg-hover-background');
+            });
+
+            it('should pad the row header and footer cells like the other cells', () => {
+                render();
+
+                for (const cell of ['tbody_th', 'tfoot_th', 'tfoot_td']) {
+                    expect(table().classList).toContain(`[&_${cell}]:px-2`);
+                    expect(table().classList).toContain(`[&_${cell}]:py-1.5`);
+                }
+                // the reboot resets the borders of th and tfoot in an unlayered rule, so the utilities have to be important
+                expect(table().classList).toContain('[&_tbody_th]:border-b!');
+                expect(table().querySelector('tfoot')!.classList).toContain('border-t-2!');
+            });
+
+            it('should centre the numeric headers over their centred values and keep the text columns start aligned', () => {
+                render();
+
+                const headers = Array.from<HTMLElement>(table().querySelectorAll('thead th'));
+                // #, Exercise, Your Points, Achievable Points, Achieved Percentage, Achievable Bonus Points
+                expect(headers).toHaveLength(6);
+                expect(headers.map((header) => header.classList.contains('text-center!'))).toEqual([false, false, true, true, true, true]);
+
+                const bodyCells = Array.from<HTMLElement>(table().querySelectorAll('tbody tr:first-child td'));
+                expect(bodyCells.slice(1).every((cell) => cell.classList.contains('text-center'))).toBe(true);
+                const footerCells = Array.from<HTMLElement>(table().querySelectorAll('tfoot td'));
+                expect(footerCells.every((cell) => cell.classList.contains('text-center'))).toBe(true);
+            });
+
+            it('should render the exercise as an icon next to a title button in one row', () => {
+                render();
+
+                const button = table().querySelector('[data-testid="exam-summary-open-exercise"]') as HTMLButtonElement;
+                const row = button.parentElement as HTMLElement;
+                expect(row.classList).toContain('flex');
+                expect(row.classList).toContain('items-center');
+                expect(button.classList).toContain('min-w-0');
+                expect(button.textContent?.trim()).toBe('-');
+                expect(table().querySelector('tbody td')!.innerHTML).not.toContain('&nbsp;');
+            });
+
+            it('should drop the bonus column when the exam has no bonus points', () => {
+                render({}, { maxBonusPoints: 0 });
+
+                expect(table().querySelectorAll('thead th')).toHaveLength(5);
+                expect(table().querySelectorAll('tfoot td')).toHaveLength(3);
+            });
         });
     });
 });

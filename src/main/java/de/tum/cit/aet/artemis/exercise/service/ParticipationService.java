@@ -507,14 +507,16 @@ public class ParticipationService {
      * graded).
      * For quiz exercises, it performs simple initialization without VCS or build setup, allowing multiple submissions (no state lock to FINISHED).
      * Note: This method finishes any provided graded participation and sets a fixed attempt=1 for practice.
+     * <p>
+     * Practice is always individual: the participation belongs to the student, also for a team exercise, where the team's graded participation is neither passed nor changed.
      *
      * @param exercise                           the exercise to start in practice mode; for programming, template and solution participations should be eagerly loaded
-     * @param participant                        the user or team starting practice
-     * @param optionalGradedStudentParticipation the optional graded (live) participation to finish before starting practice
+     * @param participant                        the student starting practice
+     * @param optionalGradedStudentParticipation the optional graded (live) participation of the student to finish before starting practice
      * @param useGradedParticipation             flag if the graded participation's repository should be used as baseline (programming only)
      * @return the practice participation connecting the given exercise and participant
      */
-    public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
+    public StudentParticipation startPracticeMode(Exercise exercise, User participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
             boolean useGradedParticipation) {
         if (exercise instanceof FileUploadExercise) {
             throw new IllegalStateException("File upload exercises do not support practice mode.");
@@ -538,8 +540,8 @@ public class ParticipationService {
             participation.setParticipant(participant);
             participation.setPracticeMode(true);
             participation = studentParticipationRepository.saveAndFlush(participation);
-            if (participant instanceof User user && exercise instanceof ProgrammingExercise) {
-                participationVCSAccessTokenService.createParticipationVCSAccessToken(user, participation);
+            if (exercise instanceof ProgrammingExercise) {
+                participationVCSAccessTokenService.createParticipationVCSAccessToken(participant, participation);
             }
         }
         else {
@@ -881,22 +883,14 @@ public class ParticipationService {
     }
 
     /**
-     * Get one practice participation (in any state) by its participant and exercise.
+     * Get one practice participation (in any state) by its student and exercise. A practice participation always belongs to a single student, also in a team exercise.
      *
-     * @param exercise    the exercise for which to find a participation
-     * @param participant the participant for which to find a participation
-     * @return the practice participation of the given participant and exercise in any state
+     * @param exercise the exercise for which to find a participation
+     * @param student  the student for which to find a participation
+     * @return the practice participation of the given student and exercise in any state
      */
-    public Optional<StudentParticipation> findOnePracticeByExerciseAndParticipant(Exercise exercise, Participant participant) {
-        if (participant instanceof User user) {
-            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), user.getId(), true);
-        }
-        else if (participant instanceof Team team) {
-            return studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId());
-        }
-        else {
-            throw new Error("Unknown Participant type");
-        }
+    public Optional<StudentParticipation> findOnePracticeByExerciseAndParticipant(Exercise exercise, User student) {
+        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentIdAndTestRun(exercise.getId(), student.getId(), true);
     }
 
     /**
@@ -957,8 +951,10 @@ public class ParticipationService {
     /**
      * The participation a submission should be saved against, as a projection rather than an entity.
      * <p>
-     * Resolves exactly as {@link #findOneByExerciseAndStudentWithEagerSubmissionsAnyState} does - team, test exam,
-     * practice after the effective due date, instructor test run - but reads six columns instead of the participation
+     * Resolves as {@link #findOneByExerciseAndStudentWithEagerSubmissionsAnyState} does - team, test exam, practice
+     * after the effective due date, instructor test run - with one difference: for a team exercise, once the effective
+     * due date has passed, this prefers the student's own practice participation over the team's, which that method
+     * does not. It reads six columns instead of the participation
      * with its eager exercise, that exercise's course, and for an exam exercise the exercise group, its exam and the
      * exam's course. Nothing is turned back into an entity: the save writes the foreign key from the id, and the
      * response is mapped from these columns. A caller that needs the participation's submissions cannot use this.
@@ -969,8 +965,18 @@ public class ParticipationService {
      */
     public Optional<StudentParticipationSubmitTargetDTO> findSubmitTargetByExerciseAndStudent(Exercise exercise, User student) {
         if (exercise.isTeamMode()) {
-            return teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student.getId())
+            Optional<StudentParticipationSubmitTargetDTO> teamParticipation = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), student.getId())
                     .flatMap(team -> studentParticipationRepository.findSubmitTargetByExerciseIdAndTeamId(exercise.getId(), team.getId()));
+            // Like for an individual exercise, the practice participation takes over once the working period is over. It is the student's own, not the team's.
+            ZonedDateTime effectiveDueDate = teamParticipation.map(StudentParticipationSubmitTargetDTO::individualDueDate).orElse(exercise.getDueDate());
+            if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
+                Optional<StudentParticipationSubmitTargetDTO> practiceParticipation = studentParticipationRepository
+                        .findSubmitTargetByExerciseIdAndStudentIdAndTestRun(exercise.getId(), student.getId(), true);
+                if (practiceParticipation.isPresent()) {
+                    return practiceParticipation;
+                }
+            }
+            return teamParticipation;
         }
         if (exercise.isTestExamExercise()) {
             return studentParticipationRepository.findLatestSubmitTargetByExerciseIdAndStudentId(exercise.getId(), student.getId());
@@ -1003,6 +1009,20 @@ public class ParticipationService {
             return teamRepository.findOneWithStudentsByExerciseIdAndUserId(exercise.getId(), student.getId()).orElse(null);
         }
         return student;
+    }
+
+    /**
+     * The participant the participation behind a submit target belongs to, for the response that reports it.
+     * <p>
+     * A practice participation belongs to the student even in a team exercise, so only the graded one is reported with the team.
+     *
+     * @param exercise the exercise the submission belongs to
+     * @param student  the student submitting
+     * @param target   the projected participation the submission is saved against
+     * @return the student for a practice participation, otherwise as {@link #findSubmitParticipant(Exercise, User)}
+     */
+    public Participant findSubmitParticipant(Exercise exercise, User student, StudentParticipationSubmitTargetDTO target) {
+        return target.testRun() ? student : findSubmitParticipant(exercise, student);
     }
 
     /**
@@ -1041,7 +1061,11 @@ public class ParticipationService {
      */
     public List<StudentParticipation> findByExerciseAndStudentIdWithSubmissionsAndResults(Exercise exercise, Long studentId) {
         if (exercise.isTeamMode()) {
-            return studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(exercise.getId(), studentId);
+            // the team's graded participation, plus the practice participation the student owns on their own: it is keyed by the student, not by the team
+            List<StudentParticipation> participations = new ArrayList<>(
+                    studentParticipationRepository.findAllWithTeamStudentsByExerciseIdAndTeamStudentIdWithSubmissionsAndResults(exercise.getId(), studentId));
+            participations.addAll(studentParticipationRepository.findWithSubmissionsAndResultsByExerciseIdAndStudentId(exercise.getId(), studentId).stream().distinct().toList());
+            return participations;
         }
         // the collection joins repeat a participation once per fetched row; distinct on the identity Hibernate already
         // shares, rather than a SELECT DISTINCT that sorts the whole row in the database
@@ -1205,13 +1229,13 @@ public class ParticipationService {
         final Map<Long, Result> finalResultMap = resultBySubmissionId;
         final Map<Long, List<CorrectionRoundResultDTO>> finalCorrectionRoundResults = correctionRoundResultsBySubmissionId;
         List<ParticipationManagementDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull)
-                .map(p -> mapToManagementDTO(p, submissionCountMap, finalResultMap, finalCorrectionRoundResults)).toList();
+                .map(p -> mapToManagementDTO(p, exercise instanceof QuizExercise, submissionCountMap, finalResultMap, finalCorrectionRoundResults)).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
-    private ParticipationManagementDTO mapToManagementDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
-            Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId) {
+    private ParticipationManagementDTO mapToManagementDTO(StudentParticipation participation, boolean quizExercise, Map<Long, Integer> submissionCountMap,
+            Map<Long, Result> resultBySubmissionId, Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId) {
         String participantName;
         String participantIdentifier;
         Long studentId = null;
@@ -1257,7 +1281,8 @@ public class ParticipationService {
         Result latestResult = submissionId != null ? resultBySubmissionId.get(submissionId) : null;
         ZonedDateTime completionDate = latestResult != null ? latestResult.getCompletionDate() : null;
         Long durationInSeconds = null;
-        if (completionDate != null && participation.getInitializationDate() != null) {
+        boolean durationUnknown = quizExercise && participation.isPracticeMode();
+        if (!durationUnknown && completionDate != null && participation.getInitializationDate() != null) {
             durationInSeconds = Duration.between(participation.getInitializationDate(), completionDate).getSeconds();
         }
 

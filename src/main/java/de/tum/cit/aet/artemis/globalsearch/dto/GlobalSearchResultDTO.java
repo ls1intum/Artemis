@@ -43,10 +43,11 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
      * @param properties     the property map returned by Weaviate
      * @param courseNameById the batched map of course id → course title, resolved by the caller via
      *                           one {@code courseRepository.findAllById(...)} lookup per search request
-     * @return the unified search result DTO, or {@code null} if the type discriminator is missing or unknown
+     * @return the unified search result DTO, or {@code null} if the type discriminator is missing or not a searchable type
+     *         (posts and answer posts are indexed but never returned, see {@code SearchableEntityAccessFilterService.SEARCHABLE_TYPES})
      */
     public static GlobalSearchResultDTO fromSearchableItemProperties(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, Long> exerciseGroupIdByExerciseId,
-            Set<Long> staffCourseIds, Set<Long> editorCourseIds, Map<Long, String> channelNameById) {
+            Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
         String type = getString(properties, SearchableEntitySchema.Properties.TYPE);
         if (type == null) {
             return null;
@@ -59,8 +60,6 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
             case SearchableEntitySchema.TypeValues.FAQ -> fromFaqRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.CHANNEL -> fromChannelRow(properties, courseNameById);
             case SearchableEntitySchema.TypeValues.COURSE -> fromCourseRow(properties);
-            case SearchableEntitySchema.TypeValues.POST -> fromPostRow(properties, courseNameById, channelNameById);
-            case SearchableEntitySchema.TypeValues.ANSWER_POST -> fromAnswerPostRow(properties, courseNameById, channelNameById);
             default -> null;
         };
     }
@@ -208,44 +207,6 @@ public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of 
 
         return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.COURSE, getString(properties, SearchableEntitySchema.Properties.TITLE),
                 getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Course", "course", metadata);
-    }
-
-    private static GlobalSearchResultDTO fromPostRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, String> channelNameById) {
-        Map<String, Object> metadata = new HashMap<>();
-        addCourseContext(properties, metadata, courseNameById);
-        Long channelId = getLong(properties, SearchableEntitySchema.Properties.CHANNEL_ID);
-        if (channelId != null) {
-            metadata.put("channelId", channelId);
-            addChannelName(channelId, metadata, channelNameById);
-        }
-
-        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.POST, getString(properties, SearchableEntitySchema.Properties.TITLE),
-                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Message", "message", metadata);
-    }
-
-    private static GlobalSearchResultDTO fromAnswerPostRow(Map<String, Object> properties, Map<Long, String> courseNameById, Map<Long, String> channelNameById) {
-        Map<String, Object> metadata = new HashMap<>();
-        addCourseContext(properties, metadata, courseNameById);
-        Long channelId = getLong(properties, SearchableEntitySchema.Properties.CHANNEL_ID);
-        if (channelId != null) {
-            metadata.put("channelId", channelId);
-            addChannelName(channelId, metadata, channelNameById);
-        }
-        Long postId = getLong(properties, SearchableEntitySchema.Properties.POST_ID);
-        if (postId != null) {
-            metadata.put("postId", postId);
-        }
-        metadata.put("isReply", true);
-
-        return new GlobalSearchResultDTO(idOrNull(properties), SearchableEntitySchema.TypeValues.ANSWER_POST, null,
-                getString(properties, SearchableEntitySchema.Properties.DESCRIPTION), "Message", "message", metadata);
-    }
-
-    private static void addChannelName(Long channelId, Map<String, Object> metadata, Map<Long, String> channelNameById) {
-        String channelName = channelNameById.get(channelId);
-        if (channelName != null) {
-            metadata.put("channelName", channelName);
-        }
     }
 
     private static void addCourseContext(Map<String, Object> properties, Map<String, Object> metadata, Map<Long, String> courseNameById) {

@@ -4,7 +4,7 @@
         id="requestAIFeedbackButton"
         tumAetUiButton
         severity="secondary"
-        class="float-right mr-2!"
+        size="small"
         (click)="requestAIFeedback()"
         [disabled]="
             isRequestingFeedback() || feedbackRequested() || hasAnyAthenaResultForCurrentAttempt() || (athenaFeedbackLimit() > 0 && athenaFeedbackUsed() >= athenaFeedbackLimit())

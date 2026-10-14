@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, input, output, signal, viewChildren } from '@angular/core';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
@@ -16,8 +16,7 @@ import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
 import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -36,8 +35,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     providers: [{ provide: ExamSubmissionComponent, useExisting: QuizExamSubmissionComponent }],
     styleUrls: ['./quiz-exam-submission.component.scss'],
     imports: [
-        TranslateDirective,
-        IncludedInScoreBadgeComponent,
+        ExamExerciseHeaderComponent,
         ExerciseSaveButtonComponent,
         TumAetUiTooltipDirective,
         MultipleChoiceQuestionComponent,
@@ -58,7 +56,6 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
     readonly ButtonSize = ButtonSize;
     readonly ButtonType = ButtonType;
-    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     mcQuestionComponents = viewChildren(MultipleChoiceQuestionComponent);
 
