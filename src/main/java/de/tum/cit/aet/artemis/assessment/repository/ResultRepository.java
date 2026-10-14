@@ -516,7 +516,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     /**
      * Returns the manual results of the given submissions together with the correction round each belongs to.
      * <p>
-     * Two callers need this. The scores overview renders assessment actions per correction round, so it needs one entry
+     * Two callers need this. The participation page renders assessment actions per correction round, so it needs one entry
      * per round rather than only the newest result, and the exam score statistics report what the first round scored.
      * Automatic and Athena results are left out because they are not correction rounds, which matches
      * {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()} and keeps a result whose assessment

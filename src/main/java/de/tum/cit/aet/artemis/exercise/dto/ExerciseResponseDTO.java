@@ -95,7 +95,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * @param programmingLanguage                        the programming language, for programming exercises
  * @param projectType                                the project type, for programming exercises
  * @param packageName                                the package name, for programming exercises
- * @param projectKey                                 the project key the scores page builds build plan links from, for programming exercises
+ * @param projectKey                                 the project key the participation page builds build plan links from, for programming exercises
  * @param testRepositoryUri                          the test repository uri, for programming exercises, cleared for students
  * @param testCasesChanged                           whether test cases changed since the last build, for programming exercises
  * @param defaultTestCaseVisibility                  the visibility a test case falls back to, for programming exercises

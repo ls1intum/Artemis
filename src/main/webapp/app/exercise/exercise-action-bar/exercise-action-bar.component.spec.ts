@@ -32,7 +32,7 @@ describe('ExerciseActionBarComponent', () => {
 
     describe('hiddenIds / hasOverflow', () => {
         it('shows nothing hidden before the row width is measured', () => {
-            fixture.componentRef.setInput('items', buildActions(['participations', 'scores', 'edit', 'delete']));
+            fixture.componentRef.setInput('items', buildActions(['participations', 'statistics', 'edit', 'delete']));
             expect(component.hiddenIds().size).toBe(0);
             expect(component.hasOverflow()).toBe(false);
             expect(component.hiddenActions()).toEqual([]);

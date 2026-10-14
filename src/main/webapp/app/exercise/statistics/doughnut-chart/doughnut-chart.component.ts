@@ -79,7 +79,7 @@ export class DoughnutChartComponent implements OnInit {
         switch (this.contentType()) {
             case DoughnutChartType.AVERAGE_EXERCISE_SCORE:
                 this.doughnutChartTitle.set('averageScore');
-                this.titleLink.set([`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`]);
+                this.titleLink.set([`/course-management/${this.course().id}/${this.exerciseType()}-exercises/${this.exerciseId()}/participations`]);
                 break;
             case DoughnutChartType.PARTICIPATIONS:
                 this.doughnutChartTitle.set('participationRate');

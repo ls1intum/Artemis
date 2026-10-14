@@ -44,7 +44,7 @@ function widthOf(element: HTMLElement): number {
 }
 
 /**
- * Owned, data-driven collapsible action row: renders {@link ActionItem}s inline (Delete/Edit/Scores kept longest via
+ * Owned, data-driven collapsible action row: renders {@link ActionItem}s inline (Delete/Edit/Participations kept longest via
  * {@link keepPriorityIds}) and folds whatever doesn't fit into a trailing ellipsis menu, based on measured button
  * widths and the row's available width.
  *

@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 /**
  * One manual result of a submission together with the correction round it belongs to.
  * <p>
- * The scores overview renders one set of assessment actions per correction round, and it needs to know, per round,
+ * The participation page renders one set of assessment actions per correction round, and it needs to know, per round,
  * whether that round has a result, whether it is finished and whether it has a complaint. Everything else about the
  * result is already covered by the flat fields of {@link ParticipationManagementDTO}, which describe the newest result.
  *

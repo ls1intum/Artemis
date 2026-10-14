@@ -70,7 +70,7 @@ describe('DoughnutChartComponent', () => {
             component.ngOnInit();
 
             expect(component.doughnutChartTitle()).toBe('averageScore');
-            expect(component.titleLink()).toEqual(['/course-management/1/text-exercises/2/scores']);
+            expect(component.titleLink()).toEqual(['/course-management/1/text-exercises/2/participations']);
         });
 
         it('should set title for participations', () => {
