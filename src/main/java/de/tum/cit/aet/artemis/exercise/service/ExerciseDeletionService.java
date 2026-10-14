@@ -157,7 +157,7 @@ public class ExerciseDeletionService {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
         if (exercise instanceof ProgrammingExercise) {
             try (var lease = mutationGuard.claimExternalMutation(exerciseId)) {
-                deleteUnderMutationGuard(exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId), deleteBaseReposBuildPlans);
+                deleteUnderMutationGuard(lease.coordinated() ? exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId) : exercise, deleteBaseReposBuildPlans);
             }
         }
         else {

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -78,6 +79,7 @@ class ExerciseDeletionMutationGuardTest {
         }).when(programmingDeletion).delete(42L, true);
         service.delete(42L, true);
         verify(guard).claimExternalMutation(42L);
+        verify(repository, times(2)).findWithCompetenciesByIdElseThrow(42L);
         verify(programmingDeletion).delete(42L, true);
         assertThat(held).isFalse();
     }
@@ -91,6 +93,7 @@ class ExerciseDeletionMutationGuardTest {
         when(repository.findByIdWithEagerExampleSubmissionsElseThrow(42L)).thenReturn(exercise);
         service.delete(42L, true);
         verify(channels).deleteChannelForExerciseId(42L);
+        verify(repository).findWithCompetenciesByIdElseThrow(42L);
         verify(programmingDeletion).delete(42L, true);
     }
 
