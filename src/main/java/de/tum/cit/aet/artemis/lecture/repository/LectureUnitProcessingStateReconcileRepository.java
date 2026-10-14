@@ -90,6 +90,7 @@ public interface LectureUnitProcessingStateReconcileRepository extends ArtemisJp
      * @param observedErrorKey     the error key seen at batch-read time that justified the revival; compared null-safely
      * @param observedLastUpdated  the {@code lastUpdated} seen at batch-read time that proved the cooldown had elapsed
      * @param observedRevivalCount the revival count seen at batch-read time that proved the budget was not exhausted
+     * @param revivalIncrement     1 to spend a revival of the capped budget, 0 for a revival that does not count against it
      * @param dispatchPriority     where the revived unit sits in the dispatch order
      * @param now                  recorded as the new {@code lastUpdated}
      * @return 1 when the revival was applied, 0 when the row changed since the batch read
@@ -100,7 +101,7 @@ public interface LectureUnitProcessingStateReconcileRepository extends ArtemisJp
             UPDATE LectureUnitProcessingState ps
             SET ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, ps.startedAt = NULL, ps.claimToken = NULL,
                 ps.ingestionJobToken = NULL, ps.retryEligibleAt = NULL, ps.errorKey = NULL, ps.retryCount = 0,
-                ps.revivalCount = ps.revivalCount + 1, ps.dispatchPriority = :dispatchPriority, ps.lastUpdated = :now,
+                ps.revivalCount = ps.revivalCount + :revivalIncrement, ps.dispatchPriority = :dispatchPriority, ps.lastUpdated = :now,
                 ps.lastHeartbeatAt = NULL, ps.lockedBy = NULL, ps.currentStage = NULL, ps.stageStartedAt = NULL,
                 ps.stageProgress = NULL, ps.stageTotal = NULL, ps.lastProgressAt = NULL
             WHERE ps.id = :id AND ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.claimToken IS NULL
@@ -109,7 +110,8 @@ public interface LectureUnitProcessingStateReconcileRepository extends ArtemisJp
             AND ps.revivalCount = :observedRevivalCount
             """)
     int reviveFailedIfUnchanged(@Param("id") long id, @Param("observedErrorKey") String observedErrorKey, @Param("observedLastUpdated") ZonedDateTime observedLastUpdated,
-            @Param("observedRevivalCount") int observedRevivalCount, @Param("dispatchPriority") Integer dispatchPriority, @Param("now") ZonedDateTime now);
+            @Param("observedRevivalCount") int observedRevivalCount, @Param("revivalIncrement") int revivalIncrement, @Param("dispatchPriority") Integer dispatchPriority,
+            @Param("now") ZonedDateTime now);
 
     /**
      * Record the video source marker of a DONE unit that has none, without touching anything else. Used only when the confirmed fingerprint equals the

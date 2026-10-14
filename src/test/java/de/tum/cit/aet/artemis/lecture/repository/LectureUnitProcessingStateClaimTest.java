@@ -574,12 +574,31 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         assertThat(processingStateRepository.claimRetryEligible(failed.getId(), "claim-R", now, now.plusMinutes(20), MAX_ATTEMPTS)).isEqualTo(1);
         LectureUnitProcessingState claimed = processingStateRepository.findById(failed.getId()).orElseThrow();
 
-        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(claimed.getId(), claimed.getErrorKey(), claimed.getLastUpdated(), claimed.getRevivalCount(), 2,
+        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(claimed.getId(), claimed.getErrorKey(), claimed.getLastUpdated(), claimed.getRevivalCount(), 1, 2,
                 ZonedDateTime.now())).as("a claim the dispatcher is about to activate must not be wiped by a revival").isZero();
 
         LectureUnitProcessingState after = processingStateRepository.findById(failed.getId()).orElseThrow();
         assertThat(after.getClaimToken()).isEqualTo("claim-R");
         assertThat(after.getPhase()).isEqualTo(ProcessingPhase.FAILED);
+    }
+
+    /** A revival that waits for a recording is not charged to the revival budget; a generic revival is. */
+    @Test
+    void testRevivalChargesTheBudgetOnlyWhenAsked() {
+        LectureUnitProcessingState failed = new LectureUnitProcessingState(unit);
+        failed.setPhase(ProcessingPhase.FAILED);
+        failed.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.videoSourceUnavailable");
+        failed.setRevivalCount(4);
+        failed.setLastUpdated(ZonedDateTime.now().minusHours(7).truncatedTo(ChronoUnit.SECONDS));
+        processingStateRepository.save(failed);
+        LectureUnitProcessingState observed = processingStateRepository.findById(failed.getId()).orElseThrow();
+
+        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(observed.getId(), observed.getErrorKey(), observed.getLastUpdated(), observed.getRevivalCount(), 0, 2,
+                ZonedDateTime.now())).isEqualTo(1);
+
+        LectureUnitProcessingState revived = processingStateRepository.findById(failed.getId()).orElseThrow();
+        assertThat(revived.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+        assertThat(revived.getRevivalCount()).as("a wait for a recording leaves the budget untouched").isEqualTo(4);
     }
 
     /** The happy path: the row is untouched since the batch read, so the requeue applies with its intent. */
@@ -633,7 +652,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         failed.markFailed("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate");
         processingStateRepository.save(failed);
 
-        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(observed.getId(), observed.getErrorKey(), observed.getLastUpdated(), observed.getRevivalCount(), 2,
+        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(observed.getId(), observed.getErrorKey(), observed.getLastUpdated(), observed.getRevivalCount(), 1, 2,
                 ZonedDateTime.now())).as("the failure that authorized this revival is not the failure on the row now").isZero();
 
         LectureUnitProcessingState after = processingStateRepository.findById(failed.getId()).orElseThrow();
@@ -659,7 +678,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         failed.setRevivalCount(1);
         processingStateRepository.save(failed);
 
-        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(observed.getId(), observed.getErrorKey(), observed.getLastUpdated(), observed.getRevivalCount(), 2,
+        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(observed.getId(), observed.getErrorKey(), observed.getLastUpdated(), observed.getRevivalCount(), 1, 2,
                 ZonedDateTime.now())).as("the budget this decision counted on has already been spent").isZero();
         assertThat(processingStateRepository.findById(failed.getId()).orElseThrow().getRevivalCount()).isEqualTo(1);
     }
@@ -679,7 +698,7 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
         processingStateRepository.save(failed);
         LectureUnitProcessingState observed = processingStateRepository.findById(failed.getId()).orElseThrow();
 
-        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(observed.getId(), observed.getErrorKey(), observed.getLastUpdated(), observed.getRevivalCount(), 2,
+        assertThat(reconcileStateRepository.reviveFailedIfUnchanged(observed.getId(), observed.getErrorKey(), observed.getLastUpdated(), observed.getRevivalCount(), 1, 2,
                 ZonedDateTime.now())).isEqualTo(1);
 
         LectureUnitProcessingState after = processingStateRepository.findById(failed.getId()).orElseThrow();

@@ -731,7 +731,9 @@ public class LectureIngestionReconcileService {
             if (state.getLastUpdated() == null || state.getLastUpdated().isAfter(ZonedDateTime.now().minus(videoPendingRecheck))) {
                 return 0;
             }
-            return reviveFailedUnit(state, "its video could not be loaded, trying the video again") ? 1 : 0;
+            // Not charged to the revival budget: weeks of waiting for a recording must not use up the budget that later protects the unit's
+            // recovery from an Iris outage once the recording is there.
+            return reviveFailedUnit(state, "its video could not be loaded, trying the video again", false) ? 1 : 0;
         }
         if (state.getRevivalCount() >= maxRevivals) {
             // Exhausted its revival budget without ever succeeding: treat a generic error that keeps
@@ -742,7 +744,7 @@ public class LectureIngestionReconcileService {
         if (state.getLastUpdated() == null || state.getLastUpdated().isAfter(ZonedDateTime.now().minus(failedRevivalCooldown))) {
             return 0;
         }
-        return reviveFailedUnit(state, "transient failure cooled down, reviving for another attempt") ? 1 : 0;
+        return reviveFailedUnit(state, "transient failure cooled down, reviving for another attempt", true) ? 1 : 0;
     }
 
     /**
@@ -788,16 +790,17 @@ public class LectureIngestionReconcileService {
      *         since the batch read, in which case nothing was written and the caller's budget must not be
      *         charged for this unit
      */
-    private boolean reviveFailedUnit(LectureUnitProcessingState state, String reason) {
+    private boolean reviveFailedUnit(LectureUnitProcessingState state, String reason, boolean chargesRevivalBudget) {
         long unitId = state.getLectureUnit().getId();
-        int updated = reconcileStateRepository.reviveFailedIfUnchanged(state.getId(), state.getErrorKey(), state.getLastUpdated(), state.getRevivalCount(),
+        int revivalIncrement = chargesRevivalBudget ? 1 : 0;
+        int updated = reconcileStateRepository.reviveFailedIfUnchanged(state.getId(), state.getErrorKey(), state.getLastUpdated(), state.getRevivalCount(), revivalIncrement,
                 RECONCILE_DISPATCH_PRIORITY, ZonedDateTime.now());
         if (updated == 0) {
             log.debug("Reconcile: skipping revival of unit {} — its state changed since the batch read", unitId);
             return false;
         }
         // Mirror the committed outcome onto the batch-read snapshot, field for field with the statement above.
-        state.setRevivalCount(state.getRevivalCount() + 1);
+        state.setRevivalCount(state.getRevivalCount() + revivalIncrement);
         state.resetRetryCount();
         state.requeue();
         state.setDispatchPriority(RECONCILE_DISPATCH_PRIORITY);

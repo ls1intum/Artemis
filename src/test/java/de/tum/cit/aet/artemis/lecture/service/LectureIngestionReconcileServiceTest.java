@@ -132,7 +132,7 @@ class LectureIngestionReconcileServiceTest {
         // The requeue is committed through a guarded update; 1 = the row is still as the batch read saw it.
         when(reconcileStateRepository.requeueForReconcileIfUnchanged(anyLong(), any(), any(), any(), any(), any(), anyInt(), any())).thenReturn(1);
         // A revival goes through its own guard, which additionally pins the error, timestamp and budget it judged.
-        when(reconcileStateRepository.reviveFailedIfUnchanged(anyLong(), any(), any(), anyInt(), anyInt(), any())).thenReturn(1);
+        when(reconcileStateRepository.reviveFailedIfUnchanged(anyLong(), any(), any(), anyInt(), anyInt(), anyInt(), any())).thenReturn(1);
     }
 
     private static final int CURRENT_PIPELINE_VERSION = 3;
@@ -202,7 +202,7 @@ class LectureIngestionReconcileServiceTest {
             assertThat(state.getErrorKey()).isNull();
             // Committed through the revival guard, which pins the three FAILED facts that authorized it: a unit
             // that failed again for another reason before this write must not have that newer failure erased.
-            verify(reconcileStateRepository).reviveFailedIfUnchanged(eq(state.getId()), eq(observedErrorKey), eq(observedLastUpdated), eq(0), anyInt(), any());
+            verify(reconcileStateRepository).reviveFailedIfUnchanged(eq(state.getId()), eq(observedErrorKey), eq(observedLastUpdated), eq(0), eq(1), anyInt(), any());
         }
 
         @Test
@@ -1137,7 +1137,7 @@ class LectureIngestionReconcileServiceTest {
 
             assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isZero();
 
-            verify(reconcileStateRepository, never()).reviveFailedIfUnchanged(anyLong(), any(), any(), anyInt(), anyInt(), any());
+            verify(reconcileStateRepository, never()).reviveFailedIfUnchanged(anyLong(), any(), any(), anyInt(), anyInt(), anyInt(), any());
         }
 
         @Test
@@ -1396,6 +1396,20 @@ class LectureIngestionReconcileServiceTest {
 
             assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
             assertThat(state.getPhase()).isEqualTo(ProcessingPhase.IDLE);
+            // Waiting for a recording does not spend the budget that later protects the unit's recovery from an Iris outage
+            verify(reconcileStateRepository).reviveFailedIfUnchanged(eq(state.getId()), any(), any(), eq(25), eq(0), anyInt(), any());
+            assertThat(state.getRevivalCount()).isEqualTo(25);
+        }
+
+        @Test
+        void shouldStillReviveAGenericFailureAfterLongWaitingForTheRecording() {
+            // Weeks of video waits left the budget untouched; when the recording is there and Iris then fails, the generic revival still applies
+            state.setRevivalCount(0);
+            state.setErrorKey("artemisApp.attachmentVideoUnit.processing.error.processingFailed");
+            state.setLastUpdated(ZonedDateTime.now().minusHours(2));
+
+            assertThat(reconcileService.reconcileCourse(COURSE_ID, 10)).isEqualTo(1);
+            verify(reconcileStateRepository).reviveFailedIfUnchanged(eq(state.getId()), any(), any(), eq(0), eq(1), anyInt(), any());
         }
 
         @Test

@@ -85,9 +85,10 @@ public class TumLiveService {
         try {
             TumLivePlaylistDTO response = restClient.get().uri("/streams/{courseSlug}/{streamId}", info.courseSlug(), info.streamId()).retrieve().body(TumLivePlaylistDTO.class);
 
-            if (response != null && response.stream() != null && response.stream().playlistUrl() != null) {
+            if (response != null && response.stream() != null && response.stream().playlistUrl() != null && !response.stream().playlistUrl().isBlank()) {
                 return TumLivePlaylistLookup.resolved(response.stream().playlistUrl());
             }
+            // The API sends an unset playlist as an empty string, as it does for a stream without a recording yet
             log.info("No 'playlistUrl' found in API response for stream {}", info.streamId());
             return TumLivePlaylistLookup.failed(TumLivePlaylistLookup.Outcome.NOT_AVAILABLE);
         }

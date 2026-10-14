@@ -116,6 +116,15 @@ class TumLiveServiceTest {
         assertThat(tumLiveService.lookUpPlaylist(WATCH_URL).outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.NOT_AVAILABLE);
     }
 
+    /** The API sends an unset playlist as an empty string: no usable video, so the unit must not count as resolved. */
+    @Test
+    void lookUpPlaylist_blankPlaylistUrl_isNotAvailable() {
+        when(restClient.get().uri(eq("/streams/{courseSlug}/{streamId}"), eq("abc-course"), eq("12345")).retrieve().body(eq(TumLivePlaylistDTO.class)))
+                .thenReturn(new TumLivePlaylistDTO(new StreamDTO("")), new TumLivePlaylistDTO(new StreamDTO("  ")));
+        assertThat(tumLiveService.lookUpPlaylist(WATCH_URL).outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.NOT_AVAILABLE);
+        assertThat(tumLiveService.lookUpPlaylist(WATCH_URL).outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.NOT_AVAILABLE);
+    }
+
     @Test
     void lookUpPlaylist_serverErrorOrConnectionFailure_isTemporarilyUnavailable() {
         stubLookupThrows(HttpServerErrorException.create(HttpStatus.BAD_GATEWAY, "Bad Gateway", HttpHeaders.EMPTY, null, null));
