@@ -273,13 +273,20 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
 
         it('should show the submitted file with a download link although the submission has no filePathUrl', () => {
+            const downloadSpy = vi.spyOn(comp, 'downloadFile').mockImplementation(() => {});
             expect(comp.studentSubmission().filePathUrl).toBeUndefined();
 
             fixture.detectChanges();
 
-            expect(comp.studentSubmission().filePathUrl).toBe(addPublicFilePrefix('path/to/the/file/file1.png'));
+            const expectedUrl = addPublicFilePrefix('path/to/the/file/file1.png');
             expect(comp.submittedFileName()).toBe('file1.png');
-            expect(fixture.nativeElement.querySelector('a[role="button"]')).not.toBeNull();
+            expect(comp.submittedFileUrl()).toBe(expectedUrl);
+            // the input submission is not modified, the url is derived state of the component
+            expect(comp.studentSubmission().filePathUrl).toBeUndefined();
+            const downloadLink = fixture.nativeElement.querySelector('a[jhiTranslate="artemisApp.fileUploadSubmission.download"]') as HTMLElement;
+            expect(downloadLink).not.toBeNull();
+            downloadLink.click();
+            expect(downloadSpy).toHaveBeenCalledWith(expectedUrl);
         });
 
         it('should show the not submitted hint instead of a file if the submission has no file', () => {
@@ -287,7 +294,7 @@ describe('FileUploadExamSubmissionComponent', () => {
 
             fixture.detectChanges();
 
-            expect(fixture.nativeElement.querySelector('a[role="button"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('a[jhiTranslate="artemisApp.fileUploadSubmission.download"]')).toBeNull();
             expect(fixture.nativeElement.querySelector('h6[jhiTranslate="artemisApp.timeline.fileUploadNotSubmitted"]')).not.toBeNull();
         });
     });

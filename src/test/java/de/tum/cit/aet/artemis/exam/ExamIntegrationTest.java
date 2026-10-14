@@ -1996,7 +1996,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExamStatistics_tutorReceivesComplaintCounts() throws Exception {
-        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, true);
+        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, false);
         ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
                 ExamChecklistDTO.class);
         // without the complaint counts the exam status of a tutor would claim that 100% of the complaints are done
