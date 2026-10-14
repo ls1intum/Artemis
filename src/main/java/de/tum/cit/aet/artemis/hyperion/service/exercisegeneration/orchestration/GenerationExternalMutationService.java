@@ -22,7 +22,7 @@ public class GenerationExternalMutationService {
     private final ProgrammingExerciseWriteOwnershipService ownership;
 
     @org.springframework.beans.factory.annotation.Autowired
-    public GenerationExternalMutationService(@Lazy ProgrammingExerciseWriteOwnershipService ownership) {
+    public GenerationExternalMutationService(ProgrammingExerciseWriteOwnershipService ownership) {
         this.ownership = ownership;
     }
 
@@ -46,10 +46,6 @@ public class GenerationExternalMutationService {
 
     public String claimExternalMutationSlot(long exerciseId) {
         return ownership.claim(exerciseId, "WRITE", GenerationJobService.EXTERNAL_MUTATION_JOB_PREFIX + UUID.randomUUID());
-    }
-
-    public boolean isCoordinationEnabled() {
-        return true;
     }
 
     public String claimParticipationSlot(long exerciseId) {
@@ -113,10 +109,6 @@ public class GenerationExternalMutationService {
 
     void retainRevertRecoverySlot(long exerciseId, String token) {
         ownership.retain(exerciseId, token, "UNDO_RECOVERY");
-    }
-
-    public boolean isGenerationActive(long exerciseId) {
-        return ownership.get(exerciseId).isPresent() || !ownership.readers(exerciseId).isEmpty();
     }
 
     /**

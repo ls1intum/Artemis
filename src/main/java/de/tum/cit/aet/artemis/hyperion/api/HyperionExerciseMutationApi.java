@@ -3,12 +3,15 @@ package de.tum.cit.aet.artemis.hyperion.api;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
+import java.util.UUID;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.api.AbstractApi;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService;
 
 /** Cross-module API for serializing external programming-exercise mutations with Hyperion generation. */
 @Controller
@@ -16,23 +19,23 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 @Profile(PROFILE_CORE + " | " + PROFILE_LOCALVC)
 public class HyperionExerciseMutationApi implements AbstractApi {
 
-    private final GenerationExternalMutationService mutationService;
+    private final ProgrammingExerciseWriteOwnershipService ownership;
 
-    public HyperionExerciseMutationApi(GenerationExternalMutationService mutationService) {
-        this.mutationService = mutationService;
+    public HyperionExerciseMutationApi(ProgrammingExerciseWriteOwnershipService ownership) {
+        this.ownership = ownership;
     }
 
     /** @return whether this deployment enables generation coordination for exercise writers */
     public boolean isCoordinationEnabled() {
-        return mutationService.isCoordinationEnabled();
+        return true;
     }
 
     public String claimExternalMutationSlot(long exerciseId) {
-        return mutationService.claimExternalMutationSlot(exerciseId);
+        return ownership.claim(exerciseId, "WRITE", GenerationJobService.EXTERNAL_MUTATION_JOB_PREFIX + UUID.randomUUID());
     }
 
     public void clearExternalMutationSlot(long exerciseId, String token) {
-        mutationService.clearExternalMutationSlot(exerciseId, token);
+        ownership.release(exerciseId, token);
     }
 
     /**
@@ -42,7 +45,7 @@ public class HyperionExerciseMutationApi implements AbstractApi {
      * @return exact reservation token
      */
     public String claimParticipationSlot(long exerciseId) {
-        return mutationService.claimParticipationSlot(exerciseId);
+        return ownership.claimReader(exerciseId);
     }
 
     /**
@@ -52,11 +55,11 @@ public class HyperionExerciseMutationApi implements AbstractApi {
      * @param token      exact reservation token
      */
     public void clearParticipationSlot(long exerciseId, String token) {
-        mutationService.clearParticipationSlot(exerciseId, token);
+        ownership.releaseReader(exerciseId, token);
     }
 
     public boolean isGenerationActive(long exerciseId) {
-        return mutationService.isGenerationActive(exerciseId);
+        return ownership.get(exerciseId).isPresent() || !ownership.readers(exerciseId).isEmpty();
     }
 
     public ParticipationReservation reserveParticipation(long exerciseId) {

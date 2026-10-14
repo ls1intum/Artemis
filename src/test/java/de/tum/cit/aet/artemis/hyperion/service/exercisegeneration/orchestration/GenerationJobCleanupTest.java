@@ -110,7 +110,9 @@ class GenerationJobCleanupTest {
     @ValueSource(booleans = { false, true })
     void publicationFailureDoesNotRollBackAnAdvancedWorkerOrRecoveryGuard(boolean recoveryGuard) {
         var provider = new LocalDataProviderService();
-        var ownership = new GenerationWriteOwnershipTestFixture().service;
+        var ownershipFixture = new GenerationWriteOwnershipTestFixture();
+        var ownership = ownershipFixture.service;
+        var mutationApi = new de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi(ownershipFixture.database);
         var reference = new AtomicReference<GenerationJobService>();
         var failure = new IllegalStateException("publication failed after dispatch");
         var file = ExerciseGenerationFileChangeDTO.of("solution/Stack.java", "write", 1);
@@ -134,7 +136,7 @@ class GenerationJobCleanupTest {
         JobInfo reservation = slots.get("42");
         if (recoveryGuard) {
             assertThat(reservation).isNull();
-            assertThat(ownership.isGenerationActive(42)).isTrue();
+            assertThat(mutationApi.isGenerationActive(42)).isTrue();
         }
         else {
             assertThat(reservation).isNotNull();
@@ -190,7 +192,9 @@ class GenerationJobCleanupTest {
     @ValueSource(booleans = { false, true })
     void partialSaveRetainsDatabaseGuardWhileFinishedActivityIsCleared(boolean lostConversionResponse) {
         var provider = new LocalDataProviderService();
-        var ownership = new GenerationWriteOwnershipTestFixture().service;
+        var ownershipFixture = new GenerationWriteOwnershipTestFixture();
+        var ownership = ownershipFixture.service;
+        var mutationApi = new de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi(ownershipFixture.database);
         var jobs = new GenerationJobService(provider, _ -> {
         }, mock(GenerationTokenUsageService.class), ownership);
         jobs.init();
@@ -208,7 +212,7 @@ class GenerationJobCleanupTest {
         }
         jobs.retryPendingCleanup();
         assertThat(jobs.hasActiveJob(42)).isFalse();
-        assertThat(ownership.isGenerationActive(42)).isTrue();
+        assertThat(mutationApi.isGenerationActive(42)).isTrue();
         assertThatThrownBy(() -> jobs.claimSeedSlot(42)).isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
         assertThat(jobs.recoverWedgedSlot(42, "wrong-token")).isFalse();
         assertThat(jobs.recoverWedgedSlot(42, job)).isTrue();

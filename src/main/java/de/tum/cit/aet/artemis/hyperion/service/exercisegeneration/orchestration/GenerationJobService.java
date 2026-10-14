@@ -71,7 +71,7 @@ public class GenerationJobService {
 
     static final String REVERT_JOB_PREFIX = "revert-";
 
-    static final String EXTERNAL_MUTATION_JOB_PREFIX = "external-mutation-";
+    public static final String EXTERNAL_MUTATION_JOB_PREFIX = "external-mutation-";
 
     static final String GENERATION_PIPELINE_ID = "HYPERION_EXERCISE_GENERATION";
 

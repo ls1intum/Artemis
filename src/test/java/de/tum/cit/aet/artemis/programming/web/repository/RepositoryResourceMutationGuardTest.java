@@ -56,8 +56,9 @@ class RepositoryResourceMutationGuardTest {
 
     @Test
     void saveFilesAndCommitChanges_blocksSaveDuringUncommittedWrites_andDoesNotClaimANestedLease() throws Exception {
-        var mutations = new GenerationExternalMutationService(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipTestFixture.create());
-        ProgrammingExerciseMutationGuardService mutationGuard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(mutations)));
+        var ownership = de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipTestFixture.create();
+        var mutations = new GenerationExternalMutationService(ownership);
+        ProgrammingExerciseMutationGuardService mutationGuard = new ProgrammingExerciseMutationGuardService(Optional.of(new HyperionExerciseMutationApi(ownership)));
         UserRepository userRepository = mock(UserRepository.class);
         User user = user("instructor");
         when(userRepository.getUser()).thenReturn(user);
