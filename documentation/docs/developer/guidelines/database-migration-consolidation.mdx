@@ -186,12 +186,15 @@ in `DatabaseMigration.java` so the two cannot drift apart. It is what establishe
 changeset's precondition holds against a schema that is missing everything written since that tag.
 
 `ci-liquibase.yml` runs all six on every pull request that changes something they read: the changelogs
-and seed data under `config/liquibase`, `DatabaseMigration.java`, `supporting_scripts/liquibase`, the
-Gradle build files that fix the database and driver versions, or the workflow itself (`has_liquibase`
-in `ci.yml`). The baseline is generated, so nothing about the file itself says it still matches, and a
-new changelog filed in the wrong directory is exactly the mistake these catch. A pull request that
-touches none of those paths cannot change what they conclude, so it skips them; `develop` is checked
-on every push that does.
+and seed data under `src/main/resources/config/liquibase`, `DatabaseMigration.java`,
+`supporting_scripts/liquibase`, `deployment/docker/artemis/config/playwright.env`, the Gradle build
+files that fix the database and driver versions, or the two workflows `ci.yml` and `ci-liquibase.yml`
+(`has_liquibase` in `ci.yml`). The baseline is generated, so nothing about the file itself says it
+still matches, and a changelog filed in the wrong place inside that directory is exactly the mistake
+these catch. The filter does not look for a changelog filed outside
+`src/main/resources/config/liquibase`; such a file is not part of `master.xml`, so it is not applied
+either. A pull request that touches none of those paths cannot change what the checks conclude, so it
+skips them; `develop` is checked on every push that does.
 
 <Callout variant={CalloutVariant.info}>
     All six run against empty databases, where every backfill and every guarded `NOT NULL` passes
