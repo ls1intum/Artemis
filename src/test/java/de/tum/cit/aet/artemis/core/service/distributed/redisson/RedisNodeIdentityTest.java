@@ -8,8 +8,8 @@ class RedisNodeIdentityTest {
 
     @Test
     void repeatedDisplayNameDoesNotReuseProcessIdentity() {
-        var first = new RedisNodeIdentity("artemis-core");
-        var replacement = new RedisNodeIdentity("artemis-core");
+        var first = new RedisNodeIdentity("artemis-core", true, false);
+        var replacement = new RedisNodeIdentity("artemis-core", true, false);
         assertThat(first.connectionName()).isNotEqualTo(replacement.connectionName());
         assertThat(first.connectionName()).isEqualTo(first.connectionName());
         assertThat(RedisNodeIdentity.isCoordinationName(first.connectionName())).isTrue();
@@ -17,13 +17,19 @@ class RedisNodeIdentityTest {
     }
 
     @Test
-    void cacheConnectionIdentityDoesNotAdvertiseWriterFencing() {
-        for (String profile : new String[] { "core", "localvc", "aiworker", "buildagent" }) {
+    void writerProfilesAdvertiseTheDeploymentFencingSettingWhileWorkersRemainObservers() {
+        for (String profile : new String[] { "core", "localvc" }) {
             var environment = new org.springframework.mock.env.MockEnvironment();
             environment.setActiveProfiles(profile);
-            var identity = new RedisNodeIdentity("artemis-node");
-            assertThat(identity.connectionName()).contains(":node:");
-            assertThat(RedisNodeIdentity.displayName(identity.connectionName())).isEqualTo("artemis-node");
+            var disabled = new RedisNodeIdentity("artemis-node", environment, false);
+            var enabled = new RedisNodeIdentity("artemis-node", environment, true);
+            assertThat(RedisNodeIdentity.declaresSafeWriterRole(disabled.connectionName())).isFalse();
+            assertThat(RedisNodeIdentity.declaresSafeWriterRole(enabled.connectionName())).isTrue();
+        }
+        for (String profile : new String[] { "aiworker", "buildagent" }) {
+            var environment = new org.springframework.mock.env.MockEnvironment();
+            environment.setActiveProfiles(profile);
+            assertThat(RedisNodeIdentity.declaresSafeWriterRole(new RedisNodeIdentity("worker", environment, false).connectionName())).isTrue();
         }
     }
 

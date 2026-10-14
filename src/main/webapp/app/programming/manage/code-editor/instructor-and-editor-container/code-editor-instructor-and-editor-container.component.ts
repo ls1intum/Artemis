@@ -487,13 +487,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     protected readonly isProblemStatementEditingLocked = computed(() => {
         const activity = this.generationActivity;
-        const writeInProgress = activity.running() && !activity.cancellable();
-        return (
-            this.generationStartPending() ||
-            this.generationRefreshPending() ||
-            this.generationRefreshBaselineUnknown() ||
-            (this.generationSupported() && (activity.statusLoading() || activity.statusLoadFailed() || writeInProgress))
-        );
+        return this.isExerciseGenerationRunning() || this.generationRefreshBaselineUnknown() || (this.generationSupported() && activity.statusLoadFailed());
     });
 
     /** Server-adjusted clock, so an exercise whose release date passes while the editor is open turns ineligible on time. */

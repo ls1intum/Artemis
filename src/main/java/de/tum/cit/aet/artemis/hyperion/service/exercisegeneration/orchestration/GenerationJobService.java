@@ -71,7 +71,7 @@ public class GenerationJobService {
 
     static final String REVERT_JOB_PREFIX = "revert-";
 
-    public static final String EXTERNAL_MUTATION_JOB_PREFIX = "external-mutation-";
+    static final String EXTERNAL_MUTATION_JOB_PREFIX = "external-mutation-";
 
     static final String GENERATION_PIPELINE_ID = "HYPERION_EXERCISE_GENERATION";
 
@@ -98,6 +98,8 @@ public class GenerationJobService {
     private final Duration longestConfiguredJobDuration;
 
     private final GenerationCancelHooks cancelHooks;
+
+    private final GenerationClusterTopology topology;
 
     private final Duration terminalReplayTtl;
 
@@ -132,19 +134,26 @@ public class GenerationJobService {
 
     GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
-            int expectedDataMemberCount, Duration terminalReplayTtl, GenerationExternalMutationService externalMutationService) {
+            int expectedDataMemberCount, Duration terminalReplayTtl) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
-                terminalReplayTtl, true, externalMutationService);
+                terminalReplayTtl, true);
     }
 
     GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
-            int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage, GenerationExternalMutationService externalMutationService) {
+            int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
-                terminalReplayTtl, exactProviderUsage, maxJobDuration, externalMutationService);
+                terminalReplayTtl, exactProviderUsage, maxJobDuration);
     }
 
     GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
+            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
+            int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage, @Nullable Duration longestConfiguredJobDuration) {
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
+                terminalReplayTtl, exactProviderUsage, longestConfiguredJobDuration, new GenerationExternalMutationService(distributedDataProvider, expectedDataMemberCount, true));
+    }
+
+    private GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
             int expectedDataMemberCount, Duration terminalReplayTtl, boolean exactProviderUsage, @Nullable Duration longestConfiguredJobDuration,
             GenerationExternalMutationService externalMutationService) {
@@ -157,38 +166,36 @@ public class GenerationJobService {
         this.staleJobTimeout = staleJobTimeout;
         this.maxJobDuration = maxJobDuration;
         this.cancelHooks = new GenerationCancelHooks(distributedDataProvider, cancellationExecutor);
+        this.topology = new GenerationClusterTopology(distributedDataProvider, expectedDataMemberCount);
         this.terminalReplayTtl = terminalReplayTtl;
         this.exactProviderUsage = exactProviderUsage;
     }
 
     GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
             @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
-            int expectedDataMemberCount, GenerationExternalMutationService externalMutationService) {
+            int expectedDataMemberCount) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, expectedDataMemberCount,
-                DEFAULT_TERMINAL_REPLAY_TTL, externalMutationService);
+                DEFAULT_TERMINAL_REPLAY_TTL);
     }
 
     public GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
-            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor,
-            GenerationExternalMutationService externalMutationService) {
+            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration, Executor cancellationExecutor) {
         this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, cancellationExecutor, 1,
-                DEFAULT_TERMINAL_REPLAY_TTL, externalMutationService);
+                DEFAULT_TERMINAL_REPLAY_TTL);
+    }
+
+    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService) {
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run);
     }
 
     GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
-            GenerationExternalMutationService externalMutationService) {
-        this(distributedDataProvider, eventPublisher, llmTokenUsageService, null, Duration.ofMinutes(35), Duration.ofMinutes(30), Runnable::run, externalMutationService);
+            Duration staleJobTimeout, Duration maxJobDuration) {
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, null, staleJobTimeout, maxJobDuration, Runnable::run);
     }
 
     GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
-            Duration staleJobTimeout, Duration maxJobDuration, GenerationExternalMutationService externalMutationService) {
-        this(distributedDataProvider, eventPublisher, llmTokenUsageService, null, staleJobTimeout, maxJobDuration, Runnable::run, externalMutationService);
-    }
-
-    GenerationJobService(DistributedDataProvider distributedDataProvider, ApplicationEventPublisher eventPublisher, GenerationTokenUsageService llmTokenUsageService,
-            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration,
-            GenerationExternalMutationService externalMutationService) {
-        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, Runnable::run, externalMutationService);
+            @Nullable HyperionGenerationBudgetService generationBudgetService, Duration staleJobTimeout, Duration maxJobDuration) {
+        this(distributedDataProvider, eventPublisher, llmTokenUsageService, generationBudgetService, staleJobTimeout, maxJobDuration, Runnable::run);
     }
 
     public Consumer<ChatResponse> tokenUsageSink(@Nullable Long courseId, @Nullable Long exerciseId, @Nullable Long userId) {
@@ -259,6 +266,7 @@ public class GenerationJobService {
     /** Initializes distributed job state and validates timeout settings. */
     @PostConstruct
     public void init() {
+        topology.validateConfiguration();
         HyperionGenerationTimeouts.validateMaxJobDuration(maxJobDuration);
         Duration longestJobDuration = longestConfiguredJobDuration == null || longestConfiguredJobDuration.compareTo(maxJobDuration) < 0 ? maxJobDuration
                 : longestConfiguredJobDuration;
@@ -353,6 +361,7 @@ public class GenerationJobService {
         String key = key(exerciseId);
         lockJobSlot(key);
         try {
+            topology.verifyAllMembers();
             JobInfo existing = jobMap.get(key);
             if (existing == null) {
                 return;
@@ -373,6 +382,7 @@ public class GenerationJobService {
     private void claimSlot(String key, JobInfo newJob, String conflictMessage, String errorKey) {
         lockJobSlot(key);
         try {
+            topology.verifyAllMembers();
             JobInfo existing = jobMap.get(key);
             if (existing != null) {
                 Instant now = Instant.now();
@@ -533,14 +543,15 @@ public class GenerationJobService {
      * @return whether this node still owns an uncancelled job
      */
     public boolean enterNonCancellablePhase(long exerciseId, String jobId) {
-        externalMutationService.claimSaveSlot(exerciseId, jobId);
-        boolean entered = false;
-        boolean transitionAttempted = false;
-        boolean locked = false;
+        if (!topology.permitsOwnership()) {
+            return false;
+        }
         String key = key(exerciseId);
+        lockJobSlot(key);
         try {
-            lockJobSlot(key);
-            locked = true;
+            if (!topology.permitsOwnership()) {
+                return false;
+            }
             JobInfo job = jobMap.get(key);
             if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
                 return false;
@@ -549,36 +560,17 @@ public class GenerationJobService {
                 // Cancellation already won this job under the same lock: the run is terminal as CANCELLED, so this must not flip it non-cancellable or let the caller persist.
                 return false;
             }
-            transitionAttempted = true;
             if (!jobMap.replace(key, job, job.withHeartbeat(Instant.now()).withCancellable(false))) {
-                transitionAttempted = false;
                 // The slot changed under an expired lease, so this node no longer owns the job and must not enter the phase that writes to Git and the database.
                 return false;
             }
-            entered = true;
         }
         finally {
-            if (locked) {
-                unlockJobSlot(key);
-            }
-            if (!entered && !transitionAttempted) {
-                externalMutationService.releaseSaveSlot(exerciseId, jobId);
-            }
-            else if (!entered) {
-                externalMutationService.retainSaveRecovery(exerciseId, jobId);
-            }
+            unlockJobSlot(key);
         }
         // The sandbox phase is over; there is no longer an in-flight tool/build operation that a cancel hook may safely interrupt.
         cancelHooks.deregister(jobId);
         return true;
-    }
-
-    public String claimSeedSlot(long exerciseId) {
-        return externalMutationService.claimSeedSlot(exerciseId);
-    }
-
-    public void clearSeedSlot(long exerciseId, String token) {
-        externalMutationService.clearSeedSlot(exerciseId, token);
     }
 
     public boolean hasActiveJob(long exerciseId) {
@@ -599,15 +591,17 @@ public class GenerationJobService {
      * @return true if this JVM still owns the active job
      */
     public boolean isOwnedActiveJob(long exerciseId, String jobId) {
-        if (jobId.startsWith(REVERT_JOB_PREFIX) || jobId.startsWith(GenerationRecoverySlots.RETRY_PREFIX)) {
-            return externalMutationService.owns(exerciseId, jobId);
+        if (!topology.permitsOwnership()) {
+            return false;
         }
         String key = key(exerciseId);
         lockJobSlot(key);
         try {
+            if (!topology.permitsOwnership()) {
+                return false;
+            }
             JobInfo job = jobMap.get(key);
-            return job != null && job.jobId().equals(jobId) && localNodeId != null && (job.ownerNodeId() == null || job.ownerNodeId().equals(localNodeId))
-                    && (job.cancellable() || externalMutationService.owns(exerciseId, jobId));
+            return job != null && job.jobId().equals(jobId) && localNodeId != null && (job.ownerNodeId() == null || job.ownerNodeId().equals(localNodeId));
         }
         finally {
             unlockJobSlot(key);
@@ -622,14 +616,17 @@ public class GenerationJobService {
      * @return true if the heartbeat was recorded
      */
     public boolean heartbeat(long exerciseId, String jobId) {
+        if (!topology.permitsOwnership()) {
+            return false;
+        }
         String key = key(exerciseId);
         lockJobSlot(key);
         try {
-            JobInfo job = jobMap.get(key);
-            if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
+            if (!topology.permitsOwnership()) {
                 return false;
             }
-            if (!job.cancellable() && !externalMutationService.owns(exerciseId, jobId)) {
+            JobInfo job = jobMap.get(key);
+            if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
                 return false;
             }
             if (generationBudgetService != null && !generationBudgetService.refreshReservation(job.budgetReservationId())) {
@@ -652,7 +649,9 @@ public class GenerationJobService {
      * @return an opaque slot token that must be passed to {@link #clearRevertSlot(long, String)}
      */
     public String claimRevertSlot(User user, long exerciseId) {
-        return externalMutationService.claimRevertSlot(exerciseId);
+        return GenerationRecoverySlots.claim(jobMap, user, exerciseId, localNodeId, topology::verifyAllMembers,
+                job -> claimSlot(key(exerciseId), job, "Exercise authoring or another mutation is running; wait before reverting.", "exerciseGenerationRunning"),
+                (token, previousRecovery) -> externalMutationService.releaseRevertSlot(exerciseId, token, previousRecovery));
     }
 
     /**
@@ -662,12 +661,7 @@ public class GenerationJobService {
      * @param jobId      exact completed generation job
      */
     public void retainIncompleteGenerationSlot(long exerciseId, String jobId) {
-        try {
-            externalMutationService.retainSaveRecovery(exerciseId, jobId);
-        }
-        finally {
-            cleanup.finished(exerciseId, jobId);
-        }
+        cleanup.incomplete(exerciseId, jobId, localNodeId);
     }
 
     public void retainRevertRecoverySlot(long exerciseId, String token) {
@@ -675,7 +669,7 @@ public class GenerationJobService {
     }
 
     public boolean isRevertRecoveryPending(long exerciseId) {
-        return externalMutationService.isUndoRecovery(exerciseId);
+        return GenerationRecoverySlots.isPending(jobMap.get(key(exerciseId)));
     }
 
     public boolean isRevertRecoveryRetry(String token) {
@@ -690,6 +684,7 @@ public class GenerationJobService {
      * @return an opaque token that must be released with {@link #clearExternalMutationSlot(long, String)}
      */
     public String claimExternalMutationSlot(long exerciseId) {
+        topology.verifyAllMembers();
         return externalMutationService.claimExternalMutationSlot(exerciseId);
     }
 
@@ -714,7 +709,18 @@ public class GenerationJobService {
      * @return the blocking slot, if the exercise currently has one that cannot be reclaimed automatically
      */
     public Optional<WedgedSlotInfo> getWedgedSlotInfo(long exerciseId) {
-        return externalMutationService.getWedgedSlotInfo(exerciseId);
+        String key = key(exerciseId);
+        lockJobSlot(key);
+        try {
+            JobInfo job = jobMap.get(key);
+            if (job == null || job.cancellable()) {
+                return Optional.empty();
+            }
+            return Optional.of(new WedgedSlotInfo(exerciseId, job.jobId(), slotKind(job), job.ownerNodeId(), job.startedAt(), !reaper.ownerMemberIsPresent(job)));
+        }
+        finally {
+            unlockJobSlot(key);
+        }
     }
 
     /**
@@ -730,14 +736,39 @@ public class GenerationJobService {
      * @return whether a departed owner's matching slot was recovered
      */
     public boolean recoverWedgedSlot(long exerciseId, String token) {
-        if (token == null || token.isBlank() || !externalMutationService.recoverWedgedSlot(exerciseId, token)) {
+        if (token == null || token.isBlank()) {
             return false;
         }
-        JobInfo job = jobMap.get(key(exerciseId));
-        if (job != null && job.jobId().equals(token)) {
-            reaper.stopActiveJob(key(exerciseId), job, Instant.now());
+        String key = key(exerciseId);
+        lockJobSlot(key);
+        try {
+            topology.verifyMajority();
+            JobInfo job = jobMap.get(key);
+            if (job == null || !job.jobId().equals(token) || job.cancellable()) {
+                return false;
+            }
+            // Retained partial saves and undos are quiescent; active writers still require owner absence.
+            if (reaper.ownerMemberIsPresent(job) && !GenerationRecoverySlots.isPending(job) && !GenerationRecoverySlots.isGenerationRecovery(job)) {
+                return false;
+            }
+            if (isGenerationJob(job)) {
+                return reaper.stopActiveJob(key, job, Instant.now());
+            }
+            return jobMap.remove(key, job);
         }
-        return true;
+        finally {
+            unlockJobSlot(key);
+        }
+    }
+
+    private static WedgedSlotKind slotKind(JobInfo job) {
+        if (job.jobId().startsWith(EXTERNAL_MUTATION_JOB_PREFIX)) {
+            return WedgedSlotKind.EXTERNAL_MUTATION;
+        }
+        if (GenerationRecoverySlots.isPending(job)) {
+            return WedgedSlotKind.REVERT_RECOVERY;
+        }
+        return job.jobId().startsWith(REVERT_JOB_PREFIX) ? WedgedSlotKind.REVERT : WedgedSlotKind.GENERATION;
     }
 
     /**
@@ -769,12 +800,7 @@ public class GenerationJobService {
      * @param jobId      the completed job identifier
      */
     public void clearJob(long exerciseId, String jobId) {
-        try {
-            externalMutationService.releaseSaveSlot(exerciseId, jobId);
-        }
-        finally {
-            cleanup.finished(exerciseId, jobId);
-        }
+        cleanup.finished(exerciseId, jobId);
     }
 
     @Scheduled(fixedDelay = 5, timeUnit = TimeUnit.SECONDS)

@@ -323,7 +323,7 @@ public class HyperionExerciseGenerationResource {
             }
             return generationRevertService
                     .revert(exercise, user,
-                            () -> jobService.isOwnedActiveJob(exerciseId, revertSlot) && programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId), revertSlot)
+                            () -> jobService.isOwnedActiveJob(exerciseId, revertSlot) && programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId))
                     .map(result -> {
                         if (result.fullyReverted()) {
                             consistent.set(true);
