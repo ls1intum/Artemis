@@ -49,12 +49,15 @@ public final class WorkerUsageRecorder implements ProviderUsageSink {
 
     private boolean uncertain;
 
+    private boolean fatalAccountingFailure;
+
     public WorkerUsageRecorder(long tokenLimit, double cachedInputWeight, boolean retriesDisabled, Consumer<ProviderUsageUpdate> events) {
         this.tokenLimit = tokenLimit;
         this.cachedInputWeight = cachedInputWeight;
         this.events = events;
         if (!retriesDisabled) {
-            markUncertain();
+            uncertain = true;
+            emit(new ProviderUsageUpdate(Kind.UNCERTAIN, 0, null));
         }
     }
 
@@ -66,7 +69,7 @@ public final class WorkerUsageRecorder implements ProviderUsageSink {
         }
         catch (IllegalArgumentException missingUsage) {
             markUncertain();
-            return;
+            throw missingUsage;
         }
         modelCalls++;
         inputTokens = Math.addExact(inputTokens, call.inputTokens());
@@ -109,6 +112,7 @@ public final class WorkerUsageRecorder implements ProviderUsageSink {
 
     @Override
     public synchronized void markUncertain() {
+        fatalAccountingFailure = true;
         if (!uncertain) {
             uncertain = true;
             emit(new ProviderUsageUpdate(Kind.UNCERTAIN, 0, null));
@@ -120,6 +124,7 @@ public final class WorkerUsageRecorder implements ProviderUsageSink {
             events.accept(event);
         }
         catch (RuntimeException deliveryFailure) {
+            fatalAccountingFailure = true;
             uncertain = true;
             throw deliveryFailure;
         }
@@ -127,6 +132,15 @@ public final class WorkerUsageRecorder implements ProviderUsageSink {
 
     public synchronized boolean budgetExhausted() {
         return billableTokens >= tokenLimit;
+    }
+
+    /**
+     * Stops further provider work after accounting loss or budget exhaustion; a verified candidate can still be saved.
+     *
+     * @return whether further authoring must stop
+     */
+    public synchronized boolean shouldStopAuthoring() {
+        return fatalAccountingFailure || budgetExhausted();
     }
 
     public synchronized AccountingState accountingState() {

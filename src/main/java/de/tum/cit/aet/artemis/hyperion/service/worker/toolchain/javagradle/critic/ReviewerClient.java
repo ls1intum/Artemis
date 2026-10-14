@@ -7,6 +7,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -28,6 +30,8 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.Promp
  * One owner for this policy means a new review pass cannot accidentally ship its own retry, budget, or metering behaviour.
  */
 final class ReviewerClient {
+
+    private static final Logger log = LoggerFactory.getLogger(ReviewerClient.class);
 
     /** Per-pass cap for visible output plus hidden reasoning. A review makes two baseline calls and at most one bounded oracle-correction call. */
     private static final int CRITIC_MAX_OUTPUT_TOKENS = 32_768;
@@ -125,32 +129,41 @@ final class ReviewerClient {
         if (configuredModel != null) {
             options.model(configuredModel);
         }
-        ChatResponse response = providerRetries.execute(() -> callOnce(systemPrompt, userPrompt, options, usageSink), cancelled, null, "reviewer call");
+        AtomicBoolean attempted = new AtomicBoolean();
+        ChatResponse response;
+        try {
+            response = providerRetries.execute(() -> {
+                attempted.set(false);
+                return providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown, () -> {
+                    attempted.set(true);
+                    return chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse();
+                });
+            }, cancelled, null, "reviewer call");
+        }
+        catch (RuntimeException error) {
+            log.warn("Reviewer provider call failed ({}, {})", ProviderFailureClass.of(error), ProviderFailureClass.describe(error));
+            if (attempted.get() && !ProviderFailureClass.of(error).provesNoUsage()) {
+                try {
+                    markUsageUncertain(usageSink);
+                }
+                catch (RuntimeException accountingFailure) {
+                    if (accountingFailure != error) {
+                        accountingFailure.addSuppressed(error);
+                    }
+                    throw accountingFailure;
+                }
+            }
+            throw error;
+        }
         if (response == null) {
-            markUsageUncertain(usageSink);
+            if (attempted.get()) {
+                markUsageUncertain(usageSink);
+            }
         }
         else if (usageSink != null) {
             usageSink.accept(response);
         }
         return response == null || response.getResult() == null || response.getResult().getOutput() == null ? null : response.getResult().getOutput().getText();
-    }
-
-    /** Once the request is sent, a failure marks usage uncertain unless it proves the provider produced no completion. */
-    @Nullable
-    private ChatResponse callOnce(String systemPrompt, String userPrompt, OpenAiChatOptions.Builder options, @Nullable Consumer<ChatResponse> usageSink) {
-        AtomicBoolean attempted = new AtomicBoolean();
-        try {
-            return providerFailureCooldown.execute(ProviderFailureCooldown.keyForModel(configuredModel), providerHardFailureCooldown, () -> {
-                attempted.set(true);
-                return chatClient.prompt().system(systemPrompt).user(userPrompt).options(options).call().chatResponse();
-            });
-        }
-        catch (RuntimeException error) {
-            if (attempted.get() && !ProviderFailureClass.of(error).provesNoUsage()) {
-                markUsageUncertain(usageSink);
-            }
-            throw error;
-        }
     }
 
     private static void markUsageUncertain(@Nullable Consumer<ChatResponse> usageSink) {

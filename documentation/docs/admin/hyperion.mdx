@@ -509,8 +509,17 @@ A server or gateway
 failure (HTTP 5xx), HTTP 408, or a read timeout after sending the request leaves
 usage unknown: the model may have run before the error was returned. Hyperion
 does not automatically replay these calls and marks accounting incomplete.
+For exact accounting, set `spring.ai.openai.max-retries=0` and
+`spring.ai.openai.chat.max-retries=0` on both the core node and the AI worker.
+A chat-specific setting can override the common setting. Hyperion follows the
+[SDK's effective retry setting](https://github.com/spring-projects/spring-ai/blob/v2.0.1/auto-configurations/models/spring-ai-autoconfigure-model-openai/src/main/java/org/springframework/ai/model/openai/autoconfigure/OpenAiAutoConfigurationUtil.java#L60-L61).
+A positive effective limit makes accounting incomplete, even when the final
+response has token counts. Missing or invalid usage stops further authoring and
+review calls locally; it does not depend on a stop message from core.
 A previously verified candidate can still be saved with incomplete accounting;
 an error response must never be treated as proof of zero usage.
+Failed reviewer calls log the exception classes and HTTP status, when available,
+without provider error bodies, prompts, or credentials.
 
 Once persistence begins, cancellation and ordinary edits are blocked. Shutdown
 allows the non-cancellable phase to drain; keep the process termination grace

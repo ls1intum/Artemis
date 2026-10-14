@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.GenerationActivityTracker;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HarmonyScrubbingChatModel;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureCooldown;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderRetryPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.worker.GenerationObserver;
 import de.tum.cit.aet.artemis.hyperion.service.worker.ToolchainGenerationAdapter;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
@@ -100,9 +101,11 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
 
     public JavaGradleGenerationAdapterService(SandboxApi sandbox, Collection<ChatModel> models, JsonMapper mapper, ObservationRegistry observations,
             @Value("${artemis.hyperion.agent.max-semantic-repairs:6}") int maxSemanticRepairs, @Value("${spring.ai.openai.max-retries:1}") int providerRetries,
+            @Value("${spring.ai.openai.chat.max-retries:#{null}}") @Nullable Integer chatProviderRetries,
             @Value("${spring.ai.openai.chat.timeout:${spring.ai.openai.timeout:60s}}") Duration providerTimeout,
             @Value("${artemis.hyperion.agent.transcript-dir:}") String transcriptDirectory) {
-        if (models.size() != 1 || maxSemanticRepairs < 1 || maxSemanticRepairs > 12 || providerRetries < 0) {
+        int effectiveProviderRetries = ProviderRetryPolicy.effectiveSdkRetries(providerRetries, chatProviderRetries);
+        if (models.size() != 1 || maxSemanticRepairs < 1 || maxSemanticRepairs > 12 || providerRetries < 0 || effectiveProviderRetries < 0) {
             throw new IllegalArgumentException("Configure one worker chat model, 1–12 semantic repairs and a nonnegative provider retry limit");
         }
         if (providerTimeout.isZero() || providerTimeout.isNegative()) {
@@ -113,7 +116,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         this.sandbox = sandbox;
         this.models = List.copyOf(models);
         this.maxSemanticRepairs = maxSemanticRepairs;
-        this.retriesDisabled = providerRetries == 0;
+        this.retriesDisabled = effectiveProviderRetries == 0;
         this.providerTimeout = providerTimeout;
         this.transcripts = new AgentTranscriptWriter(transcriptDirectory);
     }
@@ -140,7 +143,7 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         var parameters = assignment.parameters();
         var usage = new WorkerUsageRecorder(parameters.maxTokens(), parameters.cachedInputTokenWeight(), retriesDisabled,
                 event -> observer.progress("Provider usage recorded.", new GenerationProgress(null, null, null, event)));
-        BooleanSupplier stopAuthoring = () -> cancelled.getAsBoolean() || usage.budgetExhausted() || !Instant.now().isBefore(assignment.authoringDeadline());
+        BooleanSupplier stopAuthoring = stopAuthoring(cancelled, usage, assignment.authoringDeadline());
         var progress = progressSink(observer);
         var resources = new GenerationResources();
         var commands = new SandboxBuildCommands(resources);
@@ -172,6 +175,10 @@ public class JavaGradleGenerationAdapterService implements ToolchainGenerationAd
         finally {
             active.remove(assignment.identity(), orchestrator);
         }
+    }
+
+    static BooleanSupplier stopAuthoring(BooleanSupplier cancelled, WorkerUsageRecorder usage, Instant authoringDeadline) {
+        return () -> cancelled.getAsBoolean() || usage.shouldStopAuthoring() || !Instant.now().isBefore(authoringDeadline);
     }
 
     @Override
