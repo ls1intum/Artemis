@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+                   logicalFilePath="config/liquibase/changelog/20261014142610_changelog.xml">
+    <changeSet id="20261014142610-01-durable-exercise-write-ownership" author="felixtjdietrich">
+        <comment>Keep exact-token write ownership durable and outside ORM mappings. Existing exercises start unreserved; reservations do not expire.</comment>
+        <addColumn tableName="exercise">
+            <column name="write_owner_token" type="varchar(64)"/>
+            <column name="write_owner" type="varchar(255)"/>
+            <column name="write_owner_purpose" type="varchar(32)"/>
+            <column name="write_owner_started_at" type="datetime(3)"/>
+            <column name="write_owner_tests_commit" type="varchar(64)"/>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="exercise" columnName="write_owner_tests_commit"/>
+            <dropColumn tableName="exercise" columnName="write_owner_started_at"/>
+            <dropColumn tableName="exercise" columnName="write_owner_purpose"/>
+            <dropColumn tableName="exercise" columnName="write_owner"/>
+            <dropColumn tableName="exercise" columnName="write_owner_token"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

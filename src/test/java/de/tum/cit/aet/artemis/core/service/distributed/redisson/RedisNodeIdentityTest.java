@@ -17,19 +17,13 @@ class RedisNodeIdentityTest {
     }
 
     @Test
-    void writerProfilesAdvertiseTheDeploymentFencingSettingWhileWorkersRemainObservers() {
-        for (String profile : new String[] { "core", "localvc" }) {
+    void profilesDoNotAdvertiseDatabaseOwnershipThroughCacheConnections() {
+        for (String profile : new String[] { "core", "localvc", "aiworker", "buildagent" }) {
             var environment = new org.springframework.mock.env.MockEnvironment();
             environment.setActiveProfiles(profile);
-            var disabled = new RedisNodeIdentity("artemis-node", environment, false);
-            var enabled = new RedisNodeIdentity("artemis-node", environment, true);
-            assertThat(RedisNodeIdentity.declaresSafeWriterRole(disabled.connectionName())).isFalse();
-            assertThat(RedisNodeIdentity.declaresSafeWriterRole(enabled.connectionName())).isTrue();
-        }
-        for (String profile : new String[] { "aiworker", "buildagent" }) {
-            var environment = new org.springframework.mock.env.MockEnvironment();
-            environment.setActiveProfiles(profile);
-            assertThat(RedisNodeIdentity.declaresSafeWriterRole(new RedisNodeIdentity("worker", environment, false).connectionName())).isTrue();
+            var identity = new RedisNodeIdentity("artemis-node", environment);
+            assertThat(identity.connectionName()).contains(":observer:");
+            assertThat(RedisNodeIdentity.displayName(identity.connectionName())).isEqualTo("artemis-node");
         }
     }
 

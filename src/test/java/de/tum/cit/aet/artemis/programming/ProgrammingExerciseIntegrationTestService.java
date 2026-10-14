@@ -1701,11 +1701,11 @@ public class ProgrammingExerciseIntegrationTestService {
             programmingExerciseTestCaseRepository.saveAndFlush(test);
         });
 
-        // Includes the post-lease exercise reload and one channel-ID lookup that refreshes search visibility.
+        // The original 33 queries plus two indexed ownership updates: claim the exercise write token and release that exact token.
         // Mapping reset test cases must not pull their exercise or tasks back in.
         final var testCasesResponse = QueryCountAssert
                 .assertThatDb(queryInterceptor, () -> request.patchWithResponseBody("/api" + endpoint, "{}", new TypeReference<List<ProgrammingExerciseTestCaseResponseDTO>>() {
-                }, HttpStatus.OK)).hasBeenCalledAtMostTimes(33);
+                }, HttpStatus.OK)).hasBeenCalledAtMostTimes(35);
         final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         final var expectedTestCases = testsInDB.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).toList();
 
