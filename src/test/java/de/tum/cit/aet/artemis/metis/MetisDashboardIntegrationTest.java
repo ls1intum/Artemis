@@ -229,9 +229,10 @@ class MetisDashboardIntegrationTest extends AbstractProgrammingIntegrationIndepe
 
             MetisDashboardSummaryDTO summary = getDashboard().summary();
 
-            // Not started: student4 to student7, and student10, whose questions are being generated. Awaiting review: the unapproved questions of student2,
-            // student4 and student6, and student7 and student10, who have no questions yet. (2 + 5 + 4) / 3 rounds to 3.7
-            var expectedSummary = new MetisDashboardSummaryDTO(10, 2, 1, 5, 2, 5, 3.7, 2, WINDOW_END.plusHours(2));
+            // Not started: student4 to student7, and student10, whose questions are being generated. Awaiting review: only student4, whose check is in review
+            // with an unapproved question; the unapproved questions of student2 (completed) and student6 (released without a review) are past any review, and
+            // student7 and student10 have no questions yet. (2 + 5 + 4) / 3 rounds to 3.7
+            var expectedSummary = new MetisDashboardSummaryDTO(10, 2, 1, 5, 2, 1, 3.7, 2, WINDOW_END.plusHours(2));
             assertThat(summary).usingRecursiveComparison(SAME_INSTANTS).isEqualTo(expectedSummary);
         }
 
