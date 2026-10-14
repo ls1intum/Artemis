@@ -21,6 +21,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
+
 /**
  * The contract-witness authoring pass: it proposes a few executable test methods that pin rules of the approved specification, so rule coverage becomes something the server can
  * run instead of something a model asserts.
@@ -88,7 +90,7 @@ class ContractWitnessAuthor {
         }
         catch (RuntimeException e) {
             // Advisory by construction: the caller proceeds with the suite it already has.
-            log.warn("Contract-witness authoring failed: {}", e.getMessage());
+            log.warn("Contract-witness authoring failed: {}", ProviderFailureClass.describe(e));
             return List.of();
         }
     }
@@ -126,7 +128,7 @@ class ContractWitnessAuthor {
             parsed = objectMapper.readValue(extractJsonPayload(text), ContractWitnessResponse.class);
         }
         catch (Exception e) {
-            log.debug("Contract-witness JSON did not parse ({}); authoring nothing.", e.getMessage());
+            log.debug("Contract-witness JSON did not parse ({}); authoring nothing.", ProviderFailureClass.describe(e));
             return List.of();
         }
         if (parsed == null || parsed.witnesses() == null) {
