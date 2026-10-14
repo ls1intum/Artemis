@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -24,7 +25,9 @@ import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.SessionFreshnessService;
 import de.tum.cit.aet.artemis.core.web.open.PublicAccountResource;
+import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 
 /**
  * Service class for {@link AccountResource} and {@link PublicAccountResource}.
@@ -49,14 +52,21 @@ public class AccountService {
 
     private final EmailChangeService emailChangeService;
 
+    private final UserVcsAccessTokenService userVcsAccessTokenService;
+
+    private final SessionFreshnessService sessionFreshnessService;
+
     public AccountService(UserRepository userRepository, UserService userService, UserCreationService userCreationService, ProfileService profileService,
-            AccountSecurityEventService accountSecurityEventService, EmailChangeService emailChangeService) {
+            AccountSecurityEventService accountSecurityEventService, EmailChangeService emailChangeService, UserVcsAccessTokenService userVcsAccessTokenService,
+            SessionFreshnessService sessionFreshnessService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.profileService = profileService;
         this.accountSecurityEventService = accountSecurityEventService;
         this.emailChangeService = emailChangeService;
+        this.userVcsAccessTokenService = userVcsAccessTokenService;
+        this.sessionFreshnessService = sessionFreshnessService;
     }
 
     /**
@@ -137,6 +147,24 @@ public class AccountService {
         // An unchanged address leaves a request that is already waiting as it is: a settings form that is saved for another field
         // sends the address back, and must not look like withdrawing it.
         return new BasicInformationUpdateResultDTO(emailChangeService.findPendingChange(currentUser.getId()).orElse(null));
+    }
+
+    /**
+     * Adds the secret of the user's personal VCS access token to the account, unless the session predates the last change of the account's credentials.
+     * <p>
+     * An outdated session is not refused here, because the client reads the account on every page load and would otherwise be signed out of a session that may still read.
+     * It only does not get the secret: it could otherwise copy a token that was created after the change and keep using it once its own session has expired.
+     * The check only runs for an account that has a token.
+     *
+     * @param userDTO the account that is returned to the client
+     * @param userId  the id of the account
+     */
+    public void addPersonalVcsAccessTokenIfSessionIsCurrent(UserDTO userDTO, long userId) {
+        String token = userVcsAccessTokenService.findToken(userId);
+        if (token != null && sessionFreshnessService.isCurrentSession(SecurityContextHolder.getContext().getAuthentication())) {
+            userDTO.setVcsAccessToken(token);
+            userDTO.setVcsAccessTokenExpiryDate(userVcsAccessTokenService.findExpiryDate(userId));
+        }
     }
 
 }
