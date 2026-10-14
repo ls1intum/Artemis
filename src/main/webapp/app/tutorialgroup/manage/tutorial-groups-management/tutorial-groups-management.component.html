@@ -12,8 +12,8 @@
                 (valueChange)="onSearch($event)"
             />
         }
-        @if (isAtLeastInstructor()) {
-            @if (configuration(); as tutorialGroupsConfiguration) {
+        @if (configuration(); as tutorialGroupsConfiguration) {
+            @if (isAtLeastInstructor()) {
                 <a
                     tumAetUiButton
                     size="small"
@@ -26,6 +26,8 @@
                     <fa-icon [icon]="faGear" />
                     <span class="sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.editConfigurationButton"></span>
                 </a>
+            }
+            @if (isAtLeastEditor()) {
                 <a
                     tumAetUiButton
                     size="small"
@@ -40,7 +42,11 @@
                     <span class="sr-only md:not-sr-only" jhiTranslate="artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons"></span>
                 </a>
             }
+        }
+        @if (isAtLeastEditor()) {
             <jhi-tutorial-groups-import-button [courseId]="currentCourseId" (importFinished)="loadTutorialGroups()" />
+        }
+        @if (isAtLeastInstructor()) {
             <jhi-tutorial-groups-export-button [courseId]="currentCourseId" (exportFinished)="loadTutorialGroups()" />
         }
         @if (isAtLeastEditor()) {
@@ -66,10 +72,8 @@
             [description]="'artemisApp.pages.tutorialGroupsManagement.intro' | artemisTranslate"
         >
             <div tumAetUiEmptyStateActions class="flex flex-wrap items-center justify-center gap-2">
-                @if (isAtLeastInstructor()) {
-                    <jhi-tutorial-groups-import-button [courseId]="currentCourseId" (importFinished)="loadTutorialGroups()" />
-                }
                 @if (isAtLeastEditor()) {
+                    <jhi-tutorial-groups-import-button [courseId]="currentCourseId" (importFinished)="loadTutorialGroups()" />
                     <a
                         tumAetUiButton
                         size="small"

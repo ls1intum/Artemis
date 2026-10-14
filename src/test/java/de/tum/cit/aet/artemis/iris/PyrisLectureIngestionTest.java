@@ -99,8 +99,14 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         int numberOfSlides = 2;
         AttachmentVideoUnit pdfAttachmentVideoUnitWithSlides = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture1, numberOfSlides, true);
         AttachmentVideoUnit imageAttachmentVideoUnitWithSlides = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture1, numberOfSlides, false);
-        lecture1 = lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(pdfAttachmentVideoUnitWithSlides, imageAttachmentVideoUnitWithSlides));
+
+        // The helper saved both units with the lecture and the same order, so the database decides which of them comes first. The tests take the first unit and
+        // need the one with the stored PDF, which is the only one Iris can process.
+        lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        lecture1.reorderLectureUnits(List.of(pdfAttachmentVideoUnitWithSlides.getId(), imageAttachmentVideoUnitWithSlides.getId()));
+        lectureRepository.save(lecture1);
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        assertThat(this.lecture1.getLectureUnits().getFirst().getId()).isEqualTo(pdfAttachmentVideoUnitWithSlides.getId());
     }
 
     @Test

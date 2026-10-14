@@ -145,6 +145,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
 
     private adjustClickLayerWidthSubscription?: OutputRefSubscription;
+    private readonly onWindowResize = () => this.adjustClickLayerWidth();
 
     readonly question = input.required<DragAndDropQuestion>();
     readonly questionIndex = input.required<number>();
@@ -260,6 +261,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
 
     ngOnDestroy(): void {
         this.adjustClickLayerWidthSubscription?.unsubscribe();
+        window.removeEventListener('resize', this.onWindowResize);
     }
 
     ngAfterViewInit(): void {
@@ -291,8 +293,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
 
         // render import images on UI immediatly
         this.makeFileMapPreview();
-        // Trigger click layer width adjustment upon window resize.
-        window.onresize = () => this.adjustClickLayerWidth();
+        // Trigger click layer width adjustment upon window resize. Every drag and drop question of the quiz needs its own listener, because a
+        // single window.onresize handler would only realign the question that registered last and the drop locations of the others would drift.
+        window.addEventListener('resize', this.onWindowResize);
     }
 
     /**
@@ -797,7 +800,19 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
      * Delete this question from the quiz
      */
     deleteQuestion(): void {
-        this.filePreviewPaths().forEach((_, fileName) => this.removeFile.emit(fileName));
+        // Only release the files of this question. The preview paths also hold the files of every other question, because the
+        // shared file pool is previewed on init, and removing those would leave the other questions without their uploads.
+        const question = this.question();
+        const ownFileNames = new Set<string>();
+        if (question.backgroundFilePath) {
+            ownFileNames.add(question.backgroundFilePath);
+        }
+        question.dragItems?.forEach((dragItem) => {
+            if (dragItem.pictureFilePath) {
+                ownFileNames.add(dragItem.pictureFilePath);
+            }
+        });
+        ownFileNames.forEach((fileName) => this.removeFile.emit(fileName));
         this.questionDeleted.emit();
     }
 
