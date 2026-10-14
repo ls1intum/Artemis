@@ -20,13 +20,15 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
-import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
+import de.tum.cit.aet.artemis.account.api.UserApi;
+import de.tum.cit.aet.artemis.account.service.user.UserDemoService;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
+import de.tum.cit.aet.artemis.course.api.CourseApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAvailableTabsDTO;
+import de.tum.cit.aet.artemis.course.service.CourseDemoService;
 import de.tum.cit.aet.artemis.demo.service.DemoCourseContentSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoDataSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService;
@@ -70,10 +72,10 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     private DemoCourseContentSeedingService demoCourseContentSeedingService;
 
     @Autowired
-    private AccountDemoApi accountDemoApi;
+    private UserApi userApi;
 
     @Autowired
-    private CourseDemoApi courseDemoApi;
+    private CourseApi courseApi;
 
     @Autowired
     private TextDemoApi textDemoApi;
@@ -146,7 +148,7 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
                 .isEqualTo(exercises.stream().mapToDouble(Exercise::getMaxPoints).sum());
 
         // Saving the exam unchanged in the exam editor runs the validation of ExamResource, which the seeded exam has to pass like any exam created through the client.
-        userUtilService.changeUser(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN);
+        userUtilService.changeUser(UserDemoService.DEMO_INSTRUCTOR_LOGIN);
         request.put("/api/exam/courses/" + exam.getCourse().getId() + "/exams", ExamUpdateDTO.of(exam), HttpStatus.OK);
     }
 
@@ -156,7 +158,7 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
         long courseId = demoCourse().getId();
         Exam exam = demoExamWithExercises();
         String examUrl = "/api/exam/courses/" + courseId + "/exams/" + exam.getId();
-        userUtilService.changeUser(AccountDemoApi.DEMO_STUDENT_LOGIN);
+        userUtilService.changeUser(UserDemoService.DEMO_STUDENT_LOGIN);
 
         CourseAvailableTabsDTO tabs = request.get("/api/course/courses/" + courseId + "/available-tabs", HttpStatus.OK, CourseAvailableTabsDTO.class);
         assertThat(tabs.exams()).as("the course shows its exams to the demo student").isTrue();
@@ -192,10 +194,10 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     void recreatesTheDeletedExamOnlyWithTheExamModule() throws Exception {
         seed();
         Exam exam = demoExamWithExercises();
-        userUtilService.changeUser(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN);
+        userUtilService.changeUser(UserDemoService.DEMO_INSTRUCTOR_LOGIN);
         request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
 
-        DemoDataSeedingService withoutExamModule = new DemoDataSeedingService(accountDemoApi, courseDemoApi, new DemoExerciseSeedingService(Optional.of(textDemoApi),
+        DemoDataSeedingService withoutExamModule = new DemoDataSeedingService(userApi, courseApi, new DemoExerciseSeedingService(Optional.of(textDemoApi),
                 Optional.of(modelingDemoApi), Optional.of(fileUploadDemoApi), quizDemoApi, programmingDemoApi, assessmentDemoApi, Optional.empty()),
                 demoCourseContentSeedingService);
         DemoSeeding.seed(withoutExamModule);
@@ -212,7 +214,7 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     void keepsTheExamStartableWhenOneOfItsExercisesCannotBeCreated() throws Exception {
         seed();
         Exam exam = demoExamWithExercises();
-        userUtilService.changeUser(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN);
+        userUtilService.changeUser(UserDemoService.DEMO_INSTRUCTOR_LOGIN);
         request.delete("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId(), HttpStatus.OK);
         SequencedMap<String, Function<ExerciseGroup, ? extends Exercise>> exerciseCreators = new LinkedHashMap<>();
         exerciseCreators.put("Software Architecture", textDemoApi::createDemoExamExercise);
@@ -246,7 +248,7 @@ class DemoExamSeedingIntegrationTest extends AbstractSpringIntegrationIndependen
     }
 
     private Course demoCourse() {
-        return courseRepository.findAllByShortName(CourseDemoApi.DEMO_COURSE_SHORT_NAME).getFirst();
+        return courseRepository.findAllByShortName(CourseDemoService.DEMO_COURSE_SHORT_NAME).getFirst();
     }
 
     private Optional<Exam> demoExam() {

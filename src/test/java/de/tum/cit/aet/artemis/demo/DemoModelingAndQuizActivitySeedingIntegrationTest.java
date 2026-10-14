@@ -22,16 +22,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import tools.jackson.databind.JsonNode;
 
-import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
+import de.tum.cit.aet.artemis.account.api.UserApi;
+import de.tum.cit.aet.artemis.account.service.user.UserDemoService;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
-import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
+import de.tum.cit.aet.artemis.course.api.CourseApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseAvailableTabsService;
+import de.tum.cit.aet.artemis.course.service.CourseDemoService;
 import de.tum.cit.aet.artemis.demo.service.DemoCourseContentSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoDataSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService;
@@ -76,10 +78,10 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
     private DemoDataSeedingService demoDataSeedingService;
 
     @Autowired
-    private AccountDemoApi accountDemoApi;
+    private UserApi userApi;
 
     @Autowired
-    private CourseDemoApi courseDemoApi;
+    private CourseApi courseApi;
 
     @Autowired
     private QuizDemoApi quizDemoApi;
@@ -170,7 +172,7 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
         assertThat(quizStatisticsService.getOverview(quiz).participantsRated()).as("the statistics count every demo student").isEqualTo(studentLogins().size());
 
         Course course = demoCourse();
-        var demoStudent = userTestRepository.findOneByLogin(AccountDemoApi.DEMO_STUDENT_LOGIN).orElseThrow();
+        var demoStudent = userTestRepository.findOneByLogin(UserDemoService.DEMO_STUDENT_LOGIN).orElseThrow();
         assertThat(courseAvailableTabsService.getAvailableTabs(course, demoStudent).training()).as("the questions of the ended quiz fill the Training tab of the course").isTrue();
     }
 
@@ -200,10 +202,10 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
     void recreatesDeletedQuizWithoutModelingModule() {
         seed();
         Map<String, ExerciseActivity> seeded = snapshotActivity();
-        SecurityUtils.runAs(userTestRepository.findOneWithAuthoritiesByLogin(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN).orElseThrow(),
+        SecurityUtils.runAs(userTestRepository.findOneWithAuthoritiesByLogin(UserDemoService.DEMO_INSTRUCTOR_LOGIN).orElseThrow(),
                 () -> exerciseDeletionService.delete(seeded.get(ENDED_QUIZ_TITLE).exerciseId(), false));
 
-        DemoDataSeedingService withoutModeling = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
+        DemoDataSeedingService withoutModeling = new DemoDataSeedingService(userApi, courseApi,
                 new DemoExerciseSeedingService(Optional.empty(), Optional.empty(), Optional.empty(), quizDemoApi, programmingDemoApi, assessmentDemoApi, Optional.empty()),
                 new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
         DemoSeeding.seed(withoutModeling);
@@ -222,7 +224,7 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
     }
 
     private Course demoCourse() {
-        return courseRepository.findAllByShortName(CourseDemoApi.DEMO_COURSE_SHORT_NAME).stream().findFirst().orElseThrow();
+        return courseRepository.findAllByShortName(CourseDemoService.DEMO_COURSE_SHORT_NAME).stream().findFirst().orElseThrow();
     }
 
     private Exercise demoExercise(String title) {
@@ -234,7 +236,7 @@ class DemoModelingAndQuizActivitySeedingIntegrationTest extends AbstractSpringIn
     }
 
     private static List<String> studentLogins() {
-        return Stream.concat(Stream.of(AccountDemoApi.DEMO_STUDENT_LOGIN), IntStream.rangeClosed(1, 10).mapToObj(number -> AccountDemoApi.DEMO_PEER_LOGIN_PREFIX + number))
+        return Stream.concat(Stream.of(UserDemoService.DEMO_STUDENT_LOGIN), IntStream.rangeClosed(1, 10).mapToObj(number -> UserDemoService.DEMO_PEER_LOGIN_PREFIX + number))
                 .toList();
     }
 

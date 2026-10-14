@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.demo;
 
-import static de.tum.cit.aet.artemis.account.api.AccountDemoApi.DEMO_INSTRUCTOR_LOGIN;
-import static de.tum.cit.aet.artemis.account.api.AccountDemoApi.DEMO_PEER_LOGIN_PREFIX;
-import static de.tum.cit.aet.artemis.account.api.AccountDemoApi.DEMO_STUDENT_LOGIN;
-import static de.tum.cit.aet.artemis.account.api.AccountDemoApi.DEMO_TUTOR_LOGIN;
+import static de.tum.cit.aet.artemis.account.service.user.UserDemoService.DEMO_INSTRUCTOR_LOGIN;
+import static de.tum.cit.aet.artemis.account.service.user.UserDemoService.DEMO_PEER_LOGIN_PREFIX;
+import static de.tum.cit.aet.artemis.account.service.user.UserDemoService.DEMO_STUDENT_LOGIN;
+import static de.tum.cit.aet.artemis.account.service.user.UserDemoService.DEMO_TUTOR_LOGIN;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;
@@ -19,10 +19,9 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
-import de.tum.cit.aet.artemis.account.api.AccountDemoApi.DemoUsers;
+import de.tum.cit.aet.artemis.account.api.UserApi;
+import de.tum.cit.aet.artemis.account.api.dtos.DemoUsers;
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
@@ -35,14 +34,15 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
+import de.tum.cit.aet.artemis.communication.service.CommunicationDemoService;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
 import de.tum.cit.aet.artemis.communication.service.ReactionService;
 import de.tum.cit.aet.artemis.communication.service.conversation.OneToOneChatService;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseAvailableTabsService;
+import de.tum.cit.aet.artemis.course.service.CourseDemoService;
 import de.tum.cit.aet.artemis.demo.service.DemoDataSeedingService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -81,7 +81,7 @@ class DemoCommunicationSeedingIntegrationTest extends AbstractSpringIntegrationI
     private CourseAvailableTabsService courseAvailableTabsService;
 
     @Autowired
-    private AccountDemoApi accountDemoApi;
+    private UserApi userApi;
 
     @Autowired
     private ConversationMessagingService conversationMessagingService;
@@ -215,10 +215,10 @@ class DemoCommunicationSeedingIntegrationTest extends AbstractSpringIntegrationI
     void recreatesDeletedThreadWithoutReactionsWhenThePlagiarismModuleIsDisabled() {
         seed();
         Post deletedProposal = thread(channel("random"), peer(5));
-        DemoUsers users = accountDemoApi.createDemoUsers();
+        DemoUsers users = userApi.createDemoUsers();
         User proposer = users.students().get(5);
         SecurityUtils.runAs(proposer, () -> conversationMessagingService.deleteMessageById(demoCourse().getId(), deletedProposal.getId()));
-        CommunicationDemoApi withoutPlagiarismModule = new CommunicationDemoApi(conversationMessagingService, answerMessageService, reactionService, oneToOneChatService,
+        CommunicationDemoService withoutPlagiarismModule = new CommunicationDemoService(conversationMessagingService, answerMessageService, reactionService, oneToOneChatService,
                 Optional.empty(), Optional.empty(), postRepository, channelRepository, oneToOneChatRepository, faqRepository);
 
         SecurityUtils.runAs(users.instructor(), () -> withoutPlagiarismModule.createDemo(demoCourse(), users.students(), users.tutor(), users.instructor(), null));
@@ -242,7 +242,7 @@ class DemoCommunicationSeedingIntegrationTest extends AbstractSpringIntegrationI
     }
 
     private Course demoCourse() {
-        return courseRepository.findAllByShortName(CourseDemoApi.DEMO_COURSE_SHORT_NAME).getFirst();
+        return courseRepository.findAllByShortName(CourseDemoService.DEMO_COURSE_SHORT_NAME).getFirst();
     }
 
     private static String peer(int number) {

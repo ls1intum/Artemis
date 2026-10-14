@@ -27,15 +27,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
+import de.tum.cit.aet.artemis.account.api.UserApi;
+import de.tum.cit.aet.artemis.account.service.user.UserDemoService;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
+import de.tum.cit.aet.artemis.course.api.CourseApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseAvailableTabsService;
+import de.tum.cit.aet.artemis.course.service.CourseDemoService;
 import de.tum.cit.aet.artemis.demo.service.DemoCourseContentSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoDataSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService;
@@ -71,10 +73,10 @@ class DemoTutorialGroupSeedingIntegrationTest extends AbstractSpringIntegrationI
     private DemoDataSeedingService demoDataSeedingService;
 
     @Autowired
-    private AccountDemoApi accountDemoApi;
+    private UserApi userApi;
 
     @Autowired
-    private CourseDemoApi courseDemoApi;
+    private CourseApi courseApi;
 
     @Autowired
     private DemoExerciseSeedingService demoExerciseSeedingService;
@@ -124,7 +126,7 @@ class DemoTutorialGroupSeedingIntegrationTest extends AbstractSpringIntegrationI
         TutorialGroup monday = demoGroup(course, MONDAY_GROUP);
         TutorialGroup thursday = demoGroup(course, THURSDAY_GROUP);
         assertThat(List.of(monday, thursday)).allSatisfy(group -> {
-            assertThat(group.getTeachingAssistant().getLogin()).as("the demo tutor leads %s", group.getTitle()).isEqualTo(AccountDemoApi.DEMO_TUTOR_LOGIN);
+            assertThat(group.getTeachingAssistant().getLogin()).as("the demo tutor leads %s", group.getTitle()).isEqualTo(UserDemoService.DEMO_TUTOR_LOGIN);
             assertThat(group.getLanguage()).isEqualTo("English");
             assertThat(group.getCapacity()).isEqualTo(15);
             assertThat(group.getAdditionalInformation()).as("%s says what students practise in it", group.getTitle()).contains("software architecture", "algorithms", "modeling");
@@ -160,12 +162,12 @@ class DemoTutorialGroupSeedingIntegrationTest extends AbstractSpringIntegrationI
     }
 
     @Test
-    @WithMockUser(username = AccountDemoApi.DEMO_STUDENT_LOGIN, roles = "USER")
+    @WithMockUser(username = UserDemoService.DEMO_STUDENT_LOGIN, roles = "USER")
     void demoStudentFindsTheirTutorialGroup() throws Exception {
         seed();
 
         Course course = demoCourse();
-        assertThat(courseAvailableTabsService.getAvailableTabs(course, userTestRepository.findOneByLogin(AccountDemoApi.DEMO_STUDENT_LOGIN).orElseThrow()).tutorialGroups())
+        assertThat(courseAvailableTabsService.getAvailableTabs(course, userTestRepository.findOneByLogin(UserDemoService.DEMO_STUDENT_LOGIN).orElseThrow()).tutorialGroups())
                 .as("the course shows its tutorial groups").isTrue();
 
         Map<String, TutorialGroupSummaryDTO> groups = request
@@ -194,7 +196,7 @@ class DemoTutorialGroupSeedingIntegrationTest extends AbstractSpringIntegrationI
     }
 
     @Test
-    @WithMockUser(username = AccountDemoApi.DEMO_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
+    @WithMockUser(username = UserDemoService.DEMO_INSTRUCTOR_LOGIN, roles = "INSTRUCTOR")
     void recreatesDeletedTutorialGroup() throws Exception {
         seed();
         TutorialGroupData seeded = snapshot();
@@ -225,7 +227,7 @@ class DemoTutorialGroupSeedingIntegrationTest extends AbstractSpringIntegrationI
         seed();
         TutorialGroupData beforeRun = snapshot();
 
-        DemoDataSeedingService withoutTutorialGroups = new DemoDataSeedingService(accountDemoApi, courseDemoApi, demoExerciseSeedingService,
+        DemoDataSeedingService withoutTutorialGroups = new DemoDataSeedingService(userApi, courseApi, demoExerciseSeedingService,
                 new DemoCourseContentSeedingService(Optional.empty(), Optional.empty(), assessmentDemoApi, Optional.empty(), communicationDemoApi));
         DemoSeeding.seed(withoutTutorialGroups);
 
@@ -237,7 +239,7 @@ class DemoTutorialGroupSeedingIntegrationTest extends AbstractSpringIntegrationI
     }
 
     private Course demoCourse() {
-        return courseRepository.findAllByShortName(CourseDemoApi.DEMO_COURSE_SHORT_NAME).getFirst();
+        return courseRepository.findAllByShortName(CourseDemoService.DEMO_COURSE_SHORT_NAME).getFirst();
     }
 
     private TutorialGroupsConfiguration configuration(Course course) {
@@ -262,7 +264,7 @@ class DemoTutorialGroupSeedingIntegrationTest extends AbstractSpringIntegrationI
     }
 
     private static List<String> studentLogins() {
-        return Stream.concat(Stream.of(AccountDemoApi.DEMO_STUDENT_LOGIN), IntStream.rangeClosed(1, 10).mapToObj(number -> AccountDemoApi.DEMO_PEER_LOGIN_PREFIX + number))
+        return Stream.concat(Stream.of(UserDemoService.DEMO_STUDENT_LOGIN), IntStream.rangeClosed(1, 10).mapToObj(number -> UserDemoService.DEMO_PEER_LOGIN_PREFIX + number))
                 .toList();
     }
 
@@ -319,9 +321,9 @@ class DemoTutorialGroupSeedingIntegrationTest extends AbstractSpringIntegrationI
         assertThat(group.getTutorialGroupChannel().getIsPublic()).as("the channel of %s is public", group.getTitle()).isTrue();
         Set<ConversationParticipant> members = conversationParticipantRepository.findConversationParticipantsByConversationId(group.getTutorialGroupChannel().getId());
         assertThat(members).extracting(member -> member.getUser().getLogin()).as("the students of %s and their tutor are members of its channel", group.getTitle())
-                .containsExactlyInAnyOrderElementsOf(Stream.concat(registeredLogins(group).stream(), Stream.of(AccountDemoApi.DEMO_TUTOR_LOGIN)).toList());
+                .containsExactlyInAnyOrderElementsOf(Stream.concat(registeredLogins(group).stream(), Stream.of(UserDemoService.DEMO_TUTOR_LOGIN)).toList());
         assertThat(members).filteredOn(ConversationParticipant::getIsModerator).extracting(member -> member.getUser().getLogin())
-                .as("the tutor moderates the channel of %s", group.getTitle()).containsExactly(AccountDemoApi.DEMO_TUTOR_LOGIN);
+                .as("the tutor moderates the channel of %s", group.getTitle()).containsExactly(UserDemoService.DEMO_TUTOR_LOGIN);
     }
 
     /**

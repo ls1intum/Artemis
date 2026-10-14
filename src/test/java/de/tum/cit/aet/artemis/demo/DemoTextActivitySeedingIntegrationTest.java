@@ -22,9 +22,10 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
-import de.tum.cit.aet.artemis.account.api.AccountDemoApi;
-import de.tum.cit.aet.artemis.account.api.AccountDemoApi.DemoUsers;
+import de.tum.cit.aet.artemis.account.api.UserApi;
+import de.tum.cit.aet.artemis.account.api.dtos.DemoUsers;
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.service.user.UserDemoService;
 import de.tum.cit.aet.artemis.assessment.api.AssessmentDemoApi;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
@@ -37,12 +38,13 @@ import de.tum.cit.aet.artemis.assessment.dto.FeedbackDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
-import de.tum.cit.aet.artemis.atlas.api.AtlasDemoApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.communication.api.CommunicationDemoApi;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
-import de.tum.cit.aet.artemis.course.api.CourseDemoApi;
+import de.tum.cit.aet.artemis.course.api.CourseApi;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.service.CourseDemoService;
 import de.tum.cit.aet.artemis.demo.service.DemoCourseContentSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoDataSeedingService;
 import de.tum.cit.aet.artemis.demo.service.DemoExerciseSeedingService;
@@ -50,7 +52,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadDemoApi;
-import de.tum.cit.aet.artemis.lecture.api.LectureDemoApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.modeling.api.ModelingDemoApi;
 import de.tum.cit.aet.artemis.programming.api.ProgrammingDemoApi;
 import de.tum.cit.aet.artemis.quiz.api.QuizDemoApi;
@@ -77,10 +79,10 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
     private DemoDataSeedingService demoDataSeedingService;
 
     @Autowired
-    private AccountDemoApi accountDemoApi;
+    private UserApi userApi;
 
     @Autowired
-    private CourseDemoApi courseDemoApi;
+    private CourseApi courseApi;
 
     @Autowired
     private AssessmentDemoApi assessmentDemoApi;
@@ -101,10 +103,10 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
     private ProgrammingDemoApi programmingDemoApi;
 
     @Autowired
-    private LectureDemoApi lectureDemoApi;
+    private LectureApi lectureApi;
 
     @Autowired
-    private AtlasDemoApi atlasDemoApi;
+    private CompetencyApi competencyApi;
 
     @Autowired
     private TutorialGroupDemoApi tutorialGroupDemoApi;
@@ -160,7 +162,7 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
         TextExercise finishedEssay = finishedEssay();
         DemoUsers users = demoUsers();
 
-        userUtilService.changeUser(AccountDemoApi.DEMO_TUTOR_LOGIN);
+        userUtilService.changeUser(UserDemoService.DEMO_TUTOR_LOGIN);
         StatsForDashboardDTO stats = request.get("/api/exercise/exercises/" + finishedEssay.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfSubmissions().inTime()).as("every student submitted in time").isEqualTo(users.students().size());
         assertThat(stats.getTotalNumberOfAssessments()).as("every essay is assessed").isEqualTo(users.students().size());
@@ -169,7 +171,7 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
 
         assertThat(complaintRepository.findAllByExerciseIdIn(Set.of(finishedEssay.getId()))).singleElement().satisfies(complaint -> {
             assertThat(complaint.getComplaintType()).isEqualTo(ComplaintType.COMPLAINT);
-            assertThat(complaint.getStudent().getLogin()).as("a classmate of the demo student complained").startsWith(AccountDemoApi.DEMO_PEER_LOGIN_PREFIX);
+            assertThat(complaint.getStudent().getLogin()).as("a classmate of the demo student complained").startsWith(UserDemoService.DEMO_PEER_LOGIN_PREFIX);
             assertThat(complaint.getComplaintText()).isNotBlank();
             assertThat(complaint.isAccepted()).as("the complaint is neither accepted nor rejected").isNull();
         });
@@ -226,7 +228,7 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
         // Lets the pending participant score updates finish, then stops the updates, which is their state at startup until the service activates itself.
         await().atMost(Duration.ofSeconds(30)).until(participantScoreScheduleService::isIdle);
         participantScoreScheduleService.shutdown();
-        userUtilService.changeUser(AccountDemoApi.DEMO_INSTRUCTOR_LOGIN);
+        userUtilService.changeUser(UserDemoService.DEMO_INSTRUCTOR_LOGIN);
         request.delete("/api/text/text-exercises/" + essays.getLast().getId(), HttpStatus.OK);
 
         seed();
@@ -245,7 +247,7 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
             Result result = latestResult(participation);
             assertThat(result.isRated()).isTrue();
             assertThat(result.getCompletionDate()).isNotNull();
-            assertThat(result.getAssessor().getLogin()).isEqualTo(AccountDemoApi.DEMO_TUTOR_LOGIN);
+            assertThat(result.getAssessor().getLogin()).isEqualTo(UserDemoService.DEMO_TUTOR_LOGIN);
         });
         assertThat(complaintRepository.findAllByExerciseIdIn(Set.of(recreatedEssay.getId()))).as("the complaint is filed again").hasSize(1);
 
@@ -264,10 +266,10 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
         TextActivity textActivity = textActivity(courseId);
         gradingScaleRepository.delete(gradingScaleRepository.findByCourseId(courseId).orElseThrow());
 
-        DemoDataSeedingService withoutTextModule = new DemoDataSeedingService(accountDemoApi, courseDemoApi,
+        DemoDataSeedingService withoutTextModule = new DemoDataSeedingService(userApi, courseApi,
                 new DemoExerciseSeedingService(Optional.empty(), Optional.of(modelingDemoApi), Optional.of(fileUploadDemoApi), quizDemoApi, programmingDemoApi, assessmentDemoApi,
                         Optional.empty()),
-                new DemoCourseContentSeedingService(Optional.of(lectureDemoApi), Optional.of(atlasDemoApi), assessmentDemoApi, Optional.of(tutorialGroupDemoApi),
+                new DemoCourseContentSeedingService(Optional.of(lectureApi), Optional.of(competencyApi), assessmentDemoApi, Optional.of(tutorialGroupDemoApi),
                         communicationDemoApi));
         DemoSeeding.seed(withoutTextModule);
 
@@ -280,11 +282,11 @@ class DemoTextActivitySeedingIntegrationTest extends AbstractSpringIntegrationIn
     }
 
     private DemoUsers demoUsers() {
-        return accountDemoApi.createDemoUsers();
+        return userApi.createDemoUsers();
     }
 
     private Course demoCourse() {
-        return courseRepository.findAllByShortName(CourseDemoApi.DEMO_COURSE_SHORT_NAME).getFirst();
+        return courseRepository.findAllByShortName(CourseDemoService.DEMO_COURSE_SHORT_NAME).getFirst();
     }
 
     /**
