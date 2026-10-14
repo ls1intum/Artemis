@@ -398,7 +398,6 @@ describe('PostingReactionsBarComponent', () => {
 
     it('should close the reacting users tooltip when a reaction button is clicked so that no outdated list stays open', () => {
         fixture.componentRef.setInput('isEmojiCount', true);
-        component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         vi.spyOn(communicationService, 'deleteReaction').mockReturnValue(of(undefined));
 

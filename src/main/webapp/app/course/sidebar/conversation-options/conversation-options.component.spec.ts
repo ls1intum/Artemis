@@ -87,18 +87,21 @@ examples.forEach((conversation) => {
         // the favorite and the options button are siblings in one flex row with a common cross-axis alignment
         it('should align the favorite and the options button in one centered flex row', () => {
             const nativeElement: HTMLElement = fixture.debugElement.nativeElement;
-            const optionButtons = nativeElement.querySelector('.option-buttons')!;
-            const favoriteButton = optionButtons.querySelector('.favorite')!;
-            const dropdown = optionButtons.querySelector('[ngbDropdown], .dropdown')!;
+            const optionButtons = nativeElement.querySelector('.option-buttons');
+            const favoriteButton = optionButtons?.querySelector('.favorite');
+            const dropdown = optionButtons?.querySelector('div[ngbDropdown]');
+            expect(optionButtons).not.toBeNull();
+            expect(favoriteButton).not.toBeNull();
+            expect(dropdown).not.toBeNull();
 
-            expect(optionButtons.classList).toContain('flex');
-            expect(optionButtons.classList).toContain('items-center');
-            expect(favoriteButton.parentElement).toBe(optionButtons);
-            expect(dropdown.parentElement).toBe(optionButtons);
+            expect(optionButtons!.classList).toContain('flex');
+            expect(optionButtons!.classList).toContain('items-center');
+            expect(favoriteButton!.parentElement).toBe(optionButtons);
+            expect(dropdown!.parentElement).toBe(optionButtons);
             // an inline-block wrapper would put the options button on the text baseline instead of centering it
-            expect(dropdown.classList).not.toContain('d-inline-block');
-            expect(dropdown.classList).toContain('flex');
-            expect(dropdown.classList).toContain('items-center');
+            expect(dropdown!.classList).not.toContain('d-inline-block');
+            expect(dropdown!.classList).toContain('flex');
+            expect(dropdown!.classList).toContain('items-center');
         });
 
         it('should remove conversation from favorites when hidden', async () => {

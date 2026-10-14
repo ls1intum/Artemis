@@ -250,6 +250,8 @@ examples.forEach((activeConversation) => {
                 Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
                 Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
                 container.scrollTop = scrollTop;
+                // the posts are loaded and the list is visible
+                component.isFetchingPosts.set(false);
             };
 
             it('should scroll to the bottom when the user is at the bottom, independent of the container height', () => {
@@ -280,6 +282,68 @@ examples.forEach((activeConversation) => {
                 component.handleScrollOnNewMessage();
 
                 expect(scrollToBottomSpy).not.toHaveBeenCalled();
+            });
+
+            it('should not scroll when the user is at the top of the first page after the initial position was restored', () => {
+                setScrollGeometry(0);
+                component.canStartSaving = true;
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).not.toHaveBeenCalled();
+            });
+
+            it('should scroll to the bottom when the list is at the top of the first page while the initial position is not restored yet', () => {
+                setScrollGeometry(0);
+                component.canStartSaving = false;
+                const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                component.setPosts();
+                component.handleScrollOnNewMessage();
+
+                expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+            });
+
+            describe('while posts are being fetched', () => {
+                // the list is hidden by `display: none` while fetching, so it reports no scroll dimensions
+                const hideContainer = () => {
+                    const container = component.content()!.nativeElement;
+                    Object.defineProperty(container, 'scrollHeight', { value: 0, configurable: true });
+                    Object.defineProperty(container, 'clientHeight', { value: 0, configurable: true });
+                    container.scrollTop = 0;
+                };
+
+                it('should not treat loading an older page as being at the bottom', () => {
+                    vi.spyOn(communicationService, 'getFilteredPosts').mockImplementation(() => {});
+                    component.page = 2;
+                    // the user scrolled up in a long conversation to load older messages
+                    setScrollGeometry(100);
+                    const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                    component.fetchPosts();
+                    expect(component.isFetchingPosts()).toBe(true);
+                    hideContainer();
+                    // the response arrives while the list is still hidden
+                    component.setPosts();
+                    component.handleScrollOnNewMessage();
+
+                    expect(scrollToBottomSpy).not.toHaveBeenCalled();
+                });
+
+                it('should keep following new messages when posts are reloaded for a user at the bottom', () => {
+                    vi.spyOn(communicationService, 'getFilteredPosts').mockImplementation(() => {});
+                    setScrollGeometry(600);
+                    const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
+
+                    component.fetchPosts();
+                    hideContainer();
+                    component.setPosts();
+                    component.handleScrollOnNewMessage();
+
+                    expect(scrollToBottomSpy).toHaveBeenCalledOnce();
+                });
             });
 
             describe('with a stored scroll position', () => {
@@ -315,6 +379,8 @@ examples.forEach((activeConversation) => {
                     component.canStartSaving = true;
                     scrollToStoredIdSpy = vi.spyOn(component as any, 'scrollToStoredId');
                     fixture.detectChanges();
+                    // the posts are loaded and the list is visible
+                    component.isFetchingPosts.set(false);
                     vi.runAllTimers();
                     scrollToStoredIdSpy.mockClear();
                 });
