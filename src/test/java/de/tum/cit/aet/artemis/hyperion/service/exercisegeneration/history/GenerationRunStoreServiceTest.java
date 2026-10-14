@@ -116,7 +116,7 @@ class GenerationRunStoreServiceTest {
     void redisSupportsAtomicActivityAndExpiry() throws Exception {
         try (var redis = ValkeyTestContainerFactory.create()) {
             redis.start();
-            var identity = new RedisNodeIdentity("artemis-core", true, false);
+            var identity = new RedisNodeIdentity("artemis-core");
             var config = new Config();
             config.useSingleServer().setAddress("redis://" + redis.getHost() + ":" + redis.getMappedPort(6379));
             new RedissonCodecConfiguration().artemisRedissonSerializationCodecCustomizer(identity).customize(config);

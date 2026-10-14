@@ -513,7 +513,7 @@ class GenerationTaskServiceTest {
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
         verify(jobService).retainUnsavedArtifacts(eq(EXERCISE_ID), eq(JOB_ID), eq(user.getLogin()), any());
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
-        verify(generationRevertService, never()).invalidateBaseline(EXERCISE_ID);
+        verify(journal, never()).beforeMutation(anyString(), any(), any(), anyMap(), anyString());
         assertThat(sentEvents().getLast().message()).contains("changed during generation", "Nothing was saved", "retained");
     }
 
