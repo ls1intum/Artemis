@@ -118,6 +118,10 @@ class GenerationPersistenceServiceTest {
 
     private GenerationPersistenceService service;
 
+    private GenerationAuthoringBaselineService authoringBaselines;
+
+    private de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService ownership;
+
     private ProgrammingExercise exercise;
 
     private AtomicReference<String> exerciseProblemStatement;
@@ -136,6 +140,7 @@ class GenerationPersistenceServiceTest {
     void setUp() {
         org.mockito.Mockito.when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(org.mockito.ArgumentMatchers.anyLong()))
                 .thenReturn(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
+        authoringBaselines = mock(GenerationAuthoringBaselineService.class);
         gitService = mock(GitService.class);
         repositoryService = mock(RepositoryService.class);
         participationService = mock(ProgrammingExerciseParticipationService.class);
@@ -185,10 +190,40 @@ class GenerationPersistenceServiceTest {
 
     /** Builds the service with a shrunken test-case sync wait, so the build-completion wait runs without sleeping. */
     private GenerationPersistenceService newService(Duration testCaseSyncTimeout) {
+        ownership = mock(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService.class);
+        when(ownership.authorizeTestsBuild(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.nullable(String.class), org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn(true);
         return new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService,
                 exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService,
                 programmingExerciseCreationScheduleService, new ProblemStatementMetadataUpdateService(programmingExerciseRepository, programmingExerciseTaskService),
-                tempFileUtilService, testCaseSyncTimeout, Duration.ofMillis(5), buildConfigRepository);
+                tempFileUtilService, testCaseSyncTimeout, Duration.ofMillis(5), buildConfigRepository, authoringBaselines, ownership);
+    }
+
+    @Test
+    void authoringConflictDoesNotWriteAnyCanonicalState() {
+        GenerationOutcome outcome = mock(GenerationOutcome.class);
+        when(outcome.isMechanicallyVerified()).thenReturn(true);
+        when(outcome.producedProblemStatement()).thenReturn("");
+        org.mockito.Mockito.doThrow(new GenerationAuthoringBaselineService.AuthoringConflictException()).when(authoringBaselines)
+                .assertMatches(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.any());
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationAuthoringBaselineService.AuthoringConflictException.class);
+        org.mockito.Mockito.verifyNoInteractions(gitService, programmingExerciseTaskService, programmingSubmissionService, continuousIntegrationTriggerService,
+                exerciseVersionService);
+        verify(testCaseRepository, never()).saveAll(any());
+        verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any(), any(Runnable.class));
+    }
+
+    @Test
+    void missingExactTestsBuildAuthorizationDoesNotTriggerCallback() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(ownership.authorizeTestsBuild(anyLong(), any(), any())).thenReturn(false);
+        GenerationOutcome outcome = outcomeWith(Map.of(), Map.of(), Map.of("Test.java", "class Test {}"), "");
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome, exercise.getProblemStatement(), exercise.getTitle(), "job-token",
+                de.tum.cit.aet.artemis.hyperion.dto.GenerationMode.GENERATE, () -> true, () -> {
+                })).isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("exact exercise write token");
+        verify(ownership).authorizeTestsBuild(eq(exercise.getId()), eq("job-token"), any());
+        verify(programmingSubmissionService, never()).createSolutionParticipationSubmissionWithTypeTest(anyLong(), any());
+        verify(continuousIntegrationTriggerService, never()).triggerRestrictedBuild(any(), any(), any());
     }
 
     private static Result resultWithId(long id) {
@@ -540,8 +575,8 @@ class GenerationPersistenceServiceTest {
         GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "t"), Map.of(), Map.of(), "");
         when(outcome.seedRepositoryHeads()).thenReturn(Map.of(RepositoryType.TEMPLATE, "seed-template"));
 
-        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class)
-                .hasMessageContaining("changed after Hyperion verified");
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationAuthoringBaselineService.AuthoringConflictException.class)
+                .hasMessageContaining("changed during authoring");
 
         verify(repositoryService, never()).commitChanges(any(), any());
     }
@@ -1087,7 +1122,7 @@ class GenerationPersistenceServiceTest {
         var binary = new WorkspaceFile("solution/src/main/resources/fixture.bin", bytes, false);
         var source = new WorkspaceFile("solution/src/Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8), false);
         var candidate = new WorkspaceSnapshot(List.of(binary, source));
-        var seed = new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of()));
+        var seed = new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(binary)), Map.of(), new GradingContext(false, Set.of()), null);
         var output = new GenerationOutput(candidate, new VerificationResult(true, true, true, 1, List.of()), candidate.sha256(), SpecFidelityReport.empty(), "CONVERGED", null,
                 GenerationOutput.AccountingState.INCOMPLETE, "default");
         GenerationOutcome outcome = ReflectionTestUtils.invokeMethod(GenerationOutcome.class, "received", output, seed, false);
