@@ -307,42 +307,39 @@ cannot release a database write reservation.
 ### Authoring history and version restoration
 
 The capabilities in this section require the later unified authoring/history
-layer. The worker and core integration layers alone provide memory-backed
-retention and operational recovery guards, but no durable SQL authoring journal,
-history endpoints, or restoration after a full cluster restart.
+layer. Core integration provides bounded activity replay and durable database
+write reservations, not a SQL authoring-run journal or automatic job continuation.
 
 Programming Create, Adapt, and Variant share the worker lifecycle. Variant
 preparation copies a protected source to a separately reserved destination;
 quiz generation remains separate. Programming exam authoring is available only
 before student exams or test runs exist. Assignment and authoring use the same
-exercise guards and exam-row coordination.
+exercise guards and the existing draft-creation transaction.
 
-The `hyperion_authoring_run` table records owner/source/destination identity,
-terminal outcome, and links to existing before/after exercise versions. It does
-not store prompts, model content, or duplicate version snapshots. Back up these
-rows together with exercise versions and repositories. Deleting a source or
-owner does not erase a destination's mutation fence; deleting the destination
-removes its journal. Missing referenced versions make automatic undo unavailable.
+Saved content and before/after snapshots use the existing exercise version
+history. Owner/source/destination identity, outcomes and version references remain
+bounded provider records, not rows in a `hyperion_authoring_run` table. Back up
+exercise versions and repositories together. Missing versions or expired run
+references make automatic undo unavailable. A lost activity record cannot clear
+the separate, non-expiring database write reservation.
 
-Owner-scoped history is paged at `GET /api/hyperion/authoring-runs`. Exact run
-inspection and restoration use
+Owner-scoped activity and version references use
+`artemis.hyperion.generation.terminal-replay-ttl` (default four hours).
+Runs without a complete save expire from admission; a saved run's undo reference
+expires from completion. The paged `GET /api/hyperion/authoring-runs` endpoint
+lists retained runs and rechecks current course authorization. Exact run inspection
+and restoration use
 `/api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}`
-and its `/revert` POST operation. Current course authorization is rechecked.
-Detailed replay still expires; durable outcomes survive without fabricated usage.
-An interrupted restoration also has a durable `restore_started_at` marker. After
-all distributed data members restart, a core node reloads pending restoration
-guards in bounded pages before exercise writers are admitted. Until this finishes,
-mutation requests return `503 generationRecoveryInitializing`. This recovery
-initialization runs even when AI generation is disabled; LocalVC-only writers
-wait for a core node to initialize the cluster. Deploy compatible code on every
-exercise-writer node before accepting traffic.
+and its `/revert` POST operation. An expired or incomplete latest mutation does
+not permit restoration of an older successful run.
 
-Only a complete restore consumes the obligation automatically. The audited
-operator recovery operation clears it after exact-token reconciliation. A database
-failure during that operation restores the slot before another writer can claim it.
-The additional nullable-column migration preserves existing records; it cannot
-infer unrecorded partial restores from older binaries, so reconcile those before
-upgrading.
+The database reservation protects an interrupted save or restore even when
+provider activity is lost. There is no SQL activity journal, startup scan of
+restore obligations, or automatic reconstruction of lost undo references.
+Before releasing an interrupted writer's reservation, stop that writer and
+reconcile repositories, exercise metadata and versions through the audited,
+exact-token operator path. Provider restarts do not release database reservations;
+keep provider state when activity replay and undo references must survive them.
 
 Restoration uses captured test metadata and rebuilds task bindings from the saved
 statement. It does not require the previous draft to compile or pass a build.
@@ -555,12 +552,13 @@ engine does not advertise usable capacity. Core module flags do not stop a
 worker process. Drain active runs before changing profiles, disabling
 coordination, or replacing either artifact.
 
-Mutation protection on writer nodes is intentionally separate from generation
-activation. Keep deployment-wide fencing enabled while any eligible core can author
-exercises, including on writers with Hyperion disabled. Disable fencing only after
-draining every generation run and reconciling outstanding slots. Replay and ownership state are bounded
-operational state, not a durable SQL job journal. A full deployment restart does
-not promise automatic continuation or resampling of interrupted runs.
+Mutation protection on writer nodes is independent of generation activation.
+All canonical writers use the database reservation, including writers with
+Hyperion disabled. There is no deployment-wide fencing switch or provider
+membership requirement for canonical write ownership. Drain writers and
+reconcile reservations before upgrades, as described above. Activity replay is
+bounded provider state; ownership is non-expiring database state. Neither
+promises automatic continuation or resampling of an interrupted authoring run.
 
 ### Build-agent and worker deployment boundaries
 
