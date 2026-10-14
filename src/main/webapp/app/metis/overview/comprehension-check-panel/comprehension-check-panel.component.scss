@@ -1,0 +1,18 @@
+// Layout is Tailwind in the template; the mark, the bubbles and the result cards need theme colours.
+.metis-mark {
+    color: var(--primary);
+}
+
+.bubble-answer {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--module-bg);
+}
+
+.result-card {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--module-bg);
+}

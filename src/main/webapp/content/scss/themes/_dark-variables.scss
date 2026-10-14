@@ -718,6 +718,13 @@ $iris-blue-background: color-mix(in srgb, var(--primary) 10%, var(--black));
 // Iris Communication
 $tutor-suggestion-background: $gray-700;
 
+// Rating scale (Metis comprehension checks): five ordered steps from no understanding to full understanding
+$rating-scale-lowest: #c0413f;
+$rating-scale-low: #f2a0a0;
+$rating-scale-neutral: #454541;
+$rating-scale-high: #7fb1e8;
+$rating-scale-highest: #2a78d6;
+
 // Image Cropper
 $cropper-overlay-color: transparent;
 

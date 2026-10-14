@@ -1,0 +1,343 @@
+<section class="flex flex-col gap-6" data-testid="metis-exercise-settings">
+    <div class="flex flex-col gap-1">
+        <h3
+            id="artemisApp.programmingExercise.wizardMode.detailedSteps.metisStepTitle"
+            tabindex="-1"
+            class="m-0 scroll-mt-4 text-lg font-semibold"
+            jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.metisStepTitle"
+        ></h3>
+        <p class="metis-settings-hint m-0 text-sm" jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.metisStepMessage"></p>
+    </div>
+
+    <div class="metis-settings-card flex items-start gap-3 p-4">
+        <tumaet-ui-toggle-switch
+            inputId="metis-enabled"
+            data-testid="metis-enabled-toggle"
+            [disabled]="!configLoaded()"
+            [ngModel]="config().enabled"
+            (ngModelChange)="updateConfig({ enabled: $event })"
+        />
+        <div class="flex flex-col gap-0.5">
+            <label
+                for="metis-enabled"
+                class="m-0 font-semibold"
+                [jhiTranslate]="config().enabled ? 'artemisApp.metis.settings.enabled' : 'artemisApp.metis.settings.disabled'"
+            ></label>
+            <span class="metis-settings-hint text-sm" jhiTranslate="artemisApp.metis.settings.enabledSubtext"></span>
+        </div>
+    </div>
+
+    @if (config().enabled) {
+        <div class="metis-settings-card flex flex-col gap-4 p-4" data-testid="metis-window-card">
+            <div class="flex flex-col gap-1">
+                <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.settings.window.title"></h4>
+                <p class="metis-settings-hint m-0 text-sm" jhiTranslate="artemisApp.metis.settings.window.help"></p>
+            </div>
+            <div class="grid gap-4 grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%_-_1rem)/2)),1fr))]">
+                <tumaet-ui-date-picker
+                    data-testid="metis-window-start"
+                    inputId="metis-window-start"
+                    labelName="artemisApp.metis.settings.window.start"
+                    [(value)]="windowStart"
+                    (valueChange)="persistConfig()"
+                    [invalid]="isEndBeforeStart()"
+                    [ariaDescribedBy]="isEndBeforeStart() ? 'metis-window-order-error' : undefined"
+                    (inputValidityChange)="isStartTextValid.set($event)"
+                />
+                <tumaet-ui-date-picker
+                    data-testid="metis-window-end"
+                    inputId="metis-window-end"
+                    labelName="artemisApp.metis.settings.window.end"
+                    [(value)]="windowEnd"
+                    (valueChange)="persistConfig()"
+                    [invalid]="isEndBeforeStart()"
+                    [ariaDescribedBy]="isEndBeforeStart() ? 'metis-window-order-error' : undefined"
+                    (inputValidityChange)="isEndTextValid.set($event)"
+                />
+            </div>
+            @if (isEndBeforeStart()) {
+                <tumaet-ui-message
+                    id="metis-window-order-error"
+                    severity="error"
+                    data-testid="metis-window-order-error"
+                    [text]="'artemisApp.metis.settings.endBeforeStart' | artemisTranslate"
+                />
+            }
+
+            <div class="flex flex-col gap-1">
+                <h5 class="m-0 text-sm font-semibold" jhiTranslate="artemisApp.metis.settings.groupWindows.title"></h5>
+                <p class="metis-settings-hint m-0 text-sm" jhiTranslate="artemisApp.metis.settings.groupWindows.help"></p>
+            </div>
+            <!-- A write replaces every window of the exercise, so the rows can only be changed once the stored ones are known. -->
+            @if (groupWindowsLoaded()) {
+                @if (groupWindows().length) {
+                    <div class="overflow-x-auto">
+                        <table tumAetUiTable size="small" data-testid="metis-group-windows-table">
+                            <thead>
+                                <tr>
+                                    <th jhiTranslate="artemisApp.metis.settings.groupWindows.group"></th>
+                                    <th jhiTranslate="artemisApp.metis.settings.groupWindows.start"></th>
+                                    <th jhiTranslate="artemisApp.metis.settings.groupWindows.end"></th>
+                                    <th><span class="sr-only" jhiTranslate="artemisApp.metis.settings.groupWindows.remove"></span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (groupWindow of groupWindows(); track groupWindow.tutorialGroupId) {
+                                    <tr data-testid="metis-group-window-row">
+                                        <td class="font-semibold">{{ groupTitle(groupWindow.tutorialGroupId) }}</td>
+                                        <td>
+                                            <tumaet-ui-date-picker
+                                                [inputId]="'metis-group-window-start-' + groupWindow.tutorialGroupId"
+                                                [ariaLabel]="'artemisApp.metis.settings.groupWindows.start' | artemisTranslate"
+                                                [shouldDisplayTimeZoneWarning]="false"
+                                                [value]="groupWindow.windowStart"
+                                                (valueChange)="updateGroupWindow(groupWindow, 'windowStart', $event)"
+                                                [invalid]="isGroupWindowInvalid(groupWindow)"
+                                                [ariaDescribedBy]="isGroupWindowInvalid(groupWindow) ? 'metis-group-window-order-error' : undefined"
+                                            />
+                                        </td>
+                                        <td>
+                                            <tumaet-ui-date-picker
+                                                [inputId]="'metis-group-window-end-' + groupWindow.tutorialGroupId"
+                                                [ariaLabel]="'artemisApp.metis.settings.groupWindows.end' | artemisTranslate"
+                                                [shouldDisplayTimeZoneWarning]="false"
+                                                [value]="groupWindow.windowEnd"
+                                                (valueChange)="updateGroupWindow(groupWindow, 'windowEnd', $event)"
+                                                [invalid]="isGroupWindowInvalid(groupWindow)"
+                                                [ariaDescribedBy]="isGroupWindowInvalid(groupWindow) ? 'metis-group-window-order-error' : undefined"
+                                            />
+                                        </td>
+                                        <td class="text-end">
+                                            <button
+                                                type="button"
+                                                tumAetUiButton
+                                                severity="danger"
+                                                variant="text"
+                                                size="small"
+                                                data-testid="metis-remove-group-window"
+                                                [attr.aria-label]="'artemisApp.metis.settings.groupWindows.remove' | artemisTranslate"
+                                                (click)="removeGroupWindow(groupWindow)"
+                                            >
+                                                <fa-icon [icon]="faTrash" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                @if (hasInvalidGroupWindow()) {
+                    <tumaet-ui-message
+                        id="metis-group-window-order-error"
+                        severity="error"
+                        data-testid="metis-group-window-order-error"
+                        [text]="'artemisApp.metis.settings.endBeforeStart' | artemisTranslate"
+                    />
+                }
+                @if (availableGroups().length) {
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div class="flex min-w-56 flex-col gap-1">
+                            <label for="metis-group-select" class="m-0 text-sm font-semibold" jhiTranslate="artemisApp.metis.settings.groupWindows.group"></label>
+                            <tumaet-ui-select
+                                inputId="metis-group-select"
+                                size="small"
+                                optionLabel="title"
+                                optionValue="id"
+                                [options]="availableGroups()"
+                                [placeholder]="'artemisApp.metis.settings.groupWindows.selectGroup' | artemisTranslate"
+                                [ngModel]="selectedGroupId()"
+                                (ngModelChange)="selectedGroupId.set($event)"
+                            />
+                        </div>
+                        <button
+                            type="button"
+                            tumAetUiButton
+                            severity="secondary"
+                            variant="outlined"
+                            size="small"
+                            data-testid="metis-add-group-window"
+                            [disabled]="selectedGroupId() === undefined"
+                            (click)="addGroupWindow()"
+                        >
+                            <fa-icon [icon]="faPlus" />
+                            <span jhiTranslate="artemisApp.metis.settings.groupWindows.add"></span>
+                        </button>
+                    </div>
+                } @else if (tutorialGroups().length) {
+                    <p class="metis-settings-hint m-0 text-sm" jhiTranslate="artemisApp.metis.settings.groupWindows.allAssigned"></p>
+                } @else {
+                    <p class="metis-settings-hint m-0 text-sm" jhiTranslate="artemisApp.metis.settings.groupWindows.noGroups"></p>
+                }
+            }
+        </div>
+
+        <div class="metis-settings-card flex flex-col gap-4 p-4" data-testid="metis-questions-card">
+            <div class="flex flex-col gap-1">
+                <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.settings.questions.title"></h4>
+                <p class="metis-settings-hint m-0 text-sm" jhiTranslate="artemisApp.metis.settings.questions.help"></p>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="flex flex-col gap-1">
+                    <label for="metis-main-question-count" class="m-0 text-sm font-semibold" jhiTranslate="artemisApp.metis.settings.questions.mainCount"></label>
+                    <tumaet-ui-select
+                        inputId="metis-main-question-count"
+                        size="small"
+                        [options]="mainQuestionCounts"
+                        [ngModel]="config().mainQuestionCount"
+                        (ngModelChange)="updateConfig({ mainQuestionCount: $event })"
+                    />
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label for="metis-follow-up-cap" class="m-0 text-sm font-semibold" jhiTranslate="artemisApp.metis.settings.questions.followUpCap"></label>
+                    <tumaet-ui-select
+                        inputId="metis-follow-up-cap"
+                        size="small"
+                        [options]="followUpCaps"
+                        [ngModel]="config().maxFollowUpsPerQuestion"
+                        (ngModelChange)="updateConfig({ maxFollowUpsPerQuestion: $event })"
+                    />
+                </div>
+            </div>
+            <div class="flex flex-col gap-1">
+                <span id="metis-answer-length-label" class="text-sm font-semibold" jhiTranslate="artemisApp.metis.settings.answerLength.title"></span>
+                <span class="metis-settings-hint text-sm" jhiTranslate="artemisApp.metis.settings.answerLength.help"></span>
+                <tumaet-ui-select-button
+                    data-testid="metis-answer-length"
+                    aria-labelledby="metis-answer-length-label"
+                    size="small"
+                    optionLabel="label"
+                    optionValue="value"
+                    [allowEmpty]="false"
+                    [options]="answerLengthOptions()"
+                    [ngModel]="config().answerLength"
+                    (ngModelChange)="updateConfig({ answerLength: $event })"
+                />
+            </div>
+            <div class="flex flex-col gap-1">
+                <span id="metis-complexity-label" class="text-sm font-semibold" jhiTranslate="artemisApp.metis.settings.complexity.title"></span>
+                <tumaet-ui-select-button
+                    data-testid="metis-complexity"
+                    aria-labelledby="metis-complexity-label"
+                    size="small"
+                    optionLabel="label"
+                    optionValue="value"
+                    [allowEmpty]="false"
+                    [options]="complexityOptions()"
+                    [ngModel]="config().complexity"
+                    (ngModelChange)="updateConfig({ complexity: $event })"
+                />
+            </div>
+            <div class="flex flex-col gap-1">
+                <label for="metis-instructor-hint" class="m-0 text-sm font-semibold" jhiTranslate="artemisApp.metis.settings.hint.title"></label>
+                <span id="metis-instructor-hint-help" class="metis-settings-hint text-sm" jhiTranslate="artemisApp.metis.settings.hint.help"></span>
+                <textarea
+                    tumAetUiTextarea
+                    id="metis-instructor-hint"
+                    data-testid="metis-instructor-hint"
+                    rows="3"
+                    aria-describedby="metis-instructor-hint-help"
+                    [attr.maxlength]="maxHintLength"
+                    [value]="config().instructorHint ?? ''"
+                    (input)="onHintInput($event)"
+                    (change)="persistConfig()"
+                ></textarea>
+            </div>
+        </div>
+
+        <div class="metis-settings-card flex flex-col gap-4 p-4" data-testid="metis-timer-card">
+            <div class="flex flex-col gap-1">
+                <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.settings.timer.title"></h4>
+                <p class="metis-settings-hint m-0 text-sm" jhiTranslate="artemisApp.metis.settings.timer.help"></p>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="flex flex-col gap-1">
+                    <label for="metis-min-seconds" class="m-0 text-sm font-semibold" jhiTranslate="artemisApp.metis.settings.timer.min"></label>
+                    <tumaet-ui-input-number
+                        inputId="metis-min-seconds"
+                        data-testid="metis-min-seconds"
+                        [min]="minSecondsLimit"
+                        [max]="maxSecondsLimit"
+                        [step]="10"
+                        [showButtons]="true"
+                        [invalid]="isMinAboveMax() || isMinSecondsOutOfRange()"
+                        [ariaDescribedBy]="isMinAboveMax() ? 'metis-timer-order-error' : undefined"
+                        [ngModel]="config().minSecondsPerQuestion"
+                        (ngModelChange)="onSecondsChange('minSecondsPerQuestion', $event)"
+                    />
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label for="metis-max-seconds" class="m-0 text-sm font-semibold" jhiTranslate="artemisApp.metis.settings.timer.max"></label>
+                    <tumaet-ui-input-number
+                        inputId="metis-max-seconds"
+                        data-testid="metis-max-seconds"
+                        [min]="minSecondsLimit"
+                        [max]="maxSecondsLimit"
+                        [step]="10"
+                        [showButtons]="true"
+                        [invalid]="isMinAboveMax() || isMaxSecondsOutOfRange()"
+                        [ariaDescribedBy]="isMinAboveMax() ? 'metis-timer-order-error' : undefined"
+                        [ngModel]="config().maxSecondsPerQuestion"
+                        (ngModelChange)="onSecondsChange('maxSecondsPerQuestion', $event)"
+                    />
+                </div>
+            </div>
+            @if (isMinAboveMax()) {
+                <tumaet-ui-message
+                    id="metis-timer-order-error"
+                    severity="error"
+                    data-testid="metis-timer-order-error"
+                    [text]="'artemisApp.metis.settings.minAboveMax' | artemisTranslate"
+                />
+            }
+        </div>
+
+        <div class="metis-settings-card flex flex-col gap-4 p-4" data-testid="metis-rating-card">
+            <h4 class="m-0 text-base font-semibold" jhiTranslate="artemisApp.metis.settings.rating.title"></h4>
+            <div class="grid gap-4 sm:grid-cols-2">
+                <div class="flex flex-col gap-1">
+                    <label for="metis-likert-points" class="m-0 text-sm font-semibold" jhiTranslate="artemisApp.metis.settings.rating.scale"></label>
+                    <tumaet-ui-select
+                        inputId="metis-likert-points"
+                        data-testid="metis-likert-points"
+                        size="small"
+                        optionLabel="label"
+                        optionValue="value"
+                        [disabled]="scaleLocked()"
+                        [options]="likertScaleOptions()"
+                        [ngModel]="config().likertScalePoints"
+                        (ngModelChange)="updateConfig({ likertScalePoints: $event })"
+                    />
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label for="metis-follow-up-threshold" class="m-0 text-sm font-semibold" jhiTranslate="artemisApp.metis.settings.rating.threshold"></label>
+                    <tumaet-ui-select
+                        inputId="metis-follow-up-threshold"
+                        size="small"
+                        [options]="followUpThresholds()"
+                        [ngModel]="config().followUpThreshold"
+                        (ngModelChange)="updateConfig({ followUpThreshold: $event })"
+                    />
+                </div>
+            </div>
+            @if (scaleLocked()) {
+                <tumaet-ui-message severity="info" data-testid="metis-scale-locked" [text]="'artemisApp.metis.settings.rating.scaleLocked' | artemisTranslate" />
+            }
+        </div>
+
+        <div class="metis-settings-card flex items-start gap-3 p-4" data-testid="metis-review-card">
+            <tumaet-ui-toggle-switch
+                inputId="metis-review-required"
+                data-testid="metis-review-toggle"
+                [ngModel]="config().reviewRequired"
+                (ngModelChange)="updateConfig({ reviewRequired: $event })"
+            />
+            <div class="flex flex-col gap-0.5">
+                <label for="metis-review-required" class="m-0 font-semibold" jhiTranslate="artemisApp.metis.settings.review.title"></label>
+                <span class="metis-settings-hint text-sm" jhiTranslate="artemisApp.metis.settings.review.help"></span>
+            </div>
+        </div>
+
+        <tumaet-ui-message severity="info" data-testid="metis-info-banner" [text]="'artemisApp.metis.settings.banner' | artemisTranslate" />
+    }
+</section>

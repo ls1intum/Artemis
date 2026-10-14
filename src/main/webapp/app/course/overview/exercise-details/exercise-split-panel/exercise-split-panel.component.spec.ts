@@ -97,6 +97,9 @@ describe('ExerciseSplitPanelComponent', () => {
                             @if (showIris()) {
                                 <ng-template jhiPanel [label]="'iris'" [startsCollapsed]="irisPanelStartsCollapsed()">Iris</ng-template>
                             }
+                            @if (showMetis()) {
+                                <ng-template jhiPanel [label]="'metis'">Metis</ng-template>
+                            }
                         </jhi-resizable-panels>
                     `,
                     imports: [ResizablePanelsComponent, PanelDirective],
@@ -283,6 +286,39 @@ describe('ExerciseSplitPanelComponent', () => {
             fixture.detectChanges();
 
             expect(panelLabels()).not.toContain('artemisApp.courseOverview.exerciseDetails.problemStatement');
+        });
+    });
+
+    describe('comprehension check panel', () => {
+        function panelLabels(): string[] {
+            const panels = fixture.debugElement.query(By.directive(ResizablePanelsComponent)).componentInstance.panels();
+            return panels.map((panel: PanelDirective) => panel.label());
+        }
+
+        it('should hide the Metis tab while the exercise runs no comprehension check', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
+            fixture.detectChanges();
+
+            expect(component.showMetis()).toBe(false);
+            expect(panelLabels()).not.toContain('metis');
+        });
+
+        it('should show the Metis tab for a programming exercise with a comprehension check', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING } as Exercise);
+            fixture.componentRef.setInput('metisEnabled', true);
+            fixture.detectChanges();
+
+            expect(component.showMetis()).toBe(true);
+            expect(panelLabels()).toContain('metis');
+        });
+
+        it('should hide the Metis tab for an exam exercise even with a comprehension check', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, exerciseGroup: { id: 3 } } as Exercise);
+            fixture.componentRef.setInput('metisEnabled', true);
+            fixture.detectChanges();
+
+            expect(component.showMetis()).toBe(false);
+            expect(panelLabels()).not.toContain('metis');
         });
     });
 

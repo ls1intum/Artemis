@@ -1,0 +1,48 @@
+// The colour of a step comes from the five rating-scale theme properties; the rest is the square's own geometry.
+// The two darkest steps carry white text, the lighter ones the body colour.
+.rating-square {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--body-color);
+    vertical-align: middle;
+
+    &--small {
+        width: 1.25rem;
+        height: 1.25rem;
+        font-size: 0.75rem;
+    }
+
+    &--lowest {
+        background: var(--rating-scale-lowest);
+        color: var(--white);
+    }
+
+    &--low {
+        background: var(--rating-scale-low);
+    }
+
+    &--neutral {
+        background: var(--rating-scale-neutral);
+    }
+
+    &--high {
+        background: var(--rating-scale-high);
+    }
+
+    &--highest {
+        background: var(--rating-scale-highest);
+        color: var(--white);
+    }
+
+    &--unrated {
+        border: 1px dashed var(--border-color);
+        color: var(--text-body-secondary);
+    }
+}

@@ -106,7 +106,9 @@
                     "problemStepTitle": "Problem",
                     "problemStepMessage": "Create a comprehensive problem statement for the new exercise, including detailed tasks that clearly outline the required actions and expectations for students.",
                     "gradingStepTitle": "Grading",
-                    "gradingStepMessage": "Specify how this exercise is graded and how its outcome contributes to the overall course score."
+                    "gradingStepMessage": "Specify how this exercise is graded and how its outcome contributes to the overall course score.",
+                    "metisStepTitle": "Comprehension check (Metis)",
+                    "metisStepMessage": "Ask each student about their own solution after the due date. Questions are generated from the student's changes; answers are rated by an AI model and shown to instructors. Nothing here affects the score."
                 },
                 "gradingLabels": {
                     "points": "There is a total of {maxPoints} points to achieve in this {exerciseType}.",
