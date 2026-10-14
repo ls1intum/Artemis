@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.io.RandomAccessReadBuffer;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
@@ -248,18 +249,16 @@ public class LectureUnitProcessingService {
      * instead of failing with a server error when the file is processed later.
      *
      * @param file the uploaded file
-     * @throws IOException              if the upload cannot be read
-     * @throws BadRequestAlertException if the content is not a readable PDF
+     * @throws BadRequestAlertException if the content is empty or not a readable PDF
      */
-    public void validatePdfElseThrow(MultipartFile file) throws IOException {
-        byte[] fileBytes = file.getBytes();
-        try (PDDocument document = Loader.loadPDF(fileBytes)) {
+    public void validatePdfElseThrow(MultipartFile file) {
+        try (InputStream inputStream = file.getInputStream(); PDDocument document = Loader.loadPDF(new RandomAccessReadBuffer(inputStream))) {
             // Loading is lenient about damaged page trees, which only surface when the pages are read.
             document.getNumberOfPages();
         }
         catch (IOException e) {
-            log.warn("Rejected an unreadable PDF for lecture unit processing: {}", e.getMessage());
-            throw new BadRequestAlertException("The uploaded PDF file is invalid or corrupted. Please upload a valid PDF.", ENTITY_NAME, "invalidPdf");
+            log.warn("Rejected an unreadable PDF for lecture unit processing", e);
+            throw new BadRequestAlertException("The uploaded file is not a readable PDF", ENTITY_NAME, "invalidPdf");
         }
     }
 

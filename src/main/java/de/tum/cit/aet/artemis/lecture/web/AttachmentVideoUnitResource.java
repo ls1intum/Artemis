@@ -262,13 +262,12 @@ public class AttachmentVideoUnitResource {
      * @param keepFilename           specifies if the original filename should be kept or not
      * @return the ResponseEntity with status 201 (Created) and with body the new attachment video unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
-     * @throws IOException        if the uploaded file cannot be read
      */
     @PostMapping(value = "lectures/{lectureId}/attachment-video-units", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInLecture
     public ResponseEntity<AttachmentVideoUnitDTO> createAttachmentVideoUnit(@PathVariable Long lectureId,
             @RequestPart("attachmentVideoUnit") AttachmentVideoUnitDTO attachmentVideoUnitDTO, @RequestPart(required = false) AttachmentDTO attachment,
-            @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename) throws URISyntaxException, IOException {
+            @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename) throws URISyntaxException {
         log.debug("REST request to create AttachmentVideoUnit {} with Attachment {}", attachmentVideoUnitDTO, attachment);
         if (attachmentVideoUnitDTO.id() != null) {
             throw new BadRequestAlertException("A new attachment video unit cannot already have an ID", ENTITY_NAME, "idexists");
@@ -288,7 +287,7 @@ public class AttachmentVideoUnitResource {
         validateVideoSource(attachmentVideoUnitDTO.videoSource());
 
         // The file is split into slides after the unit is saved, so reject one that cannot be read before a unit without slides is created.
-        if (file != null && !file.isEmpty() && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()))) {
+        if (file != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()))) {
             lectureUnitProcessingService.validatePdfElseThrow(file);
         }
 
