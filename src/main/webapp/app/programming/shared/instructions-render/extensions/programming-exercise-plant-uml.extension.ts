@@ -85,10 +85,13 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
      * Sets the exercise ID for scoping PlantUML container IDs.
      * This ensures unique DOM IDs when multiple exercises are rendered on the same page (e.g. in exams).
      * Must be called before each markdown render, in the same synchronous block as the subsequent htmlForMarkdown() call.
+     * Resets the instance ID, so a caller that only scopes by exercise never inherits the instance ID of a previous caller of this singleton.
+     * Call setInstanceId afterwards if the rendering component has an instance ID.
      * @param exerciseId the ID of the exercise being rendered
      */
     public setExerciseId(exerciseId?: number): void {
         this.exerciseId = exerciseId;
+        this.instanceId = undefined;
     }
 
     /**
@@ -152,7 +155,8 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
         // - index: the array position, distinguishes multiple diagrams within the same exercise
         // Using the array index (not a mutable counter) avoids shared singleton state bugs.
         const plantUmlsIndexed = plantUmls.map((plantUml, index) => {
-            const scope = [this.exerciseId, this.instanceId].filter((part) => part != undefined).join('-');
+            // The instance ID is only meaningful together with the exercise ID, otherwise "plantUml-{instanceId}-{index}" could collide with "plantUml-{exerciseId}-{index}"
+            const scope = this.exerciseId == undefined ? '' : [this.exerciseId, this.instanceId].filter((part) => part != undefined).join('-');
             const containerId = scope ? `plantUml-${scope}-${index}` : `plantUml-${index}`;
             return { containerId, plantUml };
         });

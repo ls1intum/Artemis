@@ -66,8 +66,9 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         if (!latestResult) {
             return;
         }
+        const taskName = this.taskName();
         this.dialogService.open(FeedbackComponent, {
-            header: this.translateService.instant('artemisApp.result.detail.feedbackForTask', { taskName: safeUnescape(this.taskName()) ?? this.taskName() }),
+            header: this.translateService.instant('artemisApp.result.detail.feedbackForTask', { taskName: safeUnescape(taskName) ?? taskName }),
             width: '50rem',
             breakpoints: {
                 '850px': '95vw',
@@ -81,7 +82,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
                 result: latestResult,
                 participation: this.participation(),
                 feedbackFilter: this.testIds(),
-                taskName: this.taskName(),
+                taskName,
                 numberOfNotExecutedTests: this.notExecutedTests().length,
             },
         });

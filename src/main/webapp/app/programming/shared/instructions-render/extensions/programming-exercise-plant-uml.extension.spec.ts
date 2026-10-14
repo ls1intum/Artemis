@@ -97,6 +97,27 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
         });
     });
 
+    describe('instance ID scoping', () => {
+        it('should ignore the instance ID when no exercise ID is set, so it cannot collide with an exercise-scoped ID', () => {
+            extension.setExerciseId(undefined);
+            extension.setInstanceId(7);
+            const ids = extractPlantUmlIds(extension.replaceText(singleDiagramText));
+
+            expect(ids).toEqual(['plantUml-0']);
+        });
+
+        it('should not leak the instance ID of a previous render into a render that only sets the exercise ID', () => {
+            extension.setExerciseId(10);
+            extension.setInstanceId(3);
+            extension.replaceText(singleDiagramText);
+
+            extension.setExerciseId(11);
+            const ids = extractPlantUmlIds(extension.replaceText(singleDiagramText));
+
+            expect(ids).toEqual(['plantUml-11-0']);
+        });
+    });
+
     describe('single exercise with multiple diagrams', () => {
         it('should generate sequential exercise-scoped container IDs for two diagrams', () => {
             extension.setExerciseId(10);

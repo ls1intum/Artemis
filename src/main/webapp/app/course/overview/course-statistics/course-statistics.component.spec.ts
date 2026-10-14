@@ -395,8 +395,11 @@ describe('CourseStatisticsComponent', () => {
         const template = readFileSync(`${directory}.html`, 'utf8');
         const stylesheet = readFileSync(`${directory}.scss`, 'utf8');
 
-        expect(template).not.toMatch(/\b[hw]-\[\d+px\]/);
         expect(template).toContain('data-testid="total-score-doughnut"');
+        // Only the doughnut block is checked, so unrelated elements of the template may still use such utilities
+        const doughnutBlock = template.slice(template.indexOf('data-testid="total-score-doughnut"'));
+        const doughnutChart = doughnutBlock.slice(0, doughnutBlock.indexOf('</div>', doughnutBlock.indexOf('</div>') + 1));
+        expect(doughnutChart).not.toMatch(/\b[hw]-\[\d+px\]/);
         // The wrapper stays a square that never grows beyond the screen, and the label is centered over the same box
         expect(stylesheet).toMatch(/\.doughnut-wrapper\s*\{[^}]*width:\s*350px;[^}]*max-width:\s*100%;[^}]*aspect-ratio:\s*1\s*\/\s*1/);
         expect(stylesheet).toMatch(/\.chart-text\s*\{[^}]*inset:\s*0;/);

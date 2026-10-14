@@ -107,7 +107,10 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
         var pytestScripts = buildPlanPhases.phases().stream().map(phase -> phase.script()).filter(script -> script.startsWith("pytest")).toList();
         assertThat(pytestScripts).isNotEmpty();
         // A bare "pytest" would also collect test files and conftest.py from the student submission in the "assignment" directory
-        assertThat(pytestScripts).allSatisfy(script -> assertThat(script).containsPattern("^pytest (structural|behavior)"));
+        // The default template runs both directories in one call, the sequential template runs one directory per phase
+        assertThat(pytestScripts).allSatisfy(script -> assertThat(script).containsPattern("^pytest (structural behavior|structural/\\*|behavior/\\*) "));
+        assertThat(pytestScripts).anyMatch(script -> script.contains("structural"));
+        assertThat(pytestScripts).anyMatch(script -> script.contains("behavior"));
     }
 
     void assertBuildPlanPhasesAreCorrect(BuildPlanPhasesDTO buildPlanPhases, int expectedPhases) {
