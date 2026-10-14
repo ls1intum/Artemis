@@ -173,7 +173,6 @@ export class CodeButtonNewComponent {
         isInCourseManagement: boolean,
         vcsAccessTokenData: VcsAccessTokenData,
     ): Promise<AuthenticationMethodData> {
-        // TODO: put * replacement into content component
         const token = await this.getToken(exerciseId, isInCourseManagement, vcsAccessTokenData);
         const credentials = `://${login}:${token}@`;
         const url = this.insertCredentialsIntoUrl(repositoryUri, credentials);

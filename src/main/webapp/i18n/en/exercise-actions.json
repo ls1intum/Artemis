@@ -63,6 +63,7 @@
             "openTextEditor": "Open text editor",
             "copyUrl": "Copy URL",
             "copiedUrl": "Copied URL",
+            "showAlternatives": "Show Alternatives",
             "uploadFile": "Upload a file",
             "viewTeam": "Team",
             "sshKeyTip": "To use SSH, you need to add an SSH key to your account {link:here}.",

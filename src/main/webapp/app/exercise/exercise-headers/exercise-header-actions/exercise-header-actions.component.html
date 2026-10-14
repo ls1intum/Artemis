@@ -158,7 +158,11 @@
                             [repositoryUri]="repositoryUriForCodeButton()"
                             [vcsAccessTokenData]="vcsAccessTokenDataForCodeButton()"
                         />
-                        <jhi-code-button-new [repositoryUri]="repositoryUriForCodeButton()" />
+                        <jhi-code-button-new
+                            [exerciseId]="exercise().id!"
+                            [repositoryUri]="repositoryUriForCodeButton()"
+                            [vcsAccessTokenData]="vcsAccessTokenDataForCodeButton()"
+                        />
                     }
                 }
                 @if (

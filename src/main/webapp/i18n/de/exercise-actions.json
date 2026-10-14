@@ -63,6 +63,7 @@
             "openTextEditor": "Texteditor öffnen",
             "copyUrl": "URL kopieren",
             "copiedUrl": "URL kopiert",
+            "showAlternatives": "Alternativen anzeigen",
             "uploadFile": "Datei hochladen",
             "viewTeam": "Team",
             "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH Schlüssel zu deinem Konto hinzufügen.",
