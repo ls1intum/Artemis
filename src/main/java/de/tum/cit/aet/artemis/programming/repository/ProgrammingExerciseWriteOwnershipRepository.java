@@ -6,22 +6,25 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.Repository;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /** Durable write ownership kept outside entity mappings so ordinary saves cannot replace it. */
 @Lazy
 @Profile({ PROFILE_CORE, PROFILE_LOCALVC })
-public interface ProgrammingExerciseWriteOwnershipRepository extends Repository<ProgrammingExercise, Long> {
+@Repository
+public interface ProgrammingExerciseWriteOwnershipRepository extends ArtemisJpaRepository<ProgrammingExercise, Long> {
 
     /**
      * Atomically claims an unreserved programming exercise without an expiry or owner takeover.
@@ -106,6 +109,39 @@ public interface ProgrammingExerciseWriteOwnershipRepository extends Repository<
     @Modifying
     @Query(value = "UPDATE exercise SET write_owner_tests_commit = :commitHash WHERE id = :exerciseId AND write_owner_token = :token", nativeQuery = true)
     int authorizeTestsBuild(@Param("exerciseId") long exerciseId, @Param("token") String token, @Param("commitHash") String commitHash);
+
+    /**
+     * Runs database synchronization while the matching write reservation cannot be released or retained.
+     * The callback must not access files, providers or the network.
+     *
+     * @param exerciseId      target exercise
+     * @param token           current SAVE or UNDO token
+     * @param commitHash      authorized tests commit
+     * @param synchronization bounded database-only synchronization
+     * @return synchronization result, or empty when authorization no longer matches
+     */
+    @Transactional
+    default Optional<Boolean> executeAuthorizedTestsBuild(long exerciseId, String token, String commitHash, BooleanSupplier synchronization) {
+        if (lockAuthorizedTestsBuild(exerciseId, token, commitHash).isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(synchronization.getAsBoolean());
+    }
+
+    @Query(value = "SELECT id FROM exercise WHERE id = :exerciseId AND write_owner_token = :token AND write_owner_tests_commit = :commitHash AND write_owner_purpose IN ('SAVE', 'UNDO') FOR UPDATE", nativeQuery = true)
+    Optional<Long> lockAuthorizedTestsBuild(@Param("exerciseId") long exerciseId, @Param("token") String token, @Param("commitHash") String commitHash);
+
+    /**
+     * Stops future callbacks and waits for authorized database synchronization to finish.
+     *
+     * @param exerciseId target exercise
+     * @param token      current write token
+     * @return one when this reservation is still owned, otherwise zero
+     */
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE exercise SET write_owner_tests_commit = NULL WHERE id = :exerciseId AND write_owner_token = :token", nativeQuery = true)
+    int stopTestsBuildAuthorization(@Param("exerciseId") long exerciseId, @Param("token") String token);
 
     /**
      * Reads authoritative ownership without loading or changing the exercise entity.

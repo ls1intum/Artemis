@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
@@ -135,6 +136,32 @@ public class ProgrammingExerciseWriteOwnershipService {
             throw new IllegalArgumentException("Test commit hash must contain 1 to 64 characters");
         }
         return repository.authorizeTestsBuild(exerciseId, token, commitHash) == 1;
+    }
+
+    /**
+     * Synchronizes only while the exact write token and tests commit remain authorized.
+     *
+     * @param exerciseId      target exercise
+     * @param token           current SAVE or UNDO token
+     * @param commitHash      expected tests commit
+     * @param synchronization bounded database-only synchronization
+     * @return synchronization result, or empty when authorization ended
+     */
+    public Optional<Boolean> executeAuthorizedTestsBuild(long exerciseId, String token, String commitHash, BooleanSupplier synchronization) {
+        validateToken(token);
+        return repository.executeAuthorizedTestsBuild(exerciseId, token, commitHash, synchronization);
+    }
+
+    /**
+     * Ends synchronization authorization before final grading or compensation.
+     *
+     * @param exerciseId target exercise
+     * @param token      exact write token
+     * @return whether the reservation still belongs to this operation
+     */
+    public boolean stopTestsBuildAuthorization(long exerciseId, String token) {
+        validateToken(token);
+        return repository.stopTestsBuildAuthorization(exerciseId, token) == 1;
     }
 
     private static void validateToken(String token) {
