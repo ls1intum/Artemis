@@ -26,6 +26,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 
+import tools.jackson.databind.JsonNode;
+
+import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.metis.domain.MetisCheckStatus;
 import de.tum.cit.aet.artemis.metis.domain.MetisExerciseConfig;
 import de.tum.cit.aet.artemis.metis.domain.MetisQuestion;
@@ -65,6 +68,9 @@ class MetisAnswerRatingServiceTest {
 
     /** The effective due date of the student whose stored answers are rated. */
     private static final ZonedDateTime DUE = SHOWN.minusDays(1);
+
+    /** The line of the user prompt that the schema of the output follows. */
+    private static final String SCHEMA_HEADING = "Produce JSON that strictly follows this schema:";
 
     private final MetisLlmService llmService = mock(MetisLlmService.class);
 
@@ -148,7 +154,8 @@ class MetisAnswerRatingServiceTest {
             ratingService.rate(request(mainQuestion, List.of(), "It sorts the array.", true, Mode.INTERACTIVE));
 
             String systemPrompt = capturedPrompts(Mode.INTERACTIVE, 1).systemPrompt();
-            assertThat(systemPrompt).contains("If your rating is 2 or lower, also write one short follow-up question").contains("a time limit between 90 and 120 seconds");
+            assertThat(systemPrompt).contains("First decide the score, then write the rationale. If the score is 2 or lower, followUpQuestion must contain one short follow-up");
+            assertThat(systemPrompt).contains("followUpTimeLimitSeconds must be between 90 and 120.").contains("If the score is higher, leave followUpQuestion empty");
             assertThat(systemPrompt).doesNotContain(MetisAnswerRatingService.NO_FOLLOW_UP_INSTRUCTION).doesNotContain("{{");
         }
 
@@ -160,7 +167,7 @@ class MetisAnswerRatingServiceTest {
 
             ratingService.rate(request(mainQuestion, List.of(), "It sorts the array.", true, Mode.INTERACTIVE));
 
-            assertThat(capturedPrompts(Mode.INTERACTIVE, 1).systemPrompt()).contains("a time limit between 45 and 45 seconds");
+            assertThat(capturedPrompts(Mode.INTERACTIVE, 1).systemPrompt()).contains("followUpTimeLimitSeconds must be between 45 and 45.");
         }
 
         @Test
@@ -170,7 +177,22 @@ class MetisAnswerRatingServiceTest {
             ratingService.rate(request(mainQuestion, List.of(), "It sorts the array.", false, Mode.INTERACTIVE));
 
             String systemPrompt = capturedPrompts(Mode.INTERACTIVE, 1).systemPrompt();
-            assertThat(systemPrompt).contains(MetisAnswerRatingService.NO_FOLLOW_UP_INSTRUCTION).doesNotContain("If your rating is").doesNotContain("{{");
+            assertThat(systemPrompt).contains(MetisAnswerRatingService.NO_FOLLOW_UP_INSTRUCTION).doesNotContain("If the score is").doesNotContain("{{");
+        }
+
+        /**
+         * The model writes the properties in the order of the schema, and whether a follow-up is due depends on the score. With the alphabetical order of the
+         * schema generator, the model wrote the follow-up first and left it empty, so the schema must list the score before the rationale and both before the
+         * follow-up.
+         */
+        @Test
+        void shouldListTheScoreBeforeTheRationaleAndTheFollowUpInTheSchemaOfThePrompt() {
+            stubRating(Mode.INTERACTIVE, MetisLlmTestResponses.ratingJson(2, "Vague.", "Which pair does it swap first?", 75));
+
+            ratingService.rate(request(mainQuestion, List.of(), "It sorts the array.", true, Mode.INTERACTIVE));
+
+            JsonNode schema = schemaInPrompt(capturedPrompts(Mode.INTERACTIVE, 1).userPrompt());
+            assertThat(schema.get("properties").propertyNames()).containsExactly("score", "rationale", "followUpQuestion", "followUpTimeLimitSeconds");
         }
 
         @Test
@@ -525,6 +547,16 @@ class MetisAnswerRatingServiceTest {
 
     private void stubRating(Mode mode, String output) {
         when(llmService.complete(eq(Pipeline.ANSWER_RATING), eq(mode), anyString(), anyString(), any())).thenReturn(MetisLlmTestResponses.completion(output));
+    }
+
+    /**
+     * The JSON schema of a user prompt as the model reads it: from the first opening brace after the line that introduces the schema to the last closing brace,
+     * since the schema ends the prompt.
+     */
+    private static JsonNode schemaInPrompt(String userPrompt) {
+        int heading = userPrompt.indexOf(SCHEMA_HEADING);
+        assertThat(heading).isNotNegative();
+        return JsonObjectMapper.get().readTree(userPrompt.substring(userPrompt.indexOf('{', heading), userPrompt.lastIndexOf('}') + 1));
     }
 
     private CapturedPrompts capturedPrompts(Mode mode, int calls) {
