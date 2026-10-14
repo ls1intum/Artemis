@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -322,30 +323,101 @@ class LectureUnitProcessingStateClaimTest extends AbstractSpringIntegrationIndep
     }
 
     /**
-     * Open background work is backfill and reconcile work (priority 2) that is queued, running, or waiting for a retry; a failure without a
-     * scheduled retry, a finished unit and fresh work do not count.
+     * Open background work is backfill and reconcile work (priority 2) that is queued, running, or a failure whose retry is due or claimed right now. A
+     * failure that waits for its retry time, a failure without a scheduled retry, a finished unit and fresh work do not count.
      */
     @Test
     void testCountOpenBackgroundUnits() {
         Lecture lecture = unit.getLecture();
-        ZonedDateTime later = ZonedDateTime.now().plusMinutes(5);
+        ZonedDateTime now = ZonedDateTime.now();
         // Other tests share the database, so only the rows added here are compared
-        long before = processingStateRepository.countOpenBackgroundUnits(2);
-        backgroundState(unit, ProcessingPhase.IDLE, 2, null);
-        backgroundState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), ProcessingPhase.INGESTING, 2, null);
-        backgroundState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), ProcessingPhase.FAILED, 2, later);
-        backgroundState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), ProcessingPhase.FAILED, 2, null);
-        backgroundState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), ProcessingPhase.DONE, 2, null);
-        backgroundState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), ProcessingPhase.IDLE, 0, null);
+        long before = processingStateRepository.countOpenBackgroundUnits(2, now);
+        backgroundState(unit, ProcessingPhase.IDLE, 2, null, null);
+        backgroundState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), ProcessingPhase.INGESTING, 2, null, null);
+        backgroundState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), ProcessingPhase.FAILED, 2, now.minusMinutes(1), null);
+        backgroundState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), ProcessingPhase.FAILED, 2, now.plusMinutes(5), "retry-claim");
+        backgroundState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), ProcessingPhase.FAILED, 2, now.plusMinutes(5), null);
+        backgroundState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), ProcessingPhase.FAILED, 2, null, null);
+        backgroundState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), ProcessingPhase.DONE, 2, null, null);
+        backgroundState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), ProcessingPhase.IDLE, 0, null, null);
 
-        assertThat(processingStateRepository.countOpenBackgroundUnits(2)).isEqualTo(before + 3);
+        assertThat(processingStateRepository.countOpenBackgroundUnits(2, now)).as("queued, running, a due retry and a claimed retry").isEqualTo(before + 4);
     }
 
-    private void backgroundState(AttachmentVideoUnit stateUnit, ProcessingPhase phase, int priority, ZonedDateTime retryEligibleAt) {
+    /**
+     * The outage pause counts settled failures in its window whose error is not caused by the unit itself, including units that used up their retries,
+     * and counts successful ingestions by their completion time. A claimed retry, a unit-specific failure and a removed-content settlement do not count.
+     */
+    @Test
+    void testOutagePauseCounts() {
+        Lecture lecture = unit.getLecture();
+        // Far in the future, so rows of other tests sharing the database never fall into the window
+        ZonedDateTime windowStart = ZonedDateTime.now().plusDays(10);
+        ZonedDateTime inWindow = windowStart.plusMinutes(1);
+        Set<String> unitSpecific = Set.of("artemisApp.attachmentVideoUnit.processing.error.videoSourceUnavailable",
+                "artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable");
+
+        failedState(unit, "artemisApp.attachmentVideoUnit.processing.error.processingFailed", inWindow, inWindow.plusMinutes(5), null);
+        failedState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), "artemisApp.attachmentVideoUnit.processing.error.processingFailed", inWindow, null,
+                null);
+        failedState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), "artemisApp.attachmentVideoUnit.processing.error.processingFailed", inWindow,
+                inWindow.plusMinutes(5), "retry-claim");
+        failedState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), "artemisApp.attachmentVideoUnit.processing.error.videoSourceUnavailable", inWindow,
+                inWindow.plusMinutes(5), null);
+        failedState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), "artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable", inWindow, null,
+                null);
+        failedState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), "artemisApp.attachmentVideoUnit.processing.error.processingFailed",
+                windowStart.minusMinutes(1), inWindow, null);
+
+        assertThat(processingStateRepository.countRecentOutageFailures(windowStart, unitSpecific)).as("a failure with a pending retry and one that used up its retries")
+                .isEqualTo(2);
+
+        doneState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), null, "v1:fp");
+        doneState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), inWindow, null);
+        assertThat(processingStateRepository.countRecentSuccessfulIngestions(windowStart)).as("a settlement without a confirmed run is no success").isZero();
+
+        doneState(lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lecture), inWindow, "v1:fp");
+        assertThat(processingStateRepository.countRecentSuccessfulIngestions(windowStart)).isEqualTo(1);
+    }
+
+    /** A missing video marker is recorded only on an unclaimed DONE row that still carries the confirmed fingerprint the decision rests on. */
+    @Test
+    void testRecordMissingVideoSourceHash() {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(unit);
+        state.setPhase(ProcessingPhase.DONE);
+        state.setConfirmedFingerprint("v1:full");
+        processingStateRepository.save(state);
+
+        assertThat(reconcileStateRepository.recordMissingVideoSourceHash(state.getId(), "hash", "v1:other")).as("the confirmation changed").isZero();
+        assertThat(reconcileStateRepository.recordMissingVideoSourceHash(state.getId(), "hash", "v1:full")).isEqualTo(1);
+        assertThat(processingStateRepository.findById(state.getId()).orElseThrow().getVideoSourceHash()).isEqualTo("hash");
+        assertThat(reconcileStateRepository.recordMissingVideoSourceHash(state.getId(), "other-hash", "v1:full")).as("a recorded marker is never replaced").isZero();
+    }
+
+    private void backgroundState(AttachmentVideoUnit stateUnit, ProcessingPhase phase, int priority, ZonedDateTime retryEligibleAt, String claimToken) {
         LectureUnitProcessingState state = new LectureUnitProcessingState(stateUnit);
         state.setPhase(phase);
         state.setDispatchPriority(priority);
         state.setRetryEligibleAt(retryEligibleAt);
+        state.setClaimToken(claimToken);
+        processingStateRepository.save(state);
+    }
+
+    private void failedState(AttachmentVideoUnit stateUnit, String errorKey, ZonedDateTime failedAt, ZonedDateTime retryEligibleAt, String claimToken) {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(stateUnit);
+        state.setPhase(ProcessingPhase.FAILED);
+        state.setErrorKey(errorKey);
+        state.setLastUpdated(failedAt);
+        state.setRetryEligibleAt(retryEligibleAt);
+        state.setClaimToken(claimToken);
+        processingStateRepository.save(state);
+    }
+
+    private void doneState(AttachmentVideoUnit stateUnit, ZonedDateTime completedAt, String confirmedFingerprint) {
+        LectureUnitProcessingState state = new LectureUnitProcessingState(stateUnit);
+        state.setPhase(ProcessingPhase.DONE);
+        state.setStartedAt(completedAt);
+        state.setConfirmedFingerprint(confirmedFingerprint);
         processingStateRepository.save(state);
     }
 

@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
@@ -59,32 +60,47 @@ public class TumLiveService {
      * @return an optional playlist URL if found from the TUM Live API, or empty if not found or the URL is invalid
      */
     public Optional<String> getTumLivePlaylistLink(String videoUrl) {
+        return Optional.ofNullable(lookUpPlaylist(videoUrl).playlistUrl());
+    }
+
+    /**
+     * Fetch the playlist URL of a TUM Live watch page and keep the reason when there is none, so a caller can tell a stream that is not public or has no
+     * recording yet from a TUM Live that is down.
+     *
+     * @param videoUrl the public TUM Live video URL to resolve
+     * @return the playlist URL, or the reason why there is none
+     */
+    public TumLivePlaylistLookup lookUpPlaylist(String videoUrl) {
         if (restClient == null) {
             log.warn("TUM Live API client is not configured. Cannot fetch requested playlist URL.");
-            return Optional.empty();
+            return TumLivePlaylistLookup.failed(TumLivePlaylistLookup.Outcome.NOT_APPLICABLE);
         }
 
         StreamInfo info = extractCourseSlugAndStreamId(videoUrl);
         if (info == null) {
             log.warn("Could not extract courseSlug and streamId from the given video URL.");
-            return Optional.empty();
+            return TumLivePlaylistLookup.failed(TumLivePlaylistLookup.Outcome.NOT_APPLICABLE);
         }
 
         try {
             TumLivePlaylistDTO response = restClient.get().uri("/streams/{courseSlug}/{streamId}", info.courseSlug(), info.streamId()).retrieve().body(TumLivePlaylistDTO.class);
 
             if (response != null && response.stream() != null && response.stream().playlistUrl() != null) {
-                return Optional.of(response.stream().playlistUrl());
+                return TumLivePlaylistLookup.resolved(response.stream().playlistUrl());
             }
-            else {
-                log.warn("No 'playlistUrl' found in API response for stream {}", info.streamId());
-                return Optional.empty();
-            }
-
+            log.info("No 'playlistUrl' found in API response for stream {}", info.streamId());
+            return TumLivePlaylistLookup.failed(TumLivePlaylistLookup.Outcome.NOT_AVAILABLE);
+        }
+        catch (HttpClientErrorException e) {
+            // The API answered: the course is not public (401/403), or it does not know the stream (404, other 4xx). Expected for a course
+            // whose recordings are not released yet, so no stack trace.
+            boolean refused = e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403;
+            log.info("TUM Live API refused stream {} with status {}", info.streamId(), e.getStatusCode().value());
+            return TumLivePlaylistLookup.failed(refused ? TumLivePlaylistLookup.Outcome.NOT_ACCESSIBLE : TumLivePlaylistLookup.Outcome.NOT_AVAILABLE);
         }
         catch (RestClientException e) {
-            log.error("TUM Live API call failed for stream {}: {}", info.streamId(), e.getMessage(), e);
-            return Optional.empty();
+            log.warn("TUM Live API call failed for stream {}: {}", info.streamId(), e.getMessage());
+            return TumLivePlaylistLookup.failed(TumLivePlaylistLookup.Outcome.TEMPORARILY_UNAVAILABLE);
         }
     }
 

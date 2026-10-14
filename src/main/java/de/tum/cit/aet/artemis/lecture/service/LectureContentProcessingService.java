@@ -431,6 +431,26 @@ public class LectureContentProcessingService {
      * @param state its processing state, carrying the recorded video marker
      * @return true if the video source changed since the state's marker was recorded
      */
+    /**
+     * Whether the unit links a video Iris can transcribe, decided from the URL alone.
+     *
+     * @param unit the unit to check
+     * @return true if the unit's video source is supported
+     */
+    public boolean hasSupportedVideo(AttachmentVideoUnit unit) {
+        return videoSourceResolver.isSupportedSource(unit.getVideoSource());
+    }
+
+    /**
+     * The marker value of the unit's current video source, as the processing state stores it in {@code videoSourceHash}.
+     *
+     * @param unit the unit
+     * @return the hash of its video source, empty when it has none
+     */
+    public String videoSourceHashOf(AttachmentVideoUnit unit) {
+        return computeHash(unit.getVideoSource());
+    }
+
     public boolean hasVideoSourceChanged(AttachmentVideoUnit unit, LectureUnitProcessingState state) {
         boolean hasVideo = unit.getVideoSource() != null && !unit.getVideoSource().isBlank();
         boolean previousVideoKnown = state.getVideoSourceHash() != null && !state.getVideoSourceHash().isBlank();

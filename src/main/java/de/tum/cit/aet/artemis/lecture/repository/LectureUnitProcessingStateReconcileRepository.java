@@ -110,4 +110,25 @@ public interface LectureUnitProcessingStateReconcileRepository extends ArtemisJp
             """)
     int reviveFailedIfUnchanged(@Param("id") long id, @Param("observedErrorKey") String observedErrorKey, @Param("observedLastUpdated") ZonedDateTime observedLastUpdated,
             @Param("observedRevivalCount") int observedRevivalCount, @Param("dispatchPriority") Integer dispatchPriority, @Param("now") ZonedDateTime now);
+
+    /**
+     * Record the video source marker of a DONE unit that has none, without touching anything else. Used only when the confirmed fingerprint equals the
+     * fingerprint of the unit's current content including its video, which proves the indexed content (and any stored transcript) belongs to the
+     * current video. Guarded by that fingerprint and an unclaimed DONE row, so a concurrent change or run is left alone.
+     *
+     * @param id                  the processing state
+     * @param videoSourceHash     the hash of the current video source
+     * @param observedFingerprint the confirmed fingerprint the decision rests on
+     * @return 1 when the marker was recorded, 0 when the row changed or already has a marker
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE LectureUnitProcessingState ps
+            SET ps.videoSourceHash = :videoSourceHash
+            WHERE ps.id = :id AND ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE AND ps.claimToken IS NULL
+            AND (ps.videoSourceHash IS NULL OR ps.videoSourceHash = '')
+            AND ps.confirmedFingerprint = :observedFingerprint
+            """)
+    int recordMissingVideoSourceHash(@Param("id") long id, @Param("videoSourceHash") String videoSourceHash, @Param("observedFingerprint") String observedFingerprint);
 }
