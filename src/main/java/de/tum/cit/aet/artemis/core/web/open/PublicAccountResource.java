@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,14 +30,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.account.dto.EmailChangeConfirmationResultDTO;
-import de.tum.cit.aet.artemis.account.dto.EmailChangeKeyDTO;
 import de.tum.cit.aet.artemis.account.dto.LoginOptionsDTO;
 import de.tum.cit.aet.artemis.account.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.AccountSecurityEventService;
 import de.tum.cit.aet.artemis.account.service.AccountService;
-import de.tum.cit.aet.artemis.account.service.EmailChangeService;
 import de.tum.cit.aet.artemis.account.service.LoginOptionsService;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
@@ -61,11 +57,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.LimitRequestsPerMinute;
 import de.tum.cit.aet.artemis.core.security.jwt.AuthenticationMethod;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
-import de.tum.cit.aet.artemis.core.service.SessionFreshnessService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
@@ -110,22 +104,15 @@ public class PublicAccountResource {
 
     private final LoginOptionsService loginOptionsService;
 
-    private final UserVcsAccessTokenService userVcsAccessTokenService;
-
     private final UserRecoveryKeyService userRecoveryKeyService;
 
     private final UserAiPreferenceService userAiPreferenceService;
 
     private final AccountSecurityEventService accountSecurityEventService;
 
-    private final EmailChangeService emailChangeService;
-
-    private final SessionFreshnessService sessionFreshnessService;
-
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
             Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService,
-            UserVcsAccessTokenService userVcsAccessTokenService, UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService,
-            AccountSecurityEventService accountSecurityEventService, EmailChangeService emailChangeService, SessionFreshnessService sessionFreshnessService) {
+            UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService, AccountSecurityEventService accountSecurityEventService) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
@@ -133,12 +120,9 @@ public class PublicAccountResource {
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
         this.tokenProvider = tokenProvider;
         this.loginOptionsService = loginOptionsService;
-        this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.userRecoveryKeyService = userRecoveryKeyService;
         this.userAiPreferenceService = userAiPreferenceService;
         this.accountSecurityEventService = accountSecurityEventService;
-        this.emailChangeService = emailChangeService;
-        this.sessionFreshnessService = sessionFreshnessService;
     }
 
     /**
@@ -272,26 +256,11 @@ public class PublicAccountResource {
         userDTO.setSelectedLLMUsage(userAiPreferenceService.findDecision(user.getId()));
         userDTO.setSelectedLLMUsageTimestamp(userAiPreferenceService.findDecisionDate(user.getId()));
         userDTO.setMemirisEnabled(userAiPreferenceService.isMemirisEnabled(user.getId()));
-        addPersonalVcsAccessToken(userDTO, user.getId());
+        accountService.addPersonalVcsAccessTokenIfSessionIsCurrent(userDTO, user.getId());
         userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
         userDTO.setLoggedInWithPasskey(isLoggedInWithPasskey);
         userDTO.setPasskeySuperAdminApproved(isPasskeySuperAdminApproved);
         return userDTO;
-    }
-
-    /**
-     * Adds the secret of the user's personal VCS access token, unless the session predates the last change of the account's credentials.
-     * <p>
-     * An outdated session is not refused here, because the client reads the account on every page load and would otherwise be signed out of a session that may still read.
-     * It only does not get the secret: it could otherwise copy a token that was created after the change and keep using it once its own session has expired.
-     * The check only runs for an account that has a token.
-     */
-    private void addPersonalVcsAccessToken(UserDTO userDTO, long userId) {
-        String token = userVcsAccessTokenService.findToken(userId);
-        if (token != null && sessionFreshnessService.isCurrentSession(SecurityContextHolder.getContext().getAuthentication())) {
-            userDTO.setVcsAccessToken(token);
-            userDTO.setVcsAccessTokenExpiryDate(userVcsAccessTokenService.findExpiryDate(userId));
-        }
     }
 
     /**
@@ -417,26 +386,5 @@ public class PublicAccountResource {
         // AccountSecurityNotificationService.passwordChanged with the RESET actor, which is also what carries the
         // revocation summary. A second notice here would mean two audit rows and two near-identical emails per reset.
         return ResponseEntity.ok().build();
-    }
-
-    /**
-     * {@code POST /account/confirm-email-change} : confirms one address of a pending e-mail change with the key from the mail that was sent to it. The e-mail address of the
-     * account changes once both the current and the new address have been confirmed.
-     * <p>
-     * Public on purpose: the link is opened from the mailbox, where the user may not be signed in. The key is the proof, and is checked like a password reset key.
-     *
-     * @param key the key id and secret from the confirmation mail
-     * @return ResponseEntity with status 200 (OK) and which address was confirmed and whether that completed the change
-     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the key is invalid or has expired, or if the new address has been taken in the meantime
-     */
-    @FeatureUsage(UserFeature.ACCOUNT_SETTINGS)
-    @PostMapping("account/confirm-email-change")
-    @EnforceNothing
-    @LimitRequestsPerMinute(type = RateLimitType.ACCOUNT_MANAGEMENT)
-    public ResponseEntity<EmailChangeConfirmationResultDTO> confirmEmailChange(@RequestBody EmailChangeKeyDTO key) {
-        if (StringUtils.isEmpty(key.keyId()) || StringUtils.isEmpty(key.keySecret()) || key.keyId().length() < 10 || key.keySecret().length() < 10) {
-            throw new BadRequestAlertException("The key to confirm the e-mail change is invalid or has expired", "Account", "invalidEmailChangeKey");
-        }
-        return ResponseEntity.ok(emailChangeService.confirm(key.keyId(), key.keySecret()));
     }
 }
