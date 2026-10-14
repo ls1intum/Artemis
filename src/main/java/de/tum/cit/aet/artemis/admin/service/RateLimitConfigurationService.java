@@ -121,6 +121,7 @@ public class RateLimitConfigurationService {
             case AI_SEARCH_PIPELINE -> properties.getAiSearchPipelineRequestsPerMinute() != null ? properties.getAiSearchPipelineRequestsPerMinute() : type.getDefaultRpm();
             case STRUGGLE_INTERVENTION ->
                 properties.getStruggleInterventionRequestsPerMinute() != null ? properties.getStruggleInterventionRequestsPerMinute() : type.getDefaultRpm();
+            case CONTENT_SEARCH -> properties.getContentSearchRequestsPerMinute() != null ? properties.getContentSearchRequestsPerMinute() : type.getDefaultRpm();
             case BUILD_AGENT_CLONE_TOKEN ->
                 properties.getBuildAgentCloneTokenRequestsPerMinute() != null ? properties.getBuildAgentCloneTokenRequestsPerMinute() : type.getDefaultRpm();
         };

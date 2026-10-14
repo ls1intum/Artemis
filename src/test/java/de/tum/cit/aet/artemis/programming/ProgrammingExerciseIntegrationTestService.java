@@ -1701,10 +1701,11 @@ public class ProgrammingExerciseIntegrationTestService {
             programmingExerciseTestCaseRepository.saveAndFlush(test);
         });
 
-        // Resetting plus versioning takes 28 queries; mapping the reset test cases must not pull their exercise or tasks back in
+        // Resetting plus versioning takes 31 queries and the global search lookup of the exercise's channel one more; mapping the reset test cases must not
+        // pull their exercise or tasks back in
         final var testCasesResponse = QueryCountAssert
                 .assertThatDb(queryInterceptor, () -> request.patchWithResponseBody("/api" + endpoint, "{}", new TypeReference<List<ProgrammingExerciseTestCaseResponseDTO>>() {
-                }, HttpStatus.OK)).hasBeenCalledAtMostTimes(31);
+                }, HttpStatus.OK)).hasBeenCalledAtMostTimes(32);
         final var testsInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
         final var expectedTestCases = testsInDB.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).toList();
 

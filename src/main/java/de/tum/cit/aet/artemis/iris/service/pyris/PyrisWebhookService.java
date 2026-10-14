@@ -190,16 +190,17 @@ public class PyrisWebhookService {
     }
 
     /**
-     * Whether an ingestion job for this unit would actually be prepared: Iris is enabled for the
-     * course and the unit's content is eligible. The reconciler uses this to decide whether a SKIPPED
-     * unit is worth requeueing after the course's Iris settings changed.
+     * Whether an ingestion job for this unit would actually be prepared: the unit's content is eligible. The reconciler uses
+     * this to decide whether a SKIPPED unit is worth requeueing.
+     * <p>
+     * The course's Iris setting plays no role: it switches off the Iris chat and the other interactive Iris features of a
+     * course, while global search searches the lecture content of every course, so the content is ingested regardless.
      *
      * @param attachmentVideoUnit the unit to check
      * @return true if {@link #prepareLectureUnitIngestion} would prepare a job for this unit
      */
     public boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {
-        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse())
-                && PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit, videoSourceResolver);
+        return PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit, videoSourceResolver);
     }
 
     /**
@@ -241,7 +242,7 @@ public class PyrisWebhookService {
      * @param attachmentVideoUnit the attachment video unit to ingest
      * @param contentFingerprint  fingerprint of the unit's source content, stamped into the vector store
      * @param forceReingest       true for quality re-ingestions bypassing Iris's structural skip checks
-     * @return the prepared job, or {@code null} when the unit is not processable (course settings or content type)
+     * @return the prepared job, or {@code null} when the unit is not processable (tutorial lecture or no supported content)
      */
     public PyrisPreparedLectureIngestionJobDTO prepareLectureUnitIngestion(AttachmentVideoUnit attachmentVideoUnit, String contentFingerprint, boolean forceReingest) {
         if (!isLectureUnitProcessableForPyris(attachmentVideoUnit)) {
