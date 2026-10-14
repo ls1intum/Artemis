@@ -197,7 +197,7 @@ public class ExerciseGenerationRevertService {
                 fullyReverted = false;
             }
         }
-        return new RevertResult(fullyReverted, List.copyOf(reverted), true);
+        return new RevertResult(fullyReverted, List.copyOf(reverted), repositoryResult.fullyReverted() || repositoryResult.mutationAttempted());
     }
 
     private static boolean metadataCanBeReverted(String currentValue, String expectedCurrentValue, String targetBaselineValue) {
