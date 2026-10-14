@@ -1157,6 +1157,77 @@ describe('GlobalSearchModalComponent', () => {
             expect((component as any).selectedIndex()).toBe(-1);
         });
 
+        it('gives the focus back to the element the palette was opened from when it closes without navigating', () => {
+            mockSearchOverlayService.isOpen.set(false);
+            TestBed.tick();
+            const trigger = document.createElement('button');
+            document.body.appendChild(trigger);
+            trigger.focus();
+            mockSearchOverlayService.isOpen.set(true);
+            TestBed.tick();
+            (fixture.nativeElement.querySelector('.search-input') as HTMLInputElement | null)?.focus();
+
+            (component as any).onDialogHide();
+
+            expect(mockSearchOverlayService.close).toHaveBeenCalled();
+            expect(document.activeElement).toBe(trigger);
+            trigger.remove();
+        });
+
+        it('points the input at the selected result for screen readers', () => {
+            vi.useFakeTimers();
+            mockSearchService.globalSearch.mockReturnValue(
+                of([{ id: '1', type: 'exercise', title: 'A' } as GlobalSearchResult, { id: '2', type: 'lecture', title: 'B' } as GlobalSearchResult]),
+            );
+            component['onSearchInput']('query');
+            vi.advanceTimersByTime(300);
+            component['selectedIndex'].set(1);
+            fixture.detectChanges();
+
+            const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            const activeId = input.getAttribute('aria-activedescendant')!;
+            const option = fixture.nativeElement.querySelector(`#${activeId}`) as HTMLElement;
+            expect(input.getAttribute('aria-expanded')).toBe('true');
+            expect(option.getAttribute('role')).toBe('option');
+            expect(option.textContent).toContain('B');
+            expect(option.closest('[role="listbox"]')?.id).toBe(input.getAttribute('aria-controls'));
+            vi.useRealTimers();
+        });
+
+        it('points the input at no result while skeletons replace the rows', () => {
+            (component as any).results.set([{ id: '1', type: 'exercise', title: 'A' }]);
+            (component as any).isLoading.set(true);
+            (component as any).selectedIndex.set(0);
+            fixture.detectChanges();
+
+            const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            expect(input.getAttribute('aria-activedescendant')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[role="listbox"]#global-search-results')).toBeNull();
+        });
+
+        it('puts letters typed before the input has focus into the search box', () => {
+            vi.useFakeTimers();
+            (document.activeElement as HTMLElement | null)?.blur();
+
+            component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 'g', cancelable: true }));
+            component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 'i', cancelable: true }));
+            component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 't', cancelable: true }));
+
+            expect((component as any).searchQuery()).toBe('git');
+            vi.useRealTimers();
+        });
+
+        it('leaves letters alone once the input has focus', () => {
+            const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            input.focus();
+            const event = new KeyboardEvent('keydown', { key: 'g', cancelable: true });
+
+            component.handleKeyboardEvent(event);
+
+            expect(event.defaultPrevented).toBe(false);
+            expect((component as any).searchQuery()).toBe('');
+        });
+
         it('should call preventDefault on arrow keys', () => {
             const downEvent = new KeyboardEvent('keydown', { key: 'ArrowDown' });
             const downPreventDefaultSpy = vi.spyOn(downEvent, 'preventDefault');
@@ -1195,7 +1266,7 @@ describe('GlobalSearchModalComponent', () => {
                 { facet: 'type', value: 'exercise' },
                 { facet: 'course', value: '5' },
             ]);
-            (component as any).highlightChip(1);
+            (component as any).onBackspaceAtStart(new KeyboardEvent('keydown', { key: 'Backspace', cancelable: true }));
 
             component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
 
@@ -1348,13 +1419,23 @@ describe('GlobalSearchModalComponent', () => {
                 expect((component as any).searchQuery()).toBe('');
             });
 
-            it('still removes a chip highlighted with ArrowDown on Delete', () => {
+            it('goes from the input straight to the results on ArrowDown, past the chips', () => {
+                (component as any).results.set([{ id: '1', type: 'exercise', title: 'A' }]);
+                fixture.detectChanges();
+
                 searchInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
-                expect((component as any).selectedChip()).toBe(0);
+
+                expect((component as any).selectedChip()).toBe(-1);
+                expect((component as any).selectedIndex()).toBe(0);
+            });
+
+            it('still removes a chip highlighted with Backspace on Delete', () => {
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
 
                 searchInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }));
 
-                expect((component as any).tokens()).toEqual([{ facet: 'course', value: '5' }]);
+                expect((component as any).tokens()).toEqual([{ facet: 'type', value: 'exercise' }]);
             });
         });
     });

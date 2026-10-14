@@ -49,6 +49,7 @@
             "contentHitsRow": "Folien & Videos: {{ count }} Treffer in {{ lectures }}",
             "contentHitsRowAction": "Anzeigen",
             "showMoreResults": "Mehr Ergebnisse anzeigen",
+            "resultsLabel": "Suchergebnisse",
             "noResultsFound": "Keine Ergebnisse gefunden",
             "searchPlaceholder": "Suche...",
             "tooShortQueryHint": "Bitte gib einen längeren Suchbegriff ein.",
