@@ -7,23 +7,33 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.RETURNS_DEFAULTS;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockingDetails;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
@@ -42,6 +52,7 @@ import de.tum.cit.aet.artemis.core.exception.TooManyRequestsAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionAgentProperties;
@@ -66,17 +77,27 @@ import de.tum.cit.aet.artemis.hyperion.protocol.GenerationToolchain;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseMetadataSuggestionService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationVersionRecoveryService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmissionService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionEffortProfileService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationBaseline;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationGrading;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationPersistenceService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationRepositoryRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationRestoreMetadataService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.GenerationRestoreTestCasesService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
+import de.tum.cit.aet.artemis.localvc.service.GitService;
+import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
@@ -875,11 +896,76 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     private HyperionExerciseGenerationResource createResource(HyperionEffortProfileService profiles) {
+        return createResource(profiles, generationRevertService);
+    }
+
+    private HyperionExerciseGenerationResource createResource(HyperionEffortProfileService profiles, ExerciseGenerationRevertService revertService) {
         var capabilities = new GenerationCapabilityService(agentSystemPromptService, auxiliaryRepositoryRepository, programmingExerciseRepository, jobService, sandboxClient);
         var admission = new GenerationAdmissionService(programmingExerciseRepository, capabilities, jobService, agentSystemPromptService, reviewCommentContextRenderer,
                 sandboxClient, generationBudgetService, generationCapacityHealthIndicator, profiles);
-        return new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, capabilities, jobService, agentSystemPromptService, admission,
-                generationRevertService, profiles, metadataSuggestionService);
+        return new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, capabilities, jobService, agentSystemPromptService, admission, revertService,
+                profiles, metadataSuggestionService);
     }
 
+    @ParameterizedTest
+    @CsvSource({ "manual-template, false, false", "manual-template, true, false", "manual-solution, false, false", "adapted-template, false, true" })
+    void repositoryRefusalReleasesOnlyConfirmedNoWriteFirstAttempts(String scenario, boolean recovering, boolean throwingWrite, @TempDir Path temporaryDirectory) throws Exception {
+        GitService gitService = mock(GitService.class);
+        GenerationPersistenceService persistenceService = mock(GenerationPersistenceService.class,
+                invocation -> invocation.getMethod().getReturnType() == boolean.class ? true : RETURNS_DEFAULTS.answer(invocation));
+        LocalVCRepositoryUri templateUri = mock(LocalVCRepositoryUri.class);
+        LocalVCRepositoryUri solutionUri = mock(LocalVCRepositoryUri.class);
+        Repository templateRepository = mock(Repository.class);
+        Repository solutionRepository = mock(Repository.class);
+        testExercise = spy(testExercise);
+        testExercise.setProblemStatement("generated statement");
+        testExercise.setTitle("Generated title");
+        doReturn(templateUri).when(testExercise).getRepositoryURI(RepositoryType.TEMPLATE);
+        doReturn(solutionUri).when(testExercise).getRepositoryURI(RepositoryType.SOLUTION);
+        when(gitService.getOrCheckoutRepositoryOnBranch(eq(templateUri), any(Path.class), eq("main"))).thenReturn(templateRepository);
+        when(gitService.getOrCheckoutRepositoryOnBranch(eq(solutionUri), any(Path.class), eq("main"))).thenReturn(solutionRepository);
+        when(gitService.getLastCommitHash(templateUri, "main")).thenReturn(scenario.equals("manual-template") ? "manual-template" : "adapted-template");
+        when(gitService.getLastCommitHash(solutionUri, "main")).thenReturn(scenario.equals("manual-solution") ? "manual-solution" : "adapted-solution");
+        if (throwingWrite) {
+            doThrow(new IllegalStateException("Push outcome unknown")).when(gitService).resetToCommitAndForcePush(templateRepository, "old-template", "adapted-template", "main");
+        }
+        var recovery = mock(GenerationVersionRecoveryService.class);
+        var metadata = mock(GenerationRestoreMetadataService.class);
+        var testCases = mock(GenerationRestoreTestCasesService.class);
+        when(metadata.canRestore(eq(1L), any())).thenReturn(true);
+        when(testCases.canRestore(eq(1L), any())).thenReturn(true);
+        var baseline = new ExerciseGenerationBaseline("adapt-job", GenerationMode.ADAPT, Map.of(RepositoryType.TEMPLATE, "old-template", RepositoryType.SOLUTION, "old-solution"),
+                Map.of(RepositoryType.TEMPLATE, "adapted-template", RepositoryType.SOLUTION, "adapted-solution"), "old statement", "Old title", "generated statement",
+                "Generated title", "main", GenerationGrading.Snapshot.EMPTY, GenerationGrading.Snapshot.EMPTY);
+        var pair = new GenerationVersionRecoveryService.Recovery("adapt-job", 82L, null, null, baseline);
+        when(recovery.find(1L)).thenReturn(Optional.of(pair));
+        var realRevertService = new ExerciseGenerationRevertService(recovery, metadata, testCases,
+                new GenerationRepositoryRevertService(gitService, new TempFileUtilService(temporaryDirectory)), persistenceService, "main");
+        resource = createResource(effortProfileService, realRevertService);
+        when(programmingExerciseRepository.findWithAllParticipationsById(1L)).thenReturn(Optional.of(testExercise));
+        when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(1L)).thenReturn(true);
+        when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
+        when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
+        when(jobService.isOwnedActiveJob(1L, "revert-slot")).thenReturn(true);
+        when(jobService.isRevertRecoveryRetry("revert-slot")).thenReturn(recovering);
+
+        var response = resource.revertExerciseGeneration(1L, "adapt-job");
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().fullyReverted()).isFalse();
+        boolean writeAttempted = !scenario.equals("manual-template");
+        verify(gitService, times(writeAttempted ? 1 : 0)).resetToCommitAndForcePush(any(), any(), any(), any());
+        assertThat(response.getBody().revertedRepositories()).hasSize(scenario.equals("manual-solution") ? 1 : 0);
+        assertThat(mockingDetails(persistenceService).getInvocations()).noneMatch(invocation -> invocation.getMethod().getName().equals("resyncAfterRevertWithSignal"));
+        if (recovering || writeAttempted) {
+            verify(jobService, never()).clearRevertSlot(1L, "revert-slot");
+            verify(jobService).retainRevertRecoverySlot(1L, "revert-slot");
+        }
+        else {
+            verify(jobService).clearRevertSlot(1L, "revert-slot");
+            verify(jobService, never()).retainRevertRecoverySlot(1L, "revert-slot");
+        }
+        assertThat(realRevertService.findRevertibleJobId(1L)).contains("adapt-job");
+    }
 }
