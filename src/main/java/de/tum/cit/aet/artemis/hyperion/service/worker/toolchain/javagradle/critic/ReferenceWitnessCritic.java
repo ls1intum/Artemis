@@ -22,6 +22,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome.Disposition;
 
@@ -89,7 +90,7 @@ class ReferenceWitnessCritic {
             return parse(response, specification, templateStatuses, candidates);
         }
         catch (RuntimeException exception) {
-            log.warn("Contract-witness adjudication failed: {}", exception.getMessage());
+            log.warn("Contract-witness adjudication failed: {}", ProviderFailureClass.describe(exception));
             return unavailable("The independent contract-witness adjudicator failed.", candidates);
         }
     }

@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static de.tum.cit.aet.artemis.exam.service.ExamSubmissionService.isContentEqualTo;
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.EXERCISE_START_STATUS;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -9,6 +11,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +29,7 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
@@ -33,6 +37,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -46,6 +51,7 @@ import de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.exam.dto.submit.SubmitStudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -119,11 +125,15 @@ public class StudentExamService {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final ExamRepository examRepository;
-
     private final StudentExamAssignmentService assignmentService;
 
-    private final ExamExercisePreparationStatusService preparationStatus;
+    private final ExamRepository examRepository;
+
+    private final ExamUserRepository examUserRepository;
+
+    private final CacheManager cacheManager;
+
+    private final WebsocketMessagingService websocketMessagingService;
 
     private final TaskScheduler scheduler;
 
@@ -135,9 +145,9 @@ public class StudentExamService {
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
             Optional<ModelingSubmissionApi> modelingSubmissionApi, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository,
-            StudentExamAssignmentService assignmentService, ExamExercisePreparationStatusService preparationStatus, @Qualifier("taskScheduler") TaskScheduler scheduler,
-            ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper,
+            ProgrammingTriggerService programmingTriggerService, ExerciseRepository exerciseRepository, ExamRepository examRepository, ExamUserRepository examUserRepository,
+            CacheManager cacheManager, WebsocketMessagingService websocketMessagingService, StudentExamAssignmentService assignmentService,
+            @Qualifier("taskScheduler") TaskScheduler scheduler, ExamService examService, StudentExamSubmitMapper studentExamSubmitMapper,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, CourseAthenaConfigRepository courseAthenaConfigRepository) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
@@ -156,7 +166,9 @@ public class StudentExamService {
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
         this.assignmentService = assignmentService;
-        this.preparationStatus = preparationStatus;
+        this.examUserRepository = examUserRepository;
+        this.cacheManager = cacheManager;
+        this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
         this.examService = examService;
         this.studentExamSubmitMapper = studentExamSubmitMapper;
@@ -575,7 +587,7 @@ public class StudentExamService {
         testRun.setUser(userRepository.getUser());
         testRun.setTestRun(true);
         testRun.setSubmitted(false);
-        testRun = assignmentService.assignTestRun(testRun);
+        testRun = assignmentService.isProtectionEnabled() ? assignmentService.assignTestRun(testRun) : studentExamRepository.save(testRun);
         return testRun;
     }
 
@@ -741,7 +753,7 @@ public class StudentExamService {
         var failedExamsCounter = new AtomicInteger(0);
         var startedAt = ZonedDateTime.now();
         var lock = new ReentrantLock();
-        preparationStatus.update(examId, 0, 0, studentExamCount, 0, startedAt, lock);
+        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExamCount, 0, startedAt, lock);
 
         try (var threadPool = Executors.newFixedThreadPool(10)) {
             var futures = rowsByStudentExamId.entrySet().stream().map(entry -> {
@@ -755,18 +767,19 @@ public class StudentExamService {
                 return CompletableFuture
                         .runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExamId, student, exercises, testExam, false, startedExerciseIds, generatedParticipations,
                                 true), threadPool)
-                        .thenRun(() -> preparationStatus.update(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
+                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExamCount,
                                 generatedParticipations.size(), startedAt, lock))
                         .exceptionally(throwable -> {
                             log.error("Exception while preparing exercises for student exam {}", studentExamId, throwable);
-                            preparationStatus.update(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExamCount, generatedParticipations.size(),
-                                    startedAt, lock);
+                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExamCount,
+                                    generatedParticipations.size(), startedAt, lock);
                             return null;
                         });
             }).toArray(CompletableFuture[]::new);
             return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
                 threadPool.shutdown();
-                preparationStatus.update(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExamCount, generatedParticipations.size(), startedAt, lock);
+                sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExamCount, generatedParticipations.size(), startedAt,
+                        lock);
                 return generatedParticipations.size();
             });
         }
@@ -815,12 +828,50 @@ public class StudentExamService {
         return startedStudentIdsByExerciseId;
     }
 
+    private void sendAndCacheExercisePreparationStatus(Long examId, int finished, int failed, int overall, int participations, ZonedDateTime startTime, ReentrantLock lock) {
+        // Synchronizing and comparing to avoid race conditions here
+        // Otherwise it can happen that a status with less completed exams is sent after one with a higher value
+        try {
+            lock.lock();
+            ExamExerciseStartPreparationStatus status = null;
+            var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+            if (cache != null) {
+                var oldValue = cache.get(examId);
+                if (oldValue != null) {
+                    var oldStatus = (ExamExerciseStartPreparationStatus) oldValue.get();
+                    if (oldStatus != null) {
+                        status = new ExamExerciseStartPreparationStatus(Math.max(finished, oldStatus.finished()), Math.max(failed, oldStatus.failed()),
+                                Math.max(overall, oldStatus.overall()), Math.max(participations, oldStatus.participationCount()), startTime);
+                    }
+                }
+                if (status == null) {
+                    status = new ExamExerciseStartPreparationStatus(finished, failed, overall, participations, startTime);
+                }
+                cache.put(examId, status);
+            }
+            else {
+                log.warn("Unable to add exam exercise start status to distributed cache because it is null");
+            }
+            websocketMessagingService.sendMessage(EXERCISE_START_STATUS.at(examId), status);
+        }
+        catch (Exception e) {
+            log.warn("Failed to send exercise preparation status", e);
+        }
+        finally {
+            lock.unlock();
+        }
+    }
+
     public Optional<ExamExerciseStartPreparationStatus> getExerciseStartStatusOfExam(Long examId) {
-        return preparationStatus.get(examId);
+        return Optional.ofNullable(cacheManager.getCache(EXAM_EXERCISE_START_STATUS)).map(cache -> cache.get(examId))
+                .map(wrapper -> (ExamExerciseStartPreparationStatus) wrapper.get());
     }
 
     public void invalidateExerciseStartStatus(Long examId) {
-        preparationStatus.invalidate(examId);
+        var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+        if (cache != null) {
+            cache.evict(examId);
+        }
     }
 
     /**
@@ -833,7 +884,14 @@ public class StudentExamService {
      */
     public StudentExam generateIndividualStudentExam(Exam exam, User student) {
         long start = System.nanoTime();
-        StudentExam studentExam = assignmentService.assignStudent(exam.getId(), student.getId());
+        StudentExam studentExam;
+        if (assignmentService.isProtectionEnabled()) {
+            studentExam = assignmentService.assignStudent(exam.getId(), student.getId());
+        }
+        else {
+            Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+            studentExam = studentExamRepository.createRandomStudentExams(examWithExercises, Set.of(student.getId())).getFirst();
+        }
         // The bulk paths never read the user back, so creation only writes the foreign key and leaves a stub behind.
         // This one hands its student exam to a caller that returns it to the client, so it gets the real user it
         // already holds. Safe to set here: the save ran in its own transaction, so this entity is detached and no
@@ -855,20 +913,43 @@ public class StudentExamService {
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateStudentExams(final Exam exam) {
-        return assignmentService.assignRegisteredStudents(exam.getId(), false);
+        if (assignmentService.isProtectionEnabled()) {
+            return assignmentService.assignRegisteredStudents(exam.getId(), false);
+        }
+        // The caller has already deleted the existing student exams and invalidated the exercise start status, and
+        // hands over an exam that carries its exercise groups. Re-reading the exam graph here loaded it a second time
+        // and re-ran a delete that had nothing left to remove. Only the registered students are still missing, and
+        // those are read as ids: ExamUser holds an eager association to User, so assembling them from the graph cost
+        // one select per student.
+        Set<Long> registeredUserIds = examUserRepository.findUserIdsByExamId(exam.getId());
+
+        // StudentExams are saved in the called method
+        return studentExamRepository.createRandomStudentExams(exam, registeredUserIds);
     }
 
     /**
      * Generates the missing student exams randomly based on the exam configuration and the exercise groups.
      * The difference between all registered users and the users who already have an individual exam is the set of users for which student exams will be created.
      * <p>
-     * Selection and insertion are serialized on the exam row; programming authoring is excluded until assignment commits.
+     * Authoring protection uses the shared selection lock. When it is disabled, the existing unguarded assignment
+     * behavior remains: concurrent calls can both observe a missing student exam, and a group move can race selection.
      *
      * @param exam the exam to generate student exams for
      * @return the list of student exams with their corresponding users
      */
     public List<StudentExam> generateMissingStudentExams(Exam exam) {
         this.invalidateExerciseStartStatus(exam.getId());
-        return assignmentService.assignRegisteredStudents(exam.getId(), true);
+        if (assignmentService.isProtectionEnabled()) {
+            return assignmentService.assignRegisteredStudents(exam.getId(), true);
+        }
+        Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+
+        // Both sides of this subtraction are only ever compared, so ids are enough. Reading them as users loaded one
+        // entity per registered student and one per student who already has an exam.
+        Set<Long> missingUserIds = new HashSet<>(examUserRepository.findUserIdsByExamId(examWithExercises.getId()));
+        missingUserIds.removeAll(studentExamRepository.findUserIdsWithStudentExamsForExam(examWithExercises.getId()));
+
+        // StudentExams are saved in the called method
+        return studentExamRepository.createRandomStudentExams(examWithExercises, missingUserIds);
     }
 }

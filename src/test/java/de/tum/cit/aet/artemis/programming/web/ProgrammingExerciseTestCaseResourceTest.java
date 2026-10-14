@@ -112,10 +112,6 @@ class ProgrammingExerciseTestCaseResourceTest {
             assertThat(leaseHeld).isTrue();
             return null;
         }).when(scheduleService).scheduleOperations(exerciseId);
-        doAnswer(invocation -> {
-            assertThat(leaseHeld).isTrue();
-            return null;
-        }).when(updatedTestCase).setExercise(null);
         ExerciseVersionService versionService = mock(ExerciseVersionService.class);
         doAnswer(invocation -> {
             assertThat(leaseHeld).isTrue();
@@ -128,6 +124,7 @@ class ProgrammingExerciseTestCaseResourceTest {
         resource.updateTestCases(exerciseId, Set.of(update));
 
         verify(mutationGuard).claimExternalMutation(exerciseId);
+        verify(updatedTestCase, never()).setExercise(any());
         verify(versionService).createExerciseVersionSynchronously(fresh, user);
         verify(versionService, never()).createExerciseVersion(any(ProgrammingExercise.class), any(User.class));
         assertThat(leaseHeld).isFalse();

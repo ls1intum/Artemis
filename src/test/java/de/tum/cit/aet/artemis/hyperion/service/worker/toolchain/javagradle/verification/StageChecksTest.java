@@ -266,6 +266,19 @@ class StageChecksTest {
     }
 
     @Test
+    void restoresFrozenSpecificationLargerThanTheSandboxArgumentLimitThroughArchiveTransfer() {
+        String approved = "# Frozen specification\n" + "boundary ä\n".repeat(15_000);
+        assertThat(approved.getBytes(StandardCharsets.UTF_8)).hasSizeGreaterThan(128 * 1024);
+        approvedSpecs.approve("large", approved);
+        var files = new FakeInteractiveSandbox().withFile("/workspace/SPEC.md", "tampered");
+
+        assertThat(service.restoreApprovedSpecAfterCommand(files, "large")).isPresent();
+        assertThat(files.files()).containsEntry("/workspace/SPEC.md", approved);
+        assertThat(service.restoreApprovedSpecAfterCommand(files, "large")).isEmpty();
+        assertThat(files.executedCommands()).noneMatch(command -> command.contains("base64"));
+    }
+
+    @Test
     void restoreApprovedSpecAfterCommand_restoresAnOutOfBandShellMutation() {
         approvedSpecs.approve("s", specWithDesign("| FuelStrategy | designed by students | student-creates |\n"));
         sandbox.spec = "tampered";

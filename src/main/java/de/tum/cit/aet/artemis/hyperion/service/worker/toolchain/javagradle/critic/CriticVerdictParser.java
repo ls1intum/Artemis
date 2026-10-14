@@ -20,6 +20,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
 
 /**
  * Turns one full-artifact reviewer response into findings, or into no verdict at all.
@@ -132,7 +133,7 @@ class CriticVerdictParser {
             parsed = objectMapper.readValue(extractJsonPayload(text), CriticResponse.class);
         }
         catch (Exception e) {
-            log.debug("Full-artifact review JSON did not parse ({}); failing closed.", e.getMessage());
+            log.debug("Full-artifact review JSON did not parse ({}); failing closed.", ProviderFailureClass.describe(e));
             return null;
         }
         if (parsed == null || pass == ReviewPass.CONTRACT && malformedContractVerdict(parsed, requireScopeVerdict, expectExampleChecks, expectApiChecks, expectTemplateChecks)

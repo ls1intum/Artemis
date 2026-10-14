@@ -21,6 +21,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic.SpecificationReview;
 
 /**
@@ -194,8 +195,8 @@ class SpecificationReviewCritic {
             return parseSpecificationReview(correctedParsed, evidence, correctionContinuity.review());
         }
         catch (RuntimeException e) {
-            log.warn("Specification review failed: {}", e.getMessage());
-            return incompleteSpecificationReview("Reviewer call failed: " + safeFailureDetail(e), previousReview);
+            log.warn("Specification review failed: {}", ProviderFailureClass.describe(e));
+            return incompleteSpecificationReview("Reviewer call failed: " + ProviderFailureClass.describe(e), previousReview);
         }
     }
 
@@ -318,7 +319,7 @@ class SpecificationReviewCritic {
             return objectMapper.readValue(extractJsonPayload(text), SpecificationReviewResponse.class);
         }
         catch (Exception e) {
-            log.debug("Specification review JSON did not parse ({}); failing closed.", e.getMessage());
+            log.debug("Specification review JSON did not parse ({}); failing closed.", ProviderFailureClass.describe(e));
             return null;
         }
     }
@@ -583,11 +584,6 @@ class SpecificationReviewCritic {
             }
         }
         return List.copyOf(combined);
-    }
-
-    private static String safeFailureDetail(RuntimeException exception) {
-        String message = exception.getMessage();
-        return exception.getClass().getSimpleName() + (message == null || message.isBlank() ? "" : ": " + message);
     }
 
     private static String specificationReviewAuditSummary(SpecificationLearningFitItem learningFit, SpecificationConceptDisposition conceptDisposition,

@@ -21,6 +21,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic.ConceptSelectionReview;
 
 /**
@@ -99,7 +100,7 @@ class ConceptSelectionCritic {
             return parseConceptReview(readConceptReviewResponse(correction), candidates, candidateEvidence);
         }
         catch (RuntimeException e) {
-            log.warn("Concept review failed: {}", e.getMessage());
+            log.warn("Concept review failed: {}", ProviderFailureClass.describe(e));
             return new ConceptSelectionReview(false, null, List.of(), "");
         }
     }
@@ -112,7 +113,7 @@ class ConceptSelectionCritic {
             return objectMapper.readValue(extractJsonPayload(text), ConceptReviewResponse.class);
         }
         catch (Exception e) {
-            log.debug("Concept review JSON did not parse ({}); failing closed.", e.getMessage());
+            log.debug("Concept review JSON did not parse ({}); failing closed.", ProviderFailureClass.describe(e));
             return null;
         }
     }

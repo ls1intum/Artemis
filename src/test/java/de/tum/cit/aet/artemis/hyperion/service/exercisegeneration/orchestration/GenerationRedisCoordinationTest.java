@@ -42,6 +42,133 @@ class GenerationRedisCoordinationTest {
         return DockerClientFactory.instance().isDockerAvailable();
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    void cancellationRecordBlocksSaveWithoutFastSignalAndAfterLostAcknowledgement(boolean acknowledgementLost) {
+        try (var valkey = ValkeyTestContainerFactory.create()) {
+            valkey.start();
+            var identity = new RedisNodeIdentity("artemis-core", true, true);
+            var redis = client("redis://" + valkey.getHost() + ":" + valkey.getMappedPort(6379), identity);
+            try {
+                var resolver = new RedisClientListResolver(new RedissonConnectionFactory(redis));
+                var provider = spy(new RedissonDistributedDataProviderService(redis, resolver, identity));
+                var slots = spy(provider.<String, GenerationJobService.JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+                doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
+                var jobs = new GenerationJobService(provider, _ -> {
+                }, org.mockito.Mockito.mock(GenerationTokenUsageService.class));
+                jobs.init();
+                var user = new User();
+                user.setLogin("editor");
+                var exercise = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise();
+                exercise.setId(42L);
+                String job = jobs.startJob(user, exercise, "brief", GenerationMode.GENERATE);
+                if (acknowledgementLost) {
+                    doAnswer(call -> {
+                        call.callRealMethod();
+                        throw new IllegalStateException("CAS acknowledgement lost");
+                    }).doCallRealMethod().when(slots).replace(org.mockito.ArgumentMatchers.eq("42"), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+                    assertThatThrownBy(() -> jobs.requestCancellation(42, job, user)).isInstanceOf(ServiceUnavailableAlertException.class);
+                }
+                else {
+                    assertThat(jobs.requestCancellation(42, job, user)).isTrue();
+                }
+                @SuppressWarnings("unchecked")
+                var fastSignal = (de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap<String, Boolean>) org.springframework.test.util.ReflectionTestUtils
+                        .getField(jobs, "cancellationMap");
+                fastSignal.remove(job);
+                assertThat(jobs.isCancelled(job)).isFalse();
+                assertThat(slots.get("42").cancellationRequested()).isTrue();
+                assertThat(jobs.heartbeat(42, job)).isTrue();
+                assertThat(slots.get("42").cancellationRequested()).isTrue();
+                assertThat(jobs.enterNonCancellablePhase(42, job)).isFalse();
+                assertThat(jobs.requestCancellation(42, job, user)).isTrue();
+            }
+            finally {
+                redis.shutdown();
+            }
+        }
+    }
+
+    @Test
+    void unknownClientPresenceDoesNotCancelOwnedAuthoringOrAuthorizeSaving() {
+        try (var valkey = ValkeyTestContainerFactory.create()) {
+            valkey.start();
+            var identity = new RedisNodeIdentity("artemis-core", true, true);
+            var redis = client("redis://" + valkey.getHost() + ":" + valkey.getMappedPort(6379), identity);
+            try {
+                var resolver = spy(new RedisClientListResolver(new RedissonConnectionFactory(redis)));
+                var provider = new RedissonDistributedDataProviderService(redis, resolver, identity);
+                var jobs = new GenerationJobService(provider, _ -> {
+                }, org.mockito.Mockito.mock(GenerationTokenUsageService.class));
+                jobs.init();
+                var user = new User();
+                user.setLogin("editor");
+                var exercise = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise();
+                exercise.setId(42L);
+                String job = jobs.startJob(user, exercise, "brief", GenerationMode.GENERATE);
+                var slots = provider.<String, GenerationJobService.JobInfo>getMap(GenerationJobService.JOB_MAP_NAME);
+                var oldHeartbeat = slots.get("42").withHeartbeat(Instant.now().minusSeconds(30));
+                slots.put("42", oldHeartbeat);
+                doReturn(new RedisClientListResolver.ClientListSnapshot(java.util.Map.of(), java.util.Set.of(), false, false)).when(resolver).resolveClients();
+
+                assertThat(jobs.heartbeat(42, job)).isTrue();
+                assertThat(slots.get("42").lastHeartbeatAt()).isAfter(oldHeartbeat.lastHeartbeatAt());
+                assertThat(jobs.isCancelled(job)).isFalse();
+                assertThat(jobs.enterNonCancellablePhase(42, job)).isFalse();
+                assertThatThrownBy(() -> jobs.requestCancellation(42, job, user)).isInstanceOf(ServiceUnavailableAlertException.class);
+                assertThat(jobs.isCancelled(job)).isFalse();
+                assertThat(slots.get("42").cancellable()).isTrue();
+
+                org.mockito.Mockito.doCallRealMethod().when(resolver).resolveClients();
+                assertThat(jobs.enterNonCancellablePhase(42, job)).isTrue();
+                var saving = slots.get("42");
+                doReturn(new RedisClientListResolver.ClientListSnapshot(java.util.Map.of(), java.util.Set.of(), false, false)).when(resolver).resolveClients();
+                assertThat(jobs.heartbeat(42, job)).isFalse();
+                assertThat(jobs.isOwnedActiveJob(42, job)).isFalse();
+                assertThat(jobs.requestCancellation(42, job, user)).isFalse();
+                assertThat(slots.get("42")).isEqualTo(saving);
+            }
+            finally {
+                redis.shutdown();
+            }
+        }
+    }
+
+    @Test
+    void unknownClientPresenceCannotLetALateHeartbeatOverwriteAReplacement() {
+        try (var valkey = ValkeyTestContainerFactory.create()) {
+            valkey.start();
+            var identity = new RedisNodeIdentity("artemis-core", true, true);
+            var redis = client("redis://" + valkey.getHost() + ":" + valkey.getMappedPort(6379), identity);
+            try {
+                var resolver = spy(new RedisClientListResolver(new RedissonConnectionFactory(redis)));
+                var provider = spy(new RedissonDistributedDataProviderService(redis, resolver, identity));
+                var slots = spy(provider.<String, GenerationJobService.JobInfo>getMap(GenerationJobService.JOB_MAP_NAME));
+                doReturn(slots).when(provider).getMap(GenerationJobService.JOB_MAP_NAME);
+                var jobs = new GenerationJobService(provider, _ -> {
+                }, org.mockito.Mockito.mock(GenerationTokenUsageService.class));
+                jobs.init();
+                var user = new User();
+                user.setLogin("editor");
+                var exercise = new de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise();
+                exercise.setId(42L);
+                String job = jobs.startJob(user, exercise, "brief", GenerationMode.GENERATE);
+                var replacement = new GenerationJobService.JobInfo("replacement", "other", 42, Instant.now(), null, provider.getLocalNodeId(), Instant.now(), true, null);
+                doReturn(new RedisClientListResolver.ClientListSnapshot(java.util.Map.of(), java.util.Set.of(), false, false)).when(resolver).resolveClients();
+                doAnswer(call -> {
+                    slots.put("42", replacement);
+                    return call.callRealMethod();
+                }).when(slots).replace(org.mockito.ArgumentMatchers.eq("42"), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+
+                assertThat(jobs.heartbeat(42, job)).isFalse();
+                assertThat(slots.get("42")).isEqualTo(replacement);
+            }
+            finally {
+                redis.shutdown();
+            }
+        }
+    }
+
     @Test
     void independentIncarnationsFenceWritersAndRetainDepartedOwnersUntilExactRecovery() throws Exception {
         try (var valkey = ValkeyTestContainerFactory.create()) {
