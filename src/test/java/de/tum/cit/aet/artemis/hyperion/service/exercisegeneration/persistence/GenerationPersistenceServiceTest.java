@@ -207,7 +207,7 @@ class GenerationPersistenceServiceTest {
             }
             FileUtils.writeStringToFile(root.resolve(".gitignore").toFile(), "*.log\n", StandardCharsets.UTF_8);
             initialized.add().addFilepattern(".").call();
-            initialized.commit().setMessage("Seed").setAuthor("Editor", "editor@example.org").call();
+            GitService.commit(initialized).setMessage("Seed").setAuthor("Editor", "editor@example.org").call();
         }
         var builder = new org.eclipse.jgit.storage.file.FileRepositoryBuilder().setGitDir(root.resolve(".git").toFile()).setWorkTree(root.toFile()).setup();
         Repository realRepository = new Repository(builder, root, templateUri);
