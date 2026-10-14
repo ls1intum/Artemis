@@ -99,8 +99,6 @@ public class GenerationJobService {
 
     private final GenerationCancelHooks cancelHooks;
 
-    private final GenerationClusterTopology topology;
-
     private final Duration terminalReplayTtl;
 
     private final boolean exactProviderUsage;
@@ -166,7 +164,6 @@ public class GenerationJobService {
         this.staleJobTimeout = staleJobTimeout;
         this.maxJobDuration = maxJobDuration;
         this.cancelHooks = new GenerationCancelHooks(distributedDataProvider, cancellationExecutor);
-        this.topology = new GenerationClusterTopology(distributedDataProvider, expectedDataMemberCount);
         this.terminalReplayTtl = terminalReplayTtl;
         this.exactProviderUsage = exactProviderUsage;
     }
@@ -266,7 +263,6 @@ public class GenerationJobService {
     /** Initializes distributed job state and validates timeout settings. */
     @PostConstruct
     public void init() {
-        topology.validateConfiguration();
         HyperionGenerationTimeouts.validateMaxJobDuration(maxJobDuration);
         Duration longestJobDuration = longestConfiguredJobDuration == null || longestConfiguredJobDuration.compareTo(maxJobDuration) < 0 ? maxJobDuration
                 : longestConfiguredJobDuration;
@@ -361,7 +357,6 @@ public class GenerationJobService {
         String key = key(exerciseId);
         lockJobSlot(key);
         try {
-            topology.verifyAllMembers();
             JobInfo existing = jobMap.get(key);
             if (existing == null) {
                 return;
@@ -382,7 +377,6 @@ public class GenerationJobService {
     private void claimSlot(String key, JobInfo newJob, String conflictMessage, String errorKey) {
         lockJobSlot(key);
         try {
-            topology.verifyAllMembers();
             JobInfo existing = jobMap.get(key);
             if (existing != null) {
                 Instant now = Instant.now();
@@ -543,15 +537,14 @@ public class GenerationJobService {
      * @return whether this node still owns an uncancelled job
      */
     public boolean enterNonCancellablePhase(long exerciseId, String jobId) {
-        if (!topology.permitsOwnership()) {
-            return false;
-        }
+        externalMutationService.claimSaveSlot(exerciseId, jobId);
+        boolean entered = false;
+        boolean transitionAttempted = false;
+        boolean locked = false;
         String key = key(exerciseId);
-        lockJobSlot(key);
         try {
-            if (!topology.permitsOwnership()) {
-                return false;
-            }
+            lockJobSlot(key);
+            locked = true;
             JobInfo job = jobMap.get(key);
             if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
                 return false;
@@ -560,17 +553,36 @@ public class GenerationJobService {
                 // Cancellation already won this job under the same lock: the run is terminal as CANCELLED, so this must not flip it non-cancellable or let the caller persist.
                 return false;
             }
+            transitionAttempted = true;
             if (!jobMap.replace(key, job, job.withHeartbeat(Instant.now()).withCancellable(false))) {
+                transitionAttempted = false;
                 // The slot changed under an expired lease, so this node no longer owns the job and must not enter the phase that writes to Git and the database.
                 return false;
             }
+            entered = true;
         }
         finally {
-            unlockJobSlot(key);
+            if (locked) {
+                unlockJobSlot(key);
+            }
+            if (!entered && !transitionAttempted) {
+                externalMutationService.releaseSaveSlot(exerciseId, jobId);
+            }
+            else if (!entered) {
+                externalMutationService.retainSaveRecovery(exerciseId, jobId);
+            }
         }
         // The sandbox phase is over; there is no longer an in-flight tool/build operation that a cancel hook may safely interrupt.
         cancelHooks.deregister(jobId);
         return true;
+    }
+
+    public String claimSeedSlot(long exerciseId) {
+        return externalMutationService.claimSeedSlot(exerciseId);
+    }
+
+    public void clearSeedSlot(long exerciseId, String token) {
+        externalMutationService.clearSeedSlot(exerciseId, token);
     }
 
     public boolean hasActiveJob(long exerciseId) {
@@ -591,17 +603,15 @@ public class GenerationJobService {
      * @return true if this JVM still owns the active job
      */
     public boolean isOwnedActiveJob(long exerciseId, String jobId) {
-        if (!topology.permitsOwnership()) {
-            return false;
+        if (jobId.startsWith(REVERT_JOB_PREFIX) || jobId.startsWith(GenerationRecoverySlots.RETRY_PREFIX)) {
+            return externalMutationService.owns(exerciseId, jobId);
         }
         String key = key(exerciseId);
         lockJobSlot(key);
         try {
-            if (!topology.permitsOwnership()) {
-                return false;
-            }
             JobInfo job = jobMap.get(key);
-            return job != null && job.jobId().equals(jobId) && localNodeId != null && (job.ownerNodeId() == null || job.ownerNodeId().equals(localNodeId));
+            return job != null && job.jobId().equals(jobId) && localNodeId != null && (job.ownerNodeId() == null || job.ownerNodeId().equals(localNodeId))
+                    && (job.cancellable() || externalMutationService.owns(exerciseId, jobId));
         }
         finally {
             unlockJobSlot(key);
@@ -616,17 +626,14 @@ public class GenerationJobService {
      * @return true if the heartbeat was recorded
      */
     public boolean heartbeat(long exerciseId, String jobId) {
-        if (!topology.permitsOwnership()) {
-            return false;
-        }
         String key = key(exerciseId);
         lockJobSlot(key);
         try {
-            if (!topology.permitsOwnership()) {
-                return false;
-            }
             JobInfo job = jobMap.get(key);
             if (job == null || !job.jobId().equals(jobId) || localNodeId == null || (job.ownerNodeId() != null && !job.ownerNodeId().equals(localNodeId))) {
+                return false;
+            }
+            if (!job.cancellable() && !externalMutationService.owns(exerciseId, jobId)) {
                 return false;
             }
             if (generationBudgetService != null && !generationBudgetService.refreshReservation(job.budgetReservationId())) {
@@ -649,9 +656,7 @@ public class GenerationJobService {
      * @return an opaque slot token that must be passed to {@link #clearRevertSlot(long, String)}
      */
     public String claimRevertSlot(User user, long exerciseId) {
-        return GenerationRecoverySlots.claim(jobMap, user, exerciseId, localNodeId, topology::verifyAllMembers,
-                job -> claimSlot(key(exerciseId), job, "Exercise authoring or another mutation is running; wait before reverting.", "exerciseGenerationRunning"),
-                (token, previousRecovery) -> externalMutationService.releaseRevertSlot(exerciseId, token, previousRecovery));
+        return externalMutationService.claimRevertSlot(exerciseId);
     }
 
     /**
@@ -661,6 +666,7 @@ public class GenerationJobService {
      * @param jobId      exact completed generation job
      */
     public void retainIncompleteGenerationSlot(long exerciseId, String jobId) {
+        externalMutationService.retainSaveRecovery(exerciseId, jobId);
         cleanup.incomplete(exerciseId, jobId, localNodeId);
     }
 
@@ -669,7 +675,7 @@ public class GenerationJobService {
     }
 
     public boolean isRevertRecoveryPending(long exerciseId) {
-        return GenerationRecoverySlots.isPending(jobMap.get(key(exerciseId)));
+        return externalMutationService.isUndoRecovery(exerciseId);
     }
 
     public boolean isRevertRecoveryRetry(String token) {
@@ -684,7 +690,6 @@ public class GenerationJobService {
      * @return an opaque token that must be released with {@link #clearExternalMutationSlot(long, String)}
      */
     public String claimExternalMutationSlot(long exerciseId) {
-        topology.verifyAllMembers();
         return externalMutationService.claimExternalMutationSlot(exerciseId);
     }
 
@@ -709,18 +714,7 @@ public class GenerationJobService {
      * @return the blocking slot, if the exercise currently has one that cannot be reclaimed automatically
      */
     public Optional<WedgedSlotInfo> getWedgedSlotInfo(long exerciseId) {
-        String key = key(exerciseId);
-        lockJobSlot(key);
-        try {
-            JobInfo job = jobMap.get(key);
-            if (job == null || job.cancellable()) {
-                return Optional.empty();
-            }
-            return Optional.of(new WedgedSlotInfo(exerciseId, job.jobId(), slotKind(job), job.ownerNodeId(), job.startedAt(), !reaper.ownerMemberIsPresent(job)));
-        }
-        finally {
-            unlockJobSlot(key);
-        }
+        return externalMutationService.getWedgedSlotInfo(exerciseId);
     }
 
     /**
@@ -736,29 +730,14 @@ public class GenerationJobService {
      * @return whether a departed owner's matching slot was recovered
      */
     public boolean recoverWedgedSlot(long exerciseId, String token) {
-        if (token == null || token.isBlank()) {
+        if (token == null || token.isBlank() || !externalMutationService.recoverWedgedSlot(exerciseId, token)) {
             return false;
         }
-        String key = key(exerciseId);
-        lockJobSlot(key);
-        try {
-            topology.verifyMajority();
-            JobInfo job = jobMap.get(key);
-            if (job == null || !job.jobId().equals(token) || job.cancellable()) {
-                return false;
-            }
-            // Retained partial saves and undos are quiescent; active writers still require owner absence.
-            if (reaper.ownerMemberIsPresent(job) && !GenerationRecoverySlots.isPending(job) && !GenerationRecoverySlots.isGenerationRecovery(job)) {
-                return false;
-            }
-            if (isGenerationJob(job)) {
-                return reaper.stopActiveJob(key, job, Instant.now());
-            }
-            return jobMap.remove(key, job);
+        JobInfo job = jobMap.get(key(exerciseId));
+        if (job != null && job.jobId().equals(token)) {
+            reaper.stopActiveJob(key(exerciseId), job, Instant.now());
         }
-        finally {
-            unlockJobSlot(key);
-        }
+        return true;
     }
 
     private static WedgedSlotKind slotKind(JobInfo job) {
@@ -800,6 +779,7 @@ public class GenerationJobService {
      * @param jobId      the completed job identifier
      */
     public void clearJob(long exerciseId, String jobId) {
+        externalMutationService.releaseSaveSlot(exerciseId, jobId);
         cleanup.finished(exerciseId, jobId);
     }
 

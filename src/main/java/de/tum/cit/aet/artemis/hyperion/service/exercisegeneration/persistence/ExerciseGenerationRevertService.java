@@ -148,11 +148,15 @@ public class ExerciseGenerationRevertService {
      * @return the revert result, or empty when there is no retained baseline to revert to
      */
     public Optional<RevertResult> revert(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot) {
+        return revert(exercise, user, stillOwnsMutationSlot, null);
+    }
+
+    public Optional<RevertResult> revert(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot, String ownershipToken) {
         ExerciseGenerationBaseline baseline = baselineMap.get(exercise.getId());
         if (baseline == null) {
             return Optional.empty();
         }
-        RevertResult result = revertToBaseline(exercise, user, baseline, stillOwnsMutationSlot);
+        RevertResult result = revertToBaseline(exercise, user, baseline, stillOwnsMutationSlot, ownershipToken);
         // Consumed only once every captured repository was reset; a partial failure keeps it so a retry can finish instead of stranding the exercise half-reverted.
         if (result.fullyReverted()) {
             baselineMap.remove(exercise.getId(), baseline);
@@ -160,7 +164,8 @@ public class ExerciseGenerationRevertService {
         return Optional.of(result);
     }
 
-    private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, ExerciseGenerationBaseline baseline, BooleanSupplier stillOwnsMutationSlot) {
+    private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, ExerciseGenerationBaseline baseline, BooleanSupplier stillOwnsMutationSlot,
+            String ownershipToken) {
         if (!persistenceService.canRestoreGrading(exercise.getId(), baseline.previousGrading(), baseline.savedGrading())) {
             log.warn("Refusing to revert exercise {} because its grading no longer matches the generated or original state", exercise.getId());
             return new RevertResult(false, List.of(), false);
@@ -190,7 +195,7 @@ public class ExerciseGenerationRevertService {
                 Map<RepositoryType, String> revertedRepositoryHeads = repositories.captureRepositoryHeads(exercise, repositoryBranch, baseline);
                 fullyReverted = persistenceService.resyncAfterRevertWithSignal(exercise, user, testsBuildSignal, baseline.problemStatement(), baseline.title(),
                         baseline.expectedProblemStatement(), baseline.expectedTitle(), revertedRepositoryHeads, baseline.previousGrading(), baseline.savedGrading(),
-                        stillOwnsMutationSlot);
+                        stillOwnsMutationSlot, ownershipToken);
             }
             catch (RuntimeException e) {
                 log.error("Failed to trigger the grading re-sync after reverting exercise {}; retaining the baseline for retry", exercise.getId(), e);

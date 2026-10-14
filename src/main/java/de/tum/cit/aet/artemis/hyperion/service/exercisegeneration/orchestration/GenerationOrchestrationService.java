@@ -93,7 +93,14 @@ public class GenerationOrchestrationService {
             GenerationProgressSink progress, Consumer<GenerationFileUpdate> files, Consumer<ChatResponse> usage, @Nullable String sourceBrief, Instant deadline,
             @Nullable HyperionGenerationSettings settings) {
         HyperionGenerationSettings resolved = settings == null ? profiles.resolve(null) : settings;
-        var seed = seeds.capture(exercise);
+        String seedToken = jobs.claimSeedSlot(exercise.getId());
+        GenerationSeedService.Seed seed;
+        try {
+            seed = seeds.capture(exercise);
+        }
+        finally {
+            jobs.clearSeedSlot(exercise.getId(), seedToken);
+        }
         var latest = new AtomicReference<GenerationOutput>();
         var terminal = new AtomicReference<WorkerEvent>();
         Set<Long> processed = new HashSet<>();
