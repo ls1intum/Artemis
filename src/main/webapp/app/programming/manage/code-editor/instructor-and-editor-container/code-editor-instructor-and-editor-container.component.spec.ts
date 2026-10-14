@@ -172,6 +172,7 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
                 generationReverted: new Subject(),
                 exerciseContentsInvalidated: new Subject(),
                 running: signal(false),
+                cancellable: signal(false),
                 statusLoading: signal(false),
                 statusLoadFailed: signal(false),
                 attachToJob: vi.fn(),
@@ -1426,7 +1427,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         attachToJob = vi.fn();
         openEditorBottomPanel = vi.fn();
         setCodeEditorContainer(comp, { ...createDefaultContainerStub(), openEditorBottomPanel });
-        (comp as any).generationActivity = { attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => false };
+        (comp as any).generationActivity = { attachToJob, running: () => false, cancellable: () => false, statusLoading: () => false, statusLoadFailed: () => false };
     });
 
     afterEach(() => {
@@ -1552,7 +1553,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     });
 
     it('reports the run state as the adapt blocker once the exercise itself qualifies', () => {
-        (comp as any).generationActivity = { attachToJob, running: () => true, statusLoading: () => false, statusLoadFailed: () => false };
+        (comp as any).generationActivity = { attachToJob, running: () => true, cancellable: () => false, statusLoading: () => false, statusLoadFailed: () => false };
 
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
         expect((comp as any).refineBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
@@ -1601,7 +1602,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     });
 
     it('offers the generation page and explains the lost status while it is unavailable', () => {
-        (comp as any).generationActivity = { running: () => false, statusLoading: () => false, statusLoadFailed: () => true };
+        (comp as any).generationActivity = { running: () => false, cancellable: () => false, statusLoading: () => false, statusLoadFailed: () => true };
 
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.statusUnavailable');
         expect((comp as any).refineBlockedReason()).toBe('artemisApp.review.adaptExercise.statusUnavailable');
@@ -1612,20 +1613,45 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
     });
 
     it('reports the hydrating status as the adapt blocker', () => {
-        (comp as any).generationActivity = { attachToJob, running: () => false, statusLoading: () => true, statusLoadFailed: () => false };
+        (comp as any).generationActivity = { attachToJob, running: () => false, cancellable: () => false, statusLoading: () => true, statusLoadFailed: () => false };
 
         expect((comp as any).adaptBlockedReason()).toBe('artemisApp.review.adaptExercise.checkingStatus');
         expect((comp as any).aiActionsBusy()).toBe(false);
     });
 
+    it('allows statement editing during cancellable authoring but blocks a second run', () => {
+        (comp as any).generationActivity = {
+            attachToJob,
+            running: () => true,
+            cancellable: () => true,
+            statusLoading: () => false,
+            statusLoadFailed: () => false,
+        };
+
+        expect((comp as any).isProblemStatementEditingLocked()).toBe(false);
+        expect((comp as any).isExerciseGenerationActionBlocked()).toBe(true);
+    });
+
+    it('locks statement editing during the non-cancellable save', () => {
+        (comp as any).generationActivity = {
+            attachToJob,
+            running: () => true,
+            cancellable: () => false,
+            statusLoading: () => false,
+            statusLoadFailed: () => false,
+        };
+
+        expect((comp as any).isProblemStatementEditingLocked()).toBe(true);
+    });
+
     it('keeps the editor locked while generation status is hydrating', () => {
-        (comp as any).generationActivity = { attachToJob, running: () => false, statusLoading: () => true, statusLoadFailed: () => false };
+        (comp as any).generationActivity = { attachToJob, running: () => false, cancellable: () => false, statusLoading: () => true, statusLoadFailed: () => false };
 
         expect((comp as any).isExerciseGenerationRunning()).toBe(true);
     });
 
     it('keeps all exercise editing locked when generation status could not be verified', () => {
-        (comp as any).generationActivity = { attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => true };
+        (comp as any).generationActivity = { attachToJob, running: () => false, cancellable: () => false, statusLoading: () => false, statusLoadFailed: () => true };
 
         expect((comp as any).isExerciseGenerationRunning()).toBe(false);
         expect((comp as any).isProblemStatementEditingLocked()).toBe(true);
@@ -1642,6 +1668,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt with feedback'
         (comp as any).generationActivity = {
             attachToJob,
             running: () => false,
+            cancellable: () => false,
             statusLoading: () => status.statusLoading,
             statusLoadFailed: () => status.statusLoadFailed,
         };
