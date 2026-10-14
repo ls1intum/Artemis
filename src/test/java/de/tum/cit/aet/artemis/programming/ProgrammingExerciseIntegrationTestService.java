@@ -1701,7 +1701,7 @@ public class ProgrammingExerciseIntegrationTestService {
             programmingExerciseTestCaseRepository.saveAndFlush(test);
         });
 
-        // Includes the post-lease exercise reload and one channel-ID lookup that refreshes search visibility.
+        // Resetting plus versioning takes 31 queries, the channel search lookup takes one, and the guarded exercise reload takes one.
         // Mapping reset test cases must not pull their exercise or tasks back in.
         final var testCasesResponse = QueryCountAssert
                 .assertThatDb(queryInterceptor, () -> request.patchWithResponseBody("/api" + endpoint, "{}", new TypeReference<List<ProgrammingExerciseTestCaseResponseDTO>>() {
