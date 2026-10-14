@@ -78,9 +78,6 @@ class GenerationJobServiceClusterTest {
 
     private static Config clusterConfig(String clusterName, List<String> seedMembers, int expectedMembers) {
         Config config = new Config();
-        config.getMemberAttributeConfig().setAttribute(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.WRITER_FENCING_MEMBER_ATTRIBUTE, "true");
-        config.getMemberAttributeConfig().setAttribute(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.WRITER_FENCING_MEMBERS_ATTRIBUTE,
-                String.valueOf(expectedMembers));
         config.setClusterName(clusterName);
         NetworkConfig network = config.getNetworkConfig();
         network.setPortAutoIncrement(true);

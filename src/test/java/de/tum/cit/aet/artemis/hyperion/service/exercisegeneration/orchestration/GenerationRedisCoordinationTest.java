@@ -32,7 +32,7 @@ class GenerationRedisCoordinationTest {
     void cancellationRejectsLateFileUpdatesThroughTheExpiringRedisMap() {
         try (var valkey = ValkeyTestContainerFactory.create()) {
             valkey.start();
-            var identity = new RedisNodeIdentity("artemis-core", true, true);
+            var identity = new RedisNodeIdentity("artemis-core");
             var redis = client("redis://" + valkey.getHost() + ":" + valkey.getMappedPort(6379), identity);
             try {
                 var resolver = new RedisClientListResolver(new RedissonConnectionFactory(redis));

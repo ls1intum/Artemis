@@ -49,15 +49,14 @@ public class RedisClientListResolver {
      *                                  authorizing git requests. The port is dropped: it is ephemeral and changes on every reconnect. A client that reconnects can briefly
      *                                  appear under two addresses, and clients behind one NAT gateway share an address, which is why the value is a set.
      * @param coordinationNodeIds   unique process incarnations observed on Redisson connections, separate from display names
-     * @param allWritersFenced      whether every Artemis connection declares a fenced writer or a non-writer role
      * @param complete              whether the lookup covered the whole deployment. A single {@code CLIENT LIST} is answered by one Redis node only, so in cluster mode the
      *                                  result is complete only once every node has answered. Callers that conclude a node is gone from its <em>absence</em> must require
      *                                  this flag, because a partial answer is indistinguishable from a node that shut down.
      */
-    public record ClientListSnapshot(Map<String, Set<String>> addressesByClientName, Set<String> coordinationNodeIds, boolean complete, boolean allWritersFenced) {
+    public record ClientListSnapshot(Map<String, Set<String>> addressesByClientName, Set<String> coordinationNodeIds, boolean complete) {
 
         static ClientListSnapshot incomplete() {
-            return new ClientListSnapshot(Map.of(), Set.of(), false, false);
+            return new ClientListSnapshot(Map.of(), Set.of(), false);
         }
 
         /**
@@ -111,7 +110,7 @@ public class RedisClientListResolver {
             }
             Map<String, Set<String>> addressesByClientName = artemisClientAddresses(clients);
             log.debug("Redis client list based on names: {}", addressesByClientName.keySet());
-            return new ClientListSnapshot(addressesByClientName, coordinationNodeIds(clients), true, allWritersFenced(clients));
+            return new ClientListSnapshot(addressesByClientName, coordinationNodeIds(clients), true);
         }
         catch (RuntimeException e) {
             log.error("Failed to fetch Redis client list within timeout", e);
@@ -128,7 +127,6 @@ public class RedisClientListResolver {
 
         Map<String, Set<String>> addressesByClientName = new HashMap<>();
         Set<String> coordinationNodeIds = new HashSet<>();
-        boolean allWritersFenced = true;
         for (RedisClusterNode clusterNode : clusterNodes) {
             List<RedisClientInfo> clients = clusterConnection.serverCommands().getClientList(clusterNode).collectList().block(LOOKUP_TIMEOUT);
             if (clients == null) {
@@ -136,21 +134,15 @@ public class RedisClientListResolver {
                 return ClientListSnapshot.incomplete();
             }
             coordinationNodeIds.addAll(coordinationNodeIds(clients));
-            allWritersFenced &= allWritersFenced(clients);
             // One client can hold connections to several cluster nodes, so the per-node address sets are merged rather than replaced.
             artemisClientAddresses(clients).forEach((clientName, addresses) -> addressesByClientName.computeIfAbsent(clientName, _ -> new HashSet<>()).addAll(addresses));
         }
         log.debug("Aggregated Redis client list across {} cluster nodes: {}", clusterNodes.size(), addressesByClientName.keySet());
-        return new ClientListSnapshot(addressesByClientName, Set.copyOf(coordinationNodeIds), true, allWritersFenced);
+        return new ClientListSnapshot(addressesByClientName, Set.copyOf(coordinationNodeIds), true);
     }
 
     private static Set<String> coordinationNodeIds(List<RedisClientInfo> clients) {
         return clients.stream().map(RedisClientInfo::getName).filter(Objects::nonNull).filter(RedisNodeIdentity::isCoordinationName).collect(Collectors.toUnmodifiableSet());
-    }
-
-    private static boolean allWritersFenced(List<RedisClientInfo> clients) {
-        return clients.stream().map(RedisClientInfo::getName).filter(Objects::nonNull).filter(name -> name.toLowerCase(Locale.ROOT).startsWith(ARTEMIS_CLIENT_NAME_PREFIX))
-                .allMatch(RedisNodeIdentity::declaresSafeWriterRole);
     }
 
     private static Map<String, Set<String>> artemisClientAddresses(List<RedisClientInfo> clients) {

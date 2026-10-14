@@ -500,6 +500,24 @@ class GenerationTaskServiceTest {
     }
 
     @Test
+    void auxiliaryRepositoryAddedDuringAuthoringRefusesFinalSaveAndRetainsVerifiedCandidate() {
+        GenerationOutcome outcome = outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()), SpecFidelityReport.empty(),
+                Map.of(RepositoryType.SOLUTION, Map.of("src/Stack.java", "class Stack {}")), "# Bounded stack", "");
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(call -> {
+            when(auxiliaryRepositoryRepository.findByExerciseId(EXERCISE_ID)).thenReturn(List.of(new de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository()));
+            return outcome;
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
+        verify(jobService).retainUnsavedArtifacts(eq(EXERCISE_ID), eq(JOB_ID), eq(user.getLogin()), any());
+        verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
+        verify(generationRevertService, never()).invalidateBaseline(EXERCISE_ID);
+        assertThat(sentEvents().getLast().message()).contains("changed during generation", "Nothing was saved", "retained");
+    }
+
+    @Test
     void savedRun_retainsNothingBecauseTheWorkIsAlreadyInTheExercise() {
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any()))
                 .thenReturn(new GenerationPersistenceService.PersistResult(Map.of(), Map.of(RepositoryType.SOLUTION, "solution-commit"), exercise.getProblemStatement(),

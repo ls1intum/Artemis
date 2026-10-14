@@ -8,8 +8,8 @@ class RedisNodeIdentityTest {
 
     @Test
     void repeatedDisplayNameDoesNotReuseProcessIdentity() {
-        var first = new RedisNodeIdentity("artemis-core", true, false);
-        var replacement = new RedisNodeIdentity("artemis-core", true, false);
+        var first = new RedisNodeIdentity("artemis-core");
+        var replacement = new RedisNodeIdentity("artemis-core");
         assertThat(first.connectionName()).isNotEqualTo(replacement.connectionName());
         assertThat(first.connectionName()).isEqualTo(first.connectionName());
         assertThat(RedisNodeIdentity.isCoordinationName(first.connectionName())).isTrue();
@@ -17,12 +17,12 @@ class RedisNodeIdentityTest {
     }
 
     @Test
-    void profilesDoNotAdvertiseDatabaseOwnershipThroughCacheConnections() {
+    void cacheConnectionIdentityDoesNotAdvertiseWriterFencing() {
         for (String profile : new String[] { "core", "localvc", "aiworker", "buildagent" }) {
             var environment = new org.springframework.mock.env.MockEnvironment();
             environment.setActiveProfiles(profile);
-            var identity = new RedisNodeIdentity("artemis-node", environment);
-            assertThat(identity.connectionName()).contains(":observer:");
+            var identity = new RedisNodeIdentity("artemis-node");
+            assertThat(identity.connectionName()).contains(":node:");
             assertThat(RedisNodeIdentity.displayName(identity.connectionName())).isEqualTo("artemis-node");
         }
     }
