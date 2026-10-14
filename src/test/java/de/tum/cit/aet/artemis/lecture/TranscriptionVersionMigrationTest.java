@@ -16,7 +16,7 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 
 class TranscriptionVersionMigrationTest {
 
-    // MySQL initializes its data directory with many fsyncs on first start, which exceeds the container startup timeout on a busy CI runner, so it lives in memory
+    // MySQL may perform many fsyncs when it first initializes its data directory, which can slow startup on a busy CI runner, so it lives in memory
     @ParameterizedTest
     @ValueSource(strings = { "jdbc:tc:postgresql:18.4-alpine:///iris_version_upgrade", "jdbc:tc:mysql:8.4:///iris_version_upgrade?TC_TMPFS=/var/lib/mysql:rw" })
     void initializesOnlyExistingCompletedTranscriptionsWithoutChangingKnownVersions(String url) throws Exception {
