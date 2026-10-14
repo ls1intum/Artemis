@@ -131,6 +131,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly showStatus = input<boolean>(true);
     // If the programming exercise is being created, some features have to be disabled (saving the problemStatement & querying test cases).
     readonly editMode = input<boolean>(true);
+    readonly canonicalBaseIsolation = input(false);
+    readonly awaitingCanonicalSync = signal(false);
     readonly enableResize = input<boolean>(true);
     readonly initialEditorHeight = input.required<MarkdownEditorHeight>();
     /**
@@ -264,15 +266,20 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     private persistProblemStatement(): Observable<void> {
-        if (this.isGeneratingOrRefining()) {
+        if (this.isGeneratingOrRefining() || this.awaitingCanonicalSync()) {
             return EMPTY;
         }
         this.savingInstructions.set(true);
         const currentProblemStatement = this.getCurrentContent() ?? this.exercise().problemStatement;
         const problemStatementToSave = currentProblemStatement?.trim() || undefined;
         const submittedRevision = this.problemStatementRevision;
+        const submittedExerciseId = this.exercise().id!;
+        const submittedDoc = this.problemStatementSyncState?.doc;
         return this.programmingExerciseService.updateProblemStatement(this.exercise().id!, problemStatementToSave).pipe(
-            tap(() => {
+            tap((response) => {
+                if (this.canonicalBaseIsolation() && response.body && submittedDoc) {
+                    this.problemStatementSyncService.acknowledgeCanonicalSave(submittedExerciseId, response.body.problemStatement, submittedDoc);
+                }
                 if (submittedRevision === this.problemStatementRevision && (this.getCurrentContent() ?? this.exercise().problemStatement) === currentProblemStatement) {
                     this.unsavedChanges = false;
                     this.onProblemStatementSaved.emit();
@@ -624,11 +631,15 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         // Keep fallback content LF-only before seeding Yjs. If a Windows client seeds CRLF,
         // Monaco/Yjs offsets diverge by one char per line break on LF peers.
         const normalizedText = this.normalizeLineEndings(initialText);
-        this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, normalizedText);
+        this.awaitingCanonicalSync.set(this.canonicalBaseIsolation());
+        this.problemStatementSyncState = this.canonicalBaseIsolation()
+            ? this.problemStatementSyncService.init(exerciseId, normalizedText, true)
+            : this.problemStatementSyncService.init(exerciseId, normalizedText);
         model.setValue('');
         this.enforceLfEol(model);
         this.createProblemStatementBinding(this.problemStatementSyncState, model, editorInstance);
         this.problemStatementInitialSyncFinalizedSubscription = this.problemStatementSyncService.initialSyncFinalized$.subscribe(({ contentDivergedFromFallback }) => {
+            this.awaitingCanonicalSync.set(false);
             if (contentDivergedFromFallback) {
                 this.unsavedChanges = true;
             }
@@ -660,7 +671,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     private configureActionGuards(): void {
-        const canMutate = () => !this.isGeneratingOrRefining();
+        const canMutate = () => !this.isGeneratingOrRefining() && !this.awaitingCanonicalSync();
         const actions = this.markdownEditorMonaco()?.defaultActions?.();
         actions?.find((action) => action instanceof AttachmentAction)?.setExecutionGuard(canMutate);
         actions?.find((action) => action instanceof UrlAction)?.setExecutionGuard(canMutate);
@@ -675,6 +686,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Tear down Yjs synchronization and release Monaco binding resources.
      */
     private teardownProblemStatementSync() {
+        this.awaitingCanonicalSync.set(false);
         this.problemStatementStateReplacementSubscription?.unsubscribe();
         this.problemStatementStateReplacementSubscription = undefined;
         this.problemStatementInitialSyncFinalizedSubscription?.unsubscribe();

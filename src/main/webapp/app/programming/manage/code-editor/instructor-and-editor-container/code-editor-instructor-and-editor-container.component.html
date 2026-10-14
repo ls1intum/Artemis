@@ -321,6 +321,7 @@
                         [enableResize]="false"
                         [showPreview]="false"
                         [enableExerciseReviewComments]="true"
+                        [canonicalBaseIsolation]="generationSupported()"
                         [isGeneratingOrRefining]="isGeneratingOrRefining() || isProblemStatementEditingLocked()"
                         [mode]="showDiff() ? 'diff' : 'normal'"
                         [renderSideBySide]="allowSplitView()"

@@ -116,6 +116,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     const problemStatementSyncServiceMock = {
         init: vi.fn().mockReturnValue({ doc: yDoc, text: yText, awareness: yAwareness }),
         reset: vi.fn(),
+        acknowledgeCanonicalSave: vi.fn(),
         stateReplaced$: stateReplaced$.asObservable(),
         initialSyncFinalized$: initialSyncFinalized$.asObservable(),
         isAwaitingInitialSync: vi.fn(() => false),
@@ -223,6 +224,20 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         expect(problemStatementSyncServiceMock.init).toHaveBeenCalledWith(exercise.id, exercise.problemStatement);
 
+        fixture.destroy();
+    });
+
+    it('keeps the protected editor read-only until canonical bootstrap completes', () => {
+        fixture.componentRef.setInput('canonicalBaseIsolation', true);
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+        const mockEditor = editor.create();
+        setMarkdownEditorMonaco(comp, { monacoEditor: () => ({ getModel: () => mockEditor.getModel(), getEditor: () => mockEditor }) } as unknown as MarkdownEditorMonacoComponent);
+        comp.ngAfterViewInit();
+        expect(problemStatementSyncServiceMock.init).toHaveBeenCalledWith(exercise.id, exercise.problemStatement ?? '', true);
+        expect(comp.awaitingCanonicalSync()).toBe(true);
+        initialSyncFinalized$.next({ contentChangedDuringFinalize: false, contentDivergedFromFallback: false, finalContent: exercise.problemStatement! });
+        expect(comp.awaitingCanonicalSync()).toBe(false);
         fixture.destroy();
     });
 
@@ -644,7 +659,8 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(click).not.toHaveBeenCalled();
     });
 
-    it('keeps a newer edit dirty when an older save completes', () => {
+    it('keeps a newer edit dirty and advances the shared canonical base when an older save completes', () => {
+        fixture.componentRef.setInput('canonicalBaseIsolation', true);
         fixture.componentRef.setInput('editMode', true);
         setRequiredInputs(fixture, { ...exercise, problemStatement: 'submitted value' });
         fixture.detectChanges();
@@ -656,6 +672,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(response);
         const saved = vi.spyOn(comp.onProblemStatementSaved, 'emit');
 
+        (comp as any).problemStatementSyncState = { doc: yDoc, text: yText, awareness: yAwareness };
         comp.unsavedChanges = true;
         comp.saveInstructions({ stopPropagation: () => {} } as Event);
         currentContent.value = 'newer edit';
@@ -665,6 +682,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         expect(comp.unsavedChangesValue()).toBe(true);
         expect(saved).not.toHaveBeenCalled();
+        expect(problemStatementSyncServiceMock.acknowledgeCanonicalSave).toHaveBeenCalledWith(exercise.id, exercise.problemStatement, yDoc);
     });
 
     it('applies a successful AI response before the loading observable finalizes', () => {
