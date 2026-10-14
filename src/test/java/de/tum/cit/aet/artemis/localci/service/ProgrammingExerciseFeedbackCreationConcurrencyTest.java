@@ -179,9 +179,8 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
         when(build.testsRepoCommitHash()).thenReturn("old-commit");
         when(fixture.ownership().get(EXERCISE_ID))
                 .thenReturn(Optional.of(new ProgrammingExerciseWriteOwnershipService.Ownership("save-token", "owner", "SAVE", Instant.now(), "expected-commit")));
-        when(fixture.ownership().claim(EXERCISE_ID, "LOCALCI")).thenThrow(new IllegalStateException("Exercise write reserved"));
-
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> fixture.service().generateTestCasesFromBuildResult(build, exercise()));
+        assertThat(fixture.service().generateTestCasesFromBuildResult(build, exercise())).isFalse();
+        verify(fixture.ownership(), never()).claim(EXERCISE_ID, "LOCALCI");
 
         verify(fixture.testCaseRepository(), never()).saveAll(anySet());
         verify(fixture.ownership(), never()).release(EXERCISE_ID, "save-token");
@@ -195,9 +194,8 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
         when(fixture.ownership().get(EXERCISE_ID))
                 .thenReturn(Optional.of(new ProgrammingExerciseWriteOwnershipService.Ownership("old-token", "owner", "SAVE", Instant.now(), "expected-commit")));
         when(fixture.ownership().isOwned(EXERCISE_ID, "old-token")).thenReturn(false);
-        when(fixture.ownership().claim(EXERCISE_ID, "LOCALCI")).thenThrow(new IllegalStateException("Exercise write reserved"));
-
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> fixture.service().generateTestCasesFromBuildResult(build, exercise()));
+        assertThat(fixture.service().generateTestCasesFromBuildResult(build, exercise())).isFalse();
+        verify(fixture.ownership(), never()).claim(EXERCISE_ID, "LOCALCI");
 
         verify(fixture.testCaseRepository(), never()).saveAll(anySet());
     }
@@ -243,6 +241,25 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
         assertThat(fixture.service().generateTestCasesFromBuildResult(buildResultWith("newTest"), exercise())).isTrue();
         verify(fixture.testCaseRepository()).saveAll(anySet());
         verify(fixture.ownership()).release(EXERCISE_ID, "test-token");
+    }
+
+    @Test
+    void anotherWriterWinningTheOrdinaryClaimDoesNotDiscardHistoricalResultProcessing() {
+        var fixture = fixture();
+        when(fixture.ownership().claim(EXERCISE_ID, "LOCALCI"))
+                .thenThrow(new de.tum.cit.aet.artemis.core.exception.ConflictException("Reserved", "programmingExercise", "writeReserved"));
+        assertThat(fixture.service().generateTestCasesFromBuildResult(buildResultWith("newTest"), exercise())).isFalse();
+        verify(fixture.testCaseRepository(), never()).saveAll(anySet());
+        verify(fixture.ownership(), never()).release(EXERCISE_ID, "test-token");
+    }
+
+    @Test
+    void databaseFailureDuringOrdinaryClaimIsNotSuppressedAsAConflict() {
+        var fixture = fixture();
+        when(fixture.ownership().claim(EXERCISE_ID, "LOCALCI")).thenThrow(new IllegalStateException("Database unavailable"));
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> fixture.service().generateTestCasesFromBuildResult(buildResultWith("newTest"), exercise()));
+        verify(fixture.testCaseRepository(), never()).saveAll(anySet());
+        verify(fixture.ownership(), never()).release(EXERCISE_ID, "test-token");
     }
 
 }

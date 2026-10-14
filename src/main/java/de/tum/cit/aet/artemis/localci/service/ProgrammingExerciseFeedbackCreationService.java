@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackMessageService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -366,11 +367,20 @@ public class ProgrammingExerciseFeedbackCreationService {
     public boolean generateTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise) {
         long exerciseId = exercise.getId();
         var reservation = writeOwnership.get(exerciseId);
-        if (reservation.isPresent() && buildResult.testsRepoCommitHash() != null && Objects.equals(reservation.get().expectedTestsCommitHash(), buildResult.testsRepoCommitHash())
-                && writeOwnership.isOwned(exerciseId, reservation.get().token())) {
-            return synchronizeTestCases(buildResult, programmingExerciseRepository.findByIdElseThrow(exerciseId));
+        if (reservation.isPresent()) {
+            if (buildResult.testsRepoCommitHash() != null && Objects.equals(reservation.get().expectedTestsCommitHash(), buildResult.testsRepoCommitHash())
+                    && writeOwnership.isOwned(exerciseId, reservation.get().token())) {
+                return synchronizeTestCases(buildResult, programmingExerciseRepository.findByIdElseThrow(exerciseId));
+            }
+            return false;
         }
-        String token = writeOwnership.claim(exerciseId, "LOCALCI");
+        String token;
+        try {
+            token = writeOwnership.claim(exerciseId, "LOCALCI");
+        }
+        catch (ConflictException anotherWriterClaimedFirst) {
+            return false;
+        }
         try {
             ProgrammingExercise current = programmingExerciseRepository.findByIdElseThrow(exerciseId);
             boolean changed = matchesCurrentTestsHead(buildResult, current) && synchronizeTestCases(buildResult, current);
