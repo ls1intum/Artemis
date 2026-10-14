@@ -6,11 +6,14 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -29,6 +32,7 @@ import de.tum.cit.aet.artemis.programming.dto.TestCaseBase;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 
 /**
@@ -76,14 +80,20 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
         return testCase;
     }
 
-    private record Fixture(ProgrammingExerciseFeedbackCreationService service, ProgrammingExerciseTestCaseTestRepository testCaseRepository) {
+    private record Fixture(ProgrammingExerciseFeedbackCreationService service, ProgrammingExerciseTestCaseTestRepository testCaseRepository,
+            ProgrammingExerciseWriteOwnershipService ownership) {
     }
 
     private static Fixture fixture() {
         ProgrammingExerciseTestCaseTestRepository testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
+        var exerciseRepository = mock(ProgrammingExerciseRepository.class);
+        when(exerciseRepository.findByIdElseThrow(EXERCISE_ID)).thenAnswer(ignored -> exercise());
+        var ownership = mock(ProgrammingExerciseWriteOwnershipService.class);
+        when(ownership.claim(EXERCISE_ID, "LOCALCI")).thenReturn("test-token");
+        when(ownership.release(EXERCISE_ID, "test-token")).thenReturn(true);
         var service = new ProgrammingExerciseFeedbackCreationService(testCaseRepository, mock(WebsocketMessagingService.class), mock(ProgrammingExerciseTaskService.class),
-                mock(ProgrammingExerciseRepository.class), mock(StaticCodeAnalysisCategoryRepository.class), mock(FeedbackMessageService.class));
-        return new Fixture(service, testCaseRepository);
+                exerciseRepository, mock(StaticCodeAnalysisCategoryRepository.class), mock(FeedbackMessageService.class), ownership);
+        return new Fixture(service, testCaseRepository, ownership);
     }
 
     /**
@@ -139,4 +149,62 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
 
         assertThatExceptionOfType(DataIntegrityViolationException.class).isThrownBy(() -> fixture.service().generateTestCasesFromBuildResult(buildResultWith("testOne"), exercise));
     }
+
+    @Test
+    void matchingBuildCanSynchronizeWithoutReleasingItsParentWriteReservation() {
+        var fixture = fixture();
+        var build = buildResultWith("testOne");
+        when(build.testsRepoCommitHash()).thenReturn("expected-commit");
+        when(fixture.ownership().get(EXERCISE_ID))
+                .thenReturn(Optional.of(new ProgrammingExerciseWriteOwnershipService.Ownership("save-token", "owner", "SAVE", Instant.now(), "expected-commit")));
+        when(fixture.ownership().isOwned(EXERCISE_ID, "save-token")).thenReturn(true);
+
+        assertThat(fixture.service().generateTestCasesFromBuildResult(build, exercise())).isTrue();
+
+        verify(fixture.ownership(), never()).claim(EXERCISE_ID, "LOCALCI");
+        verify(fixture.ownership(), never()).release(EXERCISE_ID, "save-token");
+        verify(fixture.testCaseRepository()).saveAll(anySet());
+    }
+
+    @Test
+    void anUnrelatedBuildCannotJoinTheSaveReservation() {
+        var fixture = fixture();
+        var build = buildResultWith("testOne");
+        when(build.testsRepoCommitHash()).thenReturn("old-commit");
+        when(fixture.ownership().get(EXERCISE_ID))
+                .thenReturn(Optional.of(new ProgrammingExerciseWriteOwnershipService.Ownership("save-token", "owner", "SAVE", Instant.now(), "expected-commit")));
+        when(fixture.ownership().claim(EXERCISE_ID, "LOCALCI")).thenThrow(new IllegalStateException("Exercise write reserved"));
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> fixture.service().generateTestCasesFromBuildResult(build, exercise()));
+
+        verify(fixture.testCaseRepository(), never()).saveAll(anySet());
+        verify(fixture.ownership(), never()).release(EXERCISE_ID, "save-token");
+    }
+
+    @Test
+    void aReplacedReservationCannotAuthorizeTheCallback() {
+        var fixture = fixture();
+        var build = buildResultWith("testOne");
+        when(build.testsRepoCommitHash()).thenReturn("expected-commit");
+        when(fixture.ownership().get(EXERCISE_ID))
+                .thenReturn(Optional.of(new ProgrammingExerciseWriteOwnershipService.Ownership("old-token", "owner", "SAVE", Instant.now(), "expected-commit")));
+        when(fixture.ownership().isOwned(EXERCISE_ID, "old-token")).thenReturn(false);
+        when(fixture.ownership().claim(EXERCISE_ID, "LOCALCI")).thenThrow(new IllegalStateException("Exercise write reserved"));
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> fixture.service().generateTestCasesFromBuildResult(build, exercise()));
+
+        verify(fixture.testCaseRepository(), never()).saveAll(anySet());
+    }
+
+    @Test
+    void anUncertainMetadataWriteRetainsItsOwnReservation() {
+        var fixture = fixture();
+        when(fixture.testCaseRepository().saveAll(anySet())).thenThrow(new IllegalStateException("Database acknowledgement lost"));
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> fixture.service().generateTestCasesFromBuildResult(buildResultWith("testOne"), exercise()));
+
+        verify(fixture.ownership()).retain(EXERCISE_ID, "test-token", "LOCALCI_RECOVERY");
+        verify(fixture.ownership(), never()).release(EXERCISE_ID, "test-token");
+    }
+
 }

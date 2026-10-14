@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -52,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseWriteOwnershipService;
 
 /**
  * Service for creating feedback for programming exercises.
@@ -106,15 +108,19 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private final FeedbackMessageService feedbackMessageService;
 
+    private final ProgrammingExerciseWriteOwnershipService writeOwnership;
+
     public ProgrammingExerciseFeedbackCreationService(ProgrammingExerciseTestCaseRepository testCaseRepository, WebsocketMessagingService websocketMessagingService,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
-            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService) {
+            StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, FeedbackMessageService feedbackMessageService,
+            ProgrammingExerciseWriteOwnershipService writeOwnership) {
         this.testCaseRepository = testCaseRepository;
         this.websocketMessagingService = websocketMessagingService;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.feedbackMessageService = feedbackMessageService;
+        this.writeOwnership = writeOwnership;
     }
 
     /**
@@ -350,6 +356,32 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @return Returns true if the test cases have changed, false if they haven't.
      */
     public boolean generateTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise) {
+        long exerciseId = exercise.getId();
+        var reservation = writeOwnership.get(exerciseId);
+        if (reservation.isPresent() && buildResult.testsRepoCommitHash() != null && Objects.equals(reservation.get().expectedTestsCommitHash(), buildResult.testsRepoCommitHash())
+                && writeOwnership.isOwned(exerciseId, reservation.get().token())) {
+            return synchronizeTestCases(buildResult, programmingExerciseRepository.findByIdElseThrow(exerciseId));
+        }
+        String token = writeOwnership.claim(exerciseId, "LOCALCI");
+        try {
+            boolean changed = synchronizeTestCases(buildResult, programmingExerciseRepository.findByIdElseThrow(exerciseId));
+            if (!writeOwnership.release(exerciseId, token)) {
+                throw new IllegalStateException("Lost exercise write reservation after LocalCI synchronization");
+            }
+            return changed;
+        }
+        catch (RuntimeException failure) {
+            try {
+                writeOwnership.retain(exerciseId, token, "LOCALCI_RECOVERY");
+            }
+            catch (RuntimeException retentionFailure) {
+                failure.addSuppressed(retentionFailure);
+            }
+            throw failure;
+        }
+    }
+
+    private boolean synchronizeTestCases(BuildResultNotification buildResult, ProgrammingExercise exercise) {
         Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
         // Do not generate test cases for static code analysis feedback
         Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = getTestCasesFromBuildResult(buildResult, exercise);
