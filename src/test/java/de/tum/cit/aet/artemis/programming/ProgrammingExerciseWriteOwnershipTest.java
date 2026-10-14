@@ -42,6 +42,10 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
 
     private ProgrammingExercise exercise;
 
+    private String mysqlObserverUrl;
+
+    private String mysqlObserverPassword;
+
     @BeforeEach
     void createExercise() {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
@@ -119,7 +123,7 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
             var first = executor.submit(() -> ownershipRepository.claimAndHold(exercise.getId(), "held", acquired, release));
             try {
                 assertThat(acquired.await(10, TimeUnit.SECONDS)).isTrue();
-                grantTestLockObserverPrivilege();
+                prepareTestLockObserver();
                 var second = executor.submit(() -> ownershipRepository.claim(exercise.getId(), "waiting", "other-process", "persist", Instant.now()));
                 await().atMost(Duration.ofSeconds(10)).until(this::ownershipUpdateIsWaitingOnRowLock);
                 assertThat(second.isDone()).isFalse();
@@ -135,7 +139,7 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
         ownershipService.release(exercise.getId(), "held");
     }
 
-    private void grantTestLockObserverPrivilege() throws Exception {
+    private void prepareTestLockObserver() throws Exception {
         try (var connection = dataSource.getConnection()) {
             if (connection.getMetaData().getDatabaseProductName().equals("PostgreSQL")) {
                 return;
@@ -147,23 +151,16 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
                     .filter(candidate -> Arrays.stream(candidate.getPorts()).anyMatch(binding -> Integer.valueOf(port).equals(binding.getPublicPort()))).findFirst().orElseThrow();
             String password = Arrays.stream(docker.inspectContainerCmd(container.getId()).exec().getConfig().getEnv()).filter(value -> value.startsWith("MYSQL_ROOT_PASSWORD="))
                     .map(value -> value.substring("MYSQL_ROOT_PASSWORD=".length())).findFirst().orElseThrow();
-            String account;
-            try (var query = connection.createStatement(); var rows = query.executeQuery("SELECT CURRENT_USER()")) {
-                rows.next();
-                account = rows.getString(1);
-            }
-            int at = account.lastIndexOf('@');
-            String user = account.substring(0, at).replace("'", "''");
-            String host = account.substring(at + 1).replace("'", "''");
-            // Only this owned test container receives observer permission; the application needs none.
-            try (var admin = DriverManager.getConnection(url, "root", password); var grant = admin.createStatement()) {
-                grant.execute("GRANT PROCESS ON *.* TO '" + user + "'@'" + host + "'");
-            }
+            // Observe only the owned test database as its administrator. Existing pooled
+            // application sessions need no PROCESS grant or privilege refresh.
+            mysqlObserverUrl = url;
+            mysqlObserverPassword = password;
         }
     }
 
     private boolean ownershipUpdateIsWaitingOnRowLock() throws Exception {
-        try (var connection = dataSource.getConnection(); var statement = connection.createStatement()) {
+        try (var connection = mysqlObserverUrl == null ? dataSource.getConnection() : DriverManager.getConnection(mysqlObserverUrl, "root", mysqlObserverPassword);
+                var statement = connection.createStatement()) {
             boolean postgres = connection.getMetaData().getDatabaseProductName().equals("PostgreSQL");
             String sql = postgres ? "SELECT COUNT(*) FROM pg_stat_activity WHERE datname = current_database() AND wait_event_type = 'Lock' AND query LIKE '%write_owner_token%'"
                     : "SELECT COUNT(*) FROM information_schema.innodb_trx WHERE trx_state = 'LOCK WAIT' AND trx_query LIKE '%write_owner_token%'";
@@ -250,7 +247,7 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
     void readerAndWriterContendOnTheSameActualRowLock(boolean readerFirst) throws Exception {
         var acquired = new CountDownLatch(1);
         var release = new CountDownLatch(1);
-        grantTestLockObserverPrivilege();
+        prepareTestLockObserver();
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             var first = executor.submit(() -> readerFirst ? ownershipRepository.claimReaderAndHold(exercise.getId(), "held-reader", acquired, release)
                     : ownershipRepository.claimAndHold(exercise.getId(), "held-writer", acquired, release));
@@ -314,7 +311,7 @@ class ProgrammingExerciseWriteOwnershipTest extends AbstractProgrammingIntegrati
         assertThat(ownershipService.authorizeTestsBuild(id, token, hash)).isTrue();
         var admitted = new CountDownLatch(1);
         var finish = new CountDownLatch(1);
-        grantTestLockObserverPrivilege();
+        prepareTestLockObserver();
         try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
             var callback = executor.submit(() -> ownershipService.executeAuthorizedTestsBuild(id, token, hash, () -> {
                 admitted.countDown();
