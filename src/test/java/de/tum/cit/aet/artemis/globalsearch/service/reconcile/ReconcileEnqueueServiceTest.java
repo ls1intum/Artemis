@@ -44,6 +44,14 @@ class ReconcileEnqueueServiceTest {
     }
 
     @Test
+    void testRemainingCapacityIsTheRoomBelowTheDepthLimitAndNeverNegative() {
+        when(outboxRepository.count()).thenReturn((long) MAX_DEPTH - 3, (long) MAX_DEPTH + 10);
+
+        assertThat(enqueueService.remainingCapacity()).isEqualTo(3);
+        assertThat(enqueueService.remainingCapacity()).isZero();
+    }
+
+    @Test
     void testEnqueueUpsertQueuesTheEntityWithTheCallersOrigin() {
         when(outboxRepository.existsByEntityTypeAndEntityId(COURSE, 42L)).thenReturn(false);
 
