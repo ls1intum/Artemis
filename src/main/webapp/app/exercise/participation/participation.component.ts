@@ -14,7 +14,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { User } from 'app/account/user/user.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -576,14 +576,15 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Builds a minimal Participation-like object from the flat DTO so that jhi-result and
+     * Builds a minimal student participation from the flat DTO so that jhi-result and
      * manage-assessment-buttons can render results, assessment links and cancel buttons.
      */
-    toParticipation(dto: ParticipationManagementDTO): Participation {
+    toParticipation(dto: ParticipationManagementDTO): StudentParticipation {
         const ex = this.exercise();
         return {
             id: dto.participationId,
             type: ex?.type === ExerciseType.PROGRAMMING ? ParticipationType.PROGRAMMING : ParticipationType.STUDENT,
+            testRun: dto.testRun,
             exercise: ex,
             submissionCount: dto.submissionCount,
             submissions: dto.submissionId ? [this.toSubmission(dto)] : [],

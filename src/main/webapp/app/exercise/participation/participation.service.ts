@@ -133,6 +133,9 @@ export class ParticipationService {
                         dto.initializationDate = convertDateFromServer(dto.initializationDate);
                         dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
                         dto.completionDate = convertDateFromServer(dto.completionDate);
+                        dto.correctionRoundResults?.forEach((result) => {
+                            result.completionDate = convertDateFromServer(result.completionDate);
+                        });
                     });
                     return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
                 }),

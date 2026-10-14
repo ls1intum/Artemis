@@ -236,7 +236,16 @@ describe('Participation Service', () => {
 
         it('should GET paginated participations and convert date fields', () => {
             const isoDate = '2024-06-01T10:00:00Z';
-            const serverDto = { participationId: 1, initializationDate: isoDate, individualDueDate: isoDate, completionDate: isoDate };
+            const serverDto = {
+                participationId: 1,
+                initializationDate: isoDate,
+                individualDueDate: isoDate,
+                completionDate: isoDate,
+                correctionRoundResults: [
+                    { resultId: 2, correctionRound: 0, completionDate: isoDate },
+                    { resultId: 3, correctionRound: 1 },
+                ],
+            };
 
             let result: any;
             service.searchParticipations(42, baseSearch).subscribe((r) => (result = r));
@@ -249,6 +258,9 @@ describe('Participation Service', () => {
             expect(dayjs.isDayjs(result.content[0].initializationDate)).toBe(true);
             expect(dayjs.isDayjs(result.content[0].individualDueDate)).toBe(true);
             expect(dayjs.isDayjs(result.content[0].completionDate)).toBe(true);
+            expect(dayjs.isDayjs(result.content[0].correctionRoundResults[0].completionDate)).toBe(true);
+            expect(result.content[0].correctionRoundResults[0].completionDate.toISOString()).toBe(isoDate.replace('Z', '.000Z'));
+            expect(result.content[0].correctionRoundResults[1].completionDate).toBeUndefined();
         });
 
         it('should include filterProp in params when provided', () => {

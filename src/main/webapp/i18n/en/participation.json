@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "participation": {
+            "onlineEditor": "Online editor",
             "home": {
                 "title": "Participation",
                 "createLabel": "Create new participation"

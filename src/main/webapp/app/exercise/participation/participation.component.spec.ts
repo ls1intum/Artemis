@@ -316,6 +316,17 @@ describe('ParticipationComponent', () => {
             return Array.from(table.querySelectorAll<HTMLTableRowElement>('tbody tr'));
         }
 
+        it('should offer a new manual assessment for the team row but not its individual practice row', async () => {
+            const table = await renderRows(true, [
+                { ...teamDto, submissionId: 21 },
+                { ...practiceDto, submissionCount: 1, submissionId: 22 },
+            ]);
+            const [teamRow, practiceRow] = bodyRows(table);
+
+            expect(teamRow.querySelector('jhi-manage-assessment-buttons a')?.textContent).toContain('artemisApp.assessment.dashboard.actions.assess');
+            expect(practiceRow.querySelector('jhi-manage-assessment-buttons a')).toBeNull();
+        });
+
         it('should list a team row and a practice row of a team exercise', async () => {
             const table = await renderRows(true, [teamDto, practiceDto]);
 
