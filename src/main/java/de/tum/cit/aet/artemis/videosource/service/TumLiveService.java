@@ -93,11 +93,16 @@ public class TumLiveService {
             return TumLivePlaylistLookup.failed(TumLivePlaylistLookup.Outcome.NOT_AVAILABLE);
         }
         catch (HttpClientErrorException e) {
-            // The API answered: the course is not public (401/403), or it does not know the stream (404, other 4xx). Expected for a course
-            // whose recordings are not released yet, so no stack trace.
-            boolean refused = e.getStatusCode().value() == 401 || e.getStatusCode().value() == 403;
-            log.info("TUM Live API refused stream {} with status {}", info.streamId(), e.getStatusCode().value());
-            return TumLivePlaylistLookup.failed(refused ? TumLivePlaylistLookup.Outcome.NOT_ACCESSIBLE : TumLivePlaylistLookup.Outcome.NOT_AVAILABLE);
+            int status = e.getStatusCode().value();
+            // The course is not public (401/403), or the API does not know the stream (404). Expected for a course whose recordings are not
+            // released yet, so no stack trace.
+            if (status == 401 || status == 403 || status == 404) {
+                log.info("TUM Live API refused stream {} with status {}", info.streamId(), status);
+                return TumLivePlaylistLookup.failed(status == 404 ? TumLivePlaylistLookup.Outcome.NOT_AVAILABLE : TumLivePlaylistLookup.Outcome.NOT_ACCESSIBLE);
+            }
+            // Rate limiting (429), a request timeout (408), or a status this client does not expect: worth trying again later
+            log.warn("TUM Live API answered stream {} with status {}", info.streamId(), status);
+            return TumLivePlaylistLookup.failed(TumLivePlaylistLookup.Outcome.TEMPORARILY_UNAVAILABLE);
         }
         catch (RestClientException e) {
             log.warn("TUM Live API call failed for stream {}: {}", info.streamId(), e.getMessage());

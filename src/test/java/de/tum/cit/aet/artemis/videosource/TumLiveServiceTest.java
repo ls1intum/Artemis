@@ -125,6 +125,13 @@ class TumLiveServiceTest {
         assertThat(tumLiveService.lookUpPlaylist(WATCH_URL).outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.NOT_AVAILABLE);
     }
 
+    /** Rate limiting means TUM Live works but wants the client to wait, not that the recording is missing. */
+    @Test
+    void lookUpPlaylist_tooManyRequests_isTemporarilyUnavailable() {
+        stubLookupThrows(HttpClientErrorException.create(HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests", HttpHeaders.EMPTY, null, null));
+        assertThat(tumLiveService.lookUpPlaylist(WATCH_URL).outcome()).isEqualTo(TumLivePlaylistLookup.Outcome.TEMPORARILY_UNAVAILABLE);
+    }
+
     @Test
     void lookUpPlaylist_serverErrorOrConnectionFailure_isTemporarilyUnavailable() {
         stubLookupThrows(HttpServerErrorException.create(HttpStatus.BAD_GATEWAY, "Bad Gateway", HttpHeaders.EMPTY, null, null));

@@ -423,15 +423,6 @@ public class LectureContentProcessingService {
     }
 
     /**
-     * Whether the unit's video source differs from the one its processing state last recorded: added, removed or
-     * replaced, by the same rule {@link #handleContentChanges} applies. When it does, a stored transcript belongs to the
-     * previous video, so a repair must go through the content-change path, which deletes it, rather than a plain requeue.
-     *
-     * @param unit  the unit as it currently is
-     * @param state its processing state, carrying the recorded video marker
-     * @return true if the video source changed since the state's marker was recorded
-     */
-    /**
      * Whether the unit links a video Iris can transcribe, decided from the URL alone.
      *
      * @param unit the unit to check
@@ -451,6 +442,15 @@ public class LectureContentProcessingService {
         return computeHash(unit.getVideoSource());
     }
 
+    /**
+     * Whether the unit's video source differs from the one its processing state last recorded: added, removed or
+     * replaced, by the same rule {@link #handleContentChanges} applies. When it does, a stored transcript belongs to the
+     * previous video, so a repair must go through the content-change path, which deletes it, rather than a plain requeue.
+     *
+     * @param unit  the unit as it currently is
+     * @param state its processing state, carrying the recorded video marker
+     * @return true if the video source changed since the state's marker was recorded
+     */
     public boolean hasVideoSourceChanged(AttachmentVideoUnit unit, LectureUnitProcessingState state) {
         boolean hasVideo = unit.getVideoSource() != null && !unit.getVideoSource().isBlank();
         boolean previousVideoKnown = state.getVideoSourceHash() != null && !state.getVideoSourceHash().isBlank();

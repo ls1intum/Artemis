@@ -20,7 +20,7 @@ public record TumLivePlaylistLookup(@Nullable String playlistUrl, Outcome outcom
         NOT_ACCESSIBLE,
         /** The stream exists but has no playlist yet, or the API does not know it (HTTP 404): typically no recording is uploaded yet. */
         NOT_AVAILABLE,
-        /** The API could not be reached or failed (timeout, connection error, HTTP 5xx). */
+        /** The API could not be reached, failed, or asked to try later (timeout, connection error, HTTP 5xx, 408, 429, or another unexpected 4xx). */
         TEMPORARILY_UNAVAILABLE,
         /** The URL is not a TUM Live watch page, or the TUM Live API is not configured. */
         NOT_APPLICABLE
