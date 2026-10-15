@@ -441,17 +441,27 @@
                             }
                             @if (!dragItem.pictureFilePath) {
                                 <div>
-                                    <textarea
-                                        id="drag-item-{{ i }}-text"
-                                        [(ngModel)]="dragItem.text"
-                                        [maxlength]="MAX_DRAG_ITEM_TEXT_LENGTH"
-                                        [attr.aria-invalid]="(dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH"
-                                        [attr.aria-describedby]="
-                                            (dragItem.text?.length ?? 0) >= MAX_DRAG_ITEM_TEXT_LENGTH ? 'drag-item-text-limit-' + questionIndex() + '-' + i : undefined
-                                        "
-                                        (ngModelChange)="questionUpdated.emit()"
-                                    ></textarea>
-                                    @if ((dragItem.text?.length ?? 0) >= MAX_DRAG_ITEM_TEXT_LENGTH) {
+                                    <div class="drag-item-text-field">
+                                        <textarea
+                                            id="drag-item-{{ i }}-text"
+                                            [(ngModel)]="dragItem.text"
+                                            [customMaxLength]="MAX_DRAG_ITEM_TEXT_LENGTH"
+                                            [attr.aria-invalid]="(dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH"
+                                            [attr.aria-describedby]="
+                                                (dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH ? 'drag-item-text-limit-' + questionIndex() + '-' + i : undefined
+                                            "
+                                            (ngModelChange)="questionUpdated.emit()"
+                                        ></textarea>
+                                        <span
+                                            class="pointer-events-none absolute bottom-2 right-3 z-[4] text-xs leading-none"
+                                            [class.text-state-danger]="(dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH"
+                                            [class.text-muted-color]="(dragItem.text?.length ?? 0) <= MAX_DRAG_ITEM_TEXT_LENGTH"
+                                            data-testid="drag-item-character-count"
+                                        >
+                                            {{ dragItem.text?.length ?? 0 }}/{{ MAX_DRAG_ITEM_TEXT_LENGTH }}
+                                        </span>
+                                    </div>
+                                    @if ((dragItem.text?.length ?? 0) > MAX_DRAG_ITEM_TEXT_LENGTH) {
                                         <small
                                             id="drag-item-text-limit-{{ questionIndex() }}-{{ i }}"
                                             class="drag-item-text-limit block max-w-[150px] whitespace-normal text-state-danger"
