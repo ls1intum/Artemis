@@ -194,9 +194,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
         this.editSessionActive.set(false);
         this.creditInputEdited.set(false);
         this.viewOnly.set(true);
-        if (feedback.credits && feedback.credits > 0) {
-            feedback.positive = true;
-        }
+        feedback.positive = (feedback.credits ?? 0) > 0;
         this.currentFeedback.set(feedback);
         // Align cancel snapshot with the saved card so a later edit/cancel pair is coherent if editFeedback is skipped.
         this.oldFeedback.set(deepClone(feedback));
@@ -216,7 +214,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
      */
     private canSave(): boolean {
         const feedback = this.currentFeedback();
-        return feedback.credits !== undefined && Feedback.hasContent(feedback);
+        return !this.readOnly() && feedback.credits !== undefined && Feedback.hasContent(feedback);
     }
 
     /**
@@ -224,6 +222,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
      * and {@link updateFeedback} after the working copy is replaced.
      */
     protected onDetailTextChange(detailText: string): void {
+        if (this.readOnly()) {
+            return;
+        }
         const feedback = deepClone(this.currentFeedback());
         feedback.detailText = detailText;
         this.currentFeedback.set(feedback);
@@ -234,6 +235,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
      * Otherwise, the component is not displayed anymore in the parent component
      */
     cancelFeedback() {
+        if (this.readOnly()) {
+            return;
+        }
         const restored = this.oldFeedback();
         this.currentFeedback.set(restored);
         this.oldFeedback.set(deepClone(restored));
@@ -277,6 +281,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
      * @param delta the signed step to apply
      */
     protected stepCredits(delta: number): void {
+        if (this.readOnly()) {
+            return;
+        }
         const feedback = deepClone(this.currentFeedback());
         const credits = this.pendingStepCredits ?? feedback.credits;
         this.pendingStepCredits = undefined;
@@ -293,6 +300,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
     }
 
     protected updateCredits(credits: number | null | undefined): void {
+        if (this.readOnly()) {
+            return;
+        }
         const feedback = deepClone(this.currentFeedback());
         feedback.credits = normalizedCredits(credits);
         this.currentFeedback.set(feedback);
@@ -306,6 +316,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
      * input (the list item) — not {@link oldFeedback}, whose detailText may already be stale.
      */
     deleteFeedback() {
+        if (this.readOnly()) {
+            return;
+        }
         this.onDeleteFeedback.emit(this.feedback() ?? this.currentFeedback());
     }
 
@@ -314,6 +327,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
      * @param line Line of code which is emitted to the parent
      */
     editFeedback(line: number) {
+        if (this.readOnly()) {
+            return;
+        }
         this.creditInputEdited.set(false);
         this.editSessionActive.set(true);
         this.viewOnly.set(false);
@@ -328,6 +344,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent implements OnDestr
      * @param event Drop event with SGI data
      */
     updateFeedbackOnDrop(event: Event) {
+        if (this.readOnly()) {
+            return;
+        }
         const feedback = deepClone(this.currentFeedback());
         this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(feedback, event);
         this.linkInstruction(feedback);

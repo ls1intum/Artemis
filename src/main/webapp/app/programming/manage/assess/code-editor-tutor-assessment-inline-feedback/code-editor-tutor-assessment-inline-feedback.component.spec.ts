@@ -682,6 +682,46 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(comp.currentFeedback().credits).toBe(-2);
     });
 
+    it.each([-2, 0])('should clear positive when positive feedback is edited to %s credits', (credits) => {
+        fixture.componentRef.setInput('feedback', { id: 1, type: FeedbackType.MANUAL, credits: 2, positive: true, detailText: 'Original' } as Feedback);
+        fixture.detectChanges();
+        const update = vi.fn();
+        comp.onUpdateFeedback.subscribe(update);
+        comp.editFeedback(codeLine);
+        comp['updateCredits'](credits);
+        comp.updateFeedback();
+
+        expect(update).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ id: 1, credits, positive: false }));
+    });
+
+    it('should disable an open editor and reject changes while read only', async () => {
+        fixture.componentRef.setInput('feedback', { id: 1, type: FeedbackType.MANUAL, credits: 2, detailText: 'Original' } as Feedback);
+        fixture.detectChanges();
+        comp.editFeedback(codeLine);
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+        const update = vi.fn();
+        const remove = vi.fn();
+        comp.onUpdateFeedback.subscribe(update);
+        comp.onDeleteFeedback.subscribe(remove);
+        await fixture.whenStable();
+
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-editor-text-input"]').disabled).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-editor-points-input"]').disabled).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="feedback-save"]').disabled).toBe(true);
+        comp['onDetailTextChange']('Lost edit');
+        comp['updateCredits'](-2);
+        comp['stepCredits'](0.5);
+        comp.updateFeedbackOnDrop(new Event('drop'));
+        comp.updateFeedback();
+        comp.deleteFeedback();
+        comp.cancelFeedback();
+
+        expect(comp.currentFeedback()).toEqual(expect.objectContaining({ credits: 2, detailText: 'Original' }));
+        expect(update).not.toHaveBeenCalled();
+        expect(remove).not.toHaveBeenCalled();
+    });
+
     it('should normalize typed points before saving', () => {
         comp.currentFeedback().detailText = 'note';
         comp['updateCredits'](0.3);

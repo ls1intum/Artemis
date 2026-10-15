@@ -563,6 +563,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * @param lineNumber The line (as shown in the editor) to render the widget in.
      */
     addNewFeedback(lineNumber: number): void {
+        if (this.readOnlyManualFeedback()) {
+            return;
+        }
         // TODO for a follow-up: in the future, there might be multiple feedback items on the same line.
         const lineNumberZeroBased = lineNumber - 1;
         if (!this.newFeedbackLines().includes(lineNumberZeroBased) && !this.getInlineFeedbackNode(lineNumberZeroBased)) {

@@ -1,3 +1,4 @@
+import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -214,7 +215,9 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 provideHttpClientTesting(),
             ],
         })
-            .overrideComponent(CodeEditorMonacoComponent, { set: { imports: [MonacoEditorComponent, MockComponent(CodeEditorHeaderComponent)] } })
+            .overrideComponent(CodeEditorMonacoComponent, {
+                set: { imports: [MonacoEditorComponent, MockComponent(CodeEditorHeaderComponent), CodeEditorTutorAssessmentInlineFeedbackComponent] },
+            })
             .compileComponents();
         // Ignore console errors
         console.error = () => {
@@ -842,6 +845,65 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             { queryParams: { 'correction-round': '0', testRun: 'false' } },
         );
         expect(goSpy).toHaveBeenCalledExactlyOnceWith('/rewritten');
+    });
+
+    it.each(['save', 'submit'] as const)('should lock a locally saved inline card until a delayed %s response assigns its ID', async (action) => {
+        vi.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
+        vi.spyOn(repositoryFileService, 'getFile').mockReturnValue(of({ fileContent }));
+        vi.spyOn(comp, 'readOnly').mockReturnValue(false);
+        const response = new Subject<EntityResponseType>();
+        const save = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(response);
+        const feedbackLoaded = firstValueFrom(outputToObservable(comp.onFeedbackLoaded));
+        fixture.detectChanges();
+        await feedbackLoaded;
+        await flushMicrotasks();
+        fixture.detectChanges();
+        const container = fixture.debugElement.query(By.directive(CodeEditorContainerComponent)).componentInstance as CodeEditorContainerComponent;
+        const editor = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance as CodeEditorMonacoComponent;
+        vi.spyOn(editor, 'selectFileInEditor').mockResolvedValue(undefined);
+        container.selectedFile = 'folder/file1';
+        fixture.detectChanges();
+        await fixture.whenStable();
+        editor.addNewFeedback(2);
+        fixture.detectChanges();
+        const getCard = () =>
+            fixture.debugElement.query(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent)).componentInstance as CodeEditorTutorAssessmentInlineFeedbackComponent;
+        getCard().currentFeedback().detailText = 'Locally saved comment';
+        getCard().currentFeedback().credits = 1;
+        getCard().updateFeedback();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const card = getCard();
+        expect(card.feedback()?.id).toBeUndefined();
+        expect(card.viewOnly()).toBe(true);
+
+        await comp[action]();
+        fixture.detectChanges();
+        expect(save).toHaveBeenCalledOnce();
+        expect(card.readOnly()).toBe(true);
+        card.editFeedback(1);
+        card['onDetailTextChange']('Edit during request');
+        editor.addNewFeedback(3);
+        fixture.detectChanges();
+        expect(card.viewOnly()).toBe(true);
+        expect(card.currentFeedback().detailText).toBe('Locally saved comment');
+        expect(editor.newFeedbackLines()).toEqual([]);
+        expect(card.elementRef.nativeElement.querySelector('[data-testid="feedback-editor-text-input"]')).toBeNull();
+
+        const persisted = { ...comp.manualResult()!, feedbacks: [{ ...card.currentFeedback(), id: 123 }] };
+        response.next(new HttpResponse({ body: persisted }));
+        response.complete();
+        fixture.detectChanges();
+        expect(comp.saveBusy()).toBe(false);
+        expect(comp.submitBusy()).toBe(false);
+        expect(comp.manualResult()?.feedbacks?.[0].id).toBe(123);
+        expect(getCard().feedback()?.id).toBe(123);
+        expect(getCard()).not.toBe(card);
+        expect(getCard().currentFeedback().detailText).toBe('Locally saved comment');
+        expect(getCard().readOnly()).toBe(false);
+        getCard().editFeedback(1);
+        fixture.detectChanges();
+        expect(getCard().viewOnly()).toBe(false);
     });
 
     it('should not invalidate assessment after saving', async () => {
