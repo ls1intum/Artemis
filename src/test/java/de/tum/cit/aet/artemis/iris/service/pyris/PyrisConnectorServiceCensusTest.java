@@ -21,6 +21,8 @@ import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.cit.aet.artemis.communication.dto.FaqCensusDTO;
+import de.tum.cit.aet.artemis.communication.dto.FaqCensusEntryDTO;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.lecture.dto.IngestionCensusDTO;
 
@@ -127,5 +129,36 @@ class PyrisConnectorServiceCensusTest {
                 socket.close();
             }
         }
+    }
+
+    @Test
+    void shouldParseTheFaqCensusAndEncodeTheBaseUrlOnce() {
+        server.expect(ExpectedCount.once(), requestTo(PYRIS_URL + "/api/v1/faq-census?base_url=https%3A%2F%2Fartemis.test")).andRespond(withSuccess("""
+                {"faqs": [
+                  {"courseId": 7, "faqId": 10, "ownedRowCount": 1, "legacyRowCount": 0, "ownedFingerprint": "v1:a"},
+                  {"courseId": 7, "faqId": 11, "ownedRowCount": 0, "legacyRowCount": 1}
+                ]}
+                """, MediaType.APPLICATION_JSON));
+
+        FaqCensusDTO census = connector.getFaqCensus();
+
+        assertThat(census).isNotNull();
+        assertThat(census.faqs()).containsExactly(new FaqCensusEntryDTO(7, 10, 1, 0, "v1:a"), new FaqCensusEntryDTO(7, 11, 0, 1, null));
+        server.verify();
+    }
+
+    /** An older Pyris without the endpoint answers 404; reconciliation is then skipped, not failed. */
+    @Test
+    void shouldTreatAMissingFaqCensusEndpointAsUnavailable() {
+        server.expect(ExpectedCount.once(), requestTo(org.hamcrest.Matchers.startsWith(PYRIS_URL + "/api/v1/faq-census"))).andRespond(withStatus(HttpStatus.NOT_FOUND));
+
+        assertThat(connector.getFaqCensus()).isNull();
+    }
+
+    @Test
+    void shouldTreatAFailingFaqCensusAsUnavailable() {
+        server.expect(ExpectedCount.once(), requestTo(org.hamcrest.Matchers.startsWith(PYRIS_URL + "/api/v1/faq-census"))).andRespond(withServerError());
+
+        assertThat(connector.getFaqCensus()).isNull();
     }
 }
