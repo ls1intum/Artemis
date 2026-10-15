@@ -97,7 +97,7 @@
                 [totalRows]="totalRows()"
                 [loading]="isLoading()"
                 [tableActions]="filterActionsTemplate() ?? null"
-                [rowActions]="exercise()!.isAtLeastInstructor ? actionsTemplate : !hideParticipantInformation() ? tutorActionsTemplate : null"
+                [rowActions]="exercise()!.isAtLeastInstructor ? actionsTemplate : null"
                 [options]="tableOptions()"
                 (onLazyLoad)="onLazyLoad($event)"
             />
@@ -167,17 +167,6 @@
 <ng-template #actionsTemplate let-dto>
     <div class="btn-group gap-1">
         @if (exercise()!.type === ExerciseType.PROGRAMMING) {
-            @if (dto.repositoryUri) {
-                <jhi-code-button
-                    [smallButtons]="true"
-                    [hideLabelMobile]="true"
-                    [hideLabelBreakpoint]="'xl'"
-                    [exerciseId]="exercise()?.id"
-                    [participationId]="dto.participationId"
-                    [repositoryUri]="dto.repositoryUri"
-                    [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, dto.participationId]"
-                />
-            }
             @if (dto.buildPlanId && !localCIEnabled()) {
                 <a [href]="getBuildPlanUrl(dto)" target="_blank" rel="noreferrer" class="btn btn-primary btn-sm">
                     <fa-icon [icon]="farFileCode" />
@@ -197,14 +186,14 @@
     </div>
 </ng-template>
 
-<ng-template #tutorActionsTemplate let-dto>
-    @if (exercise()!.type === ExerciseType.PROGRAMMING && dto.repositoryUri) {
+<ng-template #repositoryCellTemplate let-cell>
+    @if (cell.data.repositoryUri) {
         <jhi-code-button
             [smallButtons]="true"
             [exerciseId]="exercise()?.id"
-            [participationId]="dto.participationId"
-            [repositoryUri]="dto.repositoryUri"
-            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, dto.participationId]"
+            [participationId]="cell.data.participationId"
+            [repositoryUri]="cell.data.repositoryUri"
+            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
         />
     }
 </ng-template>

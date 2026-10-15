@@ -139,6 +139,26 @@ describe('Exercise Scores Component', () => {
         });
     });
 
+    describe('Repository column', () => {
+        it('shows a named repository column beside the participant identity while support access is available', () => {
+            component.exercise.set({ ...exercise, isAtLeastTutor: true, isAtLeastInstructor: false, assessmentType: AssessmentType.AUTOMATIC });
+
+            expect(component.columns()[1]).toMatchObject({ headerKey: 'artemisApp.participation.repository', sort: false });
+        });
+
+        it('removes the repository column when manual assessment becomes anonymous', () => {
+            component.exercise.set({
+                ...exercise,
+                isAtLeastTutor: true,
+                isAtLeastInstructor: false,
+                assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                dueDate: dayjs().subtract(1, 'day'),
+            });
+
+            expect(component.columns().some((column) => column.headerKey === 'artemisApp.participation.repository')).toBe(false);
+        });
+    });
+
     describe('Anonymous score list', () => {
         const anonymousExercise = { ...exercise, assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().subtract(1, 'day') };
         it.each([false, true])('should show participation IDs without identity search or team links for tutors (team mode: %s)', async (teamMode) => {

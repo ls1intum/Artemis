@@ -182,6 +182,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     // Template refs for cell rendering
     readonly nameCellTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('nameCellTemplate');
+    readonly repositoryCellTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('repositoryCellTemplate');
     readonly completionDateTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('completionDateTemplate');
     readonly lastResultTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('lastResultTemplate');
     readonly assessmentTypeTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('assessmentTypeTemplate');
@@ -217,6 +218,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                   }
                 : { headerKey: 'artemisApp.participation.participationId', field: 'participationId', width: '140px', sort: true },
         ];
+
+        if (ex.type === ExerciseType.PROGRAMMING && !this.hideParticipantInformation()) {
+            cols.push({
+                headerKey: 'artemisApp.participation.repository',
+                width: '80px',
+                sort: false,
+                templateRef: this.repositoryCellTemplate(),
+            });
+        }
 
         cols.push(
             {
