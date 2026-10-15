@@ -94,6 +94,21 @@ public interface UserRecoveryKeyRepository extends ArtemisJpaRepository<UserReco
     int clearPendingEmailChangeOfRequest(@Param("userId") long userId, @Param("currentKeyId") String currentKeyId, @Param("newKeyId") String newKeyId);
 
     /**
+     * Creates the row of an account with nothing outstanding on it. A statement that only inserts: unlike saving a new instance, which Spring Data merges because the
+     * identifier is assigned, it cannot copy empty columns over a row that another request created in the meantime, it fails on the primary key instead.
+     *
+     * @param userId the account
+     * @return 1 if the row was created; the statement fails with a duplicate key violation when the account already has a row
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            INSERT INTO UserRecoveryKey (userId)
+            VALUES (:userId)
+            """)
+    int insertEmptyRow(@Param("userId") long userId);
+
+    /**
      * Sets the activation key and nothing else on the row. The other columns are left as they are, which a read followed by a save of the whole row would not do:
      * it writes back what the row held when it was read, such as a pending e-mail change that was cancelled in the meantime.
      *

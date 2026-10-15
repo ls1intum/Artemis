@@ -254,7 +254,7 @@ public class UserRecoveryKeyService {
             return;
         }
         try {
-            userRecoveryKeyRepository.save(new UserRecoveryKey(userId));
+            userRecoveryKeyRepository.insertEmptyRow(userId);
         }
         catch (DataIntegrityViolationException concurrentInsert) {
             // created by a concurrent write for the same account, which is all that was needed
