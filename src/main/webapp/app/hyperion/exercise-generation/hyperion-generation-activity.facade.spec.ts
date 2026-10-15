@@ -280,6 +280,56 @@ describe('HyperionGenerationActivityFacade', () => {
         service.stream$.next({ type: 'PROGRESS', message: 'Still running' });
         expect(fixture.componentInstance.facade.statusLoadFailed()).toBe(false);
     });
+    it.each(['terminal', 'empty'])('resumes background polling after attached foreground retries fail and reconciles %s status without websocket events', (outcome) => {
+        vi.useFakeTimers();
+        const fixture = createWith(null);
+        const recoveredStatus =
+            outcome === 'terminal' ? normalizeStatus({ jobId: 'j1', running: false, events: [{ type: 'DONE', completionStatus: 'SUCCESS' }], fileChanges: [] }) : null;
+        const unavailable = () => throwError(() => new HttpErrorResponse({ status: 503 }));
+        service.getStatus = vi
+            .fn()
+            .mockImplementationOnce(unavailable)
+            .mockImplementationOnce(unavailable)
+            .mockImplementationOnce(unavailable)
+            .mockReturnValue(of(recoveredStatus));
+
+        fixture.componentInstance.facade.attachToJob('j1', 'ADAPT');
+        vi.advanceTimersByTime(3_000);
+        expect(service.getStatus).toHaveBeenCalledTimes(3);
+        expect(fixture.componentInstance.facade.running()).toBe(true);
+        expect(fixture.componentInstance.facade.statusLoadFailed()).toBe(false);
+
+        vi.advanceTimersByTime(outcome === 'terminal' ? 5_000 : 10_000);
+
+        expect(service.getStatus).toHaveBeenCalledTimes(outcome === 'terminal' ? 4 : 5);
+        expect(fixture.componentInstance.facade.running()).toBe(false);
+        expect(service.stream$.observed).toBe(false);
+        fixture.destroy();
+        vi.advanceTimersByTime(60_000);
+        expect(service.getStatus).toHaveBeenCalledTimes(outcome === 'terminal' ? 4 : 5);
+    });
+    it('replaces an exhausted attached run without letting its fallback poll affect the newer run', () => {
+        vi.useFakeTimers();
+        const fixture = createWith(null);
+        const getStatus = vi.spyOn(service, 'getStatus').mockImplementation(() => throwError(() => new HttpErrorResponse({ status: 503 })));
+        const activity = fixture.componentInstance.facade;
+        activity.attachToJob('A', 'ADAPT');
+        vi.advanceTimersByTime(4_000);
+        expect(getStatus).toHaveBeenCalledTimes(3);
+
+        getStatus.mockReturnValue(of(normalizeStatus({ jobId: 'B', running: true, events: [], fileChanges: [] })));
+        activity.attachToJob('B', 'GENERATE');
+        getStatus.mockReturnValue(of(normalizeStatus({ jobId: 'B', running: false, events: [{ type: 'DONE', completionStatus: 'SUCCESS' }], fileChanges: [] })));
+        vi.advanceTimersByTime(4_000);
+        expect(getStatus).toHaveBeenCalledTimes(4);
+        expect(activity.jobId()).toBe('B');
+        expect(activity.running()).toBe(true);
+
+        vi.advanceTimersByTime(1_000);
+        expect(getStatus).toHaveBeenCalledTimes(5);
+        expect(activity.jobId()).toBe('B');
+        expect(activity.running()).toBe(false);
+    });
     it('releases the manual editor lock when retained-status requests never respond', () => {
         vi.useFakeTimers();
         service.getStatus = vi.fn(() => new Subject<HyperionGenerationStatus | null>());

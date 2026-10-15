@@ -463,6 +463,9 @@ export class HyperionGenerationActivityFacade {
                     if (!this.ownershipResolved) {
                         this.statusLoadFailed.set(true);
                     }
+                    if (expectedJobId !== undefined && this.exerciseId() === exerciseId && this.jobId() === expectedJobId && this.running()) {
+                        this.scheduleActiveStatusRefresh(exerciseId, expectedJobId);
+                    }
                 },
             });
     }
