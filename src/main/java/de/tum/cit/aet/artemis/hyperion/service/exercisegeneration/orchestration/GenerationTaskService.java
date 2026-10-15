@@ -722,9 +722,6 @@ public class GenerationTaskService {
         if (GenerationRequestService.hasReleaseDateInThePast(exercise)) {
             throw new IllegalStateException("Hyperion generation can only modify unreleased draft exercises.");
         }
-        if (exercise.isExamExercise() && !isStillDraftWithoutParticipations(exerciseId)) {
-            throw new IllegalStateException("Hyperion generation cannot modify an exercise assigned to a student exam or test run.");
-        }
         Set<StudentParticipation> studentParticipations = exercise.getStudentParticipations();
         if (studentParticipations != null && !studentParticipations.isEmpty()) {
             throw new IllegalStateException("Hyperion generation can only modify exercises without student participations.");

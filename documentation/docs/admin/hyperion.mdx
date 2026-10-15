@@ -274,7 +274,9 @@ permit two runs for the same exercise.
 Long-running authoring does not lock ordinary exercise edits or student starts.
 Saving and undo use a separate per-exercise live-operation reservation. The same
 reservation covers ordinary exercise mutations, staff repository pushes, template
-copies, and complete version capture. Conflicting operations fail with a retryable
+copies, source exercise imports, and complete version capture. Imports reserve the
+source before reloading its metadata and grading, and keep the reservation until
+all repository copies finish. Conflicting operations fail with a retryable
 conflict instead of observing a partially updated exercise. This boundary includes
 post-save LocalCI test synchronization, which can take up to ten minutes. It is
 not a deployment-wide lock and does not block student submission repository pushes.
@@ -333,8 +335,10 @@ history endpoints, or restoration after a full cluster restart.
 
 Programming Create, Adapt, and Variant share the worker lifecycle. Variant
 preparation copies a source to a separate destination;
-quiz generation remains separate. Programming exam authoring is available only
-before student exams or test runs exist. Generation does not change exam assignment or add exam-row coordination.
+quiz generation remains separate. Whole-exercise programming generation, adaptation,
+and variants are limited to course exercises. Exams remain unsupported, including
+future exams without assigned students. Generation does not change exam assignment
+or add exam-row coordination.
 
 Hyperion introduces no database schema changes. Saved exercise content and
 before/after snapshots use the existing exercise version history. Existing

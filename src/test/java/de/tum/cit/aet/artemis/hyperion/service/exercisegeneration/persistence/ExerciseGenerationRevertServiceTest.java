@@ -128,6 +128,14 @@ class ExerciseGenerationRevertServiceTest {
     }
 
     @Test
+    void directUndoRejectsExamBeforeRepositoryWrites() {
+        when(exercise.isExamExercise()).thenReturn(true);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> revertService.revert(exercise, user, () -> true)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("only for course exercises");
+        org.mockito.Mockito.verifyNoInteractions(gitService, persistenceService);
+    }
+
+    @Test
     void recordBaseline_omitsRepositoriesWithoutACapturedHead() throws Exception {
         Map<RepositoryType, String> onlySolutionAndTests = new EnumMap<>(RepositoryType.class);
         onlySolutionAndTests.put(RepositoryType.SOLUTION, "sha-solution");
