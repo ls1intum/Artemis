@@ -1134,9 +1134,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         params.add("emptyRepositories", String.valueOf(emptyRepositories));
         // Create the exercise and verify status code 201. The query cap guards against the response mapping pulling
         // additional sub-graphs into the creation flow. It leaves room for the creations that do the most work inside
-        // the request: an SCA-enabled exercise also inserts its default category rows (Python: 177 queries, 60 of them one insert per category).
+        // the request: an SCA-enabled exercise also inserts its default category rows (Python: 174 queries, 60 of them one insert per category).
         var response = assertThatDb(() -> request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
-                ProgrammingExerciseResponseDTO.class, params, HttpStatus.CREATED)).hasBeenCalledAtMostTimes(180);
+                ProgrammingExerciseResponseDTO.class, params, HttpStatus.CREATED)).hasBeenCalledAtMostTimes(174);
         assertCreationResponseReadContract(response, newExercise);
         ProgrammingExercise createdExercise = programmingExerciseRepository.findWithAllParticipationsById(response.id()).orElseThrow();
         createdExercisesToCleanUp.add(createdExercise);
