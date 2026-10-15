@@ -190,6 +190,75 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(eventDeleteSpy).toHaveBeenCalledOnce();
     });
 
+    it('should only remove its own files from the shared file pool when the question is deleted', () => {
+        // The pool is shared by all drag and drop questions of the quiz and already holds the files of another question.
+        const otherQuestionFiles = new Map<string, { path?: string; file: File }>([
+            ['other-background.png', { file: new File(['bg'], 'other-background.png') }],
+            ['other-item.png', { file: new File(['item'], 'other-item.png') }],
+        ]);
+        fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        component = fixture.componentInstance;
+        const newQuestion = new DragAndDropQuestion();
+        newQuestion.dragItems = [];
+        fixture.componentRef.setInput('question', newQuestion);
+        fixture.componentRef.setInput('questionIndex', 2);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
+        fixture.componentRef.setInput('filePool', otherQuestionFiles);
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        fixture.detectChanges();
+
+        component.deleteQuestion();
+
+        expect(removeFileSpy).not.toHaveBeenCalled();
+    });
+
+    it('should remove the background and drag item files of the deleted question', () => {
+        fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        component = fixture.componentInstance;
+        const filePool = new Map<string, { path?: string; file: File }>([['other-background.png', { file: new File(['bg'], 'other-background.png') }]]);
+        fixture.componentRef.setInput('question', clone(question3));
+        fixture.componentRef.setInput('questionIndex', 1);
+        fixture.componentRef.setInput('reEvaluationInProgress', false);
+        fixture.componentRef.setInput('filePool', filePool);
+        removeFileSpy = vi.spyOn(component.removeFile, 'emit');
+        fixture.detectChanges();
+
+        component.deleteQuestion();
+
+        expect(removeFileSpy).toHaveBeenCalledTimes(4);
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/1/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/2/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/3/image.jpg');
+        expect(removeFileSpy).toHaveBeenCalledWith('this/is/a/fake/path/4/image.jpg');
+        expect(removeFileSpy).not.toHaveBeenCalledWith('other-background.png');
+    });
+
+    it('should realign the click layer of every drag and drop question when the window is resized', () => {
+        const secondFixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
+        const secondComponent = secondFixture.componentInstance;
+        secondFixture.componentRef.setInput('question', clone(question2));
+        secondFixture.componentRef.setInput('questionIndex', 2);
+        secondFixture.componentRef.setInput('reEvaluationInProgress', false);
+        secondFixture.detectChanges();
+        const firstAdjustSpy = vi.spyOn(component, 'adjustClickLayerWidth');
+        const secondAdjustSpy = vi.spyOn(secondComponent, 'adjustClickLayerWidth');
+
+        window.dispatchEvent(new Event('resize'));
+
+        // The drop locations are percentages of the click layer, so a layer that keeps its old width makes them drift away from the background image.
+        expect(firstAdjustSpy).toHaveBeenCalledOnce();
+        expect(secondAdjustSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should stop reacting to window resizes once the question is destroyed', () => {
+        const adjustSpy = vi.spyOn(component, 'adjustClickLayerWidth');
+
+        fixture.destroy();
+        window.dispatchEvent(new Event('resize'));
+
+        expect(adjustSpy).not.toHaveBeenCalled();
+    });
+
     it('should set background file', () => {
         const file1 = { name: 'newFile1.jpg' } as File;
         const file2 = { name: 'newFile2.png' } as File;
@@ -382,9 +451,9 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(removeFileSpy).not.toHaveBeenCalled();
     });
 
-    it.each([false, true])('should let instructors correct over-limit text during re-evaluation: %s', async (reEvaluationInProgress) => {
+    it.each([false, true])('should show and clear text overflow errors during re-evaluation: %s', async (reEvaluationInProgress) => {
         const question = new DragAndDropQuestion();
-        question.dragItems = [{ text: 'a'.repeat(256), invalid: false }];
+        question.dragItems = [{ text: 'a'.repeat(255), invalid: false }];
         fixture.componentRef.setInput('question', question);
         fixture.componentRef.setInput('reEvaluationInProgress', reEvaluationInProgress);
         fixture.detectChanges();
@@ -393,19 +462,36 @@ describe('DragAndDropQuestionEditComponent', () => {
         const textareaElement = fixture.debugElement.query(By.css('#drag-item-0-text'));
         const textarea: HTMLTextAreaElement = textareaElement.nativeElement;
         const model = textareaElement.injector.get(NgModel);
-        expect(model.hasError('maxlength')).toBe(true);
-        expect(textarea.value).toBe('a'.repeat(256));
+        const counter: HTMLElement = fixture.nativeElement.querySelector('[data-testid="drag-item-character-count"]');
+        expect(counter.textContent?.trim()).toBe('255/255');
+        expect(model.valid).toBe(true);
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
+
+        textarea.value += 'b';
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(counter.textContent?.trim()).toBe('256/255');
+        expect(counter.classList.contains('text-state-danger')).toBe(true);
+        expect(model.hasError('customMaxLength')).toBe(true);
+        expect(question.dragItems![0].text).toBe('a'.repeat(255) + 'b');
         expect(textarea.getAttribute('aria-invalid')).toBe('true');
         expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).not.toBeNull();
+        expect(textarea.getAttribute('aria-describedby')).toBe('drag-item-text-limit-1-0');
 
         textarea.value = 'a'.repeat(255);
         textarea.dispatchEvent(new Event('input'));
         fixture.detectChanges();
         await Promise.resolve();
 
-        expect(model.hasError('maxlength')).toBe(false);
+        expect(model.valid).toBe(true);
         expect(question.dragItems![0].text).toBe('a'.repeat(255));
         expect(textarea.getAttribute('aria-invalid')).toBe('false');
+        expect(textarea.hasAttribute('aria-describedby')).toBe(false);
+        expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
+        expect(counter.textContent?.trim()).toBe('255/255');
+        expect(counter.classList.contains('text-state-danger')).toBe(false);
 
         textarea.value = 'Short item';
         textarea.dispatchEvent(new Event('input'));
@@ -414,6 +500,14 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(question.dragItems![0].text).toBe('Short item');
         expect(fixture.nativeElement.querySelector('#drag-item-text-limit-1-0')).toBeNull();
+        expect(counter.textContent?.trim()).toBe('10/255');
+
+        textarea.value = '';
+        textarea.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await Promise.resolve();
+
+        expect(counter.textContent?.trim()).toBe('0/255');
     });
 
     it('should create image item', () => {
