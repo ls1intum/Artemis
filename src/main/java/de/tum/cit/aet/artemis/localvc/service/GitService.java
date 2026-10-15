@@ -38,6 +38,7 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
@@ -143,10 +144,14 @@ public class GitService extends AbstractGitService {
      * @param targetPath    path where the repo is located on disk
      * @return the repository if it could be checked out
      * @throws GitAPIException      if the repository could not be checked out.
+     * @throws GitException         if the participation has no repository URI.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
     public Repository getOrCheckoutRepositoryForJPlag(@NonNull ProgrammingExerciseParticipation participation, Path targetPath) throws GitAPIException, InvalidPathException {
         var repoUri = participation.getVcsRepositoryUri();
+        if (repoUri == null) {
+            throw new GitException("Participation " + participation.getId() + " has no repository URI and cannot be checked out for JPlag");
+        }
         String repoFolderName = repoUri.folderNameForRepositoryUri();
 
         // Replace the exercise name in the repository folder name with the participation ID.
@@ -577,6 +582,11 @@ public class GitService extends AbstractGitService {
             log.debug("Pull ignore conflicts {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pullCommand(git).call();
+        }
+        catch (WrongRepositoryStateException ex) {
+            // A merge that stopped on conflicts leaves the repository in MERGING or MERGING_RESOLVED until the repository is reset, e.g. via the code editor.
+            // Pulling cannot succeed before then and every further attempt fails the same way, so this is reported as the repository's state, not as an unexpected error.
+            log.warn("Cannot pull the repo {}: {}", repo.getLocalPath(), ex.getMessage());
         }
         catch (GitAPIException ex) {
             log.error("Cannot pull the repo {}", repo.getLocalPath(), ex);

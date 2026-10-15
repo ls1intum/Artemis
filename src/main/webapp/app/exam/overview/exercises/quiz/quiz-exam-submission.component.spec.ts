@@ -106,6 +106,23 @@ describe('QuizExamSubmissionComponent', () => {
         expect(component.shortAnswerSubmittedTexts().size).toBe(0);
     });
 
+    it('should show a navigation button per question that marks answered questions', () => {
+        const quizConfiguration: QuizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion] };
+        fixture.componentRef.setInput('studentSubmission', quizSubmission);
+        fixture.componentRef.setInput('quizConfiguration', quizConfiguration);
+        fixture.detectChanges();
+
+        const buttons = fixture.debugElement.queryAll(By.css('button.quiz-nav-step'));
+        expect(buttons.map((button) => button.nativeElement.textContent.trim())).toEqual(['MC', 'DD', 'SA']);
+        expect(buttons.some((button) => button.nativeElement.classList.contains('changed-question'))).toBe(false);
+
+        component.onSelectedAnswerOptionsChange(multipleChoiceQuestion.id!, [new AnswerOption()]);
+        fixture.detectChanges();
+
+        const multipleChoiceButton = fixture.debugElement.query(By.css('button.multiplechoicecolor-question'));
+        expect(multipleChoiceButton.nativeElement.classList.contains('changed-question')).toBe(true);
+    });
+
     it('should update view from submission and fill the dictionary accordingly when submitted answer', () => {
         const quizConfiguration: QuizConfiguration = { quizQuestions: [multipleChoiceQuestion, dragAndDropQuestion] };
         fixture.componentRef.setInput('quizConfiguration', quizConfiguration);

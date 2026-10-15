@@ -1163,7 +1163,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         if (searchableEntityWeaviateService != null) {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(modelingExercise));
 
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam));
+            WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam);
         }
         WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam);
 
@@ -1584,7 +1584,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         if (searchableEntityWeaviateService != null) {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(textExercise));
 
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise));
+            WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise);
         }
         WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise);
 
@@ -1991,6 +1991,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(returnedStatistics.numberOfTotalParticipationsForAssessment()).isEqualTo(actualStatistics.numberOfTotalParticipationsForAssessment());
         assertThat(returnedStatistics.existsUnassessedQuizzes()).isEqualTo(actualStatistics.existsUnassessedQuizzes());
         assertThat(returnedStatistics.existsUnsubmittedExercises()).isEqualTo(actualStatistics.existsUnsubmittedExercises());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExamStatistics_tutorReceivesComplaintCounts() throws Exception {
+        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, false);
+        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
+                ExamChecklistDTO.class);
+        // without the complaint counts the exam status of a tutor would claim that 100% of the complaints are done
+        assertThat(returnedStatistics.numberOfAllComplaints()).isNotNull().isEqualTo(actualStatistics.numberOfAllComplaints());
+        assertThat(returnedStatistics.numberOfAllComplaintsDone()).isNotNull().isEqualTo(actualStatistics.numberOfAllComplaintsDone());
+        // the remaining instructor-only values stay hidden from tutors
+        assertThat(returnedStatistics.numberOfGeneratedStudentExams()).isNull();
+        assertThat(returnedStatistics.numberOfExamsStarted()).isNull();
     }
 
     @Test

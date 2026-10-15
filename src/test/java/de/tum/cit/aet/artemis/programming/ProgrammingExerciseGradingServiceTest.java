@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
@@ -770,6 +771,16 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
             verifyStudentScoreCalculation(testParticipations, student);
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateParticipationResults_forAParticipationWithoutExercise_isRejected() {
+        final var participationWithoutExercise = new ProgrammingExerciseStudentParticipation();
+        participationWithoutExercise.setId(4711L);
+
+        assertThatThrownBy(() -> programmingExerciseGradingService.updateParticipationResults(participationWithoutExercise)).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("4711");
     }
 
     @Test

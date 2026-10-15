@@ -54,7 +54,7 @@ public abstract class CourseNotification {
     /**
      * Default constructor used when creating a new notification.
      */
-    public CourseNotification(Long notificationId, Long courseId, String courseTitle, String courseIconUrl, ZonedDateTime creationDate) {
+    public CourseNotification(Long notificationId, long courseId, String courseTitle, String courseIconUrl, ZonedDateTime creationDate) {
         this.notificationId = notificationId;
         this.courseId = courseId;
         this.courseTitle = courseTitle;
@@ -67,7 +67,7 @@ public abstract class CourseNotification {
      * Constructor used when loading an existing notification from the database. Will automatically initialize the
      * fields of the given notification.
      */
-    public CourseNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
+    public CourseNotification(Long notificationId, long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
         this.notificationId = notificationId;
         this.courseId = courseId;
         this.creationDate = creationDate;

@@ -900,7 +900,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
             formData.append('attachment', objectToJsonBlob(this.attachmentForUpload(attachmentToUpdate, name, releaseDate)));
         }
         formData.append('attachmentVideoUnit', objectToJsonBlob(attachmentVideoUnit));
-        // The server notifies students whenever a notification text is sent; it does not use the text itself.
+        // The server notifies students whenever a notification text is sent; an empty one notifies them without a message of the editor.
         const notificationText = withUpload && notifyStudents ? '' : undefined;
 
         return this.attachmentVideoUnitService.update(this.lecture().id!, attachmentVideoUnit.id!, formData, notificationText, AUTOSAVE_REQUEST_CONTEXT()).pipe(
@@ -950,7 +950,7 @@ export class LectureUpdateUnitsComponent implements OnInit {
         return links
             ? links
                   .map((link) => `${link.competency?.id}:${link.weight}`)
-                  .sort()
+                  .sort((a, b) => a.localeCompare(b))
                   .join(',')
             : undefined;
     }

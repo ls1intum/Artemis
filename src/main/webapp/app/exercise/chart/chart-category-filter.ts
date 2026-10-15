@@ -30,7 +30,7 @@ export class ChartCategoryFilter extends ChartFilter {
      */
     setupCategoryFilter(exercisesScores: CategoryFilterOperatingType[]): void {
         this.exerciseCategories = this.determineDisplayableCategories(exercisesScores);
-        this.exercisesWithoutCategoriesPresent = exercisesScores.some((exercises) => !exercises.categories);
+        this.exercisesWithoutCategoriesPresent = exercisesScores.some((exercise) => !exercise.categories?.length);
         this.exerciseCategories.forEach((category) => this.filterMap.set(category, true));
         this.allCategoriesSelected = true;
         this.includeExercisesWithNoCategory = this.exercisesWithoutCategoriesPresent;
@@ -99,12 +99,10 @@ export class ChartCategoryFilter extends ChartFilter {
      */
     applyCurrentFilter<E extends CategoryFilterOperatingType>(exerciseScores: CategoryFilterOperatingType[]): Array<E> {
         return exerciseScores.filter((exercise) => {
-            if (!exercise.categories) {
+            if (!exercise.categories?.length) {
                 return this.includeExercisesWithNoCategory;
             }
-            return exercise.categories
-                .flatMap((category: ExerciseCategory) => this.filterMap.get(category.category!)!)
-                .reduce((value1: boolean, value2: boolean) => value1 || value2);
+            return exercise.categories.some((category: ExerciseCategory) => this.filterMap.get(category.category!) === true);
         }) as Array<E>;
     }
 

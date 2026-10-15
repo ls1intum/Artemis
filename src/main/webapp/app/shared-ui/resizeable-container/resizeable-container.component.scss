@@ -58,6 +58,9 @@
 .expanded {
     width: 30vw;
 
+    // A page opts in to a cap relative to its container, for example `[--resizeable-container-right-max-width:45%]`.
+    max-width: var(--resizeable-container-right-max-width, none);
+
     .card {
         width: inherit;
         min-width: 200px;
@@ -66,6 +69,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            min-height: 45px; // as tall as the header of the left card
             cursor: pointer;
 
             fa-icon {
@@ -87,15 +91,47 @@
         }
     }
 
+    // The divider is one shell divider wide, like the split of the course exercise page, and carries the same small grip. Its grab
+    // area reaches 4px into the card of the problem statement. It must not reach into the card on the other side, whose
+    // scrollbar sits on that edge.
     .draggable-left {
+        position: relative;
         display: flex;
+        flex: none;
         align-items: center;
         justify-content: center;
-        min-width: 15px;
+        width: var(--spacing-divider);
         z-index: 10;
 
         // Show a resize affordance on the drag handle (interact.js used to set this automatically).
         cursor: col-resize;
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: -4px;
+            bottom: 0;
+            left: 0;
+        }
+
+        &::after {
+            content: '';
+            box-sizing: border-box;
+            width: 5px;
+            height: 12px;
+            border-inline: 2px solid var(--body-color);
+            border-radius: 1px;
+        }
+
+        &:hover::after {
+            border-color: var(--primary);
+        }
+    }
+
+    // While a drag is in progress the pointer is captured by the panel and may no longer be over the divider.
+    &.card-resizable .draggable-left::after {
+        border-color: var(--primary);
     }
 }
 
@@ -103,7 +139,7 @@
     width: 50px;
     justify-content: space-between;
     flex-flow: column nowrap;
-    margin-left: 15px;
+    margin-left: var(--spacing-divider);
     cursor: pointer;
 
     .header {
@@ -134,6 +170,10 @@
 
     .expanded {
         width: 100% !important;
+        max-width: none;
+
+        // There is no handle to drag, but the panels keep the distance the divider has where there is one.
+        margin-left: var(--spacing-divider);
 
         .draggable-left {
             display: none;

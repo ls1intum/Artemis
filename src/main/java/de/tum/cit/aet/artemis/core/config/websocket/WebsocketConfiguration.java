@@ -366,6 +366,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Override
     protected void configureClientOutboundChannel(ChannelRegistration registration) {
         super.configureClientOutboundChannel(registration);
+        // The broker relay forwards the CONNECTED frame of the broker, which names the broker and its version
+        registration.interceptors(new StompServerHeaderInterceptor());
         registration.taskExecutor(createExecutor("ws-outbound-"));
     }
 

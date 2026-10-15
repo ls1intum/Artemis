@@ -424,7 +424,7 @@ export class AssessmentDashboardComponent implements OnInit {
 
     private hasUnfinishedAssessments(exercise: Exercise): boolean {
         return (
-            exercise.numberOfAssessmentsOfCorrectionRounds?.map((round) => round.inTime !== exercise.numberOfSubmissions?.inTime).reduce((acc, cur) => acc || cur) ||
+            exercise.numberOfAssessmentsOfCorrectionRounds?.some((round) => round.inTime !== exercise.numberOfSubmissions?.inTime) ||
             exercise.totalNumberOfAssessments !== exercise.numberOfSubmissions?.inTime
         );
     }

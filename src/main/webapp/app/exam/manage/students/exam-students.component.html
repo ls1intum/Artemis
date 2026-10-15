@@ -196,7 +196,6 @@
         <button
             type="button"
             tumAetUiButton
-            jhiDeleteButton
             data-testid="remove-student-button"
             severity="danger"
             variant="outlined"
@@ -204,18 +203,7 @@
             [tumAetUiTooltip]="'artemisApp.examManagement.examStudents.table.remove' | artemisTranslate"
             [attr.aria-label]="'artemisApp.examManagement.examStudents.table.remove' | artemisTranslate"
             [disabled]="isTestExam()"
-            [renderButtonStyle]="false"
-            [renderButtonText]="false"
-            [actionType]="ActionType.Remove"
-            [entityTitle]="examUser.login || ''"
-            deleteQuestion="artemisApp.examManagement.examStudents.removeFromExam.modalQuestion"
-            deleteConfirmationText="artemisApp.examManagement.examStudents.removeFromExam.typeNameToConfirm"
-            (delete)="removeFromExam(examUser, $event)"
-            [additionalChecks]="{
-                deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',
-            }"
-            [dialogError]="dialogError$"
-            [requireConfirmationOnlyForAdditionalChecks]="true"
+            (click)="openRemoveStudentDialog(examUser)"
         >
             <fa-icon [icon]="faUserMinus" />
         </button>
@@ -368,5 +356,26 @@
     [searchFn]="searchUsersForExamFn"
     [registerFn]="registerUsersForExamFn"
     (registered)="reloadStudentsView()"
+/>
+<jhi-exam-delete-dialog
+    [(visible)]="removeStudentDialogVisible"
+    [actionType]="ActionType.Remove"
+    [entityTitle]="studentToRemove()?.login || ''"
+    deleteQuestion="artemisApp.examManagement.examStudents.removeFromExam.modalQuestion"
+    deleteConfirmationText="artemisApp.examManagement.examStudents.removeFromExam.typeNameToConfirm"
+    [additionalChecks]="removeStudentChecks"
+    [requireConfirmationOnlyForAdditionalChecks]="true"
+    [dialogError]="dialogError$"
+    (confirmed)="removeFromExam(studentToRemove()!, $event)"
+/>
+<jhi-exam-delete-dialog
+    [(visible)]="removeAllDialogVisible"
+    [actionType]="ActionType.Remove"
+    [entityTitle]="exam().title || ''"
+    deleteQuestion="artemisApp.studentExams.removeAllStudents.question"
+    deleteConfirmationText="artemisApp.studentExams.removeAllStudents.confirmationText"
+    [additionalChecks]="removeStudentChecks"
+    [dialogError]="dialogError$"
+    (confirmed)="removeAllStudents($event)"
 />
 <tumaet-ui-confirm-dialog />

@@ -21,6 +21,9 @@ export default defineConfig({
     timeout: (parseNumber(process.env.TEST_TIMEOUT_SECONDS) ?? 3 * 60) * 1000,
     retries: parseNumber(process.env.TEST_RETRIES) ?? 2,
     workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 5,
+    /* Playwright empties its output directory when a run starts. run-tests.sh starts one run per project type, so a shared directory
+     * would lose the traces and error contexts of the parallel run to the multi-node run that follows it. */
+    outputDir: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-results/${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-results',
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: [
         ['list'],
@@ -133,7 +136,7 @@ export default defineConfig({
             },
         },
         // Tests with @kubernetes tag. These need an Artemis installation whose build agents use the
-        // Kubernetes build runner, which only run-localci-kubernetes.sh sets up. No other pipeline
+        // Kubernetes build runner, which only deployment/kubernetes/run-localci-kubernetes.sh sets up. No other pipeline
         // selects this project.
         {
             name: 'kubernetes-tests',

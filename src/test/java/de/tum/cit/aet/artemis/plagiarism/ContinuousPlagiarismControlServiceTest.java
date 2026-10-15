@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -75,10 +76,13 @@ class ContinuousPlagiarismControlServiceTest {
 
     private final UserTestRepository userRepository = mock();
 
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository = mock();
+
     private final FeatureUsageCollector featureUsageCollector = mock();
 
-    private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismChecksService, plagiarismComparisonRepository,
-            plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository, userRepository, Optional.of(featureUsageCollector));
+    private final ContinuousPlagiarismControlService service = new ContinuousPlagiarismControlService(exerciseRepository, plagiarismDetectionConfigRepository,
+            plagiarismChecksService, plagiarismComparisonRepository, plagiarismCaseService, plagiarismCaseRepository, plagiarismPostService, plagiarismResultRepository,
+            userRepository, Optional.of(featureUsageCollector));
 
     /**
      * The control only runs for a course that has an instructor to act on the findings, so every test that expects a
@@ -93,11 +97,13 @@ class ContinuousPlagiarismControlServiceTest {
     void shouldExecuteChecks() throws IOException, ProgrammingLanguageNotSupportedForPlagiarismDetectionException {
         // given: text exercise with cpc enabled
         var textExercise = new TextExercise();
+        textExercise.setCourse(new Course());
         textExercise.setId(101L);
         textExercise.setDueDate(null);
 
         // and: modeling exercise with cpc and post due date checks enabled
         var modelingExercise = new ModelingExercise();
+        modelingExercise.setCourse(new Course());
         modelingExercise.setId(102L);
         modelingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         modelingExercise.setPlagiarismDetectionConfig(PlagiarismDetectionConfig.createDefault());
@@ -105,6 +111,7 @@ class ContinuousPlagiarismControlServiceTest {
 
         // and: programing exercise with cpc enabled
         var programmingExercise = new ProgrammingExercise();
+        programmingExercise.setCourse(new Course());
         programmingExercise.setId(103L);
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
 
@@ -114,7 +121,7 @@ class ContinuousPlagiarismControlServiceTest {
 
         // and: results of plagiarism checks
         var textPlagiarismResult = new PlagiarismResult();
-        textPlagiarismResult.setComparisons(Set.of(new PlagiarismComparison()));
+        textPlagiarismResult.setComparisons(Set.of(createPlagiarismComparison(11, 1, 2)));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenReturn(textPlagiarismResult);
         var programmingPlagiarismResult = new PlagiarismResult();
         when(plagiarismChecksService.checkProgrammingExercise(programmingExercise)).thenReturn(programmingPlagiarismResult);
@@ -199,6 +206,17 @@ class ContinuousPlagiarismControlServiceTest {
     }
 
     @Test
+    void shouldSkipTheCheckWhenTheExerciseHasNoCourse() {
+        var exercise = new TextExercise();
+        exercise.setId(99L);
+        when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(exercise));
+
+        assertThatNoException().isThrownBy(service::executeChecks);
+
+        verifyNoInteractions(userRepository, plagiarismChecksService, plagiarismComparisonRepository, plagiarismCaseService, plagiarismPostService);
+    }
+
+    @Test
     void shouldRemoveStalePlagiarismCase() {
         // given: text exercise with cpc enabled
         var exercise = new TextExercise();
@@ -261,6 +279,7 @@ class ContinuousPlagiarismControlServiceTest {
     void shouldSilentAnyJPlagExceptionsThrown() {
         // given
         var textExercise = new TextExercise();
+        textExercise.setCourse(new Course());
         textExercise.setId(123L);
         when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(textExercise));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new NullPointerException("null"));
@@ -274,6 +293,7 @@ class ContinuousPlagiarismControlServiceTest {
     void shouldSilentAnyUnknownExceptionsThrown() {
         // given
         var textExercise = new TextExercise();
+        textExercise.setCourse(new Course());
         textExercise.setId(101L);
         when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(textExercise));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new IllegalStateException());
@@ -291,6 +311,7 @@ class ContinuousPlagiarismControlServiceTest {
     @Test
     void shouldRecordASilencedFailureAsAFailedRun() {
         var textExercise = new TextExercise();
+        textExercise.setCourse(new Course());
         textExercise.setId(123L);
         when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(textExercise));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenThrow(new IllegalStateException("JPlag is misconfigured"));
@@ -308,6 +329,7 @@ class ContinuousPlagiarismControlServiceTest {
     @Test
     void shouldRecordAnExerciseTypeWithoutAPlagiarismCheckAsASuccess() {
         var modelingExercise = new ModelingExercise();
+        modelingExercise.setCourse(new Course());
         modelingExercise.setId(102L);
         when(exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue()).thenReturn(Set.of(modelingExercise));
 

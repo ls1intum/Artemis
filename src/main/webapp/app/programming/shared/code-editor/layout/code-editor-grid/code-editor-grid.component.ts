@@ -1,8 +1,6 @@
-import { Component, ElementRef, HostListener, Renderer2, ViewEncapsulation, afterNextRender, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, Renderer2, ViewEncapsulation, afterNextRender, inject, input, output, signal, viewChild } from '@angular/core';
 import { InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
-import { faGripLines, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import { CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResizeType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
 
@@ -11,10 +9,11 @@ import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive
     templateUrl: './code-editor-grid.component.html',
     styleUrls: ['./code-editor-grid.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FaIconComponent, ResizableDirective],
+    imports: [ResizableDirective],
 })
 export class CodeEditorGridComponent {
     private renderer = inject(Renderer2);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly editorWrapperElement = viewChild<ElementRef<HTMLElement>>('editorWrapper');
     readonly buildOutputElement = viewChild.required<ElementRef>('buildOutput');
@@ -60,12 +59,11 @@ export class CodeEditorGridComponent {
 
     protected readonly ResizeType = ResizeType;
 
-    // Icons
-    faGripLines = faGripLines;
-    faGripLinesVertical = faGripLinesVertical;
-
     constructor() {
-        afterNextRender(() => this.recomputeMaxConstraints());
+        afterNextRender(() => {
+            this.recomputeMaxConstraints();
+            this.observeLayout();
+        });
     }
 
     @HostListener('window:resize')
@@ -80,9 +78,24 @@ export class CodeEditorGridComponent {
     }
 
     /**
+     * Measures the maxima again whenever the area of the panels changes its size, which includes the moment it is shown. The exam keeps the
+     * pages the student has left in the document, hidden: a resize of the window measures nothing there, and the editor is shown again at a size
+     * that was never measured, so the maxima of the old size would clamp every drag of a divider.
+     */
+    private observeLayout(): void {
+        const content = this.editorWrapperElement()?.nativeElement.querySelector('.editor-main__content');
+        if (!content || typeof ResizeObserver === 'undefined') {
+            return;
+        }
+        const observer = new ResizeObserver(() => this.recomputeMaxConstraints());
+        observer.observe(content);
+        this.destroyRef.onDestroy(() => observer.disconnect());
+    }
+
+    /**
      * Recomputes the sum-aware panel maxima from the current layout: each panel may grow only into the space left
-     * by its neighbour and the editor, within the visible viewport. Called on init, window resize, resize end and
-     * collapse, so it never runs during typing.
+     * by its neighbour and the editor, within the visible viewport. Called on init, window resize, resize end,
+     * collapse and when the area of the panels changes its size (see {@link observeLayout}), so it never runs during typing.
      */
     private recomputeMaxConstraints(): void {
         const wrapper = this.editorWrapperElement()?.nativeElement;
@@ -94,6 +107,10 @@ export class CodeEditorGridComponent {
         const content = wrapper.querySelector<HTMLElement>('.editor-main__content');
         const left = wrapper.querySelector<HTMLElement>('.editor-sidebar-left');
         const right = wrapper.querySelector<HTMLElement>('.editor-sidebar-right');
+        if (content?.clientWidth === 0) {
+            // not rendered (a hidden page of the exam): there is nothing to measure, and the layout is measured when it is shown
+            return;
+        }
 
         const mainTop = (main ?? wrapper).getBoundingClientRect().top;
         const availableHeight = Math.max(0, window.innerHeight - mainTop - CodeEditorGridComponent.VERTICAL_BUFFER_PX);

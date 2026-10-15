@@ -39,13 +39,13 @@ public class WeaviateAuthenticationFailureAnalyzer extends AbstractFailureAnalyz
                            api-key: <your-api-key>    # Must match AUTHENTICATION_APIKEY_ALLOWED_KEYS on the Weaviate server
 
                 2. VERIFY WEAVIATE SERVER AUTHENTICATION SETTINGS:
-                   In your Weaviate environment file (e.g. docker/weaviate/default.env), ensure:
+                   In your Weaviate environment file (e.g. deployment/docker/weaviate/default.env), ensure:
                        AUTHENTICATION_APIKEY_ENABLED=true
                        AUTHENTICATION_APIKEY_ALLOWED_KEYS=<your-api-key>
                        AUTHENTICATION_APIKEY_USERS=<your-user>
                    The api-key value in Artemis must match one of the keys in AUTHENTICATION_APIKEY_ALLOWED_KEYS.
                    Note: The values shown above are placeholders. Replace them with your actual credentials.
-                   For local development, the defaults in docker/weaviate/default.env can be used as-is.
+                   For local development, the defaults in deployment/docker/weaviate/default.env can be used as-is.
 
                 3. ALTERNATIVE - DISABLE AUTHENTICATION ON WEAVIATE SERVER:
                    If you don't need authentication, set in your Weaviate environment file:

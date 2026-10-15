@@ -143,6 +143,7 @@
     <div class="flex flex-wrap items-center gap-2 my-3">
         <tumaet-ui-icon-field [icon]="faSearch">
             <input
+                [attr.aria-label]="'artemisApp.featureUsage.search' | artemisTranslate"
                 tumAetUiInput
                 type="text"
                 [ngModel]="searchTerm()"

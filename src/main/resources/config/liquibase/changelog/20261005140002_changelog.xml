@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    A course configuration had no key of its own. The course pointed at it through a nullable column, so nothing tied the configuration to
+    the course it configures, and deleting the course could leave the row behind for good.
+
+    Every course owns exactly one permanent row. The configuration holds the key, a deleted course takes it along through the
+    database, and a configuration that belongs to no course can no longer be written. Settings never insert or delete the row,
+    they only update it.
+
+    DDL commits implicitly on MySQL, so every step is its own changeset and can be repeated after an interruption: the
+    structural steps check for themselves, and the statements only touch what is still unfinished.
+    -->
+
+    <changeSet id="20261005140002-01-stop-on-a-configuration-shared-by-several-courses" author="krusche">
+        <!-- Two courses cannot share a configuration. If they do, nothing says which one owns it, so the upgrade stops rather than guessing. -->
+        <preConditions onFail="HALT" onFailMessage="Several courses point at the same row of course_configuration. Give each course its own row (copy the row and update course.course_configuration_id) or remove the duplicate pointer, then start the server again.">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM (SELECT course_configuration_id FROM course WHERE course_configuration_id IS NOT NULL
+                GROUP BY course_configuration_id HAVING COUNT(*) &gt; 1) shared</sqlCheck>
+        </preConditions>
+        <comment>Only checks the precondition; the statement changes nothing.</comment>
+        <sql>DELETE FROM course_configuration WHERE 1 = 0;</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261005140002-02-add-course-key-to-course-configuration" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="course_configuration" columnName="course_id"/></not>
+        </preConditions>
+        <comment>The key of the course moves onto the configuration, so that it cannot outlive the course it configures.</comment>
+        <addColumn tableName="course_configuration">
+            <column name="course_id" type="BIGINT"/>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="course_configuration" columnName="course_id"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140002-04-set-course-key-of-course-configuration" author="krusche">
+        <comment>The course that pointed at a configuration becomes its key. Only configurations without a key are filled, so a repeated run changes nothing.</comment>
+        <sql>UPDATE course_configuration SET course_id =
+            (SELECT MIN(course.id) FROM course WHERE course.course_configuration_id = course_configuration.id)
+            WHERE course_id IS NULL;</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261005140002-06-remove-course-configuration-no-course-points-at" author="krusche">
+        <comment>Remove the course configurations that no course points at.</comment>
+        <!--
+        A configuration no course points at configures nothing. It carried no key of its own, and nothing lists one except through
+        the course that named it, so it has been unreachable from the moment the course stopped naming it. Nothing else references
+        the table, so the statement removes nothing but the rows themselves.
+        -->
+        <sql>DELETE FROM course_configuration WHERE course_id IS NULL;</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261005140002-07-one-course-configuration-per-course" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="course_configuration" indexName="UK_COURSE_CONFIGURATION_COURSE"/></not>
+        </preConditions>
+        <addUniqueConstraint tableName="course_configuration" columnNames="course_id" constraintName="UK_COURSE_CONFIGURATION_COURSE"/>
+        <rollback>
+            <dropUniqueConstraint tableName="course_configuration" constraintName="UK_COURSE_CONFIGURATION_COURSE"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140002-09-course-configuration-course-key-not-null" author="krusche">
+        <addNotNullConstraint tableName="course_configuration" columnName="course_id" columnDataType="BIGINT"/>
+        <rollback>
+            <dropNotNullConstraint tableName="course_configuration" columnName="course_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140002-10-course-configuration-follows-its-course" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <not><foreignKeyConstraintExists foreignKeyTableName="course_configuration" foreignKeyName="FK_COURSE_CONFIGURATION_COURSE"/></not>
+        </preConditions>
+        <addForeignKeyConstraint baseTableName="course_configuration" baseColumnNames="course_id" constraintName="FK_COURSE_CONFIGURATION_COURSE"
+                                 referencedTableName="course" referencedColumnNames="id" onDelete="CASCADE"/>
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="course_configuration" constraintName="FK_COURSE_CONFIGURATION_COURSE"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140002-11-courses-stop-pointing-at-their-course-configuration-constraint" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyTableName="course" foreignKeyName="fk_course_course_configuration"/>
+        </preConditions>
+        <comment>The configuration holds the key, so the course no longer points at it.</comment>
+        <dropForeignKeyConstraint baseTableName="course" constraintName="fk_course_course_configuration"/>
+        <rollback>
+            <addForeignKeyConstraint baseTableName="course" baseColumnNames="course_configuration_id" constraintName="fk_course_course_configuration"
+                                     referencedTableName="course_configuration" referencedColumnNames="id" onDelete="SET NULL"/>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20261005140002-12-courses-stop-pointing-at-their-course-configuration" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="course" columnName="course_configuration_id"/>
+        </preConditions>
+        <comment>Dropping the column also drops the indexes that only cover it.</comment>
+        <dropColumn tableName="course" columnName="course_configuration_id"/>
+        <rollback>
+            <addColumn tableName="course">
+                <column name="course_configuration_id" type="BIGINT"/>
+            </addColumn>
+            <sql>UPDATE course SET course_configuration_id =
+                (SELECT config.id FROM course_configuration config WHERE config.course_id = course.id);</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

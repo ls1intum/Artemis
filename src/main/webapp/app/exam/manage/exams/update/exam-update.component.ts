@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { EventManager } from 'app/foundation/service/event-manager.service';
@@ -31,6 +31,7 @@ import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/cours
 import {
     TumAetUiButtonDirective,
     TumAetUiCheckboxComponent,
+    TumAetUiDatePickerComponent,
     TumAetUiDialogComponent,
     TumAetUiFormFieldComponent,
     TumAetUiInputDirective,
@@ -38,7 +39,6 @@ import {
     TumAetUiTagComponent,
     TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
@@ -61,12 +61,12 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         ExamModePickerComponent,
         FaIconComponent,
         WorkingTimeChangeComponent,
-        FormDateTimePickerComponent,
         ExamExerciseImportComponent,
         MarkdownEditorMonacoComponent,
         ArtemisTranslatePipe,
         ConfirmEntityNameComponent,
         TumAetUiCheckboxComponent,
+        TumAetUiDatePickerComponent,
         TumAetUiDialogComponent,
         TumAetUiFormFieldComponent,
         TumAetUiInputDirective,
@@ -125,6 +125,11 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     // Link to the component enabling the selection of exercise groups and exercises for import
     examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
     examImportProgressDialog = viewChild.required(ExamImportProgressDialogComponent);
+    /**
+     * The date fields of the review, publication and example solution dates. A date field keeps its last committed date while the
+     * typed text is not a date and flags itself, but it is no form control, so the save button has to ask the fields.
+     */
+    private readonly datePickers = viewChildren(TumAetUiDatePickerComponent);
 
     ngOnInit(): void {
         combineLatest([this.route.url, this.route.data])
@@ -259,6 +264,10 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      * If either the user confirms the modal, the exam is not ongoing or the dates have not changed, the exam is saved.
      */
     handleSubmit() {
+        // The save button is disabled for an invalid configuration, but a submit can also come from the form itself (for example Enter in a field).
+        if (!this.isValidConfiguration) {
+            return;
+        }
         const datesChanged = !(this.exam.startDate?.isSame(this.originalStartDate) && this.exam.endDate?.isSame(this.originalEndDate));
 
         if (datesChanged && this.isOngoingExam) {
@@ -425,7 +434,8 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             examValidSummaryPublicationDate &&
             examValidNumberOfExercises &&
             examValidGracePeriod &&
-            this.areExamTextsValid
+            this.areExamTextsValid &&
+            this.datePickers().every((picker) => picker.isValid())
         );
     }
 
@@ -481,6 +491,34 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             return true;
         }
         return this.exam.gracePeriod >= 0 && this.exam.gracePeriod <= 3600;
+    }
+
+    /**
+     * Returns true when the grace period is set to a negative value, which the minimum of 0 seconds rules out.
+     */
+    get isGracePeriodNegative(): boolean {
+        return this.exam.gracePeriod !== undefined && this.exam.gracePeriod !== null && this.exam.gracePeriod < 0;
+    }
+
+    /**
+     * Returns true when the maximum points are missing or below the minimum of 1. Values above the maximum have their own explanation.
+     */
+    get isMaxPointsMissingOrTooLow(): boolean {
+        return !((this.exam.examMaxPoints ?? 0) >= 1);
+    }
+
+    /**
+     * Returns true when the number of exercises is set below the minimum of 1. An empty number of exercises is valid.
+     */
+    get isNumberOfExercisesTooLow(): boolean {
+        return this.exam.numberOfExercisesInExam !== undefined && this.exam.numberOfExercisesInExam !== null && this.exam.numberOfExercisesInExam < 1;
+    }
+
+    /**
+     * Returns true when the channel name field is shown but was emptied. The title fills it initially, so it is only empty after the user cleared it.
+     */
+    get isChannelNameMissing(): boolean {
+        return !this.hideChannelNameInput() && this.exam.channelName === '';
     }
 
     /**
@@ -585,6 +623,51 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         const afterEndDate = !!this.exam.endDate && summaryDate.isAfter(this.exam.endDate);
         const notAfterPublishResults = !this.exam.publishResultsDate || !summaryDate.isAfter(this.exam.publishResultsDate);
         return afterEndDate && notAfterPublishResults;
+    }
+
+    /**
+     * Returns the translation key explaining why the release date of results is invalid, or undefined if it is valid.
+     */
+    get publishResultsDateErrorKey(): string | undefined {
+        if (this.isValidPublishResultsDate) {
+            return undefined;
+        }
+        return this.exam.endDate ? 'error.examPublishResultsDateAfterEnd' : 'error.examPublishResultsDateEndMissing';
+    }
+
+    /**
+     * Returns the translation key explaining why the begin of the student review is invalid, or undefined if it is valid.
+     */
+    get examStudentReviewStartErrorKey(): string | undefined {
+        if (this.isValidExamStudentReviewStart) {
+            return undefined;
+        }
+        return this.exam.publishResultsDate ? 'error.examStudentReviewStartAfterRelease' : 'error.examStudentReviewStartReleaseMissing';
+    }
+
+    /**
+     * Returns the translation key explaining why the submission overview date is invalid, or undefined if it is valid.
+     */
+    get examSummaryPublicationDateErrorKey(): string | undefined {
+        if (this.isValidExamSummaryPublicationDate) {
+            return undefined;
+        }
+        if (!this.exam.endDate) {
+            return 'error.examSummaryPublicationDateEndMissing';
+        }
+        const afterEndDate = dayjs(this.exam.examSummaryPublicationDate).isAfter(this.exam.endDate);
+        return afterEndDate ? 'error.examSummaryPublicationDateBeforeRelease' : 'error.examSummaryPublicationDateAfterEnd';
+    }
+
+    /**
+     * Returns the translation key explaining why the example solution publication date is invalid, or undefined if it is valid.
+     */
+    get exampleSolutionPublicationDateErrorKey(): string | undefined {
+        if (this.isValidExampleSolutionPublicationDate) {
+            return undefined;
+        }
+        const beforeEndDate = dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null);
+        return beforeEndDate ? 'error.examExampleSolutionPublicationDateAfterEnd' : 'error.examExampleSolutionPublicationDateAfterVisible';
     }
 
     /**

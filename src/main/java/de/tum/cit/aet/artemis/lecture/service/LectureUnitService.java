@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -59,10 +61,12 @@ public class LectureUnitService {
 
     private final Optional<LectureContentProcessingApi> contentProcessingApi;
 
+    private final ApplicationEventPublisher applicationEventPublisher;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CourseCompetencyApi> courseCompetencyApi,
             Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<CompetencyRelationApi> competencyRelationApi,
-            Optional<LectureContentProcessingApi> contentProcessingApi) {
+            Optional<LectureContentProcessingApi> contentProcessingApi, ApplicationEventPublisher applicationEventPublisher) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
@@ -72,6 +76,16 @@ public class LectureUnitService {
         this.competencyRepositoryApi = competencyRepositoryApi;
         this.competencyRelationApi = competencyRelationApi;
         this.contentProcessingApi = contentProcessingApi;
+        this.applicationEventPublisher = applicationEventPublisher;
+    }
+
+    /**
+     * Publishes an event after learning-relevant lecture unit content has changed.
+     *
+     * @param lectureUnit the created or updated lecture unit
+     */
+    public void publishContentChangedEvent(LectureUnit lectureUnit) {
+        applicationEventPublisher.publishEvent(new LectureUnitContentChangedEvent(lectureUnit));
     }
 
     /**

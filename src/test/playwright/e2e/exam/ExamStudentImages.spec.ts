@@ -1,3 +1,4 @@
+import fs from 'fs';
 import path from 'path';
 import { expect, Page } from '@playwright/test';
 import { test } from '../../support/fixtures';
@@ -57,9 +58,18 @@ test.describe.serial('Exam student images', { tag: '@slow' }, () => {
         await dialog.locator('#import').click();
         const response = await saved;
         expect(response.status()).toBe(200);
+        // Chrome can evict the body of an upload response before it is read. Saving the same PDF again replaces the pictures and changes nothing else,
+        // so the upload may be replayed through the API to get the same answer.
+        const replayUpload = async () => {
+            const replayed = await page.request.post(response.url(), {
+                multipart: { file: { name: 'studentsWithImages.pdf', mimeType: 'application/pdf', buffer: fs.readFileSync(imagesPdf) } },
+            });
+            expect(replayed.status(), 'the replayed upload').toBe(200);
+            return replayed.json();
+        };
         return {
             dialog,
-            result: (await readResponseJson(response)) as { numberOfUsersNotFound: number; numberOfImagesSaved: number; listOfExamUserRegistrationNumbers: string[] },
+            result: (await readResponseJson(response, replayUpload)) as { numberOfUsersNotFound: number; numberOfImagesSaved: number; listOfExamUserRegistrationNumbers: string[] },
         };
     }
 

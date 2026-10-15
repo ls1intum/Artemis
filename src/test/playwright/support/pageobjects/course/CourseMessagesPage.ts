@@ -989,7 +989,7 @@ export class CourseMessagesPage {
 
         await setMonacoEditorContentByLocator(this.page, replyLocator, newContent);
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/answer-messages/') && resp.request().method() === 'PUT');
-        await replyLocator.locator('#save').click();
+        await replyLocator.getByTestId('answer-post-edit-save').click();
         await responsePromise;
     }
 

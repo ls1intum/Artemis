@@ -2,12 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockModule, MockProvider } from 'ng-mocks';
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/overview/services/exam-participation-live-events.service';
-import { Subject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockExamParticipationLiveEventsService } from 'test/helpers/mocks/service/mock-exam-participation-live-events.service';
-import { ExamLiveEventsOverlayComponent } from 'app/exam/overview/events/overlay/exam-live-events-overlay.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -15,7 +13,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 describe('ExamLiveEventsButtonComponent', () => {
     let component: ExamLiveEventsButtonComponent;
     let fixture: ComponentFixture<ExamLiveEventsButtonComponent>;
-    let mockDialogService: DialogService;
     let mockLiveEventsService: ExamParticipationLiveEventsService;
 
     beforeEach(async () => {
@@ -23,7 +20,6 @@ describe('ExamLiveEventsButtonComponent', () => {
             imports: [ExamLiveEventsButtonComponent, MockModule(FontAwesomeModule)],
             providers: [
                 MockProvider(AlertService),
-                MockProvider(DialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ExamParticipationLiveEventsService, useClass: MockExamParticipationLiveEventsService },
             ],
@@ -33,7 +29,6 @@ describe('ExamLiveEventsButtonComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(ExamLiveEventsButtonComponent);
         component = fixture.componentInstance;
-        mockDialogService = TestBed.inject(DialogService);
         mockLiveEventsService = TestBed.inject(ExamParticipationLiveEventsService);
         fixture.detectChanges();
     });
@@ -51,16 +46,16 @@ describe('ExamLiveEventsButtonComponent', () => {
     });
 
     it('should open dialog when new events are observed', () => {
-        const dialogSpy = vi.spyOn(mockDialogService, 'open').mockReturnValue({ onClose: new Subject<any>() } as any);
+        expect(component.dialogVisible()).toBe(false);
         vi.spyOn(mockLiveEventsService, 'observeNewEventsAsUser').mockReturnValue(of({} as any as ExamLiveEvent));
         component.ngOnInit();
-        expect(dialogSpy).toHaveBeenCalledOnce();
-        expect(dialogSpy.mock.calls[0][0]).toBe(ExamLiveEventsOverlayComponent);
-        const config = dialogSpy.mock.calls[0][1];
-        expect(config?.modal).toBe(true);
-        expect(config?.styleClass).toBe('live-events-modal-window');
-        const examStartDateGetter = (config?.data as { examStartDate?: () => unknown } | undefined)?.examStartDate;
-        expect(examStartDateGetter).toBeTypeOf('function');
-        expect(examStartDateGetter?.()).toBeUndefined();
+        expect(component.dialogVisible()).toBe(true);
+    });
+
+    it('should open the dialog when the button is clicked and keep it open for further events', () => {
+        const preventDefault = vi.fn();
+        component.openDialog({ preventDefault } as unknown as MouseEvent);
+        expect(preventDefault).toHaveBeenCalledOnce();
+        expect(component.dialogVisible()).toBe(true);
     });
 });

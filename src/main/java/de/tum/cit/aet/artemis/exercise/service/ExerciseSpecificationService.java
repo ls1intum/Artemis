@@ -18,7 +18,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
+import de.tum.cit.aet.artemis.core.domain.UserCourseRole_;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -93,18 +95,18 @@ public class ExerciseSpecificationService {
             if (!authCheckService.isCurrentUserAdminAccessEnabled()) {
                 Subquery<CourseRole> ucrSubqueryCourse = query.subquery(CourseRole.class);
                 var ucrRootCourse = ucrSubqueryCourse.from(UserCourseRole.class);
-                ucrSubqueryCourse.select(ucrRootCourse.get("role"))
-                        .where(criteriaBuilder.and(criteriaBuilder.equal(ucrRootCourse.get("user").get("id"), user.getId()),
-                                criteriaBuilder.equal(ucrRootCourse.get("course").get("id"), joinCourse.get("id")),
-                                ucrRootCourse.get("role").in(CourseRole.INSTRUCTOR, CourseRole.EDITOR)));
+                ucrSubqueryCourse.select(ucrRootCourse.get(UserCourseRole_.ROLE))
+                        .where(criteriaBuilder.and(criteriaBuilder.equal(ucrRootCourse.get(UserCourseRole_.USER).get(DomainObject_.ID), user.getId()),
+                                criteriaBuilder.equal(ucrRootCourse.get(UserCourseRole_.COURSE).get(DomainObject_.ID), joinCourse.get(DomainObject_.ID)),
+                                ucrRootCourse.get(UserCourseRole_.ROLE).in(CourseRole.INSTRUCTOR, CourseRole.EDITOR)));
                 Predicate atLeastEditorInCourse = criteriaBuilder.exists(ucrSubqueryCourse);
 
                 Subquery<CourseRole> ucrSubqueryExam = query.subquery(CourseRole.class);
                 var ucrRootExam = ucrSubqueryExam.from(UserCourseRole.class);
-                ucrSubqueryExam.select(ucrRootExam.get("role"))
-                        .where(criteriaBuilder.and(criteriaBuilder.equal(ucrRootExam.get("user").get("id"), user.getId()),
-                                criteriaBuilder.equal(ucrRootExam.get("course").get("id"), joinExamCourse.get("id")),
-                                ucrRootExam.get("role").in(CourseRole.INSTRUCTOR, CourseRole.EDITOR)));
+                ucrSubqueryExam.select(ucrRootExam.get(UserCourseRole_.ROLE))
+                        .where(criteriaBuilder.and(criteriaBuilder.equal(ucrRootExam.get(UserCourseRole_.USER).get(DomainObject_.ID), user.getId()),
+                                criteriaBuilder.equal(ucrRootExam.get(UserCourseRole_.COURSE).get(DomainObject_.ID), joinExamCourse.get(DomainObject_.ID)),
+                                ucrRootExam.get(UserCourseRole_.ROLE).in(CourseRole.INSTRUCTOR, CourseRole.EDITOR)));
                 Predicate atLeastEditorInExam = criteriaBuilder.exists(ucrSubqueryExam);
 
                 Predicate availableCourseExercise = criteriaBuilder.and(matchingCourseExercise, atLeastEditorInCourse);

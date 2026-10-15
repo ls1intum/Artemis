@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.notification.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -77,6 +79,7 @@ public class CourseNotificationResource {
         var presetDTOs = courseNotificationSettingPresetRegistryService.getSettingPresetDTOs();
         var notificationTypes = courseNotificationRegistryService.getNotificationTypes();
 
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(new CourseNotificationInfoDTO(notificationTypes, NotificationChannelOption.values(), presetDTOs));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                .body(new CourseNotificationInfoDTO(notificationTypes, List.of(NotificationChannelOption.values()), presetDTOs));
     }
 }

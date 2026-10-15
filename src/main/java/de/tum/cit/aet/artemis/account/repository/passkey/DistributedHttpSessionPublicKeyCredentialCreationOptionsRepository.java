@@ -135,7 +135,7 @@ public class DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository 
 
         PublicKeyCredentialCreationOptionsDTO creationOptions = getCreationOptionsMap().get(userId);
         if (creationOptions == null) {
-            log.warn("No cached PublicKeyCredentialCreationOptions found for user '{}'", userId);
+            log.warn("No cached PublicKeyCredentialCreationOptions found for the authenticated user");
             return null;
         }
 

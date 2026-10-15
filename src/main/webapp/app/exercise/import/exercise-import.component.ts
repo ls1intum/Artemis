@@ -18,6 +18,7 @@ import { NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
 import { PaginatorModule } from 'primeng/paginator';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { ExerciseCourseTitlePipe } from 'app/foundation/pipes/exercise-course-title.pipe';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export interface ExerciseImportDialogData {
     exerciseType: ExerciseType;
@@ -29,7 +30,18 @@ const DEFAULT_SORT_COLUMN = 'ID';
 @Component({
     selector: 'jhi-exercise-import',
     templateUrl: './exercise-import.component.html',
-    imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, PaginatorModule, ExerciseCourseTitlePipe],
+    imports: [
+        TranslateDirective,
+        FormsModule,
+        SortDirective,
+        SortByDirective,
+        FaIconComponent,
+        NgbHighlight,
+        ButtonComponent,
+        PaginatorModule,
+        ExerciseCourseTitlePipe,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ExerciseImportComponent extends ImportComponent<Exercise> implements OnInit {
     private injector = inject(Injector);
