@@ -112,9 +112,9 @@ class DistributedDataSurfaceTest {
     // Whole-exercise replay (including variant source identity) is new in this release; no previously released wire type changes.
     private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class,
             BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, GenerationJobService.JobInfo.class,
-            de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.LiveSaveSlot.class,
-            GenerationJobService.JobTranscript.class, GenerationJobService.JobFileChangeIndex.class, GenerationJobService.JobArtifacts.class, ExerciseGenerationBaseline.class,
-            AuthoringRun.class, GenerationRunStoreService.Mutation.class, GenerationRunStoreService.RunReference.class, OIDCExchangeCodeService.ExchangeCodeEntry.class,
+            de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.LiveSaveSlot.class, GenerationJobService.JobTranscript.class,
+            GenerationJobService.JobFileChangeIndex.class, GenerationJobService.JobArtifacts.class, ExerciseGenerationBaseline.class, AuthoringRun.class,
+            GenerationRunStoreService.Mutation.class, GenerationRunStoreService.RunReference.class, OIDCExchangeCodeService.ExchangeCodeEntry.class,
             AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class, PublicKeyCredentialCreationOptionsDTO.class, QueueItemEvent.class,
             MapItemEvent.class, PerNodeCacheEviction.class, WebsocketBrokerReconnectMessage.class);
 

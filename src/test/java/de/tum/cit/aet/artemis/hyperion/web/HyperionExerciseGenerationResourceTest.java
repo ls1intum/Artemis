@@ -940,7 +940,9 @@ class HyperionExerciseGenerationResourceTest {
         var pair = new GenerationVersionRecoveryService.Recovery("adapt-job", 82L, null, null, baseline);
         when(recovery.find(1L)).thenReturn(Optional.of(pair));
         var realRevertService = new ExerciseGenerationRevertService(recovery, metadata, testCases,
-                new GenerationRepositoryRevertService(gitService, new TempFileUtilService(temporaryDirectory)), persistenceService, "main", new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService(new LocalDataProviderService(), false));
+                new GenerationRepositoryRevertService(gitService, new TempFileUtilService(temporaryDirectory)), persistenceService, "main",
+                new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService(
+                        new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService(), false));
         resource = createResource(effortProfileService, realRevertService);
         when(programmingExerciseRepository.findWithAllParticipationsById(1L)).thenReturn(Optional.of(testExercise));
         when(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(1L)).thenReturn(true);

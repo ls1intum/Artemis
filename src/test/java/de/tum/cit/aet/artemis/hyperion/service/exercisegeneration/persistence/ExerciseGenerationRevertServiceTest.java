@@ -81,7 +81,8 @@ class ExerciseGenerationRevertServiceTest {
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(true);
         when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any())).thenReturn(true);
         revertService = new ExerciseGenerationRevertService(recovery, metadata, testCases, new GenerationRepositoryRevertService(gitService, tempFileUtilService),
-                persistenceService, DEFAULT_BRANCH, new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService(new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService(), false));
+                persistenceService, DEFAULT_BRANCH, new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService(
+                        new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService(), false));
 
         templateUri = mock(LocalVCRepositoryUri.class);
         solutionUri = mock(LocalVCRepositoryUri.class);
@@ -151,7 +152,7 @@ class ExerciseGenerationRevertServiceTest {
     }
 
     private void assertUndoExcludesCopies(boolean partial) throws Exception {
-        var provider = new HazelcastDistributedDataProviderService(hazelcastInstance);
+        var provider = new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService();
         var live = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService(provider, true);
         var repositories = mock(GenerationRepositoryRevertService.class);
         revertService = new ExerciseGenerationRevertService(recovery, metadata, testCases, repositories, persistenceService, DEFAULT_BRANCH, live);
@@ -183,9 +184,10 @@ class ExerciseGenerationRevertServiceTest {
 
     @Test
     void failedUndoPreflightDoesNotLeaveAnOrdinaryMutationReservation() {
-        var provider = new HazelcastDistributedDataProviderService(hazelcastInstance);
+        var provider = new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService();
         var live = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService(provider, true);
-        revertService = new ExerciseGenerationRevertService(recovery, metadata, testCases, new GenerationRepositoryRevertService(gitService, tempFileUtilService), persistenceService, DEFAULT_BRANCH, live);
+        revertService = new ExerciseGenerationRevertService(recovery, metadata, testCases, new GenerationRepositoryRevertService(gitService, tempFileUtilService),
+                persistenceService, DEFAULT_BRANCH, live);
         recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
         when(persistenceService.canRestoreGrading(any(Long.class), any(), any())).thenThrow(new IllegalStateException("grading unavailable"));
 

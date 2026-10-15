@@ -16,8 +16,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationVersionRecoveryService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -119,7 +119,8 @@ public class ExerciseGenerationRevertService {
         return Optional.of(result);
     }
 
-    private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, GenerationVersionRecoveryService.Recovery pair, BooleanSupplier stillOwnsMutationSlot, Runnable beforeRepositoryMutation) {
+    private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, GenerationVersionRecoveryService.Recovery pair, BooleanSupplier stillOwnsMutationSlot,
+            Runnable beforeRepositoryMutation) {
         ExerciseGenerationBaseline baseline = pair.baseline();
         if (!metadata.canRestore(exercise.getId(), pair) || !testCases.canRestore(exercise.getId(), pair)) {
             return new RevertResult(false, List.of(), false);

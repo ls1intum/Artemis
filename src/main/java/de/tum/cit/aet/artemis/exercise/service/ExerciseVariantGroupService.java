@@ -227,11 +227,13 @@ public class ExerciseVariantGroupService {
     public void assignToGroup(Exercise exercise, @Nullable ExerciseVariantGroup group) {
         if (exercise instanceof ProgrammingExercise) {
             try (var lease = mutationGuard.claimExternalMutation(exercise.getId())) {
-                assignToGroup(lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(exercise.getId()) : exercise, group, () -> {}, true, lease.coordinated());
+                assignToGroup(lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(exercise.getId()) : exercise, group, () -> {
+                }, true, lease.coordinated());
             }
         }
         else {
-            assignToGroup(exercise, group, () -> {}, true, false);
+            assignToGroup(exercise, group, () -> {
+            }, true, false);
         }
     }
 
@@ -265,7 +267,8 @@ public class ExerciseVariantGroupService {
             return false;
         }
         try (lease) {
-            return assignProgrammingSourceIfUngroupedCoordinated(lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(current.getId()) : current, group, lease.coordinated());
+            return assignProgrammingSourceIfUngroupedCoordinated(lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(current.getId()) : current, group,
+                    lease.coordinated());
         }
     }
 
