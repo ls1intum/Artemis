@@ -177,6 +177,39 @@ describe('MonacoEditorComponent', () => {
         vi.useRealTimers();
     });
 
+    it('should emit a pending debounced change immediately when flushed', () => {
+        vi.useFakeTimers();
+        const delay = 200;
+        const valueCallbackStub = vi.fn();
+        fixture.componentRef.setInput('textChangedEmitDelay', delay);
+        fixture.detectChanges();
+        comp.textChanged.subscribe(valueCallbackStub);
+        comp.setText(singleLineText);
+        expect(valueCallbackStub).not.toHaveBeenCalled();
+
+        comp.flushPendingTextChange();
+
+        expect(valueCallbackStub).toHaveBeenCalledOnce();
+        expect(valueCallbackStub).toHaveBeenCalledWith({ text: singleLineText, fileName: expect.any(String) });
+        // the debounce timer was cancelled, so the change is not emitted a second time
+        vi.advanceTimersByTime(delay);
+        expect(valueCallbackStub).toHaveBeenCalledOnce();
+        vi.useRealTimers();
+    });
+
+    it('should not emit anything when flushed without a pending change', () => {
+        vi.useFakeTimers();
+        const valueCallbackStub = vi.fn();
+        fixture.componentRef.setInput('textChangedEmitDelay', 200);
+        fixture.detectChanges();
+        comp.textChanged.subscribe(valueCallbackStub);
+
+        comp.flushPendingTextChange();
+
+        expect(valueCallbackStub).not.toHaveBeenCalled();
+        vi.useRealTimers();
+    });
+
     it('should be set to readOnly depending on the input', () => {
         fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();

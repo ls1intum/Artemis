@@ -201,6 +201,33 @@ describe('ExamUpdateComponent', () => {
 
             const validDates = () => ({ visibleDate: hours(1), startDate: hours(2), endDate: hours(3), workingTime: 3600 });
 
+            it('should show the optional publication dates under their own label, with the help icon projected next to it', () => {
+                renderWith(validDates());
+
+                for (const [testId, labelKey] of [
+                    ['examSummaryPublicationDate', 'artemisApp.examManagement.examSummaryPublicationDate'],
+                    ['exampleSolutionPublicationDate', 'artemisApp.exam.exampleSolutionPublicationDate'],
+                ]) {
+                    const picker = fixture.debugElement.query(By.css(`[data-testid="${testId}"]`));
+                    expect(picker.componentInstance.labelName()).toBe(labelKey);
+                    expect(picker.componentInstance.hideLabelName()).toBeFalsy();
+                    expect(picker.nativeElement.querySelector('jhi-help-icon[tumAetUiDatePickerLabelAddon]')).not.toBeNull();
+                }
+            });
+
+            // jsdom does not lay out CSS, so this asserts the structure: a fixed two-column grid (`sm:grid-cols-2`) would leave
+            // tracks narrower than the 15rem minimum of a date picker when the exam sidebar is open, so the pickers overlap.
+            it('should place every date picker in a grid that wraps by the available width instead of a fixed two columns', () => {
+                renderWith(validDates());
+
+                for (const testId of ['publishResultsDate', 'examSummaryPublicationDate', 'examStudentReviewStart', 'examStudentReviewEnd', 'exampleSolutionPublicationDate']) {
+                    const grid = fixture.debugElement.query(By.css(`[data-testid="${testId}"]`)).nativeElement.closest('.grid');
+                    expect(grid, testId).not.toBeNull();
+                    expect(grid.className, testId).not.toContain('sm:grid-cols-2');
+                    expect(grid.className, testId).toContain('grid-cols-[repeat(auto-fill,minmax(max(15rem,');
+                }
+            });
+
             it('should explain a release date of results that is not after the end of the exam', () => {
                 renderWith({ ...validDates(), publishResultsDate: hours(2) });
                 expect(shownMessage('publishResultsDate-error')).toBe('error.examPublishResultsDateAfterEnd');
