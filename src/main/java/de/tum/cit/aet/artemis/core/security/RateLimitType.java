@@ -92,7 +92,19 @@ public enum RateLimitType {
      * Default: 300 requests per minute per client, overridable with
      * {@code artemis.rate-limiting.struggle-intervention-requests-per-minute}.
      */
-    STRUGGLE_INTERVENTION(300);
+    STRUGGLE_INTERVENTION(300),
+
+    /**
+     * Rate limit for the slides-and-videos search behind global search. Each request embeds the query and searches the
+     * content index, and the search palette sends one per pause in typing.
+     * <p>
+     * Sized for a shared address, like {@link #STRUGGLE_INTERVENTION}: the limit is per client address, and a lecture
+     * hall can sit behind one NAT.
+     * <p>
+     * Default: 300 requests per minute per client, overridable with
+     * {@code artemis.rate-limiting.content-search-requests-per-minute}.
+     */
+    CONTENT_SEARCH(300);
 
     private final int defaultRpm;
 

@@ -28,7 +28,7 @@ import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -66,7 +66,7 @@ export enum FilterProp {
         FaIconComponent,
         TableViewComponent,
         CodeButtonComponent,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         DeleteButtonDirective,
         FeatureToggleDirective,
@@ -173,6 +173,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     // Track individual due date inline editing
     readonly editingDueDateIds = signal<ReadonlySet<number>>(new Set());
     private readonly pendingDueDates = new Map<number, dayjs.Dayjs | undefined>();
+    /** Rows whose due date text is not a date: the picker keeps its last valid date then, so it cannot be told from the pending date. */
+    private readonly invalidDueDateTextIds = signal<ReadonlySet<number>>(new Set());
 
     readonly tableOptions = computed<TableViewOptions>(() => ({
         dataKey: 'participationId',
@@ -509,6 +511,33 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.pendingDueDates.set(id, value);
     }
 
+    setDueDateTextValidity(id: number, isValid: boolean) {
+        this.invalidDueDateTextIds.update((ids) => {
+            if (ids.has(id) === !isValid) {
+                return ids;
+            }
+            const next = new Set(ids);
+            if (isValid) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    }
+
+    /** Whether the pending individual due date lies before the due date of the exercise. The calendar greys out earlier days, but typed text is not limited by it. */
+    isBeforeExerciseDueDate(id: number): boolean {
+        const pending = this.pendingDueDates.get(id);
+        const dueDate = this.exercise()?.dueDate;
+        return !!pending && !!dueDate && pending.isBefore(dueDate);
+    }
+
+    /** Whether the row cannot be saved: the typed text is not a date, or the date lies before the due date of the exercise. */
+    isPendingDueDateInvalid(id: number): boolean {
+        return this.invalidDueDateTextIds().has(id) || this.isBeforeExerciseDueDate(id);
+    }
+
     startEditDueDate(dto: ParticipationManagementDTO) {
         this.pendingDueDates.set(dto.participationId, dto.individualDueDate);
         this.editingDueDateIds.update((s) => new Set([...s, dto.participationId]));
@@ -516,6 +545,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     cancelEditDueDate(dto: ParticipationManagementDTO) {
         this.pendingDueDates.delete(dto.participationId);
+        this.setDueDateTextValidity(dto.participationId, true);
         this.editingDueDateIds.update((s) => {
             const next = new Set(s);
             next.delete(dto.participationId);
@@ -533,6 +563,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             next: () => {
                 dto.individualDueDate = newDueDate;
                 this.pendingDueDates.delete(dto.participationId);
+                this.setDueDateTextValidity(dto.participationId, true);
                 this.editingDueDateIds.update((s) => {
                     const next = new Set(s);
                     next.delete(dto.participationId);
@@ -562,6 +593,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             next: () => {
                 this.dialogErrorSource.next('');
                 this.pendingDueDates.delete(participationId);
+                this.setDueDateTextValidity(participationId, true);
                 this.editingDueDateIds.update((s) => {
                     const next = new Set(s);
                     next.delete(participationId);

@@ -379,6 +379,30 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Optional<StudentExamWorkingPeriodDTO> findNewestWorkingPeriodByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
+    /**
+     * Checks whether an exercise is part of the newest student exam of a student in an exam, ignoring instructor test runs. An earlier attempt of a test exam does
+     * not count, because the exercises of an attempt are assigned to it alone.
+     *
+     * @param examId     the id of the exam
+     * @param userId     the id of the student
+     * @param exerciseId the id of the exercise
+     * @return true if the newest student exam of the student contains the exercise
+     */
+    @Query("""
+            SELECT COUNT(e.id) > 0
+            FROM StudentExam se
+                JOIN se.exercises e
+            WHERE se.id = (
+                SELECT MAX(se2.id)
+                FROM StudentExam se2
+                WHERE se2.exam.id = :examId
+                    AND se2.user.id = :userId
+                    AND (se2.testRun IS NULL OR se2.testRun = FALSE)
+            )
+                AND e.id = :exerciseId
+            """)
+    boolean isExerciseOfNewestStudentExam(@Param("examId") long examId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
+
     @Query("""
             SELECT se
             FROM StudentExam se

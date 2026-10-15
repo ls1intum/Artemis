@@ -25,6 +25,7 @@ import {
     TumAetUiButtonDirective,
     TumAetUiCheckboxComponent,
     TumAetUiChipComponent,
+    TumAetUiDatePickerComponent,
     TumAetUiDialogComponent,
     TumAetUiFormFieldComponent,
     TumAetUiInputDirective,
@@ -48,7 +49,7 @@ import { CourseStorageService } from 'app/course/manage/services/course-storage.
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { DatePickerControlDirective } from 'app/shared-ui/date-picker-control/date-picker-control.directive';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -75,6 +76,7 @@ export interface CourseFormIssue {
 const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
     { control: 'title', labelKey: 'artemisApp.course.title', targetId: 'field_title' },
     { control: 'shortName', labelKey: 'artemisApp.course.shortName', targetId: 'field_shortName' },
+    { control: 'description', labelKey: 'artemisApp.course.description', targetId: 'field_description' },
     { control: 'semester', labelKey: 'artemisApp.course.semester', targetId: 'semester' },
     { control: 'startDate', labelKey: 'artemisApp.course.startDate', targetId: 'field_startDate_input' },
     { control: 'endDate', labelKey: 'artemisApp.course.endDate', targetId: 'field_endDate_input' },
@@ -115,7 +117,8 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
         FaIconComponent,
         TranslateDirective,
         ColorSelectorComponent,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
+        DatePickerControlDirective,
         MarkdownEditorMonacoComponent,
         FeatureToggleHideDirective,
         NgTemplateOutlet,
@@ -258,12 +261,19 @@ export class CourseUpdateComponent implements OnInit {
         return this.collectIssues();
     });
 
+    /** Live character count of the description control, for the inline counter. Bridged to reactive-form changes via formRevision. */
+    readonly descriptionLength = computed(() => {
+        this.formRevision();
+        return this.courseForm.get('description')?.value?.length ?? 0;
+    });
+
     // NOTE: These constants are used to define the maximum length of complaints and complaint responses.
     // This is the maximum value allowed in our database. These values must be the same as in Constants.java
     // Currently set to 65535 as this is the limit of TEXT
     readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
     readonly COMPLAINT_TEXT_LIMIT = 65535;
     readonly COURSE_TITLE_LIMIT = 255;
+    readonly COURSE_DESCRIPTION_LIMIT = 2000;
     readonly CODE_OF_CONDUCT_LIMIT = 10000;
 
     /**
@@ -355,7 +365,9 @@ export class CourseUpdateComponent implements OnInit {
                         updateOn: 'blur',
                     },
                 ),
-                description: new FormControl(this.course.description),
+                description: new FormControl(this.course.description, {
+                    validators: [Validators.maxLength(this.COURSE_DESCRIPTION_LIMIT)],
+                }),
                 courseInformationSharingMessagingCodeOfConduct: new FormControl(this.course.courseInformationSharingMessagingCodeOfConduct, {
                     validators: [Validators.maxLength(this.CODE_OF_CONDUCT_LIMIT)],
                 }),

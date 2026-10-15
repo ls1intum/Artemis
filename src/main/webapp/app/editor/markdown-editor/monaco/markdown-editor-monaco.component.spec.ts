@@ -120,6 +120,15 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(comp.currentMarkdown()).toBe(text);
     });
 
+    it('should flush the debounced text change of the Monaco editor', () => {
+        fixture.detectChanges();
+        const flushSpy = vi.spyOn(comp.monacoEditor()!, 'flushPendingTextChange');
+
+        comp.flushPendingTextChange();
+
+        expect(flushSpy).toHaveBeenCalledOnce();
+    });
+
     it('should notify when switching to preview mode', () => {
         const emitSpy = vi.spyOn(comp.onPreviewSelect, 'emit');
         fixture.detectChanges();

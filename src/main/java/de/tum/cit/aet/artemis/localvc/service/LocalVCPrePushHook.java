@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.localvc.service;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
@@ -49,20 +48,21 @@ public record LocalVCPrePushHook(LocalVCServletService localVCServletService, Us
     @Override
     public void onPreReceive(ReceivePack receivePack, Collection<ReceiveCommand> commands) {
 
-        Iterator<ReceiveCommand> iterator = commands.iterator();
-        if (!iterator.hasNext()) {
+        if (commands.isEmpty()) {
             // E.g. no refs were updated during the push operation.
             // Note: There is no command that we can set a REJECTED Result on so this will continue into the LocalVCPostPushHook and we have to return there again.
             return;
         }
 
-        ReceiveCommand command = iterator.next();
-
         // There should only be one ReceiveCommand. If there are multiple, e.g. because the user pushes to multiple branches simultaneously, we reject the push.
-        if (iterator.hasNext()) {
-            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push multiple refs at once.");
+        // Every single command has to be rejected here: JGit applies every command that a hook leaves on NOT_ATTEMPTED, so rejecting only one of them would let
+        // the remaining refs through without any of the checks below.
+        if (commands.size() > 1) {
+            commands.forEach(multiRefCommand -> multiRefCommand.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push multiple refs at once."));
             return;
         }
+
+        ReceiveCommand command = commands.iterator().next();
 
         Repository repository = receivePack.getRepository();
 
