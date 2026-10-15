@@ -126,12 +126,14 @@ public class AccountService {
         boolean emailDiffers = !Objects.equals(User.canonicalEmail(previousEmail), User.canonicalEmail(userDTO.getEmail()));
         boolean emailChangeNeedsConfirmation = emailDiffers && emailChangeService.requiresConfirmation(currentUser);
         PendingEmailChangeDTO pendingEmailChange = null;
-        String emailToSave = userDTO.getEmail();
+        // The address of an account that has to confirm a change is not written by this save at all, whether or not the form carries a
+        // different one. It is not compared with the address read above either: a confirmation that completes after that read has
+        // changed the address, and saving the one that was read would silently undo it.
+        String emailToSave = emailChangeService.requiresConfirmation(currentUser) ? null : userDTO.getEmail();
         if (emailChangeNeedsConfirmation) {
             // Asked for before anything is saved, so a refused address leaves the account as it was. What is saved below keeps the
             // address the account has: the new one is applied when both addresses have confirmed.
             pendingEmailChange = emailChangeService.requestChange(currentUser, userDTO.getEmail());
-            emailToSave = previousEmail;
         }
 
         userCreationService.updateBasicInformationOfCurrentUser(userDTO.getFirstName(), userDTO.getLastName(), emailToSave, userDTO.getLangKey(), userDTO.getImageUrl());

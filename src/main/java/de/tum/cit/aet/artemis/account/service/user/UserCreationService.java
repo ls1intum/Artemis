@@ -228,13 +228,17 @@ public class UserCreationService {
      *
      * @param firstName first name of user
      * @param lastName  last name of user
-     * @param email     email id of user
+     * @param email     email id of user, or null to leave the address of the account as it is. An account whose address is changed by confirmation must not
+     *                      pass one: it would be compared with the address the account has now, and an address that was confirmed after the caller read the
+     *                      account would be written back as the old one.
      * @param langKey   language key
      * @param imageUrl  image URL of user
      */
-    public void updateBasicInformationOfCurrentUser(String firstName, String lastName, String email, String langKey, String imageUrl) {
+    public void updateBasicInformationOfCurrentUser(String firstName, String lastName, @Nullable String email, String langKey, String imageUrl) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
-            updateEmailIfChanged(user, email);
+            if (email != null) {
+                updateEmailIfChanged(user, email);
+            }
             user.setFirstName(firstName);
             user.setLastName(lastName);
             user.setLangKey(langKey);

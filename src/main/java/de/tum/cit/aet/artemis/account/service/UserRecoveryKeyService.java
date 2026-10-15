@@ -4,7 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
 import java.util.Optional;
-import java.util.function.Consumer;
+import java.util.function.IntSupplier;
 
 import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
@@ -28,6 +28,11 @@ import de.tum.cit.aet.artemis.account.repository.UserRecoveryKeyRepository;
 @Lazy
 @Service
 public class UserRecoveryKeyService {
+
+    /**
+     * How often a write starts over because the row it created was removed again before it could be written to.
+     */
+    private static final int MAX_WRITE_ATTEMPTS = 3;
 
     private final UserRecoveryKeyRepository userRecoveryKeyRepository;
 
@@ -75,7 +80,7 @@ public class UserRecoveryKeyService {
      * @param activationKey the key to store
      */
     public void storeActivationKey(long userId, String activationKey) {
-        saveHandlingConcurrentInsert(userId, row -> row.setActivationKey(activationKey));
+        writeColumns(userId, () -> userRecoveryKeyRepository.updateActivationKey(userId, activationKey));
     }
 
     /**
@@ -87,11 +92,7 @@ public class UserRecoveryKeyService {
      * @param resetDate    when the key was issued, which is what bounds its validity
      */
     public void storeResetKey(long userId, String resetKeyId, String resetKeyHash, Instant resetDate) {
-        saveHandlingConcurrentInsert(userId, row -> {
-            row.setResetKeyId(resetKeyId);
-            row.setResetKeyHash(resetKeyHash);
-            row.setResetDate(resetDate);
-        });
+        writeColumns(userId, () -> userRecoveryKeyRepository.updateResetKey(userId, resetKeyId, resetKeyHash, resetDate));
     }
 
     /**
@@ -136,7 +137,8 @@ public class UserRecoveryKeyService {
      * @param change the change to store
      */
     public void storePendingEmailChange(long userId, PendingEmailChange change) {
-        saveHandlingConcurrentInsert(userId, row -> row.setPendingEmailChange(change));
+        writeColumns(userId, () -> userRecoveryKeyRepository.updatePendingEmailChange(userId, change.getNewEmail(), change.getCurrentKeyId(), change.getCurrentKeyHash(),
+                change.getNewKeyId(), change.getNewKeyHash(), change.getRequestedAt(), change.getCurrentConfirmedAt(), change.getNewConfirmedAt()));
     }
 
     /**
@@ -177,7 +179,8 @@ public class UserRecoveryKeyService {
      * @param userId the account
      */
     public void clearPendingEmailChange(long userId) {
-        clear(userId, row -> row.setPendingEmailChange(null));
+        userRecoveryKeyRepository.clearPendingEmailChange(userId);
+        userRecoveryKeyRepository.deleteIfNothingOutstanding(userId);
     }
 
     /**
@@ -198,7 +201,8 @@ public class UserRecoveryKeyService {
      * @param userId the account
      */
     public void clearActivationKey(long userId) {
-        clear(userId, row -> row.setActivationKey(null));
+        userRecoveryKeyRepository.clearActivationKey(userId);
+        userRecoveryKeyRepository.deleteIfNothingOutstanding(userId);
     }
 
     /**
@@ -207,11 +211,8 @@ public class UserRecoveryKeyService {
      * @param userId the account
      */
     public void clearResetKey(long userId) {
-        clear(userId, row -> {
-            row.setResetKeyId(null);
-            row.setResetKeyHash(null);
-            row.setResetDate(null);
-        });
+        userRecoveryKeyRepository.clearResetKey(userId);
+        userRecoveryKeyRepository.deleteIfNothingOutstanding(userId);
     }
 
     /**
@@ -223,38 +224,40 @@ public class UserRecoveryKeyService {
         userRecoveryKeyRepository.findByUserId(userId).ifPresent(userRecoveryKeyRepository::delete);
     }
 
-    private void clear(long userId, Consumer<UserRecoveryKey> mutation) {
-        userRecoveryKeyRepository.findByUserId(userId).ifPresent(row -> {
-            mutation.accept(row);
-            if (row.isEmpty()) {
-                userRecoveryKeyRepository.delete(row);
+    /**
+     * Writes some columns of the row of an account and nothing else, creating the row first when the account has none.
+     * <p>
+     * Every write of this service names the columns it means to change. A read of the row followed by a save of all of it would
+     * write back whatever the row held when it was read, so a pending e-mail change that was cancelled in between, or its
+     * confirmations, would come back with an activation or a reset key that is stored at the same time.
+     * <p>
+     * These rows are keyed on the user id, so two first writes for the same account both find no row and both insert. The loser
+     * gets a primary-key violation, which would surface as an error on a request that did nothing wrong, so it carries on with the
+     * row the winner created. A row that has become empty is deleted by whoever cleared its last column, which can happen between
+     * creating the row and writing to it: the write then finds no row and starts over.
+     *
+     * @param userId the account
+     * @param update the statement that writes the columns, reporting how many rows it wrote
+     */
+    private void writeColumns(long userId, IntSupplier update) {
+        for (int attempt = 0; attempt < MAX_WRITE_ATTEMPTS; attempt++) {
+            createRowIfMissing(userId);
+            if (update.getAsInt() > 0) {
+                return;
             }
-            else {
-                userRecoveryKeyRepository.save(row);
-            }
-        });
+        }
+        throw new IllegalStateException("The recovery key row of user " + userId + " kept disappearing while it was written");
     }
 
-    /**
-     * Saves a row that may have been created concurrently.
-     * <p>
-     * These rows are keyed on the user id, so two first writes for the same account both find nothing and both insert.
-     * The loser gets a primary-key violation, which would surface as an error on a request that did nothing wrong. It
-     * reloads instead and applies the change to the row the winner created.
-     *
-     * @param userId   the account
-     * @param mutation the change to apply
-     */
-    private void saveHandlingConcurrentInsert(long userId, Consumer<UserRecoveryKey> mutation) {
-        UserRecoveryKey row = userRecoveryKeyRepository.findByUserId(userId).orElseGet(() -> new UserRecoveryKey(userId));
-        mutation.accept(row);
+    private void createRowIfMissing(long userId) {
+        if (userRecoveryKeyRepository.existsById(userId)) {
+            return;
+        }
         try {
-            userRecoveryKeyRepository.save(row);
+            userRecoveryKeyRepository.save(new UserRecoveryKey(userId));
         }
         catch (DataIntegrityViolationException concurrentInsert) {
-            UserRecoveryKey created = userRecoveryKeyRepository.findByUserId(userId).orElseThrow(() -> concurrentInsert);
-            mutation.accept(created);
-            userRecoveryKeyRepository.save(created);
+            // created by a concurrent write for the same account, which is all that was needed
         }
     }
 }
