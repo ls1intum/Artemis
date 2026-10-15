@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.function.Supplier;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,7 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -64,8 +63,10 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
@@ -87,7 +88,6 @@ import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessToken
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
@@ -141,10 +141,7 @@ class LocalVCServletServiceTest {
     private ExerciseVersionService exerciseVersionService;
 
     @Mock
-    private ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
-
-    @Mock
-    private org.springframework.beans.factory.ObjectProvider<ProgrammingExerciseMutationGuardService> programmingExerciseMutationGuardProvider;
+    private HyperionExerciseMutationApi hyperionMutationApi;
 
     @Mock
     private ProgrammingMessagingService programmingMessagingService;
@@ -189,7 +186,7 @@ class LocalVCServletServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        org.mockito.Mockito.lenient().when(programmingExerciseMutationGuardProvider.getObject()).thenReturn(programmingExerciseMutationGuard);
+        ReflectionTestUtils.setField(localVCServletService, "hyperionMutationApi", Optional.of(hyperionMutationApi));
         testUser = new User();
         testUser.setId(1L);
         testUser.setLogin("testuser");
@@ -414,9 +411,10 @@ class LocalVCServletServiceTest {
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    void processNewPushVersionsBeforeCreatingTheTestSubmissionWithConfiguredDispatch(boolean coordinated) {
-        when(programmingExerciseMutationGuard.isCoordinationEnabled()).thenReturn(coordinated);
+    @CsvSource({ "false, false", "true, false", "false, true", "true, true" })
+    void processNewPushVersionsBeforeCreatingTheTestSubmissionWithConfiguredDispatch(boolean coordinated, boolean examExercise) {
+        when(hyperionMutationApi.isCoordinationEnabled()).thenReturn(coordinated);
+        testExercise.setExerciseGroup(examExercise ? new ExerciseGroup() : null);
         Repository repository = mock(Repository.class);
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         ProgrammingSubmission submission = new ProgrammingSubmission();
@@ -430,7 +428,7 @@ class LocalVCServletServiceTest {
         localVCServletService.processNewPush("commit-hash", repository, testUser, Optional.of(testExercise), Optional.of(solutionParticipation), Optional.empty());
 
         InOrder inOrder = inOrder(exerciseVersionService, programmingSubmissionService);
-        if (coordinated) {
+        if (coordinated && !examExercise) {
             inOrder.verify(exerciseVersionService).createExerciseVersionSynchronously(testExercise, testUser, RepositoryType.TESTS, null, "commit-hash");
             verify(exerciseVersionService, never()).createExerciseVersion(testExercise, testUser, RepositoryType.TESTS, null, "commit-hash");
         }
@@ -445,47 +443,47 @@ class LocalVCServletServiceTest {
     void claimProgrammingExerciseMutationClaimsVersionableStaffRepository() {
         Repository repository = mock(Repository.class);
         Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase(java.util.Locale.ROOT) + "-exercise.git");
-        var expectedLease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
-        });
         when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TEMPLATE)).thenReturn(true);
-        when(programmingExerciseMutationGuard.claimExternalMutation(testExercise.getId())).thenReturn(expectedLease);
+        when(hyperionMutationApi.isCoordinationEnabled()).thenReturn(true);
+        when(hyperionMutationApi.claimExternalMutationSlot(testExercise.getId())).thenReturn("staff-token");
 
         var lease = localVCServletService.claimProgrammingExerciseMutation(repository, testExercise);
 
-        assertThat(lease).isSameAs(expectedLease);
+        assertThat(lease.coordinated()).isTrue();
+        lease.close();
+        verify(hyperionMutationApi).clearExternalMutationSlot(testExercise.getId(), "staff-token");
     }
 
     @Test
     void claimProgrammingExerciseMutationKeepsUserRepositoryUnguarded() {
         Repository repository = mock(Repository.class);
         Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase(java.util.Locale.ROOT) + "-testuser.git");
-        var expectedLease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
-        });
         when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.USER)).thenReturn(false);
-        when(programmingExerciseMutationGuard.claimExternalMutation(OptionalLong.empty())).thenReturn(expectedLease);
 
         var lease = localVCServletService.claimProgrammingExerciseMutation(repository, testExercise);
 
-        assertThat(lease).isSameAs(expectedLease);
-        verify(programmingExerciseMutationGuard).claimExternalMutation(OptionalLong.empty());
+        assertThat(lease.coordinated()).isFalse();
+        lease.close();
+        org.mockito.Mockito.verifyNoInteractions(hyperionMutationApi);
     }
 
     @Test
     void claimProgrammingExerciseMutationClaimsVersionableAuxiliaryRepository() {
         Repository repository = mock(Repository.class);
         Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase(java.util.Locale.ROOT) + "-customrepo.git");
-        var expectedLease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
-        });
         when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
         when(auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise("customrepo", testExercise.getId())).thenReturn(true);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.AUXILIARY)).thenReturn(true);
-        when(programmingExerciseMutationGuard.claimExternalMutation(testExercise.getId())).thenReturn(expectedLease);
+        when(hyperionMutationApi.isCoordinationEnabled()).thenReturn(true);
+        when(hyperionMutationApi.claimExternalMutationSlot(testExercise.getId())).thenReturn("staff-token");
 
         var lease = localVCServletService.claimProgrammingExerciseMutation(repository, testExercise);
 
-        assertThat(lease).isSameAs(expectedLease);
+        assertThat(lease.coordinated()).isTrue();
+        lease.close();
+        verify(hyperionMutationApi).clearExternalMutationSlot(testExercise.getId(), "staff-token");
     }
 
     @Test
