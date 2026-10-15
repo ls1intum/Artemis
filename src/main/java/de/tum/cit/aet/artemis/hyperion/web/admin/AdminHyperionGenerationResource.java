@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationWedgedSlotDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 
 /** Audited recovery of fail-closed slots; it never runs commands on generation workers. */
 @Lazy
@@ -38,10 +39,13 @@ public class AdminHyperionGenerationResource {
 
     private final Optional<GenerationJobService> jobs;
 
+    private final GenerationLiveSaveService liveSaves;
+
     private final AuditEventRepository audit;
 
-    public AdminHyperionGenerationResource(Optional<GenerationJobService> jobs, AuditEventRepository audit) {
+    public AdminHyperionGenerationResource(Optional<GenerationJobService> jobs, GenerationLiveSaveService liveSaves, AuditEventRepository audit) {
         this.jobs = jobs;
+        this.liveSaves = liveSaves;
         this.audit = audit;
     }
 
@@ -53,10 +57,7 @@ public class AdminHyperionGenerationResource {
      */
     @GetMapping("{exerciseId}/hyperion-wedged-slot")
     public ResponseEntity<ExerciseGenerationWedgedSlotDTO> getWedgedSlot(@PathVariable long exerciseId) {
-        return slotInfo(exerciseId)
-                .map(info -> ResponseEntity.ok(
-                        new ExerciseGenerationWedgedSlotDTO(info.exerciseId(), info.token(), info.kind().name(), info.ownerNodeId(), info.startedAt(), info.ownerLeftCluster())))
-                .orElseGet(() -> ResponseEntity.notFound().build());
+        return slotInfo(exerciseId).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
@@ -80,13 +81,20 @@ public class AdminHyperionGenerationResource {
         }
         var info = wedged.get();
         audit.add(new AuditEvent(SecurityUtils.getCurrentUserLogin().orElse("unknown"), "HYPERION_SLOT_RECOVERY_ATTEMPT", Map.of("exerciseId", exerciseId, "token", token, "kind",
-                info.kind().name(), "ownerNodeId", info.ownerNodeId() == null ? "unknown" : info.ownerNodeId(), "reason", boundedReason)));
-        boolean recovered = jobs.map(service -> service.recoverWedgedSlot(exerciseId, token)).orElse(false);
+                info.kind(), "ownerNodeId", info.ownerNodeId() == null ? "unknown" : info.ownerNodeId(), "reason", boundedReason)));
+        boolean recovered = "LIVE_SAVE".equals(info.kind()) ? liveSaves.recoverSlot(exerciseId, token)
+                : jobs.map(service -> service.recoverWedgedSlot(exerciseId, token)).orElse(false);
         return recovered ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
-    private Optional<GenerationJobService.WedgedSlotInfo> slotInfo(long exerciseId) {
-        return jobs.flatMap(service -> service.getWedgedSlotInfo(exerciseId));
+    private Optional<ExerciseGenerationWedgedSlotDTO> slotInfo(long exerciseId) {
+        var live = liveSaves.getSlotInfo(exerciseId);
+        if (live.isPresent()) {
+            var slot = live.get();
+            return Optional.of(new ExerciseGenerationWedgedSlotDTO(exerciseId, slot.token(), "LIVE_SAVE", slot.ownerNodeId(), slot.startedAt(), false));
+        }
+        return jobs.flatMap(service -> service.getWedgedSlotInfo(exerciseId)).map(
+                info -> new ExerciseGenerationWedgedSlotDTO(info.exerciseId(), info.token(), info.kind().name(), info.ownerNodeId(), info.startedAt(), info.ownerLeftCluster()));
     }
 
 }

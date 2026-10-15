@@ -131,6 +131,9 @@ class HyperionCodeGenerationExecutionServiceTest {
     @Mock
     private ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
+    @Mock
+    private de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService liveSaves;
+
     private HyperionCodeGenerationExecutionService service;
 
     private User user;
@@ -146,7 +149,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         this.service = new HyperionCodeGenerationExecutionService("main", gitService, repositoryService, solutionProgrammingExerciseParticipationRepository,
                 templateProgrammingExerciseParticipationRepository, programmingSubmissionRepository, buildLogEntryService, resultRepository, continuousIntegrationTriggerService,
                 programmingExerciseParticipationService, repositoryStructureService, solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService,
-                consistencyCheckService, reviewCommentContextRendererService, exerciseVersionService, programmingFeedbackSynthesizerService);
+                consistencyCheckService, reviewCommentContextRendererService, exerciseVersionService, programmingFeedbackSynthesizerService, liveSaves);
 
         this.user = new User();
         user.setLogin("testuser");
@@ -436,7 +439,57 @@ class HyperionCodeGenerationExecutionServiceTest {
     }
 
     @Test
-    void generateAndCompileCode_withCiTriggerFailure_skipsPollingAndReportsTriggerFailure() throws Exception {
+    void legacyModelRunsWithoutTheSaveReservationButCannotWriteDuringAnotherSave() throws Exception {
+        var provider = mock(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.class);
+        when(provider.<String, de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.LiveSaveSlot>getMap(
+                de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.MAP_NAME))
+                .thenReturn(new de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap<>());
+        var realLiveSaves = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService(provider, true);
+        ReflectionTestUtils.setField(service, "liveSaves", realLiveSaves);
+        var repository = mock(Repository.class);
+        var solution = new SolutionProgrammingExerciseParticipation();
+        solution.setId(99L);
+        solution.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solution);
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn("baseline");
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("build.gradle");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
+        var saving = new java.util.concurrent.CountDownLatch(1);
+        var finishSave = new java.util.concurrent.CountDownLatch(1);
+        try (var executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            var save = executor.submit(() -> {
+                String token = realLiveSaves.claim(exercise.getId());
+                try {
+                    saving.countDown();
+                    assertThat(finishSave.await(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                }
+                finally {
+                    realLiveSaves.release(exercise.getId(), token);
+                }
+                return null;
+            });
+            try {
+                assertThat(saving.await(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, false, mock(HyperionCodeGenerationEventPublisher.class));
+                verify(solutionStrategy).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
+                verify(repositoryService, never()).createFile(any(), anyString(), any());
+                verify(repositoryService, never()).commitChanges(any(), any());
+            }
+            finally {
+                finishSave.countDown();
+            }
+            save.get(10, java.util.concurrent.TimeUnit.SECONDS);
+        }
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
+    void generateAndCompileCode_withCiTriggerFailure_skipsPollingAndReportsTriggerFailure(boolean coordinated) throws Exception {
+        when(liveSaves.isCoordinationEnabled()).thenReturn(coordinated);
+        when(liveSaves.claim(exercise.getId())).thenReturn("legacy-save");
         HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
         Repository repository = mock(Repository.class);
         String originalCommitId = "orig-hash";
@@ -447,7 +500,12 @@ class HyperionCodeGenerationExecutionServiceTest {
         exercise.setSolutionParticipation(solutionParticipation);
 
         when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
-        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
+        if (coordinated) {
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, originalCommitId, originalCommitId, newCommitId, newCommitId);
+        }
+        else {
+            when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
+        }
         when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
         doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
         doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
@@ -468,7 +526,16 @@ class HyperionCodeGenerationExecutionServiceTest {
         verify(solutionStrategy, times(1)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any());
         verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.CI_TRIGGER_FAILED, Map.of(), 1,
                 "Solution files were generated and committed to the solution repository, but Hyperion could not trigger the CI build.");
-        verify(exerciseVersionService).createExerciseVersion(exercise, user);
+        if (coordinated) {
+            var order = org.mockito.Mockito.inOrder(liveSaves, exerciseVersionService);
+            order.verify(liveSaves).claim(exercise.getId());
+            order.verify(exerciseVersionService).createExerciseVersionSynchronously(exercise, user);
+            order.verify(liveSaves).release(exercise.getId(), "legacy-save");
+            verify(exerciseVersionService, never()).createExerciseVersion(exercise, user);
+        }
+        else {
+            verify(exerciseVersionService).createExerciseVersion(exercise, user);
+        }
     }
 
     @Test

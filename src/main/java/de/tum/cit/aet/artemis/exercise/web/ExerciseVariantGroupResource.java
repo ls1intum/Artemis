@@ -170,7 +170,7 @@ public class ExerciseVariantGroupResource {
         // Load the group without its members so the ON DELETE SET NULL FK (see the Liquibase changelog) ungroups them;
         // loading them would fail Hibernate's flush because managed exercises still reference the removed group. Members survive.
         ExerciseVariantGroup group = exerciseVariantGroupRepository.findByIdAndCourseIdWithoutExercisesElseThrow(groupId, courseId);
-        exerciseVariantGroupRepository.delete(group);
+        exerciseVariantGroupService.deleteGroup(groupId, courseId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, group.getTitle())).build();
     }
 

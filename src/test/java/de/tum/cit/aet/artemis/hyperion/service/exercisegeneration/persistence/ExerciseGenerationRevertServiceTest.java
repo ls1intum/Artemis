@@ -91,7 +91,9 @@ class ExerciseGenerationRevertServiceTest {
         when(persistenceService.canRestoreProblemStatementAndTitle(any(), any(), any(), any(), any())).thenReturn(true);
         when(persistenceService.resyncAfterRevertWithSignal(any(), any(), any(), any(), any(), any(), any(), anyMap(), any(), any(), any())).thenReturn(true);
         revertService = new ExerciseGenerationRevertService(new HazelcastDistributedDataProviderService(hazelcastInstance),
-                new GenerationRepositoryRevertService(gitService, tempFileUtilService), persistenceService, DEFAULT_BRANCH);
+                new GenerationRepositoryRevertService(gitService, tempFileUtilService), persistenceService, DEFAULT_BRANCH,
+                new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService(
+                        new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService(), false));
         revertService.init();
 
         templateUri = mock(LocalVCRepositoryUri.class);
@@ -143,6 +145,63 @@ class ExerciseGenerationRevertServiceTest {
         verify(gitService).resetToCommitAndForcePush(solutionRepo, "sha-solution", "adapted-solution", DEFAULT_BRANCH);
         verify(gitService).resetToCommitAndForcePush(testsRepo, "sha-tests", "adapted-tests", DEFAULT_BRANCH);
         verify(gitService, never()).resetToCommitAndForcePush(eq(templateRepo), any(), any(), any());
+    }
+
+    @Test
+    void completeUndoExcludesTemplateCopiesUntilRepositoryRestorationFinishes() throws Exception {
+        assertUndoExcludesCopies(false);
+    }
+
+    @Test
+    void partialUndoKeepsTemplateCopiesExcludedUntilManualRecovery() throws Exception {
+        assertUndoExcludesCopies(true);
+    }
+
+    private void assertUndoExcludesCopies(boolean partial) throws Exception {
+        var provider = new HazelcastDistributedDataProviderService(hazelcastInstance);
+        var live = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService(provider, true);
+        var repositories = mock(GenerationRepositoryRevertService.class);
+        revertService = new ExerciseGenerationRevertService(provider, repositories, persistenceService, DEFAULT_BRANCH, live);
+        revertService.init();
+        recordBaseline("job-undo-boundary", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
+        when(repositories.captureRepositoryHeads(eq(exercise), eq(DEFAULT_BRANCH), any())).thenReturn(preRunHeads());
+        try (var copyExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            when(repositories.revert(eq(exercise), any(), eq(DEFAULT_BRANCH), any())).thenAnswer(invocation -> {
+                assertThat(((java.util.function.BooleanSupplier) invocation.getArgument(3)).getAsBoolean()).isTrue();
+                copyExecutor.submit(() -> org.assertj.core.api.Assertions.assertThatThrownBy(() -> live.claimReader(exercise.getId()))
+                        .isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class)).get(10, java.util.concurrent.TimeUnit.SECONDS);
+                return new GenerationRepositoryRevertService.RepositoryRevertResult(!partial, java.util.List.of(RepositoryType.TEMPLATE), true);
+            });
+
+            assertThat(revertService.revert(exercise, user, () -> true)).hasValueSatisfying(result -> assertThat(result.fullyReverted()).isEqualTo(!partial));
+            if (partial) {
+                org.assertj.core.api.Assertions.assertThatThrownBy(() -> live.claimReader(exercise.getId()))
+                        .isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
+                String recoveryToken = live.getSlotInfo(exercise.getId()).orElseThrow().token();
+                assertThat(live.recoverSlot(exercise.getId(), recoveryToken)).isTrue();
+            }
+            else {
+                assertThat(live.getSlotInfo(exercise.getId())).isEmpty();
+            }
+            String reader = live.claimReader(exercise.getId());
+            live.releaseReader(exercise.getId(), reader);
+            assertThat(live.getSlotInfo(exercise.getId())).isEmpty();
+        }
+    }
+
+    @Test
+    void failedUndoPreflightDoesNotLeaveAnOrdinaryMutationReservation() {
+        var provider = new HazelcastDistributedDataProviderService(hazelcastInstance);
+        var live = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService(provider, true);
+        revertService = new ExerciseGenerationRevertService(provider, new GenerationRepositoryRevertService(gitService, tempFileUtilService), persistenceService, DEFAULT_BRANCH,
+                live);
+        revertService.init();
+        recordBaseline("job-1", GenerationMode.ADAPT, preRunHeads(), postRunHeads(), "old statement", "Old Title");
+        when(persistenceService.canRestoreGrading(any(Long.class), any(), any())).thenThrow(new IllegalStateException("grading unavailable"));
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> revertService.revert(exercise, user, () -> true)).hasMessage("grading unavailable");
+
+        assertThat(live.getSlotInfo(exercise.getId())).isEmpty();
     }
 
     @Test
