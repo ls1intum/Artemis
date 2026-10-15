@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -58,6 +59,51 @@ class WeaviateEnqueueExecutorConfigurationTest {
             assertThat(executed).containsExactly(1, 2, 3);
         }
         finally {
+            releaseWorker.countDown();
+            caller.shutdownNow();
+            executor.shutdownNow();
+        }
+    }
+
+    @Test
+    void shutdownWhileWaitingForRoomRejectsTheTaskInsteadOfLeavingItWithoutAWorker() throws Exception {
+        CountDownLatch callerWaiting = new CountDownLatch(1);
+        CountDownLatch allowInsertion = new CountDownLatch(1);
+        ArrayBlockingQueue<Runnable> queue = new ArrayBlockingQueue<>(1) {
+
+            @Override
+            public void put(Runnable task) throws InterruptedException {
+                callerWaiting.countDown();
+                if (!allowInsertion.await(SECONDS, TimeUnit.SECONDS)) {
+                    throw new InterruptedException("Timed out waiting to insert the task");
+                }
+                super.put(task);
+            }
+        };
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, queue, new WaitForRoomPolicy());
+        ExecutorService caller = Executors.newSingleThreadExecutor();
+        CountDownLatch workerStarted = new CountDownLatch(1);
+        CountDownLatch releaseWorker = new CountDownLatch(1);
+        try {
+            executor.execute(() -> {
+                workerStarted.countDown();
+                await(releaseWorker);
+            });
+            assertThat(workerStarted.await(SECONDS, TimeUnit.SECONDS)).isTrue();
+            executor.execute(() -> executed.add(1));
+            Future<?> submission = caller.submit(() -> executor.execute(() -> executed.add(2)));
+            assertThat(callerWaiting.await(SECONDS, TimeUnit.SECONDS)).isTrue();
+
+            executor.shutdownNow();
+            assertThat(executor.awaitTermination(SECONDS, TimeUnit.SECONDS)).isTrue();
+            allowInsertion.countDown();
+
+            assertThatThrownBy(() -> submission.get(SECONDS, TimeUnit.SECONDS)).isInstanceOf(ExecutionException.class).hasCauseInstanceOf(RejectedExecutionException.class);
+            assertThat(queue).isEmpty();
+            assertThat(executed).isEmpty();
+        }
+        finally {
+            allowInsertion.countDown();
             releaseWorker.countDown();
             caller.shutdownNow();
             executor.shutdownNow();

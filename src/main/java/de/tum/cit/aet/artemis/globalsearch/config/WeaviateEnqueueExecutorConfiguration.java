@@ -80,6 +80,10 @@ public class WeaviateEnqueueExecutorConfiguration {
             }
             try {
                 executor.getQueue().put(task);
+                // Shutdown may have drained the queue and stopped the worker while this caller waited.
+                if (executor.isShutdown() && executor.remove(task)) {
+                    throw new RejectedExecutionException("The executor of the search index updates has been shut down");
+                }
             }
             catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
