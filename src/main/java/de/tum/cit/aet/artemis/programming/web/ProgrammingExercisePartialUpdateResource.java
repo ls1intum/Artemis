@@ -122,7 +122,7 @@ public class ProgrammingExercisePartialUpdateResource {
                     "timelineManagedByVariantGroup");
         }
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(timelineUpdateDTO.id())) {
-            var programmingExercise = programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id());
+            var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id()) : existingProgrammingExercise;
             var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateTimeline(programmingExercise, timelineUpdateDTO, notificationText);
             exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
             if (lease.coordinated()) {
@@ -157,8 +157,8 @@ public class ProgrammingExercisePartialUpdateResource {
         var user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, authorizationExercise, user);
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)
-                    .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+            var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(exerciseId)
+                    .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId)) : authorizationExercise;
             var updatedProgrammingExercise = programmingExerciseCreationUpdateService.updateProblemStatement(programmingExercise, updatedProblemStatement, notificationText);
             exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
             if (lease.coordinated()) {

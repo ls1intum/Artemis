@@ -146,7 +146,9 @@ public class SubmissionPolicyResource {
 
         var user = userRepository.getUser();
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
+            if (lease.coordinated()) {
+                programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
+            }
             if (programmingExercise.getSubmissionPolicy() != null) {
                 throw new BadRequestAlertException("The submission policy could not be added to the programming exercise, because it already has a submission policy.", ENTITY_NAME,
                         "programmingExercisePolicyPresent");
@@ -193,7 +195,9 @@ public class SubmissionPolicyResource {
 
         var user = userRepository.getUser();
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
+            if (lease.coordinated()) {
+                programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
+            }
             submissionPolicy = programmingExercise.getSubmissionPolicy();
             if (submissionPolicy == null) {
                 throw new BadRequestAlertException("The submission policy could not be removed from the programming exercise, because it does not have a submission policy.",
@@ -239,7 +243,9 @@ public class SubmissionPolicyResource {
         getSubmissionPolicy(activate, exercise);
         var user = userRepository.getUser();
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            exercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
+            if (lease.coordinated()) {
+                exercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
+            }
             final var submissionPolicy = getSubmissionPolicy(activate, exercise);
             if (activate) {
                 submissionPolicyService.enableSubmissionPolicy(submissionPolicy);
@@ -310,7 +316,9 @@ public class SubmissionPolicyResource {
         submissionPolicyService.validateSubmissionPolicy(updatedSubmissionPolicy);
         var user = userRepository.getUser();
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            exercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
+            if (lease.coordinated()) {
+                exercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
+            }
             SubmissionPolicy submissionPolicy = exercise.getSubmissionPolicy();
             if (submissionPolicy == null) {
                 throw new BadRequestAlertException("The submission policy could not be updated, because the programming exercise does not have a submission policy.", ENTITY_NAME,
