@@ -1,3 +1,5 @@
+import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/suggestion/code-editor-tutor-assessment-inline-feedback-suggestion.component';
+import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -18,7 +20,13 @@ import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import {
+    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
+    FEEDBACK_SUGGESTION_IDENTIFIER,
+    Feedback,
+    FeedbackType,
+} from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
@@ -216,7 +224,14 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             ],
         })
             .overrideComponent(CodeEditorMonacoComponent, {
-                set: { imports: [MonacoEditorComponent, MockComponent(CodeEditorHeaderComponent), CodeEditorTutorAssessmentInlineFeedbackComponent] },
+                set: {
+                    imports: [
+                        MonacoEditorComponent,
+                        MockComponent(CodeEditorHeaderComponent),
+                        CodeEditorTutorAssessmentInlineFeedbackComponent,
+                        CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent,
+                    ],
+                },
             })
             .compileComponents();
         // Ignore console errors
@@ -845,6 +860,81 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             { queryParams: { 'correction-round': '0', testRun: 'false' } },
         );
         expect(goSpy).toHaveBeenCalledExactlyOnceWith('/rewritten');
+    });
+
+    it.each(['save', 'submit'] as const)('should block inline and unreferenced suggestion acceptance during a delayed %s response', async (action) => {
+        vi.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
+        vi.spyOn(repositoryFileService, 'getFile').mockReturnValue(of({ fileContent }));
+        vi.spyOn(comp, 'readOnly').mockReturnValue(false);
+        vi.spyOn(internals(comp).dialogService, 'open').mockReturnValue({ onClose: of(true) } as DynamicDialogRef);
+        const response = new Subject<EntityResponseType>();
+        const save = vi.spyOn(programmingAssessmentManualResultService, 'saveAssessment').mockReturnValue(response);
+        const feedbackLoaded = firstValueFrom(outputToObservable(comp.onFeedbackLoaded));
+        fixture.detectChanges();
+        await feedbackLoaded;
+        await flushMicrotasks();
+        fixture.detectChanges();
+        const container = fixture.debugElement.query(By.directive(CodeEditorContainerComponent)).componentInstance as CodeEditorContainerComponent;
+        const editor = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance as CodeEditorMonacoComponent;
+        const unreferenced = fixture.debugElement.query(By.directive(UnreferencedFeedbackComponent)).componentInstance as UnreferencedFeedbackComponent;
+        vi.spyOn(editor, 'selectFileInEditor').mockResolvedValue(undefined);
+        container.selectedFile = 'folder/file1';
+        const inline = { id: 101, type: FeedbackType.MANUAL, reference: 'file:folder/file1_line:1', text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Inline`, credits: 1 } as Feedback;
+        const general = { id: 102, text: `${FEEDBACK_SUGGESTION_IDENTIFIER}General`, credits: 1 } as Feedback;
+        comp.feedbackSuggestions.set([inline, general]);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const acceptButtons = () =>
+            Array.from(fixture.nativeElement.querySelectorAll('[data-testid="accept-feedback-suggestion"]')).map((element) => {
+                const host = element as HTMLElement;
+                return host instanceof HTMLButtonElement ? host : host.querySelector('button')!;
+            });
+        expect(acceptButtons()).toHaveLength(2);
+        expect(acceptButtons().every((button) => !button.disabled)).toBe(true);
+        const inlineAccepted = vi.fn();
+        const generalAccepted = vi.fn();
+        editor.onAcceptSuggestion.subscribe(inlineAccepted);
+        unreferenced.onAcceptSuggestion.subscribe(generalAccepted);
+
+        await comp[action]();
+        fixture.detectChanges();
+        expect(save).toHaveBeenCalledOnce();
+        const persisted = { ...comp.manualResult()!, feedbacks: [...comp.manualResult()!.feedbacks!] };
+        expect(acceptButtons().every((button) => button.disabled)).toBe(true);
+        acceptButtons().forEach((button) => button.click());
+        // Also reject events already queued before the controls became disabled.
+        editor.acceptSuggestion(inline);
+        unreferenced.acceptSuggestion(general);
+        fixture.detectChanges();
+        expect(inlineAccepted).not.toHaveBeenCalled();
+        expect(generalAccepted).not.toHaveBeenCalled();
+        expect(comp.feedbackSuggestions()).toEqual([inline, general]);
+        expect(editor.feedbackSuggestionsInternal()).toEqual([inline, general]);
+        expect(unreferenced.feedbackSuggestions()).toEqual([general]);
+        expect(editor.feedbackInternal().some((feedback) => feedback.id === inline.id)).toBe(false);
+        expect(comp.unreferencedFeedback().some((feedback) => feedback.id === general.id)).toBe(false);
+
+        response.next(new HttpResponse({ body: persisted }));
+        response.complete();
+        fixture.detectChanges();
+        expect(comp.saveBusy()).toBe(false);
+        expect(comp.submitBusy()).toBe(false);
+        expect(comp.hasPendingChanges).toBe(false);
+        if (action === 'save') {
+            expect(comp.feedbackSuggestions()).toEqual([inline, general]);
+            expect(acceptButtons().every((button) => !button.disabled)).toBe(true);
+            acceptButtons().forEach((button) => button.click());
+            fixture.detectChanges();
+            expect(inlineAccepted).toHaveBeenCalledOnce();
+            expect(generalAccepted).toHaveBeenCalledOnce();
+            expect(comp.feedbackSuggestions()).toEqual([]);
+            expect(comp.referencedFeedback()).toContainEqual(expect.objectContaining({ id: inline.id }));
+            expect(comp.unreferencedFeedback()).toContainEqual(expect.objectContaining({ id: general.id }));
+            expect(comp.hasPendingChanges).toBe(true);
+        } else {
+            // A successful Submit deliberately discards the suggestions confirmed above.
+            expect(comp.feedbackSuggestions()).toEqual([]);
+        }
     });
 
     it.each(['save', 'submit'] as const)('should lock a locally saved inline card until a delayed %s response assigns its ID', async (action) => {

@@ -21,6 +21,7 @@ export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
     readonly codeLine = input.required<number>();
 
     readonly feedback = input.required<Feedback>();
+    readonly readOnly = input(false);
     readonly course = input<Course>(); // Needed for credit rounding settings
 
     readonly onAcceptSuggestion = output<Feedback>();

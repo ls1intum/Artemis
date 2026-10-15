@@ -1,3 +1,4 @@
+import { FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
@@ -36,6 +37,30 @@ describe('Unreferenced Feedback Detail Component', () => {
                 feedbackService = TestBed.inject(FeedbackService);
                 sgiService = TestBed.inject(StructuredGradingCriterionService);
             });
+    });
+
+    it.each([false, true])('should disable suggestion acceptance with an instruction link: %s', (linked) => {
+        fixture.componentRef.setInput('feedback', {
+            text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Suggested`,
+            gradingInstruction: linked ? { id: 1, credits: 1 } : undefined,
+        } as Feedback);
+        fixture.componentRef.setInput('resultId', 1);
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.componentRef.setInput('isSuggestion', true);
+        fixture.componentRef.setInput('suggestionAcceptanceDisabled', true);
+        fixture.detectChanges();
+        const accepted = vi.fn();
+        comp.onAcceptSuggestion.subscribe(accepted);
+        const button = fixture.nativeElement.querySelector('[data-testid="accept-feedback-suggestion"] button') as HTMLButtonElement;
+        expect(button.disabled).toBe(true);
+        button.click();
+        expect(accepted).not.toHaveBeenCalled();
+
+        fixture.componentRef.setInput('suggestionAcceptanceDisabled', false);
+        fixture.detectChanges();
+        expect(button.disabled).toBe(false);
+        button.click();
+        expect(accepted).toHaveBeenCalledWith(comp.feedback());
     });
 
     it('should render with its required inputs', () => {

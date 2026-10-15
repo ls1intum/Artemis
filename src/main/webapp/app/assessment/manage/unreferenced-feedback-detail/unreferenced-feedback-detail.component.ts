@@ -66,6 +66,7 @@ export class UnreferencedFeedbackDetailComponent implements OnInit {
     readonly resultId = input.required<number>();
     readonly isSuggestion = input<boolean>();
     public readonly readOnly = input.required<boolean>();
+    readonly suggestionAcceptanceDisabled = input(false);
     readonly highlightDifferences = input<boolean>(false);
 
     public readonly onFeedbackChange = output<Feedback>();

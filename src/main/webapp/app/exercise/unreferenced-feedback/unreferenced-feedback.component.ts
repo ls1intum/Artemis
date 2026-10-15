@@ -277,6 +277,9 @@ export class UnreferencedFeedbackComponent implements GradingInstructionSelectio
      * Accept a feedback suggestion: Make it "real" feedback and remove the suggestion card
      */
     acceptSuggestion(feedback: Feedback) {
+        if (this.readOnly()) {
+            return;
+        }
         if (!this.selectionService.canApplyInstruction(feedback.gradingInstruction)) {
             return;
         }

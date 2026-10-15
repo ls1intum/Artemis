@@ -171,7 +171,7 @@
                         [(feedbacks)]="unreferencedFeedback"
                         [feedbackSuggestions]="unreferencedFeedbackSuggestions()"
                         (feedbacksChange)="validateUpdatedFeedback($event)"
-                        [readOnly]="readOnly()"
+                        [readOnly]="readOnly() || saveBusy() || submitBusy()"
                         [highlightDifferences]="highlightDifferences"
                         (onAcceptSuggestion)="removeSuggestion($event)"
                         (onDiscardSuggestion)="removeSuggestion($event)"

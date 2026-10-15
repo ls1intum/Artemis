@@ -664,6 +664,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      * @param feedback The feedback item of the feedback suggestion.
      */
     acceptSuggestion(feedback: Feedback): void {
+        if (this.readOnlyManualFeedback()) {
+            return;
+        }
         const original = this.feedbackSuggestionsInternal().find((suggestion) => Feedback.areIdentical(suggestion, feedback));
         if (!original) {
             return;

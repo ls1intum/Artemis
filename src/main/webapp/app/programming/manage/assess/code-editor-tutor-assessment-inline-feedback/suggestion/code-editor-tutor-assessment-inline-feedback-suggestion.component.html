@@ -20,7 +20,13 @@
             </div>
         </div>
         <div class="row right-section ml-2">
-            <button type="button" class="btn btn-success m-1 btn-sm" (click)="onAcceptSuggestion.emit(currentFeedback)">
+            <button
+                type="button"
+                data-testid="accept-feedback-suggestion"
+                [disabled]="readOnly()"
+                class="btn btn-success m-1 btn-sm"
+                (click)="onAcceptSuggestion.emit(currentFeedback)"
+            >
                 <fa-icon [icon]="faCheck" />
                 <span jhiTranslate="artemisApp.assessment.detail.accept"></span>
             </button>

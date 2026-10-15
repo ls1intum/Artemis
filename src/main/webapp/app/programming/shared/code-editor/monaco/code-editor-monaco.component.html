@@ -41,6 +41,7 @@
                 <jhi-code-editor-tutor-assessment-inline-feedback-suggestion
                     [codeLine]="suggestion.line"
                     [feedback]="suggestion"
+                    [readOnly]="readOnlyManualFeedback()"
                     [course]="course()"
                     (onAcceptSuggestion)="acceptSuggestion($event)"
                     (onDiscardSuggestion)="discardSuggestion($event)"

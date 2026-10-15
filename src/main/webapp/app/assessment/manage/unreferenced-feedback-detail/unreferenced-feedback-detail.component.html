@@ -96,7 +96,14 @@
                         </tumaet-ui-input-group>
                     }
                     @if (isSuggestion()) {
-                        <tumaet-ui-button severity="success" size="small" [icon]="faCheck" (clicked)="onAcceptSuggestion.emit(feedback())">
+                        <tumaet-ui-button
+                            severity="success"
+                            size="small"
+                            [icon]="faCheck"
+                            data-testid="accept-feedback-suggestion"
+                            [disabled]="suggestionAcceptanceDisabled()"
+                            (clicked)="onAcceptSuggestion.emit(feedback())"
+                        >
                             <span jhiTranslate="artemisApp.assessment.detail.accept"></span>
                         </tumaet-ui-button>
                         <tumaet-ui-button severity="danger" size="small" variant="outlined" [icon]="faTrash" (clicked)="onDiscardSuggestion.emit(feedback())">
@@ -174,7 +181,14 @@
                 }
                 <div class="flex shrink-0 flex-wrap items-center gap-1.5">
                     @if (isSuggestion()) {
-                        <tumaet-ui-button severity="success" size="small" [icon]="faCheck" (clicked)="onAcceptSuggestion.emit(feedback())">
+                        <tumaet-ui-button
+                            severity="success"
+                            size="small"
+                            [icon]="faCheck"
+                            data-testid="accept-feedback-suggestion"
+                            [disabled]="suggestionAcceptanceDisabled()"
+                            (clicked)="onAcceptSuggestion.emit(feedback())"
+                        >
                             <span jhiTranslate="artemisApp.assessment.detail.accept"></span>
                         </tumaet-ui-button>
                         <tumaet-ui-button severity="danger" size="small" variant="outlined" [icon]="faTrash" (clicked)="onDiscardSuggestion.emit(feedback())">

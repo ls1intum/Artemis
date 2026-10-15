@@ -97,6 +97,7 @@
                         [feedback]="suggestion"
                         [resultId]="resultId()"
                         [isSuggestion]="true"
+                        [suggestionAcceptanceDisabled]="readOnly()"
                         [readOnly]="true"
                         (onAcceptSuggestion)="acceptSuggestion($event)"
                         (onDiscardSuggestion)="discardSuggestion($event)"
