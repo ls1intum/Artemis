@@ -1,36 +1,13 @@
-<div class="flex flex-wrap gap-2">
-    <!-- Enable second correction with this button -->
-    @if (!secondCorrectionEnabled()) {
-        <button
-            type="button"
-            tumAetUiButton
-            severity="success"
-            size="small"
-            (click)="triggerSecondCorrectionButton()"
-            [attr.aria-label]="'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOn' | artemisTranslate"
-        >
-            <fa-icon [icon]="faToggleOn" [fixedWidth]="true" />
-            <span>{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOn' | artemisTranslate }}</span>
-            @if (togglingSecondCorrectionButton()) {
-                <fa-icon [icon]="faSpinner" animation="spin" />
-            }
-        </button>
-    }
-    <!-- Disable second correction with this button -->
-    @if (secondCorrectionEnabled()) {
-        <button
-            type="button"
-            tumAetUiButton
-            severity="danger"
-            size="small"
-            (click)="triggerSecondCorrectionButton()"
-            [attr.aria-label]="'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOff' | artemisTranslate"
-        >
-            <fa-icon [icon]="faToggleOff" [fixedWidth]="true" />
-            <span>{{ 'artemisApp.exerciseAssessmentDashboard.toggleSecondCorrectionOff' | artemisTranslate }}</span>
-            @if (togglingSecondCorrectionButton()) {
-                <fa-icon [icon]="faSpinner" animation="spin" />
-            }
-        </button>
-    }
-</div>
+<span>
+    {{ 'artemisApp.exerciseAssessmentDashboard.secondCorrection' | artemisTranslate }}:
+    {{ (secondCorrectionEnabled() ? 'artemisApp.exerciseAssessmentDashboard.enabled' : 'artemisApp.exerciseAssessmentDashboard.disabled') | artemisTranslate }}
+</span>
+<tumaet-ui-toggle-switch
+    [ngModel]="secondCorrectionEnabled()"
+    [disabled]="togglingSecondCorrectionButton()"
+    (changed)="triggerSecondCorrectionButton()"
+    [ariaLabel]="'artemisApp.exerciseAssessmentDashboard.secondCorrection' | artemisTranslate"
+/>
+@if (togglingSecondCorrectionButton()) {
+    <fa-icon [icon]="faSpinner" animation="spin" />
+}

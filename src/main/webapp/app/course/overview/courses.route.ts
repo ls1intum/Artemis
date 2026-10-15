@@ -7,25 +7,7 @@ import { PendingChangesGuard } from 'app/foundation/guard/pending-changes.guard'
 
 import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
 import { LectureGuard } from 'app/lecture/shared/lecture-guard.service';
-
-export enum CourseOverviewRoutePath {
-    IRIS = 'iris',
-    EXERCISES = 'exercises',
-    EXAMS = 'exams',
-    COMPETENCIES = 'competencies',
-    TUTORIAL_GROUPS = 'tutorial-groups',
-    FAQ = 'faq',
-    LEARNING_PATH = 'learning-path',
-    LECTURES = 'lectures',
-    ENROLL = 'enroll',
-    ARCHIVE = 'archive',
-    STATISTICS = 'statistics',
-    COMMUNICATION = 'communication',
-    SETTINGS = 'settings',
-    TRAINING = 'training',
-    TRAINING_QUIZ = 'training/quiz',
-    CALENDAR = 'calendar',
-}
+import { CourseOverviewRoutePath } from 'app/course/overview/course-overview-route-path';
 
 /**
  * The child route paths of /courses/:courseId that carry the {@link CourseOverviewGuard} in their

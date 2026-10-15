@@ -2,6 +2,7 @@ import {
     Component,
     DestroyRef,
     ElementRef,
+    WritableSignal,
     afterNextRender,
     afterRenderEffect,
     computed,
@@ -13,7 +14,6 @@ import {
     signal,
     untracked,
     viewChild,
-    WritableSignal,
 } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -36,6 +36,7 @@ import { GradingInstructionSelectionService } from 'app/exercise/structured-grad
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 import { FormsModule } from '@angular/forms';
+import { autogrowTextarea } from 'app/foundation/util/textarea-autogrow.util';
 
 export type FeedbackType = 'correct' | 'needs_revision' | 'not_attempted' | 'non_compliant';
 
@@ -625,8 +626,7 @@ export class UnifiedFeedbackComponent {
         if (!textarea) {
             return;
         }
-        textarea.style.height = '0px';
-        textarea.style.height = `${textarea.scrollHeight}px`;
+        autogrowTextarea(textarea);
     }
 
     private autogrowTitleTextarea(): void {
@@ -634,8 +634,7 @@ export class UnifiedFeedbackComponent {
         if (!textarea) {
             return;
         }
-        textarea.style.height = '0px';
-        textarea.style.height = `${textarea.scrollHeight}px`;
+        autogrowTextarea(textarea);
     }
 
     private getReferencedFeedbackTitle(feedback: Feedback): string {

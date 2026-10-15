@@ -466,13 +466,26 @@ describe('CodeEditorMonacoComponent', () => {
         await comp.selectFileInEditor(fileToLoad.fileName);
         fixture.componentRef.setInput('selectedFile', presentFileName);
         await comp.selectFileInEditor(presentFileName);
-        expect(loadFileFromRepositoryStub).toHaveBeenCalledExactlyOnceWith(fileToLoad.fileName);
+        expect(loadFileFromRepositoryStub).toHaveBeenCalledExactlyOnceWith(fileToLoad.fileName, undefined, undefined);
         expect(comp.fileSession()).toEqual({
             ...presentFileSession,
             [fileToLoad.fileName]: { code: fileToLoad.fileContent, cursor: { column: 0, lineNumber: 0 }, scrollTop: 0, loadingError: false },
         });
         expect(setPositionStub).toHaveBeenCalledTimes(2);
         expect(changeModelStub).toHaveBeenCalledTimes(2);
+    });
+
+    it('should load a selected file from the given commit', async () => {
+        const commitId = '0123456789abcdef0123456789abcdef01234567';
+        loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: 'submitted code' }));
+        vi.spyOn(comp.editor(), 'changeModel').mockImplementation(() => {});
+        fixture.componentRef.setInput('commitId', commitId);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('selectedFile', 'file-to-load');
+        await comp.selectFileInEditor('file-to-load');
+
+        expect(loadFileFromRepositoryStub).toHaveBeenCalledExactlyOnceWith('file-to-load', undefined, commitId);
+        expect(comp.fileSession()['file-to-load'].code).toBe('submitted code');
     });
 
     it('should load a selected file after a loading error', async () => {
@@ -539,12 +552,12 @@ describe('CodeEditorMonacoComponent', () => {
 
             await comp.selectFileInEditor(fileName);
 
-            expect(getFileAsBlobSpy).toHaveBeenCalledWith(fileName);
+            expect(getFileAsBlobSpy).toHaveBeenCalledWith(fileName, undefined, undefined);
             expect(createObjectURLMock).toHaveBeenCalledOnce();
             expect(comp.imagePreviewUrl()).toBe('blob:mock-url');
             expect(comp.imagePreviewError()).toBe(false);
             expect(comp.binaryFileSelected()).toBe(false);
-            expect(loadFileFromRepositoryStub).not.toHaveBeenCalledWith(fileName);
+            expect(loadFileFromRepositoryStub).not.toHaveBeenCalledWith(fileName, undefined, undefined);
             expect(changeModelSpy).not.toHaveBeenCalled();
         });
 

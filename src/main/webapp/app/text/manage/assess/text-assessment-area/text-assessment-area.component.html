@@ -9,6 +9,8 @@
             (didChange)="textBlockRefsChangeEmit()"
             (didDelete)="removeTextBlockRef($event)"
             [highlightDifferences]="highlightDifferences()"
+            [focusFeedback]="ref.block === blockToFocus()"
+            (didHandleFocusFeedback)="didHandleFocusFeedback($event)"
         />
     }
 } @else {
@@ -22,7 +24,12 @@
 }
 @if (showCounts()) {
     <div>
-        <span class="badge bg-primary mb-2" data-testid="text-assessment-word-count" jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount() }"></span>
+        <span
+            class="badge bg-primary mb-2"
+            data-testid="text-assessment-word-count"
+            jhiTranslate="artemisApp.textExercise.wordCount"
+            [translateValues]="{ count: wordCount() }"
+        ></span>
         <span
             class="badge bg-primary mb-2"
             data-testid="text-assessment-character-count"

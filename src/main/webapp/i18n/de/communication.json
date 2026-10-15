@@ -171,6 +171,7 @@
                 "created": "Antwort erfolgreich erstellt",
                 "deleted": "Antwort erfolgreich gelöscht",
                 "deleteAnswer": "Antwort löschen",
+                "resolvesPost": "Hat die Frage gelöst",
                 "unverifiedIris": {
                     "badge": "Wartet auf Tutorprüfung",
                     "approve": "Freigeben",

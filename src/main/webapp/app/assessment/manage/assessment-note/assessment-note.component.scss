@@ -51,8 +51,10 @@
     &__textarea {
         width: 100%;
         min-width: 0;
-        min-height: 4.5rem;
-        resize: none;
-        overflow: hidden;
+        // The height is set to fit the text (see autogrowTextarea); beyond the maximum the note scrolls.
+        min-height: 5.5rem;
+        max-height: 30rem;
+        overflow-y: auto;
+        resize: vertical;
     }
 }

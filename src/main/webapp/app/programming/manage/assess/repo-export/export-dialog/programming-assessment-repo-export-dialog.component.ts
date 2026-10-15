@@ -10,7 +10,7 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -28,7 +28,7 @@ interface ProgrammingAssessmentRepoExportDialogData {
     selector: 'jhi-exercise-scores-repo-export-dialog',
     templateUrl: './programming-assessment-repo-export-dialog.component.html',
     styles: ['textarea { width: 100%; }'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, FormDateTimePickerComponent, FeatureToggleDirective, FaIconComponent, ArtemisTranslatePipe],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, TumAetUiDatePickerComponent, FeatureToggleDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     private repoExportService = inject(ProgrammingAssessmentRepoExportService);
@@ -55,6 +55,8 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
     set repositoryExportOptions(value: RepositoryExportOptions) {
         this._repositoryExportOptions.set(value);
     }
+    /** The picker keeps its last valid date while the typed text is not a date, so the text validity is tracked separately. */
+    readonly isFilterDateTextValid = signal(true);
     readonly isLoading = signal(false);
     readonly isRepoExportForMultipleExercises = signal<boolean>(undefined!);
     readonly isAtLeastInstructor = signal(false);
@@ -78,6 +80,14 @@ export class ProgrammingAssessmentRepoExportDialogComponent implements OnInit {
             addParticipantName: this.isAtLeastInstructor(),
             normalizeCodeStyle: false, // disabled by default because it is rather unstable
         };
+    }
+
+    /**
+     * The export must not run with a date the picker shows as invalid; while the date is not used (filter off), it cannot matter.
+     * A method rather than a computed, because [(ngModel)] switches the filter on by mutating the options in place.
+     */
+    hasInvalidFilterDate(): boolean {
+        return !!this.repositoryExportOptions?.filterLateSubmissions && !this.isFilterDateTextValid();
     }
 
     clear() {

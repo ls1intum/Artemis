@@ -58,13 +58,13 @@
 
 /* Scanning may precede a module becoming fully Bootstrap-free; the migration rule checks locked paths are covered. */
 @source './app/admin';
+@source './app/presentation';
 @source './app/atlas/shared/standardized-competencies';
 @source './app/atlas/manage/import-standardized-competencies';
 @source './app/exercise/feedback';
 @source './app/exercise/result';
 @source './app/iris/manage/settings';
 @source './app/editor/markdown-editor';
-@source './app/shared-ui/date-time-picker';
 
 /* The whole exam mode, and the example solution that only its summary shows. */
 @source './app/exam';
@@ -98,6 +98,7 @@
 @source './app/course/overview/setup-passkey-modal';
 @source './app/course/sidebar';
 @source './app/notification';
+@source './app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component.html';
 @source './app/calendar';
 @source './app/shared-ui/profile-picture';
 @source './app/localci/build-agent-summary';
@@ -140,6 +141,9 @@
 @source inline("sm:inline");
 @source inline("aria-disabled:opacity-60");
 @source inline("aria-disabled:cursor-not-allowed");
+
+/* The Bootstrap-heavy drag-and-drop question editor uses these utilities for its text length hint and live counter. */
+@source inline("max-w-[150px] pointer-events-none absolute bottom-2 right-3 z-[4] text-xs leading-none text-muted-color text-state-danger");
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';

@@ -1,5 +1,6 @@
 import { Component, HostListener, effect, inject, input, model, output, signal } from '@angular/core';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { TextBlockAssessmentCardComponent } from '../textblock-assessment-card/text-block-assessment-card.component';
@@ -38,6 +39,8 @@ export class TextAssessmentAreaComponent {
     selectedRef = model<TextBlockRef | undefined>(undefined);
     wordCount = signal(0);
     characterCount = signal(0);
+    // block that was just added by manual selection; its feedback editor is focused as soon as the card is rendered, once
+    blockToFocus = signal<TextBlock | undefined>(undefined);
 
     constructor() {
         // Effect to handle submission changes - updates word/character counts
@@ -75,6 +78,10 @@ export class TextAssessmentAreaComponent {
         if (!this.allowManualBlockSelection()) {
             return;
         }
+        if (!toggleValue && this.autoTextBlockAssessment()) {
+            // a new manual selection starts, so the previous one must not claim the focus when the cards are rendered again
+            this.blockToFocus.set(undefined);
+        }
         this.autoTextBlockAssessment.set(toggleValue);
     }
 
@@ -93,6 +100,7 @@ export class TextAssessmentAreaComponent {
     addTextBlockRef(ref: TextBlockRef): void {
         const currentRefs = this.textBlockRefs();
         this.textBlockRefs.set([...currentRefs, ref]);
+        this.blockToFocus.set(ref.block);
         this.textBlockRefsAddedRemoved.emit();
     }
 
@@ -106,10 +114,24 @@ export class TextAssessmentAreaComponent {
         if (index === -1) {
             return;
         }
+        if (this.blockToFocus() === ref.block) {
+            this.blockToFocus.set(undefined);
+        }
         const newRefs = [...currentRefs];
         newRefs.splice(index, 1);
         this.textBlockRefs.set(newRefs);
         this.textBlockRefsAddedRemoved.emit();
+    }
+
+    /**
+     * It is called when a card handled the request to focus its feedback editor. The request is used up, so it cannot
+     * move the focus again later on, e.g. when the assessment becomes editable again or the feedback is re-added.
+     * @param ref - TextBlockRef of the card that handled the request
+     */
+    didHandleFocusFeedback(ref: TextBlockRef): void {
+        if (this.blockToFocus() === ref.block) {
+            this.blockToFocus.set(undefined);
+        }
     }
 
     /**

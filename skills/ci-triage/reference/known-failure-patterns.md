@@ -115,6 +115,20 @@ same topology, so a failure that reproduces only in one of them is expected rath
 **What to do.** Compare against develop and against other open pull requests before attributing the
 failure to the branch. See `skills/e2e-pr-check/SKILL.md` for how to run a targeted local check.
 
+## Helios is unavailable or rejects the E2E credential
+
+**Symptom.** The log warns that Helios flakiness history is unavailable, for example with HTTP 401.
+Failed tests are classified as `unknown` and the final verdict uses the Playwright result.
+
+**Tell.** Passing tests, including tests recovered by Playwright's existing retries, still pass.
+Failures after retries remain blocking without being labelled confirmed regressions. A known-flaky
+failure in another phase cannot exonerate an unknown failure. Phase 2 does not start after an unknown
+Phase 1 failure.
+
+**What to do.** Inspect the failing tests and the matching base-branch run, as usual. Restore the
+Helios service or correct `HELIOS_REPO_SECRET` to regain history-based classification; the suite
+can run without it. Do not treat missing history as evidence of either flakiness or a regression.
+
 ## E2E job red although Playwright reports 0 failed
 
 **Symptom.** The E2E job on develop is red and "Report E2E Overall Status" says "E2E infrastructure

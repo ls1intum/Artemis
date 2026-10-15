@@ -2,6 +2,7 @@ import { Component, DestroyRef, ElementRef, afterNextRender, afterRenderEffect, 
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { autogrowTextarea } from 'app/foundation/util/textarea-autogrow.util';
 
 @Component({
     selector: 'jhi-assessment-note',
@@ -11,6 +12,8 @@ import { TumAetUiInputDirective } from '@tumaet/ui-angular';
 })
 export class AssessmentNoteComponent {
     private readonly destroyRef = inject(DestroyRef);
+
+    private readonly noteTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('noteTextarea');
 
     readonly assessmentNote = input<AssessmentNote | undefined>();
     /** Whether the title is shown; a host that names the note elsewhere (e.g. in a tab) turns it off. */
@@ -24,24 +27,25 @@ export class AssessmentNoteComponent {
     /** The host replaces the note on every input, so the length follows the text as it is typed. */
     readonly noteLength = computed(() => (this.assessmentNote()?.note ?? '').length);
 
-    private readonly textarea = viewChild.required<ElementRef<HTMLTextAreaElement>>('noteTextarea');
-
     constructor() {
-        // The text box grows with its text, like a feedback description. After render, since it measures the rendered box.
+        // Re-fit whenever the note changes, which also covers a note that is loaded after the first render.
         afterRenderEffect(() => {
             this.assessmentNote();
             this.autogrow();
         });
 
-        // The same text wraps into more lines once the box gets narrower, and a box in a hidden tab measures no height at all
-        // until its tab opens, so the height follows the width as well. Only the width: the height written here would
-        // otherwise trigger the observer again.
+        // The text wraps differently when the available width changes, which no note change signals.
+        // Only width changes are handled so that the height written by autogrow does not retrigger the observer.
         afterNextRender(() => {
-            const textarea = this.textarea().nativeElement;
+            const textarea = this.noteTextarea()?.nativeElement;
+            if (!textarea) {
+                return;
+            }
             let lastWidth = textarea.clientWidth;
-            const resizeObserver = new ResizeObserver(([entry]) => {
-                if (entry.contentRect.width !== lastWidth) {
-                    lastWidth = entry.contentRect.width;
+            const resizeObserver = new ResizeObserver((entries) => {
+                const width = entries[0]?.contentRect.width;
+                if (width !== undefined && width !== lastWidth) {
+                    lastWidth = width;
                     this.autogrow();
                 }
             });
@@ -59,6 +63,7 @@ export class AssessmentNoteComponent {
         if (!(target instanceof HTMLTextAreaElement)) {
             return;
         }
+        autogrowTextarea(target);
         const value = target.value;
         const currentNote = this.assessmentNote();
 
@@ -72,13 +77,12 @@ export class AssessmentNoteComponent {
         updatedNote.note = value;
 
         this.onAssessmentNoteChange.emit(updatedNote);
-        this.autogrow();
     }
 
-    /** Fits the text box to its text. Collapsing it first lets the box shrink again when text is removed. */
     private autogrow(): void {
-        const textarea = this.textarea().nativeElement;
-        textarea.style.height = '0px';
-        textarea.style.height = `${textarea.scrollHeight}px`;
+        const textarea = this.noteTextarea()?.nativeElement;
+        if (textarea) {
+            autogrowTextarea(textarea);
+        }
     }
 }

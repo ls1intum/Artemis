@@ -117,6 +117,11 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * tutor's feedback read-only set {@link isTutorAssessment} alone and keep the editor's own layout.
      */
     readonly assessmentWorkspace = input<boolean>(false);
+    /**
+     * The full hash of the commit to show, read-only and independent of the working copy on the server. Set it where a specific submission is shown, e.g. in the manual
+     * assessment; leave it unset to show the repository as it currently is, e.g. in the online editor.
+     */
+    commitId = input<string | undefined>(undefined);
     highlightFileChanges = input<boolean>(false);
     allowHiddenFiles = input<boolean>(false);
     /**
