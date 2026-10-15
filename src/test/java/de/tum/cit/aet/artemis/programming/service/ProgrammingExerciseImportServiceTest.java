@@ -50,7 +50,8 @@ class ProgrammingExerciseImportServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ProgrammingExerciseImportService(Optional.empty(), Optional.empty(), validation, plans, scheduling, tasks, basic, null, exercises, Optional.empty(), null);
+        service = new ProgrammingExerciseImportService(Optional.empty(), Optional.empty(), validation, plans, scheduling, tasks, basic, null, exercises, Optional.empty(), null,
+                Optional.empty(), null);
         source = new ProgrammingExercise();
         source.setId(1L);
         destination = new ProgrammingExercise();

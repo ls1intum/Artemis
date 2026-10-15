@@ -10,12 +10,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmissionService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationStartedEvent;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationVariantPreparation;
 
@@ -33,8 +36,14 @@ public class GenerationVariantService {
 
     private final GenerationVariantPlacementService placement;
 
+    private final GenerationLiveSaveService liveSaves;
+
+    private final AuthorizationCheckService authCheck;
+
     public GenerationVariantService(GenerationAdmissionService admission, GenerationVariantDraftService drafts, GenerationJobService jobs,
-            GenerationVariantPlacementService placement) {
+            GenerationVariantPlacementService placement, GenerationLiveSaveService liveSaves, AuthorizationCheckService authCheck) {
+        this.liveSaves = liveSaves;
+        this.authCheck = authCheck;
         this.admission = admission;
         this.drafts = drafts;
         this.jobs = jobs;
@@ -50,20 +59,29 @@ public class GenerationVariantService {
      * @return common authoring job and explicit source/destination identity
      */
     public ExerciseGenerationJobStartDTO start(User user, long sourceId, VariantGenerationRequestDTO request) {
-        var reservation = admission.reserveVariant(user, sourceId, request);
+        GenerationAdmissionService.ReservedRun reservation = null;
         AtomicReference<GenerationStartedEvent> prepared = new AtomicReference<>();
         boolean dispatched = false;
         try {
-            placement.validate(reservation.source(), request);
-            var sourceSnapshot = drafts.captureSource(sourceId);
-            var context = new GenerationVariantPreparation(sourceId, sourceSnapshot, request);
-            GenerationStartedEvent event = drafts.prepare(sourceId, request, destination -> {
-                var start = jobs.prepareVariantJob(user, destination, reservation.prompt(), reservation.budgetReservationId(), reservation.settings(), reservation.input(),
-                        context);
-                prepared.set(start);
-                drafts.verifySource(sourceId, sourceSnapshot);
-                return start;
-            });
+            GenerationStartedEvent event;
+            String sourceToken = liveSaves.claimReader(sourceId);
+            try {
+                var admitted = admission.reserveVariant(user, sourceId, request);
+                reservation = admitted;
+                authCheck.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, admitted.source(), user);
+                placement.validate(admitted.source(), request);
+                var sourceSnapshot = drafts.captureSource(sourceId);
+                var context = new GenerationVariantPreparation(sourceId, sourceSnapshot, request);
+                event = drafts.prepare(sourceId, request, destination -> {
+                    var start = jobs.prepareVariantJob(user, destination, admitted.prompt(), admitted.budgetReservationId(), admitted.settings(), admitted.input(), context);
+                    prepared.set(start);
+                    drafts.verifySource(sourceId, sourceSnapshot);
+                    return start;
+                });
+            }
+            finally {
+                liveSaves.releaseReader(sourceId, sourceToken);
+            }
             // prepare returns only after its repository-owned transaction commits. A worker can never race an invisible draft.
             dispatched = jobs.dispatchPreparedJob(event);
             return new ExerciseGenerationJobStartDTO(event.jobId(), event.exercise().getId(), sourceId);
@@ -76,14 +94,14 @@ public class GenerationVariantService {
             throw failure;
         }
         finally {
-            if (!dispatched) {
+            if (!dispatched && reservation != null) {
                 admission.release(reservation);
             }
         }
     }
 
     /**
-     * Copies a stable source baseline into the reserved destination without blocking ordinary edits.
+     * Copies a stable source baseline while excluding live source writes only during the copy.
      *
      * @param event admitted common job
      */
@@ -95,12 +113,18 @@ public class GenerationVariantService {
         if (!jobs.isOwnedActiveJob(event.exercise().getId(), event.jobId())) {
             throw new IllegalStateException("The destination reservation was lost before preparation");
         }
-        asInitiator(event.user(), () -> {
-            drafts.verifySource(preparation.sourceExerciseId(), preparation.sourceSnapshot());
-            drafts.complete(preparation.sourceExerciseId(), event.exercise().getId());
-            drafts.verifySource(preparation.sourceExerciseId(), preparation.sourceSnapshot());
-            return null;
-        });
+        String sourceToken = liveSaves.claimReader(preparation.sourceExerciseId());
+        try {
+            asInitiator(event.user(), () -> {
+                drafts.verifySource(preparation.sourceExerciseId(), preparation.sourceSnapshot());
+                drafts.complete(preparation.sourceExerciseId(), event.exercise().getId());
+                drafts.verifySource(preparation.sourceExerciseId(), preparation.sourceSnapshot());
+                return null;
+            });
+        }
+        finally {
+            liveSaves.releaseReader(preparation.sourceExerciseId(), sourceToken);
+        }
     }
 
     /**

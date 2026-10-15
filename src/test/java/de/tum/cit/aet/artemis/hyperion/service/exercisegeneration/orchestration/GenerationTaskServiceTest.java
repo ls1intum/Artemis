@@ -394,7 +394,7 @@ class GenerationTaskServiceTest {
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "Create a stack exercise", GenerationMode.GENERATE));
 
         verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
-        verify(generationRevertService, never()).invalidateBaseline(EXERCISE_ID);
+        verify(journal, never()).beforeMutation(anyString(), any(), any(), any(), anyString());
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
     }
 

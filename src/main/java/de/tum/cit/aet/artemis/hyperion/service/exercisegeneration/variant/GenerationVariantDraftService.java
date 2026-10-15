@@ -67,7 +67,7 @@ public class GenerationVariantDraftService {
 
     /**
      * Creates only the database draft, reserving its common authoring job within the same transaction.
-     * The caller checks an immutable source baseline before dispatch and around repository copying.
+     * The caller holds a short shared source reservation through this commit and a separate reservation around repository copying.
      *
      * @param sourceId protected source
      * @param request  transformation whose difficulty metadata is applied to the new draft
@@ -80,7 +80,7 @@ public class GenerationVariantDraftService {
     }
 
     /**
-     * Captures current source metadata and branch heads without blocking ordinary edits.
+     * Captures current source metadata and branch heads under the caller's shared source reservation.
      *
      * @param sourceId authorized source
      * @return immutable baseline for optimistic copy validation
