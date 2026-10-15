@@ -19,6 +19,9 @@ import openRepositoryInstructorParticipationsImg from './assets/integrated-code-
 import courseManagementRepositoriesImg from './assets/integrated-code-lifecycle/course-management-repositories.png';
 import openRepositoryButtonImg from './assets/integrated-code-lifecycle/open-repository-button.png';
 import vcsAccessTokensOverviewImg from './assets/integrated-code-lifecycle/vcs-access-tokens-overview.png';
+import tutorSupportBeforeDeadlineImg from './assets/integrated-code-lifecycle/tutor-support-before-deadline.png';
+import tutorSupportCodeButtonImg from './assets/integrated-code-lifecycle/tutor-support-code-button.png';
+import tutorSupportAfterDeadlineImg from './assets/integrated-code-lifecycle/tutor-support-after-deadline.png';
 
 Artemis' Integrated Code Lifecycle consists of two main components: Local Version Control and Local Continuous Integration.
 
@@ -165,6 +168,17 @@ are refused, including with an existing token or SSH key. Submitted code remains
 **Assessment Dashboard**. Automatically assessed exercises keep tutor support access after the due date; an exercise
 without a due date also keeps access until a due date is set and reached. Exam exercises do not provide this tutor
 support window. See [Access Rights](/admin/access-rights#general-functionality) for the full visibility rule.
+
+<details>
+<summary>Tutor support access before and after the due date</summary>
+
+<Image src={tutorSupportBeforeDeadlineImg} alt="Tutor participation list with student names, Code buttons, and the notice explaining the upcoming manual-assessment deadline" size={ImageSize.large} caption="Before the due date, tutors can identify student participations and open their code." />
+
+<Image src={tutorSupportCodeButtonImg} alt="Code dialog providing a clone URL and a link to the read-only online repository view" size={ImageSize.large} caption="The Code dialog provides read-only online viewing and cloning for tutors." />
+
+<Image src={tutorSupportAfterDeadlineImg} alt="Anonymous participation IDs and a notice linking to the Assessment Dashboard after the manual-assessment due date" size={ImageSize.large} caption="After the due date, manually assessed exercises hide identities and direct repository access while keeping anonymous assessment available." />
+
+</details>
 
 ### Which scoped token is provided automatically
 
