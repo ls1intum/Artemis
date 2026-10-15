@@ -119,13 +119,12 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         firstCompetency = competencyUtilService.createCompetency(course, "1");
         Competency secondCompetency = competencyUtilService.createCompetency(course, "2");
         Lecture lecture = lectureUtilService.createLecture(course);
-        LectureUnit textUnit = lectureUtilService.createTextUnit(lecture);
-        firstTextUnit = textUnit;
+        firstTextUnit = lectureUtilService.createTextUnit(lecture);
         AttachmentVideoUnit slideDeck = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 1, true);
         slideDeck.setName("Control structures slides");
         slideDeck = attachmentVideoUnitRepository.save(slideDeck);
         LectureUnit secondTextUnit = lectureUtilService.createTextUnit(lecture);
-        competencyUtilService.linkLectureUnitToCompetency(firstCompetency, textUnit);
+        competencyUtilService.linkLectureUnitToCompetency(firstCompetency, firstTextUnit);
         competencyUtilService.linkLectureUnitToCompetency(firstCompetency, slideDeck);
         competencyUtilService.linkLectureUnitToCompetency(secondCompetency, secondTextUnit);
 

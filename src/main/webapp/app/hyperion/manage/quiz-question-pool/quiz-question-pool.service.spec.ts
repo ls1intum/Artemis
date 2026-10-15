@@ -23,6 +23,8 @@ describe('QuizQuestionPoolService', () => {
         id: 11,
         competencyId: 9,
         competencyTitle: 'Arrays',
+        lectureUnitId: 4,
+        lectureUnitName: 'Arrays in Java',
         language: 'en',
         questionType: 'single-choice',
         difficulty: 'MEDIUM',
@@ -50,6 +52,8 @@ describe('QuizQuestionPoolService', () => {
             rationale: 'ok',
         });
         expect(result![0].competencyTitle).toBe('Arrays');
+        expect(result![0].lectureUnitId).toBe(4);
+        expect(result![0].lectureUnitName).toBe('Arrays in Java');
     });
 
     it('should pass the competency filter as a query parameter', () => {
@@ -95,15 +99,15 @@ describe('QuizQuestionPoolService', () => {
     it('should read and update the settings', () => {
         let loaded: PoolSettings | undefined;
         service.getSettings(7).subscribe((settings) => (loaded = settings));
-        httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/hyperion/courses/7/quiz-question-pool/settings').flush({ candidatesPerCompetency: 20 });
-        expect(loaded).toEqual({ poolGenerationEnabled: false, candidatesPerCompetency: 20 });
+        httpMock.expectOne((r) => r.method === 'GET' && r.url === '/api/hyperion/courses/7/quiz-question-pool/settings').flush({ questionsPerLectureUnit: 12 });
+        expect(loaded).toEqual({ poolGenerationEnabled: false, questionsPerLectureUnit: 12 });
 
         let stored: PoolSettings | undefined;
-        service.updateSettings(7, { poolGenerationEnabled: true, candidatesPerCompetency: 30 }).subscribe((settings) => (stored = settings));
+        service.updateSettings(7, { poolGenerationEnabled: true, questionsPerLectureUnit: 30 }).subscribe((settings) => (stored = settings));
         const req = httpMock.expectOne((r) => r.method === 'PUT' && r.url === '/api/hyperion/courses/7/quiz-question-pool/settings');
-        expect(req.request.body).toEqual({ poolGenerationEnabled: true, candidatesPerCompetency: 30 });
-        req.flush({ poolGenerationEnabled: true, candidatesPerCompetency: 30 });
-        expect(stored).toEqual({ poolGenerationEnabled: true, candidatesPerCompetency: 30 });
+        expect(req.request.body).toEqual({ poolGenerationEnabled: true, questionsPerLectureUnit: 30 });
+        req.flush({ poolGenerationEnabled: true, questionsPerLectureUnit: 30 });
+        expect(stored).toEqual({ poolGenerationEnabled: true, questionsPerLectureUnit: 30 });
     });
 
     it('should send the review decision and map the updated item', () => {

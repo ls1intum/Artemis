@@ -21,13 +21,15 @@ describe('QuizQuestionPoolComponent', () => {
     let alertService: AlertService;
 
     const progress: PoolProgress = { running: false, total: 10, toGenerate: 0, toJudge: 0, judged: 9, accepted: 7, rejected: 2, failed: 1 };
-    const settings: PoolSettings = { poolGenerationEnabled: false, candidatesPerCompetency: 20 };
+    const settings: PoolSettings = { poolGenerationEnabled: false, questionsPerLectureUnit: 12 };
 
     function question(id: number, competencyId: number, title: string): PoolQuestion {
         return {
             id,
             competencyId,
             competencyTitle: title,
+            lectureUnitId: competencyId * 10,
+            lectureUnitName: `Unit ${competencyId}`,
             language: 'en',
             questionType: 'single-choice',
             difficulty: 'MEDIUM',
@@ -88,16 +90,16 @@ describe('QuizQuestionPoolComponent', () => {
         expect(component.settings()).toBeUndefined();
     });
 
-    it('should group questions by competency and filter by the selected one', () => {
+    it('should group questions by competency and lecture unit and filter by the selected competency', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
 
         expect(component.competencyOptions()).toEqual([
             { id: 9, title: 'Arrays' },
             { id: 10, title: 'Loops' },
         ]);
-        expect(component.groups().map((group) => [group.id, group.questions.length])).toEqual([
-            [9, 2],
-            [10, 1],
+        expect(component.groups().map((group) => [group.id, group.units.map((unit) => [unit.id, unit.name, unit.questions.length])])).toEqual([
+            [9, [[90, 'Unit 9', 2]]],
+            [10, [[100, 'Unit 10', 1]]],
         ]);
 
         component.selectCompetency(10);
@@ -164,19 +166,19 @@ describe('QuizQuestionPoolComponent', () => {
 
     it('should track dirty settings and save them', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
-        const updateSpy = vi.spyOn(poolService, 'updateSettings').mockReturnValue(of({ poolGenerationEnabled: true, candidatesPerCompetency: 30 }));
+        const updateSpy = vi.spyOn(poolService, 'updateSettings').mockReturnValue(of({ poolGenerationEnabled: true, questionsPerLectureUnit: 30 }));
 
         expect(component.isSettingsDirty()).toBe(false);
         expect(component.canDeactivate()).toBe(true);
 
-        component.setCandidatesPerCompetency(30);
+        component.setQuestionsPerLectureUnit(30);
         component.setPoolGenerationEnabled(true);
         expect(component.isSettingsDirty()).toBe(true);
         expect(component.canDeactivate()).toBe(false);
 
         component.saveSettings();
 
-        expect(updateSpy).toHaveBeenCalledWith(1, { poolGenerationEnabled: true, candidatesPerCompetency: 30 });
+        expect(updateSpy).toHaveBeenCalledWith(1, { poolGenerationEnabled: true, questionsPerLectureUnit: 30 });
         expect(component.isSettingsDirty()).toBe(false);
         expect(component.canDeactivate()).toBe(true);
     });
@@ -185,7 +187,7 @@ describe('QuizQuestionPoolComponent', () => {
         setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
         const updateSpy = vi.spyOn(poolService, 'updateSettings');
 
-        component.setCandidatesPerCompetency(0);
+        component.setQuestionsPerLectureUnit(0);
         expect(component.isSettingsValid()).toBe(false);
         component.saveSettings();
 

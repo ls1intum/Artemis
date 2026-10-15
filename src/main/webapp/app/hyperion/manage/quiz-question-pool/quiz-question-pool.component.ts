@@ -30,18 +30,28 @@ export interface CompetencyOption {
     title: string;
 }
 
+export interface LectureUnitGroup {
+    id: number;
+    name: string;
+    questions: PoolQuestion[];
+}
+
 export interface CompetencyGroup {
     id: number;
     title: string;
-    questions: PoolQuestion[];
+    units: LectureUnitGroup[];
 }
 
 /** How often progress and questions are reloaded while a build runs. */
 const POLL_INTERVAL_MS = 3000;
 
+/** Bounds of the questions-per-lecture-unit setting, matching the server's validation. */
+export const MIN_QUESTIONS_PER_LECTURE_UNIT = 1;
+export const MAX_QUESTIONS_PER_LECTURE_UNIT = 60;
+
 /**
  * The per-course page of Hyperion's quiz question pool: progress and build trigger, the course's pool settings, and the pool's
- * questions grouped by competency with the filter's verdicts and the review decision on each.
+ * questions grouped by competency and lecture unit with the filter's verdicts and the review decision on each.
  */
 @Component({
     selector: 'jhi-quiz-question-pool',
@@ -74,6 +84,8 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
     readonly faPlay = faPlay;
     readonly faRotate = faRotate;
     readonly faExclamationTriangle = faExclamationTriangle;
+    readonly minQuestionsPerLectureUnit = MIN_QUESTIONS_PER_LECTURE_UNIT;
+    readonly maxQuestionsPerLectureUnit = MAX_QUESTIONS_PER_LECTURE_UNIT;
 
     readonly courseId = signal<number | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
@@ -117,10 +129,15 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
             }
             let group = groups.get(question.competencyId);
             if (!group) {
-                group = { id: question.competencyId, title: question.competencyTitle, questions: [] };
+                group = { id: question.competencyId, title: question.competencyTitle, units: [] };
                 groups.set(question.competencyId, group);
             }
-            group.questions.push(question);
+            let unit = group.units.find((candidate) => candidate.id === question.lectureUnitId);
+            if (!unit) {
+                unit = { id: question.lectureUnitId, name: question.lectureUnitName, questions: [] };
+                group.units.push(unit);
+            }
+            unit.questions.push(question);
         }
         return [...groups.values()];
     });
@@ -130,11 +147,11 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
         if (!settings || !original) {
             return false;
         }
-        return settings.poolGenerationEnabled !== original.poolGenerationEnabled || settings.candidatesPerCompetency !== original.candidatesPerCompetency;
+        return settings.poolGenerationEnabled !== original.poolGenerationEnabled || settings.questionsPerLectureUnit !== original.questionsPerLectureUnit;
     });
     readonly isSettingsValid = computed(() => {
-        const candidates = this.settings()?.candidatesPerCompetency;
-        return candidates !== undefined && candidates >= 1 && candidates <= 200;
+        const questions = this.settings()?.questionsPerLectureUnit;
+        return questions !== undefined && questions >= MIN_QUESTIONS_PER_LECTURE_UNIT && questions <= MAX_QUESTIONS_PER_LECTURE_UNIT;
     });
 
     ngOnInit(): void {
@@ -270,8 +287,8 @@ export class QuizQuestionPoolComponent implements OnInit, OnDestroy, ComponentCa
         this.settings.update((settings) => (settings ? cloneWith(settings, { poolGenerationEnabled: enabled }) : settings));
     }
 
-    setCandidatesPerCompetency(candidates: number | undefined): void {
-        this.settings.update((settings) => (settings ? cloneWith(settings, { candidatesPerCompetency: candidates ?? 0 }) : settings));
+    setQuestionsPerLectureUnit(questions: number | undefined): void {
+        this.settings.update((settings) => (settings ? cloneWith(settings, { questionsPerLectureUnit: questions ?? 0 }) : settings));
     }
 
     selectCompetency(competencyId: number | undefined | null): void {

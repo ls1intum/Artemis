@@ -28,6 +28,8 @@ export interface PoolQuestion {
     id: number;
     competencyId: number;
     competencyTitle: string;
+    lectureUnitId: number;
+    lectureUnitName: string;
     language: GenerationLanguage;
     questionType: GeneratedQuestionType;
     difficulty: PoolDifficulty;
@@ -54,7 +56,7 @@ export interface PoolProgress {
 
 export interface PoolSettings {
     poolGenerationEnabled: boolean;
-    candidatesPerCompetency: number;
+    questionsPerLectureUnit: number;
 }
 
 export interface PoolBuildStart {

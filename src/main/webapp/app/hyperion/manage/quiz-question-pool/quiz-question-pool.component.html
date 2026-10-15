@@ -82,19 +82,19 @@
             <section class="pool-card" data-testid="pool-settings-card">
                 <h6 class="pool-card-title" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.title"></h6>
                 <div class="pool-setting">
-                    <label for="pool-candidates" class="pool-setting-label" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.candidatesPerCompetency"></label>
+                    <label for="pool-questions" class="pool-setting-label" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.questionsPerLectureUnit"></label>
                     <p-inputnumber
-                        inputId="pool-candidates"
-                        [ngModel]="settingsValue.candidatesPerCompetency"
-                        (ngModelChange)="setCandidatesPerCompetency($event)"
-                        [min]="1"
-                        [max]="200"
+                        inputId="pool-questions"
+                        [ngModel]="settingsValue.questionsPerLectureUnit"
+                        (ngModelChange)="setQuestionsPerLectureUnit($event)"
+                        [min]="minQuestionsPerLectureUnit"
+                        [max]="maxQuestionsPerLectureUnit"
                         [showButtons]="true"
                         [useGrouping]="false"
                         [step]="1"
                         styleClass="w-100"
                     />
-                    <small class="pool-card-hint" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.candidatesHelp"></small>
+                    <small class="pool-card-hint" jhiTranslate="artemisApp.hyperion.quizQuestionPool.settings.questionsHelp"></small>
                 </div>
                 <div class="pool-setting pool-setting-toggle">
                     <p-toggleswitch
@@ -144,7 +144,15 @@
     @for (group of groups(); track group.id) {
         <section class="pool-group" [attr.data-testid]="'pool-group-' + group.id">
             <h5 class="pool-group-title">{{ group.title }}</h5>
-            <jhi-quiz-question-pool-item-list [questions]="group.questions" [canReview]="canReview()" [busyQuestionIds]="busyQuestionIds()" (review)="review($event)" />
+            @for (unit of group.units; track unit.id) {
+                <section class="pool-unit" [attr.data-testid]="'pool-unit-' + unit.id">
+                    <h6 class="pool-unit-title">
+                        <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.lectureUnit"></span>
+                        {{ unit.name }}
+                    </h6>
+                    <jhi-quiz-question-pool-item-list [questions]="unit.questions" [canReview]="canReview()" [busyQuestionIds]="busyQuestionIds()" (review)="review($event)" />
+                </section>
+            }
         </section>
     }
 </div>

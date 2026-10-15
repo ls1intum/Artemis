@@ -105,3 +105,20 @@
     font-weight: 700;
     margin-bottom: 0.75rem;
 }
+
+.quiz-question-pool .pool-unit {
+    margin-bottom: 1.25rem;
+}
+
+.quiz-question-pool .pool-unit-title {
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+}
+
+.quiz-question-pool .pool-unit-title span {
+    color: var(--text-color-secondary);
+    font-weight: 500;
+    margin-right: 0.35rem;
+}

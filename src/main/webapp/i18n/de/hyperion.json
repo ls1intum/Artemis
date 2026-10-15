@@ -4,7 +4,7 @@
             "quizQuestionPool": {
                 "title": "Quizfragen-Pool",
                 "sidebarTitle": "Quizfragen-Pool",
-                "intro": "Hyperion generiert Multiple-Choice-Fragen zu jeder Kompetenz dieses Kurses und prüft jede Frage, bevor du sie siehst. Übernimm die Fragen, die du in Quizzen verwenden willst, und schließe die anderen aus.",
+                "intro": "Hyperion generiert Multiple-Choice-Fragen zu jeder Vorlesungseinheit, die mit einer Kompetenz dieses Kurses verknüpft ist, gestützt auf die Folien, das Transkript oder den Text der Einheit, und prüft jede Frage, bevor du sie siehst. Übernimm die Fragen, die du in Quizzen verwenden willst, und schließe die anderen aus. Die übernommenen Fragen ermöglichen später außerdem personalisiertes Lernen: Studierende üben mit Fragen, die auf ihre Stärken und Schwächen zugeschnitten sind.",
                 "progress": {
                     "title": "Pool",
                     "total": "{{ count }} Fragen geplant",
@@ -17,14 +17,14 @@
                     "empty": "Noch keine Fragen. Starte einen Lauf, um den Pool zu füllen.",
                     "build": "Jetzt generieren",
                     "refresh": "Aktualisieren",
-                    "started": "Lauf gestartet, {{ count }} Fragen wurden dem Pool hinzugefügt.",
+                    "started": "Lauf gestartet, {{ count }} neue Fragen werden generiert.",
                     "alreadyRunning": "Für diesen Pool läuft bereits ein Lauf.",
                     "buildFailed": "Der Lauf konnte nicht gestartet werden."
                 },
                 "settings": {
                     "title": "Einstellungen",
-                    "candidatesPerCompetency": "Fragen pro Kompetenz",
-                    "candidatesHelp": "Wie viele Fragen der Pool je Kompetenz enthält, verteilt auf Fragetypen und Schwierigkeiten. Wirkt beim nächsten Lauf.",
+                    "questionsPerLectureUnit": "Fragen pro Vorlesungseinheit",
+                    "questionsHelp": "Wie viele Fragen der Pool je Vorlesungseinheit einer Kompetenz enthält, verteilt auf Fragetypen und Schwierigkeiten. Wirkt beim nächsten Lauf.",
                     "poolGenerationEnabled": "Über Nacht für neues Vorlesungsmaterial generieren",
                     "poolGenerationHelp": "Wird jetzt gespeichert und wirkt, sobald die geplante Generierung verfügbar ist.",
                     "save": "Einstellungen speichern",
@@ -45,6 +45,7 @@
                     "inProgress": "{{ count }} Fragen werden noch generiert oder geprüft.",
                     "failed": "{{ count }} Fragen konnten nicht generiert oder geprüft werden.",
                     "empty": "Noch keine Fragen in dieser Gruppe.",
+                    "lectureUnit": "Vorlesungseinheit:",
                     "showRationale": "Filterurteil anzeigen",
                     "hideRationale": "Filterurteil ausblenden",
                     "score": "Filterwert: {{ score }} / 100",

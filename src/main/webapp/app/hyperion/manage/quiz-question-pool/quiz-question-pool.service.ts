@@ -23,7 +23,7 @@ export class QuizQuestionPoolService {
     }
 
     /**
-     * Loads the pool questions of the course with their filter decisions, in cell order.
+     * Loads the pool questions of the course with their filter decisions and lecture units, in cell order.
      *
      * @param courseId     the course
      * @param competencyId restricts the result to one competency when given
@@ -89,7 +89,7 @@ export class QuizQuestionPoolService {
     }
 
     private toSettings(settings: HyperionCourseSettings): PoolSettings {
-        return { poolGenerationEnabled: !!settings.poolGenerationEnabled, candidatesPerCompetency: settings.candidatesPerCompetency };
+        return { poolGenerationEnabled: !!settings.poolGenerationEnabled, questionsPerLectureUnit: settings.questionsPerLectureUnit };
     }
 
     private toPoolQuestion(item: QuizQuestionPoolItem): PoolQuestion {
@@ -97,6 +97,8 @@ export class QuizQuestionPoolService {
             id: item.id,
             competencyId: item.competencyId,
             competencyTitle: item.competencyTitle ?? '',
+            lectureUnitId: item.lectureUnitId,
+            lectureUnitName: item.lectureUnitName ?? '',
             language: item.language,
             questionType: item.questionType,
             difficulty: item.difficulty,

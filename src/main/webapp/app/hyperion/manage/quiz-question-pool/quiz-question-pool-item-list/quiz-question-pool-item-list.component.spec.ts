@@ -37,6 +37,8 @@ describe('QuizQuestionPoolItemListComponent', () => {
             id,
             competencyId: 9,
             competencyTitle: 'Arrays',
+            lectureUnitId: 4,
+            lectureUnitName: 'Arrays in Java',
             language: 'en',
             questionType: 'single-choice',
             difficulty: 'MEDIUM',
