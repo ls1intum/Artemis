@@ -15,8 +15,8 @@
                 [class.pb-2]="!showsAssessedSubmission"
                 [class.text-editor-grid--fill]="showsAssessedSubmission"
             >
-                @if (textExercise()?.teamMode && isActive) {
-                    <div class="grid-area-team-info pb-4 ps-md-2">
+                @if (teamCollaborationEnabled() && isActive) {
+                    <div class="grid-area-team-info pb-6! ps-md-2">
                         <jhi-team-participate-info-box
                             [exercise]="textExercise()"
                             [participation]="participation()"
@@ -49,6 +49,7 @@
                     }
                     @if (!((result() && (!isAutomaticResult || isExamSummary())) || isReadOnlyWithShowResult())) {
                         <textarea
+                            [attr.aria-label]="'artemisApp.exam.yourSolution' | artemisTranslate"
                             id="text-editor"
                             #textEditor
                             class="text-editor-textarea"
@@ -61,7 +62,7 @@
                             (input)="onTextEditorInput($event)"
                             [hidden]="submission() && !submission().submitted && isExamSummary()"
                         ></textarea>
-                        @if (textExercise()?.teamMode) {
+                        @if (teamCollaborationEnabled()) {
                             <jhi-team-submission-sync
                                 [exerciseType]="textExercise().type!"
                                 [submissionObservable]="submissionObservable"
@@ -73,7 +74,7 @@
                         @if (!result()?.feedbacks?.length) {
                             <div class="row">
                                 <div class="col-12">
-                                    <b [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
+                                    <b class="text-base font-semibold!" [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
                                     <hr />
                                     <jhi-text-result [result]="result()" [course]="course()" />
                                     <hr />
@@ -111,7 +112,7 @@
             <span id="problem-statement" right-header jhiTranslate="artemisApp.exercise.problemStatement"></span>
             <ng-container right-body>
                 @if (textExercise()!.problemStatement) {
-                    <p class="markdown-preview mb-3">
+                    <p class="markdown-preview mb-4!">
                         <span [jhiMarkdown]="textExercise()!.problemStatement!"></span>
                     </p>
                 }

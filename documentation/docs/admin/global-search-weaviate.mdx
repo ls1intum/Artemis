@@ -39,21 +39,21 @@ For full configuration details of each option, see [Choose and connect an embedd
 
 ### Docker Compose (recommended)
 
-The Artemis repository ships two ready-to-use Compose files under `docker/`. Run all commands from the **repository root**.
+The Artemis repository ships two ready-to-use Compose files under `deployment/docker/`. Run all commands from the **repository root**.
 
 **Keyword-only search:**
 
 ```bash
 # From the Artemis repo root:
-docker compose --env-file .env -f docker/weaviate.yml up -d
+docker compose --env-file .env -f deployment/docker/weaviate.yml up -d
 ```
 
 **OpenAI-compatible external embedder:**
 
-Change the `env_file` entry in `docker/weaviate.yml` from `./weaviate/default.env` to `./weaviate/openai.env`, then run the same Compose command:
+Change the `env_file` entry in `deployment/docker/weaviate.yml` from `./weaviate/default.env` to `./weaviate/openai.env`, then run the same Compose command:
 
 ```bash
-docker compose --env-file .env -f docker/weaviate.yml up -d
+docker compose --env-file .env -f deployment/docker/weaviate.yml up -d
 ```
 
 **Local CPU embeddings (embeddinggemma sidecar):**
@@ -62,8 +62,8 @@ Before the first build, accept the [embeddinggemma model license](https://huggin
 
 ```bash
 export HF_TOKEN=your_huggingface_token
-docker compose --env-file .env -f docker/weaviate-embeddings.yml build
-docker compose --env-file .env -f docker/weaviate-embeddings.yml up -d
+docker compose --env-file .env -f deployment/docker/weaviate-embeddings.yml build
+docker compose --env-file .env -f deployment/docker/weaviate-embeddings.yml up -d
 ```
 
 The shipped image is pinned to **Weaviate 1.37.14** (`cr.weaviate.io/semitechnologies/weaviate:1.37.14`).
@@ -79,7 +79,7 @@ Data is persisted in the named Docker volume `artemis-weaviate`.
 
 #### Production: disable anonymous access
 
-Both Compose files source their Weaviate configuration from `docker/weaviate/*.env`. Anonymous access is **enabled by default** (fine for development). For any shared or internet-reachable deployment you must disable it and enable API-key authentication.
+Both Compose files source their Weaviate configuration from `deployment/docker/weaviate/*.env`. Anonymous access is **enabled by default** (fine for development). For any shared or internet-reachable deployment you must disable it and enable API-key authentication.
 
 <Callout variant={CalloutVariant.warning}>
 
@@ -87,7 +87,7 @@ Both Compose files source their Weaviate configuration from `docker/weaviate/*.e
 
 </Callout>
 
-Edit the applicable `.env` file under `docker/weaviate/` — `default.env` (keyword-only / no embedder), `embeddings.env` (local transformers sidecar), or `openai.env` (OpenAI-compatible external embedder) — and make the following changes:
+Edit the applicable `.env` file under `deployment/docker/weaviate/` — `default.env` (keyword-only / no embedder), `embeddings.env` (local transformers sidecar), or `openai.env` (OpenAI-compatible external embedder) — and make the following changes:
 
 ```bash
 # Disable anonymous access:
@@ -142,7 +142,7 @@ artemis:
 
 </Callout>
 
-**Compose file:** `docker/weaviate.yml` (no local embedder sidecar needed). Change its `env_file` entry from `./weaviate/default.env` to `./weaviate/openai.env` before starting the service.
+**Compose file:** `deployment/docker/weaviate.yml` (no local embedder sidecar needed). Change its `env_file` entry from `./weaviate/default.env` to `./weaviate/openai.env` before starting the service.
 
 **OpenAI-compatible base-URL (Ollama, vLLM, etc.):** When using a self-hosted OpenAI-compatible endpoint, set `open-ai-base-url` to the host **without** a `/v1` suffix — for example `http://your-ollama-host:11434`. Weaviate's `text2vec-openai` module appends `/v1` automatically; supplying it yourself produces a broken `/v1/v1` path. (This `open-ai-base-url` is the Artemis→Weaviate setting and is independent of how Pyris or other services configure their own embedding endpoints.)
 
@@ -174,10 +174,10 @@ artemis:
   weaviate:
     enabled: true
     vectorizer-module: text2vec-transformers
-    # provisioned via docker/weaviate-embeddings.yml (embeddinggemma-300m, 768d sidecar)
+    # provisioned via deployment/docker/weaviate-embeddings.yml (embeddinggemma-300m, 768d sidecar)
 ```
 
-**Compose file:** `docker/weaviate-embeddings.yml`. This file adds a `text2vec-transformers` sidecar container (`embeddinggemma-300m`, 768-dimensional vectors) alongside Weaviate. No additional properties are required — the sidecar URL is pre-configured inside the Compose file.
+**Compose file:** `deployment/docker/weaviate-embeddings.yml`. This file adds a `text2vec-transformers` sidecar container (`embeddinggemma-300m`, 768-dimensional vectors) alongside Weaviate. No additional properties are required — the sidecar URL is pre-configured inside the Compose file.
 
 <Callout variant={CalloutVariant.info}>
 
@@ -196,7 +196,7 @@ artemis:
     vectorizer-module: none   # BM25 keyword-only; no semantic search
 ```
 
-**Compose file:** `docker/weaviate.yml`.
+**Compose file:** `deployment/docker/weaviate.yml`.
 
 No embedder is provisioned. All search uses Weaviate's built-in BM25 index. Artemis does not currently provide a full reindex operation, so switching an existing production collection to a semantic embedder requires separate migration tooling.
 

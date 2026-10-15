@@ -307,7 +307,7 @@ public class TutorialGroupSessionResource {
         }
     }
 
-    private ZoneId validateTutorialGroupConfiguration(@PathVariable Long courseId) {
+    private ZoneId validateTutorialGroupConfiguration(Long courseId) {
         var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         var configuration = configurationOptional.orElseThrow(() -> new BadRequestException("The course has no tutorial groups configuration"));
         if (configuration.getCourse().getTimeZone() == null) {

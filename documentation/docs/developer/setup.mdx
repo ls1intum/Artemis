@@ -107,7 +107,7 @@ The easiest way to set up a MySQL database for development is by using Docker.
 Run the following command to start a MySQL database using the provided Docker Compose file:
 
 ```bash
-docker compose --env-file .env -f docker/mysql.yml up
+docker compose --env-file .env -f deployment/docker/mysql.yml up
 ```
 
 This method simplifies setup and management, making it ideal for development environments.
@@ -161,7 +161,7 @@ mysql -u root --execute "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_s
 
 No special PostgreSQL settings are required.
 You can either use your package manager's version, or set it up using a container.
-An example Docker Compose setup based on the [official container image](https://hub.docker.com/_/postgres) is provided in `docker/postgres.yml`.
+An example Docker Compose setup based on the [official container image](https://hub.docker.com/_/postgres) is provided in `deployment/docker/postgres.yml`.
 
 When setting up the Artemis server, the following values need to be added/updated in the server configuration (see setup steps below) to connect to PostgreSQL instead of MySQL:
 
@@ -343,7 +343,7 @@ Artemis provides a Docker image named `ghcr.io/ls1intum/artemis:<TAG/VERSION>`:
 
 #### Dockerfile
 
-You can find the latest Artemis Dockerfile at `docker/artemis/Dockerfile`.
+You can find the latest Artemis Dockerfile at `deployment/docker/artemis/Dockerfile`.
 
 - The Dockerfile has [multiple stages](https://docs.docker.com/build/building/multi-stage/): A **builder** stage, building the `.war` file, an optional **external_builder** stage to import a pre-built `.war` file, a **war_file** stage to choose between the builder stages via build argument and a **runtime** stage with minimal dependencies just for running artemis.
 

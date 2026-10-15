@@ -6,14 +6,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
@@ -33,6 +31,8 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContex
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.BuildResultOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.variants.VariantBuildVerificationService.PendingBuild;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -102,6 +103,10 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
 
     private final ProgrammingExerciseImportService programmingExerciseImportService;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final ProgrammingExerciseValidationService programmingExerciseValidationService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
@@ -132,7 +137,10 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             UserRepository userRepository, ProgrammingVariantToolsetService toolsetService, VariantBuildVerificationService buildVerificationService,
             HyperionConsistencyCheckService consistencyCheckService, VariantPlacementService variantPlacementService, ExerciseVariantJobService jobService,
-            ExerciseDeletionService exerciseDeletionService) {
+            ExerciseDeletionService exerciseDeletionService, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.contextRendererService = contextRendererService;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.programmingExerciseValidationService = programmingExerciseValidationService;
@@ -181,8 +189,13 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         // Exercise.categories is a lazy @ElementCollection NOT covered by the import fetch graph above (the REST
         // import path receives categories in the request payload instead) — reading it on this detached instance
         // in buildVariantSkeleton threw a LazyInitializationException in the first real-CI run. Hydrate separately.
-        programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(source.getId())
+        programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(source.getId())
                 .ifPresent(withCategories -> original.setCategories(withCategories.getCategories()));
+
+        // The team assignment and plagiarism detection settings are not part of an exercise, so they are read here for the
+        // skeleton to copy; without them a variant of a team exercise could not be imported.
+        teamAssignmentConfigRepository.attachTo(original);
+        plagiarismDetectionConfigRepository.attachTo(original);
 
         ProgrammingExercise newExercise = buildVariantSkeleton(original, plan, request);
         applyUniqueShortNameAndTitle(newExercise, original, plan.variantTitle());
@@ -311,14 +324,19 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         // just deferred) when Gate 1 isn't clean yet, because its result would otherwise not be true (see below).
         // Synchronized: a cancelled consistency task can still be writing here after the bounded wait gave up.
         List<VerificationReport.VerificationFinding> consistencyFindings = Collections.synchronizedList(new ArrayList<>());
-        ExecutorService virtualThreads = Executors.newVirtualThreadPerTaskExecutor();
+        // Not an executor: there is no pool to shut down, and cancelling the task interrupts its virtual thread, which
+        // is all an unfinished consistency check needs when the bounded wait gives up.
+        FutureTask<Void> consistencyTask = new FutureTask<>(() -> {
+            checkConsistency(exercise, consistencyFindings);
+            return null;
+        });
         try {
             // Gate 3 (LLM consistency check) only reads the problem statement and repository content — it never
             // depends on a build result — so it runs CONCURRENTLY with Gate 1's build wait instead of after it,
             // on its own virtual thread. Never submit blocking work like this to the bounded
             // hyperionVariantTaskExecutor pool the job itself is already occupying a thread of: that pool is
             // sized for one thread per running job, so a saturated pool would deadlock waiting on itself.
-            Future<?> consistencyTask = virtualThreads.submit(() -> checkConsistency(exercise, consistencyFindings));
+            Thread.ofVirtual().name("variant-consistency-check").start(consistencyTask);
             try {
                 // Gate 1: fresh builds for BOTH repositories — solution must pass 100%, template must fail with
                 // tests present. Triggered together and awaited jointly, since the builds run concurrently in CI
@@ -346,9 +364,9 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
             }
         }
         finally {
-            // Not try-with-resources: close() waits for termination without a timeout, which is the very block
-            // awaitConsistencyTask exists to prevent. shutdownNow() interrupts and returns.
-            virtualThreads.shutdownNow();
+            // Interrupts a straggling consistency check without waiting for it, which is the very block
+            // awaitConsistencyTask exists to prevent. A task that already completed is unaffected.
+            consistencyTask.cancel(true);
         }
         synchronized (consistencyFindings) {
             findings.addAll(consistencyFindings);
@@ -413,24 +431,18 @@ public class ProgrammingVariantAdapterService implements VariantTypeAdapters {
         }
         newExercise.setMaxPoints(original.getMaxPoints());
         newExercise.setBonusPoints(original.getBonusPoints());
-        newExercise.setIncludedInOverallScore(original.getIncludedInOverallScore());
         newExercise.setMode(original.getMode());
-        newExercise.setDifficulty(request.targetDifficulty() != null ? request.targetDifficulty() : original.getDifficulty());
-        newExercise.setCategories(new HashSet<>(original.getCategories()));
+        if (original.getStoredTeamAssignmentConfig() != null) {
+            newExercise.setTeamAssignmentConfig(original.getStoredTeamAssignmentConfig().copyTeamAssignmentConfig());
+        }
+        if (original.getPlagiarismDetectionConfig() != null) {
+            newExercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(original.getPlagiarismDetectionConfig()));
+        }
         newExercise.setProblemStatement(plan.problemStatement());
-        newExercise.setGradingInstructions(original.getGradingInstructions());
-        newExercise.setProgrammingLanguage(original.getProgrammingLanguage());
-        newExercise.setProjectType(original.getProjectType());
-        newExercise.setPackageName(original.getPackageName());
-        newExercise.setAllowOnlineEditor(original.isAllowOnlineEditor());
-        newExercise.setAllowOfflineIde(original.isAllowOfflineIde());
-        newExercise.setAllowOnlineIde(original.isAllowOnlineIde());
-        newExercise.setStaticCodeAnalysisEnabled(original.isStaticCodeAnalysisEnabled());
-        newExercise.setMaxStaticCodeAnalysisPenalty(original.getMaxStaticCodeAnalysisPenalty());
-        newExercise.setShowTestNamesToStudents(original.getShowTestNamesToStudents());
-        newExercise.setReleaseTestsWithExampleSolution(original.isReleaseTestsWithExampleSolution());
-        newExercise.setAssessmentType(original.getAssessmentType());
-        newExercise.setAllowComplaintsForAutomaticAssessments(original.getAllowComplaintsForAutomaticAssessments());
+        newExercise.copyImportSettingsFrom(original);
+        if (request.targetDifficulty() != null) {
+            newExercise.setDifficulty(request.targetDifficulty());
+        }
         newExercise.setBuildAndTestStudentSubmissionsAfterDueDate(original.getBuildAndTestStudentSubmissionsAfterDueDate());
         return newExercise;
     }

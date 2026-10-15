@@ -1,19 +1,12 @@
 package de.tum.cit.aet.artemis.lti.domain;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
@@ -59,10 +52,6 @@ public class LtiPlatformConfiguration extends DomainObject {
     @NonNull
     @Column(name = "token_uri", nullable = false)
     private String tokenUri;
-
-    @OneToMany(mappedBy = "ltiPlatformConfiguration", fetch = FetchType.LAZY)
-    @JsonIgnoreProperties(value = "ltiPlatformConfiguration", allowSetters = true)
-    private Set<OnlineCourseConfiguration> onlineCourseConfigurations = new HashSet<>();
 
     public String getRegistrationId() {
         return registrationId;
@@ -120,15 +109,6 @@ public class LtiPlatformConfiguration extends DomainObject {
 
     public void setCustomName(@Nullable String customName) {
         this.customName = customName;
-    }
-
-    /**
-     * Gets initialized online course configurations.
-     *
-     * @return Set of {@link OnlineCourseConfiguration} if initialized, or null if not.
-     */
-    public Set<OnlineCourseConfiguration> getOnlineCourseConfigurations() {
-        return Hibernate.isInitialized(this.onlineCourseConfigurations) ? this.onlineCourseConfigurations : null;
     }
 
 }

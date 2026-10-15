@@ -150,6 +150,7 @@
                 "tutorialGroups": "Übungsgruppen",
                 "faqs": "FAQs",
                 "success": "Kursmaterial erfolgreich importiert",
+                "partialSuccess": "Kursmaterial wurde importiert, aber einige Elemente sind fehlgeschlagen: {{ errors }}",
                 "noOptionsSelected": "Bitte wähle mindestens eine Option zum Importieren aus"
             },
             "archive": {

@@ -35,4 +35,14 @@ public class TumLiveApi implements AbstractApi {
     public Optional<String> getTumLivePlaylistLink(String videoUrl) {
         return tumLiveService.getTumLivePlaylistLink(videoUrl);
     }
+
+    /**
+     * Whether the URL has the shape of a TUM Live watch page. No call to the TUM Live API.
+     *
+     * @param videoUrl the video URL to check
+     * @return true if the URL names a TUM Live stream
+     */
+    public boolean isTumLiveUrl(String videoUrl) {
+        return tumLiveService.isTumLiveUrl(videoUrl);
+    }
 }

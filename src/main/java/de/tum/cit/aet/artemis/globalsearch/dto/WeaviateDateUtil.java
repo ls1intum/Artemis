@@ -7,6 +7,9 @@ import java.time.temporal.TemporalAccessor;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 
 /**
@@ -19,6 +22,8 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * type variations.
  */
 public final class WeaviateDateUtil {
+
+    private static final Logger log = LoggerFactory.getLogger(WeaviateDateUtil.class);
 
     private static final DateTimeFormatter FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
 
@@ -85,6 +90,12 @@ public final class WeaviateDateUtil {
                 return str;
             }
         }
+        // None of the three date shapes the Weaviate client is known to return (OffsetDateTime,
+        // ZonedDateTime, an RFC3339 String); toString() on an unanticipated type is not guaranteed
+        // to carry an explicit offset, so a future client upgrade could silently start producing
+        // naive-looking dates. Logged so that this ever becomes visible instead of a silently
+        // wrong date shown to a student.
+        log.warn("Unexpected Weaviate date property type {}, falling back to toString(): {}", value.getClass().getName(), value);
         return value.toString();
     }
 }

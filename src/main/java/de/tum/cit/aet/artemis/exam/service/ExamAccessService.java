@@ -80,14 +80,19 @@ public class ExamAccessService {
      * @param examExercise         - Exercise that the result is requested for
      * @param studentParticipation - used to retrieve the individual exam working time
      * @param user                 - User that requests the result
-     * @throws ConflictException if examExercise does not belong to an exam
+     * @throws ConflictException       if examExercise does not belong to an exam
+     * @throws EntityNotFoundException if the course of the exam exercise cannot be resolved
      */
     public void checkIfAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation, User user) {
         if (!examExercise.isExamExercise()) {
             throw new ConflictException("Given examExercise does not belong to an exam", "Exercise", "notExamExercise");
         }
 
-        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(examExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+        Course course = examExercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new EntityNotFoundException("Course", "of exam exercise " + examExercise.getId());
+        }
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             return;
         }
         Exam exam = examExercise.getExam();

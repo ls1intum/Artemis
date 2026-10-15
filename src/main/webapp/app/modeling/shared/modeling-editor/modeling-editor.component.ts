@@ -90,6 +90,12 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     protected readonly hasEditorTopLeft = computed(() => !!this.projectedTopLeft());
     private readonly hasEditorTopLeftRegion = computed(() => (!!this.savedStatus() && !this.readOnly()) || this.hasEditorTopLeft());
     protected readonly hasEditorBottomCenter = computed(() => this.withExplanation() || (this.showProjectedBottomCenter() && !!this.projectedBottomCenter()));
+    protected readonly saveState = computed(() => {
+        if (this.savedStatus()?.isSaving) {
+            return 'saving';
+        }
+        return this.savedStatus()?.isChanged ? 'unsaved' : 'saved';
+    });
 
     readonly helpVisible = signal(false);
     readonly fullscreenActive = signal(false);

@@ -105,9 +105,21 @@
             <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
                 <div class="flex flex-wrap items-center gap-2">
                     <span jhiTranslate="artemisApp.buildQueue.filter.buildDuration.lowerBound"></span>
-                    <input tumAetUiInput type="number" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterLowerBound" (change)="filterDurationChanged()" />
+                    <input
+                        [attr.aria-label]="'artemisApp.buildQueue.filter.buildDuration.lowerBound' | artemisTranslate"
+                        tumAetUiInput
+                        type="number"
+                        [(ngModel)]="finishedBuildJobFilter.buildDurationFilterLowerBound"
+                        (change)="filterDurationChanged()"
+                    />
                     <span jhiTranslate="artemisApp.buildQueue.filter.buildDuration.upperBound"></span>
-                    <input tumAetUiInput type="number" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterUpperBound" (change)="filterDurationChanged()" />
+                    <input
+                        [attr.aria-label]="'artemisApp.buildQueue.filter.buildDuration.upperBound' | artemisTranslate"
+                        tumAetUiInput
+                        type="number"
+                        [(ngModel)]="finishedBuildJobFilter.buildDurationFilterUpperBound"
+                        (change)="filterDurationChanged()"
+                    />
                     @if (!finishedBuildJobFilter.areDurationFiltersValid) {
                         <span class="text-state-danger" jhiTranslate="artemisApp.buildQueue.filter.buildDuration.invalidState"></span>
                     }

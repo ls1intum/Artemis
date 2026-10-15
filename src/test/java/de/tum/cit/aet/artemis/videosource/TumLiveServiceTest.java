@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.videosource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -57,6 +59,12 @@ class TumLiveServiceTest {
     }
 
     @Test
+    void getTumLivePlaylistLink_malformedUrl_returnsEmpty() {
+        Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/abc course/12345\nFORGED");
+        assertThat(result).isEmpty();
+    }
+
+    @Test
     void getTumLivePlaylistLink_invalidPath_returnsEmpty() {
         Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/invalid/path");
         assertThat(result).isEmpty();
@@ -78,5 +86,26 @@ class TumLiveServiceTest {
 
         Optional<String> result = tumLiveService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/abc-course/12345");
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getTumLivePlaylistLink_clientNotConfigured_returnsEmpty() {
+        TumLiveService unconfiguredService = new TumLiveService(restClientBuilder, " ");
+
+        Optional<String> result = unconfiguredService.getTumLivePlaylistLink("https://live.rbg.tum.de/w/abc-course/12345");
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void isTumLiveUrl_checksTheWatchPageShapeWithoutCallingTheApi() {
+        assertThat(tumLiveService.isTumLiveUrl("https://live.rbg.tum.de/w/abc-course/12345")).isTrue();
+        assertThat(tumLiveService.isTumLiveUrl("https://example.com/some/path")).isFalse();
+        assertThat(tumLiveService.isTumLiveUrl("https://tum.live/w/abc-course/12345")).isTrue();
+        assertThat(tumLiveService.isTumLiveUrl("https://api.tum.live/w/abc-course/12345")).as("the host of the configured API").isTrue();
+        assertThat(tumLiveService.isTumLiveUrl("https://example.com/w/abc-course/12345")).as("a watch page path on another host").isFalse();
+        assertThat(tumLiveService.isTumLiveUrl("mailto:lecturer@example.com")).as("an opaque URI has no path").isFalse();
+        assertThat(tumLiveService.isTumLiveUrl("http://exa mple.com/w/a/1")).as("a malformed URL").isFalse();
+        verify(restClient, never()).get();
     }
 }

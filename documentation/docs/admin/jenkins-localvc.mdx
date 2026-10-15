@@ -146,8 +146,8 @@ The following steps describe how to deploy a pre-configured version of the Jenki
 1. You can now first build and deploy Jenkins, then you can also start the other services which weren't started yet:
 
    ```bash
-   JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker compose --env-file .env -f docker/<Jenkins setup to be launched>.yml up --build -d jenkins
-   docker compose --env-file .env -f docker/<Jenkins setup to be launched>.yml up -d
+   JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker compose --env-file .env -f deployment/docker/<Jenkins setup to be launched>.yml up --build -d jenkins
+   docker compose --env-file .env -f deployment/docker/<Jenkins setup to be launched>.yml up -d
    ```
 
    Jenkins is then reachable under http://localhost:8082/, and you can log in using the credentials specified in `jenkins-casc-config-localvc.yml` (defaults to `artemis_admin` as both username and password).
@@ -316,7 +316,7 @@ The following steps describe how to deploy a pre-configured version of the Jenki
 ### Required Jenkins Plugins
 
 <Callout variant={CalloutVariant.info}>
-    The custom Jenkins Dockerfile takes advantage of the [Plugin Installation Manager Tool for Jenkins](https://github.com/jenkinsci/plugin-installation-manager-tool) to automatically install the plugins listed below. If you used the Dockerfile, you can skip these steps and [Server Notification Plugin](#server-notification-plugin). The list of plugins is maintained in `docker/jenkins/plugins.yml`.
+    The custom Jenkins Dockerfile takes advantage of the [Plugin Installation Manager Tool for Jenkins](https://github.com/jenkinsci/plugin-installation-manager-tool) to automatically install the plugins listed below. If you used the Dockerfile, you can skip these steps and [Server Notification Plugin](#server-notification-plugin). The list of plugins is maintained in `deployment/docker/jenkins/plugins.yml`.
 </Callout>
 
 You will need to install the following plugins (apart from the recommended ones that got installed during the setup process):
@@ -440,7 +440,7 @@ In order to upgrade Jenkins to a newer version, you need to rebuild the Docker i
 2. If you're using `docker compose`, you can simply use the following command and skip the next steps.
 
    ```bash
-   docker compose --env-file .env -f docker/<Jenkins setup to be launched>.yml up --build -d
+   docker compose --env-file .env -f deployment/docker/<Jenkins setup to be launched>.yml up --build -d
    ```
 
 3. Build the new Docker image:

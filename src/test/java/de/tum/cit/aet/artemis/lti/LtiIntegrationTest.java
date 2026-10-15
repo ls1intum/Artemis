@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.lti;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -21,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -220,7 +218,6 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         LtiPlatformConfiguration savedPlatform = ltiPlatformConfigurationRepository.save(platform);
         doReturn(Optional.empty()).when(ltiPlatformConfigurationRepository).findByRegistrationId(anyString());
         doReturn(savedPlatform).when(ltiPlatformConfigurationRepository).findByIdElseThrow(savedPlatform.getId());
-        doReturn(savedPlatform).when(ltiPlatformConfigurationRepository).findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(anyLong());
 
         Course savedCourse = createOnlineCourseWithConfiguration();
 
@@ -278,37 +275,23 @@ class LtiIntegrationTest extends AbstractLtiIntegrationTest {
         assertThat(ltiPlatformConfigurationRepository.findByIdElseThrow(savedPlatformConfiguration.getId())).isEqualTo(savedPlatformConfiguration);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
-    void testFindLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow() {
-        LtiPlatformConfiguration newPlatformConfiguration = new LtiPlatformConfiguration();
-        fillLtiPlatformConfig(newPlatformConfiguration);
-        LtiPlatformConfiguration savedPlatformConfiguration = ltiPlatformConfigurationRepository.save(newPlatformConfiguration);
-
-        LtiPlatformConfiguration fetchedPlatformConfiguration = ltiPlatformConfigurationRepository
-                .findLtiPlatformConfigurationWithEagerLoadedCoursesByIdElseThrow(savedPlatformConfiguration.getId());
-
-        assertThat(fetchedPlatformConfiguration).isEqualTo(savedPlatformConfiguration);
-        assertThat(Hibernate.isInitialized(fetchedPlatformConfiguration.getOnlineCourseConfigurations())).isTrue();
-    }
-
     private Course createOnlineCourseWithConfiguration() {
         Course course = CourseFactory.generateCourse(null, COURSE_START_DATE, COURSE_END_DATE, new HashSet<>());
         course.setOnlineCourse(true);
 
-        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        Course savedCourse = courseRepository.saveWithDefaultConfigurations(course);
+        OnlineCourseConfiguration onlineCourseConfiguration = onlineCourseConfigurationRepository.findStoredByCourseId(savedCourse.getId()).orElseThrow();
         onlineCourseConfiguration.setUserPrefix("prefix");
         onlineCourseConfiguration.setRequireExistingUser(false);
-        onlineCourseConfiguration.setCourse(course);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
-        Course savedCourse = courseRepository.saveAndFlush(course);
+        onlineCourseConfiguration.setCourse(savedCourse);
+        onlineCourseConfigurationRepository.saveAndFlush(onlineCourseConfiguration);
         userUtilService.enrollPrefixedUsersInCourse(savedCourse, TEST_PREFIX);
         return savedCourse;
     }
 
     private ObjectNode onlineCourseConfigurationPayload(Course savedCourse, ObjectNode platformPayload) {
         ObjectNode payload = objectMapper.createObjectNode();
-        payload.put("id", savedCourse.getOnlineCourseConfiguration().getId());
+        payload.put("id", onlineCourseConfigurationRepository.findByCourseId(savedCourse.getId()).orElseThrow().getId());
         payload.put("userPrefix", "prefix");
         payload.put("requireExistingUser", false);
         payload.set("ltiPlatformConfiguration", platformPayload);

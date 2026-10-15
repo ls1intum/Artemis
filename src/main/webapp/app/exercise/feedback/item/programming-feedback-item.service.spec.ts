@@ -383,6 +383,21 @@ describe('ProgrammingFeedbackItemService', () => {
         expect(service.create([feedback], false)[0].title).toBe(expectedTitle);
     });
 
+    it('should show the first line of a file for AI feedback that refers to line 0', () => {
+        const feedback = {
+            id: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}File src/main/java/Example.java at line 0`,
+            detailText: 'The loop condition is incorrect.',
+            reference: 'file:src/main/java/Example.java_line:0',
+        } as Feedback;
+
+        const item = service.create([feedback], false)[0];
+
+        // Athena numbers the lines of a file from 0, so line 0 is the first line (shown as line 1)
+        expect(item.codeReference).toEqual({ filePath: 'src/main/java/Example.java', line: 1 });
+    });
+
     it('should strip the adapted-suggestion prefix from a feedback suggestion title', () => {
         const feedback = {
             id: 1,

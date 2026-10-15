@@ -1,8 +1,9 @@
 <div class="form-group">
     @if (isAssigmentRepositoryEditable()) {
-        <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.assignment"></label>
+        <label for="field_assignmentRepositoryCheckoutPath" jhiTranslate="artemisApp.programmingExercise.checkoutPath.assignment"></label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
         <input
+            [attr.aria-label]="'artemisApp.programmingExercise.checkoutPath.assignment' | artemisTranslate"
             #field_assignmentRepositoryCheckoutPath="ngModel"
             required
             type="text"
@@ -15,9 +16,10 @@
         />
     }
     @if (isTestRepositoryEditable()) {
-        <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.tests"></label>
+        <label for="field_testRepositoryCheckoutPath" jhiTranslate="artemisApp.programmingExercise.checkoutPath.tests"></label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
         <input
+            [attr.aria-label]="'artemisApp.programmingExercise.checkoutPath.tests' | artemisTranslate"
             #field_testRepositoryCheckoutPath="ngModel"
             required
             type="text"
@@ -30,9 +32,10 @@
         />
     }
     @if (isSolutionRepositoryEditable()) {
-        <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.solution"></label>
+        <label for="field_solutionRepositoryCheckoutPath" jhiTranslate="artemisApp.programmingExercise.checkoutPath.solution"></label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
         <input
+            [attr.aria-label]="'artemisApp.programmingExercise.checkoutPath.solution' | artemisTranslate"
             #field_solutionRepositoryCheckoutPath="ngModel"
             required
             type="text"

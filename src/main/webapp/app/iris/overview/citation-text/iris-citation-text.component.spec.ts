@@ -1,15 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Router, provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { IrisCitationTextComponent } from './iris-citation-text.component';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
-import { Router, provideRouter } from '@angular/router';
 import { Subject, of, throwError } from 'rxjs';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { IrisMaterialVersionService } from 'app/iris/overview/services/iris-material-version.service';
 import { escapeHtml, formatCitationLabel, parseCitation, removeCitationBlocks, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 describe('IrisCitationTextComponent', () => {
     let fixture: ComponentFixture<IrisCitationTextComponent>;
@@ -153,6 +154,71 @@ describe('IrisCitationTextComponent', () => {
 
         navButtons[0].click();
         expect(bubbleText.textContent?.trim()).toBe(initialText);
+    });
+
+    describe('navigating to a citation', () => {
+        const clickCitation = (marker = '[cite:L:7:3:::Key:]') => {
+            const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
+            const el = render(marker, citationInfo);
+            const citation = el.querySelector('.iris-citation--clickable') as HTMLElement;
+            expect(citation).toBeTruthy();
+            citation.click();
+        };
+
+        it('navigates to the citation target with lecture query parameters', () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+            clickCitation();
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], { queryParams: { unit: 7, page: 3 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
+        });
+
+        it('opens the lecture without query parameters when the cited unit id cannot be used', () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+            const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 0, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
+
+            (render('[cite:L:0:3:::Key:]', citationInfo).querySelector('.iris-citation--clickable') as HTMLElement).click();
+
+            expect(navigate).toHaveBeenCalledExactlyOnceWith(['/courses', '1', 'lectures', '1']);
+        });
+
+        it('drops a page a citation cannot be honoured with, as a URL carrying the same value would be', () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+            clickCitation('[cite:L:7:0:::Key:]');
+
+            expect(navigate).toHaveBeenCalledWith(
+                ['/courses', '1', 'lectures', '1'],
+                expect.objectContaining({
+                    queryParams: { unit: 7 },
+                }),
+            );
+        });
+
+        it.each(['', ' ', '\t'])('ignores a blank citation timestamp (%j)', (timestamp) => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+            const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
+            const el = render('[cite:L:7:3:::Key:]', citationInfo);
+            const citation = el.querySelector('.iris-citation--clickable') as HTMLElement;
+            citation.setAttribute('data-timestamp', timestamp);
+            citation.click();
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], {
+                queryParams: { unit: 7, page: 3 },
+                state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+            });
+        });
+
+        it('preserves a citation timestamp of zero', () => {
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+            clickCitation('[cite:L:7::0::Key:]');
+
+            expect(navigate).toHaveBeenCalledWith(['/courses', '1', 'lectures', '1'], {
+                queryParams: { unit: 7, timestamp: 0 },
+                state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+            });
+        });
     });
 
     it('adjusts tooltip shift based on overflow', () => {
@@ -301,7 +367,7 @@ describe('IrisCitationTextComponent', () => {
         });
 
         /** Every citation navigation carries this, so the lecture page knows a specific unit was asked for and can say so when it cannot find it. */
-        const unitOnly = { unit: '42' };
+        const unitOnly = { unit: 42 };
 
         const clickCitation = (text: string, citationInfo: IrisCitationMetaDTO[]) => {
             const el = render(text, citationInfo);
@@ -315,7 +381,7 @@ describe('IrisCitationTextComponent', () => {
             clickCitation('[cite:L:42:7:::Key:Summary:va0]', [meta()]);
             expect(getMaterialVersions).not.toHaveBeenCalled();
             expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.unverified');
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
         });
 
         it('cancels an earlier citation check when another citation is clicked', () => {
@@ -328,7 +394,7 @@ describe('IrisCitationTextComponent', () => {
             citations[1].dispatchEvent(new MouseEvent('click', { bubbles: true }));
             first.next({ attachmentVersion: 3 });
             expect(navigate).toHaveBeenCalledTimes(1);
-            expect(navigate).toHaveBeenLastCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', page: '8' } });
+            expect(navigate).toHaveBeenLastCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: 42, page: 8 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
         });
 
         it('does not let a delayed citation in another message replace the latest navigation', () => {
@@ -341,7 +407,7 @@ describe('IrisCitationTextComponent', () => {
             second.detectChanges();
             second.nativeElement.querySelector('.iris-citation').dispatchEvent(new MouseEvent('click', { bubbles: true }));
             pending.next({ attachmentVersion: 3 });
-            expect(navigate).toHaveBeenCalledExactlyOnceWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: '42', page: '8' } });
+            expect(navigate).toHaveBeenCalledExactlyOnceWith(['/courses', '9', 'lectures', '5'], { queryParams: { unit: 42, page: 8 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             second.destroy();
         });
 
@@ -351,7 +417,7 @@ describe('IrisCitationTextComponent', () => {
             clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
 
             expect(getMaterialVersions).toHaveBeenCalledWith(42);
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: '7' } });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: 7 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             expect(warning).not.toHaveBeenCalled();
         });
 
@@ -360,7 +426,7 @@ describe('IrisCitationTextComponent', () => {
 
             clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.stale');
         });
 
@@ -369,7 +435,7 @@ describe('IrisCitationTextComponent', () => {
 
             clickCitation('[cite:L:42::120:180:Key:Summary:vt2]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, timestamp: '120' } });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, timestamp: 120 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             expect(warning).not.toHaveBeenCalled();
         });
 
@@ -380,7 +446,7 @@ describe('IrisCitationTextComponent', () => {
 
             clickCitation('[cite:L:42:7:120:180:Key:Summary:vt2]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, timestamp: '120' } });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, timestamp: 120 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             expect(warning).not.toHaveBeenCalled();
         });
 
@@ -390,7 +456,7 @@ describe('IrisCitationTextComponent', () => {
 
             clickCitation('[cite:L:42:7:120:180:Key:Summary:vt2]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             expect(error).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.gone');
         });
 
@@ -401,7 +467,7 @@ describe('IrisCitationTextComponent', () => {
 
             clickCitation('[cite:L:42:7::180:Key:Summary:va3]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: '7' } });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: 7 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             expect(warning).not.toHaveBeenCalled();
         });
 
@@ -410,7 +476,7 @@ describe('IrisCitationTextComponent', () => {
 
             clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             expect(error).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.gone');
         });
 
@@ -421,7 +487,7 @@ describe('IrisCitationTextComponent', () => {
 
             clickCitation('[cite:L:42::120:180:Key:Summary:vt2]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.unverified');
             expect(error).not.toHaveBeenCalled();
         });
@@ -430,7 +496,7 @@ describe('IrisCitationTextComponent', () => {
             clickCitation('[cite:L:42:7:::Key:Summary]', [meta()]);
 
             expect(getMaterialVersions).not.toHaveBeenCalled();
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: '7' } });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: { ...unitOnly, page: 7 }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             expect(warning).not.toHaveBeenCalled();
         });
 
@@ -440,7 +506,7 @@ describe('IrisCitationTextComponent', () => {
             clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
 
             // An unverified page number may well be the wrong one, so the link is kept while the jump is not
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             expect(warning).toHaveBeenCalledWith('artemisApp.iris.citation.outdated.unverified');
         });
 
@@ -450,7 +516,7 @@ describe('IrisCitationTextComponent', () => {
 
             clickCitation('[cite:L:42:7:::Key:Summary:va3]', [meta()]);
 
-            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly });
+            expect(navigate).toHaveBeenCalledWith(['/courses', '9', 'lectures', '5'], { queryParams: unitOnly, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             expect(warning).not.toHaveBeenCalled();
             expect(error).not.toHaveBeenCalled();
         });

@@ -107,21 +107,19 @@ export class YouTubePlayerComponent implements AfterViewInit, OnDestroy {
             }
         });
 
-        // Keep YouTube deeplinks aligned with late query-param updates as well.
+        // Until the player has reported ready, the wrapper only queues the seek it is given, so the latest request has
+        // to be the queued one. Afterwards a new timestamp is not this effect's business: the wrapper cues the video
+        // again itself when `startSeconds` changes, and the lecture unit seeks and pauses on every request. Seeking a
+        // cued video here as well starts it playing, so a new timestamp would autoplay while the same timestamp
+        // requested again would not.
         effect(() => {
             const timestamp = this.startSeconds();
             const playerComponent = this.playerComponent();
 
-            if (timestamp === undefined) {
-                this.lastInitialTimestamp = undefined;
+            if (!playerComponent || timestamp === undefined || this.youtubePlayer) {
                 return;
             }
 
-            if (!playerComponent || this.lastInitialTimestamp === timestamp) {
-                return;
-            }
-
-            this.lastInitialTimestamp = timestamp;
             playerComponent.seekTo(timestamp, true);
             this.updateCurrentSegment(timestamp);
         });

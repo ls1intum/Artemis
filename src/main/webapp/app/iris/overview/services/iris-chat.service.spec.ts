@@ -206,6 +206,19 @@ describe('IrisChatService', () => {
         expect(messages).toHaveLength(mockConversation.messages!.length);
     });
 
+    it('should hide stored conversation summaries', async () => {
+        const compaction = { id: 99, sender: IrisSender.SUMMARY, content: [], sentAt: dayjs() };
+        const session: IrisSession = { ...mockConversation, messages: [...mockConversation.messages!, compaction] };
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: session } as HttpResponse<IrisSession>));
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        service.openChat(ChatServiceMode.COURSE, id);
+        await waitForSessionId();
+        const messages = await firstValueFrom(service.currentMessages());
+        expect(messages).toHaveLength(mockConversation.messages!.length);
+        expect(messages.some((message) => message.sender === IrisSender.SUMMARY)).toBe(false);
+    });
+
     describe('stagePendingContext', () => {
         it('should not call HTTP when stagePendingContext is invoked, only update dropdown signals', async () => {
             vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
@@ -964,6 +977,52 @@ describe('IrisChatService', () => {
         service.openChat(ChatServiceMode.PROGRAMMING_EXERCISE, id + 1);
 
         expect(await firstValueFrom(service.currentLiveAssistantDraft())).toBeUndefined();
+    });
+
+    describe('automatic context switch adoption', () => {
+        const ctxswapMessage = (marker: Record<string, unknown>): IrisChatWebsocketDTO => ({
+            type: IrisChatWebsocketPayloadType.MESSAGE,
+            message: {
+                sender: IrisSender.CTXSWAP,
+                id: 77,
+                content: [{ type: 'json', attributes: marker }],
+                sentAt: '2024-01-01T10:00:00Z',
+            },
+        });
+
+        it('should commit the marker context and update the sidebar entry on an incoming CTXSWAP message', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            const sidebarSessions = [{ id, title: 'Chat', creationDate: new Date(), mode: ChatServiceMode.COURSE, entityId: id } as IrisSessionDTO];
+            await startSessionWithWebsocket(websocketSubject, sidebarSessions);
+
+            websocketSubject.next(ctxswapMessage({ transition: 'added', entityMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 11, name: 'Sorting' }));
+
+            expect(service.committedContext()).toEqual({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 11, entityName: 'Sorting' });
+            expect(service.chatSessions.getValue().find((session) => session.id === id)).toMatchObject({
+                mode: ChatServiceMode.PROGRAMMING_EXERCISE,
+                entityId: 11,
+                entityName: 'Sorting',
+            });
+        });
+
+        it('should commit the course context on a removed transition', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+
+            websocketSubject.next(ctxswapMessage({ transition: 'removed' }));
+
+            expect(service.committedContext()).toEqual({ mode: ChatServiceMode.COURSE, entityId: courseId });
+        });
+
+        it('should ignore a CTXSWAP message with an incomplete marker', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            const committedBefore = service.committedContext();
+
+            websocketSubject.next(ctxswapMessage({ transition: 'changed' }));
+
+            expect(service.committedContext()).toEqual(committedBefore);
+        });
     });
 
     describe('run-state frame policy', () => {

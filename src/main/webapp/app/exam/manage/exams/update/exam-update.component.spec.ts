@@ -181,6 +181,26 @@ describe('ExamUpdateComponent', () => {
             expect(fixture.debugElement.query(titleValidationSelector)).toBeNull();
         });
 
+        it('should not allow saving while a date field holds text that is not a date', () => {
+            examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
+            examWithoutExercises.startDate = dayjs().add(2, 'hours');
+            examWithoutExercises.endDate = dayjs().add(3, 'hours');
+            examWithoutExercises.workingTime = 3600;
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(true);
+
+            const input: HTMLInputElement = fixture.nativeElement.querySelector('input#publishResultsDate');
+            input.value = 'not a date';
+            input.dispatchEvent(new Event('input'));
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(false);
+
+            input.value = '';
+            input.dispatchEvent(new Event('input'));
+            fixture.changeDetectorRef.detectChanges();
+            expect(component.isValidConfiguration).toBe(true);
+        });
+
         it('should validate the dates correctly', () => {
             examWithoutExercises.visibleDate = dayjs().add(1, 'hours');
             examWithoutExercises.startDate = dayjs().add(2, 'hours');
@@ -793,6 +813,25 @@ describe('ExamUpdateComponent', () => {
             expect(button?.disabled).toBe(true);
         });
 
+        it('should not save or open the confirmation dialog when a submit comes in for an invalid configuration', async () => {
+            const saveSpy = vi.spyOn(examManagementService, 'update');
+            examWithoutExercises.id = 1;
+            examWithoutExercises.startDate = dayjs().subtract(1, 'hours');
+            examWithoutExercises.endDate = dayjs().add(1, 'hours');
+            component['originalStartDate'] = dayjs().subtract(2, 'hours');
+            component['originalEndDate'] = dayjs().add(2, 'hours');
+
+            fixture.detectChanges();
+            await Promise.resolve();
+
+            vi.spyOn(component, 'isValidConfiguration', 'get').mockReturnValue(false);
+            component.handleSubmit();
+            await Promise.resolve();
+
+            expect(component.confirmDateChangeVisible()).toBe(false);
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
         it('should open the confirmation dialog when dates changed for an ongoing exam', async () => {
             // Set up an ongoing exam
             examWithoutExercises.id = 1;
@@ -809,6 +848,7 @@ describe('ExamUpdateComponent', () => {
             examWithoutExercises.startDate = dayjs().subtract(30, 'minutes');
             examWithoutExercises.endDate = dayjs().add(2, 'hours');
 
+            vi.spyOn(component, 'isValidConfiguration', 'get').mockReturnValue(true);
             component.handleSubmit();
             await Promise.resolve();
 
@@ -830,6 +870,7 @@ describe('ExamUpdateComponent', () => {
 
             examWithoutExercises.startDate = dayjs().subtract(30, 'minutes');
 
+            vi.spyOn(component, 'isValidConfiguration', 'get').mockReturnValue(true);
             component.handleSubmit();
             await Promise.resolve();
 
@@ -862,6 +903,7 @@ describe('ExamUpdateComponent', () => {
             await Promise.resolve();
 
             // Don't change the dates
+            vi.spyOn(component, 'isValidConfiguration', 'get').mockReturnValue(true);
             component.handleSubmit();
             await Promise.resolve();
 

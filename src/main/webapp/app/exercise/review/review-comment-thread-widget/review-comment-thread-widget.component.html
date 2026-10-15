@@ -116,7 +116,12 @@
                     </div>
                 </div>
                 @if (editingCommentId() === commentVm.comment.id) {
-                    <textarea class="monaco-review-comment-textarea" [ngModel]="editText()" (ngModelChange)="editText.set($event)"></textarea>
+                    <textarea
+                        [attr.aria-label]="'accessibility.editComment' | artemisTranslate"
+                        class="monaco-review-comment-textarea"
+                        [ngModel]="editText()"
+                        (ngModelChange)="editText.set($event)"
+                    ></textarea>
                     <div class="monaco-review-comment-actions">
                         <button pButton type="button" severity="secondary" size="small" (click)="cancelEditing()">
                             {{ 'artemisApp.review.editCancel' | artemisTranslate }}
@@ -197,6 +202,7 @@
         <div class="monaco-review-comment-reply">
             <div class="monaco-review-comment-separator"></div>
             <textarea
+                [attr.aria-label]="'artemisApp.review.replyPlaceholder' | artemisTranslate"
                 class="monaco-review-comment-textarea monaco-review-comment-textarea--compact"
                 [placeholder]="'artemisApp.review.replyPlaceholder' | artemisTranslate"
                 [ngModel]="replyText()"

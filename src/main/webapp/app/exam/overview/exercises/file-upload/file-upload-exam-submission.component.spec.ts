@@ -128,6 +128,50 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
     });
 
+    describe('upload controls', () => {
+        beforeEach(() => {
+            resetComponent();
+            fixture.detectChanges();
+        });
+
+        it('should place Upload right after the file input in one wrapping row', () => {
+            const input: HTMLInputElement = fixture.debugElement.query(By.css('#fileUploadInput')).nativeElement;
+            const button: HTMLButtonElement = fixture.debugElement.query(By.css('[data-testid="file-upload-submit"]')).nativeElement;
+            const inputContainer = input.parentElement!;
+            const row = inputContainer.parentElement!;
+
+            // Upload is the next sibling of the input's container, so it is attached to the input instead of floating at the end of the panel
+            expect(inputContainer.nextElementSibling).toBe(button);
+            expect(button.parentElement).toBe(row);
+            expect(row.classList).toContain('flex');
+            expect(row.classList).toContain('flex-wrap');
+
+            // keyboard order is Choose File, then Upload
+            expect(input.compareDocumentPosition(button) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        });
+
+        it('should draw the file input as one bordered field, so that Upload is attached to the field and not to a bare filename', () => {
+            const input: HTMLInputElement = fixture.debugElement.query(By.css('#fileUploadInput')).nativeElement;
+            const field = fixture.debugElement.query(By.css('[data-testid="file-upload-field"]')).nativeElement as HTMLElement;
+
+            expect(field).toBe(input.parentElement);
+            // the field draws the border and clips the corners of the selector button; the button itself has no border of its own except the one that separates it from the name
+            expect([...field.classList]).toEqual(expect.arrayContaining(['border', 'rounded-md', 'overflow-hidden']));
+            expect([...input.classList]).toEqual(expect.arrayContaining(['file:border-0', 'file:border-r']));
+            // the font of the selector is set with the important modifier, which keeps the field as high as the small Upload button (34px)
+            expect(input.classList).toContain('file:text-sm!');
+        });
+
+        it('should let the file input take the available width without a fixed fraction of the panel', () => {
+            const input: HTMLInputElement = fixture.debugElement.query(By.css('#fileUploadInput')).nativeElement;
+            expect(input.classList).toContain('w-full');
+
+            for (let element = input.parentElement; element && element !== fixture.nativeElement; element = element.parentElement) {
+                expect([...element.classList].filter((className) => /(^|:)w-\d+\/\d+$/.test(className))).toEqual([]);
+            }
+        });
+    });
+
     describe('ngOnInit', () => {
         beforeEach(() => {
             resetComponent();

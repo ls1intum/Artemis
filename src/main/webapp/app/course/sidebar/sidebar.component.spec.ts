@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
-import { SidebarCardDirective } from 'app/course/sidebar/directive/sidebar-card.directive';
+import { SidebarCardComponent } from 'app/course/sidebar/sidebar-card/sidebar-card.component';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -56,7 +56,7 @@ describe('SidebarComponent', () => {
                 SidebarComponent,
                 SidebarCardMediumComponent,
                 SidebarCardItemComponent,
-                SidebarCardDirective,
+                SidebarCardComponent,
                 SearchFilterPipe,
                 SearchFilterComponent,
                 MockPipe(ArtemisTranslatePipe),

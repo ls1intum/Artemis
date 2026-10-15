@@ -58,6 +58,17 @@ describe('ExamGeneralInformationComponent', () => {
         expect(component.examEndDate()).toBeUndefined();
     });
 
+    it('should render the section title in the same size as the other sections of the summary', () => {
+        fixture.componentRef.setInput('exam', exam);
+        fixture.componentRef.setInput('studentExam', studentExam);
+        fixture.changeDetectorRef.detectChanges();
+
+        const title = (fixture.nativeElement as HTMLElement).querySelector('#general-information-title')!;
+        expect(title.classList).toContain('text-base!');
+        expect(title.classList).toContain('font-semibold!');
+        expect(title.getAttribute('data-testid')).toBe('exam-summary-heading');
+    });
+
     it('should return the start date plus the working time as the student exam end date', () => {
         fixture.componentRef.setInput('exam', exam);
         fixture.componentRef.setInput('studentExam', studentExam);

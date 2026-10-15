@@ -721,6 +721,10 @@
                         "name": "Iris-Dashboard",
                         "description": "Nutzung, Kosten und Warnungen von Iris."
                     },
+                    "INGESTION_DASHBOARD": {
+                        "name": "Index-Dashboard",
+                        "description": "Abdeckung des Global-Search-Index im Vergleich zu den Erwartungen der Datenbank."
+                    },
                     "UPCOMING_EXAMS_AND_EXERCISES": {
                         "name": "Anstehende Klausuren und Aufgaben",
                         "description": "Eine Übersicht über das Anstehende in allen Kursen."

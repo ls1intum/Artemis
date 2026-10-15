@@ -55,6 +55,8 @@ import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseManagementDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.course.dto.CoursesForDashboardDTO;
+import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
+import de.tum.cit.aet.artemis.course.repository.CourseConfigurationRepository;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.service.CourseAvailableTabsService;
 import de.tum.cit.aet.artemis.course.service.CourseOverviewExerciseService;
@@ -66,7 +68,11 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationStatusRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 
 /**
  * REST controller for providing courses in the student view.
@@ -108,10 +114,19 @@ public class CourseOverviewResource {
 
     private final CourseOverviewExerciseService courseOverviewExerciseService;
 
+    private final Optional<LtiApi> ltiApi;
+
+    private final Optional<TutorialGroupApi> tutorialGroupApi;
+
+    private final CourseAthenaConfigRepository courseAthenaConfigRepository;
+
+    private final CourseConfigurationRepository courseConfigurationRepository;
+
     public CourseOverviewResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             EnrollmentService enrollmentService, CourseScoreCalculationService courseScoreCalculationService, Optional<ExamRepositoryApi> examRepositoryApi,
             ComplaintService complaintService, TeamRepository teamRepository, CourseAvailableTabsService courseAvailableTabsService,
-            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository, CourseOverviewExerciseService courseOverviewExerciseService) {
+            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository, CourseOverviewExerciseService courseOverviewExerciseService, Optional<LtiApi> ltiApi,
+            Optional<TutorialGroupApi> tutorialGroupApi, CourseAthenaConfigRepository courseAthenaConfigRepository, CourseConfigurationRepository courseConfigurationRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -124,6 +139,10 @@ public class CourseOverviewResource {
         this.courseAvailableTabsService = courseAvailableTabsService;
         this.userCourseNotificationStatusRepository = userCourseNotificationStatusRepository;
         this.courseOverviewExerciseService = courseOverviewExerciseService;
+        this.ltiApi = ltiApi;
+        this.tutorialGroupApi = tutorialGroupApi;
+        this.courseAthenaConfigRepository = courseAthenaConfigRepository;
+        this.courseConfigurationRepository = courseConfigurationRepository;
     }
 
     /**
@@ -325,18 +344,26 @@ public class CourseOverviewResource {
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
+        // The configurations hold the key to their course, so the course cannot carry them: each is read on its own, and
+        // only for the roles that see it.
+        OnlineCourseConfiguration onlineConfiguration = null;
+        TutorialGroupsConfiguration tutorialConfiguration = null;
         if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            course = courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId);
+            // the Athena switches, grade-relevance and the auto-orchestration settings the instructor edits
+            courseAthenaConfigRepository.attachTo(course);
+            courseConfigurationRepository.attachTo(course);
+            onlineConfiguration = ltiApi.flatMap(api -> api.findOnlineCourseConfiguration(courseId)).orElse(null);
+            tutorialConfiguration = tutorialGroupApi.flatMap(api -> api.findConfigurationByCourseId(courseId)).orElse(null);
         }
         else if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
+            tutorialConfiguration = tutorialGroupApi.flatMap(api -> api.findConfigurationByCourseId(courseId)).orElse(null);
         }
 
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             userRepository.setUserCountsForCourse(course);
         }
 
-        return ResponseEntity.ok(CourseManagementDTO.of(course));
+        return ResponseEntity.ok(CourseManagementDTO.of(course, onlineConfiguration, tutorialConfiguration));
     }
 
     @UsageInteraction(FeatureInteraction.AUTOMATIC)

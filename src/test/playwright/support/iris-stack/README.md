@@ -128,10 +128,10 @@ purely for debugging; Pyris reaches it over the docker network regardless.
 The runner brings up this stack and enables Iris on the Artemis server when `RUN_IRIS=true`:
 
 ```bash
-RUN_IRIS=true ./run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
+RUN_IRIS=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --skip-db --filter "Iris"
 ```
 
-What `RUN_IRIS=true` does (see `run-e2e-tests-local-fast.sh`):
+What `RUN_IRIS=true` does (see `supporting_scripts/e2e/run-e2e-tests-local-fast.sh`):
 
 1. Verifies the `pyris-e2e:local` image exists and brings up this stack, waiting for
    Pyris `/api/v1/health/` to report `isHealthy:true`.
@@ -150,7 +150,7 @@ What `RUN_IRIS=true` does (see `run-e2e-tests-local-fast.sh`):
 Course-level Iris settings default to `enabled` for the seed lecture course (9022), and the
 spec additionally PUTs `api/iris/courses/9022/iris-settings {enabled:true}` defensively.
 
-`./run-e2e-tests-local-fast.sh --stop` also tears this stack down.
+`./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --stop` also tears this stack down.
 
 ## Networking summary
 
@@ -170,5 +170,5 @@ iris-e2e-mock-llm grep <your-change> /app/mock_llm.py`, then force a rebuild:
 ```bash
 docker compose -f src/test/playwright/support/iris-stack/docker-compose.yml down -v
 docker rmi iris-mock-llm:local
-RUN_IRIS=true ./run-e2e-tests-local-fast.sh --filter "Iris"   # rebuilds mock-llm fresh
+RUN_IRIS=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --filter "Iris"   # rebuilds mock-llm fresh
 ```

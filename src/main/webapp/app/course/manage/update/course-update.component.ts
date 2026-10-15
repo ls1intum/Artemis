@@ -167,7 +167,7 @@ export class CourseUpdateComponent implements OnInit {
     protected readonly faCircleExclamation = faCircleExclamation;
 
     /** Options of the default programming language select, sorted like the previous native select; clearing it leaves the course without a default. */
-    protected readonly programmingLanguageOptions = Object.values(ProgrammingLanguage).sort();
+    protected readonly programmingLanguageOptions = Object.values(ProgrammingLanguage).sort((a, b) => a.localeCompare(b));
 
     readonly fileInput = viewChild.required<ElementRef<HTMLInputElement>>('fileInput');
     readonly colorSelector = viewChild.required(ColorSelectorComponent);

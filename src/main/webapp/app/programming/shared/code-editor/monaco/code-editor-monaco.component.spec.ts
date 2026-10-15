@@ -20,7 +20,8 @@ import {
     RenameFileChange,
     RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IKeyboardEvent } from 'monaco-editor';
@@ -828,6 +829,93 @@ describe('CodeEditorMonacoComponent', () => {
         // Editor lines are 1-based: both start at line 7, so both sit after line 6
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 6, 'feedback-0-line-6', expect.any(HTMLElement));
         expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 6, 'feedback-1-line-6', expect.any(HTMLElement));
+    });
+
+    describe('inline feedback placement', () => {
+        // The editor stores the line of an inline feedback 0-based: `_line:0` is the first line. A feedback sits above the first line it refers to,
+        // i.e. after the Monaco line `start` (line 0 puts it above the first line of the file)
+        const firstLineFeedback: Feedback = { id: 10, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:0', text: 'File file1.java at line 1', detailText: 'first' };
+        const laterFeedback: Feedback = { id: 11, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:4', text: 'File file1.java at line 5', detailText: 'later' };
+        const otherFileFeedback: Feedback = { id: 12, type: FeedbackType.MANUAL, reference: 'file:file2.java_line:0', text: 'File file2.java at line 1', detailText: 'other' };
+
+        let addLineWidgetStub: ReturnType<typeof vi.spyOn>;
+
+        const settle = async () => {
+            fixture.changeDetectorRef.detectChanges();
+            await new Promise(process.nextTick);
+            await fixture.whenStable();
+        };
+
+        const renderedInlineFeedbackLines = () =>
+            fixture.debugElement.queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent)).map((element) => element.componentInstance.codeLine());
+
+        beforeEach(() => {
+            addLineWidgetStub = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
+            vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+            fixture.componentRef.setInput('readOnlyManualFeedback', true);
+        });
+
+        it('should render feedback on the first line above it without hiding the other feedback of the file', async () => {
+            fixture.componentRef.setInput('selectedFile', 'file1.java');
+            fixture.componentRef.setInput('feedbacks', [firstLineFeedback, laterFeedback, otherFileFeedback]);
+            await settle();
+
+            expect(renderedInlineFeedbackLines()).toEqual([0, 4]);
+            expect(addLineWidgetStub).toHaveBeenCalledWith(0, 'feedback-0-line-0', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(4, 'feedback-1-line-4', expect.any(HTMLElement));
+        });
+
+        it('should render feedback on the first line after switching to the file it belongs to', async () => {
+            fixture.componentRef.setInput('selectedFile', 'file1.java');
+            fixture.componentRef.setInput('feedbacks', [firstLineFeedback, laterFeedback, otherFileFeedback]);
+            await settle();
+            addLineWidgetStub.mockClear();
+
+            fixture.componentRef.setInput('selectedFile', 'file2.java');
+            await settle();
+
+            expect(renderedInlineFeedbackLines()).toEqual([0]);
+            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(0, 'feedback-0-line-0', expect.any(HTMLElement));
+        });
+
+        it('should render feedback on the first line when it arrives after the file was opened', async () => {
+            fixture.componentRef.setInput('selectedFile', 'file1.java');
+            await settle();
+            expect(addLineWidgetStub).not.toHaveBeenCalled();
+
+            fixture.componentRef.setInput('feedbacks', [firstLineFeedback, laterFeedback]);
+            await settle();
+
+            expect(renderedInlineFeedbackLines()).toEqual([0, 4]);
+            expect(addLineWidgetStub).toHaveBeenCalledWith(0, 'feedback-0-line-0', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(4, 'feedback-1-line-4', expect.any(HTMLElement));
+        });
+
+        it('should turn a new feedback on the first line into a stored feedback', async () => {
+            fixture.componentRef.setInput('isTutorAssessment', true);
+            fixture.componentRef.setInput('readOnlyManualFeedback', false);
+            fixture.componentRef.setInput('selectedFile', 'file1.java');
+            await settle();
+            comp.newFeedbackLines.set([0]);
+
+            comp.updateFeedback({ type: FeedbackType.MANUAL, reference: 'file:file1.java_line:0', text: 'File file1.java at line 1', detailText: 'new', credits: -1 });
+            await settle();
+
+            expect(comp.newFeedbackLines()).toEqual([]);
+            expect(renderedInlineFeedbackLines()).toEqual([0]);
+            expect(addLineWidgetStub).toHaveBeenCalledWith(0, expect.stringMatching(/^feedback-.*-line-0$/), expect.any(HTMLElement));
+        });
+
+        it('should not let a feedback whose line cannot be resolved hide the other feedback of the file', async () => {
+            const malformedFeedback: Feedback = { id: 20, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:abc', text: 'malformed' };
+            fixture.componentRef.setInput('selectedFile', 'file1.java');
+            fixture.componentRef.setInput('feedbacks', [malformedFeedback, laterFeedback]);
+            await settle();
+
+            expect(comp.feedbackForSelectedFile()).toEqual([laterFeedback]);
+            expect(renderedInlineFeedbackLines()).toEqual([4]);
+            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(4, 'feedback-0-line-4', expect.any(HTMLElement));
+        });
     });
 
     it('should add a new feedback widget', async () => {

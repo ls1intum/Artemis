@@ -43,6 +43,21 @@ public class VideoSourceResolverService {
     }
 
     /**
+     * Whether a video source is one Iris can transcribe: a YouTube URL, or a TUM Live watch page when the TUM Live integration is configured. Decided from the
+     * URL alone, without a network call, so the answer does not change while TUM Live is unreachable; {@link #resolve} is what turns a supported source into a
+     * playable URL.
+     *
+     * @param videoSource the raw video URL; may be {@code null} or blank
+     * @return true if the source is supported
+     */
+    public boolean isSupportedSource(String videoSource) {
+        if (videoSource == null || videoSource.isBlank()) {
+            return false;
+        }
+        return (tumLiveApi.isPresent() && tumLiveApi.get().isTumLiveUrl(videoSource)) || youTubeUrlService.isYouTubeUrl(videoSource);
+    }
+
+    /**
      * Resolve a video source URL.
      *
      * @param videoSource the raw video URL; may be {@code null} or blank

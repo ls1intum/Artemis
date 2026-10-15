@@ -27,7 +27,7 @@ export class SidebarCardMediumComponent {
     readonly pageChange = output<string | number>();
     /** Key used for grouping or categorizing sidebar items */
     readonly groupKey = input<string>();
-    /** Id of the entity the detail route currently shows, set by {@link SidebarCardDirective}. */
+    /** Id of the entity the detail route currently shows, set by {@link SidebarCardComponent}. */
     readonly activeItemId = input<number>();
 
     /**

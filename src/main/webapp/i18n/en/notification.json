@@ -205,6 +205,11 @@
                 "content": "{{replyMarkdownContent}}",
                 "settingsTitle": "Iris reply needs review"
             },
+            "atlasCompetencyUpdateNotification": {
+                "title": "Automatic competency update",
+                "content": "Automatic competency update after changes to {{exerciseCount}} learning object(s): {{appliedCount}} change(s) applied. The details were sent by email.",
+                "settingsTitle": "Automatic competency updates (instructors)"
+            },
             "newMentionNotification": {
                 "title": "You were mentioned",
                 "content": "{{postMarkdownContent}}",
@@ -319,6 +324,11 @@
                 "title": "Tutorial deleted",
                 "content": "Tutorial group {{groupTitle}} was deleted.",
                 "settingsTitle": "Tutorial deleted"
+            },
+            "irisResponseNotification": {
+                "title": "Iris responded - {{chatTitle}}",
+                "content": "{{messagePreview}}",
+                "settingsTitle": "Iris response"
             },
             "temporal": {
                 "now": "Now",
