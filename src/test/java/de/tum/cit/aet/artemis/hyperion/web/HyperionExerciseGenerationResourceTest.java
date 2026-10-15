@@ -416,7 +416,7 @@ class HyperionExerciseGenerationResourceTest {
         when(programmingExerciseRepository.findWithAllParticipationsById(1L)).thenReturn(Optional.of(testExercise));
         when(agentSystemPromptService.isGenerationSupported(testExercise)).thenReturn(true);
         org.mockito.Mockito.doThrow(new ConflictException("Exercise generation is already running for this exercise", "hyperionExerciseGeneration", "exerciseGenerationRunning"))
-                .when(jobService).rejectIfActiveJobCannotBeReclaimed(1L);
+                .when(jobService).rejectIfActiveJob(1L);
 
         assertThatExceptionOfType(ConflictException.class).isThrownBy(() -> resource.generateExercise(1L, request));
 

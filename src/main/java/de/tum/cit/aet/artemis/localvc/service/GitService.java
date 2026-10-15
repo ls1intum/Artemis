@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
@@ -31,6 +32,7 @@ import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PushCommand;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.Status;
+import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
@@ -39,7 +41,6 @@ import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -47,7 +48,6 @@ import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefLeaseSpec;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
-import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -88,20 +88,7 @@ public class GitService extends AbstractGitService {
     @Value("${artemis.git.email}")
     private String artemisGitEmail;
 
-    private final RepositoryCheckoutLocks checkoutLocks = new RepositoryCheckoutLocks();
-
-    /**
-     * Returns the checked-out repository's current local HEAD. Unlike {@link #getLastCommitHash(LocalVCRepositoryUri)}, this reads the exact working copy after checkout/pull and
-     * after a local commit, avoiding a second remote read that could observe an unrelated concurrent push.
-     *
-     * @param repository the checked-out repository
-     * @return the local HEAD commit hash, or {@code null} when the repository has no HEAD yet
-     * @throws IOException if HEAD cannot be resolved
-     */
-    public String getLocalHeadHash(Repository repository) throws IOException {
-        ObjectId head = repository.resolve(Constants.HEAD);
-        return head == null ? null : head.name();
-    }
+    private final Map<Path, Path> cloneInProgressOperations = new ConcurrentHashMap<>();
 
     /**
      * Get the URI for a {@link LocalVCRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS
@@ -283,15 +270,6 @@ public class GitService extends AbstractGitService {
 
     private Repository checkoutRepository(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
             boolean writeAccess, boolean selectCloneBranch) throws GitAPIException {
-        // Repository GETs also pull. Serialize preparation of each local working copy, otherwise overlapping reads can
-        // race JGit's index lock and the failed-pull cleanup can delete the other reader's checkout.
-        try (var ignored = checkoutLocks.acquire(localPath, JGIT_TIMEOUT_IN_SECONDS)) {
-            return prepareRepository(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch, writeAccess, selectCloneBranch);
-        }
-    }
-
-    private Repository prepareRepository(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
-            boolean writeAccess, boolean selectCloneBranch) throws GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUri differs from the targetRepoUri, we attempt to clone the source repo into the target directory
         deleteIncompleteWorkingCopy(localPath);
@@ -323,10 +301,13 @@ public class GitService extends AbstractGitService {
         }
         // If the git repository can't be found on our server, clone it from the remote.
         else {
+            waitUntilPathNotBusy(localPath);
+
             // Clone repository.
             try {
                 var gitUriAsString = getGitUriAsString(sourceRepoUri);
                 log.debug("Cloning from {} to {}", gitUriAsString, localPath);
+                cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
                 CloneCommand clone = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
@@ -347,7 +328,47 @@ public class GitService extends AbstractGitService {
                 }
                 throw new GitException(e);
             }
+            finally {
+                // make sure that cloneInProgress is released
+                cloneInProgressOperations.remove(localPath);
+            }
             return getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch, writeAccess);
+        }
+    }
+
+    /**
+     * Waits until no clone operation is running for the given path.
+     * <p>
+     * Retries once a second for up to {@link #JGIT_TIMEOUT_IN_SECONDS} seconds before giving up.
+     *
+     * @param localPath The path in which a clone operation should be made.
+     * @throws CanceledException If the waiting has been interrupted.
+     * @throws GitException      If the path is still busy after the maximum number of retries.
+     */
+    private void waitUntilPathNotBusy(final Path localPath) throws CanceledException, GitException {
+        int remainingSeconds = JGIT_TIMEOUT_IN_SECONDS;
+
+        while (cloneInProgressOperations.containsKey(localPath)) {
+            log.warn("Clone is already in progress. This will lead to an error. Wait for a second");
+            try {
+                Thread.sleep(1000);
+            }
+            catch (InterruptedException ex) {
+                // The interrupt status is deliberately not restored here, which is what java:S2142 would ask for.
+                // CanceledException is a GitAPIException, and callers catch it per element and carry on: the
+                // plagiarism check maps over participations in a parallel stream, and a ForkJoinPool worker does not
+                // clear a leftover flag between elements the way a ThreadPoolExecutor worker does. A restored flag
+                // would make every later clone on that worker fail inside interruptible NIO and delete its working
+                // copy, turning one abandoned clone into a whole worker's worth of them.
+                throw new CanceledException("Waiting for local path to be free for cloning got interrupted.");
+            }
+
+            if (remainingSeconds <= 0) {
+                throw new GitException("Cannot clone the same repository multiple times");
+            }
+            else {
+                remainingSeconds--;
+            }
         }
     }
 
@@ -382,7 +403,10 @@ public class GitService extends AbstractGitService {
      * @param localPath the path of the working copy
      */
     private void deleteIncompleteWorkingCopy(Path localPath) {
-        // Called while checkoutLocks holds this path, so an active clone cannot be mistaken for an incomplete copy.
+        if (cloneInProgressOperations.containsKey(localPath)) {
+            // A clone in progress writes HEAD and config last, so its git directory looks incomplete until it is done
+            return;
+        }
         Path gitDirectory = localPath.resolve(".git");
         if (Files.isDirectory(gitDirectory) && (Files.notExists(gitDirectory.resolve(Constants.HEAD)) || Files.notExists(gitDirectory.resolve(Constants.CONFIG)))) {
             log.warn("Deleting the incomplete working copy {} so that it is cloned again", localPath);
@@ -550,24 +574,6 @@ public class GitService extends AbstractGitService {
             if (!pushed) {
                 resetToOriginHead(repo);
             }
-        }
-    }
-
-    private static void assertPushAccepted(Iterable<PushResult> pushResults, String remoteRef) throws TransportException {
-        boolean foundTargetRef = false;
-        for (PushResult pushResult : pushResults) {
-            for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
-                if (!remoteRef.equals(update.getRemoteName())) {
-                    continue;
-                }
-                foundTargetRef = true;
-                if (update.getStatus() != RemoteRefUpdate.Status.OK && update.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
-                    throw new TransportException("Leased push of " + remoteRef + " was rejected with status " + update.getStatus() + ": " + update.getMessage());
-                }
-            }
-        }
-        if (!foundTargetRef) {
-            throw new TransportException("Push result did not contain an update for " + remoteRef);
         }
     }
 
@@ -904,20 +910,6 @@ public class GitService extends AbstractGitService {
             }
         }
         return Optional.empty();
-    }
-
-    /**
-     * Checks if no differences exist between the working-tree, the index, and the current HEAD.
-     *
-     * @param repo Local Repository Object.
-     * @return True if the status is clean
-     * @throws GitAPIException if the state of the repository could not be retrieved.
-     */
-    public boolean isWorkingCopyClean(Repository repo) throws GitAPIException {
-        try (Git git = new Git(repo)) {
-            Status status = git.status().call();
-            return status.isClean();
-        }
     }
 
     /**

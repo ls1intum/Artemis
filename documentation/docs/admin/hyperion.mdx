@@ -265,73 +265,78 @@ model authoring starts. The worker receives a frozen, bounded repository snapsho
 against that snapshot before persisting them, and checks repository heads and
 exercise metadata again before writing.
 
-Use identical generation settings on generation-capable core nodes. The
-exercise-mutation guard also runs on `core` and `localvc` writer nodes where
-Hyperion is disabled; it does not load a model or connect to a worker.
-Every writer must run this version of Artemis and use the same distributed data
-provider. Set `artemis.hyperion.generation.cluster-fencing-enabled=true` on every
-`core` and `localvc` writer before enabling generation anywhere. The setting defaults
-to the local `artemis.hyperion.exercise-generation.enabled` value; it does not start
-a model, worker, or generation service. When both settings are false everywhere,
-ordinary edits and template copies do not claim generation slots or query provider
-topology. Do not mix guarded and older, unguarded nodes while generation is enabled.
-Drain runs and restart all writers together when changing the fencing setting.
+Configure exactly one AI Worker identity for generation. Use the same distributed-data
+provider on generation-capable core nodes and that worker. Core reserves one job
+per exercise with an atomic operation on the shared job map. A second generation
+or adaptation for that exercise is rejected while its reservation exists. The
+worker can offer several execution slots for different exercises; this does not
+permit two runs for the same exercise.
 
-Coordination follows the selected provider rather than assuming every store is a
-Hazelcast cluster:
+Generation does not add deployment-wide writer locks. Ordinary exercise edits,
+student repository copies, and exam assignment retain their normal behavior.
+Before saving, Hyperion checks the expected repository heads and exercise
+metadata. An intervening edit rejects the candidate rather than authorizing an
+overwrite. Avoid editing an exercise while generation is saving: these checks do
+not make writes to several Git repositories and the database one transaction.
 
-- **Hazelcast:** writer nodes must be data members, not standalone LocalVC clients.
-  Configure `jhipster.cache.hazelcast.expected-data-member-count` consistently.
-  Set `artemis.hyperion.generation.cluster-fencing-enabled=true` on **every writer**,
-  including nodes with Hyperion disabled, before enabling generation anywhere.
-  This setting defaults to the local `artemis.hyperion.exercise-generation.enabled`
-  value. It does not start a model, worker or generation service. Admission checks
-  that every observed data member advertises fencing and the same expected member
-  count; mixed settings reject generation.
-  Drain runs and restart all writers together when changing this deployment setting.
-  Ordinary writes retain their existing behavior when generation and fencing are
-  disabled everywhere. With fencing enabled, incomplete membership rejects ordinary
-  mutation and participation-copy claims, and invalidates generation ownership.
-  Admission requires all configured data members; recovery requires a strict
-  majority. The non-expiring job-slot map also has majority-based read/write
-  split-brain protection and no eviction; full-membership application checks
-  additionally stop authoring and participation in the majority partition.
-- **Redis / Valkey:** all writers must use the same authoritative store and
-  distributed-data namespace. Each Redisson client receives a unique process
-  incarnation and a fenced-writer, unfenced-writer, or non-writer role in its
-  connection name; the configured client name remains the
-  display name in monitoring. Reusing a display name after restart does not reuse
-  ownership. Coordination requires a complete `CLIENT LIST` response containing
-  the calling process. Grant the existing Artemis Redis account permission to
-  inspect clients; unavailable, denied, or incomplete lookups reject coordinated writes.
-  Admission also requires every observed Artemis writer to declare fencing. Worker-only
-  processes need no writer setting. Legacy Artemis connections without a role reject
-  admission; custom Redis connections must use the same process identity rather than a
-  raw display name. Use a dedicated, trusted Redis account and namespace: connection
-  names declare application configuration, not authentication of arbitrary clients.
-  Connected Artemis clients are **not** Redis data members, so their count is not
-  checked against the Hazelcast member-count setting.
+A save in progress is not automatically handed to another process after a
+heartbeat timeout or disconnect. After a crash, confirm that the old core process
+has stopped and inspect repository heads and exercise metadata before releasing
+its reservation. The shared map is operational state, not a durable recovery
+journal. Do not clear that state while a generation or save is running. If it is
+lost, stop generation and reconcile interrupted saves before starting another run.
+No additional cluster member-count, quorum, or Redis client-inspection settings
+are required for this feature.
 
-Neither connection absence nor a timeout proves an old JVM stopped writing Git or
-the database. Non-cancellable slots do not expire or become automatically
-recoverable when an owner disconnects. A writer whose operation has finished retries
-its exact-token slot release after temporary store failures; it does not admit a
-replacement writer until release succeeds. This retry is local to the running
-process. If that process stops before releasing the slot, operator recovery is
-still required. The operator recovery procedure below is
-mandatory for both providers.
+### Authoring history and version restoration
 
-The store is coordination infrastructure, not a disposable cache: use persistent,
-non-evicting storage and do not flush it while any writer is running. Redis
-asynchronous replication can lose acknowledged writes during failover; client
-membership checks do not prevent that. Do not treat these checks as certification
-of automatic Redis failover. Drain and stop all Artemis writers before replacing
-or restoring a store, reconcile interrupted saves, and run the deployment canary
-before reopening authoring.
+The capabilities in this section require the later unified authoring/history
+layer. The worker and core integration layers alone provide memory-backed
+retention and per-exercise job reservations, but no durable SQL authoring journal,
+history endpoints, or restoration after a full cluster restart.
 
-### Concurrent worker slots
+Programming Create, Adapt, and Variant share the worker lifecycle. Variant
+preparation copies a source to a separate destination;
+quiz generation remains separate. Programming exam authoring is available only
+before student exams or test runs exist. Generation does not change exam assignment or add exam-row coordination.
 
-A worker process can handle several exercises concurrently. Set
+Hyperion introduces no database schema changes. Saved exercise content and
+before/after snapshots use the existing exercise version history. Existing
+account-deletion rules remain unchanged; missing versions disable automatic undo.
+
+Owner-scoped activity and version references live in the configured distributed
+provider for `artemis.hyperion.generation.terminal-replay-ttl` (default four hours).
+Runs without a complete save expire from admission; a saved run's undo reference
+expires from completion. The paged `GET /api/hyperion/authoring-runs` endpoint lists only
+retained runs and rechecks current course authorization. Exact run inspection and
+restoration use
+`/api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}`
+and its `/revert` POST operation. Expired references are not reconstructed from
+unrelated exercise versions, and an older successful run is never substituted
+for an expired or incomplete latest mutation. Saved exercise versions remain
+available through normal version history after activity expires.
+
+An interrupted save or restore requires manual inspection before another Hyperion
+operation uses the exercise. Expiring activity is not evidence that an old writer
+has stopped. There is no SQL recovery journal or database startup reconstruction.
+Complete loss of distributed state requires stopping generation and reconciling
+potentially interrupted operations against repository state and exercise versions.
+Ordinary editing is not blocked by a Hyperion recovery reservation; tell editors
+not to change an exercise until that reconciliation is complete.
+
+Restoration uses captured test metadata and rebuilds task bindings from the saved
+statement. It does not require the previous draft to compile or pass a build.
+Tests introduced by the undone run become inactive rather than being deleted,
+so historical result feedback remains intact. Newly generated output still has
+to pass verification before it can be saved.
+
+Restoration checks the selected run, repository heads, grading and
+placement metadata. It does not rewind other exercises or delete a variant.
+
+### One worker and concurrent exercise slots
+
+Configure exactly one worker identity in `artemis.aiworker.ids`. That worker
+process can handle several exercises concurrently. Set
 `artemis.aiworker.max-concurrent-executions=4` on the worker to offer four
 slots (default `1`, maximum `16`). Each execution has its own sandbox, state,
 lease and cancellation identity. A single exercise still permits only one active
@@ -369,11 +374,11 @@ qualified; naming another profile does not add a language implementation. Core a
 and returned evidence must agree on the workload schema, profile, image and execution.
 See [AI Worker operations](/admin/aiworker) for infrastructure configuration.
 
-| Environment | Worker placement                                           | Operational requirement                                                                                                                                                         |
-| ----------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Staging     | Dedicated generation VM or host                            | Use separate distributed-data, model-provider credentials and capacity from production. Qualify the exact images and configuration before promotion.                            |
-| Production  | Dedicated generation VM or host                            | Start with one slot, monitor actual resource use, and increase only within host and provider limits. Keep generation off exam-critical hosts.                                   |
-| Test server | Dedicated generation VM, which may share physical hardware | Use a separate Docker daemon inside the VM. Sharing the core or LocalCI Docker socket is not an isolation boundary. Leave generation disabled if no isolated host is available. |
+| Environment | Worker placement                              | Operational requirement                                                                                                                             |
+| ----------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Staging     | Dedicated generation process on a host        | Separate distributed-data and model-provider credentials and capacity from production. Qualify the exact images and configuration before promotion. |
+| Production  | Dedicated generation process on a host        | Start with one slot, monitor actual resource use, and increase only within host and provider limits. Keep generation off exam-critical hosts.       |
+| Test server | Dedicated generation process on the test host | No VM is required. Use a dedicated Docker execution environment; do not share core credentials or repository mounts with it.                        |
 
 The supervisor's Docker socket is host-level authority even when the supervisor
 container is unprivileged. Provision outbound access only to the configured
@@ -387,7 +392,7 @@ Before enabling admission, preload the immutable sandbox image, configure
 distributed-data access and per-worker permissions, and confirm the administrator view
 reports the intended toolchain and capacity. Then run a controlled generation,
 verify solution/starter grading and persistence, cancel a second run, and verify
-undo. Test an interrupted worker and exact-run recovery in staging before
+undo. Test an interrupted worker and manual save reconciliation in staging before
 production. A heartbeat alone verifies neither provider access nor generation.
 
 For upgrades, stop new admission at the deployment boundary, wait for active runs
@@ -397,13 +402,11 @@ worker is not a drain mechanism. Re-enable admission only after capacity and the
 controlled workflow pass. Retain the prior application and sandbox digests for
 rollback; do not roll back only one side of the protocol.
 
-The shared job record includes the cancellation decision. Before this release,
-stop admission and canonical-write traffic on every core/LocalVC writer, drain
-all generation, undo, ordinary-write and source-copy reservations, and reconcile
-any retained partial-write slots. Update all writers before traffic resumes.
-Do not mix older and newer writer processes: an older record reader can discard
-the cancellation field and overwrite that decision. This is a cache protocol
-change, not a database schema migration.
+The shared job record includes the cancellation decision. Drain generation and
+undo before upgrading generation-capable core processes and their worker. Do not
+mix incompatible job-record readers while runs are active. This is a provider
+record compatibility requirement, not a database schema migration or a reason to
+stop ordinary exercise edits across the deployment.
 
 ### Inspect runs and worker capacity
 
@@ -436,7 +439,7 @@ Administrator-only APIs expose the same metadata and controls:
 | Running          | The worker reports active executions and no free slot.                   |
 
 This view contains no prompts, generated artifacts, or credentials. It cannot
-execute commands, terminate a worker, or release an exercise mutation slot.
+execute commands, terminate a worker, or release a generation reservation.
 Ordinary LocalCI monitoring continues to report ordinary build agents separately.
 
 The **Configured workers** count includes offline identities. **Free / total
@@ -480,34 +483,33 @@ an error response must never be treated as proof of zero usage.
 Failed reviewer calls log the exception classes and HTTP status, when available,
 without provider error bodies, prompts, or credentials.
 
-Once persistence begins, cancellation and ordinary edits are blocked. Shutdown
+Once persistence begins, cancellation is blocked. Ordinary edits are not globally
+locked by Hyperion. Shutdown
 allows the non-cancellable phase to drain; keep the process termination grace
 period longer than `artemis.hyperion.generation.shutdown-drain-timeout` (default
 11 minutes). An uncertain save is reported as `PARTIAL` and requires manual
 repository and database reconciliation rather than automatic undo.
 
-If a core process dies while holding a non-cancellable slot, confirm that its JVM
-is stopped before recovery. External-edit slot diagnostics and recovery remain
-available when generation is disabled. Recover generation and revert slots on a
-generation-enabled core node so their job state is reconciled too:
+If a core process dies during saving or undo, confirm that its JVM is stopped,
+not merely disconnected. Inspect all affected repository heads, exercise metadata,
+and grading state. Resolve incomplete writes before admitting another Hyperion
+operation. Do not retry saving automatically after a crash.
 
-1. Confirm that the owning JVM is stopped, not merely disconnected from the cluster.
-2. Reconcile the exercise's repository heads and metadata before allowing new edits.
-3. As an administrator, read `GET /api/hyperion/admin/exercises/{id}/hyperion-wedged-slot`.
-4. Release that exact token with `DELETE /api/hyperion/admin/exercises/{id}/hyperion-wedged-slots/{token}?reason=...`, supplying a nonblank incident reason of at most 500 characters.
+A stale authoring heartbeat requests cancellation but does not release the
+exercise reservation. Before manually releasing it, confirm that both the old
+core job and its worker execution have stopped. An old heartbeat, a cancellation
+request, or a network disconnect is not proof that execution has finished. Stop
+the old execution if necessary; do not start a replacement while it can still run.
 
-Recovery records an audit attempt before releasing anything, refuses a live owner,
-and requires a complete coordination view. Hazelcast additionally requires a
-majority of the expected data members: a two-member Hazelcast deployment cannot
-recover after losing one member. A stale token never releases a replacement
-slot. Releasing a slot does not repair an interrupted save.
-
-The diagnostic reports the slot `kind`. `GENERATION`, `REVERT`, and `EXTERNAL_MUTATION`
-are in-flight writers and follow the steps above. `REVERT_RECOVERY` is the guard an
-interrupted undo leaves behind after it has already stopped: no process is writing,
-so recovery does not require the owner to be absent. Reconcile the repositories
-first, or let the instructor retry **Undo**, and release the guard only once the
-exercise is consistent again.
+An administrator can inspect a stale authoring, save, or undo reservation with
+`GET /api/hyperion/admin/exercises/{id}/hyperion-wedged-slot` and release its exact
+token with
+`DELETE /api/hyperion/admin/exercises/{id}/hyperion-wedged-slots/{token}?reason=...`.
+Supply an incident reason after confirming that the old executions have stopped
+and reconciling the exercise. These operations apply to generation and undo, not
+ordinary edits. They do not prove that a disconnected process has stopped and do
+not repair an interrupted save. No cluster quorum or topology inspection replaces
+the operator's checks.
 
 The LocalCI build that synchronizes saved tests is restricted to network `none`
 and receives no exercise-configured environment variables. Its persisted build
@@ -541,12 +543,11 @@ engine does not advertise usable capacity. Core module flags do not stop a
 worker process. Drain active runs before changing profiles, disabling
 coordination, or replacing either artifact.
 
-Mutation protection on writer nodes is intentionally separate from generation
-activation. Keep deployment-wide fencing enabled while any eligible core can author
-exercises, including on writers with Hyperion disabled. Disable fencing only after
-draining every generation run and reconciling outstanding slots. Replay and ownership state are bounded
-operational state, not a durable SQL job journal. A full deployment restart does
-not promise automatic continuation or resampling of interrupted runs.
+Generation is disabled by default. Enabling it does not require a setting on every
+ordinary writer node and does not put student starts or exam assignment behind a
+Hyperion lock. Run admission and replay use the existing distributed-data provider,
+not a SQL job journal. A full deployment restart does not promise automatic
+continuation of interrupted runs.
 
 ### Build-agent and worker deployment boundaries
 
@@ -567,27 +568,16 @@ sharing a host does not authorize sharing core credentials, repository mounts,
 or a privileged Docker daemon. LocalCI and generation capacity are managed
 separately, even when core also runs the `buildagent` profile.
 
-### Participation copies and interrupted undo
+### Concurrent edits and interrupted undo
 
-A programming participation reserves the exercise until its repository copy completes.
-Several student copies may run concurrently, but generation, adaptation, undo, and ordinary
-exercise mutations cannot overlap any of them. Reservations do not expire while a copy is
-running. After a writer node crashes, recover the shared reservation only after confirming
-that **all** recorded copy owners and their repository operations have stopped; the exact-token
-recovery endpoint also requires all those owners to be absent, a complete coordination view, and (for Hazelcast) a data-member majority.
+Student repository copies and ordinary exercise edits do not claim Hyperion job
+reservations. The per-exercise reservation prevents competing Hyperion operations,
+not all activity on that exercise. Expected-head and metadata checks reject a
+save or undo when the exercise no longer matches its captured baseline.
 
-An undo that restores only some repositories keeps the exercise guarded. The instructor can
-retry **Undo** against the retained baseline; another undo, generation, or ordinary edit cannot
-run concurrently. A missing or expired baseline during this recovery does not unlock an
-inconsistent exercise. If a retry cannot finish, reconcile the repositories and release the
-`REVERT_RECOVERY` slot through the audited operator recovery path described above.
-
-An incomplete generation save also keeps the exercise guarded if live changes remain or
-the saved state is uncertain. Ordinary edits, another generation, and participation copies
-are blocked. The completed run still releases its admission budget; the recovery guard
-does not expire. An administrator must reconcile repositories, metadata and grading, then
-use the audited exact-token recovery endpoint. This quiescent guard has kind `GENERATION`
-and a `generation-recovery-` token; unlike an in-flight generation reservation, it can be
-released while its owner is still present. A fully compensated failure leaves no recovery
-guard. A first undo refused before any write also releases its temporary reservation, but
-such a refusal during a recovery retry preserves the existing guard.
+If a save or undo restores only some repositories, inspect and reconcile the
+repositories, exercise metadata, and grading before trying another operation.
+Do not infer consistency from a missing activity transcript or expired undo
+reference. Inform editors of the incident because ordinary edits remain available.
+A fully compensated failure needs no manual content restoration, but confirm the
+reported outcome before starting another generation.

@@ -171,7 +171,7 @@ public class HyperionExerciseGenerationResource {
             throw new BadRequestAlertException("Whole-exercise generation is not available for exercises with auxiliary repositories: the verifier only models the solution, "
                     + "template, and tests repositories.", ENTITY_NAME, "unsupportedGenerationLanguage");
         }
-        jobService.rejectIfActiveJobCannotBeReclaimed(exerciseId);
+        jobService.rejectIfActiveJob(exerciseId);
         if (request.mode() == GenerationMode.GENERATE && (request.prompt() == null || request.prompt().isBlank())
                 && !generationRequestService.isAuthoritativeProblemStatement(exercise)) {
             throw new BadRequestAlertException("Enter a brief before generating an exercise without a problem statement.", ENTITY_NAME, "generationBriefRequired");

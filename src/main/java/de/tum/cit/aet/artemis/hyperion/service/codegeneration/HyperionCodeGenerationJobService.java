@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
@@ -38,15 +37,11 @@ public class HyperionCodeGenerationJobService {
 
     private final HyperionCodeGenerationTaskService taskService;
 
-    private final GenerationExternalMutationService mutationService;
-
     private DistributedMap<String, JobInfo> jobMap;
 
-    public HyperionCodeGenerationJobService(DistributedDataProvider distributedDataProvider, HyperionCodeGenerationTaskService taskService,
-            GenerationExternalMutationService mutationService) {
+    public HyperionCodeGenerationJobService(DistributedDataProvider distributedDataProvider, HyperionCodeGenerationTaskService taskService) {
         this.distributedDataProvider = distributedDataProvider;
         this.taskService = taskService;
-        this.mutationService = mutationService;
     }
 
     /**
@@ -71,30 +66,10 @@ public class HyperionCodeGenerationJobService {
      */
     public String startJob(User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType, boolean initialAutoGeneration,
             List<Long> selectedFeedbackThreadIds) {
-        String mutationToken = mutationService.claimExternalMutationSlot(exercise.getId());
-        try {
-            JobInfo job = claimJob(user.getLogin(), exercise.getId(), repositoryType);
-            String jobId = job.jobId();
-            try {
-                taskService.runJobAsync(jobId, user, exercise, courseId, repositoryType, initialAutoGeneration, selectedFeedbackThreadIds, () -> {
-                    try {
-                        clearJob(exercise.getId(), jobId);
-                    }
-                    finally {
-                        mutationService.clearExternalMutationSlot(exercise.getId(), mutationToken);
-                    }
-                });
-                return jobId;
-            }
-            catch (RuntimeException e) {
-                clearJob(exercise.getId(), jobId);
-                throw e;
-            }
-        }
-        catch (RuntimeException e) {
-            mutationService.clearExternalMutationSlot(exercise.getId(), mutationToken);
-            throw e;
-        }
+        JobInfo job = claimJob(user.getLogin(), exercise.getId(), repositoryType);
+        String jobId = job.jobId();
+        taskService.runJobAsync(jobId, user, exercise, courseId, repositoryType, initialAutoGeneration, selectedFeedbackThreadIds, () -> clearJob(exercise.getId(), jobId));
+        return jobId;
     }
 
     /**

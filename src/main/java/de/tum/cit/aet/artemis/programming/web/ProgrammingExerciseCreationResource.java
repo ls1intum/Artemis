@@ -50,7 +50,6 @@ import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationExcepti
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationUpdateService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseValidationService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 
@@ -89,15 +88,13 @@ public class ProgrammingExerciseCreationResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
-
     private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
     public ProgrammingExerciseCreationResource(AuthorizationCheckService authCheckService, CourseService courseService,
             ProgrammingExerciseValidationService programmingExerciseValidationService, ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService,
             StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             ExerciseVersionService exerciseVersionService, CompetencyExerciseLinkService competencyExerciseLinkService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
@@ -107,7 +104,6 @@ public class ProgrammingExerciseCreationResource {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.exerciseVersionService = exerciseVersionService;
-        this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
         this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
@@ -136,7 +132,6 @@ public class ProgrammingExerciseCreationResource {
         programmingExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        User user = userRepository.getUser();
         programmingExerciseValidationService.validateNewProgrammingExerciseSettings(programmingExercise, buildConfig, course);
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(programmingExercise, ENTITY_NAME);
@@ -155,14 +150,7 @@ public class ProgrammingExerciseCreationResource {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
 
-            try (var mutationLease = programmingExerciseMutationGuard.claimExternalMutation(newProgrammingExercise.getId())) {
-                if (mutationLease.coordinated()) {
-                    exerciseVersionService.createExerciseVersionSynchronously(newProgrammingExercise, user);
-                }
-                else {
-                    exerciseVersionService.createExerciseVersion(newProgrammingExercise, user);
-                }
-            }
+            exerciseVersionService.createExerciseVersion(newProgrammingExercise);
 
             return ResponseEntity.created(new URI("/api/programming/programming-exercises/" + newProgrammingExercise.getId()))
                     .body(ProgrammingExerciseResponseDTO.of(newProgrammingExercise, buildConfig));
@@ -185,55 +173,44 @@ public class ProgrammingExerciseCreationResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<String> generateStructureOracleForExercise(@PathVariable long exerciseId) {
         log.debug("REST request to generate the structure oracle for ProgrammingExercise with id: {}", exerciseId);
-        var authorizationExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(exerciseId);
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, authorizationExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
+        if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
+                    "This is a linked exercise and generating the structure oracle for this exercise is not possible.", "couldNotGenerateStructureOracle")).body(null);
+        }
 
-        var mutationLease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId);
-        try (mutationLease) {
-            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationCategoriesElseThrow(exerciseId);
-            if (programmingExercise.getPackageName() == null || programmingExercise.getPackageName().length() < 3) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
-                        "This is a linked exercise and generating the structure oracle for this exercise is not possible.", "couldNotGenerateStructureOracle")).body(null);
+        var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
+        var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
+        var testRepoUri = programmingExercise.getVcsTestRepositoryUri();
+
+        try {
+            String testsPath = Path.of("test", programmingExercise.getPackageFolderName()).toString();
+            // Atm we only have one folder that can have structural tests, but this could change.
+            testsPath = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId).hasSequentialTestRuns()
+                    ? Path.of("structural", testsPath).toString()
+                    : testsPath;
+            boolean didGenerateOracle = programmingExerciseCreationUpdateService.generateStructureOracleFile(solutionRepoUri, exerciseRepoUri, testRepoUri, testsPath, user);
+
+            if (didGenerateOracle) {
+                exerciseVersionService.createExerciseVersion(programmingExercise, user);
+                HttpHeaders responseHeaders = new HttpHeaders();
+                responseHeaders.setContentType(MediaType.TEXT_PLAIN);
+                return new ResponseEntity<>("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName(), responseHeaders, HttpStatus.OK);
             }
-
-            var solutionRepoUri = programmingExercise.getVcsSolutionRepositoryUri();
-            var exerciseRepoUri = programmingExercise.getVcsTemplateRepositoryUri();
-            var testRepoUri = programmingExercise.getVcsTestRepositoryUri();
-
-            try {
-                String testsPath = Path.of("test", programmingExercise.getPackageFolderName()).toString();
-                // Atm we only have one folder that can have structural tests, but this could change.
-                testsPath = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId).hasSequentialTestRuns()
-                        ? Path.of("structural", testsPath).toString()
-                        : testsPath;
-                boolean didGenerateOracle = programmingExerciseCreationUpdateService.generateStructureOracleFile(solutionRepoUri, exerciseRepoUri, testRepoUri, testsPath, user);
-
-                if (didGenerateOracle) {
-                    if (mutationLease.coordinated()) {
-                        exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
-                    }
-                    else {
-                        exerciseVersionService.createExerciseVersion(programmingExercise, user);
-                    }
-                    HttpHeaders responseHeaders = new HttpHeaders();
-                    responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-                    return new ResponseEntity<>("Successfully generated the structure oracle for the exercise " + programmingExercise.getProjectName(), responseHeaders,
-                            HttpStatus.OK);
-                }
-                else {
-                    return ResponseEntity.badRequest().headers(
-                            HeaderUtil.createAlert(applicationName, "Did not update the oracle because there have not been any changes to it.", "didNotGenerateStructureOracle"))
-                            .body(null);
-                }
-            }
-            catch (Exception e) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createAlert(applicationName,
-                                "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": " + e,
-                                "errorStructureOracleGeneration"))
+            else {
+                return ResponseEntity.badRequest().headers(
+                        HeaderUtil.createAlert(applicationName, "Did not update the oracle because there have not been any changes to it.", "didNotGenerateStructureOracle"))
                         .body(null);
             }
+        }
+        catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName,
+                            "An error occurred while generating the structure oracle for the exercise " + programmingExercise.getProjectName() + ": " + e,
+                            "errorStructureOracleGeneration"))
+                    .body(null);
         }
     }
 
