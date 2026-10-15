@@ -404,7 +404,7 @@ public class FileUploadExerciseResource {
         validateCourseAndExerciseGroupExclusivity(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate);
 
         // Retrieve the course over the exerciseGroup or the given courseId
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExerciseBeforeUpdate);
+        Course course = courseService.retrieveCourseOfLoadedExercise(fileUploadExerciseBeforeUpdate);
         validateCourseId(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate, course);
 
         // Check that the user is authorized to update the exercise
@@ -722,7 +722,7 @@ public class FileUploadExerciseResource {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FileUploadExercise not found"));
 
         validateCourseAndExerciseGroupExclusivity(updateFileUploadExerciseDTO, existingExercise);
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(existingExercise);
+        Course course = courseService.retrieveCourseOfLoadedExercise(existingExercise);
         validateCourseId(updateFileUploadExerciseDTO, existingExercise, course);
 
         var user = userRepository.getUserWithAuthorities();
