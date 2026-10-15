@@ -39,7 +39,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { User } from 'app/account/user/user.model';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { ConfirmIconComponent } from 'app/shared-ui/confirm-icon/confirm-icon.component';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
@@ -50,6 +50,7 @@ import { Subject, of, throwError } from 'rxjs';
 import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { DialogService } from 'primeng/dynamicdialog';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 
 describe('PostingReactionsBarComponent', () => {
     let component: PostingReactionsBarComponent<Posting>;
@@ -763,6 +764,19 @@ describe('PostingReactionsBarComponent', () => {
 
         expect(dialogServiceSpy).not.toHaveBeenCalled();
         expect(createForwardedMessagesSpy).not.toHaveBeenCalled();
+    });
+
+    it('should open the forward dialog without moving focus away from the recipient search input', () => {
+        const conversationService = TestBed.inject(ConversationService);
+        vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [] })));
+        const dialogOpenSpy = vi.spyOn(component['dialogService'], 'open').mockReturnValue({ onClose: new Subject().asObservable() } as any);
+
+        fixture.componentRef.setInput('course', { id: 1 });
+
+        component.openForwardMessageView({ id: 5 } as Post, false);
+
+        expect(dialogOpenSpy).toHaveBeenCalledOnce();
+        expect(dialogOpenSpy.mock.calls[0][1]).toEqual(expect.objectContaining({ focusOnShow: false }));
     });
 
     it('should call createForwardedMessages with the correct arguments', () => {
