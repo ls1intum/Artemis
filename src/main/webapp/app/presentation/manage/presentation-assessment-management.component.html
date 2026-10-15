@@ -59,7 +59,9 @@
                                     </div>
                                 </header>
 
-                                <div class="presentation-summary text-(--text-body-secondary)">{{ presentationAssessment.description }}</div>
+                                @if (presentationAssessment.description) {
+                                    <div class="presentation-summary text-(--text-body-secondary)">{{ presentationAssessment.description }}</div>
+                                }
 
                                 <div class="presentation-grading-toolbar">
                                     <label for="selected-presentation-student-search-input" class="sr-only">{{
