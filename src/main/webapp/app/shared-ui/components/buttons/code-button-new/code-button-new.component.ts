@@ -37,6 +37,7 @@ export class CodeButtonNewComponent {
     readonly exerciseId = input.required<number>();
     readonly repositoryUri = input.required<string>();
     readonly vcsAccessTokenData = input.required<VcsAccessTokenData>();
+    readonly repositoryViewLink = input.required<(string | number)[]>();
 
     protected readonly dataResource = resource({
         params: () => ({

@@ -63,6 +63,7 @@
             "openTextEditor": "Open text editor",
             "copyUrl": "Copy URL",
             "copiedUrl": "Copied URL",
+            "openRepositoryReadOnly": "Open repository in read-only online code view (new tab)",
             "showAlternatives": "Show Alternatives",
             "uploadFile": "Upload a file",
             "viewTeam": "Team",

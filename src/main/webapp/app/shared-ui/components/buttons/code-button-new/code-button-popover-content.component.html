@@ -1,4 +1,4 @@
-<div class="flex flex-col">
+<div>
     <div class="flex flex-col gap-3 p-3!">
         <h5 class="m-0" jhiTranslate="artemisApp.exerciseActions.accessRepository"></h5>
 
@@ -24,19 +24,34 @@
             }
         }
 
-        <div class="flex">
-            <button
-                type="button"
-                class="flex items-center gap-2 rounded-s-sm! rounded-e-none! border border-primary bg-primary px-3 text-(--tumaet-ui-primary-contrast-color)"
-                [tumAetUiMenuTrigger]="authenticationMenu"
-            >
-                {{ selectedAuthenticationMethodLabel() }}
-                <fa-icon [icon]="faCaretDown" size="xs" aria-hidden="true" />
-            </button>
+        <div class="flex items-center gap-2">
+            <div class="flex min-w-0 flex-1">
+                <button
+                    type="button"
+                    class="flex items-center gap-2 rounded-s-sm! rounded-e-none! border border-primary bg-primary px-3 text-(--tumaet-ui-primary-contrast-color)"
+                    [tumAetUiMenuTrigger]="authenticationMenu"
+                >
+                    {{ selectedAuthenticationMethodLabel() }}
+                    <fa-icon [icon]="faCaretDown" size="xs" aria-hidden="true" />
+                </button>
 
-            <div class="min-w-0 flex-1 rounded-e-sm border-y border-e px-3 py-2">
-                <code class="block truncate">{{ repositoryDisplayUrl() }}</code>
+                <div class="min-w-0 flex-1 rounded-e-sm border-y border-e px-3 py-2">
+                    <code class="block truncate">{{ repositoryDisplayUrl() }}</code>
+                </div>
             </div>
+
+            <a
+                class="flex items-center justify-center rounded-sm text-(--tumaet-ui-text-color)!"
+                [routerLink]="repositoryViewLink()"
+                target="_blank"
+                rel="noopener noreferrer"
+                [tumAetUiTooltip]="'artemisApp.exerciseActions.openRepositoryReadOnly' | artemisTranslate"
+                tumAetUiTooltipPlacement="left"
+                [tumAetUiTooltipDescribesHost]="false"
+            >
+                <fa-icon [icon]="faExternalLink" aria-hidden="true" />
+                <span class="sr-only" jhiTranslate="artemisApp.exerciseActions.openRepositoryReadOnly"></span>
+            </a>
         </div>
     </div>
 

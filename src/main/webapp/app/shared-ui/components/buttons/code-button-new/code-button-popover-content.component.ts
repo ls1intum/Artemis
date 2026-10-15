@@ -1,9 +1,18 @@
 import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCaretDown, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCaretDown, faCheck, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { faCopy } from '@fortawesome/free-regular-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiMenuComponent, TumAetUiMenuItemDirective, TumAetUiMenuTriggerDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiMessageComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RepositoryAuthenticationMethod } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
@@ -26,7 +35,10 @@ export type AuthenticationMethodData =
         TumAetUiMenuItemDirective,
         TumAetUiMenuTriggerDirective,
         TumAetUiMessageComponent,
+        TumAetUiTooltipDirective,
         CdkCopyToClipboard,
+        RouterLink,
+        ArtemisTranslatePipe,
     ],
 })
 export class CodeButtonPopoverContentComponent {
@@ -35,10 +47,12 @@ export class CodeButtonPopoverContentComponent {
     protected readonly faCaretDown = faCaretDown;
     protected readonly faCheck = faCheck;
     protected readonly faCopy = faCopy;
+    protected readonly faExternalLink = faExternalLink;
     protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
     protected readonly sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
 
     readonly authenticationMethodData = input.required<NonEmptyArray<AuthenticationMethodData>>();
+    readonly repositoryViewLink = input.required<(string | number)[]>();
     protected readonly selectedAuthenticationMethodData = linkedSignal(() => this.initializeSelectedAuthenticationMethodData());
     protected readonly selectedAuthenticationMethodLabel = computed(() => this.getAuthenticationMechanismLabel(this.selectedAuthenticationMethodData().authenticationMethod));
     protected readonly authenticationMethodDataAndLabels = computed(() => this.getAuthenticationMechanismsWithLabels());
