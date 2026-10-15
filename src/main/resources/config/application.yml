@@ -468,6 +468,9 @@ jhipster:
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600
             backup-count: 1
+            # Fixed data-member count for Hyperion job/save map protection; worker clients do not count.
+            # When generation is enabled, every member must use the same value and all members must be present.
+            expected-data-member-count: 1
 
 # =======================================================================================
 # EUREKA CONFIGURATION (Service Discovery via JHipster Registry)

@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvid
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -50,10 +51,13 @@ public class ExerciseGenerationRevertService {
 
     private final String defaultBranch;
 
+    private final GenerationLiveSaveService liveSaves;
+
     private DistributedMap<Long, ExerciseGenerationBaseline> baselineMap;
 
     public ExerciseGenerationRevertService(DistributedDataProvider distributedDataProvider, GenerationRepositoryRevertService repositories,
-            GenerationPersistenceService persistenceService, @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+            GenerationPersistenceService persistenceService, @Value("${artemis.version-control.default-branch:main}") String defaultBranch, GenerationLiveSaveService liveSaves) {
+        this.liveSaves = liveSaves;
         this.distributedDataProvider = distributedDataProvider;
         this.repositories = repositories;
         this.persistenceService = persistenceService;
@@ -148,11 +152,40 @@ public class ExerciseGenerationRevertService {
      * @return the revert result, or empty when there is no retained baseline to revert to
      */
     public Optional<RevertResult> revert(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot) {
+        String token = liveSaves.claim(exercise.getId());
+        boolean release = true;
+        var durablePhaseEntered = new java.util.concurrent.atomic.AtomicBoolean();
+        try {
+            var result = revertCoordinated(exercise, user, () -> {
+                liveSaves.verify(exercise.getId(), token);
+                return stillOwnsMutationSlot.getAsBoolean();
+            }, () -> durablePhaseEntered.set(true));
+            if (result.filter(value -> !value.fullyReverted() && value.mutationAttempted()).isPresent()) {
+                liveSaves.retain(exercise.getId(), token);
+                release = false;
+            }
+            return result;
+        }
+        catch (RuntimeException failure) {
+            if (durablePhaseEntered.get()) {
+                liveSaves.retain(exercise.getId(), token);
+                release = false;
+            }
+            throw failure;
+        }
+        finally {
+            if (release) {
+                liveSaves.release(exercise.getId(), token);
+            }
+        }
+    }
+
+    private Optional<RevertResult> revertCoordinated(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot, Runnable beforeRepositoryMutation) {
         ExerciseGenerationBaseline baseline = baselineMap.get(exercise.getId());
         if (baseline == null) {
             return Optional.empty();
         }
-        RevertResult result = revertToBaseline(exercise, user, baseline, stillOwnsMutationSlot);
+        RevertResult result = revertToBaseline(exercise, user, baseline, stillOwnsMutationSlot, beforeRepositoryMutation);
         // Consumed only once every captured repository was reset; a partial failure keeps it so a retry can finish instead of stranding the exercise half-reverted.
         if (result.fullyReverted()) {
             baselineMap.remove(exercise.getId(), baseline);
@@ -160,7 +193,8 @@ public class ExerciseGenerationRevertService {
         return Optional.of(result);
     }
 
-    private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, ExerciseGenerationBaseline baseline, BooleanSupplier stillOwnsMutationSlot) {
+    private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, ExerciseGenerationBaseline baseline, BooleanSupplier stillOwnsMutationSlot,
+            Runnable beforeRepositoryMutation) {
         if (!persistenceService.canRestoreGrading(exercise.getId(), baseline.previousGrading(), baseline.savedGrading())) {
             log.warn("Refusing to revert exercise {} because its grading no longer matches the generated or original state", exercise.getId());
             return new RevertResult(false, List.of(), false);
@@ -176,6 +210,7 @@ public class ExerciseGenerationRevertService {
         String repositoryBranch = baseline.repositoryBranch() == null || baseline.repositoryBranch().isBlank() ? defaultBranch : baseline.repositoryBranch();
         GenerationPersistenceService.TestsBuildSignal testsBuildSignal = baseline.headFor(RepositoryType.TESTS) == null ? null
                 : persistenceService.prepareTestsBuildSignal(exercise, baseline.headFor(RepositoryType.TESTS));
+        beforeRepositoryMutation.run();
         var repositoryResult = repositories.revert(exercise, baseline, repositoryBranch, stillOwnsMutationSlot);
         boolean fullyReverted = repositoryResult.fullyReverted();
         List<RepositoryType> reverted = repositoryResult.revertedRepositories();

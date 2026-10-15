@@ -147,6 +147,75 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         exerciseVersionRepository.deleteAll();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void queuedCompleteSnapshotCannotReadRepositoryHeadsDuringSave() throws Exception {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+        exerciseVersionService.createExerciseVersionSynchronously(exercise, author);
+        exercise.setTitle(exercise.getTitle() + " updated");
+        programmingExerciseRepository.saveAndFlush(exercise);
+        Set<String> repositoryUris = Set.of(exercise.getTemplateParticipation().getRepositoryUri(), exercise.getSolutionParticipation().getRepositoryUri(),
+                exercise.getTestRepositoryUri());
+        var provider = org.mockito.Mockito.mock(de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider.class);
+        org.mockito.Mockito
+                .when(provider.<String, de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.LiveSaveSlot>getMap(
+                        de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.MAP_NAME))
+                .thenReturn(new de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap<>());
+        var liveSave = new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService(provider, true);
+        var queued = new java.util.ArrayList<Runnable>();
+        Object originalExecutor = org.springframework.test.util.ReflectionTestUtils.getField(exerciseVersionService, "exerciseVersionExecutor");
+        Object originalApi = org.springframework.test.util.ReflectionTestUtils.getField(exerciseVersionService, "liveSaveApi");
+        org.springframework.test.util.ReflectionTestUtils.setField(exerciseVersionService, "exerciseVersionExecutor", (java.util.concurrent.Executor) queued::add);
+        org.springframework.test.util.ReflectionTestUtils.setField(exerciseVersionService, "liveSaveApi",
+                java.util.Optional.of(new de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi(liveSave)));
+        var saving = new java.util.concurrent.CountDownLatch(1);
+        var finishSave = new java.util.concurrent.CountDownLatch(1);
+        try (var executor = java.util.concurrent.Executors.newSingleThreadExecutor()) {
+            exerciseVersionService.createExerciseVersion(exercise, author);
+            assertThat(queued).hasSize(1);
+            long versionsBefore = exerciseVersionRepository.findAllByExerciseId(exercise.getId()).size();
+            long headReadsBefore = org.mockito.Mockito.mockingDetails(gitServiceSpy).getInvocations().stream().filter(
+                    invocation -> invocation.getMethod().getName().equals("getLastCommitHash") && repositoryUris.contains(String.valueOf((Object) invocation.getArgument(0))))
+                    .count();
+            var save = executor.submit(() -> {
+                String token = liveSave.claim(exercise.getId());
+                try {
+                    saving.countDown();
+                    assertThat(finishSave.await(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                }
+                finally {
+                    liveSave.release(exercise.getId(), token);
+                }
+                return null;
+            });
+            try {
+                assertThat(saving.await(10, java.util.concurrent.TimeUnit.SECONDS)).isTrue();
+                queued.removeFirst().run();
+                assertThat(exerciseVersionRepository.findAllByExerciseId(exercise.getId())).hasSize((int) versionsBefore);
+                assertThat(org.mockito.Mockito.mockingDetails(gitServiceSpy).getInvocations().stream().filter(
+                        invocation -> invocation.getMethod().getName().equals("getLastCommitHash") && repositoryUris.contains(String.valueOf((Object) invocation.getArgument(0))))
+                        .count()).isEqualTo(headReadsBefore);
+            }
+            finally {
+                finishSave.countDown();
+            }
+            save.get(10, java.util.concurrent.TimeUnit.SECONDS);
+            exerciseVersionService.createExerciseVersion(exercise, author);
+            assertThat(queued).hasSize(1);
+            queued.removeFirst().run();
+            assertThat(exerciseVersionRepository.findAllByExerciseId(exercise.getId())).hasSize((int) versionsBefore + 1);
+            assertThat(org.mockito.Mockito.mockingDetails(gitServiceSpy).getInvocations().stream().filter(
+                    invocation -> invocation.getMethod().getName().equals("getLastCommitHash") && repositoryUris.contains(String.valueOf((Object) invocation.getArgument(0))))
+                    .count()).isGreaterThan(headReadsBefore);
+            assertThat(exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElseThrow().getExerciseSnapshot().programmingData()).isNotNull();
+        }
+        finally {
+            org.springframework.test.util.ReflectionTestUtils.setField(exerciseVersionService, "exerciseVersionExecutor", originalExecutor);
+            org.springframework.test.util.ReflectionTestUtils.setField(exerciseVersionService, "liveSaveApi", originalApi);
+        }
+    }
+
     @ParameterizedTest
     @EnumSource(ExerciseType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -185,7 +254,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createExerciseVersionOrThrowUsesExactCallerCapturedCommitIds() {
+    void createExerciseVersionSynchronouslyUsesExactCallerCapturedCommitIds() {
         ProgrammingExercise exercise = createProgrammingExercise();
         User author = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         String exactTemplateCommit = "a".repeat(40);

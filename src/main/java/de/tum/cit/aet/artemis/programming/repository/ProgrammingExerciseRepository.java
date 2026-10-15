@@ -54,6 +54,14 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 public interface ProgrammingExerciseRepository extends DynamicSpecificationRepository<ProgrammingExercise, Long, ProgrammingExerciseFetchOptions> {
 
     /**
+     * Checks whether an exercise is outside whole-exercise generation's course-only scope.
+     *
+     * @param exerciseId exercise to inspect
+     * @return whether the exercise belongs to an exam
+     */
+    boolean existsByIdAndExerciseGroupIsNotNull(long exerciseId);
+
+    /**
      * Atomically couples the metadata compare-and-set with its database-only task synchronization.
      *
      * @param exerciseId               the exercise to update

@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGE
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.ServerSocket;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -53,6 +54,8 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.spi.properties.ClusterProperty;
+import com.hazelcast.splitbrainprotection.SplitBrainProtectionFunction;
+import com.hazelcast.splitbrainprotection.SplitBrainProtectionOn;
 import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -778,7 +781,7 @@ public class HazelcastConfiguration {
     }
 
     /**
-     * Registers the standard split-brain policy and non-evicting generation job records.
+     * Keeps authoring ownership and short exercise writes unavailable unless every configured data member is present.
      *
      * @param config the member configuration
      */
@@ -790,9 +793,30 @@ public class HazelcastConfiguration {
 
         config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
         config.addSplitBrainProtectionConfig(splitBrainConfig);
-        var generationSlots = new MapConfig(Constants.HYPERION_GENERATION_JOBS_MAP).setBackupCount(config.getMapConfig("default").getBackupCount())
-                .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.NONE).setMaxSizePolicy(MaxSizePolicy.PER_NODE));
-        config.addMapConfig(generationSlots);
+        int expectedMembers = env.getProperty("jhipster.cache.hazelcast.expected-data-member-count", Integer.class, 1);
+        if (expectedMembers < 1) {
+            throw new IllegalArgumentException("Configure a positive Hazelcast expected-data-member-count");
+        }
+        String authoringProtection = "hyperion-live-save-complete-membership";
+        String countAttribute = "artemis.hyperion.expected-data-members";
+        String enabledAttribute = "artemis.hyperion.exercise-generation-enabled";
+        String configuredCount = Integer.toString(expectedMembers);
+        String configuredEnabled = Boolean.toString(env.getProperty("artemis.hyperion.exercise-generation.enabled", Boolean.class, false));
+        config.getMemberAttributeConfig().setAttribute(countAttribute, configuredCount).setAttribute(enabledAttribute, configuredEnabled);
+        // An intentional singleton works; missing, unexpected, or differently configured data members fail closed.
+        var authoringConfig = new SplitBrainProtectionConfig(authoringProtection, true).setProtectOn(SplitBrainProtectionOn.READ_WRITE)
+                .setFunctionImplementation((SplitBrainProtectionFunction & Serializable) members -> {
+                    var dataMembers = members.stream().filter(member -> !member.isLiteMember()).toList();
+                    return dataMembers.size() == expectedMembers && dataMembers.stream()
+                            .allMatch(member -> configuredCount.equals(member.getAttribute(countAttribute)) && configuredEnabled.equals(member.getAttribute(enabledAttribute)));
+                });
+        config.addSplitBrainProtectionConfig(authoringConfig);
+        for (String name : List.of(Constants.HYPERION_GENERATION_JOBS_MAP, Constants.HYPERION_LIVE_SAVE_COORDINATION_MAP)) {
+            var authoringMap = new MapConfig(name).setBackupCount(config.getMapConfig("default").getBackupCount())
+                    .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.NONE).setMaxSizePolicy(MaxSizePolicy.PER_NODE))
+                    .setSplitBrainProtectionName(authoringProtection);
+            config.addMapConfig(authoringMap);
+        }
         config.setProperty(ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.getName(), "30");
         config.setProperty(ClusterProperty.MERGE_NEXT_RUN_DELAY_SECONDS.getName(), "30");
     }

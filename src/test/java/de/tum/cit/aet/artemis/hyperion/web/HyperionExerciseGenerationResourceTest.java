@@ -896,7 +896,9 @@ class HyperionExerciseGenerationResourceTest {
             doThrow(new IllegalStateException("Push outcome unknown")).when(gitService).resetToCommitAndForcePush(templateRepository, "old-template", "adapted-template", "main");
         }
         var realRevertService = new ExerciseGenerationRevertService(new LocalDataProviderService(),
-                new GenerationRepositoryRevertService(gitService, new TempFileUtilService(temporaryDirectory)), persistenceService, "main");
+                new GenerationRepositoryRevertService(gitService, new TempFileUtilService(temporaryDirectory)), persistenceService, "main",
+                new de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService(
+                        new de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService(), false));
         realRevertService.init();
         assertThat(realRevertService.recordBaseline(testExercise, "adapt-job", GenerationMode.ADAPT,
                 Map.of(RepositoryType.TEMPLATE, "old-template", RepositoryType.SOLUTION, "old-solution"),

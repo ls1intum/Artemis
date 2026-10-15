@@ -7,6 +7,8 @@ import java.util.regex.Pattern;
  */
 public final class Constants {
 
+    public static final String HYPERION_LIVE_SAVE_COORDINATION_MAP = "hyperion-live-save-coordination";
+
     public static final String HYPERION_GENERATION_JOBS_MAP = "hyperion-exercise-generation-jobs";
 
     // NOTE: those 4 values have to be the same as in app.constants.ts
