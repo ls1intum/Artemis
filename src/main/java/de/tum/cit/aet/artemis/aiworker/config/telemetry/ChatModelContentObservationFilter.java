@@ -145,7 +145,7 @@ public class ChatModelContentObservationFilter implements ObservationFilter {
 
     private Map<String, Object> outputMessage(Generation generation) {
         Map<String, Object> result = new LinkedHashMap<>(message(generation.getOutput()));
-        String finishReason = generation.getMetadata() == null ? null : generation.getMetadata().getFinishReason();
+        String finishReason = generation.getMetadata().getFinishReason();
         result.put("finish_reason", StringUtils.hasText(finishReason) ? finishReason : "unknown");
         return result;
     }

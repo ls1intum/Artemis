@@ -1,6 +1,11 @@
 :host {
     width: 65%;
 
+    // The date fields need about 15rem each, which 65% of a narrow page does not leave.
+    @media (max-width: 768px) {
+        width: 100%;
+    }
+
     .frame {
         display: flex;
         flex-direction: column;
@@ -48,6 +53,18 @@
                 .field-error {
                     font-size: 12px;
                     color: var(--danger);
+                }
+            }
+
+            // A row with a date field: the field never gets narrower than its text needs, so on a narrow screen the two
+            // columns stack instead of overlapping.
+            .label-and-input-row--wrap {
+                flex-wrap: wrap;
+                gap: 1rem 3rem;
+
+                .label-and-input,
+                .spacer {
+                    flex: 1 1 15rem;
                 }
             }
         }

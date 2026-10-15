@@ -7,7 +7,7 @@ import { CourseAvailableTabs } from 'app/course/shared/entities/course-available
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
 import { provideHttpClient } from '@angular/common/http';
 import { CourseOverviewGuard } from 'app/course/overview/course-overview/course-overview-guard';
-import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
+import { CourseOverviewRoutePath } from 'app/course/overview/course-overview-route-path';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';

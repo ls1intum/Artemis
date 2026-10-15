@@ -60,8 +60,8 @@ public class HarmonyScrubbingChatModel implements ChatModel {
         List<Generation> rebuilt = new ArrayList<>(response.getResults().size());
         for (Generation generation : response.getResults()) {
             AssistantMessage output = generation.getOutput();
-            String text = output == null ? null : output.getText();
-            if (output != null && text != null && text.contains("<|")) {
+            String text = output.getText();
+            if (text != null && text.contains("<|")) {
                 changed = true;
                 AssistantMessage cleaned = AssistantMessage.builder().content(sanitizeHarmonyTokens(text)).properties(output.getMetadata()).media(output.getMedia())
                         .toolCalls(output.getToolCalls()).build();

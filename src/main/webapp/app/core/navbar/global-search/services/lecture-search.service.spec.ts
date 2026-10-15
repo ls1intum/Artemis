@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LectureSearchService } from './lecture-search.service';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 
 describe('LectureSearchService', () => {
@@ -33,6 +34,18 @@ describe('LectureSearchService', () => {
         expect(req.request.body).toEqual({ query: 'angular signals', limit: 10 });
 
         req.flush([]);
+    });
+
+    it('suppresses the global error alert only for a silent search', () => {
+        service.search('signals').subscribe();
+        service.search('signals', 10, undefined, undefined, true).subscribe();
+
+        const [loud, silent] = httpTesting.match('api/iris/lecture-search');
+        expect(loud.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(false);
+        expect(silent.request.context.get(SKIP_HTTP_ERROR_ALERT)).toBe(true);
+
+        loud.flush([]);
+        silent.flush([]);
     });
 
     it('should accept a custom limit', () => {

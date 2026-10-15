@@ -34,11 +34,17 @@
                 autocomplete="off"
                 role="combobox"
                 aria-autocomplete="list"
-                [attr.aria-expanded]="menuVisible()"
-                [attr.aria-controls]="menuVisible() ? listboxId : null"
-                [attr.aria-activedescendant]="menuVisible() ? activeOptionId() : null"
+                [attr.aria-expanded]="menuVisible() || !!resultsListboxId()"
+                [attr.aria-controls]="menuVisible() ? listboxId : (resultsListboxId() ?? null)"
+                [attr.aria-activedescendant]="menuVisible() ? activeOptionId() : (activeResultId() ?? null)"
             />
         </div>
+        <!-- Always rendered: a live region only announces changes once it is in the DOM. -->
+        <span class="sr-only" aria-live="polite" data-testid="global-search-chip-announcement">
+            @if (selectedChipLabel(); as label) {
+                {{ 'global.search.filterSelected' | artemisTranslate: { filter: label } }}
+            }
+        </span>
         @if (isLoading()) {
             <span class="sr-only" role="status">{{ 'global.search.searching' | artemisTranslate }}</span>
         }

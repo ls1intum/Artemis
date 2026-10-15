@@ -203,6 +203,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly synchronizationState = computed(() => this.computeSynchronizationState());
     readonly synchronizationAvailable = computed(() => this.synchronizationState().available);
 
+    /** A unit that only embeds a video link may carry an attachment without a file, which leaves nothing to download. */
+    readonly hasDownloadableFile = computed(() => !!this.getAttachmentLink());
+
     readonly hasPdf = computed(() => this.hasAttachment() && isPdfAttachment(this.lectureUnit().attachment));
 
     readonly hasRenderableVideo = computed(() => !!this.rawVideoSource() || !!this.youtubeVideoId());
