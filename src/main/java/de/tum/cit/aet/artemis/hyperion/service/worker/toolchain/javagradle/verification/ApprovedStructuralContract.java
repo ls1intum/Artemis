@@ -241,6 +241,10 @@ final class ApprovedStructuralContract {
         ObjectNode classNode = mapper.createObjectNode();
         classNode.put("name", type.getSimpleName());
         classNode.put("package", packageName);
+        if (type.isPublic()) {
+            // Ares matches modifiers exactly; allow implicit type flags while requiring the approved visibility.
+            classNode.set("modifiers", mapper.valueToTree(List.of("public", "optional: abstract", "optional: interface", "optional: final", "optional: strictfp")));
+        }
         classNode.put("isInterface", type.isInterface());
         classNode.put("isEnum", type.isEnum());
         classNode.put("isAbstract", type.isAbstract() && !type.isInterface());

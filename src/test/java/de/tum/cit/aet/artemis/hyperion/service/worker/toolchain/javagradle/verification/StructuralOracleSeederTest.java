@@ -163,6 +163,42 @@ class StructuralOracleSeederTest {
         }
     }
 
+    @Test
+    void graderJarIsNotOnTheSharedTestClasspath() throws Exception {
+        assertThat(getClass().getClassLoader().getResource("de/tum/cit/ase/ares/api/structural/ClassTestProvider.class")).isNull();
+        assertThat(java.util.Collections.list(getClass().getClassLoader().getResources("archunit.properties"))).noneMatch(resource -> resource.toString().contains("ares"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "class", "abstract class", "interface", "enum" })
+    void seededClassOracleRejectsPackagePrivateApprovedPublicTypes(String kind) throws Exception {
+        String declaration = "public " + kind + " Box { " + (kind.equals("enum") ? "VALUE" : "") + " }";
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        var seeded = seederWith(sandbox, Map.of(), Map.of(), Map.of(), approvedSpec("Box", declaration)).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        assertThat(seeded.repositoryFiles()).containsKey("test/ClassTest.java");
+        String oracle = seeded.repositoryFiles().get("test/test.json");
+        executeSeededClassProperties(tempDir.resolve("public"), declaration, oracle);
+        assertThatThrownBy(() -> executeSeededClassProperties(tempDir.resolve("packagePrivate"), declaration.replaceFirst("public ", ""), oracle))
+                .isInstanceOf(AssertionFailedError.class);
+    }
+
+    private void executeSeededClassProperties(Path directory, String source, String oracle) throws Exception {
+        FileUtils.writeStringToFile(directory.resolve("Box.java").toFile(), source, StandardCharsets.UTF_8);
+        var compiler = ToolProvider.getSystemJavaCompiler();
+        try (var files = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
+            assertThat(compiler.getTask(null, files, null, List.of("-proc:none", "-d", directory.toString()), null, files.getJavaFileObjects(directory.resolve("Box.java"))).call())
+                    .isTrue();
+        }
+        try (var loader = new URLClassLoader(
+                new java.net.URL[] { directory.toUri().toURL(), Path.of(System.getProperty("artemis.test.structuralOracleGraderJar")).toUri().toURL() },
+                getClass().getClassLoader())) {
+            var properties = new com.fasterxml.jackson.databind.ObjectMapper().readTree(oracle).get(0).get("class");
+            // Run the pinned Ares class-property grader used by the seeded ClassTest, without its unrelated source-name scanner.
+            org.springframework.test.util.ReflectionTestUtils.invokeMethod(loader.loadClass("de.tum.cit.ase.ares.api.structural.ClassTestProvider"), "checkBasicClassProperties",
+                    "Box", loader.loadClass("Box"), properties);
+        }
+    }
+
     private void executeSeededGenericTest(Path directory, String source, String testSource, String oracle) throws Throwable {
         FileUtils.writeStringToFile(directory.resolve("Box.java").toFile(), source, StandardCharsets.UTF_8);
         // Invoke the actual seeded dynamic-test body directly; Ares policy/timeout annotations are not part of this reflection check.
