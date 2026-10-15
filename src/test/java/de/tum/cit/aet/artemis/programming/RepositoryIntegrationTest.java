@@ -671,6 +671,24 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         assertThat(files).containsEntry(currentLocalFileName, false).containsEntry(textFileWithBinaryExtensionName, true);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void manualAssessmentDeadlineClosesLiveRepositoryButKeepsAnonymousSubmittedCode() throws Exception {
+        String commit = pushCommitFromLocalClone("submitted code");
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+
+        request.getMap(participationsBaseUrl + participation.getId() + "/repository/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
+        request.get(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.FORBIDDEN, byte[].class, fileParams(currentLocalFileName));
+        request.get("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.FORBIDDEN, String.class);
+        var file = request.get(commitUrl(commit, "/file"), HttpStatus.OK, byte[].class, fileParams(currentLocalFileName));
+        assertThat(new String(file, StandardCharsets.UTF_8)).isEqualTo("submitted code");
+        var files = request.getMap(commitUrl(commit, "/files"), HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).containsKey(currentLocalFileName);
+        request.getMap(commitUrl(commit, "/files-change"), HttpStatus.OK, String.class, Boolean.class);
+    }
+
     private String commitUrl(String commitId, String suffix) {
         return participationsBaseUrl + participation.getId() + "/repository/commits/" + commitId + suffix;
     }

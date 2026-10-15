@@ -90,13 +90,14 @@
             </h4>
         }
         <div style="flex: 1; min-height: 0">
+            <jhi-participation-access-notice [exercise]="exercise()!" />
             <jhi-table-view
                 [cols]="columns()"
                 [vals]="participations()"
                 [totalRows]="totalRows()"
                 [loading]="isLoading()"
                 [tableActions]="filterActionsTemplate() ?? null"
-                [rowActions]="exercise()!.isAtLeastInstructor ? actionsTemplate : null"
+                [rowActions]="exercise()!.isAtLeastInstructor ? actionsTemplate : !hideParticipantInformation() ? tutorActionsTemplate : null"
                 [options]="tableOptions()"
                 (onLazyLoad)="onLazyLoad($event)"
             />
@@ -194,4 +195,16 @@
         }
         <jhi-manage-assessment-buttons [course]="course()!" [exercise]="exercise()!" [participation]="toParticipation(dto)" [isLoading]="isLoading()" (refresh)="refresh()" />
     </div>
+</ng-template>
+
+<ng-template #tutorActionsTemplate let-dto>
+    @if (exercise()!.type === ExerciseType.PROGRAMMING && dto.repositoryUri) {
+        <jhi-code-button
+            [smallButtons]="true"
+            [exerciseId]="exercise()?.id"
+            [participationId]="dto.participationId"
+            [repositoryUri]="dto.repositoryUri"
+            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, dto.participationId]"
+        />
+    }
 </ng-template>

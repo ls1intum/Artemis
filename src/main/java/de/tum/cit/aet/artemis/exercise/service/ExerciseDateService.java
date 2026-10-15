@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
@@ -40,6 +41,33 @@ public class ExerciseDateService {
         this.participationRepository = participationRepository;
         this.examDateApi = examDateApi;
         this.studentExamApi = studentExamApi;
+    }
+
+    /**
+     * Whether participation identities must be hidden from non-instructor staff. Course programming exercises allow
+     * student support until their exercise due date, and indefinitely when assessment is automatic or no due date is set.
+     * Other exercise types and exams retain anonymous assessment throughout.
+     *
+     * @param exercise the exercise being accessed
+     * @return whether anonymous assessment applies
+     */
+    public boolean isAssessmentAnonymizationActive(Exercise exercise) {
+        return !(exercise instanceof ProgrammingExercise) || isAssessmentAnonymizationActive(exercise.isExamExercise(), exercise.getAssessmentType(), exercise.getDueDate());
+    }
+
+    /**
+     * Applies the same deadline rule to the projection used on every Git operation, including previously issued tokens.
+     *
+     * @param exercise the programming exercise access projection
+     * @return whether anonymous assessment applies
+     */
+    public boolean isAssessmentAnonymizationActive(GitRepositoryAccessDTO exercise) {
+        return isAssessmentAnonymizationActive(exercise.isExamExercise(), exercise.assessmentType(), exercise.dueDate());
+    }
+
+    private boolean isAssessmentAnonymizationActive(boolean examExercise, AssessmentType assessmentType, ZonedDateTime dueDate) {
+        return examExercise
+                || ((assessmentType == AssessmentType.MANUAL || assessmentType == AssessmentType.SEMI_AUTOMATIC) && dueDate != null && !ZonedDateTime.now().isBefore(dueDate));
     }
 
     /**

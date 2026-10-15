@@ -2962,6 +2962,29 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(response.getHeader("X-artemisApp-params")).isEqualTo(participation.getId().toString());
     }
 
+    @ParameterizedTest
+    @CsvSource({ "AUTOMATIC,-1,false", "AUTOMATIC,1,false", "SEMI_AUTOMATIC,1,false", "SEMI_AUTOMATIC,-1,true", "MANUAL,-1,true", "SEMI_AUTOMATIC,0,false" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void programmingSupportVisibilityFollowsAssessmentAndDeadline(AssessmentType assessmentType, int dueDateOffset, boolean anonymous) throws Exception {
+        var participation = createParticipationForAnonymityTest(false);
+        var exercise = participation.getProgrammingExercise();
+        exercise.setAssessmentType(assessmentType);
+        exercise.setDueDate(dueDateOffset == 0 ? null : ZonedDateTime.now().plusDays(dueDateOffset));
+        exerciseRepository.save(exercise);
+        String url = "/api/exercise/exercises/" + exercise.getId() + "/participations/";
+        var search = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "All");
+        var page = request.getList(url + "page", HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(page).hasSize(1);
+        assertThat(page.getFirst().repositoryUri()).isEqualTo(anonymous ? null : participation.getRepositoryUri());
+        assertThat(page.getFirst().participantIdentifier()).isEqualTo(anonymous ? null : participation.getParticipantIdentifier());
+        var scores = request.getList(url + "scores", HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(scores.getFirst().repositoryUri()).isEqualTo(anonymous ? null : participation.getRepositoryUri());
+        var direct = request.get("/api/exercise/participations/" + participation.getId(), HttpStatus.OK, StudentParticipationDTO.class);
+        assertThat(direct.repositoryUri()).isEqualTo(anonymous ? null : participation.getRepositoryUri());
+        var identitySearch = new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", TEST_PREFIX + "student1", "All");
+        request.getList(url + "page", anonymous ? HttpStatus.FORBIDDEN : HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(identitySearch));
+    }
+
     private ProgrammingExerciseStudentParticipation createParticipationForAnonymityTest(boolean teamMode) {
         ProgrammingExerciseStudentParticipation participation;
         if (teamMode) {
@@ -2972,6 +2995,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         else {
             participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         }
+        var exercise = participation.getProgrammingExercise();
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        exerciseRepository.save(exercise);
         participationUtilService.addSubmission(participation, new ProgrammingSubmission());
         assertThat(participation.getRepositoryUri()).isNotBlank();
         return participation;

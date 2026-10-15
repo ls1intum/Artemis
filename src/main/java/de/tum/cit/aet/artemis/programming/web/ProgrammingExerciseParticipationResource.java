@@ -455,6 +455,7 @@ public class ProgrammingExerciseParticipationResource {
     public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForParticipationRepo(@PathVariable long participationId) {
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        checkParticipantRepositoryVisibilityElseThrow(participation);
         var commitInfo = programmingExerciseParticipationService.getCommitInfos(participation.getVcsRepositoryUri());
         return ResponseEntity.ok(commitInfo);
     }
@@ -573,6 +574,7 @@ public class ProgrammingExerciseParticipationResource {
                         participation, ENTITY_NAME);
                 ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(programmingExerciseParticipation);
                 participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+                checkParticipantRepositoryVisibilityElseThrow(participation);
                 // we only forward the repository type for the test repository, as the test repository is the only one that needs to be treated differently
                 return ResponseEntity.ok(repositoryService.getFilesContentAtCommit(programmingExercise, commitId, null, programmingExerciseParticipation, null));
             }
@@ -631,6 +633,7 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingExerciseParticipation programmingParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation,
                 ENTITY_NAME);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+        checkParticipantRepositoryVisibilityElseThrow(participation);
         try {
             return ResponseEntity
                     .ok(repositoryService.getFilesContentAtCommit(programmingParticipation.getProgrammingExercise(), commitId, null, programmingParticipation, validFilePaths));
@@ -669,8 +672,14 @@ public class ProgrammingExerciseParticipationResource {
         return ResponseEntity.ok(vcsAccessLogDTOs);
     }
 
+    private void checkParticipantRepositoryVisibilityElseThrow(Participation participation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && !canSeeParticipantInformation(studentParticipation)) {
+            throw new AccessForbiddenException("Direct repository access is unavailable during anonymous assessment. Use the assessment dashboard.");
+        }
+    }
+
     private boolean canSeeParticipantInformation(ProgrammingExerciseStudentParticipation participation) {
-        return authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastInstructorForExercise(participation.getExercise());
+        return participationAuthCheckService.canSeeParticipantInformation(participation);
     }
 
     /**

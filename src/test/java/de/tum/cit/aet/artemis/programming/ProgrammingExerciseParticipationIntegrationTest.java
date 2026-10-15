@@ -818,8 +818,26 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         }
     }
 
+    @ParameterizedTest
+    @CsvSource({ "false,AUTOMATIC,-1", "true,AUTOMATIC,-1", "false,SEMI_AUTOMATIC,1", "true,SEMI_AUTOMATIC,1", "false,SEMI_AUTOMATIC,0" })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testTutorSupportRepositoryViewKeepsIdentityBeforeAnonymousAssessment(boolean teamMode, AssessmentType assessmentType, int dueDateOffset) throws Exception {
+        var result = createResultForParticipationPrivacyTest(teamMode);
+        var participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+        programmingExercise.setAssessmentType(assessmentType);
+        programmingExercise.setDueDate(dueDateOffset == 0 ? null : ZonedDateTime.now().plusDays(dueDateOffset));
+        programmingExerciseRepository.save(programmingExercise);
+        var body = getJson(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks");
+        assertNestedParticipantIdentity(body, participation, teamMode, true);
+        var nestedResult = getJson(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks?withSubmission=true");
+        assertNestedParticipantIdentity(nestedResult.path("submission").path("participation"), participation, teamMode, true);
+    }
+
     private Result createResultForParticipationPrivacyTest(boolean teamMode) {
         startExercise();
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
         if (!teamMode) {
             return addStudentParticipationWithResult(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1));
         }

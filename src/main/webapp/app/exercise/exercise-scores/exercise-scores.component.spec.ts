@@ -18,6 +18,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { Range } from 'app/foundation/util/utils';
 import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
+import dayjs from 'dayjs/esm';
 import { Subscription, of } from 'rxjs';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
@@ -139,8 +140,9 @@ describe('Exercise Scores Component', () => {
     });
 
     describe('Anonymous score list', () => {
+        const anonymousExercise = { ...exercise, assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().subtract(1, 'day') };
         it.each([false, true])('should show participation IDs without identity search or team links for tutors (team mode: %s)', async (teamMode) => {
-            const tutorExercise = { ...exercise, isAtLeastTutor: true, isAtLeastInstructor: false, teamMode };
+            const tutorExercise = { ...anonymousExercise, isAtLeastTutor: true, isAtLeastInstructor: false, teamMode };
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: tutorExercise })));
             vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(participationService, 'searchParticipationScores').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
@@ -158,7 +160,7 @@ describe('Exercise Scores Component', () => {
         });
 
         it.each([false, true])('should retain identity columns and search for instructors (team mode: %s)', (teamMode) => {
-            component.exercise.set({ ...exercise, teamMode, isAtLeastInstructor: true });
+            component.exercise.set({ ...anonymousExercise, teamMode, isAtLeastInstructor: true });
 
             expect(component.tableOptions().showSearch).not.toBe(false);
             expect(component.columns()[0]).toMatchObject({
@@ -171,7 +173,7 @@ describe('Exercise Scores Component', () => {
         it.each(['participantName', 'participantIdentifier', 'buildPlanId'])(
             'should discard stale identity search and sorting for tutors while retaining score filters (%s)',
             (sortField) => {
-                component.exercise.set({ ...exercise, isAtLeastInstructor: false });
+                component.exercise.set({ ...anonymousExercise, isAtLeastInstructor: false });
                 component.activeFilter.set(FilterProp.SUCCESSFUL);
                 component.rangeFilter.set(new Range(80, 90));
                 const searchSpy = vi.spyOn(participationService, 'searchParticipationScores').mockReturnValue(of({ content: [], totalElements: 0 }));
@@ -194,7 +196,7 @@ describe('Exercise Scores Component', () => {
         );
 
         it('should retain instructor identity search and sorting', () => {
-            component.exercise.set({ ...exercise, isAtLeastInstructor: true });
+            component.exercise.set({ ...anonymousExercise, isAtLeastInstructor: true });
             const searchSpy = vi.spyOn(participationService, 'searchParticipationScores').mockReturnValue(of({ content: [], totalElements: 0 }));
 
             component.onLazyLoad({ globalFilter: 'alice', sortField: 'participantName' });
@@ -203,7 +205,7 @@ describe('Exercise Scores Component', () => {
         });
 
         it.each([false, true])('should offer management exports only to instructors (instructor: %s)', async (isAtLeastInstructor) => {
-            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...exercise, isAtLeastInstructor } })));
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: { ...anonymousExercise, isAtLeastInstructor } })));
             vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
             vi.spyOn(participationService, 'searchParticipationScores').mockReturnValue(of({ content: [], totalElements: 0 }));
             fixture.detectChanges();
