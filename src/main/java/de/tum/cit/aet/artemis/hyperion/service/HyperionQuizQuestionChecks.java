@@ -182,10 +182,30 @@ final class HyperionQuizQuestionChecks {
                 }
                 String shorter = normalised.get(i);
                 String longer = normalised.get(j);
-                if (shorter.length() < longer.length() && Pattern.compile("\\b" + Pattern.quote(shorter) + "\\b").matcher(longer).find()) {
+                if (shorter.length() < longer.length() && containsAsWholePhrase(longer, shorter)) {
                     return true;
                 }
             }
+        }
+        return false;
+    }
+
+    /**
+     * Whether {@code phrase} occurs in {@code text} with no letter or digit directly before or after it.
+     */
+    private static boolean containsAsWholePhrase(String text, String phrase) {
+        if (phrase.isEmpty()) {
+            return false;
+        }
+        int start = text.indexOf(phrase);
+        while (start >= 0) {
+            int end = start + phrase.length();
+            boolean boundaryBefore = start == 0 || !Character.isLetterOrDigit(text.charAt(start - 1));
+            boolean boundaryAfter = end == text.length() || !Character.isLetterOrDigit(text.charAt(end));
+            if (boundaryBefore && boundaryAfter) {
+                return true;
+            }
+            start = text.indexOf(phrase, start + 1);
         }
         return false;
     }
