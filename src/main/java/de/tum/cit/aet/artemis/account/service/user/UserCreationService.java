@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -236,9 +237,17 @@ public class UserCreationService {
      */
     public void updateBasicInformationOfCurrentUser(String firstName, String lastName, @Nullable String email, String langKey, String imageUrl) {
         SecurityUtils.getCurrentUserLogin().flatMap(userRepository::findOneByLogin).ifPresent(user -> {
-            if (email != null) {
-                updateEmailIfChanged(user, email);
+            if (email == null) {
+                // The address is not part of this save: only the columns of the form are written, so nothing else is written back as it was read, in particular not an address
+                // that a confirmation applied after the account was read.
+                userRepository.updateBasicInformation(user.getId(), firstName, lastName, langKey, user.getLogin(), Instant.now());
+                if (imageUrl != null) {
+                    userRepository.updateUserImageUrl(user.getId(), FileSystemLocation.storedFilename(imageUrl));
+                }
+                log.info("Changed Information for User: {}", user.getLogin());
+                return;
             }
+            updateEmailIfChanged(user, email);
             user.setFirstName(firstName);
             user.setLastName(lastName);
             user.setLangKey(langKey);
