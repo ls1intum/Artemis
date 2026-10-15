@@ -1013,6 +1013,32 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     void updateUserImageUrl(@Param("userId") long userId, @Param("filename") String filename);
 
+    /**
+     * Writes the fields of the settings form and nothing else on the account, as a single statement. Saving the entity that was read instead writes every column back as it was
+     * read, so an address that a confirmation applied in the meantime would be replaced by the old one.
+     *
+     * @param userId     the account
+     * @param firstName  the first name
+     * @param lastName   the last name
+     * @param langKey    the language key
+     * @param modifiedBy who changed the account, which saving the entity would record through auditing
+     * @param modifiedAt when the account was changed
+     * @return 1 if the account was changed
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.firstName = :firstName,
+                user.lastName = :lastName,
+                user.langKey = :langKey,
+                user.lastModifiedBy = :modifiedBy,
+                user.lastModifiedDate = :modifiedAt
+            WHERE user.id = :userId
+            """)
+    int updateBasicInformation(@Param("userId") long userId, @Param("firstName") String firstName, @Param("lastName") String lastName, @Param("langKey") String langKey,
+            @Param("modifiedBy") String modifiedBy, @Param("modifiedAt") Instant modifiedAt);
+
     @Modifying
     @Transactional // ok because of modifying query
     @Query("""

@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -45,7 +46,12 @@ import de.tum.cit.aet.artemis.account.dto.EmailChangeConfirmationResultDTO;
 import de.tum.cit.aet.artemis.account.dto.EmailChangeConfirmationResultDTO.EmailChangeAddress;
 import de.tum.cit.aet.artemis.account.dto.EmailChangeKeyDTO;
 import de.tum.cit.aet.artemis.account.dto.PendingEmailChangeDTO;
+import de.tum.cit.aet.artemis.account.repository.AuthorityRepository;
+import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.account.repository.UserRecoveryKeyRepository;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
+import de.tum.cit.aet.artemis.account.service.AccountCredentialRevocationService;
+import de.tum.cit.aet.artemis.account.service.AccountSecurityNotificationService;
 import de.tum.cit.aet.artemis.account.service.EmailChangeService;
 import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
@@ -90,6 +96,21 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Autowired
     private UserRecoveryKeyRepository userRecoveryKeyRepository;
+
+    @Autowired
+    private AuthorityRepository authorityRepository;
+
+    @Autowired
+    private OrganizationRepository organizationRepository;
+
+    @Autowired
+    private AccountCredentialRevocationService accountCredentialRevocationService;
+
+    @Autowired
+    private AccountSecurityNotificationService accountSecurityNotificationService;
+
+    @Autowired
+    private AuditEventRepository auditEventRepository;
 
     @Autowired
     private PasswordService passwordService;
@@ -237,6 +258,65 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
         assertThat(cancelled).as("the cancellation ran between the first read and the write").isTrue();
         assertThat(storedPendingChange()).as("the cancelled request, and its confirmation of the current address, stay gone").isEmpty();
         assertThat(userRecoveryKeyService.findResetKeyId(user.getId())).isEqualTo("racingresetkey");
+    }
+
+    /**
+     * The row of an account is created by an insert that fails on a row that exists, not by saving an empty instance, which would be merged over the row a concurrent
+     * request created and erase the key it stored.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void creatingTheRowDoesNotEraseAKeyThatAnotherRequestStoredMeanwhile() {
+        userRecoveryKeyService.clearAll(user.getId());
+        assertThat(userRecoveryKeyRepository.findByUserId(user.getId())).isEmpty();
+
+        AtomicBoolean otherRequestStored = new AtomicBoolean(false);
+        UserRecoveryKeyRepository racingRepository = mock(UserRecoveryKeyRepository.class, delegatesTo(userRecoveryKeyRepository));
+        // after this request found no row, another request stores an activation key, which creates the row
+        doAnswer(invocation -> {
+            Object result = invocation.getMethod().invoke(userRecoveryKeyRepository, invocation.getArguments());
+            if (otherRequestStored.compareAndSet(false, true)) {
+                userRecoveryKeyService.storeActivationKey(user.getId(), "otherrequestkey");
+            }
+            return result;
+        }).when(racingRepository).existsById(anyLong());
+
+        new UserRecoveryKeyService(racingRepository).storeResetKey(user.getId(), "racingresetkey", "hash", Instant.now());
+
+        assertThat(otherRequestStored).isTrue();
+        assertThat(userRecoveryKeyService.findActivationKey(user.getId())).as("the key of the other request is still there").isEqualTo("otherrequestkey");
+        assertThat(userRecoveryKeyService.findResetKeyId(user.getId())).isEqualTo("racingresetkey");
+    }
+
+    /**
+     * Saving the settings writes the fields of the form and nothing else. An address that a confirmation applied after the account was read is not replaced by the one
+     * that was read.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aSettingsSaveDoesNotOverwriteAnAddressThatWasConfirmedAfterTheAccountWasRead() {
+        AtomicBoolean confirmed = new AtomicBoolean(false);
+        UserRepository racingRepository = mock(UserRepository.class, delegatesTo(userTestRepository));
+        doAnswer(invocation -> {
+            Object result = invocation.getMethod().invoke(userTestRepository, invocation.getArguments());
+            if (confirmed.compareAndSet(false, true)) {
+                // the confirmation of the new address completes right after the settings save read the account
+                User confirmedAccount = userTestRepository.findOneByLogin(LOGIN).orElseThrow();
+                confirmedAccount.setEmail(NEW_EMAIL);
+                userTestRepository.save(confirmedAccount);
+            }
+            return result;
+        }).when(racingRepository).findOneByLogin(anyString());
+        var racingService = new UserCreationService(racingRepository, passwordService, authorityRepository, organizationRepository, accountCredentialRevocationService,
+                accountSecurityNotificationService, auditEventRepository, userRecoveryKeyService, userActivityService);
+
+        racingService.updateBasicInformationOfCurrentUser("Renamed", "Account", null, user.getLangKey(), null);
+
+        assertThat(confirmed).isTrue();
+        User saved = userTestRepository.findOneByLogin(LOGIN).orElseThrow();
+        assertThat(saved.getEmail()).as("the confirmed address stays").isEqualTo(NEW_EMAIL);
+        assertThat(saved.getFirstName()).isEqualTo("Renamed");
+        assertThat(saved.getLastName()).isEqualTo("Account");
     }
 
     @Test
