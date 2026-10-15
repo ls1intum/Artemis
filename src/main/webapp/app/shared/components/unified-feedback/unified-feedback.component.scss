@@ -4,7 +4,8 @@
 .unified-feedback {
     // The rules inside the card share one colour: the rule under the reference/criterion row and the rule above the AI
     // suggestion footer. They used to differ, so the rule under the criterion looked darker than the one above the footer.
-    // The full border colour keeps them readable; the card's own outline stays the quieter mix.
+    // The full border colour keeps them readable, and the card's own outline takes it too, so the card stands out from the
+    // grey of the panel it sits in.
     --unified-feedback-divider: var(--border-color);
 
     min-width: min(320px, 100%);
@@ -13,7 +14,7 @@
     margin-bottom: 0.5rem;
     padding: 1rem;
     background-color: var(--card-bg);
-    border: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
+    border: 1px solid var(--border-color);
 }
 
 .unified-feedback-content {

@@ -41,6 +41,11 @@
     }
 }
 
+// Framed like the panels it sits beside (the general feedback panel, the editor's cards) and like its own collapsed rail
+.right-panel {
+    border: var(--bs-border-width) solid var(--bs-border-color);
+}
+
 // The tab row of the right panel is grey like the header of the general feedback panel, so the headers of the page read alike. It
 // draws the line below the tabs, and the tabs run down to it, so the indicator of the selected tab sits on that line.
 .right-panel-header {
