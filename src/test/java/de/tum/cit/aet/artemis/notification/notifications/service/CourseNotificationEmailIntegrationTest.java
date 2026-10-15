@@ -499,6 +499,7 @@ class CourseNotificationEmailIntegrationTest extends AbstractSpringIntegrationIn
         Locale locale = Locale.forLanguageTag(langKey);
         Context context = new Context(locale);
         context.setVariable("serverUrl", SERVER_URL);
+        context.setVariable("baseUrl", SERVER_URL);
         context.setVariable("notificationType", notificationType);
         context.setVariable("recipient", recipient);
         context.setVariable("courseId", COURSE_ID);
