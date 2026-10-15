@@ -191,7 +191,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             untracked(() => {
                 // Once the initial position is restored, a user who is at the bottom stays there when a message arrives.
                 // Restoring the stored top-visible post would otherwise override the scroll to the bottom above.
-                const keepsFollowingNewMessages = this.canStartSaving && this.wasScrolledToBottom;
+                // A navigation that is still pending, to a post that is not loaded yet, is not a stored position: it needs the
+                // next page that arrives to reach its target, so it is not held back by the bottom-following guard.
+                const hasPendingNavigation = this.focusOnPostId !== undefined;
+                const keepsFollowingNewMessages = this.canStartSaving && this.wasScrolledToBottom && !hasPendingNavigation;
                 if (!this.createdNewMessage && this.posts().length > 0 && !keepsFollowingNewMessages) {
                     this.scrollToStoredId();
                 }

@@ -356,7 +356,7 @@ examples.forEach((activeConversation) => {
                 const createPostingThread = (id: number, offsetTop: number) =>
                     ({
                         post: () => ({ id }),
-                        elementRef: { nativeElement: { offsetTop, getBoundingClientRect: () => ({ top: 0, bottom: 0 }) } },
+                        elementRef: { nativeElement: { offsetTop, getBoundingClientRect: () => ({ top: 0, bottom: 0 }), querySelector: () => null } },
                     }) as unknown as PostingThreadComponent;
 
                 beforeEach(() => {
@@ -397,6 +397,23 @@ examples.forEach((activeConversation) => {
 
                     expect(scrollToStoredIdSpy).not.toHaveBeenCalled();
                     expect(container.scrollTop).toBe(container.scrollHeight);
+                });
+
+                it('should keep navigating to a post that is not loaded yet when the next page arrives for a user at the bottom', () => {
+                    const unloadedPostId = 99;
+                    // the user is at the bottom of an already restored conversation and follows the View action of a forwarded message
+                    container.scrollTop = 600;
+                    component.focusOnPostId = unloadedPostId;
+                    component.setPosts();
+
+                    // the next page arrives and contains the post
+                    messagesSignal.set([createPostingThread(unloadedPostId, 500), ...messagesSignal()]);
+                    fixture.detectChanges();
+                    vi.runAllTimers();
+
+                    expect(scrollToStoredIdSpy).toHaveBeenCalledOnce();
+                    expect(container.scrollTop).toBe(490);
+                    expect(component.focusOnPostId).toBeUndefined();
                 });
 
                 it('should restore the stored scroll position when a message arrives while the user is not at the bottom', () => {
