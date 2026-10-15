@@ -182,7 +182,9 @@ describe('ExamUpdateComponent', () => {
         });
 
         describe('explanations of invalid fields', () => {
-            const hours = (offset: number) => dayjs().add(offset, 'hours');
+            // One fixed reference time: two separate dayjs() calls differ by milliseconds, which would make equal offsets compare as different dates
+            const now = dayjs();
+            const hours = (offset: number) => now.add(offset, 'hours');
 
             /** Renders the form with the given changes applied to a copy of the exam. */
             function renderWith(changes: Partial<Exam>) {
