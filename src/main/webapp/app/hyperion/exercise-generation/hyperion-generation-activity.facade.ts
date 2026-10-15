@@ -365,7 +365,7 @@ export class HyperionGenerationActivityFacade {
                         return;
                     }
                     if (expectedJobId !== undefined && status.jobId !== expectedJobId) {
-                        if (!this.cancelRequested() && this.ownedByCaller() && !status.running) {
+                        if (!background && !this.cancelRequested() && this.ownedByCaller() && !status.running) {
                             this.scheduleActiveStatusRefresh(exerciseId, expectedJobId);
                             return;
                         }
