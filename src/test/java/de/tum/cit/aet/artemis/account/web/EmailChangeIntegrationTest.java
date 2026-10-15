@@ -2,11 +2,15 @@ package de.tum.cit.aet.artemis.account.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.mockito.AdditionalAnswers.delegatesTo;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import java.net.URI;
@@ -18,12 +22,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -39,6 +45,7 @@ import de.tum.cit.aet.artemis.account.dto.EmailChangeConfirmationResultDTO;
 import de.tum.cit.aet.artemis.account.dto.EmailChangeConfirmationResultDTO.EmailChangeAddress;
 import de.tum.cit.aet.artemis.account.dto.EmailChangeKeyDTO;
 import de.tum.cit.aet.artemis.account.dto.PendingEmailChangeDTO;
+import de.tum.cit.aet.artemis.account.repository.UserRecoveryKeyRepository;
 import de.tum.cit.aet.artemis.account.service.EmailChangeService;
 import de.tum.cit.aet.artemis.account.service.UserActivityService;
 import de.tum.cit.aet.artemis.account.service.UserRecoveryKeyService;
@@ -80,6 +87,9 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
     @Autowired
     private UserRecoveryKeyService userRecoveryKeyService;
+
+    @Autowired
+    private UserRecoveryKeyRepository userRecoveryKeyRepository;
 
     @Autowired
     private PasswordService passwordService;
@@ -197,6 +207,79 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
                 pending.getRequestedAt().minus(age), pending.getCurrentConfirmedAt());
         aged.setNewConfirmedAt(pending.getNewConfirmedAt());
         userRecoveryKeyService.storePendingEmailChange(user.getId(), aged);
+    }
+
+    /**
+     * Issuing a reset key must not write back what the row held when it was read. A cancellation that happens right after that read ends the request, and the reset key
+     * is stored next to it without bringing the request or its confirmations back.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void issuingAResetKeyDoesNotRestoreAnEmailChangeThatWasCancelledMeanwhile() throws Exception {
+        requestChangeTo(NEW_EMAIL);
+        confirm(mailTo(originalEmail));
+        assertThat(storedPendingChange()).isPresent();
+
+        AtomicBoolean cancelled = new AtomicBoolean(false);
+        UserRecoveryKeyRepository racingRepository = mock(UserRecoveryKeyRepository.class, delegatesTo(userRecoveryKeyRepository));
+        Answer<Object> readThenCancel = invocation -> {
+            Object result = invocation.getMethod().invoke(userRecoveryKeyRepository, invocation.getArguments());
+            if (cancelled.compareAndSet(false, true)) {
+                userRecoveryKeyService.clearPendingEmailChange(user.getId());
+            }
+            return result;
+        };
+        doAnswer(readThenCancel).when(racingRepository).findByUserId(anyLong());
+        doAnswer(readThenCancel).when(racingRepository).existsById(anyLong());
+
+        new UserRecoveryKeyService(racingRepository).storeResetKey(user.getId(), "racingresetkey", "hash", Instant.now());
+
+        assertThat(cancelled).as("the cancellation ran between the first read and the write").isTrue();
+        assertThat(storedPendingChange()).as("the cancelled request, and its confirmation of the current address, stay gone").isEmpty();
+        assertThat(userRecoveryKeyService.findResetKeyId(user.getId())).isEqualTo("racingresetkey");
+    }
+
+    @Test
+    @WithMockUser(username = LOGIN)
+    void storingKeysOfDifferentKindsLeavesTheOthersAsTheyAre() throws Exception {
+        requestChangeTo(NEW_EMAIL);
+        PendingEmailChange pending = storedPendingChange().orElseThrow();
+
+        userRecoveryKeyService.storeActivationKey(user.getId(), "activationkey");
+        userRecoveryKeyService.storeResetKey(user.getId(), "resetkeyid", "resetkeyhash", Instant.now());
+
+        assertThat(userRecoveryKeyService.findActivationKey(user.getId())).isEqualTo("activationkey");
+        assertThat(userRecoveryKeyService.findResetKeyId(user.getId())).isEqualTo("resetkeyid");
+        assertThat(storedPendingChange().orElseThrow().getCurrentKeyId()).isEqualTo(pending.getCurrentKeyId());
+
+        userRecoveryKeyService.clearActivationKey(user.getId());
+        userRecoveryKeyService.clearResetKey(user.getId());
+
+        assertThat(userRecoveryKeyService.findActivationKey(user.getId())).isNull();
+        assertThat(userRecoveryKeyService.findResetKeyId(user.getId())).isNull();
+        assertThat(storedPendingChange()).as("clearing the keys leaves the request, and the row that holds it").isPresent();
+
+        userRecoveryKeyService.clearPendingEmailChange(user.getId());
+
+        assertThat(userRecoveryKeyRepository.findByUserId(user.getId())).as("nothing is outstanding, so the row is gone").isEmpty();
+    }
+
+    /**
+     * A settings save of an account that confirms address changes never writes the address, so an address that a confirmation applied after the save read the account is
+     * not replaced by the one it read.
+     */
+    @Test
+    @WithMockUser(username = LOGIN)
+    void aSettingsSaveLeavesTheAddressOfTheAccountAlone() {
+        user.setEmail(NEW_EMAIL);
+        userTestRepository.save(user);
+
+        userCreationService.updateBasicInformationOfCurrentUser("Renamed", "Account", null, user.getLangKey(), null);
+
+        User saved = userTestRepository.findOneByLogin(LOGIN).orElseThrow();
+        assertThat(saved.getEmail()).isEqualTo(NEW_EMAIL);
+        assertThat(saved.getFirstName()).isEqualTo("Renamed");
+        assertThat(saved.getLastName()).isEqualTo("Account");
     }
 
     @Test
