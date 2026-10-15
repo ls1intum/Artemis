@@ -230,10 +230,13 @@ artemis:
       generation-batch-size: 8 # questions requested per generation call
       stale-claim-minutes: 30 # a claim older than this counts as abandoned by a dead node and is released at the next build
       max-material-characters: 60000 # characters of a lecture unit's text that a generation prompt receives at most
+      schedule-cron: "0 0 2 * * *" # when the pools of courses that enabled overnight generation are built, on the node with the scheduling profile
       build-lease-minutes: 10 # a build that stops renewing its lease for this long counts as dead and frees the course for the next build; keep it longer than the longest model call
 ```
 
 Both models must be reachable through the configured Spring AI endpoint. On Azure OpenAI / Microsoft Foundry a model name is the deployment name. Every generation and filter call is recorded in the LLM token usage tracking, so add the two models to `artemis.llm.model-costs` if you want their cost reported.
+
+Overnight generation runs only for courses whose instructors enabled it on the pool page, and only while the course has not ended. The scheduler builds one course after another on the node that carries the `scheduling` profile, so set `schedule-cron` to a quiet hour and expect the run to take a few minutes per course with new or changed lecture material. One build per course runs at a time across the cluster.
 
 ## Verifying the integration
 

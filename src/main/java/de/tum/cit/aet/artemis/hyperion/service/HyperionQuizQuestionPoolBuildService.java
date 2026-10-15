@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,8 +52,12 @@ import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.HyperionCourseSettings;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolBuild;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolBuildTrigger;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolLectureUnit;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionFilterDecisionDTO;
@@ -60,7 +65,9 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
+import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolBuildRepository;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
+import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolLectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
@@ -71,9 +78,12 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  * vary in how many options are correct, and source code a question carries as plain text is set in Markdown code before the question
  * is stored. A build that is asked to stop ends after its current unit of work and drops the items it has not generated yet.
  * <p>
- * {@link #enqueue} tops every cell up to its target and is idempotent. {@link #build} works the pool to completion in a loop of
- * conditional claims, so a build can be resumed after an interruption and several nodes can share one pool. The generator model
- * configured under {@code artemis.hyperion.quiz-pool.generator-model} is bound onto every generation call.
+ * {@link #enqueue} reconciles every lecture unit with the material it was last built from, replacing the unreviewed questions of a
+ * unit whose material changed and flagging the approved ones, then tops every cell up to its target; it is idempotent. {@link #build}
+ * works the pool to completion in a loop of conditional claims, so a build can be resumed after an interruption and several nodes
+ * can share one pool. One build per course runs at a time across the cluster, guarded by an expiring lease that the running build
+ * refreshes after every unit of work. The generator model configured under {@code artemis.hyperion.quiz-pool.generator-model} is
+ * bound onto every generation call.
  */
 @Service
 @Lazy
@@ -131,6 +141,8 @@ public class HyperionQuizQuestionPoolBuildService {
     /** How long a cancel request is kept for a build that never released its lease to clear it. */
     private static final Duration CANCEL_REQUEST_LIFETIME = Duration.ofDays(1);
 
+    private static final int MAX_FAILURE_LENGTH = 500;
+
     @Nullable
     private final ChatClient chatClient;
 
@@ -150,11 +162,9 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private final CourseRepository courseRepository;
 
-    private final String generatorModel;
+    private final QuizQuestionPoolLectureUnitRepository lectureUnitRepository;
 
-    private final int generationBatchSize;
-
-    private final Duration staleClaimAge;
+    private final QuizQuestionPoolBuildRepository buildRepository;
 
     private final DistributedDataProvider distributedDataProvider;
 
@@ -166,10 +176,17 @@ public class HyperionQuizQuestionPoolBuildService {
 
     private final Duration leaseDuration;
 
+    private final String generatorModel;
+
+    private final int generationBatchSize;
+
+    private final Duration staleClaimAge;
+
     public HyperionQuizQuestionPoolBuildService(@Nullable ChatClient chatClient, HyperionPromptTemplateService templateService,
             HyperionQuizQuestionPoolMaterialService materialService, Optional<CourseCompetencyApi> courseCompetencyApi, HyperionQuizQuestionFilterService filterService,
             LLMTokenUsageService llmTokenUsageService, QuizQuestionPoolItemRepository itemRepository, HyperionCourseSettingsService settingsService,
-            CourseRepository courseRepository, DistributedDataProvider distributedDataProvider, @Value("${artemis.hyperion.quiz-pool.generator-model:}") String generatorModel,
+            CourseRepository courseRepository, QuizQuestionPoolLectureUnitRepository lectureUnitRepository, QuizQuestionPoolBuildRepository buildRepository,
+            DistributedDataProvider distributedDataProvider, @Value("${artemis.hyperion.quiz-pool.generator-model:}") String generatorModel,
             @Value("${artemis.hyperion.quiz-pool.generation-batch-size:8}") int generationBatchSize,
             @Value("${artemis.hyperion.quiz-pool.stale-claim-minutes:30}") int staleClaimMinutes,
             @Value("${artemis.hyperion.quiz-pool.build-lease-minutes:10}") int buildLeaseMinutes) {
@@ -182,6 +199,9 @@ public class HyperionQuizQuestionPoolBuildService {
         this.itemRepository = itemRepository;
         this.settingsService = settingsService;
         this.courseRepository = courseRepository;
+        this.lectureUnitRepository = lectureUnitRepository;
+        this.buildRepository = buildRepository;
+        this.distributedDataProvider = distributedDataProvider;
         this.generatorModel = generatorModel == null ? "" : generatorModel.trim();
         if (generationBatchSize < 1) {
             throw new IllegalArgumentException("artemis.hyperion.quiz-pool.generation-batch-size must be at least 1, got " + generationBatchSize);
@@ -189,16 +209,52 @@ public class HyperionQuizQuestionPoolBuildService {
         if (staleClaimMinutes < 1) {
             throw new IllegalArgumentException("artemis.hyperion.quiz-pool.stale-claim-minutes must be at least 1, got " + staleClaimMinutes);
         }
+        if (buildLeaseMinutes < 1) {
+            throw new IllegalArgumentException("artemis.hyperion.quiz-pool.build-lease-minutes must be at least 1, got " + buildLeaseMinutes);
+        }
         this.generationBatchSize = generationBatchSize;
         this.staleClaimAge = Duration.ofMinutes(staleClaimMinutes);
         if (buildLeaseMinutes < 1) {
             throw new IllegalArgumentException("artemis.hyperion.quiz-pool.build-lease-minutes must be at least 1, got " + buildLeaseMinutes);
         }
-        this.distributedDataProvider = distributedDataProvider;
         this.leaseDuration = Duration.ofMinutes(buildLeaseMinutes);
         this.buildLeases = distributedDataProvider.getMap(BUILD_LEASES);
         this.buildSettings = distributedDataProvider.getMap(BUILD_SETTINGS);
         this.cancelRequests = distributedDataProvider.getExpiringMap(BUILD_CANCELLATIONS, CANCEL_REQUEST_LIFETIME);
+    }
+
+    /**
+     * What one build did, counted over its own work.
+     *
+     * @param generated items that received a question
+     * @param judged    items that received a verdict
+     * @param accepted  judged items the filter accepted
+     * @param rejected  judged items the filter rejected
+     * @param failed    items that ended in a failed state
+     */
+    public record BuildOutcome(int generated, int judged, int accepted, int rejected, int failed) {
+
+        static BuildOutcome none() {
+            return new BuildOutcome(0, 0, 0, 0, 0);
+        }
+    }
+
+    /** Mutable counters of a running build; {@link #toOutcome()} freezes them. */
+    private static final class Counters {
+
+        private int generated;
+
+        private int judged;
+
+        private int accepted;
+
+        private int rejected;
+
+        private int failed;
+
+        private BuildOutcome toOutcome() {
+            return new BuildOutcome(generated, judged, accepted, rejected, failed);
+        }
     }
 
     /**
@@ -312,7 +368,7 @@ public class HyperionQuizQuestionPoolBuildService {
     }
 
     /**
-     * Returns whether a live build lease exists for the course.
+     * Returns whether any node holds a live build lease for the course.
      *
      * @param courseId the course
      * @return whether a build is running
@@ -399,10 +455,55 @@ public class HyperionQuizQuestionPoolBuildService {
     }
 
     /**
-     * Tops every cell of the course's pool up to its target, creating the missing items in state {@link QuizQuestionPoolItemState#PENDING}.
+     * Records that a build starts.
+     *
+     * @param course   the course
+     * @param trigger  what started the build
+     * @param enqueued how many items {@link #enqueue} added
+     * @return the stored build record
+     */
+    public QuizQuestionPoolBuild recordStart(Course course, QuizQuestionPoolBuildTrigger trigger, int enqueued) {
+        QuizQuestionPoolBuild build = new QuizQuestionPoolBuild();
+        build.setCourse(course);
+        build.setTrigger(trigger);
+        build.setEnqueued(enqueued);
+        return buildRepository.save(build);
+    }
+
+    /**
+     * Closes a build record whose build never ran because the dispatch to the executor failed.
+     *
+     * @param buildId the build record
+     * @param cause   the dispatch failure
+     */
+    public void recordDispatchFailure(long buildId, Exception cause) {
+        recordFinish(buildId, BuildOutcome.none(), truncateFailure(cause.toString()));
+    }
+
+    private static String truncateFailure(String message) {
+        return message.length() > MAX_FAILURE_LENGTH ? message.substring(0, MAX_FAILURE_LENGTH) : message;
+    }
+
+    private void recordFinish(long buildId, BuildOutcome outcome, @Nullable String failure) {
+        buildRepository.findById(buildId).ifPresent(build -> {
+            build.setFinishedAt(ZonedDateTime.now());
+            build.setGenerated(outcome.generated());
+            build.setJudged(outcome.judged());
+            build.setAccepted(outcome.accepted());
+            build.setRejected(outcome.rejected());
+            build.setFailed(outcome.failed());
+            build.setFailure(failure);
+            buildRepository.save(build);
+        });
+    }
+
+    /**
+     * Reconciles the course's lecture units with the material they were last built from and tops every cell of the pool up to its
+     * target, creating the missing items in state {@link QuizQuestionPoolItemState#PENDING}. Cells exist for every competency and each
+     * lecture unit linked to it that carries readable material and is not excluded. A unit whose material changed loses its
+     * unreviewed items and keeps its approved ones flagged; an excluded unit loses its unreviewed items and gets no cells.
      * New items take the indices above the highest index of their cell, so a cell whose items were partly deleted gets no duplicate index.
-     * Cells exist for every competency and each lecture unit linked to it that carries readable material. The settings the cells were
-     * planned with are kept while the build runs.
+     * The settings the cells were planned with are kept while the build runs.
      *
      * @param course the course
      * @return the number of items created
@@ -410,7 +511,30 @@ public class HyperionQuizQuestionPoolBuildService {
     public int enqueue(Course course) {
         HyperionCourseSettings settings = settingsService.getSettings(course.getId());
         buildSettings.put(course.getId(), settings);
-        Map<Cell, Integer> targets = targetsOf(course, settings);
+        CourseCompetencyApi api = courseCompetencyApi.orElseThrow(() -> new ApiConditionNotPresentException(CourseCompetencyApi.class, "artemis.atlas.enabled"));
+        List<Long> competencyIds = api.findAllForCourse(course.getId()).stream().map(CourseCompetency::getId).sorted().toList();
+        Map<Long, QuizQuestionPoolLectureUnit> records = lectureUnitRepository.findAllByCourseId(course.getId()).stream()
+                .collect(Collectors.toMap(QuizQuestionPoolLectureUnit::getLectureUnitId, Function.identity(), (first, second) -> first));
+        ZonedDateTime now = ZonedDateTime.now();
+        Map<Long, List<Long>> unitIdsByCompetency = new LinkedHashMap<>();
+        Set<Long> reconciled = new HashSet<>();
+        Map<Reconciliation, Integer> reconciliations = new EnumMap<>(Reconciliation.class);
+        for (Map.Entry<Long, List<LectureUnit>> entry : materialService.findGroundableUnits(competencyIds).entrySet()) {
+            List<Long> unitIds = new ArrayList<>();
+            for (LectureUnit unit : entry.getValue()) {
+                if (reconciled.add(unit.getId())) {
+                    reconciliations.merge(reconcile(course, unit, records, now), 1, Integer::sum);
+                }
+                if (!records.get(unit.getId()).isExcluded()) {
+                    unitIds.add(unit.getId());
+                }
+            }
+            if (!unitIds.isEmpty()) {
+                unitIdsByCompetency.put(entry.getKey(), unitIds);
+            }
+        }
+        lectureUnitRepository.saveAll(records.values());
+        Map<Cell, Integer> targets = planCells(unitIdsByCompetency, languageOf(course), settings);
         Map<Cell, QuizQuestionPoolCellCountDTO> existingByCell = countsByCell(course.getId());
         List<QuizQuestionPoolItem> created = new ArrayList<>();
         for (Map.Entry<Cell, Integer> target : targets.entrySet()) {
@@ -431,12 +555,18 @@ public class HyperionQuizQuestionPoolBuildService {
             }
         }
         itemRepository.saveAll(created);
-        log.info("Quiz question pool of course [{}]: {} cells, {} new items", course.getId(), targets.size(), created.size());
+        log.info("Quiz question pool of course [{}]: {} of {} competencies have lecture material, {} cells, {} new items, units {}", course.getId(), unitIdsByCompetency.size(),
+                competencyIds.size(), targets.size(), created.size(), reconciliations);
         return created.size();
     }
 
+    private enum Reconciliation {
+        NEW, UNCHANGED, CHANGED, EXCLUDED
+    }
+
     /**
-     * Computes the pool a build would plan with the course's stored settings, without creating any item.
+     * Computes the pool a build would plan with the course's stored settings, without creating or changing anything. Excluded lecture
+     * units get no cells; a change of a unit's material is only detected when a build reconciles the unit.
      *
      * @param course the course
      * @return how many questions the pool holds once such a build is complete, and how many that build would add
@@ -454,40 +584,91 @@ public class HyperionQuizQuestionPoolBuildService {
         return new QuizQuestionPoolPlanDTO(planned, missing);
     }
 
-    /** The target of every cell of the course under the given settings, over the competencies and their groundable lecture units. */
+    /** The target of every cell under the given settings, over the competencies and their groundable lecture units that are not excluded. */
     private Map<Cell, Integer> targetsOf(Course course, HyperionCourseSettings settings) {
         CourseCompetencyApi api = courseCompetencyApi.orElseThrow(() -> new ApiConditionNotPresentException(CourseCompetencyApi.class, "artemis.atlas.enabled"));
         List<Long> competencyIds = api.findAllForCourse(course.getId()).stream().map(CourseCompetency::getId).sorted().toList();
+        Set<Long> excluded = lectureUnitRepository.findAllByCourseId(course.getId()).stream().filter(QuizQuestionPoolLectureUnit::isExcluded)
+                .map(QuizQuestionPoolLectureUnit::getLectureUnitId).collect(Collectors.toSet());
         Map<Long, List<Long>> unitIdsByCompetency = new LinkedHashMap<>();
-        materialService.findGroundableUnits(competencyIds).forEach((competencyId, units) -> unitIdsByCompetency.put(competencyId, units.stream().map(LectureUnit::getId).toList()));
+        materialService.findGroundableUnits(competencyIds).forEach((competencyId, units) -> {
+            List<Long> unitIds = units.stream().map(LectureUnit::getId).filter(unitId -> !excluded.contains(unitId)).toList();
+            if (!unitIds.isEmpty()) {
+                unitIdsByCompetency.put(competencyId, unitIds);
+            }
+        });
         return planCells(unitIdsByCompetency, languageOf(course), settings);
     }
 
-    /** The item count and the highest item index of every cell that holds items. */
+    /** The items of every cell whose material is unchanged, and the highest item index of the cell. */
     private Map<Cell, QuizQuestionPoolCellCountDTO> countsByCell(long courseId) {
         return itemRepository.countByCellForCourse(courseId).stream().collect(
                 Collectors.toMap(count -> new Cell(count.competencyId(), count.lectureUnitId(), count.language(), count.questionType(), count.difficulty()), Function.identity()));
     }
 
     /**
-     * Runs {@link #build} under the given lease and frees the course's build slot afterwards, whatever the outcome. A build whose lease
-     * expired while it waited for the executor takes the lease again when the course is free, and does nothing when another build holds
-     * the course in the meantime.
+     * Compares one lecture unit with the record of its last build and applies the consequences to the pool. The record is created or
+     * updated in {@code records} and saved by the caller.
+     */
+    private Reconciliation reconcile(Course course, LectureUnit unit, Map<Long, QuizQuestionPoolLectureUnit> records, ZonedDateTime now) {
+        long unitId = unit.getId();
+        QuizQuestionPoolLectureUnit record = records.get(unitId);
+        if (record == null) {
+            record = new QuizQuestionPoolLectureUnit();
+            record.setCourse(course);
+            record.setLectureUnitId(unitId);
+            records.put(unitId, record);
+        }
+        record.setUpdatedAt(now);
+        if (record.isExcluded()) {
+            itemRepository.deleteAllByLectureUnitExceptReviewState(course.getId(), unitId, QuizQuestionReviewState.APPROVED);
+            return Reconciliation.EXCLUDED;
+        }
+        String fingerprint = materialService.fingerprintOf(unit);
+        if (record.getFingerprint() == null) {
+            record.setFingerprint(fingerprint);
+            record.setLastBuiltAt(now);
+            return Reconciliation.NEW;
+        }
+        if (!Objects.equals(fingerprint, record.getFingerprint())) {
+            int deleted = itemRepository.deleteAllByLectureUnitExceptReviewState(course.getId(), unitId, QuizQuestionReviewState.APPROVED);
+            int flagged = itemRepository.markMaterialChangedByLectureUnit(course.getId(), unitId, now);
+            log.info("Lecture unit [{}] of course [{}] changed: {} unreviewed items deleted, {} approved items flagged", unitId, course.getId(), deleted, flagged);
+            record.setFingerprint(fingerprint);
+            record.setLastBuiltAt(now);
+            return Reconciliation.CHANGED;
+        }
+        record.setLastBuiltAt(now);
+        return Reconciliation.UNCHANGED;
+    }
+
+    /**
+     * Runs {@link #build} under the given lease, stores its outcome on the build record and frees the course's build slot afterwards,
+     * whatever the outcome. A build whose lease expired while it waited for the executor takes the lease again when the course is free,
+     * and does nothing when another build holds the course in the meantime.
      *
      * @param courseId   the course whose pool to build
      * @param userId     the user the token usage is attributed to; may be {@code null}
+     * @param buildId    the build record that receives the outcome
      * @param leaseToken the token {@link #tryStart} returned
      */
-    public void buildAndRelease(long courseId, @Nullable Long userId, String leaseToken) {
+    public void buildAndRelease(long courseId, @Nullable Long userId, long buildId, String leaseToken) {
         if (!renewLease(courseId, leaseToken) && !acquireLease(courseId, leaseToken)) {
             log.warn("Quiz question pool build of course [{}] is dropped: its lease expired while it waited and another build holds the course", courseId);
+            recordFinish(buildId, BuildOutcome.none(), "Dropped: the lease expired while the build waited and another build holds the course");
             return;
         }
+        BuildOutcome outcome = BuildOutcome.none();
+        String failure = null;
         try {
-            build(courseId, userId, leaseToken);
+            outcome = build(courseId, userId, leaseToken);
         }
         catch (Exception e) {
             log.error("Quiz question pool build of course [{}] failed", courseId, e);
+            failure = truncateFailure(e.toString());
+        }
+        try {
+            recordFinish(buildId, outcome, failure);
         }
         finally {
             release(courseId, leaseToken);
@@ -502,9 +683,9 @@ public class HyperionQuizQuestionPoolBuildService {
      * @param courseId   the course whose pool to build
      * @param userId     the user the token usage is attributed to; may be {@code null}
      * @param leaseToken the lease the build runs under; the build stops after the unit of work during which the lease was lost
-     * @return the number of items generated or judged
+     * @return what the build did
      */
-    public int build(long courseId, @Nullable Long userId, String leaseToken) {
+    public BuildOutcome build(long courseId, @Nullable Long userId, String leaseToken) {
         if (chatClient == null) {
             throw new InternalServerErrorAlertException("AI chat client is not configured", "QuizQuestionPool", "QuizQuestionPool.chatClientNotConfigured");
         }
@@ -520,6 +701,7 @@ public class HyperionQuizQuestionPoolBuildService {
 
         HyperionCourseSettings settings = Objects.requireNonNullElseGet(settingsOfRunningBuild(courseId), () -> settingsService.getSettings(courseId));
         Materials materials = new Materials(courseId);
+        Counters counters = new Counters();
         int completed = 0;
         boolean leaseHeld = true;
         boolean cancelled = false;
@@ -530,7 +712,7 @@ public class HyperionQuizQuestionPoolBuildService {
             }
             Optional<QuizQuestionPoolItem> toJudge = claimNext(courseId, QuizQuestionPoolItemState.GENERATED, QuizQuestionPoolItemState.FILTERING);
             if (toJudge.isPresent()) {
-                judge(course, userId, toJudge.get(), materials);
+                judge(course, userId, toJudge.get(), materials, counters);
                 completed++;
                 leaseHeld = renewLease(courseId, leaseToken);
                 continue;
@@ -539,7 +721,7 @@ public class HyperionQuizQuestionPoolBuildService {
             if (batch.isEmpty()) {
                 break;
             }
-            generate(course, userId, batch, materials, settings);
+            generate(course, userId, batch, materials, settings, counters);
             completed += batch.size();
             leaseHeld = renewLease(courseId, leaseToken);
         }
@@ -554,7 +736,7 @@ public class HyperionQuizQuestionPoolBuildService {
         else {
             log.info("Quiz question pool build of course [{}] finished after {} units of work", courseId, completed);
         }
-        return completed;
+        return counters.toOutcome();
     }
 
     private Optional<QuizQuestionPoolItem> claimNext(long courseId, QuizQuestionPoolItemState from, QuizQuestionPoolItemState to) {
@@ -598,11 +780,11 @@ public class HyperionQuizQuestionPoolBuildService {
         return true;
     }
 
-    private void generate(Course course, @Nullable Long userId, List<QuizQuestionPoolItem> batch, Materials materials, HyperionCourseSettings settings) {
+    private void generate(Course course, @Nullable Long userId, List<QuizQuestionPoolItem> batch, Materials materials, HyperionCourseSettings settings, Counters counters) {
         QuizQuestionPoolItem first = batch.getFirst();
         ItemMaterial material = materials.materialFor(first);
         if (material.failure() != null) {
-            batch.forEach(item -> recordGenerationFailure(item, material.failure(), false));
+            batch.forEach(item -> recordGenerationFailure(item, material.failure(), false, counters));
             return;
         }
 
@@ -626,7 +808,7 @@ public class HyperionQuizQuestionPoolBuildService {
         }
         catch (Exception e) {
             log.warn("Generation of {} pool questions for lecture unit [{}] in course [{}] failed", batch.size(), first.getLectureUnitId(), course.getId(), e);
-            batch.forEach(item -> recordGenerationFailure(item, FAILURE_CALL_FAILED, true));
+            batch.forEach(item -> recordGenerationFailure(item, FAILURE_CALL_FAILED, true, counters));
             return;
         }
 
@@ -640,7 +822,7 @@ public class HyperionQuizQuestionPoolBuildService {
             QuizQuestionPoolItem item = batch.get(index);
             GeneratedQuizQuestionDTO question = index < questions.size() ? questions.get(index) : null;
             if (question == null) {
-                recordGenerationFailure(item, FAILURE_NO_VALID_QUESTION, true);
+                recordGenerationFailure(item, FAILURE_NO_VALID_QUESTION, true, counters);
                 continue;
             }
             usable++;
@@ -651,7 +833,9 @@ public class HyperionQuizQuestionPoolBuildService {
             item.setState(QuizQuestionPoolItemState.GENERATED);
             item.setClaimedAt(null);
             item.setUpdatedAt(ZonedDateTime.now());
-            saveIfStillOwned(item);
+            if (saveIfStillOwned(item)) {
+                counters.generated++;
+            }
         }
         if (usable < batch.size()) {
             log.warn("Generation for lecture unit [{}] in course [{}] yielded {} usable questions for {} items", first.getLectureUnitId(), course.getId(), usable, batch.size());
@@ -765,17 +949,19 @@ public class HyperionQuizQuestionPoolBuildService {
         }
     }
 
-    private void recordGenerationFailure(QuizQuestionPoolItem item, String failure, boolean retryable) {
+    private void recordGenerationFailure(QuizQuestionPoolItem item, String failure, boolean retryable, Counters counters) {
         int attempts = item.getGenerationAttempts() + 1;
         item.setGenerationAttempts(attempts);
         item.setFailure(failure);
         item.setState(retryable && attempts < MAX_ATTEMPTS ? QuizQuestionPoolItemState.PENDING : QuizQuestionPoolItemState.FAILED_GENERATION);
         item.setClaimedAt(null);
         item.setUpdatedAt(ZonedDateTime.now());
-        saveIfStillOwned(item);
+        if (saveIfStillOwned(item) && item.getState() == QuizQuestionPoolItemState.FAILED_GENERATION) {
+            counters.failed++;
+        }
     }
 
-    private void judge(Course course, @Nullable Long userId, QuizQuestionPoolItem item, Materials materials) {
+    private void judge(Course course, @Nullable Long userId, QuizQuestionPoolItem item, Materials materials, Counters counters) {
         ItemMaterial material = materials.materialFor(item);
         int attempts = item.getFilterAttempts() + 1;
         item.setFilterAttempts(attempts);
@@ -816,7 +1002,21 @@ public class HyperionQuizQuestionPoolBuildService {
         }
         item.setClaimedAt(null);
         item.setUpdatedAt(ZonedDateTime.now());
-        saveIfStillOwned(item);
+        if (!saveIfStillOwned(item)) {
+            return;
+        }
+        if (item.getState() == QuizQuestionPoolItemState.FILTERED) {
+            counters.judged++;
+            if (Boolean.TRUE.equals(item.getAccepted())) {
+                counters.accepted++;
+            }
+            else {
+                counters.rejected++;
+            }
+        }
+        else if (item.getState() == QuizQuestionPoolItemState.FAILED_FILTER) {
+            counters.failed++;
+        }
     }
 
     /**

@@ -12,6 +12,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,15 +47,21 @@ import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.domain.HyperionCourseSettings;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionDifficulty;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolBuild;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolBuildTrigger;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolLectureUnit;
+import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
+import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolBuildRepository;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
+import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolLectureUnitRepository;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolBuildService.Cell;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
@@ -82,6 +90,12 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     private CourseTestRepository courseRepository;
 
     @Mock
+    private QuizQuestionPoolLectureUnitRepository lectureUnitRepository;
+
+    @Mock
+    private QuizQuestionPoolBuildRepository buildRepository;
+
+    @Mock
     private DistributedDataProvider distributedDataProvider;
 
     @Mock
@@ -95,6 +109,8 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
     private AutoCloseable mocks;
 
+    private Course course;
+
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
@@ -104,6 +120,8 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         lenient().when(distributedDataProvider.<Long, String>getMap(HyperionQuizQuestionPoolBuildService.BUILD_LEASES)).thenReturn(leases);
         lenient().when(distributedDataProvider.<Long, HyperionCourseSettings>getMap(HyperionQuizQuestionPoolBuildService.BUILD_SETTINGS)).thenReturn(buildSettings);
         lenient().when(distributedDataProvider.<String, Boolean>getExpiringMap(eq(HyperionQuizQuestionPoolBuildService.BUILD_CANCELLATIONS), any())).thenReturn(cancellations);
+        course = new Course();
+        course.setId(5L);
     }
 
     @AfterEach
@@ -274,7 +292,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         String leaseToken = service.tryStart(5L);
         assertThat(service.requestCancel(5L)).isTrue();
 
-        assertThat(service.build(5L, 7L, leaseToken)).isZero();
+        assertThat(service.build(5L, 7L, leaseToken)).isEqualTo(HyperionQuizQuestionPoolBuildService.BuildOutcome.none());
 
         verify(itemRepository).deleteAllByCourseIdAndState(5L, QuizQuestionPoolItemState.PENDING);
         verify(itemRepository, never()).findAllByCourseIdAndState(anyLong(), any(), any());
@@ -392,6 +410,14 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     }
 
     @Test
+    void constructor_rejectsAnEmptyLease() {
+        assertThatThrownBy(
+                () -> new HyperionQuizQuestionPoolBuildService(null, new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi), filterService,
+                        llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, "", 8, 30, 0))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("build-lease-minutes");
+    }
+
+    @Test
     void tryStart_holdsTheLeaseUntilReleased() {
         HyperionQuizQuestionPoolBuildService service = service();
 
@@ -460,7 +486,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         leases.remove(5L);
         String replacement = service.tryStart(5L);
 
-        service.buildAndRelease(5L, 7L, expired);
+        service.buildAndRelease(5L, 7L, 3L, expired);
 
         assertThat(leases.get(5L)).startsWith(replacement + "|");
         verify(courseRepository, never()).findByIdElseThrow(anyLong());
@@ -473,10 +499,112 @@ class HyperionQuizQuestionPoolBuildServiceTest {
         String expired = service.tryStart(5L);
         leases.remove(5L);
 
-        service.buildAndRelease(5L, 7L, expired);
+        service.buildAndRelease(5L, 7L, 3L, expired);
 
         verify(courseRepository).findByIdElseThrow(5L);
         assertThat(service.isRunning(5L)).isFalse();
+    }
+
+    @Test
+    void recordStart_storesTheTriggerAndTheEnqueuedCount() {
+        HyperionQuizQuestionPoolBuildService service = service();
+        when(buildRepository.save(any(QuizQuestionPoolBuild.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        QuizQuestionPoolBuild build = service.recordStart(course, QuizQuestionPoolBuildTrigger.SCHEDULED, 12);
+
+        assertThat(build.getCourse()).isSameAs(course);
+        assertThat(build.getTrigger()).isEqualTo(QuizQuestionPoolBuildTrigger.SCHEDULED);
+        assertThat(build.getEnqueued()).isEqualTo(12);
+        assertThat(build.getFinishedAt()).isNull();
+    }
+
+    @Test
+    void enqueue_recordsNewUnitsAndFillsTheirCells() {
+        HyperionQuizQuestionPoolBuildService service = service();
+        TextUnit unit = textUnit(4L);
+        stubCompetencyWithUnit(9L, unit, "fp-1");
+        when(lectureUnitRepository.findAllByCourseId(5L)).thenReturn(List.of());
+
+        int created = service.enqueue(course);
+
+        assertThat(created).isEqualTo(12);
+        ArgumentCaptor<Collection<QuizQuestionPoolLectureUnit>> records = ArgumentCaptor.captor();
+        verify(lectureUnitRepository).saveAll(records.capture());
+        assertThat(records.getValue()).singleElement().satisfies(record -> {
+            assertThat(record.getLectureUnitId()).isEqualTo(4L);
+            assertThat(record.getFingerprint()).isEqualTo("fp-1");
+            assertThat(record.isExcluded()).isFalse();
+            assertThat(record.getLastBuiltAt()).isNotNull();
+        });
+        ArgumentCaptor<List<QuizQuestionPoolItem>> items = ArgumentCaptor.captor();
+        verify(itemRepository).saveAll(items.capture());
+        assertThat(items.getValue()).hasSize(12).allSatisfy(item -> {
+            assertThat(item.getCompetencyId()).isEqualTo(9L);
+            assertThat(item.getLectureUnitId()).isEqualTo(4L);
+        });
+        verify(itemRepository, never()).deleteAllByLectureUnitExceptReviewState(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void enqueue_replacesUnreviewedAndFlagsApprovedItemsOfAChangedUnit() {
+        HyperionQuizQuestionPoolBuildService service = service();
+        TextUnit unit = textUnit(4L);
+        stubCompetencyWithUnit(9L, unit, "fp-2");
+        QuizQuestionPoolLectureUnit record = record(4L, "fp-1", false);
+        when(lectureUnitRepository.findAllByCourseId(5L)).thenReturn(List.of(record));
+
+        service.enqueue(course);
+
+        verify(itemRepository).deleteAllByLectureUnitExceptReviewState(5L, 4L, QuizQuestionReviewState.APPROVED);
+        verify(itemRepository).markMaterialChangedByLectureUnit(eq(5L), eq(4L), any(ZonedDateTime.class));
+        assertThat(record.getFingerprint()).isEqualTo("fp-2");
+    }
+
+    @Test
+    void enqueue_leavesAnUnchangedUnitAlone() {
+        HyperionQuizQuestionPoolBuildService service = service();
+        TextUnit unit = textUnit(4L);
+        stubCompetencyWithUnit(9L, unit, "fp-1");
+        when(lectureUnitRepository.findAllByCourseId(5L)).thenReturn(List.of(record(4L, "fp-1", false)));
+        when(itemRepository.countByCellForCourse(5L)).thenReturn(List
+                .of(new QuizQuestionPoolCellCountDTO(9L, 4L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.MEDIUM, 12, 11)));
+
+        int created = service.enqueue(course);
+
+        assertThat(created).isZero();
+        verify(itemRepository, never()).deleteAllByLectureUnitExceptReviewState(anyLong(), anyLong(), any());
+        verify(itemRepository, never()).markMaterialChangedByLectureUnit(anyLong(), anyLong(), any());
+    }
+
+    @Test
+    void enqueue_numbersReplacementItemsAfterTheFlaggedOnes() {
+        HyperionQuizQuestionPoolBuildService service = service();
+        TextUnit unit = textUnit(4L);
+        stubCompetencyWithUnit(9L, unit, "fp-1");
+        when(lectureUnitRepository.findAllByCourseId(5L)).thenReturn(List.of(record(4L, "fp-1", false)));
+        when(itemRepository.countByCellForCourse(5L)).thenReturn(List
+                .of(new QuizQuestionPoolCellCountDTO(9L, 4L, QuizQuestionGenerationLanguage.EN, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.MEDIUM, 0, 11)));
+
+        int created = service.enqueue(course);
+
+        ArgumentCaptor<List<QuizQuestionPoolItem>> saved = ArgumentCaptor.captor();
+        verify(itemRepository).saveAll(saved.capture());
+        assertThat(created).isEqualTo(12);
+        assertThat(saved.getValue()).extracting(QuizQuestionPoolItem::getItemIndex).containsExactly(12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23);
+    }
+
+    @Test
+    void enqueue_dropsUnreviewedItemsOfAnExcludedUnitAndCreatesNoCells() {
+        HyperionQuizQuestionPoolBuildService service = service();
+        TextUnit unit = textUnit(4L);
+        stubCompetencyWithUnit(9L, unit, "fp-1");
+        when(lectureUnitRepository.findAllByCourseId(5L)).thenReturn(List.of(record(4L, "fp-1", true)));
+
+        int created = service.enqueue(course);
+
+        assertThat(created).isZero();
+        verify(itemRepository).deleteAllByLectureUnitExceptReviewState(5L, 4L, QuizQuestionReviewState.APPROVED);
+        verify(itemRepository, never()).markMaterialChangedByLectureUnit(anyLong(), anyLong(), any());
     }
 
     @Test
@@ -537,13 +665,44 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     }
 
     @Test
-    void buildAndRelease_freesTheSlotWhenTheBuildFails() {
+    void buildAndRelease_recordsTheFailureAndReleasesTheLease() {
         HyperionQuizQuestionPoolBuildService service = service();
+        QuizQuestionPoolBuild build = new QuizQuestionPoolBuild();
+        build.setId(3L);
+        when(buildRepository.findById(3L)).thenReturn(Optional.of(build));
         String leaseToken = service.tryStart(5L);
 
-        service.buildAndRelease(5L, 7L, leaseToken);
+        service.buildAndRelease(5L, 7L, 3L, leaseToken);
 
         assertThat(service.isRunning(5L)).isFalse();
+        assertThat(build.getFinishedAt()).isNotNull();
+        assertThat(build.getFailure()).contains("AI chat client is not configured");
+        verify(buildRepository).save(build);
+    }
+
+    private void stubCompetencyWithUnit(long competencyId, TextUnit unit, String fingerprint) {
+        Competency competency = new Competency();
+        competency.setId(competencyId);
+        when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.of(competency));
+        when(materialService.findGroundableUnits(List.of(competencyId))).thenReturn(Map.of(competencyId, List.of(unit)));
+        lenient().when(materialService.fingerprintOf(unit)).thenReturn(fingerprint);
+        when(settingsService.getSettings(5L)).thenReturn(new HyperionCourseSettings(false, 12, false, 12, 1, 4, 0, 100, 0));
+    }
+
+    private static TextUnit textUnit(long id) {
+        TextUnit unit = new TextUnit();
+        unit.setId(id);
+        unit.setContent("content");
+        return unit;
+    }
+
+    private QuizQuestionPoolLectureUnit record(long lectureUnitId, String fingerprint, boolean excluded) {
+        QuizQuestionPoolLectureUnit record = new QuizQuestionPoolLectureUnit();
+        record.setCourse(course);
+        record.setLectureUnitId(lectureUnitId);
+        record.setFingerprint(fingerprint);
+        record.setExcluded(excluded);
+        return record;
     }
 
     private static QuizQuestionPoolItem item(long id, QuizQuestionGenerationType type) {
@@ -580,11 +739,12 @@ class HyperionQuizQuestionPoolBuildServiceTest {
 
     private HyperionQuizQuestionPoolBuildService service() {
         return new HyperionQuizQuestionPoolBuildService(null, new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi), filterService,
-                llmTokenUsageService, itemRepository, settingsService, courseRepository, distributedDataProvider, "", 8, 30, 10);
+                llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, "", 8, 30, 10);
     }
 
     private HyperionQuizQuestionPoolBuildService serviceWithChatClient() {
         return new HyperionQuizQuestionPoolBuildService(ChatClient.create(chatModel), new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi),
-                filterService, llmTokenUsageService, itemRepository, settingsService, courseRepository, distributedDataProvider, "", 8, 30, 10);
+                filterService, llmTokenUsageService, itemRepository, settingsService, courseRepository, lectureUnitRepository, buildRepository, distributedDataProvider, "", 8, 30,
+                10);
     }
 }

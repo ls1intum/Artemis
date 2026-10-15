@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitCountDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
 
 /**
@@ -165,14 +166,15 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
     List<Long> findCompetencyIdsForCourse(@Param("courseId") long courseId);
 
     /**
-     * Counts the items of a course per cell. Cells without items are absent from the result.
+     * Counts the items of a course per cell whose material is unchanged, together with the highest index any item of the cell uses.
+     * Cells without items are absent from the result.
      *
      * @param courseId the course
-     * @return one count per cell that holds at least one item
+     * @return one entry per cell that holds at least one item
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolCellCountDTO(item.competencyId, item.lectureUnitId, item.language, item.questionType, item.difficulty,
-                COUNT(item), MAX(item.itemIndex))
+                SUM(CASE WHEN item.materialChanged = FALSE THEN 1 ELSE 0 END), MAX(item.itemIndex))
             FROM QuizQuestionPoolItem item
             WHERE item.course.id = :courseId
             GROUP BY item.competencyId, item.lectureUnitId, item.language, item.questionType, item.difficulty
@@ -296,4 +298,47 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
             WHERE item.id = :itemId
             """)
     int updateReviewState(@Param("itemId") long itemId, @Param("reviewState") QuizQuestionReviewState reviewState, @Param("now") ZonedDateTime now);
+
+    /**
+     * Deletes the items of a lecture unit that do not carry the given review state, so that approved items can be kept while the rest goes.
+     *
+     * @param courseId      the course
+     * @param lectureUnitId the lecture unit
+     * @param reviewState   the review state that spares an item
+     * @return the number of deleted items
+     */
+    @Modifying
+    @Transactional // ok because of the delete
+    @Query("""
+            DELETE FROM QuizQuestionPoolItem item
+            WHERE item.course.id = :courseId AND item.lectureUnitId = :lectureUnitId AND item.reviewState <> :reviewState
+            """)
+    int deleteAllByLectureUnitExceptReviewState(@Param("courseId") long courseId, @Param("lectureUnitId") long lectureUnitId,
+            @Param("reviewState") QuizQuestionReviewState reviewState);
+
+    /**
+     * Flags the remaining items of a lecture unit as generated from material that has changed since.
+     *
+     * @param courseId      the course
+     * @param lectureUnitId the lecture unit
+     * @param now           the update time
+     * @return the number of flagged items
+     */
+    @Modifying
+    @Transactional // ok because of the update
+    @Query("""
+            UPDATE QuizQuestionPoolItem item
+            SET item.materialChanged = TRUE, item.updatedAt = :now, item.version = item.version + 1
+            WHERE item.course.id = :courseId AND item.lectureUnitId = :lectureUnitId AND item.materialChanged = FALSE
+            """)
+    int markMaterialChangedByLectureUnit(@Param("courseId") long courseId, @Param("lectureUnitId") long lectureUnitId, @Param("now") ZonedDateTime now);
+
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitCountDTO(item.lectureUnitId, COUNT(item),
+                SUM(CASE WHEN item.reviewState = :approved THEN 1 ELSE 0 END), SUM(CASE WHEN item.materialChanged = TRUE THEN 1 ELSE 0 END))
+            FROM QuizQuestionPoolItem item
+            WHERE item.course.id = :courseId
+            GROUP BY item.lectureUnitId
+            """)
+    List<QuizQuestionPoolLectureUnitCountDTO> countByLectureUnitForCourse(@Param("courseId") long courseId, @Param("approved") QuizQuestionReviewState approved);
 }
