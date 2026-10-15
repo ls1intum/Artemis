@@ -19,10 +19,12 @@ import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.IngestionCoverageExpectedIdsRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureVideoCoverageApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitVideoSourceDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -47,6 +49,9 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
 
     @Autowired
     private LectureUnitRepository lectureUnitRepository;
+
+    @Autowired
+    private LectureVideoCoverageApi lectureVideoCoverageApi;
 
     @Autowired
     private ExerciseRepository exerciseRepository;
@@ -113,6 +118,8 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
 
     private AttachmentVideoUnit tutorialVideoUnit;
 
+    private AttachmentVideoUnit unsupportedVideoUnit;
+
     @BeforeEach
     void setUp() {
         ZonedDateTime past = ZonedDateTime.now().minusDays(1);
@@ -125,7 +132,7 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
 
         textUnit = lectureUtilService.createTextUnit(lectureA);
         onlineUnit = lectureUtilService.createOnlineUnit(lectureA);
-        videoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, lectureA, null, "https://video.example/lecture-a");
+        videoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, lectureA, null, "https://www.youtube.com/watch?v=lectureA001");
         // A whitespace-only video source is treated as absent by the content-processing trigger, so it must not appear in
         // the video expected set.
         blankVideoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, lectureA, null, "   ");
@@ -155,7 +162,8 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
         Lecture tutorialLectureC = createTutorialLecture(courseC);
         tutorialPdfUnit = seedUnitWithAttachment(attachmentVideoUnitRepository, attachmentRepository, tutorialLectureC, null, "attachments/attachment-unit/tutorial.pdf",
                 AttachmentType.FILE);
-        tutorialVideoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, tutorialLectureC, null, "https://video.example/tutorial");
+        tutorialVideoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, tutorialLectureC, null, "https://www.youtube.com/watch?v=tutorial001");
+        unsupportedVideoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, lectureC, null, "https://vimeo.com/123456");
     }
 
     @Test
@@ -180,11 +188,24 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
 
     @Test
     void findsOnlyUnitsWithNonBlankVideoSource() {
-        List<CourseEntityIdDTO> result = lectureUnitRepository.findUnitIdCourseIdPairsWithVideoForCourses(List.of(courseAId));
+        List<CourseEntityIdDTO> result = lectureVideoCoverageApi.findUnitIdCourseIdPairsWithSupportedVideoForCourses(List.of(courseAId));
 
         assertThat(result).containsExactly(new CourseEntityIdDTO(courseAId, videoUnit.getId()));
         // The whitespace-only source and the PDF/attachment units must not be reported as expecting a transcript.
         assertThat(result).doesNotContain(new CourseEntityIdDTO(courseAId, blankVideoUnit.getId()), new CourseEntityIdDTO(courseAId, pdfUnit.getId()));
+    }
+
+    /**
+     * Iris transcribes only videos from a supported source. A link to any other video page is never transcribed, so expecting a transcript for it
+     * would report the unit missing permanently.
+     */
+    @Test
+    void excludesUnsupportedVideoSourcesFromVideoExpectations() {
+        List<CourseEntityIdDTO> result = lectureVideoCoverageApi.findUnitIdCourseIdPairsWithSupportedVideoForCourses(List.of(courseCId));
+
+        assertThat(result).doesNotContain(new CourseEntityIdDTO(courseCId, unsupportedVideoUnit.getId()));
+        assertThat(lectureUnitRepository.findVideoSourcesForCourses(List.of(courseCId))).as("the query itself still returns the unit, the source rule is applied after it")
+                .extracting(LectureUnitVideoSourceDTO::unitId).contains(unsupportedVideoUnit.getId());
     }
 
     /**
@@ -214,7 +235,7 @@ class IngestionCoverageExpectedSetTest extends AbstractSpringIntegrationIndepend
     /** A tutorial lecture's video is not ingested either, so its unit must not be expected to have a transcript. */
     @Test
     void excludesTutorialLectureVideosFromVideoExpectations() {
-        List<CourseEntityIdDTO> result = lectureUnitRepository.findUnitIdCourseIdPairsWithVideoForCourses(List.of(courseCId));
+        List<CourseEntityIdDTO> result = lectureVideoCoverageApi.findUnitIdCourseIdPairsWithSupportedVideoForCourses(List.of(courseCId));
 
         assertThat(result).doesNotContain(new CourseEntityIdDTO(courseCId, tutorialVideoUnit.getId()));
     }

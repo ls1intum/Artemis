@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.course.dto.CourseContentAvailabilityDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForOverviewDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseForRoleAssignmentDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseForSearchFilterDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestInstructorCourseRowDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -770,6 +771,29 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long>, Jp
                )
             """)
     List<Course> findAllAccessibleCoursesForUser(@Param("userId") Long userId, @Param("isAdmin") boolean isAdmin);
+
+    /**
+     * Finds the same courses as {@link #findAllAccessibleCoursesForUser}, active and past alike, as the id, title and
+     * active flag the global search course filter needs, without loading the course entities.
+     *
+     * @param userId  the id of the user
+     * @param isAdmin whether the user is an admin
+     * @param now     the current time, deciding which courses have ended
+     * @return the courses accessible to the user
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.course.dto.CourseForSearchFilterDTO(
+                c.id, c.title,
+                CASE WHEN c.endDate IS NULL OR c.endDate >= :now THEN TRUE ELSE FALSE END
+            )
+            FROM Course c
+            WHERE :isAdmin = TRUE
+               OR EXISTS (
+                   SELECT ucr FROM UserCourseRole ucr
+                   WHERE ucr.course.id = c.id AND ucr.user.id = :userId
+               )
+            """)
+    List<CourseForSearchFilterDTO> findAllAccessibleCoursesForSearchFilter(@Param("userId") long userId, @Param("isAdmin") boolean isAdmin, @Param("now") ZonedDateTime now);
 
     /**
      * Finds the courses among the requested ids where the user has any role (student, TA, editor, or instructor).

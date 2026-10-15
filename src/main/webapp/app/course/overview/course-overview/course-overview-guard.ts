@@ -3,7 +3,7 @@ import { ActivatedRouteSnapshot, CanActivate, Router, UrlTree } from '@angular/r
 import { Observable, catchError, map, of } from 'rxjs';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
 import { CourseAvailableTabsService } from 'app/course/overview/services/course-available-tabs.service';
-import { CourseOverviewRoutePath } from 'app/course/overview/courses.route';
+import { CourseOverviewRoutePath } from 'app/course/overview/course-overview-route-path';
 
 @Service()
 export class CourseOverviewGuard implements CanActivate {
