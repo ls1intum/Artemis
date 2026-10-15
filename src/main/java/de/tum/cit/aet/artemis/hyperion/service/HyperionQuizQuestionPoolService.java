@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolLectureUnitDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
@@ -356,6 +357,16 @@ public class HyperionQuizQuestionPoolService {
         List<QuizQuestionPoolItemDTO> questions = selection.items().stream().map(item -> toDTO(item, titles.get(item.getCompetencyId()), unitNames.get(item.getLectureUnitId())))
                 .toList();
         return new QuizQuestionPoolSelectionDTO(questions, request.count(), selection.competencyIdsWithoutQuestions());
+    }
+
+    /**
+     * Counts the questions a draw may take, per competency, lecture unit, question type and difficulty.
+     *
+     * @param courseId the course
+     * @return one count per cell that holds such questions
+     */
+    public List<QuizQuestionPoolSelectionCandidateDTO> getSelectionCandidates(long courseId) {
+        return selectionService.candidates(courseId);
     }
 
     private Map<Long, String> unitNamesOf(List<QuizQuestionPoolItem> items) {

@@ -87,6 +87,31 @@
                     "competency": "Kompetenz",
                     "allCompetencies": "Alle Kompetenzen"
                 },
+                "createQuiz": {
+                    "button": "Quiz aus dem Pool erstellen",
+                    "title": "Quiz aus dem Pool erstellen",
+                    "intro": "Zieht übernommene Fragen, verteilt über die gewählten Kompetenzen, Vorlesungseinheiten, Fragetypen und Schwierigkeiten, und öffnet sie in einem neuen Quiz. Am seltensten gezogene Fragen kommen zuerst, sodass wiederholte Quizze durch den Pool rotieren.",
+                    "competencies": "Kompetenzen",
+                    "competenciesPlaceholder": "Kompetenzen wählen",
+                    "lectureUnits": "Vorlesungseinheiten",
+                    "lectureUnitsPlaceholder": "Alle Vorlesungseinheiten der gewählten Kompetenzen",
+                    "count": "Anzahl Fragen",
+                    "questionTypes": "Fragetypen",
+                    "questionTypesPlaceholder": "Alle Typen",
+                    "difficulties": "Schwierigkeiten",
+                    "difficultiesPlaceholder": "Alle Schwierigkeiten",
+                    "available": "{{ count }} übernommene Fragen passen zur Auswahl.",
+                    "submit": "Im Quiz-Editor öffnen",
+                    "cancel": "Abbrechen",
+                    "none": "Keine übernommenen Fragen passen zur Auswahl. Übernimm Fragen oder erweitere die Auswahl.",
+                    "fewer": "Nur {{ selected }} der {{ requested }} angeforderten Fragen waren verfügbar. Der Quiz-Editor wurde mit diesen geöffnet.",
+                    "failed": "Die Fragen konnten nicht gezogen werden.",
+                    "types": {
+                        "single-choice": "Single Choice",
+                        "multiple-choice": "Multiple Choice",
+                        "true-false": "Richtig oder falsch"
+                    }
+                },
                 "list": {
                     "needsReview": "Prüfung empfohlen ({{ count }})",
                     "needsReviewHint": "Diese Fragen haben den Filter bestanden, wurden aber in mindestens einem Kriterium markiert. Prüfe sie, bevor du sie übernimmst.",

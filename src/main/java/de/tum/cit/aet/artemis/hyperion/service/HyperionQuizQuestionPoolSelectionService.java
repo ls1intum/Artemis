@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItem;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionPoolItemState;
 import de.tum.cit.aet.artemis.hyperion.domain.QuizQuestionReviewState;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
 
@@ -80,6 +81,17 @@ public class HyperionQuizQuestionPoolSelectionService {
         itemRepository.saveAll(drawn);
         List<Long> empty = competencyIds.stream().filter(competencyId -> eligible.stream().noneMatch(item -> item.getCompetencyId().equals(competencyId))).toList();
         return new Selection(drawn, empty);
+    }
+
+    /**
+     * Counts the questions a draw may take, per competency, lecture unit, question type and difficulty: approved, judged questions whose
+     * material has not changed.
+     *
+     * @param courseId the course
+     * @return one count per cell that holds such questions
+     */
+    public List<QuizQuestionPoolSelectionCandidateDTO> candidates(long courseId) {
+        return itemRepository.countSelectionCandidates(courseId, QuizQuestionPoolItemState.FILTERED, QuizQuestionReviewState.APPROVED);
     }
 
     private static <T> boolean matches(@Nullable Collection<T> wanted, T value) {

@@ -87,6 +87,31 @@
                     "competency": "Competency",
                     "allCompetencies": "All competencies"
                 },
+                "createQuiz": {
+                    "button": "Create quiz from pool",
+                    "title": "Create a quiz from the pool",
+                    "intro": "Draws approved questions spread over the chosen competencies, lecture units, question types and difficulties, and opens them in a new quiz. Questions drawn least often come first, so repeated quizzes rotate through the pool.",
+                    "competencies": "Competencies",
+                    "competenciesPlaceholder": "Choose competencies",
+                    "lectureUnits": "Lecture units",
+                    "lectureUnitsPlaceholder": "All lecture units of the chosen competencies",
+                    "count": "Number of questions",
+                    "questionTypes": "Question types",
+                    "questionTypesPlaceholder": "All types",
+                    "difficulties": "Difficulties",
+                    "difficultiesPlaceholder": "All difficulties",
+                    "available": "{{ count }} approved questions match the selection.",
+                    "submit": "Open in quiz editor",
+                    "cancel": "Cancel",
+                    "none": "No approved questions match the selection. Approve questions or widen the selection.",
+                    "fewer": "Only {{ selected }} of the {{ requested }} requested questions were available. The quiz editor opened with those.",
+                    "failed": "The questions could not be drawn.",
+                    "types": {
+                        "single-choice": "Single choice",
+                        "multiple-choice": "Multiple choice",
+                        "true-false": "True or false"
+                    }
+                },
                 "list": {
                     "needsReview": "Needs review ({{ count }})",
                     "needsReviewHint": "These questions passed the filter but were flagged on at least one criterion. Check them before approving.",

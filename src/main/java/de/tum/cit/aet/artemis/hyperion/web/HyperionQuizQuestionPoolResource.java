@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPageDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolPlanDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolReviewDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionCandidateDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolSelectionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolService;
@@ -279,6 +280,21 @@ public class HyperionQuizQuestionPoolResource {
         courseRepository.findByIdElseThrow(courseId);
         poolService.updateLectureUnitRelevance(courseId, lectureUnitId, relevance.excluded());
         return ResponseEntity.ok(relevance);
+    }
+
+    /**
+     * GET /courses/{courseId}/quiz-question-pool/selection-candidates : Count the questions a draw may take, per competency, lecture
+     * unit, question type and difficulty.
+     *
+     * @param courseId the id of the course
+     * @return one count per cell that holds approved, judged questions with current material
+     */
+    @EnforceAtLeastEditorInCourse
+    @GetMapping("courses/{courseId}/quiz-question-pool/selection-candidates")
+    public ResponseEntity<List<QuizQuestionPoolSelectionCandidateDTO>> getQuizQuestionPoolSelectionCandidates(@PathVariable long courseId) {
+        log.debug("REST request to count the questions a draw may take from the Hyperion quiz question pool of course [{}]", courseId);
+        courseRepository.findByIdElseThrow(courseId);
+        return ResponseEntity.ok(poolService.getSelectionCandidates(courseId));
     }
 
     /**
