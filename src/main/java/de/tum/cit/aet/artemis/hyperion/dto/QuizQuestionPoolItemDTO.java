@@ -22,6 +22,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record QuizQuestionPoolItemDTO(@NotNull @Schema(description = "Id of the pool item") Long id,
         @NotNull @Schema(description = "Id of the competency the question assesses") Long competencyId,
         @Schema(description = "Title of the competency the question assesses") @Nullable String competencyTitle,
+        @NotNull @Schema(description = "Id of the lecture unit the question is grounded in") Long lectureUnitId,
+        @Schema(description = "Name of the lecture unit the question is grounded in") @Nullable String lectureUnitName,
         @NotNull @Schema(description = "Language of the question") QuizQuestionGenerationLanguage language,
         @NotNull @Schema(description = "Type of the question") QuizQuestionGenerationType questionType,
         @NotNull @Schema(description = "Difficulty band of the question") QuizQuestionDifficulty difficulty,

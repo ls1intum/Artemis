@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,6 +31,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 
 class HyperionQuizQuestionPoolServiceTest {
 
@@ -48,6 +51,9 @@ class HyperionQuizQuestionPoolServiceTest {
     @Mock
     private CourseCompetencyApi courseCompetencyApi;
 
+    @Mock
+    private LectureUnitApi lectureUnitApi;
+
     private HyperionQuizQuestionPoolService service;
 
     private AutoCloseable mocks;
@@ -57,7 +63,7 @@ class HyperionQuizQuestionPoolServiceTest {
     @BeforeEach
     void setup() {
         mocks = MockitoAnnotations.openMocks(this);
-        service = new HyperionQuizQuestionPoolService(buildService, taskService, itemRepository, settingsService, Optional.of(courseCompetencyApi));
+        service = new HyperionQuizQuestionPoolService(buildService, taskService, itemRepository, settingsService, Optional.of(courseCompetencyApi), Optional.of(lectureUnitApi));
         course = new Course();
         course.setId(5L);
     }
@@ -115,15 +121,20 @@ class HyperionQuizQuestionPoolServiceTest {
     }
 
     @Test
-    void getItems_mapsItemsWithTheirCompetencyTitles() {
+    void getItems_mapsItemsWithTheirCompetencyTitlesAndLectureUnitNames() {
         Competency competency = new Competency();
         competency.setId(9L);
         competency.setTitle("Arrays");
         when(courseCompetencyApi.findAllForCourse(5L)).thenReturn(Set.of(competency));
+        TextUnit unit = new TextUnit();
+        unit.setId(4L);
+        unit.setName("Arrays in Java");
+        when(lectureUnitApi.findAllByIds(anyCollection())).thenReturn(List.of(unit));
         QuizQuestionPoolItem item = new QuizQuestionPoolItem();
         item.setId(1L);
         item.setCourse(course);
         item.setCompetencyId(9L);
+        item.setLectureUnitId(4L);
         item.setLanguage(QuizQuestionGenerationLanguage.EN);
         item.setQuestionType(QuizQuestionGenerationType.SINGLE_CHOICE);
         item.setDifficulty(QuizQuestionDifficulty.MEDIUM);
@@ -134,6 +145,8 @@ class HyperionQuizQuestionPoolServiceTest {
 
         assertThat(items).hasSize(1);
         assertThat(items.getFirst().competencyTitle()).isEqualTo("Arrays");
+        assertThat(items.getFirst().lectureUnitId()).isEqualTo(4L);
+        assertThat(items.getFirst().lectureUnitName()).isEqualTo("Arrays in Java");
         assertThat(items.getFirst().state()).isEqualTo(QuizQuestionPoolItemState.PENDING);
         verify(itemRepository, never()).findAllByCourseIdOrdered(5L);
     }
@@ -144,5 +157,6 @@ class HyperionQuizQuestionPoolServiceTest {
         when(itemRepository.findAllByCourseIdOrdered(5L)).thenReturn(List.of());
 
         assertThat(service.getItems(5L, null)).isEmpty();
+        verify(lectureUnitApi, never()).findAllByIds(anyCollection());
     }
 }

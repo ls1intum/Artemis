@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,9 +25,11 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolStateCountDTO;
 import de.tum.cit.aet.artemis.hyperion.repository.QuizQuestionPoolItemRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
- * Starts pool builds and answers what the pool page shows: progress, the items with their decisions, and the course's settings.
+ * Starts pool builds and answers what the pool page shows: progress, the items with their decisions and lecture units, and the course's settings.
  */
 @Service
 @Lazy
@@ -43,13 +46,17 @@ public class HyperionQuizQuestionPoolService {
 
     private final Optional<CourseCompetencyApi> courseCompetencyApi;
 
+    private final Optional<LectureUnitApi> lectureUnitApi;
+
     public HyperionQuizQuestionPoolService(HyperionQuizQuestionPoolBuildService buildService, HyperionQuizQuestionPoolTaskService taskService,
-            QuizQuestionPoolItemRepository itemRepository, HyperionCourseSettingsService settingsService, Optional<CourseCompetencyApi> courseCompetencyApi) {
+            QuizQuestionPoolItemRepository itemRepository, HyperionCourseSettingsService settingsService, Optional<CourseCompetencyApi> courseCompetencyApi,
+            Optional<LectureUnitApi> lectureUnitApi) {
         this.buildService = buildService;
         this.taskService = taskService;
         this.itemRepository = itemRepository;
         this.settingsService = settingsService;
         this.courseCompetencyApi = courseCompetencyApi;
+        this.lectureUnitApi = lectureUnitApi;
     }
 
     /**
@@ -109,7 +116,22 @@ public class HyperionQuizQuestionPoolService {
                 : itemRepository.findAllByCourseIdAndCompetencyIdOrdered(courseId, competencyId);
         Map<Long, String> titles = courseCompetencyApi.map(api -> api.findAllForCourse(courseId)).orElse(Set.of()).stream()
                 .collect(Collectors.toMap(CourseCompetency::getId, CourseCompetency::getTitle, (first, second) -> first));
-        return items.stream().map(item -> toDTO(item, titles.get(item.getCompetencyId()))).toList();
+        Map<Long, String> unitNames = unitNamesOf(items);
+        return items.stream().map(item -> toDTO(item, titles.get(item.getCompetencyId()), unitNames.get(item.getLectureUnitId()))).toList();
+    }
+
+    private Map<Long, String> unitNamesOf(List<QuizQuestionPoolItem> items) {
+        Set<Long> unitIds = items.stream().map(QuizQuestionPoolItem::getLectureUnitId).collect(Collectors.toSet());
+        if (unitIds.isEmpty() || lectureUnitApi.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, String> names = new HashMap<>();
+        for (LectureUnit unit : lectureUnitApi.get().findAllByIds(unitIds)) {
+            if (unit.getName() != null) {
+                names.put(unit.getId(), unit.getName());
+            }
+        }
+        return names;
     }
 
     /**
@@ -133,8 +155,9 @@ public class HyperionQuizQuestionPoolService {
         return HyperionCourseSettingsDTO.of(settingsService.updateSettings(courseId, settings.toSettings()));
     }
 
-    private static QuizQuestionPoolItemDTO toDTO(QuizQuestionPoolItem item, @Nullable String competencyTitle) {
-        return new QuizQuestionPoolItemDTO(item.getId(), item.getCompetencyId(), competencyTitle, item.getLanguage(), item.getQuestionType(), item.getDifficulty(), item.getState(),
-                item.getReviewState(), item.getQuestion(), item.getDecision(), item.getFailure(), item.getGeneratorModel(), item.getJudgeModel(), item.getUpdatedAt());
+    private static QuizQuestionPoolItemDTO toDTO(QuizQuestionPoolItem item, @Nullable String competencyTitle, @Nullable String lectureUnitName) {
+        return new QuizQuestionPoolItemDTO(item.getId(), item.getCompetencyId(), competencyTitle, item.getLectureUnitId(), lectureUnitName, item.getLanguage(),
+                item.getQuestionType(), item.getDifficulty(), item.getState(), item.getReviewState(), item.getQuestion(), item.getDecision(), item.getFailure(),
+                item.getGeneratorModel(), item.getJudgeModel(), item.getUpdatedAt());
     }
 }

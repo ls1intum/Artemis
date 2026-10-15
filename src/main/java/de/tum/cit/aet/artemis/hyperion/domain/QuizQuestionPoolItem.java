@@ -26,8 +26,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 /**
  * One intended question of a course's quiz question pool.
  * <p>
- * The pool is a grid of cells, one per combination of competency, language, question type and difficulty, and each cell holds a
- * fixed number of items numbered by {@code itemIndex}. An item is created in state {@link QuizQuestionPoolItemState#PENDING} and
+ * The pool is a grid of cells, one per combination of competency, lecture unit linked to that competency, language, question type
+ * and difficulty, and each cell holds a fixed number of items numbered by {@code itemIndex}. An item is created in state {@link QuizQuestionPoolItemState#PENDING} and
  * carries its generated question once generated and the filter's decision once judged.
  */
 @Entity
@@ -41,6 +41,9 @@ public class QuizQuestionPoolItem extends DomainObject {
 
     @Column(name = "competency_id", nullable = false)
     private Long competencyId;
+
+    @Column(name = "lecture_unit_id", nullable = false)
+    private Long lectureUnitId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "language", nullable = false)
@@ -120,6 +123,14 @@ public class QuizQuestionPoolItem extends DomainObject {
 
     public void setCompetencyId(Long competencyId) {
         this.competencyId = competencyId;
+    }
+
+    public Long getLectureUnitId() {
+        return lectureUnitId;
+    }
+
+    public void setLectureUnitId(Long lectureUnitId) {
+        this.lectureUnitId = lectureUnitId;
     }
 
     public QuizQuestionGenerationLanguage getLanguage() {

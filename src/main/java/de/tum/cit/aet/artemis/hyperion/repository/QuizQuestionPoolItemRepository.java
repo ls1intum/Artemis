@@ -36,7 +36,7 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
             SELECT item
             FROM QuizQuestionPoolItem item
             WHERE item.course.id = :courseId
-            ORDER BY item.competencyId, item.language, item.questionType, item.difficulty, item.itemIndex
+            ORDER BY item.competencyId, item.lectureUnitId, item.language, item.questionType, item.difficulty, item.itemIndex
             """)
     List<QuizQuestionPoolItem> findAllByCourseIdOrdered(@Param("courseId") long courseId);
 
@@ -44,18 +44,19 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
             SELECT item
             FROM QuizQuestionPoolItem item
             WHERE item.course.id = :courseId AND item.competencyId = :competencyId
-            ORDER BY item.language, item.questionType, item.difficulty, item.itemIndex
+            ORDER BY item.lectureUnitId, item.language, item.questionType, item.difficulty, item.itemIndex
             """)
     List<QuizQuestionPoolItem> findAllByCourseIdAndCompetencyIdOrdered(@Param("courseId") long courseId, @Param("competencyId") long competencyId);
 
     @Query("""
             SELECT COUNT(item)
             FROM QuizQuestionPoolItem item
-            WHERE item.course.id = :courseId AND item.competencyId = :competencyId AND item.language = :language
+            WHERE item.course.id = :courseId AND item.competencyId = :competencyId AND item.lectureUnitId = :lectureUnitId AND item.language = :language
                 AND item.questionType = :questionType AND item.difficulty = :difficulty
             """)
-    int countInCell(@Param("courseId") long courseId, @Param("competencyId") long competencyId, @Param("language") QuizQuestionGenerationLanguage language,
-            @Param("questionType") QuizQuestionGenerationType questionType, @Param("difficulty") QuizQuestionDifficulty difficulty);
+    int countInCell(@Param("courseId") long courseId, @Param("competencyId") long competencyId, @Param("lectureUnitId") long lectureUnitId,
+            @Param("language") QuizQuestionGenerationLanguage language, @Param("questionType") QuizQuestionGenerationType questionType,
+            @Param("difficulty") QuizQuestionDifficulty difficulty);
 
     /**
      * Finds the items of a course in a state, ordered by cell and index, so the first result names the next cell to work on.
@@ -69,18 +70,18 @@ public interface QuizQuestionPoolItemRepository extends ArtemisJpaRepository<Qui
             SELECT item
             FROM QuizQuestionPoolItem item
             WHERE item.course.id = :courseId AND item.state = :state
-            ORDER BY item.competencyId, item.language, item.questionType, item.difficulty, item.itemIndex
+            ORDER BY item.competencyId, item.lectureUnitId, item.language, item.questionType, item.difficulty, item.itemIndex
             """)
     List<QuizQuestionPoolItem> findAllByCourseIdAndState(@Param("courseId") long courseId, @Param("state") QuizQuestionPoolItemState state, Pageable pageable);
 
     @Query("""
             SELECT item
             FROM QuizQuestionPoolItem item
-            WHERE item.course.id = :courseId AND item.competencyId = :competencyId AND item.language = :language
+            WHERE item.course.id = :courseId AND item.competencyId = :competencyId AND item.lectureUnitId = :lectureUnitId AND item.language = :language
                 AND item.questionType = :questionType AND item.difficulty = :difficulty AND item.state = :state
             ORDER BY item.itemIndex
             """)
-    List<QuizQuestionPoolItem> findAllInCellWithState(@Param("courseId") long courseId, @Param("competencyId") long competencyId,
+    List<QuizQuestionPoolItem> findAllInCellWithState(@Param("courseId") long courseId, @Param("competencyId") long competencyId, @Param("lectureUnitId") long lectureUnitId,
             @Param("language") QuizQuestionGenerationLanguage language, @Param("questionType") QuizQuestionGenerationType questionType,
             @Param("difficulty") QuizQuestionDifficulty difficulty, @Param("state") QuizQuestionPoolItemState state, Pageable pageable);
 

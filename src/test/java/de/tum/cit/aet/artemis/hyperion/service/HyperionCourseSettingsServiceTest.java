@@ -46,7 +46,7 @@ class HyperionCourseSettingsServiceTest {
         HyperionCourseSettings settings = service.getSettings(5L);
 
         assertThat(settings.poolGenerationEnabled()).isFalse();
-        assertThat(settings.candidatesPerCompetency()).isEqualTo(HyperionCourseSettings.DEFAULT_CANDIDATES_PER_COMPETENCY);
+        assertThat(settings.questionsPerLectureUnit()).isEqualTo(HyperionCourseSettings.DEFAULT_QUESTIONS_PER_LECTURE_UNIT);
     }
 
     @Test
@@ -90,6 +90,6 @@ class HyperionCourseSettingsServiceTest {
         HyperionCourseSettings settings = new HyperionCourseSettings((Boolean) null, (Integer) null);
 
         assertThat(settings.poolGenerationEnabled()).isFalse();
-        assertThat(settings.candidatesPerCompetency()).isEqualTo(HyperionCourseSettings.DEFAULT_CANDIDATES_PER_COMPETENCY);
+        assertThat(settings.questionsPerLectureUnit()).isEqualTo(HyperionCourseSettings.DEFAULT_QUESTIONS_PER_LECTURE_UNIT);
     }
 }

@@ -14,7 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Hyperion settings of one course")
 public record HyperionCourseSettingsDTO(@Schema(description = "Whether the quiz question pool is generated automatically for new lecture material") boolean poolGenerationEnabled,
-        @Min(HyperionCourseSettings.MIN_CANDIDATES_PER_COMPETENCY) @Max(HyperionCourseSettings.MAX_CANDIDATES_PER_COMPETENCY) @Schema(description = "Questions the pool holds per competency, spread over that competency's cells") int candidatesPerCompetency) {
+        @Min(HyperionCourseSettings.MIN_QUESTIONS_PER_LECTURE_UNIT) @Max(HyperionCourseSettings.MAX_QUESTIONS_PER_LECTURE_UNIT) @Schema(description = "Questions the pool holds per lecture unit and competency, spread over that unit's cells") int questionsPerLectureUnit) {
 
     /**
      * Converts the persisted settings to their DTO.
@@ -23,7 +23,7 @@ public record HyperionCourseSettingsDTO(@Schema(description = "Whether the quiz 
      * @return the DTO
      */
     public static HyperionCourseSettingsDTO of(HyperionCourseSettings settings) {
-        return new HyperionCourseSettingsDTO(settings.poolGenerationEnabled(), settings.candidatesPerCompetency());
+        return new HyperionCourseSettingsDTO(settings.poolGenerationEnabled(), settings.questionsPerLectureUnit());
     }
 
     /**
@@ -32,6 +32,6 @@ public record HyperionCourseSettingsDTO(@Schema(description = "Whether the quiz 
      * @return the settings
      */
     public HyperionCourseSettings toSettings() {
-        return new HyperionCourseSettings(poolGenerationEnabled, candidatesPerCompetency);
+        return new HyperionCourseSettings(poolGenerationEnabled, questionsPerLectureUnit);
     }
 }

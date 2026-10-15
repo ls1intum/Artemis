@@ -42,16 +42,29 @@ import de.tum.cit.aet.artemis.hyperion.dto.HyperionCourseSettingsDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolItemDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionPoolProgressDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolService;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "hyperionquizpool";
 
-    /** Two competencies, two question types and three difficulties give twelve cells; twenty candidates per competency give four items per cell. */
-    private static final int EXPECTED_ITEMS = 48;
+    /**
+     * The first competency has a text unit and a slide-deck unit, the second a text unit: three lecture units, each with two question types
+     * and three difficulties, give eighteen cells; twelve questions per lecture unit give two items per cell.
+     */
+    private static final int EXPECTED_ITEMS = 36;
 
-    private static final int EXPECTED_CELLS = 12;
+    private static final int EXPECTED_CELLS = 18;
+
+    private static final int EXPECTED_ITEMS_OF_FIRST_COMPETENCY = 24;
+
+    /** A phrase on the first slide of the test deck, which must reach the generation prompt through the PDF text extraction. */
+    private static final String SLIDE_DECK_PHRASE = "Control Structures";
 
     private static final Pattern NUMBER_OF_QUESTIONS = Pattern.compile("Number of Questions: (\\d+)");
 
@@ -66,6 +79,12 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     @Autowired
     private HyperionQuizQuestionPoolService poolService;
 
+    @Autowired
+    private LectureUtilService lectureUtilService;
+
+    @Autowired
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
+
     private long courseId;
 
     private Competency firstCompetency;
@@ -73,6 +92,8 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
     private final AtomicInteger questionCounter = new AtomicInteger();
 
     private final AtomicBoolean generationFails = new AtomicBoolean(false);
+
+    private final AtomicBoolean slideDeckReachedThePrompt = new AtomicBoolean(false);
 
     @BeforeEach
     void setupTestData() {
@@ -83,7 +104,16 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         course = courseRepository.save(course);
         courseId = course.getId();
         firstCompetency = competencyUtilService.createCompetency(course, "1");
-        competencyUtilService.createCompetency(course, "2");
+        Competency secondCompetency = competencyUtilService.createCompetency(course, "2");
+        Lecture lecture = lectureUtilService.createLecture(course);
+        LectureUnit textUnit = lectureUtilService.createTextUnit(lecture);
+        AttachmentVideoUnit slideDeck = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 1, true);
+        slideDeck.setName("Control structures slides");
+        slideDeck = attachmentVideoUnitRepository.save(slideDeck);
+        LectureUnit secondTextUnit = lectureUtilService.createTextUnit(lecture);
+        competencyUtilService.linkLectureUnitToCompetency(firstCompetency, textUnit);
+        competencyUtilService.linkLectureUnitToCompetency(firstCompetency, slideDeck);
+        competencyUtilService.linkLectureUnitToCompetency(secondCompetency, secondTextUnit);
 
         userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), course, CourseRole.STUDENT);
         userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), course, CourseRole.TEACHING_ASSISTANT);
@@ -92,6 +122,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
 
         questionCounter.set(0);
         generationFails.set(false);
+        slideDeckReachedThePrompt.set(false);
         mockModel();
     }
 
@@ -114,6 +145,9 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
             }
             if (generationFails.get()) {
                 throw new RuntimeException("model unavailable");
+            }
+            if (user.contains(SLIDE_DECK_PHRASE)) {
+                slideDeckReachedThePrompt.set(true);
             }
             Matcher count = NUMBER_OF_QUESTIONS.matcher(user);
             Matcher type = QUESTION_TYPE.matcher(user);
@@ -160,13 +194,18 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
             assertThat(item.decision()).isNotNull();
             assertThat(item.decision().verdicts()).hasSize(5);
             assertThat(item.competencyTitle()).isNotBlank();
+            assertThat(item.lectureUnitId()).isNotNull();
+            assertThat(item.lectureUnitName()).isNotBlank();
         });
         assertThat(items).filteredOn(item -> item.decision().accepted()).hasSize(EXPECTED_ITEMS - EXPECTED_CELLS);
+        assertThat(items.stream().map(QuizQuestionPoolItemDTO::lectureUnitId).distinct()).hasSize(3);
+        assertThat(slideDeckReachedThePrompt).isTrue();
 
         List<QuizQuestionPoolItemDTO> ofFirstCompetency = request.getList(
                 "/api/hyperion/courses/" + courseId + "/quiz-question-pool/questions?competencyId=" + firstCompetency.getId(), HttpStatus.OK, QuizQuestionPoolItemDTO.class);
-        assertThat(ofFirstCompetency).hasSize(EXPECTED_ITEMS / 2);
+        assertThat(ofFirstCompetency).hasSize(EXPECTED_ITEMS_OF_FIRST_COMPETENCY);
         assertThat(ofFirstCompetency).allMatch(item -> item.competencyId().equals(firstCompetency.getId()));
+        assertThat(ofFirstCompetency.stream().map(QuizQuestionPoolItemDTO::lectureUnitId).distinct()).hasSize(2);
 
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", courseId)).andExpect(status().isAccepted())
                 .andExpect(jsonPath("$.started").value(true)).andExpect(jsonPath("$.enqueued").value(0));
@@ -206,6 +245,24 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), empty, CourseRole.INSTRUCTOR);
 
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", empty.getId())).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldEnqueueNothingWhenNoLectureUnitIsLinked() throws Exception {
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        Course unlinked = CourseFactory.generateMinimalCourse();
+        unlinked.setTitle("Hyperion Pool Unlinked Course");
+        unlinked = courseRepository.save(unlinked);
+        competencyUtilService.createCompetency(unlinked, "3");
+        userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), unlinked, CourseRole.INSTRUCTOR);
+
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/quiz-question-pool/build", unlinked.getId())).andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.started").value(true)).andExpect(jsonPath("$.enqueued").value(0));
+        long unlinkedId = unlinked.getId();
+        await().atMost(Duration.ofSeconds(60)).pollInterval(Duration.ofMillis(200)).until(() -> !poolService.getProgress(unlinkedId).running());
+
+        assertThat(poolService.getProgress(unlinkedId).total()).isZero();
     }
 
     @Test
@@ -250,7 +307,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         HyperionCourseSettingsDTO defaults = request.get("/api/hyperion/courses/" + courseId + "/quiz-question-pool/settings", HttpStatus.OK, HyperionCourseSettingsDTO.class);
-        assertThat(defaults).isEqualTo(new HyperionCourseSettingsDTO(false, 20));
+        assertThat(defaults).isEqualTo(new HyperionCourseSettingsDTO(false, 12));
 
         HyperionCourseSettingsDTO updated = request.putWithResponseBody("/api/hyperion/courses/" + courseId + "/quiz-question-pool/settings",
                 new HyperionCourseSettingsDTO(true, 30), HyperionCourseSettingsDTO.class, HttpStatus.OK);
@@ -266,7 +323,7 @@ class HyperionQuizQuestionPoolResourceTest extends AbstractSpringIntegrationLoca
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         request.performMvcRequest(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/hyperion/courses/{courseId}/quiz-question-pool/settings", courseId)
-                .contentType(MediaType.APPLICATION_JSON).content("{ \"poolGenerationEnabled\": true, \"candidatesPerCompetency\": 0 }")).andExpect(status().isBadRequest());
+                .contentType(MediaType.APPLICATION_JSON).content("{ \"poolGenerationEnabled\": true, \"questionsPerLectureUnit\": 0 }")).andExpect(status().isBadRequest());
     }
 
     @Test

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -26,7 +27,7 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionQuizQuestionPoolBuildServ
 class HyperionQuizQuestionPoolBuildServiceTest {
 
     @Mock
-    private HyperionCompetencyContextService competencyContextService;
+    private HyperionQuizQuestionPoolMaterialService materialService;
 
     @Mock
     private CourseCompetencyApi courseCompetencyApi;
@@ -59,15 +60,22 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     }
 
     @Test
-    void deriveCells_crossesCompetenciesWithTypesAndDifficultiesInAFixedOrder() {
-        List<Cell> cells = HyperionQuizQuestionPoolBuildService.deriveCells(List.of(7L, 3L), QuizQuestionGenerationLanguage.DE,
+    void deriveCells_crossesCompetenciesAndUnitsWithTypesAndDifficultiesInAFixedOrder() {
+        List<Cell> cells = HyperionQuizQuestionPoolBuildService.deriveCells(Map.of(7L, List.of(2L, 1L), 3L, List.of(5L)), QuizQuestionGenerationLanguage.DE,
                 Set.of(QuizQuestionGenerationType.MULTIPLE_CHOICE, QuizQuestionGenerationType.SINGLE_CHOICE), Set.of(QuizQuestionDifficulty.HARD, QuizQuestionDifficulty.EASY));
 
-        assertThat(cells).hasSize(8);
-        assertThat(cells.getFirst()).isEqualTo(new Cell(7L, QuizQuestionGenerationLanguage.DE, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.EASY));
-        assertThat(cells.get(1)).isEqualTo(new Cell(7L, QuizQuestionGenerationLanguage.DE, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.HARD));
-        assertThat(cells.get(2)).isEqualTo(new Cell(7L, QuizQuestionGenerationLanguage.DE, QuizQuestionGenerationType.MULTIPLE_CHOICE, QuizQuestionDifficulty.EASY));
-        assertThat(cells.getLast()).isEqualTo(new Cell(3L, QuizQuestionGenerationLanguage.DE, QuizQuestionGenerationType.MULTIPLE_CHOICE, QuizQuestionDifficulty.HARD));
+        assertThat(cells).hasSize(12);
+        assertThat(cells.getFirst()).isEqualTo(new Cell(3L, 5L, QuizQuestionGenerationLanguage.DE, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.EASY));
+        assertThat(cells.get(1)).isEqualTo(new Cell(3L, 5L, QuizQuestionGenerationLanguage.DE, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.HARD));
+        assertThat(cells.get(2)).isEqualTo(new Cell(3L, 5L, QuizQuestionGenerationLanguage.DE, QuizQuestionGenerationType.MULTIPLE_CHOICE, QuizQuestionDifficulty.EASY));
+        assertThat(cells.get(4)).isEqualTo(new Cell(7L, 1L, QuizQuestionGenerationLanguage.DE, QuizQuestionGenerationType.SINGLE_CHOICE, QuizQuestionDifficulty.EASY));
+        assertThat(cells.getLast()).isEqualTo(new Cell(7L, 2L, QuizQuestionGenerationLanguage.DE, QuizQuestionGenerationType.MULTIPLE_CHOICE, QuizQuestionDifficulty.HARD));
+    }
+
+    @Test
+    void deriveCells_isEmptyWithoutLectureUnits() {
+        assertThat(HyperionQuizQuestionPoolBuildService.deriveCells(Map.of(), QuizQuestionGenerationLanguage.EN, Set.of(QuizQuestionGenerationType.SINGLE_CHOICE),
+                Set.of(QuizQuestionDifficulty.MEDIUM))).isEmpty();
     }
 
     @Test
@@ -126,7 +134,7 @@ class HyperionQuizQuestionPoolBuildServiceTest {
     }
 
     private HyperionQuizQuestionPoolBuildService service(List<String> questionTypes, List<String> difficulties) {
-        return new HyperionQuizQuestionPoolBuildService(null, new HyperionPromptTemplateService(), competencyContextService, Optional.of(courseCompetencyApi), filterService,
+        return new HyperionQuizQuestionPoolBuildService(null, new HyperionPromptTemplateService(), materialService, Optional.of(courseCompetencyApi), filterService,
                 llmTokenUsageService, itemRepository, settingsService, courseRepository, "", questionTypes, difficulties, 8, 30);
     }
 }

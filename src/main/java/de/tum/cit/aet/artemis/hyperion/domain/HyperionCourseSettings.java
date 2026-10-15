@@ -13,30 +13,30 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * JSON object persisted for the Hyperion settings of one course.
  *
  * @param poolGenerationEnabled   whether the quiz question pool is generated automatically for new lecture material
- * @param candidatesPerCompetency questions the pool holds per competency, spread over that competency's cells
+ * @param questionsPerLectureUnit questions the pool holds per lecture unit and competency, spread over that unit's cells
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record HyperionCourseSettings(boolean poolGenerationEnabled, int candidatesPerCompetency) implements Serializable {
+public record HyperionCourseSettings(boolean poolGenerationEnabled, int questionsPerLectureUnit) implements Serializable {
 
-    public static final int DEFAULT_CANDIDATES_PER_COMPETENCY = 20;
+    public static final int DEFAULT_QUESTIONS_PER_LECTURE_UNIT = 12;
 
-    public static final int MIN_CANDIDATES_PER_COMPETENCY = 1;
+    public static final int MIN_QUESTIONS_PER_LECTURE_UNIT = 1;
 
-    public static final int MAX_CANDIDATES_PER_COMPETENCY = 200;
+    public static final int MAX_QUESTIONS_PER_LECTURE_UNIT = 60;
 
-    private static final HyperionCourseSettings DEFAULT = new HyperionCourseSettings(false, DEFAULT_CANDIDATES_PER_COMPETENCY);
+    private static final HyperionCourseSettings DEFAULT = new HyperionCourseSettings(false, DEFAULT_QUESTIONS_PER_LECTURE_UNIT);
 
     /**
      * Creates settings from a persisted payload, substituting the defaults for fields the payload does not carry.
      *
      * @param poolGenerationEnabled   the stored flag, or {@code null} when the payload predates it
-     * @param candidatesPerCompetency the stored count, or {@code null} when the payload predates it
+     * @param questionsPerLectureUnit the stored count, or {@code null} when the payload predates it
      */
     @JsonCreator
     public HyperionCourseSettings(@JsonProperty("poolGenerationEnabled") @Nullable Boolean poolGenerationEnabled,
-            @JsonProperty("candidatesPerCompetency") @Nullable Integer candidatesPerCompetency) {
-        this(Boolean.TRUE.equals(poolGenerationEnabled), candidatesPerCompetency == null ? DEFAULT_CANDIDATES_PER_COMPETENCY : candidatesPerCompetency);
+            @JsonProperty("questionsPerLectureUnit") @Nullable Integer questionsPerLectureUnit) {
+        this(Boolean.TRUE.equals(poolGenerationEnabled), questionsPerLectureUnit == null ? DEFAULT_QUESTIONS_PER_LECTURE_UNIT : questionsPerLectureUnit);
     }
 
     public static HyperionCourseSettings defaultSettings() {

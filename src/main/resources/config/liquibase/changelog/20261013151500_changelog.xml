@@ -9,6 +9,7 @@
             </column>
             <column name="course_id" type="bigint"><constraints nullable="false"/></column>
             <column name="competency_id" type="bigint"><constraints nullable="false"/></column>
+            <column name="lecture_unit_id" type="bigint"><constraints nullable="false"/></column>
             <column name="language" type="varchar(10)"><constraints nullable="false"/></column>
             <column name="question_type" type="varchar(30)"><constraints nullable="false"/></column>
             <column name="difficulty" type="varchar(10)"><constraints nullable="false"/></column>
@@ -30,11 +31,14 @@
                                  referencedColumnNames="id" referencedTableName="course" onDelete="CASCADE" onUpdate="RESTRICT"/>
         <addForeignKeyConstraint baseColumnNames="competency_id" baseTableName="quiz_question_pool_item" constraintName="fk_quiz_question_pool_item_competency_id"
                                  referencedColumnNames="id" referencedTableName="competency" onDelete="CASCADE" onUpdate="RESTRICT"/>
+        <addForeignKeyConstraint baseColumnNames="lecture_unit_id" baseTableName="quiz_question_pool_item" constraintName="fk_quiz_question_pool_item_lecture_unit_id"
+                                 referencedColumnNames="id" referencedTableName="lecture_unit" onDelete="CASCADE" onUpdate="RESTRICT"/>
         <createIndex indexName="idx_quiz_question_pool_item_course_state" tableName="quiz_question_pool_item">
             <column name="course_id"/>
             <column name="state"/>
         </createIndex>
         <createIndex indexName="idx_quiz_question_pool_item_competency_id" tableName="quiz_question_pool_item"><column name="competency_id"/></createIndex>
+        <createIndex indexName="idx_quiz_question_pool_item_lecture_unit_id" tableName="quiz_question_pool_item"><column name="lecture_unit_id"/></createIndex>
     </changeSet>
 
     <changeSet id="20261013151500-02-create-hyperion-course-settings" author="reyers">
