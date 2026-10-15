@@ -266,6 +266,7 @@ dependencyManagement {
 
 configurations {
     mockitoAgent
+    structuralOracleGrader
 }
 
 repositories {
@@ -774,6 +775,9 @@ dependencies {
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20260814"
+    structuralOracleGrader("de.tum.cit.ase:ares:2.2.1") {
+        transitive = false
+    }
 
     testImplementation "org.junit.jupiter:junit-jupiter:${junit_version}"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junit_version}"
@@ -788,6 +792,14 @@ dependencies {
 
 // we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ':mockitoAgent' after it has been resolved
 apply from: "gradle/test.gradle"
+
+// Keep Ares' own global test configuration off the Artemis test classpath.
+tasks.withType(Test).configureEach {
+    inputs.files(configurations.structuralOracleGrader)
+    doFirst {
+        systemProperty "artemis.test.structuralOracleGraderJar", configurations.structuralOracleGrader.singleFile.absolutePath
+    }
+}
 apply from: "gradle/openapi.gradle"
 
 dependencyManagement {
