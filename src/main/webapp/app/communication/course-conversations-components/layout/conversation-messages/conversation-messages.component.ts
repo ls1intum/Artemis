@@ -61,6 +61,9 @@ function withConsecutiveFlag(post: Post, isConsecutive: boolean): Post {
     return flagged;
 }
 
+// sub-pixel scroll positions on scaled displays must still count as "at the bottom"
+const SCROLLED_TO_BOTTOM_TOLERANCE_PX = 5;
+
 @Component({
     selector: 'jhi-conversation-messages',
     templateUrl: './conversation-messages.component.html',
@@ -117,9 +120,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     canCreateNewMessageInConversation = canCreateNewMessageInConversation;
 
-    previousScrollDistanceFromTop = 0;
-    // as set for the css class '.posting-infinite-scroll-container'
-    messagesContainerHeight = 700;
+    // whether the user was scrolled to the bottom of the message list before the latest posts were applied
+    private wasScrolledToBottom = false;
     currentPostContextFilter?: PostContextFilter;
     private readonly search$ = new Subject<string>();
     searchText = '';
@@ -187,7 +189,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             // Read the signal to track changes
             void this.messages();
             untracked(() => {
-                if (!this.createdNewMessage && this.posts().length > 0) {
+                // Once the initial position is restored, a user who is at the bottom stays there when a message arrives.
+                // Restoring the stored top-visible post would otherwise override the scroll to the bottom above.
+                // A navigation that is still pending, to a post that is not loaded yet, is not a stored position: it needs the
+                // next page that arrives to reach its target, so it is not held back by the bottom-following guard.
+                const hasPendingNavigation = this.focusOnPostId !== undefined;
+                const keepsFollowingNewMessages = this.canStartSaving && this.wasScrolledToBottom && !hasPendingNavigation;
+                if (!this.createdNewMessage && this.posts().length > 0 && !keepsFollowingNewMessages) {
                     this.scrollToStoredId();
                 }
             });
@@ -325,6 +333,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (this.course() && activeConversation) {
             this.canStartSaving = false;
             this.onSearch();
+            // the scroll state of the previously opened conversation does not apply to the new one
+            this.wasScrolledToBottom = false;
             this.createEmptyPost();
             this.communicationService.fetchAllPinnedPosts(activeConversation.id!).subscribe({
                 next: (pinnedPosts: Post[]) => {
@@ -439,10 +449,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * Applies pinned message filters, loads forwarded messages and their sources, and groups posts for rendering.
      */
     setPosts(): void {
-        // Saves the current scroll position relative to the bottom.
-        const content = this.content();
-        if (content) {
-            this.previousScrollDistanceFromTop = content.nativeElement.scrollHeight - content.nativeElement.scrollTop;
+        // While posts are being fetched, the list is hidden and reports no scroll dimensions, so the state captured
+        // by fetchPosts() before hiding it is kept.
+        if (!this.isFetchingPosts()) {
+            this.captureScrolledToBottom();
         }
         this.applyPinnedMessageFilter();
         this.reversePosts();
@@ -491,6 +501,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             });
         });
     };
+
+    /**
+     * Remembers whether the user is at the bottom of the visible message list, so that a newly received message is scrolled into view only then.
+     */
+    private captureScrolledToBottom(): void {
+        const content = this.content();
+        if (content) {
+            const { scrollHeight, scrollTop, clientHeight } = content.nativeElement;
+            this.wasScrolledToBottom = scrollHeight - scrollTop - clientHeight <= SCROLLED_TO_BOTTOM_TOLERANCE_PX;
+        }
+    }
 
     /**
      * Reverses the posts array to maintain chronological order.
@@ -624,6 +645,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     public fetchPosts(forceUpdate = false) {
         this.refreshConversationPostContextFilter();
         if (this.currentPostContextFilter) {
+            if (!this.isFetchingPosts()) {
+                // the list is hidden while fetching, so its scroll state has to be captured while it is still visible
+                this.captureScrolledToBottom();
+            }
             this.isFetchingPosts.set(true); // will be set to false in subscription
             this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this._activeConversation());
         }
@@ -673,7 +698,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (!el) {
             return;
         }
-        if ((this.posts().length > 0 && el.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
+        // Before the initial position is restored, a list at the very top of the first page is positioned at the bottom.
+        // Afterwards, a user who scrolled up to the oldest messages must stay in place.
+        const isInitialPositioning = !this.canStartSaving && this.posts().length > 0 && el.scrollTop === 0 && this.page === 1;
+        if (isInitialPositioning || this.wasScrolledToBottom) {
             this.scrollToBottomOfMessages();
         }
     };

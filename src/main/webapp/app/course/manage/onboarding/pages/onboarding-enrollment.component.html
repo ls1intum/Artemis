@@ -78,23 +78,21 @@
         }
 
         @if (course().enrollmentEnabled) {
-            <div class="ms-4 mb-3">
+            <div class="step-indent mb-3">
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label" for="onboarding-enrollmentStartDate" jhiTranslate="artemisApp.course.enrollmentStartDate"></label>
                         <tumaet-ui-date-picker
                             inputId="onboarding-enrollmentStartDate"
-                            [hideLabelName]="true"
+                            labelName="artemisApp.course.enrollmentStartDate"
                             [value]="course().enrollmentStartDate"
                             (valueChange)="updateField('enrollmentStartDate', $event)"
                             (inputValidityChange)="setStartTextValid($event)"
                         />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label" for="onboarding-enrollmentEndDate" jhiTranslate="artemisApp.course.enrollmentEndDate"></label>
                         <tumaet-ui-date-picker
                             inputId="onboarding-enrollmentEndDate"
-                            [hideLabelName]="true"
+                            labelName="artemisApp.course.enrollmentEndDate"
                             [value]="course().enrollmentEndDate"
                             (valueChange)="updateField('enrollmentEndDate', $event)"
                             (inputValidityChange)="setEndTextValid($event)"
@@ -139,11 +137,10 @@
                 }
 
                 @if (course().unenrollmentEnabled) {
-                    <div class="ms-4 mb-3">
-                        <label class="form-label" for="onboarding-unenrollmentEndDate" jhiTranslate="artemisApp.course.unenrollmentEndDate"></label>
+                    <div class="step-indent mb-3">
                         <tumaet-ui-date-picker
                             inputId="onboarding-unenrollmentEndDate"
-                            [hideLabelName]="true"
+                            labelName="artemisApp.course.unenrollmentEndDate"
                             [value]="course().unenrollmentEndDate"
                             (valueChange)="updateField('unenrollmentEndDate', $event)"
                             (inputValidityChange)="setUnenrollmentEndTextValid($event)"
