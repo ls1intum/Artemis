@@ -1053,6 +1053,20 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(request.get(url, HttpStatus.OK, ProgrammingSubmission.class).getId()).as("the own team is handed out").isEqualTo(ownSubmission.getId());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void instructorsCanSelectSubmissionsFromOtherTutorsTeams() throws Exception {
+        exercise.setMode(ExerciseMode.TEAM);
+        exercise.setDueDate(ZonedDateTime.now().minusDays(2));
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
+        exercise = programmingExerciseRepository.saveAndFlush(exercise);
+        Team team = teamUtilService.createTeam(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student3")), userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"), exercise,
+                "othertutor");
+        addSubmissionForTeam(team);
+        var response = request.get("/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK, ProgrammingSubmission.class);
+        assertThat(response).as("instructors may select teams they do not own").isNotNull();
+    }
+
     private ProgrammingSubmission addSubmissionForTeam(Team team) {
         var submission = ParticipationFactory.generateProgrammingSubmission(true);
         submission.setParticipation(participationUtilService.addTeamParticipationForProgrammingExercise(exercise, team));

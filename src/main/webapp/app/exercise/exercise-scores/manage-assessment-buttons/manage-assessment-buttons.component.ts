@@ -40,10 +40,38 @@ export class ManageAssessmentButtonsComponent {
     readonly disabled = input(false);
     readonly disabledTooltip = input('');
     readonly correctionRoundsEnabled = input<number>();
+    readonly assessableCorrectionRounds = input<number[]>();
     readonly isTestRun = input(false);
     readonly examMode = computed(() => !!this.exercise().exerciseGroup);
     readonly newManualResultAllowed = computed(() => areManualResultsAllowed(this.exercise()) && (!isPracticeMode(this.participation()) || this.examMode()));
     readonly correctionRoundIndices = computed(() => [...Array(this.correctionRoundsEnabled() ?? this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()]);
+    readonly assessmentLinks = computed(() =>
+        this.correctionRoundIndices().flatMap((correctionRound) => {
+            const result = this.resultForRound(correctionRound);
+            const action = this.assessmentAction(correctionRound);
+            if (
+                !this.participation().submissions?.[0]?.id ||
+                (correctionRound > 0 && !this.resultForRound(correctionRound - 1)?.completionDate) ||
+                (!this.newManualResultAllowed() &&
+                    (!result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC || result.assessmentType === AssessmentType.AUTOMATIC_ATHENA)) ||
+                (action === 'assess' && this.assessableCorrectionRounds() !== undefined && !this.assessableCorrectionRounds()!.includes(correctionRound))
+            ) {
+                return [];
+            }
+            return [
+                {
+                    correctionRound,
+                    result,
+                    action,
+                    severity: this.assessmentLinkSeverity(correctionRound),
+                    labelKey: this.assessmentLabelKey(correctionRound),
+                    link: this.getAssessmentLink(correctionRound),
+                    targetRound: this.getCorrectionRoundForAssessmentLink(correctionRound),
+                    canCancel: this.newManualResultAllowed() && !!result?.assessmentType && !result.completionDate && result.assessmentType !== AssessmentType.AUTOMATIC,
+                },
+            ];
+        }),
+    );
     cancelConfirmationText!: string;
 
     readonly faBan = faBan;
@@ -113,7 +141,7 @@ export class ManageAssessmentButtonsComponent {
             exercise.exerciseGroup?.exam?.id,
             exercise.exerciseGroup?.id,
             // TODO do we need to handle this differently for programming exercises?
-            this.resultForRound(correctionRound)?.id,
+            exercise.isAtLeastInstructor ? this.resultForRound(correctionRound)?.id : undefined,
         );
     }
 

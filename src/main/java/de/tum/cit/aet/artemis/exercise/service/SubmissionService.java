@@ -75,6 +75,8 @@ public class SubmissionService {
 
     private final ExerciseDateService exerciseDateService;
 
+    protected final SubmissionAssessmentEligibilityService assessmentEligibilityService;
+
     protected final SubmissionRepository submissionRepository;
 
     protected final ResultRepository resultRepository;
@@ -105,7 +107,7 @@ public class SubmissionService {
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
             FeedbackRepository feedbackRepository, ExerciseDateService exerciseDateService, ParticipationRepository participationRepository,
             ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi, TestCaseFeedbackRepository testCaseFeedbackRepository,
-            ScaFeedbackRepository scaFeedbackRepository) {
+            ScaFeedbackRepository scaFeedbackRepository, SubmissionAssessmentEligibilityService assessmentEligibilityService) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -120,6 +122,7 @@ public class SubmissionService {
         this.athenaApi = athenaApi;
         this.testCaseFeedbackRepository = testCaseFeedbackRepository;
         this.scaFeedbackRepository = scaFeedbackRepository;
+        this.assessmentEligibilityService = assessmentEligibilityService;
     }
 
     /**
@@ -222,24 +225,8 @@ public class SubmissionService {
                     ZonedDateTime.now());
         }
 
-        if (exercise.isTeamMode()) {
-            // only the team tutor may assess a team submission, so the queue of a tutor contains only the teams they own
-            final var user = userRepository.getUser();
-            participations = participations.stream().filter(participation -> participation.getTeam().map(team -> team.isOwner(user)).orElse(false)).toList();
-        }
-
-        var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();
-
-        if (correctionRound > 0) {
-            // remove submission if user already assessed first correction round
-            // if disabled, please switch tutorAssessUnique within the tests
-            // TODO: we could move this check into the database call of the if clause above (examMode == true) to avoid fetching all results and assessors
-            final var user = userRepository.getUser();
-            submissionsWithoutResult = submissionsWithoutResult.stream().filter(submission -> {
-                final var resultForCorrectionRound = submission.getResultForCorrectionRound(correctionRound - 1);
-                return resultForCorrectionRound != null && !resultForCorrectionRound.getAssessor().equals(user);
-            }).toList();
-        }
+        var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).flatMap(Optional::stream)
+                .filter(submission -> assessmentEligibilityService.canStartAssessment(submission, exercise, correctionRound)).toList();
 
         if (!examMode && exercise.getDueDate() != null) {
             submissionsWithoutResult = selectOnlySubmissionsBeforeDueDate(submissionsWithoutResult);
@@ -684,6 +671,10 @@ public class SubmissionService {
     protected Result lockSubmission(Submission submission, int correctionRound) {
         checkCorrectionRoundIsNotNegativeElseThrow(correctionRound);
         Result result = submission.getResultForCorrectionRound(correctionRound);
+        if (result == null || result.getAssessor() == null) {
+            assessmentEligibilityService.checkCanStartAssessmentElseThrow(submission, correctionRound);
+            checkSubmissionLockLimit(submission.getParticipation().getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow().getId());
+        }
         if (result == null && correctionRound > 0) {
             // copy the result of the previous correction round
             result = copyResultFromPreviousRoundAndSave(submission, submission.getResultForCorrectionRound(correctionRound - 1));

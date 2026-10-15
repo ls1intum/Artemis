@@ -2276,9 +2276,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(names).extracting(ParticipationNameExportDTO::participantIdentifier).containsExactly(team.getShortName());
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = { "true", "false", "omitted" })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void ownTeamsListsTheTeamsOfTheTutorWithTheirNames() throws Exception {
+    void ownTeamsListsTheTeamsOfTheTutorWithTheirNames(String ownTeams) throws Exception {
         var exercise = createProgrammingExerciseForTeam();
         var ownTeam = createTeamForExercise(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), exercise);
         ownTeam.setOwner(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
@@ -2291,7 +2292,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationUtilService.createAndSavePracticeParticipationForExercise(exercise, TEST_PREFIX + "student1");
         var search = new ParticipationScoreSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", "", "All", null, null);
         var params = pageableSearchUtilService.searchMapping(search);
-        params.add("ownTeams", "true");
+        if (!"omitted".equals(ownTeams)) {
+            params.add("ownTeams", ownTeams);
+        }
 
         var management = request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue", HttpStatus.OK, ParticipationScoreDTO.class, params);
 
@@ -2324,6 +2327,29 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var identitySearch = new ParticipationScoreSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", "", "All", null, null);
         request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue", HttpStatus.FORBIDDEN, ParticipationScoreDTO.class,
                 pageableSearchUtilService.searchMapping(identitySearch));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void assessmentQueueCarriesSubmittedAndDeadlineEligibility() throws Exception {
+        var exercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1),
+                ZonedDateTime.now().plusDays(1));
+        var submission = participationUtilService.addSubmission(exercise, new TextSubmission().submitted(false), TEST_PREFIX + "student1");
+        var search = new ParticipationScoreSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "All", null, null);
+        var url = "/api/exercise/exercises/" + exercise.getId() + "/assessment-queue";
+        var rows = request.getList(url, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(rows.getFirst().assessableCorrectionRounds()).as("an omitted empty list carries no eligible corrections").isNullOrEmpty();
+        submission.setSubmitted(true);
+        submissionRepository.save(submission);
+        var participation = (StudentParticipation) submission.getParticipation();
+        participation.setIndividualDueDate(ZonedDateTime.now().plusDays(1));
+        participationRepo.save(participation);
+        rows = request.getList(url, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(rows.getFirst().assessableCorrectionRounds()).isNullOrEmpty();
+        participation.setIndividualDueDate(ZonedDateTime.now().minusHours(1));
+        participationRepo.save(participation);
+        rows = request.getList(url, HttpStatus.OK, ParticipationScoreDTO.class, pageableSearchUtilService.searchMapping(search));
+        assertThat(rows.getFirst().assessableCorrectionRounds()).containsExactly(0);
     }
 
     @Test

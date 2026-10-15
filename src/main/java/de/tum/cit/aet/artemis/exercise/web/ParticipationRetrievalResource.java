@@ -264,7 +264,7 @@ public class ParticipationRetrievalResource {
             @RequestParam(defaultValue = "false") boolean ownTeams) {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        Long teamOwnerId = ownTeams && exercise.isTeamMode() ? userRepository.getUser().getId() : null;
+        Long teamOwnerId = exercise.isTeamMode() && (ownTeams || !authCheckService.isAtLeastInstructorForExercise(exercise)) ? userRepository.getUser().getId() : null;
         boolean hideParticipant = teamOwnerId == null && shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
         Page<ParticipationScoreDTO> page = participationService.findParticipationScoresForExercise(exercise, search, teamOwnerId, true);
         if (hideParticipant) {

@@ -1,63 +1,48 @@
-@if (participation().submissions?.[0]?.id) {
-    @for (correctionRound of correctionRoundIndices(); track correctionRound) {
-        @if (
-            (correctionRound === 0 || resultForRound(correctionRound - 1)?.completionDate) &&
-            (newManualResultAllowed() ||
-                (resultForRound(correctionRound)?.assessmentType &&
-                    resultForRound(correctionRound)?.assessmentType !== AssessmentType.AUTOMATIC &&
-                    resultForRound(correctionRound)?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA))
-        ) {
-            <div class="flex items-center gap-1">
-                <a
-                    tumAetUiButton
-                    size="small"
-                    data-testid="manage-assessment-link"
-                    [attr.data-assessment-action]="assessmentAction(correctionRound)"
-                    [attr.data-correction-round]="correctionRound"
-                    [severity]="assessmentLinkSeverity(correctionRound)"
-                    [attr.aria-label]="assessmentLabelKey(correctionRound) | artemisTranslate: { correctionRound: correctionRound + 1 }"
-                    [routerLink]="disabled() ? null : getAssessmentLink(correctionRound)"
-                    [tumAetUiTooltip]="disabledTooltip()"
-                    [attr.aria-disabled]="disabled() || null"
-                    [class.opacity-60]="disabled()"
-                    [class.cursor-not-allowed]="disabled()"
-                    [attr.tabindex]="disabled() ? -1 : null"
-                    [queryParams]="{ 'correction-round': getCorrectionRoundForAssessmentLink(correctionRound), testRun: isTestRun() || undefined }"
-                >
-                    <fa-icon [icon]="faClipboardList" [fixedWidth]="true" />
-                    <span class="hidden xl:inline">
-                        {{ assessmentLabelKey(correctionRound) | artemisTranslate: { correctionRound: correctionRound + 1 } }}
-                    </span>
-                </a>
-                @if (
-                    newManualResultAllowed() &&
-                    resultForRound(correctionRound)?.assessmentType &&
-                    !resultForRound(correctionRound)?.completionDate &&
-                    resultForRound(correctionRound)?.assessmentType !== AssessmentType.AUTOMATIC
-                ) {
-                    <button
-                        type="button"
-                        tumAetUiButton
-                        size="small"
-                        severity="danger"
-                        data-testid="manage-assessment-cancel"
-                        (click)="cancelAssessment(resultForRound(correctionRound)!, participation())"
-                        [disabled]="isLoading() || disabled()"
-                        [attr.aria-label]="
-                            'artemisApp.assessment.dashboard.actions.' + (examMode() ? 'examCorrectionRound.' : '') + 'cancel'
-                                | artemisTranslate: { correctionRound: correctionRound + 1 }
-                        "
-                    >
-                        <fa-icon [fixedWidth]="true" [icon]="faBan" />
-                        <span class="hidden xl:inline">
-                            {{
-                                'artemisApp.assessment.dashboard.actions.' + (examMode() ? 'examCorrectionRound.' : '') + 'cancel'
-                                    | artemisTranslate: { correctionRound: correctionRound + 1 }
-                            }}
-                        </span>
-                    </button>
-                }
-            </div>
+@for (link of assessmentLinks(); track link.correctionRound) {
+    <div class="flex items-center gap-1">
+        <a
+            tumAetUiButton
+            size="small"
+            data-testid="manage-assessment-link"
+            [attr.data-assessment-action]="link.action"
+            [attr.data-correction-round]="link.correctionRound"
+            [severity]="link.severity"
+            [attr.aria-label]="link.labelKey | artemisTranslate: { correctionRound: link.correctionRound + 1 }"
+            [routerLink]="disabled() ? null : link.link"
+            [tumAetUiTooltip]="disabledTooltip()"
+            [attr.aria-disabled]="disabled() || null"
+            [class.opacity-60]="disabled()"
+            [class.cursor-not-allowed]="disabled()"
+            [attr.tabindex]="disabled() ? -1 : null"
+            [queryParams]="{ 'correction-round': link.targetRound, testRun: isTestRun() || undefined }"
+        >
+            <fa-icon [icon]="faClipboardList" [fixedWidth]="true" />
+            <span class="hidden xl:inline">
+                {{ link.labelKey | artemisTranslate: { correctionRound: link.correctionRound + 1 } }}
+            </span>
+        </a>
+        @if (link.canCancel) {
+            <button
+                type="button"
+                tumAetUiButton
+                size="small"
+                severity="danger"
+                data-testid="manage-assessment-cancel"
+                (click)="cancelAssessment(link.result!, participation())"
+                [disabled]="isLoading() || disabled()"
+                [attr.aria-label]="
+                    'artemisApp.assessment.dashboard.actions.' + (examMode() ? 'examCorrectionRound.' : '') + 'cancel'
+                        | artemisTranslate: { correctionRound: link.correctionRound + 1 }
+                "
+            >
+                <fa-icon [fixedWidth]="true" [icon]="faBan" />
+                <span class="hidden xl:inline">
+                    {{
+                        'artemisApp.assessment.dashboard.actions.' + (examMode() ? 'examCorrectionRound.' : '') + 'cancel'
+                            | artemisTranslate: { correctionRound: link.correctionRound + 1 }
+                    }}
+                </span>
+            </button>
         }
-    }
+    </div>
 }

@@ -46,7 +46,7 @@ const STATE_SEVERITY: Record<AssessmentState, TumAetUiTagSeverity> = {
 /**
  * Derives where an assessment stands from its newest manual result, which belongs to the latest correction round.
  */
-export function getAssessmentState(dto: ParticipationScoreDTO): AssessmentState {
+export function getAssessmentState(dto: ParticipationScoreDTO, correctionRoundsEnabled = 1): AssessmentState {
     if (!dto.submissionId) {
         return 'noSubmission';
     }
@@ -60,7 +60,10 @@ export function getAssessmentState(dto: ParticipationScoreDTO): AssessmentState 
     if (manualResult.hasComplaint) {
         return 'complaint';
     }
-    return manualResult.completionDate ? 'assessed' : 'inProgress';
+    if (!manualResult.completionDate) {
+        return 'inProgress';
+    }
+    return (manualResult.correctionRound ?? 0) + 1 < correctionRoundsEnabled ? 'notAssessed' : 'assessed';
 }
 
 @Component({
@@ -100,6 +103,7 @@ export class AssessmentQueueComponent {
     readonly totalRecords = signal(0);
     readonly isLoading = signal(false);
     private lastQuery?: TumAetUiTableQueryEvent;
+    private currentLoadRequestId = 0;
 
     readonly course = computed(() => getCourseFromExercise(this.exercise())!);
     readonly isProgrammingExercise = computed(() => this.exercise().type === ExerciseType.PROGRAMMING);
@@ -120,6 +124,7 @@ export class AssessmentQueueComponent {
     protected readonly faUsers = faUsers;
 
     loadPage(query: TumAetUiTableQueryEvent) {
+        const requestId = ++this.currentLoadRequestId;
         this.lastQuery = query;
         this.isLoading.set(true);
         const request = this.isTestRun()
@@ -159,13 +164,27 @@ export class AssessmentQueueComponent {
                   ownTeams: this.teamMode(),
                   filterProp: 'NoPracticeMode',
               });
-        request.pipe(finalize(() => this.isLoading.set(false))).subscribe({
-            next: (page) => {
-                this.rows.set(page.content);
-                this.totalRecords.set(page.totalElements);
-            },
-            error: (error) => onError(this.alertService, error),
-        });
+        request
+            .pipe(
+                finalize(() => {
+                    if (requestId === this.currentLoadRequestId) {
+                        this.isLoading.set(false);
+                    }
+                }),
+            )
+            .subscribe({
+                next: (page) => {
+                    if (requestId === this.currentLoadRequestId) {
+                        this.rows.set(page.content);
+                        this.totalRecords.set(page.totalElements);
+                    }
+                },
+                error: (error) => {
+                    if (requestId === this.currentLoadRequestId) {
+                        onError(this.alertService, error);
+                    }
+                },
+            });
     }
 
     /** Reloads the current page, e.g. after an assessment was cancelled. */
@@ -176,7 +195,7 @@ export class AssessmentQueueComponent {
     }
 
     state(dto: ParticipationScoreDTO): AssessmentState {
-        return getAssessmentState(dto);
+        return getAssessmentState(dto, this.correctionRoundsEnabled());
     }
 
     stateSeverity(dto: ParticipationScoreDTO): TumAetUiTagSeverity {

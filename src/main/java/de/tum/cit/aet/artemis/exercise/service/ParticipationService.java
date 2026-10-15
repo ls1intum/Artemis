@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
@@ -116,11 +117,15 @@ public class ParticipationService {
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
+    private final SubmissionAssessmentEligibilityService assessmentEligibilityService;
+
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
-            ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
+            ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SubmissionAssessmentEligibilityService assessmentEligibilityService) {
+        this.assessmentEligibilityService = assessmentEligibilityService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
@@ -1337,13 +1342,13 @@ public class ParticipationService {
         final Map<Long, Result> finalResultMap = resultBySubmissionId;
         final Map<Long, List<CorrectionRoundResultDTO>> finalCorrectionRoundResults = correctionRoundResultsBySubmissionId;
         List<ParticipationScoreDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull)
-                .map(p -> mapToDTO(p, exercise instanceof QuizExercise, submissionCountMap, finalResultMap, finalCorrectionRoundResults)).toList();
+                .map(p -> mapToDTO(p, exercise, submissionCountMap, finalResultMap, finalCorrectionRoundResults, excludePractice)).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
-    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, boolean quizExercise, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
-            Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId) {
+    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, Exercise exercise, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
+            Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId, boolean assessmentQueue) {
         // Participant info
         String participantName;
         String participantIdentifier;
@@ -1381,7 +1386,7 @@ public class ParticipationService {
         // Duration in seconds. A quiz practice participation is reused for every attempt and the start of a single attempt is not recorded, so the time since the
         // participation was created would include the pauses between the attempts and is not the duration of the latest one.
         Long durationInSeconds = null;
-        boolean durationUnknown = quizExercise && participation.isPracticeMode();
+        boolean durationUnknown = exercise instanceof QuizExercise && participation.isPracticeMode();
         if (!durationUnknown && completionDate != null && participation.getInitializationDate() != null) {
             durationInSeconds = Duration.between(participation.getInitializationDate(), completionDate).getSeconds();
         }
@@ -1411,8 +1416,13 @@ public class ParticipationService {
 
         return new ParticipationScoreDTO(participation.getId(), participation.getInitializationDate(), submissionCount, participantName, participantIdentifier, studentId, teamId,
                 resultId, score, successful, completionDate, assessmentType, assessmentNote, durationInSeconds, submissionId, buildFailed, buildPlanId, repositoryUri,
-                participation.isTestRun(), testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults, participation.getTeam()
-                        .map(team -> team.getStudents().stream().map(student -> new UserNameAndLoginDTO(student.getName(), student.getLogin())).toList()).orElse(null));
+                participation.isTestRun(), testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults,
+                participation.getTeam().map(team -> team.getStudents().stream().map(student -> new UserNameAndLoginDTO(student.getName(), student.getLogin())).toList())
+                        .orElse(null),
+                assessmentQueue
+                        ? IntStream.range(0, exercise.getNumberOfCorrectionRounds())
+                                .filter(round -> latestSubmission != null && assessmentEligibilityService.canStartAssessment(latestSubmission, exercise, round)).boxed().toList()
+                        : null);
     }
 
     /**

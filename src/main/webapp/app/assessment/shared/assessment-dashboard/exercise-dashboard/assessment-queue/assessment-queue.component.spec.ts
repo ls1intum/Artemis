@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { HttpResponse } from '@angular/common/http';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -23,7 +23,7 @@ describe('AssessmentQueueComponent', () => {
     let participationService: ParticipationService;
 
     const exercise = { id: 7, type: ExerciseType.PROGRAMMING, teamMode: true, course: { id: 3 } } as Exercise;
-    const teamRow = { participationId: 11, submissionCount: 1, submissionId: 12, teamId: 13, testRun: false } as ParticipationScoreDTO;
+    const teamRow = { participationId: 11, submissionCount: 1, submissionId: 12, teamId: 13, testRun: false, assessableCorrectionRounds: [0] } as ParticipationScoreDTO;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -58,6 +58,40 @@ describe('AssessmentQueueComponent', () => {
         });
         expect(comp.rows()).toEqual([teamRow]);
         expect(comp.totalRecords()).toBe(1);
+        expect(comp.isLoading()).toBe(false);
+    });
+
+    it('ignores stale responses, completions and errors while a newer request is loading', () => {
+        const first = new Subject<{ content: ParticipationScoreDTO[]; totalElements: number }>();
+        const second = new Subject<{ content: ParticipationScoreDTO[]; totalElements: number }>();
+        const third = new Subject<{ content: ParticipationScoreDTO[]; totalElements: number }>();
+        vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValueOnce(first).mockReturnValueOnce(second).mockReturnValueOnce(third);
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.loadPage({ pageIndex: 0, pageSize: 20 });
+        comp.loadPage({ pageIndex: 1, pageSize: 20 });
+        first.next({ content: [teamRow], totalElements: 99 });
+        first.complete();
+        expect(comp.rows()).toEqual([]);
+        expect(comp.totalRecords()).toBe(0);
+        expect(comp.isLoading()).toBe(true);
+        comp.loadPage({ pageIndex: 2, pageSize: 20 });
+        second.error({ status: 403, message: 'stale failure' });
+        expect(alertSpy).not.toHaveBeenCalled();
+        expect(comp.isLoading()).toBe(true);
+        third.next({ content: [teamRow], totalElements: 1 });
+        third.complete();
+        expect(comp.rows()).toEqual([teamRow]);
+        expect(comp.totalRecords()).toBe(1);
+        expect(comp.isLoading()).toBe(false);
+    });
+
+    it('reports errors from the latest request and clears its loading state', () => {
+        const response = new Subject<{ content: ParticipationScoreDTO[]; totalElements: number }>();
+        vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(response);
+        const alertSpy = vi.spyOn(TestBed.inject(AlertService), 'error');
+        comp.loadPage({ pageIndex: 0, pageSize: 20 });
+        response.error({ status: 403, message: 'failed' });
+        expect(alertSpy).toHaveBeenCalled();
         expect(comp.isLoading()).toBe(false);
     });
 
@@ -138,6 +172,25 @@ describe('AssessmentQueueComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]')).toBeNull();
     });
 
+    it('hides new assessment actions when the server omits an empty eligibility list', async () => {
+        vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(of({ content: [{ ...teamRow, assessableCorrectionRounds: undefined }], totalElements: 1 }));
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]')).toBeNull();
+    });
+
+    it('keeps new test-run assessments available without queue eligibility metadata', async () => {
+        fixture.componentRef.setInput('isTestRun', true);
+        vi.spyOn(TestBed.inject(SubmissionService), 'getTestRunSubmissionsForExercise').mockReturnValue(
+            of(new HttpResponse({ body: [{ id: 12, participation: { id: 11 }, results: [] } as Submission] })),
+        );
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]').getAttribute('href')).toContain('testRun=true');
+    });
+
     it('loads only the current user’s test-run submissions through the test-run endpoint', () => {
         fixture.componentRef.setInput('isTestRun', true);
         const testRunSpy = vi.spyOn(TestBed.inject(SubmissionService), 'getTestRunSubmissionsForExercise').mockReturnValue(
@@ -202,6 +255,16 @@ describe('AssessmentQueueComponent', () => {
 
     describe('getAssessmentState', () => {
         const manual = (overrides: object) => ({ resultId: 1, correctionRound: 0, assessmentType: AssessmentType.SEMI_AUTOMATIC, ...overrides });
+
+        it('requires all enabled rounds to be complete, preserving complaints and drafts', () => {
+            const row = { ...teamRow, correctionRoundResults: [manual({ completionDate: dayjs() })] };
+            expect(getAssessmentState(row, 1)).toBe('assessed');
+            expect(getAssessmentState(row, 2)).toBe('notAssessed');
+            fixture.componentRef.setInput('correctionRoundsEnabled', 2);
+            expect(comp.state(row)).toBe('notAssessed');
+            expect(getAssessmentState({ ...teamRow, correctionRoundResults: [manual({ hasComplaint: true, completionDate: dayjs() })] }, 2)).toBe('complaint');
+            expect(getAssessmentState({ ...teamRow, correctionRoundResults: [manual({})] }, 2)).toBe('inProgress');
+        });
 
         it.each([
             ['noSubmission', { submissionId: undefined }],

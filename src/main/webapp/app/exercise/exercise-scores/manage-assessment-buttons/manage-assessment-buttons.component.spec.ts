@@ -152,6 +152,46 @@ describe('ManageAssessmentButtonsComponent', () => {
         expect(fixture.nativeElement.querySelectorAll('[data-testid="manage-assessment-link"]')).toHaveLength(2);
     });
 
+    it.each([ExerciseType.TEXT, ExerciseType.MODELING])('uses submission routes for tutors and named results for instructors in exam %s assessments', (type) => {
+        fixture.componentRef.setInput('participation', { id: 11, submissions: [{ id: 21, results: [{ id: 31, correctionRound: 0, assessmentType: AssessmentType.MANUAL }] }] });
+        const examExercise = { ...exercise, type, exerciseGroup: { id: 4, exam: { id: 3 } }, isAtLeastInstructor: false };
+        fixture.componentRef.setInput('exercise', examExercise);
+        fixture.detectChanges();
+        let link = fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]');
+        expect(link.getAttribute('href')).toContain('/submissions/21/assessment?correction-round=0');
+        expect(link.getAttribute('data-assessment-action')).toBe('continue');
+        fixture.componentRef.setInput('participation', {
+            id: 11,
+            submissions: [{ id: 21, results: [{ id: 31, correctionRound: 0, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() }] }],
+        });
+        fixture.detectChanges();
+        link = fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]');
+        expect(link.getAttribute('href')).toContain('/submissions/21/assessment?correction-round=0');
+        expect(link.getAttribute('data-assessment-action')).toBe('open');
+        fixture.componentRef.setInput('exercise', { ...examExercise, isAtLeastInstructor: true });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]').getAttribute('href')).toContain('/submissions/21/assessments/31?correction-round=0');
+    });
+
+    it('hides ineligible new corrections while allowing existing results to reopen', () => {
+        fixture.componentRef.setInput('exercise', { ...exercise, exerciseGroup: { id: 4, exam: { id: 3, numberOfCorrectionRoundsInExam: 2 } } });
+        fixture.componentRef.setInput('participation', {
+            id: 11,
+            submissions: [{ id: 21, results: [{ id: 31, correctionRound: 0, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() }] }],
+        });
+        fixture.componentRef.setInput('assessableCorrectionRounds', []);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="manage-assessment-link"]')).toHaveLength(1);
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]').getAttribute('data-assessment-action')).toBe('open');
+        fixture.componentRef.setInput('assessableCorrectionRounds', [1]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="manage-assessment-link"]')).toHaveLength(2);
+        fixture.componentRef.setInput('participation', { id: 12, submissions: [{ id: 22, results: [] }] });
+        fixture.componentRef.setInput('assessableCorrectionRounds', []);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]')).toBeNull();
+    });
+
     describe('getAssessmentLink', () => {
         it('should return undefined when exercise type is missing', () => {
             fixture.componentRef.setInput('exercise', { id: 1 } as Exercise);

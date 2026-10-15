@@ -27,6 +27,7 @@ export interface ParticipationScoreDTO {
     passedTestCaseCount?: number;
     codeIssueCount?: number;
     correctionRoundResults?: CorrectionRoundResultDTO[];
+    assessableCorrectionRounds?: number[];
 }
 
 /**

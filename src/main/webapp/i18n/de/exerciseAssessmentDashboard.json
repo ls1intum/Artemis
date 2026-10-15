@@ -66,9 +66,9 @@
             "startAssessment": "Neue Bewertung starten",
             "noSubmissions": "Es gibt derzeit keine Abgaben, die du bewerten kannst.",
             "students": {
-                "title": "Einreichungen der Studierenden",
-                "hint": "Einreichungen der Studierenden und ihr Bewertungsstatus.",
-                "empty": "Es gibt keine Teilnahmen von Studierenden in dieser Aufgabe.",
+                "title": "Abgaben der Studierenden",
+                "hint": "Abgaben der Studierenden und ihr Bewertungsstatus.",
+                "empty": "Es gibt keine Abgaben von Studierenden in dieser Übung.",
                 "participant": "ID"
             },
             "myTeams": {

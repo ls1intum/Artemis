@@ -15,7 +15,8 @@ import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 public record ParticipationScoreDTO(long participationId, ZonedDateTime initializationDate, int submissionCount, String participantName, String participantIdentifier,
         Long studentId, Long teamId, Long resultId, Double score, Boolean successful, ZonedDateTime completionDate, AssessmentType assessmentType, String assessmentNote,
         Long durationInSeconds, Long submissionId, Boolean buildFailed, String buildPlanId, String repositoryUri, boolean testRun, Integer testCaseCount,
-        Integer passedTestCaseCount, Integer codeIssueCount, List<CorrectionRoundResultDTO> correctionRoundResults, List<UserNameAndLoginDTO> teamStudents) {
+        Integer passedTestCaseCount, Integer codeIssueCount, List<CorrectionRoundResultDTO> correctionRoundResults, List<UserNameAndLoginDTO> teamStudents,
+        List<Integer> assessableCorrectionRounds) {
 
     /**
      * Removes participant information, including repository identifiers that contain the student login or team name.
@@ -24,8 +25,8 @@ public record ParticipationScoreDTO(long participationId, ZonedDateTime initiali
      */
     public ParticipationScoreDTO withoutParticipantInformation() {
         return new ParticipationScoreDTO(participationId, initializationDate, submissionCount, null, null, null, null, resultId, score, successful, completionDate, assessmentType,
-                assessmentNote, durationInSeconds, submissionId, buildFailed, null, null, testRun, testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults,
-                null);
+                assessmentNote, durationInSeconds, submissionId, buildFailed, null, null, testRun, testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults, null,
+                assessableCorrectionRounds);
     }
 
 }
