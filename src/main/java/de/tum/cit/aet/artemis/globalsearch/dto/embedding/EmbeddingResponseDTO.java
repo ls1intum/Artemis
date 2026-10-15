@@ -27,7 +27,7 @@ public record EmbeddingResponseDTO(List<EmbeddingDataDTO> data) {
 
         @Override
         public boolean equals(Object other) {
-            return other instanceof EmbeddingDataDTO that && index == that.index && Arrays.equals(embedding, that.embedding);
+            return other instanceof EmbeddingDataDTO(int otherIndex, float[] otherEmbedding) && index == otherIndex && Arrays.equals(embedding, otherEmbedding);
         }
 
         @Override

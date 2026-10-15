@@ -73,8 +73,9 @@ public class SearchableEntityVectorWriter {
 
         @Override
         public boolean equals(Object other) {
-            return other instanceof PreparedRow that && Objects.equals(uuid, that.uuid) && Objects.equals(properties, that.properties) && Objects.equals(chunks, that.chunks)
-                    && Arrays.deepEquals(vectors, that.vectors);
+            return other instanceof PreparedRow(String otherUuid, Map<String, Object> otherProperties, List<String> otherChunks, float[][] otherVectors)
+                    && Objects.equals(uuid, otherUuid) && Objects.equals(properties, otherProperties) && Objects.equals(chunks, otherChunks)
+                    && Arrays.deepEquals(vectors, otherVectors);
         }
 
         @Override

@@ -136,6 +136,18 @@ class SearchableEntityChunkerTest {
     }
 
     @Test
+    void longRunOfWhitespaceWithoutLineBreaksIsCleanedInLinearTime() {
+        // A run of no-break spaces survives the blank rule, and a match attempt from each of its characters used to take quadratic time.
+        String text = "a" + String.valueOf((char) 0x00A0).repeat(40_000) + "x";
+
+        long start = System.nanoTime();
+        String cleaned = SearchableEntityChunker.clean(text);
+
+        assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofSeconds(5));
+        assertThat(cleaned).isEqualTo(text);
+    }
+
+    @Test
     void entityWithoutDescriptionIsItsHeader() {
         Map<String, Object> properties = Map.of(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.Properties.TITLE,
                 "random");

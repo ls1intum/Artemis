@@ -95,8 +95,10 @@ public final class SearchableEntityChunker {
     /**
      * A run of whitespace with at least two line breaks. {@code S} contains {@code \n} itself, so a further repetition of a
      * line break group after the second one adds nothing, and leaving it out keeps the stack use constant for any input.
+     * The lookbehind lets a match start only at the beginning of a run: without it, a long run with fewer than two line
+     * breaks is scanned again from each of its characters, which takes quadratic time.
      */
-    private static final Pattern BLANK_LINES = Pattern.compile(S + "*\\n" + S + "*\\n" + S + "*", LINES);
+    private static final Pattern BLANK_LINES = Pattern.compile("(?<!" + S + ")" + S + "*\\n" + S + "*\\n" + S + "*", LINES);
 
     private static final Pattern SPACED_NEWLINE = Pattern.compile(" ?\\n ?", LINES);
 
