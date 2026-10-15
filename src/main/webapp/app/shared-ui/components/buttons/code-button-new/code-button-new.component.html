@@ -9,7 +9,7 @@
     {{ 'artemisApp.exerciseActions.code' | artemisTranslate }}
 </button>
 
-<tumaet-ui-popover #popoverContent [ariaLabel]="'artemisApp.exerciseActions.codePopoverAriaLabel' | artemisTranslate" placement="bottom">
+<tumaet-ui-popover #popoverContent [ariaLabel]="'artemisApp.exerciseActions.codePopoverAriaLabel' | artemisTranslate" placement="bottom" padding="none">
     <div class="w-120">
         @if (dataResource.isLoading()) {
             <div class="flex h-40 w-full items-center justify-center">

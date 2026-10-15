@@ -1,61 +1,61 @@
-<div class="flex flex-col gap-3">
-    <h5 class="m-0" jhiTranslate="artemisApp.exerciseActions.accessRepository"></h5>
+<div class="flex flex-col">
+    <div class="flex flex-col gap-3 p-3!">
+        <h5 class="m-0" jhiTranslate="artemisApp.exerciseActions.accessRepository"></h5>
 
-    @let selectedMethodData = selectedAuthenticationMethodData();
-    @if (selectedMethodData.authenticationMethod === RepositoryAuthenticationMethod.SSH) {
-        @let sshKeys = selectedMethodData.sshKeyState;
-        @if (sshKeys.status === 'missing') {
-            <tumaet-ui-message severity="warn">
-                <span
-                    class="text-sm [&_a]:text-inherit! [&_a]:underline!"
-                    jhiTranslate="artemisApp.exerciseActions.codePopoverSshKeyTip"
-                    [translateValues]="{ sshSettingsUrl: sshSettingsUrl }"
-                ></span>
-            </tumaet-ui-message>
-        } @else if (sshKeys.hasExpiredKeys) {
-            <tumaet-ui-message severity="warn">
-                <span
-                    class="text-sm [&_a]:text-inherit! [&_a]:underline!"
-                    jhiTranslate="artemisApp.exerciseActions.codePopoverSshKeyExpiredTip"
-                    [translateValues]="{ sshSettingsUrl: sshSettingsUrl }"
-                ></span>
-            </tumaet-ui-message>
+        @let selectedMethodData = selectedAuthenticationMethodData();
+        @if (selectedMethodData.authenticationMethod === RepositoryAuthenticationMethod.SSH) {
+            @let sshKeys = selectedMethodData.sshKeyState;
+            @if (sshKeys.status === 'missing') {
+                <tumaet-ui-message severity="warn">
+                    <span
+                        class="text-sm [&_a]:text-inherit! [&_a]:underline!"
+                        jhiTranslate="artemisApp.exerciseActions.codePopoverSshKeyTip"
+                        [translateValues]="{ sshSettingsUrl: sshSettingsUrl }"
+                    ></span>
+                </tumaet-ui-message>
+            } @else if (sshKeys.hasExpiredKeys) {
+                <tumaet-ui-message severity="warn">
+                    <span
+                        class="text-sm [&_a]:text-inherit! [&_a]:underline!"
+                        jhiTranslate="artemisApp.exerciseActions.codePopoverSshKeyExpiredTip"
+                        [translateValues]="{ sshSettingsUrl: sshSettingsUrl }"
+                    ></span>
+                </tumaet-ui-message>
+            }
         }
-    }
 
-    <div class="flex">
-        <button
-            type="button"
-            class="flex items-center gap-2 rounded-s-sm! rounded-e-none! border border-primary bg-primary px-3 text-(--tumaet-ui-primary-contrast-color)"
-            [tumAetUiMenuTrigger]="authenticationMenu"
-        >
-            {{ selectedAuthenticationMethodLabel() }}
-            <fa-icon [icon]="faCaretDown" size="xs" aria-hidden="true" />
-        </button>
+        <div class="flex">
+            <button
+                type="button"
+                class="flex items-center gap-2 rounded-s-sm! rounded-e-none! border border-primary bg-primary px-3 text-(--tumaet-ui-primary-contrast-color)"
+                [tumAetUiMenuTrigger]="authenticationMenu"
+            >
+                {{ selectedAuthenticationMethodLabel() }}
+                <fa-icon [icon]="faCaretDown" size="xs" aria-hidden="true" />
+            </button>
 
-        <div class="min-w-0 flex-1 rounded-e-sm border-y border-e px-3 py-2">
-            <code class="block truncate">{{ repositoryDisplayUrl() }}</code>
+            <div class="min-w-0 flex-1 rounded-e-sm border-y border-e px-3 py-2">
+                <code class="block truncate">{{ repositoryDisplayUrl() }}</code>
+            </div>
         </div>
     </div>
 
-    <div class="flex flex-col">
-        <button
-            type="button"
-            class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3 py-2 enabled:hover:bg-(--tumaet-ui-hover-background)! enabled:hover:text-(--tumaet-ui-accent-color)! disabled:text-state-success!"
-            [cdkCopyToClipboard]="repositoryCopyUrl()"
-            (cdkCopyToClipboardCopied)="onRepositoryUrlCopied($event)"
-            [disabled]="copiedRepositoryUrl()"
-            data-testid="copy-repository-url"
-        >
-            <fa-icon [icon]="copiedRepositoryUrl() ? faCheck : faCopy" aria-hidden="true" />
-            <span [jhiTranslate]="copiedRepositoryUrl() ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl'"></span>
-        </button>
+    <button
+        type="button"
+        class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 enabled:hover:bg-(--tumaet-ui-hover-background)! enabled:hover:text-(--tumaet-ui-accent-color)! disabled:text-state-success!"
+        [cdkCopyToClipboard]="repositoryCopyUrl()"
+        (cdkCopyToClipboardCopied)="onRepositoryUrlCopied($event)"
+        [disabled]="copiedRepositoryUrl()"
+        data-testid="copy-repository-url"
+    >
+        <fa-icon [icon]="copiedRepositoryUrl() ? faCheck : faCopy" aria-hidden="true" />
+        <span [jhiTranslate]="copiedRepositoryUrl() ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl'"></span>
+    </button>
 
-        <div class="border-t border-border"></div>
+    <div class="border-t border-border"></div>
 
-        <div class="flex h-10 items-center justify-center">
-            <button type="button" tumAetUiButton variant="text" size="small" jhiTranslate="artemisApp.exerciseActions.showAlternatives"></button>
-        </div>
+    <div class="flex h-10 items-center justify-center">
+        <button type="button" tumAetUiButton variant="text" size="small" jhiTranslate="artemisApp.exerciseActions.showAlternatives"></button>
     </div>
 </div>
 
