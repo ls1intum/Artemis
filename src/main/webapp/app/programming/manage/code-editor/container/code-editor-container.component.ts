@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faChevronDown, faCommentDots, faGripLines, faTerminal } from '@fortawesome/free-solid-svg-icons';
+import { faCommentDots, faTerminal } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
+import { FeedbackBottomPanelComponent } from 'app/exercise/feedback-bottom-panel/feedback-bottom-panel.component';
+import { FeedbackSplitComponent } from 'app/exercise/feedback-bottom-panel/feedback-split.component';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -64,12 +65,13 @@ export enum CollapsableCodeEditorElement {
         CodeEditorBuildOutputComponent,
         KeysPipe,
         FaIconComponent,
-        ResizableDirective,
         NgTemplateOutlet,
         TumAetUiTabsComponent,
         TumAetUiTabListComponent,
         TumAetUiTabComponent,
         ArtemisTranslatePipe,
+        FeedbackBottomPanelComponent,
+        FeedbackSplitComponent,
     ],
 })
 export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnDestroy {
@@ -81,10 +83,8 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     readonly CommitState = CommitState;
     readonly EditorState = EditorState;
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
-    protected readonly faGripLines = faGripLines;
     protected readonly faTerminal = faTerminal;
     protected readonly faCommentDots = faCommentDots;
-    protected readonly faChevronDown = faChevronDown;
     // grid is the root layout element and is always rendered, so it is required and safe to dereference.
     readonly grid = viewChild.required(CodeEditorGridComponent);
     // fileBrowser, actions, buildOutput and monacoEditor are optional viewChildren:

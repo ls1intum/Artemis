@@ -596,6 +596,64 @@ describe('TextEditorComponent', () => {
         });
     });
 
+    describe('general feedback panel', () => {
+        const generalFeedback = { id: 1, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'Well structured.', credits: 2 } as Feedback;
+        const referencedFeedback = { id: 2, type: FeedbackType.MANUAL, reference: 'text:1', detailText: 'Cite a source.', credits: -1 } as Feedback;
+
+        const render = (feedbacks: Feedback[], isExamSummary = false) => {
+            comp.textExercise.set(textExercise);
+            comp.result.set({ id: 1, assessmentType: AssessmentType.MANUAL, feedbacks } as Result);
+            fixture.componentRef.setInput('isExamSummary', isExamSummary);
+            fixture.changeDetectorRef.detectChanges();
+        };
+        const panel = (): HTMLElement | null => fixture.nativeElement.querySelector('[data-testid="text-general-feedback-panel"]');
+        const generalFeedbackElement = (): HTMLElement | null => fixture.nativeElement.querySelector('jhi-general-feedback');
+
+        it('should show the general feedback in a panel under the submission, as the code editor does', () => {
+            render([generalFeedback, referencedFeedback]);
+
+            expect(comp.showsGeneralFeedbackPanel).toBe(true);
+            expect(panel()).not.toBeNull();
+            expect(panel()!.querySelector('[data-testid="feedback-bottom-panel-count"]')!.textContent!.trim()).toBe('1');
+            // The feedback is in the panel only, not once more inside the submission panel
+            expect(fixture.nativeElement.querySelectorAll('jhi-general-feedback')).toHaveLength(1);
+            expect(panel()!.contains(generalFeedbackElement())).toBe(true);
+            expect(fixture.nativeElement.querySelector('[data-testid="text-assessed-submission"]')!.contains(generalFeedbackElement())).toBe(false);
+        });
+
+        it('should keep the general feedback below the submission in an exam summary, which is one long page', () => {
+            render([generalFeedback], true);
+
+            expect(comp.showsGeneralFeedbackPanel).toBe(false);
+            expect(panel()).toBeNull();
+            expect(fixture.nativeElement.querySelector('[data-testid="text-assessed-submission"]')!.contains(generalFeedbackElement())).toBe(true);
+        });
+
+        it('should show no panel when the assessment has no general feedback', () => {
+            render([referencedFeedback]);
+
+            expect(comp.showsGeneralFeedbackPanel).toBe(false);
+            expect(panel()).toBeNull();
+            // The inline component stays in the page but has nothing to draw
+            expect(fixture.nativeElement.querySelector('[data-testid="general-feedback"]')).toBeNull();
+        });
+
+        it('should collapse and expand the panel from its header button', () => {
+            render([generalFeedback]);
+            const content = (): HTMLElement => panel()!.querySelector('.feedback-bottom-panel__content')!;
+            expect(content().hidden).toBe(false);
+
+            (panel()!.querySelector('[data-testid="feedback-bottom-panel-toggle"]') as HTMLButtonElement).click();
+            fixture.changeDetectorRef.detectChanges();
+            expect(comp.generalFeedbackExpanded()).toBe(false);
+            expect(content().hidden).toBe(true);
+
+            (panel()!.querySelector('[data-testid="feedback-bottom-panel-toggle"]') as HTMLButtonElement).click();
+            fixture.changeDetectorRef.detectChanges();
+            expect(content().hidden).toBe(false);
+        });
+    });
+
     it('should destroy', () => {
         comp.submission.set({ text: 'abc' } as TextSubmission);
         comp.answer.set('def');

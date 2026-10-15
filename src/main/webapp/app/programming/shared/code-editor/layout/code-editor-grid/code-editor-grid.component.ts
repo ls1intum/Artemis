@@ -1,15 +1,20 @@
-import { Component, DestroyRef, ElementRef, HostListener, Renderer2, ViewEncapsulation, afterNextRender, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, Renderer2, ViewEncapsulation, afterNextRender, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { ResizeType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ResizableDirective } from 'app/shared-ui/directives/resizable.directive';
+import { FeedbackSplitComponent } from 'app/exercise/feedback-bottom-panel/feedback-split.component';
+import { SplitterModule } from 'primeng/splitter';
+import type { SplitterResizeEndEvent } from 'primeng/types/splitter';
+import { SPLITTER_GUTTER_SIZE, splitterPassThrough } from 'app/assessment/manage/assessment-workspace/splitter-pass-through';
+import { NgTemplateOutlet } from '@angular/common';
 
 @Component({
     selector: 'jhi-code-editor-grid',
     templateUrl: './code-editor-grid.component.html',
     styleUrls: ['./code-editor-grid.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [ResizableDirective],
+    imports: [ResizableDirective, FeedbackSplitComponent, NgTemplateOutlet, SplitterModule],
     host: { '[class.code-editor-grid--fill]': 'fillHeight()' },
 })
 export class CodeEditorGridComponent {
@@ -49,20 +54,10 @@ export class CodeEditorGridComponent {
     // Resizable constraints (px). The min values mirror the previous interact.js configuration,
     // which derived them from the screen dimensions at view init.
     readonly resizableMinHeightMain = window.screen.height / 3;
-    readonly resizableMinWidthLeft = window.screen.width / 7;
-    readonly resizableMinWidthRight = window.screen.width / 6;
     readonly resizableMinHeightBottom = window.screen.height / 6;
 
-    // Width that must always remain for the code editor in the middle, and small safety buffers for the
-    // inter-panel gap / grip / margins, so a resize cannot collapse a neighbour to nothing.
-    private static readonly EDITOR_CENTER_MIN_WIDTH = 300;
+    // Small safety buffer for the inter-panel gap / grip / margins, so a resize cannot collapse a neighbour to nothing.
     private static readonly VERTICAL_BUFFER_PX = 40;
-    private static readonly HORIZONTAL_BUFFER_PX = 24;
-    /**
-     * Widest share of the row the instructions column takes in an assessment, like the text and modeling assessment
-     * workspace, which keeps the side with the submission at 36% or more.
-     */
-    private static readonly ASSESSMENT_INSTRUCTIONS_MAX_SHARE = 0.64;
 
     /**
      * Maximum panel sizes (px), recomputed on layout-affecting events (see {@link recomputeMaxConstraints}) rather
@@ -75,11 +70,20 @@ export class CodeEditorGridComponent {
     protected readonly maxConstraints = signal({
         heightMain: 1200,
         heightBottom: 600,
-        widthLeft: window.screen.width / 2,
-        widthRight: window.screen.width / 1.3,
     });
 
     protected readonly ResizeType = ResizeType;
+
+    protected readonly gutterSize = SPLITTER_GUTTER_SIZE;
+    protected readonly passThrough = splitterPassThrough('horizontal');
+    /** The widths (percent) of the file browser, the editor and the instructions; the splitter remembers what the user drags them to. */
+    protected readonly sidebarSizes = computed(() => (this.assessmentWorkspace() ? [20, 45, 35] : [24, 46, 30]));
+    /**
+     * The smallest widths (percent) the splitter lets the three panels shrink to. An assessment keeps the file browser and the editor
+     * at 36% or more, like the text and modeling assessment workspace, whose instructions side may be dragged to between 24% and 64%.
+     */
+    protected readonly sidebarMinSizes = computed(() => (this.assessmentWorkspace() ? [10, 36, 24] : [10, 30, 10]));
+    private lastSidebarSizes?: number[];
 
     constructor() {
         afterNextRender(() => {
@@ -91,6 +95,14 @@ export class CodeEditorGridComponent {
     @HostListener('window:resize')
     onWindowResize(): void {
         this.recomputeMaxConstraints();
+    }
+
+    /** The user finished dragging a divider between the file browser, the editor and the instructions. */
+    protected onSidebarsResized(event: SplitterResizeEndEvent): void {
+        // The splitter reports the new sizes only; the divider next to the file browser moved when the file browser's own share changed
+        const fileBrowserMoved = this.lastSidebarSizes !== undefined && Math.abs(Number(event.sizes[0]) - this.lastSidebarSizes[0]) > 0.01;
+        this.lastSidebarSizes = event.sizes.map(Number);
+        this.onResize.emit(fileBrowserMoved ? ResizeType.SIDEBAR_LEFT : ResizeType.SIDEBAR_RIGHT);
     }
 
     /** Re-emit a panel resize and refresh the sum-aware maxima so the next drag accounts for the new sizes. */
@@ -127,8 +139,6 @@ export class CodeEditorGridComponent {
         const main = wrapper.querySelector<HTMLElement>('.editor-main');
         const bottom = wrapper.querySelector<HTMLElement>('.editor-bottom');
         const content = wrapper.querySelector<HTMLElement>('.editor-main__content');
-        const left = wrapper.querySelector<HTMLElement>('.editor-sidebar-left');
-        const right = wrapper.querySelector<HTMLElement>('.editor-sidebar-right');
         if (content?.clientWidth === 0) {
             // not rendered (a hidden page of the exam): there is nothing to measure, and the layout is measured when it is shown
             return;
@@ -136,8 +146,6 @@ export class CodeEditorGridComponent {
 
         const mainTop = (main ?? wrapper).getBoundingClientRect().top;
         const availableHeight = Math.max(0, window.innerHeight - mainTop - CodeEditorGridComponent.VERTICAL_BUFFER_PX);
-        const availableWidth = content?.clientWidth ?? window.innerWidth;
-        const reservedWidth = CodeEditorGridComponent.EDITOR_CENTER_MIN_WIDTH + CodeEditorGridComponent.HORIZONTAL_BUFFER_PX;
 
         // A filling grid gives the bottom area whatever the editor leaves, so the editor may grow until the bottom area is
         // at its minimum rather than only into the bottom area's current height
@@ -148,10 +156,6 @@ export class CodeEditorGridComponent {
         this.maxConstraints.set({
             heightMain,
             heightBottom: Math.max(this.resizableMinHeightBottom, Math.min(600, availableHeight - (main?.offsetHeight ?? this.resizableMinHeightMain))),
-            widthLeft: Math.max(this.resizableMinWidthLeft, Math.min(window.screen.width / 2, availableWidth - (right?.offsetWidth ?? 0) - reservedWidth)),
-            widthRight: this.assessmentWorkspace()
-                ? availableWidth * CodeEditorGridComponent.ASSESSMENT_INSTRUCTIONS_MAX_SHARE
-                : Math.max(this.resizableMinWidthRight, Math.min(window.screen.width / 1.3, availableWidth - (left?.offsetWidth ?? 0) - reservedWidth)),
         });
     }
 

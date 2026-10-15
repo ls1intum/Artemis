@@ -1010,6 +1010,66 @@ describe('ModelingSubmissionComponent', () => {
             expect(result?.completionDate?.isSame(expectedSortedResults[index].completionDate)).toBe(true);
         });
     });
+    describe('general feedback panel', () => {
+        const general = { id: 1, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'Well structured.', credits: 2 } as Feedback;
+        const referenced = { id: 2, type: FeedbackType.MANUAL, reference: 'ref1', referenceId: 'ref1', detailText: 'Missing attribute.', credits: -1 } as Feedback;
+
+        const assess = (feedbacks: Feedback[], isExamSummary = false) => {
+            createModelingSubmissionComponent();
+            comp.assessmentResult.set({ id: 1, feedbacks } as Result);
+            fixture.componentRef.setInput('isExamSummary', isExamSummary);
+        };
+
+        it('should show the general feedback in a panel under the diagram when a course assessment has some', () => {
+            assess([general, referenced]);
+
+            expect(comp.showsGeneralFeedbackPanel).toBe(true);
+            // The side panel keeps the feedback on the diagram
+            expect(comp['sidePanelHasContent']()).toBe(true);
+        });
+
+        it('should keep the general feedback in the side panel of an exam summary, which is one long page', () => {
+            assess([general, referenced], true);
+
+            expect(comp.showsGeneralFeedbackPanel).toBe(false);
+            expect(comp['sidePanelHasContent']()).toBe(true);
+        });
+
+        it('should show no panel without general feedback', () => {
+            assess([referenced]);
+
+            expect(comp.showsGeneralFeedbackPanel).toBe(false);
+            expect(comp['sidePanelHasContent']()).toBe(true);
+        });
+
+        it('should leave the side panel empty-handed when general feedback is all there is, since the panel below holds it', () => {
+            assess([general]);
+
+            expect(comp.showsGeneralFeedbackPanel).toBe(true);
+            expect(comp['sidePanelHasContent']()).toBe(false);
+        });
+
+        it('should still show the side panel for an assessment without any feedback, which explains that there is none', () => {
+            assess([]);
+
+            expect(comp.showsGeneralFeedbackPanel).toBe(false);
+            expect(comp['hasAssessmentToShow']()).toBe(false);
+            comp.result.set({ id: 1 } as Result);
+            expect(comp['sidePanelHasContent']()).toBe(true);
+        });
+
+        it('should collapse and expand the panel', () => {
+            createModelingSubmissionComponent();
+            expect(comp.generalFeedbackExpanded()).toBe(true);
+
+            comp.toggleGeneralFeedback();
+            expect(comp.generalFeedbackExpanded()).toBe(false);
+
+            comp.toggleGeneralFeedback();
+            expect(comp.generalFeedbackExpanded()).toBe(true);
+        });
+    });
+
     describe('feedback presentation', () => {
         it('should name the element, soften the Apollon owner separator, and stay silent without one', () => {
             createModelingSubmissionComponent();

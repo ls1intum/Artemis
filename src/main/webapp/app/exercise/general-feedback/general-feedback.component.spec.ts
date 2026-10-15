@@ -58,15 +58,22 @@ describe('GeneralFeedbackComponent', () => {
         expect(section()?.querySelectorAll('jhi-unified-feedback')).toHaveLength(1);
     });
 
-    it('should lay the cards out in columns only when asked to', () => {
+    it('should lay the cards out identically whichever options the host sets', () => {
         fixture.componentRef.setInput('feedbacks', [{ id: 1, type: FeedbackType.MANUAL_UNREFERENCED, detailText: 'Well structured.', credits: 2 }] as Feedback[]);
-        fixture.detectChanges();
-        const list = (): HTMLElement | null => section()!.querySelector('.general-feedback__list');
-        expect(list()?.classList).not.toContain('general-feedback__list--columns');
+        const listClass = (): string => section()!.querySelector('ul')!.className;
 
-        fixture.componentRef.setInput('columns', true);
-        fixture.detectChanges();
-        expect(list()?.classList).toContain('general-feedback__list--columns');
+        // The options the four exercise types set: text and file upload separate the section, programming drops the title (its tab
+        // names the section), and modeling sets neither. The card layout must not depend on any of them.
+        const layouts = new Set<string>();
+        for (const options of [{}, { separated: true }, { showTitle: false }, { separated: true, showTitle: false }]) {
+            fixture.componentRef.setInput('separated', false);
+            fixture.componentRef.setInput('showTitle', true);
+            Object.entries(options).forEach(([name, value]) => fixture.componentRef.setInput(name, value));
+            fixture.detectChanges();
+            layouts.add(listClass());
+        }
+
+        expect([...layouts]).toEqual(['general-feedback__list']);
     });
 
     it('should render nothing without general feedback', () => {

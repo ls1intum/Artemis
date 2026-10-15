@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -39,6 +40,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { TextResultComponent } from '../text-result/text-result.component';
 import { GeneralFeedbackComponent } from 'app/exercise/general-feedback/general-feedback.component';
+import { FeedbackBottomPanelComponent } from 'app/exercise/feedback-bottom-panel/feedback-bottom-panel.component';
+import { FeedbackSplitComponent } from 'app/exercise/feedback-bottom-panel/feedback-split.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { onTextEditorTab } from 'app/foundation/util/text.utils';
@@ -62,6 +65,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         TeamSubmissionSyncComponent,
         TextResultComponent,
         GeneralFeedbackComponent,
+        FeedbackBottomPanelComponent,
+        FeedbackSplitComponent,
+        NgTemplateOutlet,
         RatingComponent,
         FaIconComponent,
         MarkdownDirective,
@@ -97,6 +103,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     readonly submission = signal<TextSubmission>(undefined!);
     readonly course = signal<Course | undefined>(undefined);
     readonly isSaving = signal(false);
+    /** Whether the general feedback panel at the bottom of the page shows its content. */
+    readonly generalFeedbackExpanded = signal(true);
     private textEditorInput = new Subject<string>();
     textEditorInputObservable = this.textEditorInput.asObservable();
     private submissionChange = new Subject<TextSubmission>();
@@ -395,6 +403,18 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      */
     get unreferencedFeedback(): Feedback[] | undefined {
         return this.result() ? getUnreferencedFeedback(this.result().feedbacks) : undefined;
+    }
+
+    /**
+     * Whether the general feedback sits in the panel at the bottom of the page, as in the code editor. An exam summary is one
+     * long page that a fixed panel would cut, so it keeps the feedback below the submission.
+     */
+    get showsGeneralFeedbackPanel(): boolean {
+        return this.showsAssessedSubmission && !this.isExamSummary() && !!this.unreferencedFeedback?.length;
+    }
+
+    toggleGeneralFeedback(): void {
+        this.generalFeedbackExpanded.update((expanded) => !expanded);
     }
 
     /** Whether the student reads an assessed submission, which the submission panel of the assessment page then frames. */

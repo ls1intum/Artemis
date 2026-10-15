@@ -22,11 +22,5 @@ export class GeneralFeedbackComponent {
     readonly separated = input(false);
     /** Whether the section names itself; a tab that already reads "General feedback" with the count shows it without. */
     readonly showTitle = input(true);
-    /**
-     * Whether the cards fill the width in as many columns as fit, at least 20rem each, so a wide panel shows more feedback
-     * at once; a narrow one falls back to a single column.
-     */
-    readonly columns = input(false);
-
     protected readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 }

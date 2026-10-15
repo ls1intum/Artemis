@@ -37,6 +37,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { GeneralFeedbackComponent } from 'app/exercise/general-feedback/general-feedback.component';
+import { FeedbackBottomPanelComponent } from 'app/exercise/feedback-bottom-panel/feedback-bottom-panel.component';
+import { FeedbackSplitComponent } from 'app/exercise/feedback-bottom-panel/feedback-split.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { onError } from 'app/foundation/util/global.utils';
@@ -70,6 +72,8 @@ const FEEDBACK_PREVIEW_HIGHLIGHT = 'var(--apollon-interactive-selection)';
         ModelingAssessmentPanelDirective,
         UnifiedFeedbackComponent,
         GeneralFeedbackComponent,
+        FeedbackBottomPanelComponent,
+        FeedbackSplitComponent,
     ],
     host: { '(window:beforeunload)': 'unloadNotification($event)' },
 })
@@ -157,6 +161,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly umlModel = signal<UMLModel>(undefined!);
     readonly hasElements = signal(false);
     readonly isSaving = signal(false);
+    /** Whether the general feedback panel under the diagram shows its content. */
+    readonly generalFeedbackExpanded = signal(true);
     readonly isChanged = signal(false);
     readonly retryStarted = signal(false);
     autoSaveInterval?: number;
@@ -181,6 +187,23 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
 
     protected hasAssessmentToShow(): boolean {
         return !!this.assessmentResult()?.feedbacks?.length || !!this.result();
+    }
+
+    /**
+     * Whether the general feedback sits in the panel under the diagram, as in the code editor. An exam summary is one long page
+     * that a fixed panel would cut, so it keeps the feedback in the side panel.
+     */
+    get showsGeneralFeedbackPanel(): boolean {
+        return !this.isExamSummary() && !!this.unreferencedFeedback?.length;
+    }
+
+    toggleGeneralFeedback(): void {
+        this.generalFeedbackExpanded.update((expanded) => !expanded);
+    }
+
+    /** Whether the side panel next to the diagram has anything to show: general feedback alone has its own panel below it. */
+    protected sidePanelHasContent(): boolean {
+        return this.hasAssessmentToShow() && !(this.showsGeneralFeedbackPanel && !this.referencedFeedback?.length);
     }
 
     readonly canSubmitExercise = computed(() => this.shouldShowLiveEditor());

@@ -2,6 +2,11 @@
 // otherwise stretch a description over 1000px, and below 320px the title, points and actions no longer fit in one row.
 // A column narrower than that (e.g. the code editor next to an open file browser) still wins, so the card never overflows it.
 .unified-feedback {
+    // The rules inside the card share one colour: the rule under the reference/criterion row and the rule above the AI
+    // suggestion footer. They used to differ, so the rule under the criterion looked darker than the one above the footer.
+    // The full border colour keeps them readable; the card's own outline stays the quieter mix.
+    --unified-feedback-divider: var(--border-color);
+
     min-width: min(320px, 100%);
     max-width: 720px;
     border-radius: 0.375rem;
@@ -24,7 +29,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--unified-feedback-divider);
     overflow: hidden;
 }
 
@@ -470,5 +475,5 @@
     display: flex;
     margin-top: 0.5rem;
     padding-top: 0.5rem;
-    border-top: 1px solid color-mix(in srgb, var(--border-color) 60%, transparent);
+    border-top: 1px solid var(--unified-feedback-divider);
 }

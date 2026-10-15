@@ -34,25 +34,19 @@
     @include mixins.count-pill;
 }
 
+// Every card is as wide as --general-feedback-card-width wherever that much room is left, whichever exercise type hosts the
+// list: programming, text, modeling and file upload all show the same card. Only a container narrower than one card makes
+// it shrink to the container. As many columns as fit; the cards of a row take its full height, so the rows line up however
+// long each card's text is.
 .general-feedback__list {
-    display: flex;
+    --general-feedback-card-width: 24rem;
+
+    display: grid;
     margin: 0;
     padding: 0;
-    flex-direction: column;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--general-feedback-card-width)), var(--general-feedback-card-width)));
     gap: 0.75rem;
     list-style: none;
-
-    // The list's gap already spaces the cards, so a card's own bottom margin (meant for a plain stack) is dropped.
-    ::ng-deep .unified-feedback {
-        margin-bottom: 0;
-    }
-}
-
-// As many columns as fit, each at least as wide as a card's minimum; auto-fit drops the empty ones, so a single card still
-// takes the full width. The cards of a row take its full height, so the rows line up however long each card's text is.
-.general-feedback__list--columns {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
 
     > li > jhi-unified-feedback {
         display: block;
@@ -60,6 +54,8 @@
     }
 
     ::ng-deep .unified-feedback {
+        // The list's gap already spaces the cards, so a card's own bottom margin (meant for a plain stack) is dropped.
+        margin-bottom: 0;
         max-width: none;
         height: 100%;
     }

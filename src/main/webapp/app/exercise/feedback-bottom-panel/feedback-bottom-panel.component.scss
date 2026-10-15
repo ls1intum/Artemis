@@ -1,0 +1,88 @@
+@use 'src/main/webapp/content/scss/artemis-mixins' as mixins;
+
+:host {
+    // A column, so the panel shrinks inside a host a page gave a max-height and its content scrolls instead of overflowing it
+    display: flex;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+}
+
+:host(.fill) {
+    height: 100%;
+}
+
+// Framed like the submission panel above it (assessment-submission-panel) and the general feedback & notes panel of the
+// assessment workspace. A page maps the header onto its own palette through the custom properties.
+.feedback-bottom-panel {
+    display: flex;
+    min-height: 0;
+    flex: 0 1 auto;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    background-color: var(--card-bg);
+    color: var(--body-color);
+
+    &--fill {
+        height: 100%;
+    }
+
+    // Collapsed, only the header remains
+    &--collapsed {
+        height: auto;
+    }
+}
+
+.feedback-bottom-panel__header {
+    display: flex;
+    min-height: 2.5rem;
+    flex: none;
+    align-items: center;
+    padding: var(--feedback-panel-header-padding-block, 0.3rem) 0.75rem;
+    border-bottom: 1px solid var(--feedback-panel-header-border, var(--border-color));
+    background-color: var(--feedback-panel-header-background, var(--hover-slightly-darker-body-bg));
+    color: inherit;
+}
+
+.feedback-bottom-panel--collapsed .feedback-bottom-panel__header {
+    border-bottom-color: transparent;
+}
+
+.feedback-bottom-panel__title {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.feedback-bottom-panel__heading {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 650;
+    line-height: 1.3;
+}
+
+// The same pill as the count on the general feedback tab of the programming exercise and on the file browser's files
+.feedback-bottom-panel__count {
+    @include mixins.count-pill;
+}
+
+.feedback-bottom-panel__collapse {
+    flex-shrink: 0;
+    color: inherit;
+}
+
+.feedback-bottom-panel__chevron--collapsed {
+    transform: rotate(180deg);
+}
+
+// Only the content scrolls, so the header stays in reach
+.feedback-bottom-panel__content {
+    min-height: 0;
+    flex: 1 1 auto;
+    padding: 0.75rem;
+    overflow-y: auto;
+}

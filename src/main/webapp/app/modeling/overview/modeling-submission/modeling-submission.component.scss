@@ -83,6 +83,8 @@ jhi-modeling-assessment {
     height: 100%;
     min-width: 0;
     min-height: 0;
+    // The canvas on top and, when there is general feedback, its panel underneath
+    flex-direction: column;
 
     &__canvas {
         display: flex;
@@ -90,6 +92,17 @@ jhi-modeling-assessment {
         min-height: min(34rem, 70dvh);
         flex: 1 1 auto;
         overflow: hidden;
+    }
+}
+
+// The diagram above and the general feedback panel below share the layout's height; a splitter divides them. With a panel under
+// it the diagram may shrink below its usual minimum, so the split can hand the panel its share.
+.modeling-submission-split {
+    flex: 1 1 auto;
+    min-height: 0;
+
+    &--divided .modeling-submission-assessment-layout__canvas {
+        min-height: 0;
     }
 }
 

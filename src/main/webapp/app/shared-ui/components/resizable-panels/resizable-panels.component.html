@@ -4,7 +4,7 @@
          its first panel are never destroyed, so the left panel's projected content (e.g. the modeling editor) keeps
          its in-memory state instead of being recreated and reset on collapse. -->
     <p-splitter
-        [pt]="{ gutter: { 'data-testid': 'splitter-gutter' }, panel: { 'data-testid': 'splitter-panel' } }"
+        [pt]="passThrough"
         class="resizable-panels-splitter w-100 h-100"
         [class.right-collapsed]="isRightPanelCollapsed()"
         layout="horizontal"

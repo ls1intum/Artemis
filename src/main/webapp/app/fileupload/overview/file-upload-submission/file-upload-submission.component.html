@@ -47,7 +47,7 @@
                         }
                     </ng-container>
                     <ng-container [ngTemplateOutlet]="submittedFile" [ngTemplateOutletContext]="{ inPanel: true }" />
-                    <jhi-general-feedback [feedbacks]="unreferencedFeedback()" [course]="course()" [separated]="true" [columns]="true" />
+                    <jhi-general-feedback [feedbacks]="unreferencedFeedback()" [course]="course()" [separated]="true" />
                     <!-- In a course the exercise details panel asks for the rating; an exam summary has no such panel. -->
                     @if (isOwnerOfParticipation() && result() && participation() && displayedInExamSummary()) {
                         <jhi-rating

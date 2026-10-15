@@ -13,46 +13,16 @@
 
     // The current PrimeNG Splitter renders its panels as `p-splitterpanel`. This class name has
     // changed across PrimeNG majors, so revisit these selectors when upgrading PrimeNG.
-    .p-splitterpanel {
+    // Only the panels of this splitter: the editors inside them may hold splitters of their own, which these rules would reach
+    // through a descendant selector (and did: their handles showed this one's grip on top of their own).
+    > .p-splitterpanel {
         display: flex;
         min-width: 0;
         min-height: 0;
         overflow: hidden;
     }
 
-    // Thin transparent gutter showing two vertical grip bars, like the previous split.js gutter.
-    .p-splitter-gutter {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: col-resize;
-        background: transparent;
-    }
-
-    .p-splitter-gutter-handle {
-        // Center the two grip bars within the handle. Without explicit centering and sizing, PrimeNG sizes the
-        // handle to fill the gutter and the bars sit at flex-start (visually left of the divider) instead of centered.
-        // The handle is as wide as the gutter, which is one divider: the two 2px bars and their 1px gap fit in it.
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        width: var(--spacing-divider);
-        height: 12px;
-        gap: 1px;
-        background: transparent;
-        pointer-events: none;
-
-        &::before,
-        &::after {
-            content: '';
-            display: block;
-            width: 2px;
-            height: 12px;
-            background: var(--bs-body-color);
-            border-radius: 1px;
-        }
-    }
+    // The gutter and its grip are styled by the pass-through (splitterPassThrough), the same as on the assessment pages.
 
     // Collapsed state: the splitter stays mounted (so the left panel survives), but the right panel shrinks to the
     // icon rail and the gutter is hidden. !important overrides PrimeNG's inline flex-basis from panelSizes.

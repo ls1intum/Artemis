@@ -1,0 +1,26 @@
+<section class="feedback-bottom-panel" [class.feedback-bottom-panel--fill]="fill()" [class.feedback-bottom-panel--collapsed]="!expanded()" [attr.data-testid]="testId()">
+    <div class="feedback-bottom-panel__header">
+        <div class="feedback-bottom-panel__title">
+            <ng-content select="[panelHeader]">
+                <fa-icon [icon]="faCommentDots" aria-hidden="true" />
+                <h3 class="feedback-bottom-panel__heading">{{ titleKey() | artemisTranslate }}</h3>
+                @if (count() !== undefined) {
+                    <span class="feedback-bottom-panel__count" data-testid="feedback-bottom-panel-count">{{ count() }}</span>
+                }
+            </ng-content>
+        </div>
+        <button
+            type="button"
+            class="btn btn-link feedback-bottom-panel__collapse"
+            data-testid="feedback-bottom-panel-toggle"
+            [attr.aria-expanded]="expanded()"
+            [attr.aria-label]="toggleLabelKey() | artemisTranslate"
+            (click)="toggled.emit($event)"
+        >
+            <fa-icon [icon]="faChevronDown" [class.feedback-bottom-panel__chevron--collapsed]="!expanded()" aria-hidden="true" />
+        </button>
+    </div>
+    <div class="feedback-bottom-panel__content" [hidden]="!expanded()">
+        <ng-content />
+    </div>
+</section>

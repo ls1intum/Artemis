@@ -1,3 +1,4 @@
+import { SPLITTER_GUTTER_SIZE, splitterPassThrough } from 'app/assessment/manage/assessment-workspace/splitter-pass-through';
 import { AfterViewInit, Component, Directive, ElementRef, OnDestroy, TemplateRef, computed, contentChildren, effect, inject, input, signal, untracked } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -55,12 +56,14 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     readonly leftMinSizePercent = input(0);
 
     /**
-     * Gutter size (px) of the splitter: the grey divider between the two panels, so it matches `--spacing-divider`,
-     * the width every other divider in the shells uses. The template binds `gutterSize` below, so the value the
-     * splitter renders and the value the flex-basis arithmetic assumes cannot drift apart.
+     * Gutter size (px) of the splitter: the divider between the two panels, as wide as on every other page that divides panels
+     * (the assessment workspace, the code editor). The template binds `gutterSize` below, so the value the splitter renders and
+     * the value the flex-basis arithmetic assumes cannot drift apart.
      */
-    private static readonly GUTTER_SIZE = 6;
+    private static readonly GUTTER_SIZE = SPLITTER_GUTTER_SIZE;
     protected readonly gutterSize = ResizablePanelsComponent.GUTTER_SIZE;
+    /** Looks like the splitter of the assessment pages; only the test ids are this component's own. */
+    protected readonly passThrough = splitterPassThrough('horizontal', { gutter: 'splitter-gutter', panel: 'splitter-panel' });
     /** Split (percent) used when reopening without a usable saved size. */
     private static readonly DEFAULT_SIZES = [65, 35];
 

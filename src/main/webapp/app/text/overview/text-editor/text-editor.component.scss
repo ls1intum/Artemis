@@ -97,3 +97,17 @@ div {
         flex-direction: column;
     }
 }
+
+// The submission above and the general feedback panel below it share the page's height; a splitter divides them. Without a
+// panel the splitter component only passes the height on.
+.text-editor-grid--fill > .text-editor-split {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.text-editor-split__top {
+    display: flex;
+    min-height: 0;
+    flex: 1 1 auto;
+    flex-direction: column;
+}

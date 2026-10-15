@@ -3,6 +3,11 @@
    ========================================================================== */
 
 .editor-wrapper {
+    /* The width of the dividers between the panels, the same as the gutter of the splitters on the other pages
+       (SPLITTER_GUTTER_SIZE in splitter-pass-through.ts), and the colour of the grip drawn on them. */
+    --code-editor-divider: 12px;
+    --code-editor-divider-grip: color-mix(in srgb, var(--tumaet-ui-text-color) 62%, transparent);
+
     display: grid;
     grid-template-rows: min-content auto auto;
 
@@ -16,7 +21,7 @@
 
     /* A collapsed side panel keeps the divider next to it, like the collapsed panel of the course exercise page. */
     .collapsed--horizontal {
-        width: calc(50px + var(--spacing-divider)) !important;
+        width: calc(50px + var(--code-editor-divider)) !important;
     }
 
     .collapsed--vertical {
@@ -40,7 +45,7 @@
         display: grid;
         grid-template-rows: auto auto;
         height: 500px;
-        margin-bottom: var(--spacing-divider);
+        margin-bottom: var(--code-editor-divider);
 
         &__content {
             display: flex;
@@ -113,8 +118,8 @@
            handle, so the build output could not be resized. Sticky keeps it reachable at the bottom while scrolling.
            The negative margin lays it over the bottom edge of the panel instead of below it, so it does not make the panel scroll. */
         > .rg-bottom-bottom {
-            height: var(--spacing-divider);
-            margin-top: calc(-1 * var(--spacing-divider));
+            height: var(--code-editor-divider);
+            margin-top: calc(-1 * var(--code-editor-divider));
             position: sticky;
             bottom: 0;
         }
@@ -362,11 +367,26 @@
         flex: none;
     }
 
+    /* A splitter divides the editor from the bottom area and hands each the share the user dragged it to, the same as it does
+       between the panels of the assessment pages. The two areas then fill the panel they sit in. */
+    > .editor-split {
+        min-height: 0;
+        flex: 1 1 auto;
+    }
+
+    .editor-split__top,
+    .editor-split__bottom {
+        display: flex;
+        min-height: 0;
+        flex: 1 1 auto;
+        flex-direction: column;
+    }
+
     .editor-main {
         display: flex;
-        height: 65%;
+        height: auto;
         min-height: 0;
-        flex: 0 0 auto;
+        flex: 1 1 auto;
         flex-direction: column;
         margin-bottom: 0;
     }
@@ -457,7 +477,7 @@
     }
 }
 
-/* The instructions on top, the feedback panel below, split like the workspace of the text and modeling assessments */
+/* The instructions on top, the feedback panel below, divided by a splitter like the workspace of the text and modeling assessments */
 .code-editor-assessment-sidebar {
     display: flex;
     height: 100%;
@@ -465,27 +485,14 @@
     min-height: 0;
     flex-direction: column;
 
-    > jhi-code-editor-instructions {
-        min-height: 24%;
-        flex: 1 1 0;
+    > jhi-feedback-split {
+        min-height: 0;
+        flex: 1 1 auto;
     }
 
-    /* Like the workspace's [52, 48] split with a 24% minimum each: dragging keeps both the instructions and the panel at
-       least a quarter of the column */
-    &__panel {
-        min-height: 24%;
-        height: 48%;
-        max-height: 76%;
-
-        /* Gives way to the instructions' minimum, which the grip between them would otherwise push below a quarter */
-        flex: 0 1 auto;
-    }
-
-    /* Easier to grab, and no text gets selected while dragging */
-    > .rg-sidebar-split {
-        padding: 2px 0;
-        touch-action: none;
-        user-select: none;
+    &__instructions > jhi-code-editor-instructions {
+        min-height: 0;
+        flex: 1 1 auto;
     }
 }
 
@@ -493,14 +500,11 @@
    Resizable drag elements
    ========================================================================== */
 
-/* The divider between two panels is one `--spacing-divider` wide and carries the same small grip as the split of the course exercise
+/* The divider between two panels is one `--code-editor-divider` wide and carries the same small grip as the split of the course exercise
    page. Its box is the gap between the panels. The grab area reaches 4px into the panel that follows the divider, and never into the
    one before it, whose scrollbar sits on that edge. */
 .rg-main-bottom,
-.rg-bottom-bottom,
-.rg-sidebar-split,
-.rg-sidebar-left,
-.rg-sidebar-right {
+.rg-bottom-bottom {
     position: relative;
     display: flex;
     flex: none;
@@ -516,50 +520,28 @@
     &::after {
         content: '';
         box-sizing: border-box;
-        border: 0 solid var(--body-color);
-        border-radius: 1px;
-    }
-
-    &:hover::after {
-        border-color: var(--primary);
-    }
-}
-
-/* While a drag is in progress the pointer is captured by the panel and may no longer be over the divider. */
-.card-resizable > :is(.rg-main-bottom, .rg-bottom-bottom, .rg-sidebar-left, .rg-sidebar-right)::after {
-    border-color: var(--primary);
-}
-
-.rg-sidebar-left,
-.rg-sidebar-right {
-    width: var(--spacing-divider);
-    cursor: col-resize;
-
-    &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: -4px;
-        bottom: 0;
-        left: 0;
-    }
-
-    &::after {
-        width: 5px;
-        height: 12px;
-        border-inline-width: 2px;
     }
 }
 
 .rg-main-bottom,
 .rg-bottom-bottom {
-    height: var(--spacing-divider);
+    height: var(--code-editor-divider);
+    /* The grey of the shell, like the gutters of the splitters (splitterPassThrough) */
+    background: var(--bs-body-bg);
     cursor: row-resize;
 
+    /* Two thin horizontal lines, as on the handle of a vertical splitter */
     &::after {
-        width: 12px;
-        height: 5px;
-        border-block-width: 2px;
+        width: 1.25rem;
+        height: 0.75rem;
+        background: linear-gradient(
+            to bottom,
+            transparent 0 3px,
+            var(--code-editor-divider-grip) 3px 5px,
+            transparent 5px 7px,
+            var(--code-editor-divider-grip) 7px 9px,
+            transparent 9px
+        );
     }
 }
 
@@ -573,11 +555,6 @@
     left: 0;
 }
 
-/* Takes the place of the divider while its panel is collapsed, so that the gap to the editor stays as wide. */
-.editor-wrapper .separator {
-    flex: none;
-    width: var(--spacing-divider);
-}
 
 /* ==========================================================================
    Problem Statement (center) – keep content inside the card and allow shrink
@@ -621,4 +598,46 @@
     flex: 1 1 auto;
     min-height: 0;
     overflow: hidden;
+}
+
+/* ==========================================================================
+   The file browser, the editor and the instructions: the panels of one splitter
+   ========================================================================== */
+
+.editor-main__content > .editor-sidebars {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+}
+
+/* Each column fills its panel; the widths the columns had before the splitter set them are the splitter's now. */
+.editor-wrapper .editor-sidebars {
+    .editor-sidebar-left,
+    .editor-sidebar-right,
+    .editor-center {
+        width: 100% !important;
+        max-width: none !important;
+        min-width: 0 !important;
+        height: 100%;
+        flex: 1 1 auto !important;
+    }
+}
+
+/* The splitter's children alternate panel, gutter, panel, gutter, panel, so its gutters are the 2nd and the 2nd to last child.
+   A collapsed side keeps only its header strip and its divider cannot be dragged. */
+.editor-sidebars--left-collapsed > [data-pc-section='panel']:first-of-type,
+.editor-sidebars--right-collapsed > [data-pc-section='panel']:last-of-type {
+    min-width: 50px !important;
+    flex: 0 0 50px !important;
+}
+
+.editor-sidebars--left-collapsed > [data-pc-section='gutter']:nth-child(2),
+.editor-sidebars--right-collapsed > [data-pc-section='gutter']:nth-last-child(2) {
+    pointer-events: none;
+}
+
+/* Without instructions the panel and the divider in front of it are not there, and the editor takes their room */
+.editor-sidebars--right-hidden > [data-pc-section='panel']:last-of-type,
+.editor-sidebars--right-hidden > [data-pc-section='gutter']:nth-last-child(2) {
+    display: none !important;
 }
