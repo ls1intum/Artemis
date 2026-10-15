@@ -58,6 +58,16 @@ class GlobalSearchResultRankerTest {
     }
 
     @Test
+    void recognizesSpelledOutSemestersAsTheSameCourse() {
+        var old = row("exercise", 5L, "Bumpers");
+        var current = row("exercise", 6L, "Bumpers");
+        var spelledOutCourses = Map.of(5L, course(5L, "Software Engineering Sommersemester 2024", NOW.minusYears(2)), 6L,
+                course(6L, "Software Engineering Wintersemester 2026/27", NOW.plusMonths(3)));
+
+        assertThat(GlobalSearchResultRanker.rank(List.of(old, current), true, spelledOutCourses, NOW)).containsExactly(current);
+    }
+
+    @Test
     void prefersTheRunningCourseAmongEquallyRelevantCopiesInAnyOrder() {
         // Identical copies get the same relevance, so Weaviate may return the running course's copy last.
         var previous = row("exercise", 2L, "Bumpers");
