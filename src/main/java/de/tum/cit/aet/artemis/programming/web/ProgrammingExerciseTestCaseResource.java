@@ -116,7 +116,7 @@ public class ProgrammingExerciseTestCaseResource {
         User user = userRepository.getUserWithAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, authorizationExercise, user);
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+            var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId) : authorizationExercise;
             Set<ProgrammingExerciseTestCase> updatedTests = programmingExerciseTestCaseService.update(exerciseId, testCaseProgrammingExerciseTestCaseDTOS);
             // A test case is now marked as AFTER_DUE_DATE: a scheduled score update might be needed.
             if (updatedTests.stream().anyMatch(ProgrammingExerciseTestCase::isAfterDueDate)) {
@@ -149,7 +149,9 @@ public class ProgrammingExerciseTestCaseResource {
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            if (lease.coordinated()) {
+                programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            }
             programmingExerciseTestCaseService.logTestCaseReset(user, programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
 
             List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(programmingExercise);
