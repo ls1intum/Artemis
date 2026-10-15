@@ -58,6 +58,7 @@ jobs:
       has_workflows: ${{ steps.decide.outputs.has_workflows }}
       has_version: ${{ steps.decide.outputs.has_version }}
       has_beans: ${{ steps.decide.outputs.has_beans }}
+      has_liquibase: ${{ steps.decide.outputs.has_liquibase }}
       has_skills: ${{ steps.decide.outputs.has_skills }}
       has_tum_aet_ui: ${{ steps.decide.outputs.has_tum_aet_ui }}
       codeql_relevant: ${{ steps.decide.outputs.codeql_relevant }}
@@ -65,6 +66,7 @@ jobs:
       run_client_tests: ${{ steps.decide.outputs.run_client_tests }}
       server_test_inputs: ${{ steps.decide.outputs.server_test_inputs }}
       run_e2e: ${{ steps.decide.outputs.run_e2e }}
+      build_pr_image: ${{ steps.decide.outputs.build_pr_image }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -171,6 +173,20 @@ jobs:
               - 'src/main/resources/**'
               - 'build.gradle'
               - 'gradle/**'
+            # ci-liquibase.yml reads the changelogs and the seed data (src/main/resources/config/liquibase), the
+            # oldest supported release from DatabaseMigration.java, the database versions from gradle.properties,
+            # the JDBC drivers that Gradle resolves, and the contexts an end-to-end stack starts with
+            # (playwright.env). A change to none of them cannot change what it concludes.
+            has_liquibase:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-liquibase.yml'
+              - 'src/main/resources/config/liquibase/**'
+              - 'src/main/java/de/tum/cit/aet/artemis/core/config/migration/DatabaseMigration.java'
+              - 'supporting_scripts/liquibase/**'
+              - 'deployment/docker/artemis/config/playwright.env'
+              - 'build.gradle'
+              - 'gradle.properties'
+              - 'gradle/**'
             has_skills:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-skills.yml'
@@ -275,6 +291,7 @@ jobs:
           F_WORKFLOWS: ${{ steps.area.outputs.has_workflows }}
           F_VERSION: ${{ steps.area.outputs.has_version }}
           F_BEANS: ${{ steps.area.outputs.has_beans }}
+          F_LIQUIBASE: ${{ steps.area.outputs.has_liquibase }}
           F_SKILLS: ${{ steps.area.outputs.has_skills }}
           F_TUM_AET_UI: ${{ steps.area.outputs.has_tum_aet_ui }}
           F_CODEQL: ${{ steps.relevant.outputs.codeql }}
@@ -284,11 +301,12 @@ jobs:
           F_CLIENT_TESTS: ${{ steps.relevant.outputs.client_tests }}
           F_E2E: ${{ steps.relevant.outputs.e2e_tests }}
           EVENT_NAME: ${{ github.event_name }}
+          IS_DRAFT: ${{ github.event.pull_request.draft || false }}
           CHANGED_FILES: ${{ github.event.pull_request.changed_files || 0 }}
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_skills has_tum_aet_ui codeql_relevant run_server_tests run_client_tests server_test_inputs run_e2e; do
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_tum_aet_ui codeql_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -301,6 +319,14 @@ jobs:
               echo "has_workflows=${F_WORKFLOWS:-false}"
               echo "has_version=${F_VERSION:-false}"
               echo "has_beans=${F_BEANS:-false}"
+              # The Liquibase checks follow the path filter, so a pull request with 3000 changed files or more
+              # always runs them: the pulls API stops at 3000, and a changelog beyond that limit would
+              # otherwise leave this output false, and all-required-ci-passed accepts a skipped check.
+              if [ "${F_LIQUIBASE:-false}" = "true" ] || { [ "$EVENT_NAME" = "pull_request" ] && [ "${CHANGED_FILES:-0}" -ge 3000 ]; }; then
+                echo "has_liquibase=true"
+              else
+                echo "has_liquibase=false"
+              fi
               echo "has_skills=${F_SKILLS:-false}"
               echo "has_tum_aet_ui=${F_TUM_AET_UI:-false}"
               if [ "${F_CODEQL:-false}" = "true" ] || [ "${F_CODEQL_CONFIG:-false}" = "true" ]; then
@@ -319,8 +345,17 @@ jobs:
                 echo "run_server_tests=true"
                 echo "run_client_tests=true"
                 echo "run_e2e=true"
+                echo "build_pr_image=true"
               else
-                echo "run_e2e=${F_E2E:-false}"
+                # E2E is the slowest stage, so a draft does not start it; `ready_for_review` starts a
+                # run that does. The image stays for a draft, because a test server deploys the image of
+                # an open pull request, drafts included. A pull request that only changes tests builds none.
+                echo "build_pr_image=${F_E2E:-false}"
+                if [ "${F_E2E:-false}" = "true" ] && [ "$IS_DRAFT" != "true" ]; then
+                  echo "run_e2e=true"
+                else
+                  echo "run_e2e=false"
+                fi
                 if [ "${F_SERVER_TESTS:-false}" = "true" ] || [ "${F_SERVER_TEST_INPUTS:-false}" = "true" ]; then
                   echo "run_server_tests=true"
                 else
@@ -357,6 +392,9 @@ jobs:
       attestations: write
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      # The PR image only feeds E2E and test-server deploys; a pull request that only changes tests needs neither.
+      # `!= 'false'`, so an output that went missing builds it.
+      build_pr_image: ${{ needs.detect-changes.outputs.build_pr_image != 'false' }}
       is_pr: ${{ github.event_name == 'pull_request' }}
       is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
       is_release: ${{ github.event_name == 'release' }}
@@ -787,10 +825,13 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
-  # Check baseline consistency and misplaced migrations regardless of which area changed.
+  # Check baseline consistency and misplaced migrations. Two jobs start a container and replay every
+  # changelog, so it runs only when something it reads changed (`has_liquibase` in `detect-changes`).
+  # `detect-changes` is skipped for `@tumaet/*` releases, and so is this job with it.
   liquibase:
-    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
     name: Liquibase Schema
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_liquibase == 'true'
     uses: ./.github/workflows/ci-liquibase.yml
     permissions:
       contents: read
@@ -807,8 +848,8 @@ jobs:
     name: E2E
     needs: [detect-changes, build]
     # A pull request that only changes tests (server, client) or documentation cannot change the outcome of
-    # E2E, the slowest stage, so it does not start it (`run_e2e`, see `detect-changes`). `!= 'false'`, so an
-    # output that went missing runs E2E instead of skipping it.
+    # E2E, the slowest stage, and neither can a draft be merged, so neither starts it (`run_e2e`, see
+    # `detect-changes`). `!= 'false'`, so an output that went missing runs E2E instead of skipping it.
     if: >-
       (github.event_name != 'pull_request' ||
        github.event.pull_request.head.repo.full_name == github.repository) &&

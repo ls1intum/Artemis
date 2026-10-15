@@ -36,6 +36,7 @@ ci.yml                                                            (single entry 
 ├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
 ├── dead-code       ── uses ci-dead-code.yml      (always; unreachable Java classes + unreachable client files)
+├── liquibase       ── uses ci-liquibase.yml      (if has_liquibase; changelogs, seed data and baseline replayed on PostgreSQL and MySQL)
 ├── e2e             ── uses ci-e2e.yml            (after build; required but flakiness-aware — reds only on a real, non-flaky regression; a known-flaky-only run is exonerated)
 │
 │   ADVISORY — runs for signal, never blocks merge:
@@ -167,13 +168,22 @@ the suite ran).
   `packages`. Playwright specs are `*.spec.ts` too, which is why client specs are matched by
   location, and a change under `src/test/playwright` always runs E2E. `build` and the other required
   checks still run.
+- A **draft** pull request does not start E2E either; marking it ready for review starts a CI run,
+  which runs E2E only if the changes also pass the `e2e_tests` filter above (a pull request that only
+  changes tests still skips it). The PR Docker image (`docker-pr` in `ci-build.yml`) is built for
+  internal pull requests only, because fork pull requests cannot push to GHCR, and only if the changes
+  pass that same filter (`build_pr_image`). That includes Playwright files and drafts: a test server
+  deploys the image of an open pull request, drafts included. A pull request that only changes tests
+  gets no image, because neither E2E nor a deploy needs it, and a deploy of such a commit has no
+  `sha-<commit>` image to find.
 - Only `pull_request` events skip. A push to `develop`, a merge group, a manual run and a release
   other than a `@tumaet/*` one run both suites, because the coverage badge and Sonar read both
   suites' coverage there and `develop` is where anything that slipped past a pull request's own run
   would show up. `@tumaet/*` release tags skip `detect-changes` and with it `test`, like every other
   Artemis job.
 - A pull request with 3000 changed files or more never skips: the changed files come from the pulls
-  API, which stops at 3000, so the filters may not have seen all of them.
+  API, which stops at 3000, so the filters may not have seen all of them. That covers the server
+  suite, the client suite, E2E, the PR image and the Liquibase checks (`has_liquibase`).
 - Codacy coverage is uploaded by the server report job only, so an internal pull request that skips
   the server suite uploads none.
 
