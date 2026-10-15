@@ -15,6 +15,18 @@
     }
     <div class="mt-2 flex flex-wrap items-center gap-2">
         <span class="text-xs font-semibold uppercase text-muted-color" [jhiTranslate]="'artemisApp.hyperion.quizQuestionPool.list.difficulty.' + question.difficulty"></span>
+        @if (question.materialChanged) {
+            <span
+                class="inline-flex"
+                [tumAetUiTooltip]="'artemisApp.hyperion.quizQuestionPool.list.materialChangedHint' | artemisTranslate"
+                tumAetUiTooltipPlacement="top"
+                [attr.data-testid]="'pool-material-changed-' + question.id"
+            >
+                <tumaet-ui-tag severity="warn" size="sm">
+                    <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.list.materialChanged"></span>
+                </tumaet-ui-tag>
+            </span>
+        }
         @for (flagged of view.flaggedVerdicts; track flagged.verdict.mode) {
             <tumaet-ui-tag [severity]="flagged.verdict.triggered ? 'danger' : 'warn'" size="sm" [attr.data-testid]="'pool-verdict-' + question.id + '-' + flagged.verdict.mode">
                 @if (flagged.verdict.triggered) {

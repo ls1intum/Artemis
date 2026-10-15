@@ -260,11 +260,29 @@ class HyperionQuizQuestionPoolServiceTest {
         when(materialService.findUnits(List.of(4L))).thenReturn(Map.of(4L, unit));
         when(lectureUnitRepository.findByCourseIdAndLectureUnitId(5L, 4L)).thenReturn(Optional.empty());
         when(courseRepository.findByIdElseThrow(5L)).thenReturn(course);
+        when(buildService.tryStart(5L)).thenReturn("lease");
 
         service.updateLectureUnitRelevance(5L, 4L, true);
 
         verify(lectureUnitRepository).save(any(QuizQuestionPoolLectureUnit.class));
         verify(itemRepository).deleteAllByLectureUnitExceptReviewState(5L, 4L, QuizQuestionReviewState.APPROVED);
+        verify(buildService).release(5L, "lease");
+    }
+
+    @Test
+    void updateLectureUnitRelevance_refusesToExcludeWhileABuildRunsButIncludes() {
+        TextUnit unit = unitOfCourse(4L, "Arrays in Java", 5L);
+        when(materialService.findUnits(List.of(4L))).thenReturn(Map.of(4L, unit));
+        when(buildService.tryStart(5L)).thenReturn(null);
+        when(lectureUnitRepository.findByCourseIdAndLectureUnitId(5L, 4L)).thenReturn(Optional.empty());
+        when(courseRepository.findByIdElseThrow(5L)).thenReturn(course);
+
+        assertThatThrownBy(() -> service.updateLectureUnitRelevance(5L, 4L, true)).isInstanceOf(ConflictException.class);
+        verify(itemRepository, never()).deleteAllByLectureUnitExceptReviewState(anyLong(), anyLong(), any());
+        verify(lectureUnitRepository, never()).save(any(QuizQuestionPoolLectureUnit.class));
+
+        service.updateLectureUnitRelevance(5L, 4L, false);
+        verify(lectureUnitRepository).save(any(QuizQuestionPoolLectureUnit.class));
     }
 
     @Test

@@ -55,6 +55,7 @@ describe('QuizQuestionPoolComponent', () => {
             flagged: false,
             question: { id: `pool-${id}`, type: 'single-choice', title: `Q${id}`, questionText: 'Q?', options: [{ text: 'A', correct: true }] },
             decision: { accepted: true, aggregateScore: 1, verdicts: [], rationale: 'ok' },
+            materialChanged: false,
             updatedAt: '2026-10-13T10:00:00Z',
         };
     }
@@ -107,6 +108,7 @@ describe('QuizQuestionPoolComponent', () => {
         vi.spyOn(poolService, 'getQuestions').mockImplementation(pagesOf(questions()));
         vi.spyOn(poolService, 'getSettings').mockReturnValue(of(settings));
         vi.spyOn(poolService, 'getPlan').mockReturnValue(of({ planned: 10, missing: 0 }));
+        vi.spyOn(poolService, 'getLectureUnits').mockReturnValue(of([]));
         fixture = TestBed.createComponent(QuizQuestionPoolComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
@@ -918,6 +920,121 @@ describe('QuizQuestionPoolComponent', () => {
         first.complete();
 
         expect(component.questions().map((question) => question.state)).toEqual(['FILTERED', 'FILTERED', 'FILTERED']);
+    });
+
+    it('should show the last build with its trigger, counts and failure', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        component.progress.set({
+            ...progress,
+            lastBuild: {
+                id: 3,
+                trigger: 'SCHEDULED',
+                startedAt: '2026-11-02T02:00:00Z',
+                finishedAt: '2026-11-02T02:10:00Z',
+                enqueued: 12,
+                generated: 14,
+                judged: 12,
+                accepted: 10,
+                rejected: 2,
+                failed: 0,
+                failure: 'model unavailable',
+            },
+        });
+        fixture.detectChanges();
+
+        expect(component.triggerLabelKey('SCHEDULED')).toBe('artemisApp.hyperion.quizQuestionPool.progress.trigger.SCHEDULED');
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-last-build"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="pool-last-build-failure"]')).not.toBeNull();
+    });
+
+    it('should list the lecture units per competency and exclude one only after confirmation', () => {
+        const units = [
+            {
+                competencyId: 9,
+                competencyTitle: 'Arrays',
+                lectureUnitId: 4,
+                lectureUnitName: 'Arrays in Java',
+                excluded: false,
+                materialChanged: true,
+                questionCount: 12,
+                approvedCount: 3,
+            },
+            {
+                competencyId: 9,
+                competencyTitle: 'Arrays',
+                lectureUnitId: 6,
+                lectureUnitName: 'Arrays, continued',
+                excluded: true,
+                materialChanged: false,
+                questionCount: 0,
+                approvedCount: 0,
+            },
+            {
+                competencyId: 10,
+                competencyTitle: 'Loops',
+                lectureUnitId: 4,
+                lectureUnitName: 'Arrays in Java',
+                excluded: false,
+                materialChanged: true,
+                questionCount: 12,
+                approvedCount: 3,
+            },
+        ];
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'getLectureUnits').mockReturnValue(of(units));
+        const relevanceSpy = vi.spyOn(poolService, 'updateLectureUnitRelevance').mockReturnValue(of(true));
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+        component.refresh();
+        fixture.detectChanges();
+
+        expect(component.lectureUnitGroups().map((group) => [group.competencyId, group.units.length])).toEqual([
+            [9, 2],
+            [10, 1],
+        ]);
+        expect(component.excludedUnitCount()).toBe(1);
+        expect(component.changedUnitCount()).toBe(1);
+
+        component.toggleLectureUnit(units[0]);
+        expect(relevanceSpy).not.toHaveBeenCalled();
+        confirmationService.request(undefined)!.accept();
+        expect(relevanceSpy).toHaveBeenCalledWith(1, 4, true);
+
+        component.toggleLectureUnit(units[1]);
+        expect(relevanceSpy).toHaveBeenLastCalledWith(1, 6, false);
+    });
+
+    it('should explain a refused exclusion while a build runs', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        vi.spyOn(poolService, 'updateLectureUnitRelevance').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 409 })));
+        const errorSpy = vi.spyOn(alertService, 'error');
+        const confirmationService = fixture.debugElement.injector.get(TumAetUiConfirmationService);
+
+        component.toggleLectureUnit({
+            competencyId: 9,
+            competencyTitle: 'Arrays',
+            lectureUnitId: 4,
+            lectureUnitName: 'Arrays in Java',
+            excluded: false,
+            materialChanged: false,
+            questionCount: 1,
+            approvedCount: 0,
+        });
+        confirmationService.request(undefined)!.accept();
+
+        expect(errorSpy).toHaveBeenCalledWith('artemisApp.hyperion.quizQuestionPool.errors.buildRunning');
+        expect(component.busyLectureUnitIds().size).toBe(0);
+    });
+
+    it('should fold and unfold the lecture units from anywhere in their header row', () => {
+        setup({ isAtLeastEditor: true, isAtLeastInstructor: true });
+        const header = document.createElement('div');
+        header.className = 'tumaet-ui-panel-header';
+        const title = document.createElement('span');
+        header.append(title);
+
+        expect(component.unitsCollapsed()).toBe(true);
+        component.toggleUnitsFromHeader({ target: title } as unknown as MouseEvent);
+        expect(component.unitsCollapsed()).toBe(false);
     });
 
     it('should delete a question after the instructor confirms', () => {

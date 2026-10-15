@@ -226,12 +226,24 @@ public class HyperionQuizQuestionPoolService {
      * @param lectureUnitId the lecture unit, which must belong to a lecture of the course
      * @param excluded      whether the unit is excluded
      * @throws EntityNotFoundException if the unit does not exist in the course
+     * @throws ConflictException       if the unit is to be excluded while a build of the course is running; excluding holds the course's build
+     *                                     lease, so no build starts while the unit's questions are deleted
      */
     public void updateLectureUnitRelevance(long courseId, long lectureUnitId, boolean excluded) {
         LectureUnit unit = materialService.findUnits(List.of(lectureUnitId)).get(lectureUnitId);
         if (unit == null || unit.getLecture() == null || unit.getLecture().getCourse() == null || !Objects.equals(unit.getLecture().getCourse().getId(), courseId)) {
             throw new EntityNotFoundException("LectureUnit", lectureUnitId);
         }
+        if (excluded) {
+            whileHoldingTheBuildLease(courseId, () -> storeRelevance(courseId, lectureUnitId, true));
+        }
+        else {
+            storeRelevance(courseId, lectureUnitId, false);
+        }
+    }
+
+    /** Stores whether the lecture unit is excluded and, when it is, deletes its questions that are not approved. */
+    private void storeRelevance(long courseId, long lectureUnitId, boolean excluded) {
         QuizQuestionPoolLectureUnit record = lectureUnitRepository.findByCourseIdAndLectureUnitId(courseId, lectureUnitId).orElseGet(() -> {
             QuizQuestionPoolLectureUnit created = new QuizQuestionPoolLectureUnit();
             created.setCourse(courseRepository.findByIdElseThrow(courseId));

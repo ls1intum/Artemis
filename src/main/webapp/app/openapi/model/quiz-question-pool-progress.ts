@@ -8,6 +8,7 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
+import type { QuizQuestionPoolBuild } from './quiz-question-pool-build';
 import type { HyperionCourseSettings } from './hyperion-course-settings';
 
 /**
@@ -32,4 +33,6 @@ export interface QuizQuestionPoolProgress {
     failed?: number;
     /** The settings the running build planned its cells with; absent while no build is running */
     buildSettings?: HyperionCourseSettings;
+    /** The most recent build, absent before the first */
+    lastBuild?: QuizQuestionPoolBuild;
 }

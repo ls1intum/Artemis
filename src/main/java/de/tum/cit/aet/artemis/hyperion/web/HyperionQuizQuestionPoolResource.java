@@ -266,7 +266,7 @@ public class HyperionQuizQuestionPoolResource {
      * @param courseId      the id of the course
      * @param lectureUnitId the id of the lecture unit
      * @param relevance     whether the unit is excluded
-     * @return the stored decision
+     * @return the stored decision; 409 when a unit is to be excluded while a build of the course is running
      */
     @EnforceAtLeastInstructorInCourse
     @PutMapping("courses/{courseId}/quiz-question-pool/lecture-units/{lectureUnitId}/relevance")

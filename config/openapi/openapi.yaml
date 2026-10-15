@@ -425,6 +425,30 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolItem'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/lecture-units/{lectureUnitId}/relevance:
+    put:
+      tags: [hyperion-quiz-question-pool]
+      operationId: updateQuizQuestionPoolLectureUnitRelevance
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: lectureUnitId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuizQuestionPoolLectureUnitRelevance'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionPoolLectureUnitRelevance'}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags: [tutorial-group]
@@ -2141,6 +2165,23 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/QuizQuestionPoolPlan'}
+  /api/hyperion/courses/{courseId}/quiz-question-pool/lecture-units:
+    get:
+      tags: [hyperion-quiz-question-pool]
+      operationId: getQuizQuestionPoolLectureUnits
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/QuizQuestionPoolLectureUnit'}
   /api/hyperion/authoring-runs:
     get:
       tags: [hyperion-authoring-run]
@@ -3104,6 +3145,11 @@ components:
           items: {$ref: '#/components/schemas/QuizQuestionCreate'}
           minItems: 1
       required: [includedInOverallScore, mode, quizMode, quizQuestions, title]
+    QuizQuestionPoolLectureUnitRelevance:
+      type: object
+      description: Whether a lecture unit is excluded from quiz question generation
+      properties:
+        excluded: {type: boolean, description: Whether the unit is excluded from generation}
     LeaderboardWithCurrentUserEntry:
       type: object
       properties:
@@ -3443,6 +3489,8 @@ components:
         buildSettings: {$ref: '#/components/schemas/HyperionCourseSettings', description: The
             settings the running build planned its cells with; absent while no build
             is running}
+        lastBuild: {$ref: '#/components/schemas/QuizQuestionPoolBuild', description: 'The
+            most recent build, absent before the first'}
     IndexedContentObject:
       type: object
       properties:
@@ -4297,6 +4345,8 @@ components:
           enum: [PENDING, APPROVED, EXCLUDED]
         flagged: {type: boolean, description: 'Whether the filter''s verdicts ask
             for a review, present once the question is judged'}
+        materialChanged: {type: boolean, description: Whether the lecture unit's material
+            changed after the question was generated}
         question: {$ref: '#/components/schemas/GeneratedQuizQuestion', description: 'The
             generated question, present once generated'}
         decision: {$ref: '#/components/schemas/QuizQuestionFilterDecision', description: 'The
@@ -4499,6 +4549,31 @@ components:
         improved: {type: boolean, description: Whether the text was actually improved,
           example: true}
       required: [improved, rewrittenText]
+    QuizQuestionPoolBuild:
+      type: object
+      description: One build of a course's quiz question pool
+      properties:
+        id: {type: integer, format: int64, description: Id of the build}
+        trigger:
+          type: string
+          description: What started the build
+          enum: [MANUAL, SCHEDULED]
+        startedAt: {type: string, format: date-time, description: When the build started}
+        finishedAt: {type: string, format: date-time, description: 'When the build
+            ended, absent while it runs'}
+        enqueued: {type: integer, format: int32, description: Items the build added
+            to the pool}
+        generated: {type: integer, format: int32, description: Items the build generated}
+        judged: {type: integer, format: int32, description: Items the build judged}
+        accepted: {type: integer, format: int32, description: Judged items the filter
+            accepted}
+        rejected: {type: integer, format: int32, description: Judged items the filter
+            rejected}
+        failed: {type: integer, format: int32, description: Items that failed permanently
+            in this build}
+        failure: {type: string, description: 'Why the build stopped early, absent
+            when it ran through'}
+      required: [id, startedAt, trigger]
     QuizSubmissionAfterEvaluation:
       type: object
       properties:
@@ -5204,6 +5279,28 @@ components:
         registrationNumber: {type: string}
         firstName: {type: string}
         lastName: {type: string}
+    QuizQuestionPoolLectureUnit:
+      type: object
+      description: One lecture unit of a competency in the quiz question pool
+      properties:
+        competencyId: {type: integer, format: int64, description: Id of the competency
+            the unit is linked to}
+        competencyTitle: {type: string, description: Title of the competency}
+        lectureUnitId: {type: integer, format: int64, description: Id of the lecture
+            unit}
+        lectureUnitName: {type: string, description: Name of the lecture unit}
+        lectureTitle: {type: string, description: Title of the unit's lecture}
+        excluded: {type: boolean, description: Whether an instructor excluded the
+            unit from generation}
+        materialChanged: {type: boolean, description: Whether approved questions of
+            the unit were generated from material that has changed since}
+        questionCount: {type: integer, format: int32, description: Questions the pool
+            holds for the unit}
+        approvedCount: {type: integer, format: int32, description: Approved questions
+            of the unit}
+        lastBuiltAt: {type: string, format: date-time, description: 'When the unit
+            was last built, absent before the first build'}
+      required: [competencyId, lectureUnitId]
     ShortAnswerSubmittedAnswerBeforeEvaluation:
       required: [type]
       type: object

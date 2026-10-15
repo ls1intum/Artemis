@@ -16,11 +16,13 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { QuizQuestionPoolDeletion } from '../model/quiz-question-pool-deletion';
+import { QuizQuestionPoolLectureUnit } from '../model/quiz-question-pool-lecture-unit';
 import { QuizQuestionPoolPlan } from '../model/quiz-question-pool-plan';
 import { QuizQuestionPoolProgress } from '../model/quiz-question-pool-progress';
 import { QuizQuestionPoolPage } from '../model/quiz-question-pool-page';
 import { HyperionCourseSettings } from '../model/hyperion-course-settings';
 import { QuizQuestionPoolBuildStart } from '../model/quiz-question-pool-build-start';
+import { QuizQuestionPoolLectureUnitRelevance } from '../model/quiz-question-pool-lecture-unit-relevance';
 import { QuizQuestionPoolReview } from '../model/quiz-question-pool-review';
 import { QuizQuestionPoolItem } from '../model/quiz-question-pool-item';
 import { appendQueryParam } from './query-params';
@@ -63,6 +65,16 @@ export class HyperionQuizQuestionPoolApi {
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/questions${queryString ? `?${queryString}` : ''}`;
         return this.http.delete<QuizQuestionPoolDeletion>(url);
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     */
+    getQuizQuestionPoolLectureUnits(courseId: number): Observable<Array<QuizQuestionPoolLectureUnit>> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/lecture-units`;
+        return this.http.get<Array<QuizQuestionPoolLectureUnit>>(url);
     }
 
     /**
@@ -123,6 +135,18 @@ export class HyperionQuizQuestionPoolApi {
     startQuizQuestionPoolBuild(courseId: number): Observable<QuizQuestionPoolBuildStart> {
         const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/build`;
         return this.http.post<QuizQuestionPoolBuildStart>(url, null);
+    }
+
+    /**
+     *
+     *
+     * @param courseId
+     * @param lectureUnitId
+     * @param quizQuestionPoolLectureUnitRelevance
+     */
+    updateQuizQuestionPoolLectureUnitRelevance(courseId: number, lectureUnitId: number, quizQuestionPoolLectureUnitRelevance: QuizQuestionPoolLectureUnitRelevance): Observable<QuizQuestionPoolLectureUnitRelevance> {
+        const url = `${this.basePath}/api/hyperion/courses/${courseId}/quiz-question-pool/lecture-units/${lectureUnitId}/relevance`;
+        return this.http.put<QuizQuestionPoolLectureUnitRelevance>(url, quizQuestionPoolLectureUnitRelevance);
     }
 
     /**

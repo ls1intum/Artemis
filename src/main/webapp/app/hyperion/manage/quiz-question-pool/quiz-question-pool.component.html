@@ -110,6 +110,39 @@
                             }
                         }
                     </p>
+                    @if (lastBuild(); as build) {
+                        <p class="m-0 flex flex-wrap gap-x-1 text-sm text-muted-color" data-testid="pool-last-build">
+                            <span class="font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.lastBuild"></span>
+                            <span [jhiTranslate]="triggerLabelKey(build.trigger)"></span>
+                            @if (build.finishedAt) {
+                                <span
+                                    jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.lastBuildFinished"
+                                    [translateValues]="{ time: build.finishedAt | artemisDate: 'short' }"
+                                ></span>
+                            } @else {
+                                <span
+                                    jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.lastBuildRunning"
+                                    [translateValues]="{ time: build.startedAt | artemisDate: 'short' }"
+                                ></span>
+                            }
+                            <span
+                                jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.lastBuildCounts"
+                                [translateValues]="{
+                                    enqueued: build.enqueued,
+                                    generated: build.generated,
+                                    accepted: build.accepted,
+                                    rejected: build.rejected,
+                                    failed: build.failed,
+                                }"
+                            ></span>
+                            @if (build.failure) {
+                                <span class="text-state-danger" data-testid="pool-last-build-failure">
+                                    <fa-icon [icon]="faTriangleExclamation" class="me-1" />
+                                    <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.progress.lastBuildFailure" [translateValues]="{ failure: build.failure }"></span>
+                                </span>
+                            }
+                        </p>
+                    }
                 </div>
             } @else {
                 <tumaet-ui-empty-state
@@ -160,6 +193,109 @@
 
     @if (isInstructor() && settings(); as settingsValue) {
         <jhi-quiz-question-pool-settings-dialog [(visible)]="settingsDialogVisible" [settings]="settingsValue" [saving]="isSavingSettings()" (save)="saveSettings($event)" />
+    }
+
+    @if (lectureUnits().length > 0) {
+        <tumaet-ui-panel
+            class="[&_.tumaet-ui-panel-header]:cursor-pointer"
+            [toggleable]="true"
+            [(collapsed)]="unitsCollapsed"
+            (click)="toggleUnitsFromHeader($event)"
+            [toggleAriaLabel]="'artemisApp.hyperion.quizQuestionPool.units.toggle' | artemisTranslate"
+            data-testid="pool-lecture-units"
+        >
+            <div tumAetUiPanelHeader class="flex flex-wrap items-center gap-2">
+                <span class="font-semibold" jhiTranslate="artemisApp.hyperion.quizQuestionPool.units.title" [translateValues]="{ count: lectureUnits().length }"></span>
+                @if (excludedUnitCount() > 0) {
+                    <tumaet-ui-tag severity="contrast" size="sm" data-testid="pool-units-excluded-count">
+                        <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.units.excludedCount" [translateValues]="{ count: excludedUnitCount() }"></span>
+                    </tumaet-ui-tag>
+                }
+                @if (changedUnitCount() > 0) {
+                    <tumaet-ui-tag severity="warn" size="sm" data-testid="pool-units-changed-count">
+                        <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.units.changedCount" [translateValues]="{ count: changedUnitCount() }"></span>
+                    </tumaet-ui-tag>
+                }
+            </div>
+            <div class="flex flex-col gap-4">
+                <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.units.hint"></p>
+                @for (group of lectureUnitGroups(); track group.competencyId) {
+                    <section class="flex flex-col" [attr.data-testid]="'pool-units-competency-' + group.competencyId">
+                        <p class="m-0 mb-1 font-semibold">{{ group.competencyTitle }}</p>
+                        @for (unit of group.units; track unit.lectureUnitId) {
+                            <div
+                                class="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border py-2 last:border-b-0"
+                                [class.opacity-60]="unit.excluded"
+                                [attr.data-testid]="'pool-unit-row-' + group.competencyId + '-' + unit.lectureUnitId"
+                            >
+                                <span class="min-w-0">
+                                    {{ unit.lectureUnitName }}
+                                    @if (unit.lectureTitle) {
+                                        <span class="text-sm text-muted-color">· {{ unit.lectureTitle }}</span>
+                                    }
+                                </span>
+                                <span
+                                    class="text-sm text-muted-color"
+                                    jhiTranslate="artemisApp.hyperion.quizQuestionPool.units.counts"
+                                    [translateValues]="{ count: unit.questionCount, approved: unit.approvedCount }"
+                                ></span>
+                                @if (unit.lastBuiltAt) {
+                                    <span
+                                        class="text-sm text-muted-color"
+                                        jhiTranslate="artemisApp.hyperion.quizQuestionPool.units.lastBuilt"
+                                        [translateValues]="{ time: unit.lastBuiltAt | artemisDate: 'short' }"
+                                    ></span>
+                                } @else {
+                                    <span class="text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.quizQuestionPool.units.neverBuilt"></span>
+                                }
+                                @if (unit.excluded) {
+                                    <tumaet-ui-tag severity="contrast" size="sm" [attr.data-testid]="'pool-unit-excluded-' + unit.lectureUnitId">
+                                        <fa-icon [icon]="faBan" class="me-1" />
+                                        <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.units.excludedTag"></span>
+                                    </tumaet-ui-tag>
+                                }
+                                @if (unit.materialChanged) {
+                                    <span
+                                        class="inline-flex"
+                                        [tumAetUiTooltip]="'artemisApp.hyperion.quizQuestionPool.units.materialChangedHint' | artemisTranslate"
+                                        tumAetUiTooltipPlacement="top"
+                                    >
+                                        <tumaet-ui-tag severity="warn" size="sm" [attr.data-testid]="'pool-unit-material-changed-' + unit.lectureUnitId">
+                                            <fa-icon [icon]="faTriangleExclamation" class="me-1" />
+                                            <span jhiTranslate="artemisApp.hyperion.quizQuestionPool.units.materialChanged"></span>
+                                        </tumaet-ui-tag>
+                                    </span>
+                                }
+                                @if (isInstructor()) {
+                                    <span
+                                        class="ms-auto inline-flex"
+                                        [tumAetUiTooltip]="isRunning() && !unit.excluded ? ('artemisApp.hyperion.quizQuestionPool.units.excludeBlocked' | artemisTranslate) : ''"
+                                        tumAetUiTooltipPlacement="top"
+                                    >
+                                        <button
+                                            tumAetUiButton
+                                            type="button"
+                                            size="small"
+                                            severity="secondary"
+                                            variant="outlined"
+                                            [disabled]="busyLectureUnitIds().has(unit.lectureUnitId) || (isRunning() && !unit.excluded)"
+                                            [attr.data-testid]="'pool-unit-toggle-' + group.competencyId + '-' + unit.lectureUnitId"
+                                            (click)="toggleLectureUnit(unit)"
+                                        >
+                                            <span
+                                                [jhiTranslate]="
+                                                    unit.excluded ? 'artemisApp.hyperion.quizQuestionPool.units.include' : 'artemisApp.hyperion.quizQuestionPool.units.exclude'
+                                                "
+                                            ></span>
+                                        </button>
+                                    </span>
+                                }
+                            </div>
+                        }
+                    </section>
+                }
+            </div>
+        </tumaet-ui-panel>
     }
 
     @if (showNeedsReviewQueue()) {

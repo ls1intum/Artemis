@@ -30,7 +30,16 @@
                     "cancelConfirmReject": "Weiterlaufen lassen",
                     "cancelRequested": "Der Lauf endet nach dem aktuellen Schritt.",
                     "cancelNotRunning": "Es läuft kein Lauf.",
-                    "cancelFailed": "Der Lauf konnte nicht abgebrochen werden."
+                    "cancelFailed": "Der Lauf konnte nicht abgebrochen werden.",
+                    "lastBuild": "Letzter Lauf:",
+                    "trigger": {
+                        "MANUAL": "manuell gestartet,",
+                        "SCHEDULED": "vom nächtlichen Zeitplan gestartet,"
+                    },
+                    "lastBuildFinished": "beendet {{ time }}.",
+                    "lastBuildRunning": "läuft seit {{ time }}.",
+                    "lastBuildCounts": "{{ enqueued }} hinzugefügt, {{ generated }} generiert, {{ accepted }} angenommen, {{ rejected }} abgelehnt, {{ failed }} fehlgeschlagen.",
+                    "lastBuildFailure": "Vorzeitig beendet: {{ failure }}"
                 },
                 "settings": {
                     "title": "Einstellungen",
@@ -51,7 +60,7 @@
                     "mediumPercent": "Mittel (%)",
                     "hardPercent": "Schwer (%)",
                     "poolGenerationEnabled": "Über Nacht für neues Vorlesungsmaterial generieren",
-                    "poolGenerationHelp": "Gilt für geplante Läufe.",
+                    "poolGenerationHelp": "Jede Nacht generiert Hyperion Fragen für Vorlesungseinheiten, die neu sind oder deren Material sich seit dem letzten Lauf geändert hat.",
                     "save": "Einstellungen speichern",
                     "saved": "Einstellungen gespeichert.",
                     "saveFailed": "Die Einstellungen konnten nicht gespeichert werden.",
@@ -120,7 +129,9 @@
                     "allReviewed": "Alle markierten Fragen geprüft",
                     "needsReviewToggle": "Markierte Fragen ein- oder ausblenden",
                     "deleteCompetency": "Fragen dieser Kompetenz löschen",
-                    "deleteBlocked": "Während ein Lauf läuft, können keine Fragen gelöscht werden."
+                    "deleteBlocked": "Während ein Lauf läuft, können keine Fragen gelöscht werden.",
+                    "materialChanged": "Material geändert",
+                    "materialChangedHint": "Das Material der Vorlesungseinheit hat sich geändert, nachdem diese Frage generiert wurde. Die Frage bleibt erhalten, zählt aber nicht mehr zum Pool."
                 },
                 "errors": {
                     "loadFailed": "Der Quizfragen-Pool konnte nicht geladen werden.",
@@ -132,6 +143,27 @@
                     "typeCourseTitle": "Gib den Titel des Kurses ein, um zu bestätigen.",
                     "deleted": "{{ count }} Fragen gelöscht.",
                     "failed": "Die Fragen konnten nicht gelöscht werden."
+                },
+                "units": {
+                    "title": "Vorlesungseinheiten ({{ count }})",
+                    "toggle": "Vorlesungseinheiten ein- oder ausblenden",
+                    "hint": "Für jede Vorlesungseinheit, die mit einer Kompetenz verknüpft ist, werden Fragen generiert. Schließe eine Einheit aus, damit künftige Läufe sie überspringen; ihre nicht geprüften Fragen werden gelöscht, freigegebene bleiben erhalten.",
+                    "excludedCount": "{{ count }} ausgeschlossen",
+                    "changedCount": "{{ count }} mit geändertem Material",
+                    "counts": "{{ count }} Fragen, {{ approved }} freigegeben",
+                    "lastBuilt": "zuletzt generiert {{ time }}",
+                    "neverBuilt": "noch nicht generiert",
+                    "excludedTag": "Ausgeschlossen",
+                    "materialChanged": "Material geändert",
+                    "materialChangedHint": "Freigegebene Fragen dieser Einheit wurden aus früherem Material generiert. Prüfe sie; der nächste Lauf generiert neue Fragen aus dem aktuellen Material.",
+                    "exclude": "Ausschließen",
+                    "include": "Einbeziehen",
+                    "excludeConfirmHeader": "Diese Vorlesungseinheit ausschließen?",
+                    "excludeConfirmMessage": "Läufe überspringen „{{ unit }}“. Ihre nicht geprüften Fragen werden jetzt gelöscht; freigegebene Fragen bleiben erhalten.",
+                    "excludeBlocked": "Während ein Lauf läuft, können keine Vorlesungseinheiten ausgeschlossen werden.",
+                    "excluded": "Vorlesungseinheit ausgeschlossen.",
+                    "included": "Vorlesungseinheit einbezogen. Der nächste Lauf generiert ihre Fragen.",
+                    "relevanceFailed": "Die Änderung konnte nicht gespeichert werden."
                 }
             }
         }
