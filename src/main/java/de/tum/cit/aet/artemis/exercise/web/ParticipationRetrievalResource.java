@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -245,6 +246,30 @@ public class ParticipationRetrievalResource {
             page = page.map(ParticipationScoreDTO::withoutParticipantInformation);
         }
 
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
+    }
+
+    /**
+     * Gets assessment queue rows independently of participation management and the scores page.
+     *
+     * @param exerciseId the exercise to assess
+     * @param search     pagination, sorting and filtering parameters
+     * @param ownTeams   restrict team exercises to teams owned by the requesting tutor
+     * @return score rows with participant identities hidden unless the requester is an instructor or the team's tutor
+     */
+    @GetMapping("exercises/{exerciseId}/assessment-queue")
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<ParticipationScoreDTO>> getAssessmentQueue(@PathVariable Long exerciseId, @Valid ParticipationScoreSearchDTO search,
+            @RequestParam(defaultValue = "false") boolean ownTeams) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        Long teamOwnerId = ownTeams && exercise.isTeamMode() ? userRepository.getUser().getId() : null;
+        boolean hideParticipant = teamOwnerId == null && shouldHideParticipantInformation(exercise, search.searchTerm(), search.sortedColumn());
+        Page<ParticipationScoreDTO> page = participationService.findParticipationScoresForExercise(exercise, search, teamOwnerId, true);
+        if (hideParticipant) {
+            page = page.map(ParticipationScoreDTO::withoutParticipantInformation);
+        }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return ResponseEntity.ok().headers(headers).body(page.getContent());
     }

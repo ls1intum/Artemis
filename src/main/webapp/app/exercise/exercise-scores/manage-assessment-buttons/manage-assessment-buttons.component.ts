@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, output, signal } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { faBan, faClipboardList } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -17,13 +17,14 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TumAetUiButtonDirective, TumAetUiButtonSeverity, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-manage-assessment-buttons',
     templateUrl: './manage-assessment-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, ArtemisTranslatePipe],
+    imports: [RouterLink, FaIconComponent, ArtemisTranslatePipe, TumAetUiButtonDirective, TumAetUiTooltipDirective],
 })
-export class ManageAssessmentButtonsComponent implements OnInit {
+export class ManageAssessmentButtonsComponent {
     private programmingAssessmentManualResultService = inject(ProgrammingAssessmentManualResultService);
     private modelingAssessmentService = inject(ModelingAssessmentService);
     private textAssessmentService = inject(TextAssessmentService);
@@ -36,10 +37,14 @@ export class ManageAssessmentButtonsComponent implements OnInit {
 
     readonly refresh = output<void>();
 
-    readonly correctionRoundIndices = signal<number[]>(undefined!);
-    cancelConfirmationText!: string; // resolved from the translation service in the constructor before the cancel action can be triggered
-    readonly newManualResultAllowed = signal(false);
-    examMode = false;
+    readonly disabled = input(false);
+    readonly disabledTooltip = input('');
+    readonly correctionRoundsEnabled = input<number>();
+    readonly isTestRun = input(false);
+    readonly examMode = computed(() => !!this.exercise().exerciseGroup);
+    readonly newManualResultAllowed = computed(() => areManualResultsAllowed(this.exercise()) && (!isPracticeMode(this.participation()) || this.examMode()));
+    readonly correctionRoundIndices = computed(() => [...Array(this.correctionRoundsEnabled() ?? this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()]);
+    cancelConfirmationText!: string;
 
     readonly faBan = faBan;
     readonly faClipboardList = faClipboardList;
@@ -49,17 +54,6 @@ export class ManageAssessmentButtonsComponent implements OnInit {
         const translateService = inject(TranslateService);
 
         translateService.get('artemisApp.programmingAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
-    }
-
-    ngOnInit(): void {
-        this.newManualResultAllowed.set(areManualResultsAllowed(this.exercise()));
-        this.examMode = !!this.exercise().exerciseGroup;
-        if (isPracticeMode(this.participation()) && !this.examMode) {
-            // don't allow manual results for practice mode participations
-            this.newManualResultAllowed.set(false);
-        }
-        // ngFor needs an array to iterate over. This creates an array in the form of [0, 1, ...] up to the correction rounds exclusively (normally 1 or 2)
-        this.correctionRoundIndices.set([...Array(this.exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1).keys()]);
     }
 
     /**
@@ -72,6 +66,32 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     resultForRound(correctionRound: number): Result | undefined {
         const submission = this.participation().submissions?.[0];
         return submission ? getSubmissionResultByCorrectionRound(submission, correctionRound) : undefined;
+    }
+
+    /**
+     * Green to start an assessment, blue to open a finished one or its complaint, amber to continue a draft.
+     */
+    assessmentLinkSeverity(correctionRound: number): TumAetUiButtonSeverity {
+        const result = this.resultForRound(correctionRound);
+        if ((!result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC) && !result?.hasComplaint) {
+            return 'success';
+        }
+        return result?.completionDate || result?.hasComplaint ? 'primary' : 'warn';
+    }
+
+    assessmentAction(correctionRound: number): 'assess' | 'open' | 'continue' | 'complaint' {
+        const result = this.resultForRound(correctionRound);
+        if (result?.hasComplaint) {
+            return 'complaint';
+        }
+        return !result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC ? 'assess' : result.completionDate ? 'open' : 'continue';
+    }
+
+    assessmentLabelKey(correctionRound: number): string {
+        const action = this.assessmentAction(correctionRound);
+        return action === 'complaint'
+            ? 'artemisApp.exerciseAssessmentDashboard.showComplaint'
+            : 'artemisApp.assessment.dashboard.actions.' + (this.examMode() ? 'examCorrectionRound.' : '') + action;
     }
 
     getAssessmentLink(correctionRound = 0) {

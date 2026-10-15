@@ -2277,6 +2277,56 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void ownTeamsListsTheTeamsOfTheTutorWithTheirNames() throws Exception {
+        var exercise = createProgrammingExerciseForTeam();
+        var ownTeam = createTeamForExercise(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), exercise);
+        ownTeam.setOwner(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        ownTeam = teamRepository.save(ownTeam);
+        var participation = participationUtilService.addTeamParticipationForProgrammingExercise(exercise, ownTeam);
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        var otherTeam = teamRepository
+                .save(new Team().shortName(TEST_PREFIX + "otherTeam").exercise(exercise).students(Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student2"))));
+        participationUtilService.addTeamParticipationForProgrammingExercise(exercise, otherTeam);
+        participationUtilService.createAndSavePracticeParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        var search = new ParticipationScoreSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", "", "All", null, null);
+        var params = pageableSearchUtilService.searchMapping(search);
+        params.add("ownTeams", "true");
+
+        var management = request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue", HttpStatus.OK, ParticipationScoreDTO.class, params);
+
+        assertThat(management).as("the tutor sees their own team").hasSize(1);
+        assertThat(management.getFirst().submissionId()).as("the assessment link targets the latest submission").isEqualTo(submission.getId());
+        assertThat(management.getFirst().submissionCount()).isEqualTo(1);
+        assertThat(management.getFirst().teamStudents()).extracting(UserNameAndLoginDTO::login).contains(TEST_PREFIX + "student1");
+        assertThat(management.getFirst().teamId()).isEqualTo(ownTeam.getId());
+        assertThat(management.getFirst().participantIdentifier()).as("the team tutor sees the name of their team").isEqualTo(ownTeam.getShortName());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void examAssessmentQueueIsAvailableToTutorsWithoutStudentIdentities() throws Exception {
+        Exam exam = examRepository.save(ExamFactory.generateExamWithExerciseGroup(course, false));
+        var exercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exam.getExerciseGroups().getFirst()));
+        var submission = participationUtilService.addSubmission(exercise, new TextSubmission(), TEST_PREFIX + "student1");
+        participationUtilService.createAndSavePracticeParticipationForExercise(exercise, TEST_PREFIX + "student2");
+        var search = new ParticipationScoreSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "All", null, null);
+        var management = request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue", HttpStatus.OK, ParticipationScoreDTO.class,
+                pageableSearchUtilService.searchMapping(search));
+
+        assertThat(management).hasSize(1);
+        assertThat(management.getFirst().submissionId()).isEqualTo(submission.getId());
+        assertThat(management.getFirst()).extracting("participantName", "participantIdentifier", "studentId", "teamStudents").containsOnlyNulls();
+        request.getList("/api/exercise/exercises/" + exercise.getId() + "/participations/scores", HttpStatus.FORBIDDEN, ParticipationScoreDTO.class,
+                pageableSearchUtilService.searchMapping(search));
+        request.getList("/api/exercise/exercises/" + exercise.getId() + "/participations/page", HttpStatus.FORBIDDEN, ParticipationManagementDTO.class,
+                pageableSearchUtilService.searchMapping(new ParticipationSearchDTO(0, 20, SortingOrder.ASCENDING, "id", "", "All")));
+        var identitySearch = new ParticipationScoreSearchDTO(0, 20, SortingOrder.ASCENDING, "participantName", "", "All", null, null);
+        request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue", HttpStatus.FORBIDDEN, ParticipationScoreDTO.class,
+                pageableSearchUtilService.searchMapping(identitySearch));
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationByExerciseAndStudentIdForTeam() throws Exception {
         var exercise = createTextExerciseForTeam();

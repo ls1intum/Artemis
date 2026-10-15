@@ -12,9 +12,11 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { Course } from 'app/course/shared/entities/course.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { of } from 'rxjs';
+import dayjs from 'dayjs/esm';
 import { provideRouter } from '@angular/router';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
@@ -61,13 +63,30 @@ describe('ManageAssessmentButtonsComponent', () => {
         } as Participation);
     });
 
-    describe('ngOnInit', () => {
+    describe('assessmentLinkSeverity', () => {
+        const withResult = (result?: Partial<Result>) =>
+            fixture.componentRef.setInput('participation', {
+                id: 10,
+                submissions: [{ id: 20, results: result ? [{ id: 30, correctionRound: 0, ...result }] : [] }],
+            } as Participation);
+
+        it.each([
+            ['success', undefined],
+            ['success', { assessmentType: AssessmentType.AUTOMATIC, completionDate: dayjs() }],
+            ['warn', { assessmentType: AssessmentType.SEMI_AUTOMATIC }],
+            ['primary', { assessmentType: AssessmentType.SEMI_AUTOMATIC, completionDate: dayjs() }],
+            ['primary', { assessmentType: AssessmentType.SEMI_AUTOMATIC, hasComplaint: true }],
+        ])('is %s', (severity, result) => {
+            withResult(result as Partial<Result> | undefined);
+            expect(comp.assessmentLinkSeverity(0)).toBe(severity);
+        });
+    });
+
+    describe('reactive assessment availability', () => {
         it('should set newManualResultAllowed for non-exam exercise', () => {
             fixture.componentRef.setInput('exercise', { ...exercise, assessmentType: 'SEMI_AUTOMATIC' } as any);
 
-            comp.ngOnInit();
-
-            expect(comp.examMode).toBe(false);
+            expect(comp.examMode()).toBe(false);
             expect(comp.correctionRoundIndices()).toEqual([0]);
         });
 
@@ -80,9 +99,7 @@ describe('ManageAssessmentButtonsComponent', () => {
             } as Exercise;
             fixture.componentRef.setInput('exercise', examExercise);
 
-            comp.ngOnInit();
-
-            expect(comp.examMode).toBe(true);
+            expect(comp.examMode()).toBe(true);
             expect(comp.correctionRoundIndices()).toEqual([0, 1]);
         });
 
@@ -99,11 +116,40 @@ describe('ManageAssessmentButtonsComponent', () => {
                 assessmentType: 'SEMI_AUTOMATIC',
             } as any);
 
-            comp.ngOnInit();
-
             // Practice mode (testRun) should disable manual results for non-exam mode
             expect(comp.newManualResultAllowed()).toBe(false);
         });
+    });
+
+    it('updates the assessment link when a row changes and disables it while assessment is unavailable', () => {
+        fixture.detectChanges();
+        let link: HTMLAnchorElement = fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]');
+        expect(link.getAttribute('href')).toBe('/course-management/1/programming-exercises/1/submissions/20/assessment?correction-round=0');
+        fixture.componentRef.setInput('participation', { id: 11, submissions: [{ id: 21, results: [] }] });
+        fixture.detectChanges();
+        link = fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]');
+        expect(link.getAttribute('href')).toBe('/course-management/1/programming-exercises/1/submissions/21/assessment?correction-round=0');
+        fixture.componentRef.setInput('disabled', true);
+        fixture.detectChanges();
+        expect(link.getAttribute('href')).toBeNull();
+        expect(link.getAttribute('aria-disabled')).toBe('true');
+        expect(link.getAttribute('tabindex')).toBe('-1');
+    });
+
+    it('only renders enabled correction rounds and preserves the test-run query parameter', () => {
+        fixture.componentRef.setInput('exercise', { ...exercise, exerciseGroup: { id: 4, exam: { id: 3, numberOfCorrectionRoundsInExam: 2 } } });
+        fixture.componentRef.setInput('participation', {
+            id: 11,
+            submissions: [{ id: 21, results: [{ id: 31, correctionRound: 0, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() }] }],
+        });
+        fixture.componentRef.setInput('correctionRoundsEnabled', 1);
+        fixture.componentRef.setInput('isTestRun', true);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="manage-assessment-link"]')).toHaveLength(1);
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-link"]').getAttribute('href')).toContain('testRun=true');
+        fixture.componentRef.setInput('correctionRoundsEnabled', 2);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="manage-assessment-link"]')).toHaveLength(2);
     });
 
     describe('getAssessmentLink', () => {

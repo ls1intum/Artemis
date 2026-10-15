@@ -207,7 +207,7 @@ public class SubmissionService {
         // TODO: it really does not make sense to fetch these submissions with all related data from the database just to select one submission afterwards
         // it would be better to fetch them with minimal related data (so we can select one) and then afterwards fetch the selected one with all related data
 
-        final List<StudentParticipation> participations;
+        List<StudentParticipation> participations;
         if (examMode) {
             // Get all participations of submissions that are submitted and do not already have a manual result or belong to test run submissions.
             // No manual result means that no tutor has started an assessment for the corresponding submission yet.
@@ -220,6 +220,12 @@ public class SubmissionService {
             // Does not fetch participations for which the due date has not yet passed.
             participations = studentParticipationRepository.findByExerciseIdWithLatestSubmissionWithoutManualResultsWithPassedIndividualDueDateIgnoreTestRuns(exercise.getId(),
                     ZonedDateTime.now());
+        }
+
+        if (exercise.isTeamMode()) {
+            // only the team tutor may assess a team submission, so the queue of a tutor contains only the teams they own
+            final var user = userRepository.getUser();
+            participations = participations.stream().filter(participation -> participation.getTeam().map(team -> team.isOwner(user)).orElse(false)).toList();
         }
 
         var submissionsWithoutResult = participations.stream().map(Participation::findLatestSubmission).filter(Optional::isPresent).map(Optional::get).toList();

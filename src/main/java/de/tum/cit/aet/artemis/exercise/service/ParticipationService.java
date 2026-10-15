@@ -17,6 +17,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -1285,13 +1286,27 @@ public class ParticipationService {
      * @return a page of ParticipationScoreDTO
      */
     public Page<ParticipationScoreDTO> findParticipationScoresForExercise(Exercise exercise, ParticipationScoreSearchDTO search) {
+        return findParticipationScoresForExercise(exercise, search, null, false);
+    }
+
+    /**
+     * Loads score rows for an assessment queue or the scores page, optionally restricting team ownership and excluding practice participations.
+     *
+     * @param exercise        the exercise to query
+     * @param search          pagination, sorting and filtering parameters
+     * @param teamOwnerId     only include teams owned by this tutor, or null for all teams
+     * @param excludePractice whether practice participations must be excluded
+     * @return the requested page with results and correction-round information
+     */
+    public Page<ParticipationScoreDTO> findParticipationScoresForExercise(Exercise exercise, ParticipationScoreSearchDTO search, @Nullable Long teamOwnerId,
+            boolean excludePractice) {
         SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
         Pageable pageable = PageRequest.of(search.page(), search.pageSize());
         boolean teamMode = exercise.isTeamMode();
 
         // Step 1: Get paginated participation IDs with filters
         Page<Long> idPage = studentParticipationRepository.findParticipationIdsForScores(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(),
-                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn());
+                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn(), teamOwnerId, excludePractice);
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
             return new PageImpl<>(List.of(), pageable, idPage.getTotalElements());
@@ -1396,7 +1411,8 @@ public class ParticipationService {
 
         return new ParticipationScoreDTO(participation.getId(), participation.getInitializationDate(), submissionCount, participantName, participantIdentifier, studentId, teamId,
                 resultId, score, successful, completionDate, assessmentType, assessmentNote, durationInSeconds, submissionId, buildFailed, buildPlanId, repositoryUri,
-                participation.isTestRun(), testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults);
+                participation.isTestRun(), testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults, participation.getTeam()
+                        .map(team -> team.getStudents().stream().map(student -> new UserNameAndLoginDTO(student.getName(), student.getLogin())).toList()).orElse(null));
     }
 
     /**

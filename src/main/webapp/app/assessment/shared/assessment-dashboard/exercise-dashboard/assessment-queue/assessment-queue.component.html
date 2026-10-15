@@ -1,0 +1,101 @@
+<section class="flex flex-col gap-2" data-testid="assessment-queue">
+    <div>
+        <h4 class="mb-0" [jhiTranslate]="isTestRun() ? 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' : translationKey() + '.title'"></h4>
+        <p class="m-0 text-sm text-muted-color" [jhiTranslate]="translationKey() + '.hint'"></p>
+    </div>
+    @if (!isTestRun() && (exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1) > correctionRoundsEnabled()) {
+        <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled"></p>
+    }
+    <tumaet-ui-table
+        data-testid="assessment-queue-table"
+        [columns]="columns()"
+        [rows]="rows()"
+        [totalRecords]="totalRecords()"
+        [loading]="isLoading()"
+        [rowActions]="rowActions"
+        [striped]="true"
+        [pageSize]="20"
+        [showRowsPerPage]="false"
+        [initialSortField]="participantSortField()"
+        [showSearch]="teamMode() && !isTestRun()"
+        [emptyMessage]="translationKey() + '.empty'"
+        (dataRequest)="loadPage($event)"
+    />
+</section>
+
+<ng-template #participantTemplate let-cell>
+    @if (teamMode()) {
+        <span class="inline-flex items-baseline gap-2" [tumAetUiTooltip]="teamMembers(cell.data)">
+            <span class="font-semibold">{{ cell.data.participantName }}</span>
+            @if (cell.data.participantIdentifier) {
+                <code class="text-sm">{{ cell.data.participantIdentifier }}</code>
+            }
+        </span>
+    } @else {
+        <span class="font-semibold" data-testid="assessment-student-id">{{ cell.data.participationId }}</span>
+    }
+</ng-template>
+
+<ng-template #statusTemplate let-cell>
+    <tumaet-ui-tag data-testid="assessment-state" [attr.data-state]="state(cell.data)" [severity]="stateSeverity(cell.data)">
+        {{ 'artemisApp.exerciseAssessmentDashboard.myTeams.state.' + state(cell.data) | artemisTranslate }}
+    </tumaet-ui-tag>
+</ng-template>
+
+<ng-template #resultTemplate let-cell>
+    @if (toResult(cell.data); as result) {
+        <jhi-result [exercise]="exercise()" [result]="result" [participation]="toParticipation(cell.data)" [isOwnParticipation]="false" />
+    } @else {
+        <span>–</span>
+    }
+</ng-template>
+
+<ng-template #rowActions let-dto>
+    <div class="flex items-center justify-end gap-1">
+        <jhi-manage-assessment-buttons
+            [course]="course()"
+            [exercise]="exercise()"
+            [participation]="toParticipation(dto)"
+            [isLoading]="isLoading()"
+            [disabled]="assessmentDisabled()"
+            [disabledTooltip]="assessmentDisabledTooltip()"
+            [correctionRoundsEnabled]="correctionRoundsEnabled()"
+            [isTestRun]="isTestRun()"
+            (refresh)="refresh()"
+        />
+        @if (isProgrammingExercise() || dto.teamId) {
+            <button
+                type="button"
+                tumAetUiButton
+                size="small"
+                variant="text"
+                severity="secondary"
+                data-testid="assessment-more-actions"
+                [tumAetUiMenuTrigger]="moreActionsMenu"
+                [attr.aria-label]="'artemisApp.exerciseAssessmentDashboard.myTeams.moreActions' | artemisTranslate"
+            >
+                <fa-icon [icon]="faEllipsisVertical" [fixedWidth]="true" />
+            </button>
+            <ng-template #moreActionsMenu>
+                <tumaet-ui-menu [attr.aria-label]="'artemisApp.exerciseAssessmentDashboard.myTeams.moreActions' | artemisTranslate">
+                    @if (isProgrammingExercise()) {
+                        <a tumAetUiMenuItem data-testid="assessment-repository" [routerLink]="repositoryLink(dto)">
+                            <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                            <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.myTeams.repository"></span>
+                        </a>
+                        <a tumAetUiMenuItem data-testid="assessment-commit-history" [routerLink]="commitHistoryLink(dto)">
+                            <fa-icon [icon]="faCodeCommit" [fixedWidth]="true" />
+                            <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.myTeams.commitHistory"></span>
+                        </a>
+                    }
+                    @if (dto.teamId) {
+                        <a tumAetUiMenuItem data-testid="assessment-team" [routerLink]="teamLink(dto)">
+                            <fa-icon [icon]="faUsers" [fixedWidth]="true" />
+                            <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.myTeams.teamDetails"></span>
+                        </a>
+                    }
+                </tumaet-ui-menu>
+            </ng-template>
+        }
+    </div>
+</ng-template>
