@@ -468,7 +468,9 @@ public class PyrisConnectorService {
             return objectMapper.readTree(ex.getResponseBodyAsString()).required("detail").required("errorMessage").asString();
         }
         catch (JacksonException | IllegalArgumentException e) {
-            log.error("Failed to parse error message from Pyris", e);
+            // Pyris or a proxy in front of it can answer 400 or 500 with a body that is not the error JSON, e.g. a plain-text "Internal Server Error".
+            // The caller turns the status into an IrisException, so a warning is enough.
+            log.warn("Pyris answered with status {} and a body that is not the expected error JSON: {}", ex.getStatusCode(), e.getMessage());
             return "";
         }
     }

@@ -16,7 +16,7 @@ export const MAX_SUBMISSION_TEXT_LENGTH = 30 * 1000;
 export const EXAM_TEXT_MAX_LENGTH = 10 * 1000;
 /** Maximum quiz exercise short answer character length: 255 **/
 export const MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
-/** Maximum quiz exercise text drag-item character length. **/
+/** Maximum quiz exercise text drag-item character length. Keep in sync with Constants.MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH. **/
 export const MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH = 255;
 /** Maximum exam title character length: 255 **/
 export const EXAM_TITLE_MAX_LENGTH = 255; // Must be consistent with Constants.EXAM_TITLE_MAX_LENGTH and the exam.title database column
