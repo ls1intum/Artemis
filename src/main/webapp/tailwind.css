@@ -98,6 +98,7 @@
 @source './app/course/overview/setup-passkey-modal';
 @source './app/course/sidebar';
 @source './app/notification';
+@source './app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component.html';
 @source './app/calendar';
 @source './app/shared-ui/profile-picture';
 @source './app/localci/build-agent-summary';
