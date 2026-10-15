@@ -72,6 +72,9 @@ public class ExerciseGenerationRevertService {
      * @return the revert result, or empty when there is no retained baseline to revert to
      */
     public Optional<RevertResult> revert(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot) {
+        if (exercise.isExamExercise()) {
+            throw new IllegalArgumentException("Whole-exercise generation undo is available only for course exercises.");
+        }
         String token = liveSaves.claim(exercise.getId());
         boolean release = true;
         var durablePhaseEntered = new java.util.concurrent.atomic.AtomicBoolean();

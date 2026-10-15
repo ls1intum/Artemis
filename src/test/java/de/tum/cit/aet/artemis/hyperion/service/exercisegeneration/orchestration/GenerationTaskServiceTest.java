@@ -381,6 +381,24 @@ class GenerationTaskServiceTest {
     }
 
     @Test
+    void exerciseConvertedToFutureExamDuringGenerationIsNotSaved() {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer(invocation -> {
+            var exam = new de.tum.cit.aet.artemis.exam.domain.Exam();
+            exam.setStartDate(ZonedDateTime.now().plusDays(2));
+            var group = new de.tum.cit.aet.artemis.exam.domain.ExerciseGroup();
+            group.setExam(exam);
+            exercise.setExerciseGroup(group);
+            return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "Create a stack exercise", GenerationMode.GENERATE));
+
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
+        verify(generationRevertService, never()).invalidateBaseline(EXERCISE_ID);
+        assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
+    }
+
+    @Test
     void mechanicallyVerifiedRun_persistsExactlyOnce() {
         when(persistenceService.persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any())).thenAnswer(invocation -> {
             Runnable beforeDurableMutation = invocation.getArgument(8);

@@ -280,6 +280,14 @@ class GenerationPersistenceServiceTest {
         return result;
     }
 
+    @Test
+    void directPersistenceRejectsExamBeforeRepositoryOrMetadataWrites() {
+        when(exercise.isExamExercise()).thenReturn(true);
+        assertThatThrownBy(() -> service.persist(exercise, user, mock(GenerationOutcome.class))).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("only for course exercises");
+        org.mockito.Mockito.verifyNoInteractions(gitService, programmingExerciseRepository);
+    }
+
     private GenerationOutcome outcomeWith(Map<String, String> template, Map<String, String> solution, Map<String, String> tests, String problemStatement) {
         return outcomeWithPlan(template, solution, tests, problemStatement, null);
     }
