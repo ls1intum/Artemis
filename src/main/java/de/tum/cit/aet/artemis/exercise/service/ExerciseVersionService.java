@@ -194,51 +194,6 @@ public class ExerciseVersionService {
     }
 
     /**
-     * Captures a version on the caller thread using the current author.
-     *
-     * @param targetExercise exercise to snapshot
-     */
-    public void createExerciseVersionSynchronously(Exercise targetExercise) {
-        createExerciseVersionSynchronously(targetExercise, userRepository.getUser());
-    }
-
-    /**
-     * Creates a version on the caller thread while logging versioning failures.
-     *
-     * @param targetExercise exercise to snapshot
-     * @param author         version author
-     */
-    public void createExerciseVersionSynchronously(Exercise targetExercise, User author) {
-        createExerciseVersionInternal(targetExercise, author, ExerciseEditorSyncService.getClientSessionId(), null, null, null, Map.of());
-    }
-
-    /**
-     * Captures a repository-push version inside the mutation lease and preserves editor alert attribution.
-     *
-     * @param targetExercise                  exercise to snapshot
-     * @param author                          version author
-     * @param triggeringRepositoryType        repository changed by the caller
-     * @param triggeringAuxiliaryRepositoryId auxiliary repository id, when applicable
-     * @param triggeringCommitHash            commit created by the caller
-     */
-    public void createExerciseVersionSynchronously(Exercise targetExercise, User author, @Nullable RepositoryType triggeringRepositoryType,
-            @Nullable Long triggeringAuxiliaryRepositoryId, @Nullable String triggeringCommitHash) {
-        createExerciseVersionInternal(targetExercise, author, ExerciseEditorSyncService.getClientSessionId(), attributableTarget(triggeringRepositoryType),
-                triggeringAuxiliaryRepositoryId, triggeringCommitHash, Map.of());
-    }
-
-    /**
-     * Creates a version on the caller thread using exact commit IDs while logging versioning failures.
-     *
-     * @param targetExercise      exercise to snapshot
-     * @param author              version author
-     * @param repositoryCommitIds exact commit IDs for repositories changed by the caller
-     */
-    public void createExerciseVersionSynchronously(Exercise targetExercise, User author, Map<RepositoryType, String> repositoryCommitIds) {
-        createExerciseVersionInternal(targetExercise, author, ExerciseEditorSyncService.getClientSessionId(), null, null, null, repositoryCommitIds);
-    }
-
-    /**
      * Creates a version on the caller thread and propagates failures.
      *
      * @param targetExercise exercise to snapshot

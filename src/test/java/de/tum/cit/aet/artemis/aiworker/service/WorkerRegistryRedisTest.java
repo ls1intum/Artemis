@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport;
 import de.tum.cit.aet.artemis.core.config.RedissonCodecConfiguration;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
-import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisNodeIdentity;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
 import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
@@ -46,14 +45,12 @@ class WorkerRegistryRedisTest {
     void concurrentCoordinatorsFenceReplacementsAndLateCompletion() throws Exception {
         try (var store = ValkeyTestContainerFactory.create()) {
             store.start();
-            var firstIdentity = new RedisNodeIdentity("aiworker-core", true, false);
-            var secondIdentity = new RedisNodeIdentity("aiworker-core", true, false);
             String address = "redis://" + store.getHost() + ":" + store.getMappedPort(6379);
-            var firstClient = client(address, firstIdentity);
-            var secondClient = client(address, secondIdentity);
+            var firstClient = client(address);
+            var secondClient = client(address);
             try {
-                var firstData = new RedissonDistributedDataProviderService(firstClient, new RedisClientListResolver(new RedissonConnectionFactory(firstClient)), firstIdentity);
-                var secondData = new RedissonDistributedDataProviderService(secondClient, new RedisClientListResolver(new RedissonConnectionFactory(secondClient)), secondIdentity);
+                var firstData = new RedissonDistributedDataProviderService(firstClient, new RedisClientListResolver(new RedissonConnectionFactory(firstClient)));
+                var secondData = new RedissonDistributedDataProviderService(secondClient, new RedisClientListResolver(new RedissonConnectionFactory(secondClient)));
                 var properties = new AiWorkerProperties(List.of("worker"), Duration.ofSeconds(30), Duration.ofSeconds(45));
                 var first = new WorkerRegistryService(properties, new WorkerTransport(firstData, new WorkerMessageCodecApi()), firstData);
                 var second = new WorkerRegistryService(properties, new WorkerTransport(secondData, new WorkerMessageCodecApi()), secondData);
@@ -102,11 +99,11 @@ class WorkerRegistryRedisTest {
         }
     }
 
-    private RedissonClient client(String address, RedisNodeIdentity identity) {
+    private RedissonClient client(String address) {
         var config = new Config();
         config.useSingleServer().setAddress(address).setConnectionMinimumIdleSize(1).setConnectionPoolSize(2).setSubscriptionConnectionMinimumIdleSize(1)
                 .setSubscriptionConnectionPoolSize(2);
-        new RedissonCodecConfiguration().artemisRedissonSerializationCodecCustomizer(identity).customize(config);
+        new RedissonCodecConfiguration().artemisRedissonSerializationCodecCustomizer().customize(config);
         return Redisson.create(config);
     }
 }

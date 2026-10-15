@@ -76,9 +76,5 @@ class GenerationRetryConfigurationTest {
             return mock(HyperionEffortProfileService.class);
         }
 
-        @Bean
-        GenerationExternalMutationService externalMutation() {
-            return mock(GenerationExternalMutationService.class);
-        }
     }
 }

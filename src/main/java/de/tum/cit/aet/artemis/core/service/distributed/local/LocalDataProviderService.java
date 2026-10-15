@@ -16,7 +16,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.LocalDataCondition;
-import de.tum.cit.aet.artemis.core.service.distributed.api.CoordinationSnapshot;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DefaultTimeToLiveDistributedMap;
@@ -30,8 +29,6 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopi
 @Lazy
 @Conditional(LocalDataCondition.class)
 public class LocalDataProviderService implements DistributedDataProvider {
-
-    private static final String LOCAL_NODE_ID = "local-node";
 
     private final ConcurrentHashMap<String, DistributedQueue<?>> queues = new ConcurrentHashMap<>();
 
@@ -125,16 +122,6 @@ public class LocalDataProviderService implements DistributedDataProvider {
     @Override
     public String getLocalMemberAddress() {
         return "localhost";
-    }
-
-    @Override
-    public String getLocalNodeId() {
-        return LOCAL_NODE_ID;
-    }
-
-    @Override
-    public Optional<CoordinationSnapshot> getCoordinationSnapshot() {
-        return Optional.of(new CoordinationSnapshot(Set.of(LOCAL_NODE_ID), true));
     }
 
     @Override

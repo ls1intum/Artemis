@@ -131,9 +131,6 @@ class HyperionCodeGenerationExecutionServiceTest {
     @Mock
     private ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
-    @Mock
-    private de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService mutationService;
-
     private HyperionCodeGenerationExecutionService service;
 
     private User user;
@@ -149,7 +146,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         this.service = new HyperionCodeGenerationExecutionService("main", gitService, repositoryService, solutionProgrammingExerciseParticipationRepository,
                 templateProgrammingExerciseParticipationRepository, programmingSubmissionRepository, buildLogEntryService, resultRepository, continuousIntegrationTriggerService,
                 programmingExerciseParticipationService, repositoryStructureService, solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService,
-                consistencyCheckService, reviewCommentContextRendererService, exerciseVersionService, programmingFeedbackSynthesizerService, mutationService);
+                consistencyCheckService, reviewCommentContextRendererService, exerciseVersionService, programmingFeedbackSynthesizerService);
 
         this.user = new User();
         user.setLogin("testuser");
@@ -472,63 +469,6 @@ class HyperionCodeGenerationExecutionServiceTest {
         verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.CI_TRIGGER_FAILED, Map.of(), 1,
                 "Solution files were generated and committed to the solution repository, but Hyperion could not trigger the CI build.");
         verify(exerciseVersionService).createExerciseVersion(exercise, user);
-    }
-
-    @org.junit.jupiter.params.ParameterizedTest
-    @org.junit.jupiter.params.provider.ValueSource(booleans = { false, true })
-    void versionCaptureCannotEscapeCoordinatedTaskCleanup(boolean coordinated) throws Exception {
-        Repository repository = mock(Repository.class);
-        String originalCommitId = "orig-hash";
-        String newCommitId = "new-hash";
-        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
-        solutionParticipation.setId(99L);
-        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
-        exercise.setSolutionParticipation(solutionParticipation);
-
-        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
-        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
-        when(gitService.getFileByName(repository, "src/Test.java")).thenReturn(Optional.empty());
-        doNothing().when(repositoryService).createFile(eq(repository), eq("src/Test.java"), any());
-        doReturn(COMMIT_HASH).when(repositoryService).commitChanges(repository, user);
-        doNothing().when(gitService).resetToOriginHead(repository);
-        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
-        when(repositoryStructureService.getBuildEnvironmentContext(repository)).thenReturn("pom.xml");
-        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
-                .thenReturn(new CodeGenerationResponseDTO(null, List.of(new GeneratedFileDTO("src/Test.java", "public class Test {}")), List.of()));
-        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
-        doThrow(new ContinuousIntegrationException("CI error")).when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
-        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
-
-        var queued = new java.util.ArrayList<Runnable>();
-        var held = new java.util.concurrent.atomic.AtomicBoolean(true);
-        var reads = new java.util.ArrayList<Boolean>();
-        var versions = mock(ExerciseVersionService.class, org.mockito.Mockito.CALLS_REAL_METHODS);
-        var snapshots = mock(de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository.class);
-        ReflectionTestUtils.setField(versions, "exerciseVersionExecutor", (java.util.concurrent.Executor) queued::add);
-        ReflectionTestUtils.setField(versions, "programmingExerciseRepository", snapshots);
-        when(snapshots.findForVersioningById(exercise.getId())).thenAnswer(ignored -> {
-            reads.add(held.get());
-            throw new IllegalStateException("controlled snapshot failure");
-        });
-        ReflectionTestUtils.setField(service, "exerciseVersionService", versions);
-        when(mutationService.isCoordinationEnabled()).thenReturn(coordinated);
-        var websocket = mock(de.tum.cit.aet.artemis.hyperion.service.websocket.HyperionWebsocketService.class);
-        var tasks = new HyperionCodeGenerationTaskService(service, websocket);
-        tasks.runJobAsync("version-job", user, exercise, 1L, RepositoryType.SOLUTION, false, null, () -> held.set(false));
-
-        verify(websocket).send(eq(user.getLogin()), any(), argThat(payload -> payload instanceof HyperionCodeGenerationEventDTO event
-                && event.type() == HyperionCodeGenerationEventDTO.Type.DONE && event.completionStatus() == HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL));
-        assertThat(held.get()).isFalse();
-        if (coordinated) {
-            assertThat(queued).isEmpty();
-            assertThat(reads).containsExactly(true);
-        }
-        else {
-            assertThat(reads).isEmpty();
-            assertThat(queued).hasSize(1);
-            queued.removeFirst().run();
-            assertThat(reads).containsExactly(false);
-        }
     }
 
     @Test

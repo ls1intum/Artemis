@@ -34,7 +34,6 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseRespons
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 
 /**
@@ -64,12 +63,10 @@ public class ProgrammingExerciseTestCaseResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
-
     public ProgrammingExerciseTestCaseResource(ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseTestCaseService programmingExerciseTestCaseService, ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+            ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.programmingExerciseTestCaseService = programmingExerciseTestCaseService;
         this.programmingExerciseCreationScheduleService = programmingExerciseCreationScheduleService;
@@ -77,7 +74,6 @@ public class ProgrammingExerciseTestCaseResource {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.exerciseVersionService = exerciseVersionService;
-        this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
     }
 
     /**
@@ -112,25 +108,18 @@ public class ProgrammingExerciseTestCaseResource {
     public ResponseEntity<Set<ProgrammingExerciseTestCaseResponseDTO>> updateTestCases(@PathVariable Long exerciseId,
             @RequestBody Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) {
         log.debug("REST request to update the weights {} of the exercise {}", testCaseProgrammingExerciseTestCaseDTOS, exerciseId);
-        var authorizationExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        User user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, authorizationExercise, user);
-        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-            Set<ProgrammingExerciseTestCase> updatedTests = programmingExerciseTestCaseService.update(exerciseId, testCaseProgrammingExerciseTestCaseDTOS);
-            // A test case is now marked as AFTER_DUE_DATE: a scheduled score update might be needed.
-            if (updatedTests.stream().anyMatch(ProgrammingExerciseTestCase::isAfterDueDate)) {
-                programmingExerciseCreationScheduleService.scheduleOperations(programmingExercise.getId());
-            }
+        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
-            if (lease.coordinated()) {
-                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
-            }
-            else {
-                exerciseVersionService.createExerciseVersion(programmingExercise, user);
-            }
-            return ResponseEntity.ok(updatedTests.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet()));
+        Set<ProgrammingExerciseTestCase> updatedTests = programmingExerciseTestCaseService.update(exerciseId, testCaseProgrammingExerciseTestCaseDTOS);
+        // A test case is now marked as AFTER_DUE_DATE: a scheduled score update might be needed.
+        if (updatedTests.stream().anyMatch(ProgrammingExerciseTestCase::isAfterDueDate)) {
+            programmingExerciseCreationScheduleService.scheduleOperations(programmingExercise.getId());
         }
+
+        exerciseVersionService.createExerciseVersion(programmingExercise);
+        Set<ProgrammingExerciseTestCaseResponseDTO> updatedTestDTOs = updatedTests.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
+        return ResponseEntity.ok(updatedTestDTOs);
     }
 
     /**
@@ -142,24 +131,17 @@ public class ProgrammingExerciseTestCaseResource {
      */
     @PatchMapping("programming-exercises/{exerciseId}/test-cases/reset")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<ProgrammingExerciseTestCaseResponseDTO>> resetTestCases(@PathVariable long exerciseId) {
+    public ResponseEntity<List<ProgrammingExerciseTestCaseResponseDTO>> resetTestCases(@PathVariable Long exerciseId) {
         log.debug("REST request to reset the test case weights of exercise {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
-        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-            programmingExerciseTestCaseService.logTestCaseReset(user, programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
+        programmingExerciseTestCaseService.logTestCaseReset(user, programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
 
-            List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(programmingExercise);
-            if (lease.coordinated()) {
-                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
-            }
-            else {
-                exerciseVersionService.createExerciseVersion(programmingExercise, user);
-            }
-            return ResponseEntity.ok(testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).toList());
-        }
+        List<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.reset(programmingExercise);
+        exerciseVersionService.createExerciseVersion(programmingExercise, user);
+        List<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).toList();
+        return ResponseEntity.ok(testCaseDTOs);
     }
 }

@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 
 /**
  * REST controller for deleting/resetting programming exercises or related entities such as exercise tasks.
@@ -72,12 +71,9 @@ public class ProgrammingExerciseDeletionResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
-
     public ProgrammingExerciseDeletionResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseDeletionService programmingExerciseDeletionService, ExerciseVersionService exerciseVersionService,
-            ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard) {
+            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseDeletionService programmingExerciseDeletionService, ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -86,7 +82,6 @@ public class ProgrammingExerciseDeletionResource {
         this.exerciseDeletionService = exerciseDeletionService;
         this.programmingExerciseDeletionService = programmingExerciseDeletionService;
         this.exerciseVersionService = exerciseVersionService;
-        this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
     }
 
     /**
@@ -133,28 +128,16 @@ public class ProgrammingExerciseDeletionResource {
 
         if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, user);
+            continuousIntegrationService.orElseThrow().recreateBuildPlansForExercise(programmingExercise);
         }
 
         if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
+            exerciseDeletionService.reset(exerciseId);
+            exerciseDeletionService.cleanup(exerciseId);
         }
-        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
-            if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
-                continuousIntegrationService.orElseThrow().recreateBuildPlansForExercise(programmingExercise);
-            }
-            if (programmingExerciseResetOptionsDTO.deleteParticipationsSubmissionsAndResults()) {
-                exerciseDeletionService.reset(exerciseId);
-                exerciseDeletionService.cleanup(exerciseId);
-            }
-            if (lease.coordinated()) {
-                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
-            }
-            else {
-                exerciseVersionService.createExerciseVersion(programmingExercise, user);
-            }
-            return ResponseEntity.ok().build();
-        }
+        exerciseVersionService.createExerciseVersion(programmingExercise, user);
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -170,20 +153,11 @@ public class ProgrammingExerciseDeletionResource {
     public ResponseEntity<Void> deleteTasks(@PathVariable Long exerciseId) {
         log.debug("REST request to delete tasks for ProgrammingExercise with id : {}", exerciseId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
 
-        try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-            programmingExerciseDeletionService.deleteTasks(exercise.getId());
-            if (lease.coordinated()) {
-                exerciseVersionService.createExerciseVersionSynchronously(exercise, user);
-            }
-            else {
-                exerciseVersionService.createExerciseVersion(exercise, user);
-            }
-            return ResponseEntity.noContent().build();
-        }
+        programmingExerciseDeletionService.deleteTasks(exercise.getId());
+        exerciseVersionService.createExerciseVersion(exercise);
+        return ResponseEntity.noContent().build();
     }
 
 }

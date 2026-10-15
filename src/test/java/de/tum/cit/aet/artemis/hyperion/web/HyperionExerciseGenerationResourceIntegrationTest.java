@@ -5,8 +5,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,11 +15,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exam.service.StudentExamAssignmentService;
-import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
-import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
-import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -51,21 +44,6 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     @Autowired
     private JsonMapper objectMapper;
 
-    @Autowired
-    private ExamUtilService examUtilService;
-
-    @Autowired
-    private ExamTestRepository examRepository;
-
-    @Autowired
-    private StudentExamTestRepository studentExamRepository;
-
-    @Autowired
-    private StudentExamAssignmentService assignmentService;
-
-    @Autowired
-    private HyperionExerciseMutationApi mutationApi;
-
     private long exerciseId;
 
     @BeforeEach
@@ -85,7 +63,7 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     }
 
     @Test
-    void mutationGuardAcceptsDatelessAndFutureDraftsButRejectsReleasedExercises() {
+    void generationEligibilityAcceptsDatelessAndFutureDraftsButRejectsReleasedExercises() {
         var exercise = programmingExerciseRepository.findById(exerciseId).orElseThrow();
         exercise.setReleaseDate(null);
         exercise.setStartDate(null);
@@ -98,60 +76,6 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
         exercise.setStartDate(java.time.ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.saveAndFlush(exercise);
         org.assertj.core.api.Assertions.assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId)).isFalse();
-    }
-
-    @Test
-    void examAssignmentClosesAuthoringBeforeParticipationsExist() {
-        var exam = prepareExamExercise();
-        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        org.assertj.core.api.Assertions.assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId)).isTrue();
-        var assigned = assignmentService.assignStudent(exam.getId(), student.getId());
-        org.assertj.core.api.Assertions.assertThat(assigned.getExercises()).extracting(de.tum.cit.aet.artemis.exercise.domain.Exercise::getId).contains(exerciseId);
-        org.assertj.core.api.Assertions.assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId)).isFalse();
-        org.assertj.core.api.Assertions.assertThat(programmingExerciseRepository.findWithAllParticipationsById(exerciseId).orElseThrow().getStudentParticipations()).isEmpty();
-    }
-
-    @Test
-    void activeMutationRejectsExamAssignmentWithoutPersistingAStudentExam() {
-        var exam = prepareExamExercise();
-        var student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        String token = mutationApi.claimExternalMutationSlot(exerciseId);
-        try {
-            org.assertj.core.api.Assertions.assertThatThrownBy(() -> assignmentService.assignStudent(exam.getId(), student.getId()))
-                    .isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
-            org.assertj.core.api.Assertions.assertThat(studentExamRepository.findUserIdsWithStudentExamsForExam(exam.getId())).isEmpty();
-        }
-        finally {
-            mutationApi.clearExternalMutationSlot(exerciseId, token);
-        }
-        org.assertj.core.api.Assertions.assertThat(assignmentService.assignStudent(exam.getId(), student.getId())).isNotNull();
-    }
-
-    @Test
-    void testRunAssignmentAlsoClosesAuthoring() {
-        var exam = prepareExamExercise();
-        var testRun = new de.tum.cit.aet.artemis.exam.domain.StudentExam();
-        testRun.setExam(exam);
-        testRun.setUser(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
-        testRun.setTestRun(true);
-        testRun.setSubmitted(false);
-        testRun.setWorkingTime(3600);
-        testRun.setExercises(List.of(programmingExerciseRepository.findById(exerciseId).orElseThrow()));
-        assignmentService.assignTestRun(testRun);
-        org.assertj.core.api.Assertions.assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId)).isFalse();
-    }
-
-    private de.tum.cit.aet.artemis.exam.domain.Exam prepareExamExercise() {
-        var exercise = programmingExerciseRepository.findById(exerciseId).orElseThrow();
-        var exam = examUtilService.addExamWithExerciseGroup(exercise.getCourseViaExerciseGroupOrCourseMember(), true);
-        exam.setStartDate(java.time.ZonedDateTime.now().plusDays(1));
-        exam.setEndDate(java.time.ZonedDateTime.now().plusDays(1).plusHours(2));
-        exam.setNumberOfExercisesInExam(1);
-        exam = examRepository.saveAndFlush(exam);
-        exercise.setCourse(null);
-        exercise.setExerciseGroup(exam.getExerciseGroups().getFirst());
-        programmingExerciseRepository.saveAndFlush(exercise);
-        return exam;
     }
 
     @Test
