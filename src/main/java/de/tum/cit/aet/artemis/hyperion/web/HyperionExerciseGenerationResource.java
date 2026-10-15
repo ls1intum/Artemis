@@ -382,17 +382,15 @@ public class HyperionExerciseGenerationResource {
     }
 
     /**
-     * Hyperion writes directly to the exercise repositories, so it must only run on exercises no student has started. An exercise whose release date lies in the past is
-     * rejected; one without a release date is accepted, because instructors leave the date empty while authoring and {@link ProgrammingExercise#isReleased()} would treat that as
-     * released. An exercise that is visible but has no participations stays eligible: the participation endpoints refuse to start one while a run holds the exercise, so a
-     * student cannot copy a template that is about to change.
+     * Only course drafts without student participations may be changed. A missing release date is valid during authoring. Generation does not block participation starts;
+     * eligibility is checked again before saving, and the short live-save boundary excludes repository copies during durable writes.
      */
     private void validateDraftExercise(ProgrammingExercise exercise) {
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("Whole-exercise generation is available only for course exercises.", ENTITY_NAME, "unsupportedGenerationLanguage");
+        }
         if (GenerationRequestService.hasReleaseDateInThePast(exercise)) {
             throw new BadRequestAlertException("Hyperion generation can only modify unreleased draft exercises.", ENTITY_NAME, "exerciseAlreadyReleased");
-        }
-        if (exercise.isExamExercise() && !programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exercise.getId())) {
-            throw new BadRequestAlertException("Hyperion can only modify an exam before student exams or test runs are assigned.", ENTITY_NAME, "exerciseAlreadyAssigned");
         }
         if (hasStudentParticipations(exercise)) {
             throw new BadRequestAlertException("Hyperion generation can only modify exercises without student participations.", ENTITY_NAME, "exerciseHasParticipations");
@@ -401,7 +399,6 @@ public class HyperionExerciseGenerationResource {
 
     private boolean canOfferRevert(ProgrammingExercise exercise) {
         return !GenerationRequestService.hasReleaseDateInThePast(exercise) && !hasStudentParticipations(exercise)
-                && (!exercise.isExamExercise() || programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exercise.getId()))
                 && (!jobService.hasActiveJob(exercise.getId()) || jobService.isRevertRecoveryPending(exercise.getId()));
     }
 

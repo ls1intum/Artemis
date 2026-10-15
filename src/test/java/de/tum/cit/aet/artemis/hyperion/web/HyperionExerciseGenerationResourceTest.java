@@ -34,6 +34,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
@@ -447,6 +448,28 @@ class HyperionExerciseGenerationResourceTest {
 
         assertThatThrownBy(() -> resource.generateExercise(1L, request)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("project type 'MAVEN_BLACKBOX'");
         verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any(), any());
+    }
+
+    @ParameterizedTest
+    @EnumSource(GenerationMode.class)
+    void futureUnassignedExamIsRejectedBeforeCapacityOrBudget(GenerationMode mode) {
+        var exam = new de.tum.cit.aet.artemis.exam.domain.Exam();
+        exam.setStartDate(ZonedDateTime.now().plusDays(2));
+        var group = new de.tum.cit.aet.artemis.exam.domain.ExerciseGroup();
+        group.setExam(exam);
+        testExercise.setExerciseGroup(group);
+        testExercise.setStudentParticipations(Set.of());
+        when(programmingExerciseRepository.findWithAllParticipationsById(1L)).thenReturn(Optional.of(testExercise));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> resource.generateExercise(1L, new ExerciseGenerationRequestDTO(mode, "Create a stack exercise", null)))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("unsupportedGenerationLanguage"));
+        verify(sandboxClient, never()).hasAvailableGenerationSandboxSlot(any());
+        verify(generationBudgetService, never()).reserveGenerationBudget(any(), any(), anyLong());
+        verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any(), any());
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.revertExerciseGeneration(1L))
+                .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("unsupportedGenerationLanguage"));
+        verify(jobService, never()).claimRevertSlot(any(), anyLong());
     }
 
     @Test

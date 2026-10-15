@@ -50,6 +50,9 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     @Autowired
     private JsonMapper objectMapper;
 
+    @Autowired
+    private de.tum.cit.aet.artemis.exam.util.ExamUtilService examUtilService;
+
     private long exerciseId;
 
     @BeforeEach
@@ -81,6 +84,19 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
         exercise.setReleaseDate(java.time.ZonedDateTime.now().minusDays(1));
         exercise.setStartDate(java.time.ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.saveAndFlush(exercise);
+        org.assertj.core.api.Assertions.assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId)).isFalse();
+    }
+
+    @Test
+    void generationEligibilityRejectsFutureExamEvenBeforeStudentAssignment() {
+        var exercise = programmingExerciseRepository.findById(exerciseId).orElseThrow();
+        var exam = examUtilService.addExamWithExerciseGroup(exercise.getCourseViaExerciseGroupOrCourseMember(), true);
+        org.assertj.core.api.Assertions.assertThat(exam.getStartDate()).isAfter(java.time.ZonedDateTime.now());
+        exercise.setCourse(null);
+        exercise.setReleaseDate(null);
+        exercise.setExerciseGroup(exam.getExerciseGroups().getFirst());
+        programmingExerciseRepository.saveAndFlush(exercise);
+
         org.assertj.core.api.Assertions.assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId)).isFalse();
     }
 
