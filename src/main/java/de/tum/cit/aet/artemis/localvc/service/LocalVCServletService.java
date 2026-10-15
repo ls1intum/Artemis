@@ -226,7 +226,7 @@ public class LocalVCServletService {
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
-            ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard,
+            ExerciseVersionService exerciseVersionService, @Lazy ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard,
             UserVcsAccessTokenService userVcsAccessTokenService, Optional<DistributedDataAccessService> distributedDataAccessService,
             Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService,
             BuildAgentNetworkPolicy buildAgentNetworkPolicy, MailSendingService mailSendingService, DistributedDataProvider distributedDataProvider,
