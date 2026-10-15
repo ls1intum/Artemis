@@ -30,6 +30,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -52,7 +55,9 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
+import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.protocol.GenerationOutput;
@@ -61,6 +66,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
 import de.tum.cit.aet.artemis.hyperion.protocol.VerificationResult;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationSeedService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
@@ -118,6 +124,8 @@ class GenerationPersistenceServiceTest {
 
     private GenerationPersistenceService service;
 
+    private GenerationLiveSaveService liveSaves;
+
     private ProgrammingExercise exercise;
 
     private AtomicReference<String> exerciseProblemStatement;
@@ -155,6 +163,7 @@ class GenerationPersistenceServiceTest {
         when(resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(anyLong())).thenReturn(Optional.empty(), Optional.of(resultWithId(1L)));
         when(programmingSubmissionService.existsNewerSuccessfulTestResultForParticipationAndCommitHash(anyLong(), anyString(), any())).thenReturn(true);
         when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any())).thenReturn(1);
+        liveSaves = new GenerationLiveSaveService(new LocalDataProviderService(), true);
         service = newService(Duration.ofSeconds(2));
 
         exercise = mock(ProgrammingExercise.class);
@@ -189,7 +198,7 @@ class GenerationPersistenceServiceTest {
                 .spy(new GenerationPersistenceService("main", gitService, repositoryService, participationService, continuousIntegrationTriggerService,
                         programmingSubmissionService, exerciseVersionService, testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService,
                         programmingExerciseCreationScheduleService, new ProblemStatementMetadataUpdateService(programmingExerciseRepository, programmingExerciseTaskService),
-                        tempFileUtilService, testCaseSyncTimeout, Duration.ofMillis(5), buildConfigRepository));
+                        tempFileUtilService, testCaseSyncTimeout, Duration.ofMillis(5), buildConfigRepository, liveSaves));
         org.mockito.Mockito.doNothing().when(mockedGitBoundary).verifyGitIndexMatchesWorkingTree(any());
         return mockedGitBoundary;
     }
@@ -460,6 +469,23 @@ class GenerationPersistenceServiceTest {
         assertThat(FileUtils.readFileToByteArray(templateRepository.getLocalPath().resolve("Template.java").toFile())).isEqualTo("t".getBytes(StandardCharsets.UTF_8));
         assertThat(FileUtils.readFileToByteArray(solutionRepository.getLocalPath().resolve("Solution.java").toFile())).isEqualTo("s".getBytes(StandardCharsets.UTF_8));
         assertThat(FileUtils.readFileToByteArray(testsRepository.getLocalPath().resolve("Test.java").toFile())).isEqualTo("x".getBytes(StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void completedSaveWithUnconfirmedReservationReleaseReportsPartialInsteadOfUnchanged() throws Exception {
+        liveSaves = Mockito.spy(liveSaves);
+        service = newService(Duration.ofSeconds(1));
+        stubSuccessfulCheckoutAndCommits();
+        long exerciseId = exercise.getId();
+        Mockito.doThrow(new IllegalStateException("coordination unavailable")).when(liveSaves).recoverSlot(eq(exerciseId), anyString());
+        var outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "# Saved Exercise");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOfSatisfying(GenerationIncompleteException.class, failure -> {
+            assertThat(failure.liveExerciseChanged()).isTrue();
+            assertThat(failure.savedRepositoryCommits()).containsEntry(RepositoryType.TEMPLATE, "hash-template");
+        });
+        assertThat(liveSaves.getSlotInfo(exercise.getId())).isPresent();
+        assertThatThrownBy(() -> liveSaves.claim(exercise.getId())).isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
     }
 
     @Test
@@ -1327,6 +1353,59 @@ class GenerationPersistenceServiceTest {
         boolean result = service.canRestoreProblemStatementAndTitle(exercise, "old statement", "Old Title", "adapted statement", "Adapted Title");
 
         assertThat(result).isFalse();
+    }
+
+    @Test
+    void persistExcludesRepositoryCopiesUntilFailedSaveCompensationFinishes() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        var templateHead = new AtomicReference<>("pre-template");
+        var solutionHead = new AtomicReference<>("pre-solution");
+        var copied = new AtomicInteger();
+        var rejectedCopies = new AtomicInteger();
+        when(gitService.getLastCommitHash(templateUri, "main")).thenAnswer(_ -> templateHead.get());
+        when(gitService.getLastCommitHash(solutionUri, "main")).thenAnswer(_ -> solutionHead.get());
+        when(gitService.getLastCommitHash(testsUri, "main")).thenReturn("pre-tests");
+        try (var reader = Executors.newSingleThreadExecutor()) {
+            Callable<Map<String, String>> copyRepositories = () -> {
+                String token = liveSaves.claimReader(1L);
+                try {
+                    copied.incrementAndGet();
+                    return Map.of("template", templateHead.get(), "solution", solutionHead.get());
+                }
+                finally {
+                    liveSaves.releaseReader(1L, token);
+                }
+            };
+            Runnable assertCopyRejected = () -> {
+                var attempt = reader.submit(copyRepositories);
+                assertThatThrownBy(() -> attempt.get(5, TimeUnit.SECONDS)).hasCauseInstanceOf(ConflictException.class);
+                assertThat(copied).hasValue(0);
+                rejectedCopies.incrementAndGet();
+            };
+            doAnswer(_ -> {
+                templateHead.set("hash-template");
+                assertCopyRejected.run();
+                return null;
+            }).when(gitService).pushCommitWithLease(repository, "hash-template", "main", "pre-template");
+            doThrow(new org.eclipse.jgit.api.errors.NoHeadException("solution push failed")).when(gitService).pushCommitWithLease(repository, "hash-solution", "main",
+                    "pre-solution");
+            doAnswer(_ -> {
+                assertThat(templateHead).hasValue("hash-template");
+                assertCopyRejected.run();
+                templateHead.set("pre-template");
+                return null;
+            }).when(gitService).resetToCommitAndForcePush(repository, "pre-template", "hash-template", "main");
+
+            var outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of(), "");
+            assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOfSatisfying(GenerationIncompleteException.class,
+                    failure -> assertThat(failure.liveExerciseChanged()).isFalse());
+
+            assertThat(rejectedCopies).hasValue(2);
+            assertThat(liveSaves.getSlotInfo(1L)).isEmpty();
+            assertThat(reader.submit(copyRepositories).get(5, TimeUnit.SECONDS)).containsExactlyInAnyOrderEntriesOf(Map.of("template", "pre-template", "solution", "pre-solution"));
+            assertThat(copied).hasValue(1);
+            verify(gitService).resetToCommitAndForcePush(repository, "pre-template", "hash-template", "main");
+        }
     }
 
     @Test

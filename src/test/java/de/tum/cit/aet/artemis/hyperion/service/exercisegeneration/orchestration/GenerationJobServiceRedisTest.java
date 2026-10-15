@@ -123,6 +123,48 @@ class GenerationJobServiceRedisTest {
         }
     }
 
+    @Test
+    void liveSaveReadersAndRecoveryTokensRoundTripThroughTheRealRedisCodec() throws Exception {
+        try (var valkey = ValkeyTestContainerFactory.create()) {
+            valkey.start();
+            String address = "redis://" + valkey.getHost() + ":" + valkey.getMappedPort(6379);
+            var firstRedis = client(address, "artemis-live-save-first");
+            var secondRedis = client(address, "artemis-live-save-second");
+            try (var reader = Executors.newSingleThreadExecutor()) {
+                var first = new GenerationLiveSaveService(provider(firstRedis, "artemis-live-save-first"), true);
+                var second = new GenerationLiveSaveService(provider(secondRedis, "artemis-live-save-second"), true);
+                String firstReader = first.claimReader(42L);
+                String oldGroupToken = second.getSlotInfo(42L).orElseThrow().token();
+
+                String secondReader = reader.submit(() -> second.claimReader(42L)).get(10, TimeUnit.SECONDS);
+
+                var shared = first.getSlotInfo(42L).orElseThrow();
+                assertThat(shared.readers()).containsOnlyKeys(firstReader, secondReader);
+                assertThat(shared.readers().values()).doesNotHaveDuplicates();
+                assertThat(shared.token()).isNotEqualTo(oldGroupToken);
+                assertThatThrownBy(() -> first.claim(42L)).isInstanceOf(ConflictException.class);
+                assertThat(second.recoverSlot(42L, oldGroupToken)).isFalse();
+                assertThat(second.getSlotInfo(42L).orElseThrow().readers()).containsOnlyKeys(firstReader, secondReader);
+
+                first.releaseReader(42L, firstReader);
+                assertThat(second.getSlotInfo(42L).orElseThrow().readers()).containsOnlyKeys(secondReader);
+                assertThatThrownBy(() -> first.claim(42L)).isInstanceOf(ConflictException.class);
+                second.releaseReader(42L, secondReader);
+                assertThat(first.getSlotInfo(42L)).isEmpty();
+
+                String writer = first.claim(42L);
+                assertThat(second.getSlotInfo(42L).orElseThrow().token()).isEqualTo(writer);
+                assertThatThrownBy(() -> second.claimReader(42L)).isInstanceOf(ConflictException.class);
+                first.release(42L, writer);
+                assertThat(second.getSlotInfo(42L)).isEmpty();
+            }
+            finally {
+                secondRedis.shutdown();
+                firstRedis.shutdown();
+            }
+        }
+    }
+
     private static String admitAfter(CountDownLatch ready, CountDownLatch start, GenerationJobService jobs) throws InterruptedException {
         ready.countDown();
         if (!start.await(10, TimeUnit.SECONDS)) {
