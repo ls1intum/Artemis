@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.util.List;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -219,7 +220,7 @@ public class ExerciseGroupResource {
     @PostMapping("courses/{courseId}/exams/{examId}/import-exercise-group")
     @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroupImportResultDTO> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId,
-            @Valid @RequestBody List<@Valid ExerciseGroupImportDTO> exerciseGroupsToImport, @RequestParam(required = false) String importId) throws IOException {
+            @Valid @RequestBody List<@NotNull @Valid ExerciseGroupImportDTO> exerciseGroupsToImport, @RequestParam(required = false) String importId) throws IOException {
         log.debug("REST request to import {} exercise group(s) to exam {}", exerciseGroupsToImport.size(), examId);
 
         examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);

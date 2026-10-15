@@ -24,6 +24,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -2812,6 +2813,41 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", body, HttpStatus.BAD_REQUEST, null);
 
         assertThat(examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups()).hasSize(exerciseGroupsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExerciseGroup_rejectsNullElementsAndPersistsNothing() throws Exception {
+        Exam targetExam = examUtilService.addExam(course1);
+        int exerciseGroupsBefore = examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups().size();
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group";
+
+        // a null group or a null exercise is a malformed request, not a server error
+        request.postWithoutLocation(path, Arrays.asList((ExerciseGroupImportDTO) null), HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation(path, List.of(new ExerciseGroupImportDTO("g", true, Arrays.asList((ExerciseImportDTO) null))), HttpStatus.BAD_REQUEST, null);
+
+        assertThat(examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups()).hasSize(exerciseGroupsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExam_rejectsNullElementsAndPersistsNothing() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        int examsBefore = examRepository.findByCourseId(course1.getId()).size();
+
+        for (List<ExerciseGroupImportDTO> malformedGroups : List.of(Arrays.asList((ExerciseGroupImportDTO) null),
+                List.of(new ExerciseGroupImportDTO("g", true, Arrays.asList((ExerciseImportDTO) null))))) {
+            ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.testExam(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
+                    importDTO.endDate(), importDTO.publishResultsDate(), importDTO.examStudentReviewStart(), importDTO.examStudentReviewEnd(), importDTO.gracePeriod(),
+                    importDTO.workingTime(), importDTO.startText(), importDTO.endText(), importDTO.confirmationStartText(), importDTO.confirmationEndText(),
+                    importDTO.examMaxPoints(), importDTO.randomizeExerciseOrder(), importDTO.numberOfExercisesInExam(), importDTO.numberOfCorrectionRoundsInExam(),
+                    importDTO.examiner(), importDTO.moduleNumber(), importDTO.courseName(), importDTO.exampleSolutionPublicationDate(), importDTO.examSummaryPublicationDate(),
+                    importDTO.channelName(), importDTO.courseId(), malformedGroups);
+            request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", body, HttpStatus.BAD_REQUEST, null);
+        }
+
+        assertThat(examRepository.findByCourseId(course1.getId())).hasSize(examsBefore);
     }
 
     @Test

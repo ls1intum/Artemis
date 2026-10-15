@@ -31,7 +31,7 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
         @Nullable String confirmationEndText, @Nullable @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer examMaxPoints, @Nullable Boolean randomizeExerciseOrder,
         @Nullable Integer numberOfExercisesInExam, @Nullable Integer numberOfCorrectionRoundsInExam, @Nullable String examiner, @Nullable String moduleNumber,
         @Nullable String courseName, @Nullable ZonedDateTime exampleSolutionPublicationDate, @Nullable ZonedDateTime examSummaryPublicationDate, @Nullable String channelName,
-        @NotNull Long courseId, @Nullable List<@Valid ExerciseGroupImportDTO> exerciseGroups) {
+        @NotNull Long courseId, @Nullable List<@NotNull @Valid ExerciseGroupImportDTO> exerciseGroups) {
 
     /**
      * Creates an ExamImportDTO from an existing Exam entity.

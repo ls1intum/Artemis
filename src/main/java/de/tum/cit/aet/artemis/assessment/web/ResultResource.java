@@ -303,6 +303,11 @@ public class ResultResource {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "noWorkingPeriod",
                         "This student has no working period in this exam, because no student exam exists for them. Generate the student exams first.")).build();
             }
+            // A result for an exercise that the student exam does not contain would be left out of the exam result
+            if (!api.isExerciseOfNewestStudentExam(exercise.getExerciseGroup().getExam().getId(), student.get().getId(), exercise.getId())) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "exerciseNotInStudentExam",
+                        "The student exam of this student does not contain this exercise.")).build();
+            }
         }
 
         // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.

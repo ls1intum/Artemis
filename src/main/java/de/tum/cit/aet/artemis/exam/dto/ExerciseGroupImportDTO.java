@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.Nullable;
 
@@ -18,7 +19,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseGroupImportDTO(@Nullable String title, boolean isMandatory, @Nullable List<@Valid ExerciseImportDTO> exercises) {
+public record ExerciseGroupImportDTO(@Nullable String title, boolean isMandatory, @Nullable List<@NotNull @Valid ExerciseImportDTO> exercises) {
 
     /**
      * Creates an ExerciseGroupImportDTO from an existing ExerciseGroup entity.

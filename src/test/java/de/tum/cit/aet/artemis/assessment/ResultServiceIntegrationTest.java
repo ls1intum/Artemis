@@ -805,6 +805,20 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(studentParticipationRepository.findByExerciseId(examModelingExercise.getId())).isEmpty();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createResultForExternalSubmissionExam_exerciseNotInStudentExam() throws Exception {
+        endExamOfExamModelingExercise();
+        var exam = examRepository.findByIdElseThrow(examModelingExercise.getExerciseGroup().getExam().getId());
+        // the student exam exists, but it was assigned other exercises, so a result for this one would be left out of the exam result
+        examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
+
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(examModelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(studentParticipationRepository.findByExerciseId(examModelingExercise.getId())).isEmpty();
+    }
+
     private void endExamOfExamModelingExercise() {
         var exam = examRepository.findByIdElseThrow(examModelingExercise.getExerciseGroup().getExam().getId());
         exam.setStartDate(ZonedDateTime.now().minusHours(3));
