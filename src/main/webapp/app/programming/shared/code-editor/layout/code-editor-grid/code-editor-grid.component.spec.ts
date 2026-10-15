@@ -197,6 +197,20 @@ describe('CodeEditorGridComponent', () => {
             expect(splitter()!.classList).toContain('feedback-split--collapsed');
         });
 
+        it('collapses the bottom area when the splitter asks for it, and keeps it collapsed on a second request', () => {
+            fixture.componentRef.setInput('fillHeight', true);
+            fixture.detectChanges();
+
+            fixture.debugElement.query(By.css('jhi-feedback-split')).triggerEventHandler('collapseRequested');
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(comp.buildOutputIsCollapsed()).toBe(true);
+            expect(splitter()!.classList).toContain('feedback-split--collapsed');
+
+            comp.collapseBuildOutput();
+            expect(comp.buildOutputIsCollapsed()).toBe(true);
+        });
+
         it('reports a resize of the splitter like one of the old grip', () => {
             fixture.componentRef.setInput('fillHeight', true);
             fixture.detectChanges();

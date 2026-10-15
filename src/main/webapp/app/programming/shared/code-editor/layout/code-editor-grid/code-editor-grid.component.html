@@ -81,6 +81,7 @@
             storageKey="code-editor-main-bottom-split"
             [bottomTemplate]="bottomArea"
             [expanded]="!buildOutputIsCollapsed()"
+            (collapseRequested)="collapseBuildOutput()"
             (resizeEnd)="onPanelResized(ResizeType.MAIN_BOTTOM)"
         >
             <div feedbackSplitTop class="editor-split__top"><ng-container [ngTemplateOutlet]="mainArea" /></div>

@@ -59,6 +59,7 @@
                                                 [hasBottom]="showsGeneralFeedbackPanel"
                                                 [bottomTemplate]="generalFeedbackPanel"
                                                 [expanded]="generalFeedbackExpanded()"
+                                                (collapseRequested)="generalFeedbackExpanded.set(false)"
                                             >
                                                 <div feedbackSplitTop class="modeling-submission-assessment-layout__canvas">
                                                     <jhi-modeling-assessment

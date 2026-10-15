@@ -34,17 +34,17 @@
     @include mixins.count-pill;
 }
 
-// Every card is as wide as --general-feedback-card-width wherever that much room is left, whichever exercise type hosts the
-// list: programming, text, modeling and file upload all show the same card. Only a container narrower than one card makes
-// it shrink to the container. As many columns as fit; the cards of a row take its full height, so the rows line up however
-// long each card's text is.
+// The cards share the width of the container like those of the assessment's general feedback: as many columns of at least
+// --general-feedback-card-width as fit, each growing to take its share of the row, so a wider panel gets wider cards rather than
+// empty space beside them. A container narrower than one card makes it shrink to the container. The cards of a row take its
+// full height, so the rows line up however long each card's text is.
 .general-feedback__list {
-    --general-feedback-card-width: 24rem;
+    --general-feedback-card-width: 22rem;
 
     display: grid;
     margin: 0;
     padding: 0;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--general-feedback-card-width)), var(--general-feedback-card-width)));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--general-feedback-card-width)), 1fr));
     gap: 0.75rem;
     list-style: none;
 

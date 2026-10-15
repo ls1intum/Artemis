@@ -130,6 +130,7 @@
                         [hasBottom]="showsGeneralFeedbackPanel"
                         [bottomTemplate]="generalFeedbackPanel"
                         [expanded]="generalFeedbackExpanded()"
+                        (collapseRequested)="generalFeedbackExpanded.set(false)"
                     >
                         <div feedbackSplitTop class="text-editor-split__top"><ng-container [ngTemplateOutlet]="mainArea" /></div>
                     </jhi-feedback-split>

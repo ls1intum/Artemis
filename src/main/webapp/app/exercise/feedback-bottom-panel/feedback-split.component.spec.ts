@@ -11,7 +11,7 @@ const STORAGE_KEY = 'feedback-split-spec';
     imports: [FeedbackSplitComponent],
     template: `
         <ng-template #panel><div data-testid="bottom">Panel</div></ng-template>
-        <jhi-feedback-split [storageKey]="storageKey" [hasBottom]="hasBottom()" [bottomTemplate]="panel" [expanded]="expanded()">
+        <jhi-feedback-split [storageKey]="storageKey" [hasBottom]="hasBottom()" [bottomTemplate]="panel" [expanded]="expanded()" (collapseRequested)="collapseRequests = collapseRequests + 1">
             <div feedbackSplitTop data-testid="top">Content</div>
         </jhi-feedback-split>
     `,
@@ -20,6 +20,7 @@ class HostComponent {
     readonly storageKey = STORAGE_KEY;
     readonly hasBottom = input(true);
     readonly expanded = input(true);
+    collapseRequests = 0;
 }
 
 describe('FeedbackSplitComponent', () => {
@@ -98,6 +99,36 @@ describe('FeedbackSplitComponent', () => {
         fixture.detectChanges();
 
         expect(splitter().componentInstance.panelSizes).toEqual([68, 32]);
+    });
+
+    it('should ask for the panel to collapse when it is dragged down to its smallest size', () => {
+        create();
+        splitter().triggerEventHandler('onResizeEnd', { originalEvent: new MouseEvent('mouseup'), sizes: [92, 8] });
+
+        expect(fixture.componentInstance.collapseRequests).toBe(1);
+    });
+
+    it('should not ask for the panel to collapse while it is dragged to a usable height', () => {
+        create();
+        splitter().triggerEventHandler('onResizeEnd', { originalEvent: new MouseEvent('mouseup'), sizes: [80, 20] });
+
+        expect(fixture.componentInstance.collapseRequests).toBe(0);
+    });
+
+    it('should reopen a panel that was dragged shut at the height it had before the drag, also after a reload', () => {
+        create();
+        splitter().triggerEventHandler('onResizeEnd', { originalEvent: new MouseEvent('mouseup'), sizes: [55, 45] });
+        // The splitter stores the size of every drag itself
+        localStorage.setItem(STORAGE_KEY, JSON.stringify([92, 8]));
+        splitter().triggerEventHandler('onResizeEnd', { originalEvent: new MouseEvent('mouseup'), sizes: [92, 8] });
+
+        fixture.componentRef.setInput('expanded', false);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('expanded', true);
+        fixture.detectChanges();
+
+        expect(splitter().componentInstance.panelSizes).toEqual([55, 45]);
+        expect(JSON.parse(localStorage.getItem(STORAGE_KEY)!)).toEqual([55, 45]);
     });
 
     it('should use the split saved from an earlier visit when the panel is opened again', () => {

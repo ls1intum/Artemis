@@ -170,6 +170,17 @@ export class CodeEditorGridComponent {
         }
     }
 
+    /** Collapses the build output, e.g. when the splitter above it was dragged down to its smallest size; a collapsed one stays so. */
+    collapseBuildOutput() {
+        if (this.buildOutputIsCollapsed()) {
+            return;
+        }
+        // The same state as the collapse button leaves: the class the card styles read, and the signal
+        this.renderer.addClass(this.buildOutputElement().nativeElement, 'collapsed--vertical');
+        this.buildOutputIsCollapsed.set(true);
+        this.recomputeMaxConstraints();
+    }
+
     /**
      * Collapse parts of the editor (file browser, build output, or instructions)
      * @param interactableEvent {object} The custom event object with additional information

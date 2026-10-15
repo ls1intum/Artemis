@@ -75,6 +75,11 @@
     color: inherit;
 }
 
+// The icon element is inline, to which a transform does not apply, so the chevron would stay pointing down when collapsed
+.feedback-bottom-panel__collapse fa-icon {
+    display: inline-block;
+}
+
 .feedback-bottom-panel__chevron--collapsed {
     transform: rotate(180deg);
 }
