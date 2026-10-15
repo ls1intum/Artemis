@@ -35,6 +35,7 @@
             <div class="tumaet:flex tumaet:items-center tumaet:gap-1">
                 @if (!hideLabelName() && labelName()) {
                     <label [attr.for]="inputId()" class="tumaet:font-semibold tumaet:text-text">{{ labelName()! | tumAetUiTranslate }}</label>
+                    <ng-content select="[tumAetUiDatePickerLabelAddon]" />
                 }
                 @if (shouldDisplayTimeZoneWarning()) {
                     <fa-stack
