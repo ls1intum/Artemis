@@ -65,11 +65,19 @@ public final class SearchableEntityChunker {
     private static final double OVERLAP_SHARE = 0.1;
 
     /**
-     * Python's whitespace (what {@code str.isspace()} and {@code \s} accept), which is wider than Java's.
+     * Python's whitespace (what {@code str.isspace()} and {@code \s} accept), which is wider than Java's, without the line
+     * feed. The line feed is kept apart so that a pattern can name it, see {@link #BLANK_LINES}.
      */
-    private static final String WS = "\\t\\n\\x0B\\f\\r\\x1C-\\x1F \\x85\\xA0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000";
+    private static final String WS_WITHOUT_LF = "\\t\\x0B\\f\\r\\x1C-\\x1F \\x85\\xA0\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000";
+
+    /**
+     * All of Python's whitespace, the line feed included.
+     */
+    private static final String WS = WS_WITHOUT_LF + "\\n";
 
     private static final String S = "[" + WS + "]";
+
+    private static final String S_WITHOUT_LF = "[" + WS_WITHOUT_LF + "]";
 
     private static final String NOT_S = "[^" + WS + "]";
 
@@ -93,12 +101,13 @@ public final class SearchableEntityChunker {
     private static final Pattern HORIZONTAL_SPACE = Pattern.compile("[ \\t\\f\\x0B]+", LINES);
 
     /**
-     * A run of whitespace with at least two line breaks. {@code S} contains {@code \n} itself, so a further repetition of a
-     * line break group after the second one adds nothing, and leaving it out keeps the stack use constant for any input.
-     * The lookbehind lets a match start only at the beginning of a run: without it, a long run with fewer than two line
-     * breaks is scanned again from each of its characters, which takes quadratic time.
+     * A run of whitespace with at least two line breaks, matched as: whitespace without a line break, the first line break,
+     * again whitespace without a line break, the second line break, and the rest of the run. Every part has exactly one
+     * way to match, so the time is linear in the length of the run and the stack use is constant. The lookbehind lets a match
+     * start only at the beginning of a run: without it, a long run with fewer than two line breaks is scanned again from
+     * each of its characters, which takes quadratic time.
      */
-    private static final Pattern BLANK_LINES = Pattern.compile("(?<!" + S + ")" + S + "*\\n" + S + "*\\n" + S + "*", LINES);
+    private static final Pattern BLANK_LINES = Pattern.compile("(?<!" + S + ")" + S_WITHOUT_LF + "*\\n" + S_WITHOUT_LF + "*\\n" + S + "*", LINES);
 
     private static final Pattern SPACED_NEWLINE = Pattern.compile(" ?\\n ?", LINES);
 
