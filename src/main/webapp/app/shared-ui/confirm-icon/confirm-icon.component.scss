@@ -1,3 +1,8 @@
+:host {
+    display: inline-flex;
+    align-items: center;
+}
+
 .confirm-icon-button {
     display: inline-flex;
     align-items: center;
@@ -7,6 +12,7 @@
     border: none;
     background: none;
     color: inherit;
+    font: inherit;
     cursor: pointer;
 }
 
