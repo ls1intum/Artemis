@@ -11,6 +11,17 @@ export function supportsHyperionExerciseGeneration(language: ProgrammingLanguage
     return language === ProgrammingLanguage.JAVA && !!projectType && SUPPORTED_PROJECT_TYPES.has(projectType);
 }
 
+/** Both authoring pages must use the same document protocol for the same exercise. */
+export function usesCanonicalProblemStatementSync(exercise: ProgrammingExercise | undefined, generationEnabled: boolean): boolean {
+    return (
+        generationEnabled &&
+        !!exercise?.id &&
+        !!exercise.isAtLeastEditor &&
+        !exercise.exerciseGroup &&
+        supportsHyperionExerciseGeneration(exercise.programmingLanguage, exercise.projectType)
+    );
+}
+
 /**
  * The first reason an exercise cannot be generated or adapted, in the order an instructor can act on them: what the
  * exercise is comes before what has happened to it. Each value is a suffix of {@link HYPERION_GENERATION_BLOCKER_KEY}.

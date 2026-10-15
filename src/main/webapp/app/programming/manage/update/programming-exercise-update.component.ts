@@ -144,6 +144,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly maxProblemStatementLength = MAX_PROGRAMMING_EXERCISE_PROBLEM_STATEMENT_LENGTH;
     private readonly maxNameLength = PROGRAMMING_EXERCISE_NAME_MAX_LENGTH;
 
+    exerciseProblemComponent = viewChild(ProgrammingExerciseProblemComponent);
     exerciseInfoComponent = viewChild(ProgrammingExerciseInformationComponent);
     exerciseDifficultyComponent = viewChild(ProgrammingExerciseModeComponent);
     exerciseLanguageComponent = viewChild(ProgrammingExerciseLanguageComponent);
@@ -946,8 +947,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
+        const acknowledgeCanonicalSave = this.exerciseProblemComponent()?.editableInstructions()?.createCanonicalSaveAcknowledgement();
         result.subscribe({
             next: (response: HttpResponse<ProgrammingExercise>) => {
+                acknowledgeCanonicalSave?.(response.body?.problemStatement);
                 this.onSaveSuccess(response.body!);
             },
             error: (error: HttpErrorResponse) => {

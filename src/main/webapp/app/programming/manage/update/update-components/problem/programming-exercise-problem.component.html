@@ -129,6 +129,7 @@
                 }
                 <jhi-programming-exercise-editable-instructions
                     #editableInstructions
+                    [canonicalBaseIsolation]="canonicalBaseIsolation()"
                     [exercise]="programmingExercise()!"
                     [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                     [showStatus]="!!programmingExercise()?.id"

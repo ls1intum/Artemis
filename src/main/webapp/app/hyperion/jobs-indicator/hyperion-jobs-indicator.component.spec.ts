@@ -72,6 +72,24 @@ describe('HyperionJobsIndicatorComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('keeps all thirty retained runs and their dismiss controls in a viewport-bounded scroll container', () => {
+        registry.writableEntries.set(Array.from({ length: 30 }, (_, index) => entry(`run-${index}`, 'failed')));
+        registry.writableIndicatorState.set('attention');
+        fixture.detectChanges();
+        openTray();
+        const tray = document.querySelector<HTMLElement>('[data-testid="hyperion-jobs-indicator-tray"]')!;
+        const list = tray.querySelector<HTMLElement>('[data-testid="hyperion-jobs-list"]')!;
+        expect(tray.classList.contains('max-h-[calc(100dvh-6rem)]')).toBe(true);
+        expect(list.classList.contains('min-h-0')).toBe(true);
+        expect(list.classList.contains('overflow-y-auto')).toBe(true);
+        expect(list.querySelectorAll('[data-testid="hyperion-jobs-indicator-entry"]')).toHaveLength(30);
+        const dismiss = list.querySelectorAll<HTMLButtonElement>('[data-testid="hyperion-jobs-indicator-dismiss"]');
+        dismiss.item(29).click();
+        expect(registry.dismiss).toHaveBeenCalledExactlyOnceWith('run-29');
+        fixture.detectChanges();
+        expect(list.querySelectorAll('[data-testid="hyperion-jobs-indicator-entry"]')).toHaveLength(29);
+    });
+
     it('renders nothing at all while there is nothing to report', () => {
         expect(fixture.nativeElement.textContent.trim()).toBe('');
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-jobs-indicator-trigger"]')).toBeNull();

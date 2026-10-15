@@ -1,3 +1,10 @@
+import { By } from '@angular/platform-browser';
+import { MockComponent } from 'ng-mocks';
+import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
+import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/exercise/synchronization/services/problem-statement-sync.service';
+import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,7 +18,7 @@ vi.mock('y-monaco', () => {
     return { MonacoBinding: MockMonacoBinding };
 });
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Provider, Signal, WritableSignal, signal } from '@angular/core';
+import { Injector, Provider, Signal, WritableSignal, signal } from '@angular/core';
 import { Observable, Subject, defer, of, throwError } from 'rxjs';
 import { FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
@@ -187,9 +194,13 @@ async function configureTestBed(additionalProviders: Provider[] = []): Promise<v
     const componentProviders = reviewCommentProvider ? [reviewCommentProvider] : [];
 
     await TestBed.configureTestingModule({
-        imports: [CodeEditorInstructorAndEditorContainerComponent],
+        imports: [CodeEditorInstructorAndEditorContainerComponent, ProgrammingExerciseProblemComponent],
         providers: getBaseProviders(additionalProviders),
     })
+        .overrideComponent(ProgrammingExerciseProblemComponent, {
+            remove: { imports: [ProgrammingExerciseEditableInstructionComponent] },
+            add: { imports: [MockComponent(ProgrammingExerciseEditableInstructionComponent)] },
+        })
         .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
             set: { template: '', imports: [], providers: componentProviders },
         })
@@ -382,6 +393,99 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         comp.selectTemplateParticipation = vi.fn().mockResolvedValue(undefined);
         comp.selectSolutionParticipation = vi.fn().mockResolvedValue(undefined);
         comp.selectTestRepository = vi.fn().mockResolvedValue(undefined);
+    });
+
+    it.each([
+        ['default off', false, {}, false],
+        ['exam', true, { exerciseGroup: { id: 1 } }, false],
+        ['unsupported language', true, { programmingLanguage: ProgrammingLanguage.PYTHON }, false],
+        ['unsupported project', true, { projectType: ProjectType.MAVEN_MAVEN }, false],
+        ['not an editor', true, { isAtLeastEditor: false }, false],
+        ['not yet persisted', true, { id: undefined }, false],
+        ['supported course exercise', true, {}, true],
+    ] as const)('uses the same cross-page protocol for %s', (_name, enabled, overrides, expected) => {
+        vi.mocked(profileService.isModuleFeatureActive).mockReturnValue(enabled);
+        const exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, ...overrides });
+        const codeFixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        const settingsFixture = TestBed.createComponent(ProgrammingExerciseProblemComponent);
+        try {
+            codeFixture.componentInstance.exercise.set(exercise);
+            settingsFixture.componentRef.setInput('programmingExercise', exercise);
+            settingsFixture.componentRef.setInput('programmingExerciseCreationConfig', {
+                ...programmingExerciseCreationConfigMock,
+                problemStatementLoaded: true,
+                templateParticipationResultLoaded: true,
+            });
+            settingsFixture.componentRef.setInput('isEditFieldDisplayedRecord', { problemStatement: true });
+            vi.spyOn(settingsFixture.componentInstance.aiOps, 'loadTemplate').mockImplementation(() => {});
+            settingsFixture.detectChanges();
+            const editor = settingsFixture.debugElement.query(By.directive(ProgrammingExerciseEditableInstructionComponent))
+                .componentInstance as ProgrammingExerciseEditableInstructionComponent;
+            expect(editor.canonicalBaseIsolation()).toBe(expected);
+            expect(codeFixture.componentInstance['generationSupported']()).toBe(expected);
+        } finally {
+            codeFixture.destroy();
+            settingsFixture.destroy();
+        }
+    });
+
+    it('synchronizes settings and code-editor peers through their actual protocol inputs and both saved baselines', () => {
+        vi.useFakeTimers();
+        const exercise = createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, problemStatement: 'base' });
+        comp.exercise.set(exercise);
+        const settingsFixture = TestBed.createComponent(ProgrammingExerciseProblemComponent);
+        settingsFixture.componentRef.setInput('programmingExercise', exercise);
+        settingsFixture.componentRef.setInput('programmingExerciseCreationConfig', {
+            ...programmingExerciseCreationConfigMock,
+            problemStatementLoaded: true,
+            templateParticipationResultLoaded: true,
+        });
+        settingsFixture.componentRef.setInput('isEditFieldDisplayedRecord', { problemStatement: true });
+        vi.spyOn(settingsFixture.componentInstance.aiOps, 'loadTemplate').mockImplementation(() => {});
+        settingsFixture.detectChanges();
+        const settingsEditor = settingsFixture.debugElement.query(By.directive(ProgrammingExerciseEditableInstructionComponent))
+            .componentInstance as ProgrammingExerciseEditableInstructionComponent;
+        const settingsMessages = new Subject<any>();
+        const codeMessages = new Subject<any>();
+        const peer = (sessionId: string, incoming: Subject<any>, outgoing: Subject<any>) => {
+            const injector = Injector.create({
+                providers: [
+                    ProblemStatementSyncService,
+                    { provide: AccountService, useValue: { userIdentity: () => undefined } },
+                    {
+                        provide: ExerciseEditorSyncService,
+                        useValue: {
+                            sessionId,
+                            subscribeToUpdates: () => incoming,
+                            sendSynchronizationUpdate: (_id: number, message: any) => outgoing.next({ ...message, sessionId }),
+                        },
+                    },
+                ],
+            });
+            return injector.get(ProblemStatementSyncService);
+        };
+        const settings = peer('settings', settingsMessages, codeMessages);
+        const code = peer('code', codeMessages, settingsMessages);
+        try {
+            const settingsState = settings.init(42, 'base', settingsEditor.canonicalBaseIsolation());
+            vi.advanceTimersByTime(500);
+            let codeState: ProblemStatementSyncState = code.init(42, 'base', comp['generationSupported']());
+            code.stateReplaced$.subscribe((state) => (codeState = state));
+            vi.advanceTimersByTime(500);
+            settingsState.text.insert(settingsState.text.length, ' settings');
+            expect(codeState.text.toString()).toBe('base settings');
+            settings.acknowledgeCanonicalSave(42, 'base settings', settingsState.doc);
+            expect(codeState.doc.getMap('problem-statement-canonical').get('content')).toBe('base settings');
+            codeState.text.insert(codeState.text.length, ' code');
+            expect(settingsState.text.toString()).toBe('base settings code');
+            code.acknowledgeCanonicalSave(42, 'base settings code', codeState.doc);
+            expect(settingsState.doc.getMap('problem-statement-canonical').get('content')).toBe('base settings code');
+        } finally {
+            settings.reset();
+            code.reset();
+            settingsFixture.destroy();
+            vi.useRealTimers();
+        }
     });
 
     afterEach(() => {

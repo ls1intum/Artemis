@@ -19,7 +19,7 @@
         }
     </button>
     <tumaet-ui-popover #tray placement="bottom" [ariaLabel]="'artemisApp.hyperion.jobs.title' | artemisTranslate" (openChange)="onTrayOpenChange($event)">
-        <div class="flex w-80 flex-col gap-3" data-testid="hyperion-jobs-indicator-tray">
+        <div class="flex max-h-[calc(100dvh-6rem)] w-80 flex-col gap-3" data-testid="hyperion-jobs-indicator-tray">
             <p class="m-0 font-semibold" jhiTranslate="artemisApp.hyperion.jobs.title"></p>
 
             @if (loadFailed()) {
@@ -43,7 +43,11 @@
                     [description]="'artemisApp.hyperion.jobs.emptyHint' | artemisTranslate"
                 />
             } @else {
-                <ul data-testid="hyperion-jobs-list" class="m-0 list-none divide-y divide-border p-0" [attr.aria-label]="'artemisApp.hyperion.jobs.title' | artemisTranslate">
+                <ul
+                    data-testid="hyperion-jobs-list"
+                    class="m-0 min-h-0 overflow-y-auto overscroll-contain list-none divide-y divide-border p-0"
+                    [attr.aria-label]="'artemisApp.hyperion.jobs.title' | artemisTranslate"
+                >
                     @for (row of rows(); track row.jobId) {
                         <li class="flex items-center gap-1" [attr.data-state]="row.status">
                             <a
