@@ -143,6 +143,14 @@
         </ng-template>
     }
 
+    @if (showMetis()) {
+        <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.metis'" [icon]="faGraduationCap">
+            @defer (on idle) {
+                <jhi-comprehension-check-panel class="h-full" [exerciseId]="exercise().id!" />
+            }
+        </ng-template>
+    }
+
     @if (showDiscussion()) {
         <ng-template jhiPanel [label]="'artemisApp.communication.label'" [icon]="faComment">
             @defer (on idle) {

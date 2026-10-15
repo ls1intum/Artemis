@@ -26,6 +26,7 @@ import {
     MODULE_FEATURE_LDAP,
     MODULE_FEATURE_LECTURE,
     MODULE_FEATURE_LTI,
+    MODULE_FEATURE_METIS,
     MODULE_FEATURE_MODELING,
     MODULE_FEATURE_PASSKEY,
     MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN,
@@ -140,6 +141,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         MODULE_FEATURE_PASSKEY,
         MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN,
         MODULE_FEATURE_THEIA,
+        MODULE_FEATURE_METIS,
     ];
 
     /** Documentation links for runtime feature toggles */
@@ -189,6 +191,7 @@ export class AdminFeatureToggleComponent implements OnInit {
         [MODULE_FEATURE_PASSKEY]: 'https://docs.artemis.tum.de/admin/production-setup/security#passkey-authentication',
         [MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN]: 'https://docs.artemis.tum.de/admin/production-setup/security#passkey-authentication',
         [MODULE_FEATURE_THEIA]: 'https://docs.artemis.tum.de',
+        [MODULE_FEATURE_METIS]: 'https://docs.artemis.tum.de/admin/metis',
     };
 
     ngOnInit(): void {

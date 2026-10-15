@@ -155,6 +155,13 @@ const moduleThresholds = {
         functions: 88.6,
         lines: 93.2,
     },
+    metis: {
+        // New module; conservative initial baseline, ratchet up once CI measures.
+        statements: 85.0,
+        branches: 70.0,
+        functions: 80.0,
+        lines: 85.0,
+    },
     modeling: {
         // Lowered after switching isFeedbackSuggestionsEnabled to the course-level Athena config
         // (dropping the feedbackSuggestionModule/allowFeedbackRequests exercise fields and their

@@ -65,6 +65,10 @@
                 [editable]="!isSaving()"
                 (criteriaGenerated)="editForm.form.markAsDirty()"
             />
+            @if (isMetisSectionDisplayed()) {
+                <hr class="mb-5" />
+                <jhi-metis-exercise-settings [exercise]="programmingExercise" [courseId]="courseId()" />
+            }
             @if (isEditFieldDisplayedRecord().plagiarismControl && !isExamMode()) {
                 <jhi-feature-overlay [enabled]="plagiarismEnabled()" placement="right">
                     <jhi-exercise-update-plagiarism [(exercise)]="programmingExercise" />

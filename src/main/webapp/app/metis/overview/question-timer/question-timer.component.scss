@@ -1,0 +1,4 @@
+// Layout is Tailwind in the template; only the critical state needs the themed warning background.
+.question-timer.critical {
+    background: var(--artemis-alert-warning-background);
+}

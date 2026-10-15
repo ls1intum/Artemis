@@ -1,0 +1,321 @@
+<div *titleBarTitle class="flex items-center gap-2">
+    <jhi-course-title-bar-title title="artemisApp.metis.dashboard.title" />
+    <span class="text-muted-color">· {{ exercise.title }}</span>
+</div>
+<div *titleBarActions class="flex flex-wrap justify-end gap-1">
+    @if (exercise.isAtLeastInstructor) {
+        <button
+            type="button"
+            tumAetUiButton
+            severity="secondary"
+            size="small"
+            data-testid="dashboard-generate"
+            [tumAetUiTooltip]="'artemisApp.metis.dashboard.generateTooltip' | artemisTranslate"
+            tumAetUiTooltipPlacement="top"
+            (click)="generateNow()"
+        >
+            <fa-icon [icon]="faWandMagicSparkles" />
+            <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.metis.dashboard.generate"></span>
+        </button>
+    }
+    <button
+        type="button"
+        tumAetUiButton
+        severity="secondary"
+        size="small"
+        data-testid="dashboard-export"
+        [tumAetUiTooltip]="'artemisApp.metis.dashboard.export' | artemisTranslate"
+        tumAetUiTooltipPlacement="top"
+        (click)="exportCsv()"
+    >
+        <fa-icon [icon]="faFileExport" />
+        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.metis.dashboard.export"></span>
+    </button>
+    <!-- The review and the settings need the editor role, which their routes and endpoints enforce; tutors see the data and the export only. -->
+    @if (exercise.isAtLeastEditor) {
+        <a
+            routerLink="review"
+            tumAetUiButton
+            severity="secondary"
+            size="small"
+            data-testid="dashboard-review"
+            [tumAetUiTooltip]="'artemisApp.metis.dashboard.review' | artemisTranslate"
+            tumAetUiTooltipPlacement="top"
+        >
+            <fa-icon [icon]="faListCheck" />
+            <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.metis.dashboard.review"></span>
+        </a>
+        <a
+            [routerLink]="['/course-management', courseId, 'programming-exercises', exercise.id, 'edit']"
+            tumAetUiButton
+            severity="secondary"
+            size="small"
+            data-testid="dashboard-settings"
+            [tumAetUiTooltip]="'artemisApp.metis.dashboard.settings' | artemisTranslate"
+            tumAetUiTooltipPlacement="top"
+        >
+            <fa-icon [icon]="faCog" />
+            <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.metis.dashboard.settings"></span>
+        </a>
+    }
+    <a
+        [routerLink]="['/course-management', courseId, 'programming-exercises', exercise.id]"
+        tumAetUiButton
+        severity="secondary"
+        size="small"
+        data-testid="dashboard-back"
+        [tumAetUiTooltip]="'artemisApp.metis.dashboard.back' | artemisTranslate"
+        tumAetUiTooltipPlacement="top"
+    >
+        <fa-icon [icon]="faArrowLeft" />
+        <span class="title-bar-collapsible-label" jhiTranslate="artemisApp.metis.dashboard.back"></span>
+    </a>
+</div>
+
+<div class="flex flex-col gap-6" data-testid="metis-dashboard">
+    @if (summary(); as totals) {
+        <div class="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6" data-testid="dashboard-tiles">
+            <div class="metis-tile metis-tile-hero">
+                <span class="metis-tile-value" data-testid="tile-completed">{{ totals.completed }}</span>
+                <span class="metis-tile-label" jhiTranslate="artemisApp.metis.dashboard.tiles.completed" [translateValues]="{ total: totals.participants }"></span>
+            </div>
+            <div class="metis-tile">
+                <span class="metis-tile-value" data-testid="tile-in-progress">{{ totals.inProgress }}</span>
+                <span class="metis-tile-label" jhiTranslate="artemisApp.metis.dashboard.tiles.inProgress"></span>
+            </div>
+            <div class="metis-tile">
+                <span class="metis-tile-value" data-testid="tile-not-started">{{ totals.notStarted }}</span>
+                <span class="metis-tile-label" jhiTranslate="artemisApp.metis.dashboard.tiles.notStarted"></span>
+                @if (totals.windowEnd) {
+                    <span
+                        class="metis-tile-note"
+                        data-testid="tile-window-end"
+                        jhiTranslate="artemisApp.metis.dashboard.tiles.windowOpenUntil"
+                        [translateValues]="{ time: (totals.windowEnd | artemisDate: 'time') }"
+                    ></span>
+                }
+            </div>
+            <div class="metis-tile">
+                <span class="metis-tile-value" data-testid="tile-average">{{ totals.averageScore !== undefined ? (totals.averageScore | number: '1.1-1') : '–' }}</span>
+                <span class="metis-tile-label" jhiTranslate="artemisApp.metis.dashboard.tiles.average" [translateValues]="{ points: points() }"></span>
+            </div>
+            <div class="metis-tile">
+                <span class="metis-tile-value" data-testid="tile-follow-ups">{{ totals.followUps }}</span>
+                <span class="metis-tile-label" jhiTranslate="artemisApp.metis.dashboard.tiles.followUps"></span>
+            </div>
+            <div class="metis-tile">
+                <span class="metis-tile-value" data-testid="tile-skipped-or-failed">{{ totals.skippedOrFailed }}</span>
+                <span class="metis-tile-label" jhiTranslate="artemisApp.metis.dashboard.tiles.skippedOrFailed"></span>
+            </div>
+        </div>
+    }
+
+    <div class="metis-card">
+        <jhi-rating-distribution [rows]="rows()" [points]="points()" />
+    </div>
+
+    <div class="metis-card flex flex-col gap-4">
+        <div class="flex flex-wrap items-center gap-3">
+            <tumaet-ui-select
+                class="min-w-48"
+                inputId="metis-dashboard-group-filter"
+                data-testid="dashboard-group-filter"
+                size="small"
+                optionLabel="label"
+                optionValue="value"
+                [ariaLabel]="'artemisApp.metis.dashboard.filters.group' | artemisTranslate"
+                [options]="groupOptions()"
+                [ngModel]="groupFilter()"
+                (ngModelChange)="onGroupFilterChange($event)"
+            />
+            <tumaet-ui-select
+                class="min-w-40"
+                inputId="metis-dashboard-status-filter"
+                data-testid="dashboard-status-filter"
+                size="small"
+                optionLabel="label"
+                optionValue="value"
+                [ariaLabel]="'artemisApp.metis.dashboard.filters.status' | artemisTranslate"
+                [options]="statusOptions()"
+                [ngModel]="statusFilter()"
+                (ngModelChange)="onStatusFilterChange($event)"
+            />
+            <tumaet-ui-select
+                class="min-w-48"
+                inputId="metis-dashboard-sort"
+                data-testid="dashboard-sort"
+                size="small"
+                optionLabel="label"
+                optionValue="value"
+                [ariaLabel]="'artemisApp.metis.dashboard.filters.sort' | artemisTranslate"
+                [placeholder]="'artemisApp.metis.dashboard.filters.sort' | artemisTranslate"
+                [options]="sortOptions()"
+                [ngModel]="sortPreset()"
+                (ngModelChange)="onSortPresetChange($event)"
+            />
+            <tumaet-ui-search-field
+                class="grow"
+                data-testid="dashboard-search"
+                size="small"
+                placeholder="artemisApp.metis.dashboard.filters.search"
+                [value]="searchTerm()"
+                (valueChange)="onSearchTermChange($event)"
+            />
+            <span
+                id="metis-dashboard-table-caption"
+                class="text-sm text-muted-color"
+                data-testid="dashboard-showing"
+                jhiTranslate="artemisApp.metis.dashboard.showing"
+                [translateValues]="{ shown: visibleRows().length, total: totalCount() }"
+            ></span>
+        </div>
+        <div class="overflow-x-auto">
+            <table
+                tumAetUiTable
+                size="small"
+                aria-describedby="metis-dashboard-table-caption"
+                data-testid="dashboard-table"
+                [striped]="true"
+                [rowHover]="true"
+                [sortField]="sortField()"
+                [sortOrder]="sortOrder()"
+                (sortChange)="onSortChange($event)"
+            >
+                <thead>
+                    <tr>
+                        <th scope="col"><span class="sr-only" jhiTranslate="artemisApp.metis.dashboard.table.details"></span></th>
+                        <th scope="col" tumAetUiSortableColumn="studentName" data-testid="dashboard-sort-student">
+                            <span jhiTranslate="artemisApp.metis.dashboard.table.student"></span>
+                        </th>
+                        <th scope="col" tumAetUiSortableColumn="tutorialGroupTitle"><span jhiTranslate="artemisApp.metis.dashboard.table.group"></span></th>
+                        <th scope="col" tumAetUiSortableColumn="status"><span jhiTranslate="artemisApp.metis.dashboard.table.status"></span></th>
+                        <th scope="col"><span jhiTranslate="artemisApp.metis.dashboard.table.ratings" [translateValues]="{ count: questionCount() }"></span></th>
+                        <th scope="col" class="text-end" tumAetUiSortableColumn="followUps"><span jhiTranslate="artemisApp.metis.dashboard.table.followUps"></span></th>
+                        <th scope="col" class="text-end" tumAetUiSortableColumn="average" data-testid="dashboard-sort-average">
+                            <span jhiTranslate="artemisApp.metis.dashboard.table.average"></span>
+                        </th>
+                        <th scope="col" tumAetUiSortableColumn="completedAt"><span jhiTranslate="artemisApp.metis.dashboard.table.completed"></span></th>
+                        <th scope="col"><span class="sr-only" jhiTranslate="artemisApp.metis.dashboard.table.actions"></span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (view of visibleRows(); track view.row.participationId) {
+                        <tr [attr.data-testid]="'dashboard-row-' + view.row.participationId">
+                            <td>
+                                <button
+                                    type="button"
+                                    tumAetUiButton
+                                    severity="secondary"
+                                    size="small"
+                                    variant="text"
+                                    [attr.aria-expanded]="view.expanded"
+                                    [attr.aria-label]="'artemisApp.metis.dashboard.table.expand' | artemisTranslate: { name: view.row.studentName }"
+                                    [attr.data-testid]="'dashboard-expand-' + view.row.participationId"
+                                    (click)="toggleExpanded(view.row.participationId)"
+                                >
+                                    <fa-icon [icon]="view.expanded ? faChevronDown : faChevronRight" />
+                                </button>
+                            </td>
+                            <td>
+                                <span class="inline-flex flex-wrap items-center gap-2">
+                                    <span class="font-semibold">{{ view.row.studentName }}</span>
+                                    <span class="text-xs text-muted-color">{{ view.row.studentLogin }}</span>
+                                </span>
+                            </td>
+                            <td>{{ view.row.tutorialGroupTitle ?? '–' }}</td>
+                            <td>
+                                <tumaet-ui-tag
+                                    [severity]="statusSeverity(view.row.check.status)"
+                                    [value]="'artemisApp.metis.dashboard.status.' + view.row.check.status | artemisTranslate"
+                                />
+                            </td>
+                            <td>
+                                <span class="inline-flex gap-1">
+                                    @for (question of view.mainQuestions; track question.id) {
+                                        <jhi-rating-square [score]="question.llmScore" [points]="points()" />
+                                    }
+                                </span>
+                            </td>
+                            <td class="text-end">{{ view.followUps }}</td>
+                            <td class="text-end">{{ view.average !== undefined ? (view.average | number: '1.1-1') : '–' }}</td>
+                            <td class="whitespace-nowrap">{{ view.completedAt ? (view.completedAt | artemisDate: 'short') : '–' }}</td>
+                            <td class="text-end">
+                                <button
+                                    type="button"
+                                    tumAetUiButton
+                                    severity="secondary"
+                                    size="small"
+                                    variant="outlined"
+                                    [attr.data-testid]="'dashboard-open-thread-' + view.row.participationId"
+                                    (click)="toggleExpanded(view.row.participationId)"
+                                >
+                                    <fa-icon [icon]="faComments" />
+                                    <span jhiTranslate="artemisApp.metis.dashboard.openThread"></span>
+                                </button>
+                            </td>
+                        </tr>
+                        @if (view.expanded) {
+                            <tr [attr.data-testid]="'dashboard-row-details-' + view.row.participationId">
+                                <td colspan="9">
+                                    <div class="flex flex-col gap-3 py-2">
+                                        <ol class="m-0 flex list-none flex-col gap-3 p-0">
+                                            @for (question of view.row.questions; track question.id) {
+                                                <li class="flex flex-col gap-1">
+                                                    <div class="flex flex-wrap items-center gap-2 text-sm">
+                                                        @if (question.parentQuestionId !== undefined) {
+                                                            <span class="font-semibold" jhiTranslate="artemisApp.metis.dashboard.table.followUp"></span>
+                                                        } @else {
+                                                            <span
+                                                                class="font-semibold"
+                                                                jhiTranslate="artemisApp.metis.dashboard.table.question"
+                                                                [translateValues]="{ order: question.questionOrder }"
+                                                            ></span>
+                                                        }
+                                                        @if (question.focusFilePath; as focusFilePath) {
+                                                            <jhi-focus-chip [path]="focusFilePath" [changedLines]="question.focusFileChangedLines ?? 0" />
+                                                        }
+                                                    </div>
+                                                    <p class="m-0">{{ question.questionText }}</p>
+                                                    @if (question.answerText) {
+                                                        <p class="metis-answer m-0">{{ question.answerText }}</p>
+                                                        @if (question.llmScore !== undefined) {
+                                                            <p class="m-0 flex flex-wrap items-center gap-2 text-sm">
+                                                                <jhi-rating-square [score]="question.llmScore" [points]="points()" />
+                                                                <span
+                                                                    jhiTranslate="artemisApp.metis.dashboard.table.rating"
+                                                                    [translateValues]="{ score: question.llmScore, points: points() }"
+                                                                ></span>
+                                                                <span class="text-muted-color">{{ question.llmRationale }}</span>
+                                                            </p>
+                                                        }
+                                                    } @else {
+                                                        <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.metis.dashboard.notAnswered"></p>
+                                                    }
+                                                </li>
+                                            }
+                                        </ol>
+                                        <p
+                                            class="m-0 text-xs text-muted-color"
+                                            [attr.data-testid]="'dashboard-metadata-' + view.row.participationId"
+                                            jhiTranslate="artemisApp.metis.dashboard.metadata"
+                                            [translateValues]="{
+                                                date: (view.row.check.generatedAt | artemisDate: 'short'),
+                                                commit: view.row.check.commitHash ?? '–',
+                                                model: view.row.check.llmModel ?? '–',
+                                                prompt: view.row.check.promptVersion ?? '–',
+                                            }"
+                                        ></p>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    } @empty {
+                        <tr>
+                            <td colspan="9" class="text-muted-color" jhiTranslate="artemisApp.metis.dashboard.table.empty"></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

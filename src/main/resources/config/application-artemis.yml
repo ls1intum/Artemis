@@ -134,6 +134,7 @@ artemis:
     #   "[gpt-5.4]":
     #     input-cost-per-million-eur: 2.30
     #     output-cost-per-million-eur: 13.80
+    #   "[qwen3-coder:30b]": { input-cost-per-million-eur: 0, output-cost-per-million-eur: 0 }
   atlas:
     # *-model values are Azure deployment aliases — replace with your own deployment names.
     chat-model: gpt-5.4-mini

@@ -95,7 +95,9 @@
                     "problemStepTitle": "Aufgabe",
                     "problemStepMessage": "Erstelle eine detaillierte Aufgabenstellung für die Übung mit klaren Schritten und Erwartungen an die Studierenden",
                     "gradingStepTitle": "Bewertung",
-                    "gradingStepMessage": "Definiere die Bewertungskriterien für diese Aufgabe und wie sich das Ergebnis auf die Gesamtnote des Kurses auswirkt"
+                    "gradingStepMessage": "Definiere die Bewertungskriterien für diese Aufgabe und wie sich das Ergebnis auf die Gesamtnote des Kurses auswirkt",
+                    "metisStepTitle": "Verständnisprüfung (Metis)",
+                    "metisStepMessage": "Befrage jede:n Studierende:n nach der Abgabefrist zur eigenen Lösung. Die Fragen werden aus den Änderungen der Studierenden generiert; die Antworten werden von einem KI-Modell bewertet und den Lehrenden angezeigt. Nichts davon beeinflusst die Punktzahl."
                 },
                 "gradingLabels": {
                     "points": "Es gibt insgesamt maximal {maxPoints} Punkte bei dieser {exerciseType} zu erreichen.",

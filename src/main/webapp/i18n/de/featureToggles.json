@@ -124,6 +124,10 @@
                 "passkey-admin": {
                     "name": "Passkey für Administrator-Funktionen erforderlich",
                     "description": "Wenn aktiviert, müssen sich Administratoren mit einem Passkey authentifizieren, um auf Administrator-Funktionen zuzugreifen. Setzt voraus, dass die Passkey-Authentifizierung aktiv ist."
+                },
+                "metis": {
+                    "name": "Metis-Verständnisprüfungen",
+                    "description": "Stellt Studierenden nach der Abgabefrist einer Programmieraufgabe Verständnisfragen zu ihrer eigenen Lösung"
                 }
             },
             "toggles": {

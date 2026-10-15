@@ -42,3 +42,7 @@ api/quiz-training-resources.ts
 api/tutorial-group-session-resources.ts
 api/tutorial-groups-configuration-resources.ts
 api/legacy-calendar-resources.ts
+api/metis-dashboard-resources.ts
+api/metis-exercise-config-resources.ts
+api/metis-question-review-resources.ts
+api/metis-student-check-resources.ts

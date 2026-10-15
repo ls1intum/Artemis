@@ -72,6 +72,7 @@
                 "src/main/webapp/app/lecture/manage/lecture-units/**/*.scss",
                 "src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.scss",
                 "src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.scss",
+                "src/main/webapp/app/metis/**/*.scss",
                 "packages/tum-aet-ui/src/lib/**/*.scss"
             ],
             "customSyntax": "postcss-scss",

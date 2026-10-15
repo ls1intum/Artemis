@@ -748,6 +748,8 @@ export default tseslint.config(
             'src/main/webapp/app/lecture/manage/lecture-units/**/*.html',
             'src/main/webapp/app/lecture/manage/pdf-drop-zone/**/*.html',
             'src/main/webapp/app/lecture/manage/pdf-upload-target-dialog/**/*.html',
+            // Metis comprehension checks: a new module, built on TUM AET UI and Tailwind from the start.
+            'src/main/webapp/app/metis/**/*.html',
             'packages/tum-aet-ui/src/lib/**/*.html',
         ],
         languageOptions: {
@@ -807,6 +809,32 @@ export default tseslint.config(
                             group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
                             message:
                                 'The exam mode, the notifications and the calendar use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+    // The Metis comprehension check is built on TUM AET UI and Tailwind from the start: neither PrimeNG nor ng-bootstrap may be imported anywhere in it, including specs.
+    // Like the other `no-restricted-imports` blocks, this one overrides the rule, so the shared restrictions are repeated.
+    {
+        files: ['src/main/webapp/app/metis/**/*.ts'],
+        rules: {
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        { name: 'dayjs', message: "Please import from 'dayjs/esm' instead." },
+                        { name: 'lodash', message: "Please import from 'lodash-es' instead." },
+                        noNgZoneImport,
+                        ...noDirectCloneDeepImports,
+                    ],
+                    patterns: [
+                        ...tumAetUiConsumerImportPatterns,
+                        {
+                            group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
+                            message:
+                                'The Metis comprehension check uses TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
                         },
                     ],
                 },

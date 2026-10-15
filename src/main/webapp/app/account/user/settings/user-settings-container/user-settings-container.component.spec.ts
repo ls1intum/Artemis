@@ -10,7 +10,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { UserSettingsContainerComponent } from 'app/account/user/settings/user-settings-container/user-settings-container.component';
-import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_ATLAS, MODULE_FEATURE_IRIS, MODULE_FEATURE_METIS } from 'app/app.constants';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { User } from 'app/account/user/user.model';
@@ -212,6 +212,13 @@ describe('UserSettingsContainerComponent', () => {
 
         it('should display the AI Experience link when athena and iris are active', () => {
             spyOnProfileService([], [MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS]);
+            const aiLink = queryAiExperienceLink();
+            expect(aiLink).toBeTruthy();
+            expect(aiLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.aiExperience');
+        });
+
+        it('should display the AI Experience link when metis is the only AI module', () => {
+            spyOnProfileService([], [MODULE_FEATURE_METIS]);
             const aiLink = queryAiExperienceLink();
             expect(aiLink).toBeTruthy();
             expect(aiLink?.getAttribute('jhiTranslate')).toBe('artemisApp.userSettings.aiExperience');

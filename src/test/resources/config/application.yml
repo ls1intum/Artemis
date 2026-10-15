@@ -117,6 +117,11 @@ artemis:
     iris:
         enabled: false
 
+    # Metis: tests never start the generation poller; they call MetisGenerationDispatchService.dispatch(now) directly
+    metis:
+        generation:
+            scheduler-enabled: false
+
     # Theia configuration for tests
     theia:
         enabled: true

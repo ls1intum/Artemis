@@ -45,8 +45,9 @@ import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCas
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/course/shared/entities/course.model';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { ScienceEventType } from 'app/foundation/science/science.model';
-import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_ATHENA, MODULE_FEATURE_IRIS, MODULE_FEATURE_METIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { MetisService } from 'app/metis/shared/services/metis.service';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
@@ -82,6 +83,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private readonly scienceService = inject(ScienceService);
     private irisSettingsService = inject(IrisSettingsService);
+    private metisService = inject(MetisService);
     private destroyRef = inject(DestroyRef);
     private courseStorageService = inject(CourseStorageService);
 
@@ -232,6 +234,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private readonly _irisChatEnabled = signal(false);
     readonly irisChatEnabled = this._irisChatEnabled.asReadonly();
 
+    private readonly _metisEnabled = signal(false);
+    readonly metisEnabled = this._metisEnabled.asReadonly();
+
     private readonly _instructorActionItems = signal<InstructorActionItem[]>([]);
     readonly instructorActionItems = this._instructorActionItems.asReadonly();
 
@@ -244,6 +249,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     // Subscription tracking for methods called on each exercise load
     private participationUpdateListener?: Subscription;
     private teamAssignmentUpdateListener?: Subscription;
+    private metisStatusSubscription?: Subscription;
 
     // Icons
     faBook = faBook;
@@ -404,6 +410,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             }
         }
 
+        this.loadMetisStatus();
+
         this.showIfExampleSolutionPresent(newExerciseDetails.exercise);
         this.subscribeForNewResults();
         void this.subscribeToTeamAssignmentUpdates();
@@ -413,6 +421,32 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this._exerciseIcon.set(getIcon(this.exercise.type));
         }
         this.createInstructorActions();
+    }
+
+    /**
+     * Asks the server whether the comprehension check runs for the exercise, which decides whether the student tab
+     * is shown. Only programming exercises of a course can have one, and only while the Metis module is active; the
+     * tab stays hidden until the answer arrives, and an answer for an exercise that was left meanwhile is dropped.
+     */
+    private loadMetisStatus(): void {
+        this._metisEnabled.set(false);
+        this.metisStatusSubscription?.unsubscribe();
+        const exerciseId = this.exercise?.id;
+        if (
+            this.exercise?.type !== ExerciseType.PROGRAMMING ||
+            this.exercise.exerciseGroup ||
+            exerciseId === undefined ||
+            !this.profileService.isModuleFeatureActive(MODULE_FEATURE_METIS)
+        ) {
+            return;
+        }
+        this.metisStatusSubscription = this.metisService
+            .isEnabledForExercise(exerciseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (enabled) => this._metisEnabled.set(enabled),
+                error: () => this._metisEnabled.set(false),
+            });
     }
 
     /**

@@ -15,13 +15,18 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
 /**
- * Keeps the Metis entities free of JPA associations, from both sides.
+ * Keeps the Metis entities free of JPA associations, from both sides, and keeps every other module independent of Metis.
  * <p>
  * A Metis row names its parent, an exercise, a participation or a tutorial group, by id. A mapped association in either
  * direction would make the parent and the Metis row load together: an inverse one-to-one on the exercise cannot be lazy
  * without bytecode enhancement, so every load of an exercise would read metis_exercise_config, and a collection on the
  * parent is one more association every fetch has to leave out. {@code MetisLazyLoadingIntegrationTest} holds the runtime
  * side of the same statement, by reading the SQL that loading a parent or a Metis row executes.
+ * <p>
+ * No other module needs Metis, so the module has no {@code api} package, and an access test of the kind other modules have
+ * would have no rule to apply. The second rule takes its place: no production class outside Metis depends on any class of
+ * the module, its entities included. Deletion reaches the Metis rows through the cascades of the database, and the
+ * configuration row of a new exercise is written without a Metis class.
  */
 class MetisDomainArchitectureTest extends AbstractArchitectureTest {
 
@@ -40,9 +45,10 @@ class MetisDomainArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void nothingOutsideMetisDependsOnItsEntities() {
-        noClasses().that().resideOutsideOfPackage(METIS_PACKAGE).should().dependOnClassesThat().resideInAPackage(METIS_DOMAIN_PACKAGE)
-                .because("the parent entities must not grow an inverse mapping towards Metis; cross-module access goes through the api package once it exists")
+    void nothingOutsideMetisDependsOnTheModule() {
+        noClasses().that().resideOutsideOfPackage(METIS_PACKAGE).should().dependOnClassesThat().resideInAPackage(METIS_PACKAGE)
+                .because("no other module needs Metis: the parent entities must not grow an inverse mapping towards Metis, and the module has no api package "
+                        + "that other modules could use; one has to be added before any other module may call Metis")
                 .check(productionClasses);
     }
 }
