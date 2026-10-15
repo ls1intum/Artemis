@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.CorruptObjectException;
 import org.eclipse.jgit.lib.ObjectChecker;
+import org.eclipse.jgit.lib.ObjectId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -633,7 +634,11 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingExerciseParticipation programmingParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation,
                 ENTITY_NAME);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        checkParticipantRepositoryVisibilityElseThrow(participation);
+        // The files of a submitted commit are part of the assessment snapshot, which feedback shows as code references, so a commit named by its full hash stays readable
+        // for a tutor, as it is on the commit file endpoint. A branch or a tag name would reach the live repository, which needs the participant visibility.
+        if (!ObjectId.isId(commitId)) {
+            checkParticipantRepositoryVisibilityElseThrow(participation);
+        }
         try {
             return ResponseEntity
                     .ok(repositoryService.getFilesContentAtCommit(programmingParticipation.getProgrammingExercise(), commitId, null, programmingParticipation, validFilePaths));
@@ -672,8 +677,13 @@ public class ProgrammingExerciseParticipationResource {
         return ResponseEntity.ok(vcsAccessLogDTOs);
     }
 
+    /**
+     * Refuses a tutor the live repository and its history of another student while participant information is hidden. Editors keep the repository permissions they have, which
+     * include reading, so they follow the visibility of the participant list only for names.
+     */
     private void checkParticipantRepositoryVisibilityElseThrow(Participation participation) {
-        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && !canSeeParticipantInformation(studentParticipation)) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && !canSeeParticipantInformation(studentParticipation)
+                && !authCheckService.isAtLeastEditorForExercise(studentParticipation.getExercise())) {
             throw new AccessForbiddenException("Direct repository access is unavailable during anonymous assessment. Use the assessment dashboard.");
         }
     }

@@ -1849,7 +1849,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
         @BeforeEach
         void setup() throws Exception {
-            userUtilService.addUsers(TEST_PREFIX, 4, 2, 0, 2);
+            userUtilService.addUsers(TEST_PREFIX, 4, 2, 1, 2);
             var course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExerciseAndTestCases(TEST_PREFIX);
             programmingExercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
             programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
@@ -1875,6 +1875,57 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnBadRequestWithoutAnyProvidedParameters() throws Exception {
             request.getMap(basePath + studentCommitHash, HttpStatus.BAD_REQUEST, String.class, String.class);
+        }
+
+        /**
+         * The support window of tutors is over: a manually assessed exercise past its due date hides who a participation belongs to.
+         */
+        private void closeTheTutorSupportWindow() {
+            programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+            programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+            programmingExerciseRepository.save(programmingExercise);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void shouldLetATutorReadTheFilesOfASubmittedCommitAfterTheSupportWindowClosed() throws Exception {
+            closeTheTutorSupportWindow();
+            // the code references of anonymous feedback read the submitted commit by its hash
+            var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
+                    + "&participationId=" + participation.getId();
+
+            Map<?, ?> files = request.postWithResponseBody(path, Set.of("student/Example.java"), Map.class, HttpStatus.OK);
+
+            assertThat(files.get("student/Example.java")).isEqualTo("class StudentExample {}\n");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void shouldNotLetATutorReadTheLiveRepositoryByAReferenceAfterTheSupportWindowClosed() throws Exception {
+            closeTheTutorSupportWindow();
+            // a name is not a commit of the submission, it reaches whatever the repository holds now
+            var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=HEAD&participationId="
+                    + participation.getId();
+
+            request.postWithResponseBody(path, Set.of("student/Example.java"), Map.class, HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        void shouldKeepAnEditorsAccessToTheRepositoryOfAStudentAfterTheSupportWindowClosed() throws Exception {
+            closeTheTutorSupportWindow();
+
+            var files = request.getMap(basePath + studentCommitHash + "&participationId=" + participation.getId(), HttpStatus.OK, String.class, String.class);
+
+            assertThat(files).containsEntry("student/Example.java", "class StudentExample {}\n");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        void shouldNotLetATutorBrowseTheCommitDetailsAfterTheSupportWindowClosed() throws Exception {
+            closeTheTutorSupportWindow();
+
+            request.getMap(basePath + studentCommitHash + "&participationId=" + participation.getId(), HttpStatus.FORBIDDEN, String.class, String.class);
         }
 
         @Test
