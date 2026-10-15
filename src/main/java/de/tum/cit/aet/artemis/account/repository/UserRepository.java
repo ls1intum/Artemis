@@ -306,6 +306,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 user.lastName,
                 user.langKey,
                 user.email,
+                user.isTestUser,
                 CASE WHEN cp.isMuted = TRUE THEN TRUE ELSE FALSE END,
                 CASE WHEN cp.isHidden = TRUE THEN TRUE ELSE FALSE END,
                 CASE WHEN EXISTS (SELECT ucr FROM UserCourseRole ucr WHERE ucr.user = user AND ucr.course.id = :courseId
@@ -339,6 +340,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 user.lastName,
                 user.langKey,
                 user.email,
+                user.isTestUser,
                 CASE WHEN cp.isMuted = TRUE THEN TRUE ELSE FALSE END,
                 CASE WHEN cp.isHidden = TRUE THEN TRUE ELSE FALSE END,
                 TRUE
