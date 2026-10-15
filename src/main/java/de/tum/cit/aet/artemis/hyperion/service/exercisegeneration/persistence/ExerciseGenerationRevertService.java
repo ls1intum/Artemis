@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.history.GenerationVersionRecoveryService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -40,9 +41,12 @@ public class ExerciseGenerationRevertService {
 
     private final String defaultBranch;
 
+    private final GenerationLiveSaveService liveSaves;
+
     public ExerciseGenerationRevertService(GenerationVersionRecoveryService recovery, GenerationRestoreMetadataService metadata, GenerationRestoreTestCasesService testCases,
             GenerationRepositoryRevertService repositories, GenerationPersistenceService persistenceService,
-            @Value("${artemis.version-control.default-branch:main}") String defaultBranch) {
+            @Value("${artemis.version-control.default-branch:main}") String defaultBranch, GenerationLiveSaveService liveSaves) {
+        this.liveSaves = liveSaves;
         this.recovery = recovery;
         this.metadata = metadata;
         this.testCases = testCases;
@@ -68,11 +72,40 @@ public class ExerciseGenerationRevertService {
      * @return the revert result, or empty when there is no retained baseline to revert to
      */
     public Optional<RevertResult> revert(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot) {
+        String token = liveSaves.claim(exercise.getId());
+        boolean release = true;
+        var durablePhaseEntered = new java.util.concurrent.atomic.AtomicBoolean();
+        try {
+            var result = revertCoordinated(exercise, user, () -> {
+                liveSaves.verify(exercise.getId(), token);
+                return stillOwnsMutationSlot.getAsBoolean();
+            }, () -> durablePhaseEntered.set(true));
+            if (result.filter(value -> !value.fullyReverted() && value.mutationAttempted()).isPresent()) {
+                liveSaves.retain(exercise.getId(), token);
+                release = false;
+            }
+            return result;
+        }
+        catch (RuntimeException failure) {
+            if (durablePhaseEntered.get()) {
+                liveSaves.retain(exercise.getId(), token);
+                release = false;
+            }
+            throw failure;
+        }
+        finally {
+            if (release) {
+                liveSaves.release(exercise.getId(), token);
+            }
+        }
+    }
+
+    private Optional<RevertResult> revertCoordinated(ProgrammingExercise exercise, User user, BooleanSupplier stillOwnsMutationSlot, Runnable beforeRepositoryMutation) {
         var pair = recovery.find(exercise.getId());
         if (pair.isEmpty()) {
             return Optional.empty();
         }
-        RevertResult result = revertToBaseline(exercise, user, pair.get(), stillOwnsMutationSlot);
+        RevertResult result = revertToBaseline(exercise, user, pair.get(), stillOwnsMutationSlot, beforeRepositoryMutation);
         // Consumed only once every captured repository was reset; a partial failure keeps it so a retry can finish instead of stranding the exercise half-reverted.
         if (result.fullyReverted()) {
             try {
@@ -86,7 +119,7 @@ public class ExerciseGenerationRevertService {
         return Optional.of(result);
     }
 
-    private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, GenerationVersionRecoveryService.Recovery pair, BooleanSupplier stillOwnsMutationSlot) {
+    private RevertResult revertToBaseline(ProgrammingExercise exercise, User user, GenerationVersionRecoveryService.Recovery pair, BooleanSupplier stillOwnsMutationSlot, Runnable beforeRepositoryMutation) {
         ExerciseGenerationBaseline baseline = pair.baseline();
         if (!metadata.canRestore(exercise.getId(), pair) || !testCases.canRestore(exercise.getId(), pair)) {
             return new RevertResult(false, List.of(), false);
@@ -108,6 +141,7 @@ public class ExerciseGenerationRevertService {
         }
         recovery.started(pair);
         String repositoryBranch = baseline.repositoryBranch() == null || baseline.repositoryBranch().isBlank() ? defaultBranch : baseline.repositoryBranch();
+        beforeRepositoryMutation.run();
         var repositoryResult = repositories.revert(exercise, baseline, repositoryBranch, stillOwnsMutationSlot);
         boolean fullyReverted = repositoryResult.fullyReverted();
         List<RepositoryType> reverted = repositoryResult.revertedRepositories();

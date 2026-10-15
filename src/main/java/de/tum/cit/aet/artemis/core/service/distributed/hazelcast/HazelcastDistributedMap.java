@@ -10,6 +10,10 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import com.hazelcast.core.EntryEvent;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceAware;
+import com.hazelcast.map.EntryProcessor;
+import com.hazelcast.splitbrainprotection.SplitBrainProtectionException;
 import com.hazelcast.map.ExtendedMapEntry;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
@@ -27,12 +31,88 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
 
     private final IMap<K, V> map;
 
+    private final boolean ownerChecked;
+
     public HazelcastDistributedMap(IMap<K, V> map) {
+        this(map, false);
+    }
+
+    public HazelcastDistributedMap(IMap<K, V> map, boolean ownerChecked) {
         this.map = map;
+        this.ownerChecked = ownerChecked;
+    }
+
+    private enum Mutation {
+        GET, PUT, PUT_IF_ABSENT, REMOVE, REMOVE_EXPECTED, REPLACE_EXPECTED
+    }
+
+    /** Checks current membership on the partition owner, not the asynchronously updated protection cache. */
+    private static final class ProtectedEntryProcessor<K, V> implements EntryProcessor<K, V, Object>, HazelcastInstanceAware {
+
+        private final String mapName;
+
+        private final Mutation mutation;
+
+        private final V expected;
+
+        private final V replacement;
+
+        private transient HazelcastInstance instance;
+
+        private ProtectedEntryProcessor(String mapName, Mutation mutation, V expected, V replacement) {
+            this.mapName = mapName;
+            this.mutation = mutation;
+            this.expected = expected;
+            this.replacement = replacement;
+        }
+
+        @Override
+        public void setHazelcastInstance(HazelcastInstance instance) {
+            this.instance = instance;
+        }
+
+        @Override
+        public Object process(Map.Entry<K, V> entry) {
+            String policy = instance.getConfig().findMapConfig(mapName).getSplitBrainProtectionName();
+            var protection = instance.getConfig().getSplitBrainProtectionConfig(policy);
+            if (!protection.getFunctionImplementation().apply(instance.getCluster().getMembers())) {
+                throw new SplitBrainProtectionException("Current membership does not satisfy " + policy);
+            }
+            V current = entry.getValue();
+            return switch (mutation) {
+                case GET -> current;
+                case PUT -> {
+                    entry.setValue(replacement);
+                    yield current;
+                }
+                case PUT_IF_ABSENT -> {
+                    if (current == null) {
+                        entry.setValue(replacement);
+                    }
+                    yield current;
+                }
+                case REMOVE -> {
+                    entry.setValue(null);
+                    yield current;
+                }
+                case REMOVE_EXPECTED, REPLACE_EXPECTED -> {
+                    boolean matches = current != null && Objects.equals(current, expected);
+                    if (matches) {
+                        entry.setValue(mutation == Mutation.REMOVE_EXPECTED ? null : replacement);
+                    }
+                    yield matches;
+                }
+            };
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <R> R protectedOperation(K key, Mutation mutation, V expected, V replacement) {
+        return (R) map.executeOnKey(key, new ProtectedEntryProcessor<>(map.getName(), mutation, expected, replacement));
     }
 
     public V get(K key) {
-        return map.get(key);
+        return ownerChecked ? protectedOperation(key, Mutation.GET, null, null) : map.get(key);
     }
 
     @Override
@@ -42,7 +122,12 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public void put(K key, V value) {
-        map.put(key, value);
+        if (ownerChecked) {
+            protectedOperation(key, Mutation.PUT, null, value);
+        }
+        else {
+            map.put(key, value);
+        }
     }
 
     /**
@@ -59,7 +144,7 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public V putIfAbsent(K key, V value) {
-        return map.putIfAbsent(key, value);
+        return ownerChecked ? protectedOperation(key, Mutation.PUT_IF_ABSENT, null, value) : map.putIfAbsent(key, value);
     }
 
     @Override
@@ -69,11 +154,14 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public boolean remove(K key, V value) {
-        return map.remove(key, value);
+        return ownerChecked ? protectedOperation(key, Mutation.REMOVE_EXPECTED, value, null) : map.remove(key, value);
     }
 
     @Override
     public boolean replace(K key, V expectedValue, V replacementValue) {
+        if (ownerChecked) {
+            return protectedOperation(key, Mutation.REPLACE_EXPECTED, expectedValue, replacementValue);
+        }
         return map.executeOnKey(key, entry -> {
             if (entry.getValue() == null || !Objects.equals(entry.getValue(), expectedValue)) {
                 return false;
@@ -90,7 +178,7 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public V remove(K key) {
-        return map.remove(key);
+        return ownerChecked ? protectedOperation(key, Mutation.REMOVE, null, null) : map.remove(key);
     }
 
     @Override

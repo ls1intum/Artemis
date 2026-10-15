@@ -273,21 +273,58 @@ or adaptation for that exercise is rejected while its reservation exists. The
 worker can offer several execution slots for different exercises; this does not
 permit two runs for the same exercise.
 
-Generation does not add deployment-wide writer locks. Ordinary exercise edits,
-student repository copies, and exam assignment retain their normal behavior.
-Before saving, Hyperion checks the expected repository heads and exercise
-metadata. An intervening edit rejects the candidate rather than authorizing an
-overwrite. Avoid editing an exercise while generation is saving: these checks do
-not make writes to several Git repositories and the database one transaction.
+Long-running authoring does not lock ordinary exercise edits or student starts.
+Saving and undo use a separate per-exercise live-operation reservation. The same
+reservation covers ordinary exercise mutations, staff repository pushes, template
+copies, and complete version capture. Conflicting operations fail with a retryable
+conflict instead of observing a partially updated exercise. This boundary includes
+post-save LocalCI test synchronization, which can take up to ten minutes. It is
+not a deployment-wide lock and does not block student submission repository pushes.
+Several course-exercise template copies can run concurrently; saving and undo
+exclude them until all copies finish. Exam template copies and exam version capture
+do not use this boundary; exam exercises are not eligible for generation in this layer.
+
+Before saving, Hyperion also checks expected repository heads and exercise metadata.
+These checks do not make several Git repositories and the database one transaction.
+An interrupted save can still require manual reconciliation.
+
+Set `artemis.hyperion.exercise-generation.enabled` consistently on **every core and
+LocalVC writer**, including writers that do not offer the generation API. With it
+false throughout the deployment, ordinary operations do not claim live-operation
+reservations. Mixed settings are unsupported: stop admission, drain generation and
+live operations, then update all writers before enabling generation. There is no
+separate fencing-enabled setting, writer-role announcement, or Redis client-list
+requirement for generation.
+
+For Hazelcast, set `jhipster.cache.hazelcast.expected-data-member-count` to the
+fixed number of data members on every member. Set the same count and the same
+`artemis.hyperion.exercise-generation.enabled` value on every non-lite Hazelcast
+data member, including members that do not serve generation. The default count
+`1` is for a single-node installation. Worker clients do not count. The generation
+flag alone does not expose the API on an ineligible member; the Hyperion flag and
+`core,localci,localvc` profiles are still required. Generation job and live-operation maps
+require exactly the configured number of data members for reads and writes;
+missing or unexpected extra members stop coordinated operations. A two-member deployment
+stops coordinated operations if one member is unavailable; a three-member deployment
+also stops them if only two remain. Do not lower the count to bypass an outage.
+Drain operations and restart the cluster together before changing its configured
+size. This feature does not provide automatic failover, automatic replacement, or
+autoscaling while authoring is active. An exact member count does not prove that
+missing old processes have stopped: a replacement cluster can have the same count
+with different processes. Stop the missing old core processes before starting
+replacements or recovering reservations. If all copies of a job or live-operation
+record are lost, replacements cannot reconstruct it; stop writers and reconcile
+interrupted operations before reopening admission. Never infer process death from
+cluster membership.
 
 A save in progress is not automatically handed to another process after a
-heartbeat timeout or disconnect. After a crash, confirm that the old core process
-has stopped and inspect repository heads and exercise metadata before releasing
-its reservation. The shared map is operational state, not a durable recovery
-journal. Do not clear that state while a generation or save is running. If it is
-lost, stop generation and reconcile interrupted saves before starting another run.
-No additional cluster member-count, quorum, or Redis client-inspection settings
-are required for this feature.
+heartbeat timeout or disconnect. After a crash, stop the old core and worker
+executions and reconcile repository heads, exercise metadata, and grading before
+releasing their reservations. Job and live-operation records are operational
+state, not a durable SQL recovery journal. Do not flush or replace that state
+while writers run. After complete state loss, stop writers and reconcile
+interrupted operations before reopening writes. These requirements also apply to
+Redis/Valkey; asynchronous provider failover is not certified as lossless ownership.
 
 ### Authoring history and version restoration
 
@@ -317,8 +354,8 @@ operation uses the exercise. Expiring activity is not evidence that an old write
 has stopped. There is no SQL recovery journal or database startup reconstruction.
 Complete loss of distributed state requires stopping generation and reconciling
 potentially interrupted operations against repository state and exercise versions.
-Ordinary editing is not blocked by a Hyperion recovery reservation; tell editors
-not to change an exercise until that reconciliation is complete.
+A retained live-operation reservation also prevents conflicting ordinary writes.
+Keep editors informed and reconcile the exercise before releasing it.
 
 Restoration uses captured test metadata and rebuilds task bindings from the saved
 statement. It does not require the previous draft to compile or pass a build.
@@ -481,8 +518,8 @@ an error response must never be treated as proof of zero usage.
 Failed reviewer calls log the exception classes and HTTP status, when available,
 without provider error bodies, prompts, or credentials.
 
-Once persistence begins, cancellation is blocked. Ordinary edits are not globally
-locked by Hyperion. Shutdown
+Once persistence begins, cancellation is blocked and the per-exercise live-operation
+reservation excludes conflicting edits and template copies. Shutdown
 allows the non-cancellable phase to drain; keep the process termination grace
 period longer than `artemis.hyperion.generation.shutdown-drain-timeout` (default
 11 minutes). An uncertain save is reported as `PARTIAL` and requires manual
@@ -504,8 +541,11 @@ An administrator can inspect a stale authoring, save, or undo reservation with
 token with
 `DELETE /api/hyperion/admin/exercises/{id}/hyperion-wedged-slots/{token}?reason=...`.
 Supply an incident reason after confirming that the old executions have stopped
-and reconciling the exercise. These operations apply to generation and undo, not
-ordinary edits. They do not prove that a disconnected process has stopped and do
+and reconciling the exercise. The diagnostic can report a job or a `LIVE_SAVE` reservation, including one left
+by an ordinary write or template copy. If both remain, release and recheck each
+exact token after reconciliation. A shared-copy reservation can name several
+owner processes; confirm that all of their copy operations have stopped before
+releasing it. They do not prove that a disconnected process has stopped and do
 not repair an interrupted save. No cluster quorum or topology inspection replaces
 the operator's checks.
 
@@ -548,9 +588,10 @@ engine does not advertise usable capacity. Core module flags do not stop a
 worker process. Drain active runs before changing profiles, disabling
 coordination, or replacing either artifact.
 
-Generation is disabled by default. Enabling it does not require a setting on every
-ordinary writer node and does not put student starts or exam assignment behind a
-Hyperion lock. Run admission and replay use the existing distributed-data provider,
+Generation is disabled by default. Enable the existing generation setting
+consistently on all core and LocalVC writers before admission. Template copies and
+ordinary mutations share the live-operation boundary only when it is enabled.
+Exam assignment is not changed by this layer. Run admission and replay use the existing distributed-data provider,
 not a SQL job journal. A full deployment restart does not promise automatic
 continuation of interrupted runs.
 
@@ -575,14 +616,14 @@ separately, even when core also runs the `buildagent` profile.
 
 ### Concurrent edits and interrupted undo
 
-Student repository copies and ordinary exercise edits do not claim Hyperion job
-reservations. The per-exercise reservation prevents competing Hyperion operations,
-not all activity on that exercise. Expected-head and metadata checks reject a
-save or undo when the exercise no longer matches its captured baseline.
+Student template copies and ordinary edits do not claim the long-running generation
+job slot. They use the separate live-operation reservation, which also covers save,
+undo, and complete version capture. Expected-head and metadata checks additionally
+reject save or undo when the exercise no longer matches its captured baseline.
 
 If a save or undo restores only some repositories, inspect and reconcile the
 repositories, exercise metadata, and grading before trying another operation.
 Do not infer consistency from a missing activity transcript or expired undo
-reference. Inform editors of the incident because ordinary edits remain available.
+reference. Inform editors of the incident and retain the live-operation reservation until the exercise is consistent.
 A fully compensated failure needs no manual content restoration, but confirm the
 reported outcome before starting another generation.

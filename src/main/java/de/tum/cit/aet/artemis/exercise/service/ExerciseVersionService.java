@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepos
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewVersionChangeService;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -129,13 +130,16 @@ public class ExerciseVersionService {
     // block on versioning; under the test profile it is synchronous, keeping versioning-triggering tests deterministic.
     private final Executor exerciseVersionExecutor;
 
+    private final Optional<HyperionExerciseMutationApi> liveSaveApi;
+
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, QuizExerciseRepository quizExerciseRepository,
             Optional<TextRepositoryApi> textRepositoryApi, Optional<ModelingRepositoryApi> modelingRepositoryApi, Optional<FileUploadApi> fileUploadApi,
             UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
             ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher, JsonMapper objectMapper,
             @Qualifier("exerciseVersionTaskExecutor") Executor exerciseVersionExecutor, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
-            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository, Optional<HyperionExerciseMutationApi> liveSaveApi) {
+        this.liveSaveApi = liveSaveApi;
         this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.exerciseVersionRepository = exerciseVersionRepository;
@@ -191,6 +195,40 @@ public class ExerciseVersionService {
      */
     public void createExerciseVersion(Exercise targetExercise, User author) {
         createExerciseVersion(targetExercise, author, null, null, null);
+    }
+
+    /**
+     * Captures a version on the caller thread using the current author.
+     *
+     * @param targetExercise exercise to snapshot
+     */
+    public void createExerciseVersionSynchronously(Exercise targetExercise) {
+        createExerciseVersionSynchronously(targetExercise, userRepository.getUser());
+    }
+
+    /**
+     * Creates a version on the caller thread while logging versioning failures.
+     *
+     * @param targetExercise exercise to snapshot
+     * @param author         version author
+     */
+    public void createExerciseVersionSynchronously(Exercise targetExercise, User author) {
+        createExerciseVersionInternal(targetExercise, author, ExerciseEditorSyncService.getClientSessionId(), null, null, null, Map.of());
+    }
+
+    /**
+     * Captures a repository-push version inside the mutation lease and preserves editor alert attribution.
+     *
+     * @param targetExercise                  exercise to snapshot
+     * @param author                          version author
+     * @param triggeringRepositoryType        repository changed by the caller
+     * @param triggeringAuxiliaryRepositoryId auxiliary repository id, when applicable
+     * @param triggeringCommitHash            commit created by the caller
+     */
+    public void createExerciseVersionSynchronously(Exercise targetExercise, User author, @Nullable RepositoryType triggeringRepositoryType,
+            @Nullable Long triggeringAuxiliaryRepositoryId, @Nullable String triggeringCommitHash) {
+        createExerciseVersionInternal(targetExercise, author, ExerciseEditorSyncService.getClientSessionId(), attributableTarget(triggeringRepositoryType),
+                triggeringAuxiliaryRepositoryId, triggeringCommitHash, Map.of());
     }
 
     /**
@@ -294,6 +332,15 @@ public class ExerciseVersionService {
         if (targetExercise == null || targetExercise.getId() == null) {
             throw new IllegalArgumentException("createExerciseVersion called with null");
         }
+        try (var reservation = targetExercise instanceof ProgrammingExercise && !targetExercise.isExamExercise()
+                ? liveSaveApi.map(api -> api.reserveParticipation(targetExercise.getId())).orElse(null)
+                : null) {
+            return captureExerciseVersion(targetExercise, author, clientSessionId, triggeringTarget, triggeringAuxiliaryRepositoryId, triggeringCommitHash, repositoryCommitIds);
+        }
+    }
+
+    private Long captureExerciseVersion(Exercise targetExercise, User author, @Nullable String clientSessionId, @Nullable ExerciseEditorSyncTarget triggeringTarget,
+            @Nullable Long triggeringAuxiliaryRepositoryId, @Nullable String triggeringCommitHash, Map<RepositoryType, String> repositoryCommitIds) {
         Exercise exercise = fetchExerciseEagerly(targetExercise);
         if (exercise == null) {
             throw new IllegalStateException("Exercise with id " + targetExercise.getId() + " not found");

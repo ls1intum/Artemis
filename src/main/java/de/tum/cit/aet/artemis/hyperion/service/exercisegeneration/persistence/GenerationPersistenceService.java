@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.BinaryContent;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
@@ -106,6 +107,8 @@ public class GenerationPersistenceService {
 
     private final TempFileUtilService tempFileUtilService;
 
+    private final GenerationLiveSaveService liveSaves;
+
     private final GenerationGrading gradingService;
 
     private final Duration testCaseSyncTimeout;
@@ -121,10 +124,10 @@ public class GenerationPersistenceService {
             ProgrammingSubmissionService programmingSubmissionService, ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             ResultRepository resultRepository, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService,
-            TempFileUtilService tempFileUtilService) {
+            TempFileUtilService tempFileUtilService, GenerationLiveSaveService liveSaves) {
         this(defaultBranch, gitService, repositoryService, participationService, continuousIntegrationTriggerService, programmingSubmissionService, exerciseVersionService,
                 testCaseRepository, resultRepository, programmingExerciseRepository, programmingExerciseTaskService, programmingExerciseCreationScheduleService,
-                problemStatementMetadataUpdateService, tempFileUtilService, testCaseSyncTimeout, testCaseSyncPoll, buildConfigRepository);
+                problemStatementMetadataUpdateService, tempFileUtilService, testCaseSyncTimeout, testCaseSyncPoll, buildConfigRepository, liveSaves);
     }
 
     // Package-private so tests can shrink the sync wait instead of sleeping for seconds.
@@ -133,7 +136,9 @@ public class GenerationPersistenceService {
             ExerciseVersionService exerciseVersionService, ProgrammingExerciseTestCaseRepository testCaseRepository, ResultRepository resultRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProblemStatementMetadataUpdateService problemStatementMetadataUpdateService,
-            TempFileUtilService tempFileUtilService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll, ProgrammingExerciseBuildConfigRepository buildConfigRepository) {
+            TempFileUtilService tempFileUtilService, Duration testCaseSyncTimeout, Duration testCaseSyncPoll, ProgrammingExerciseBuildConfigRepository buildConfigRepository,
+            GenerationLiveSaveService liveSaves) {
+        this.liveSaves = liveSaves;
         this.defaultBranch = defaultBranch;
         this.buildConfigRepository = buildConfigRepository;
         this.gitService = gitService;
@@ -190,6 +195,33 @@ public class GenerationPersistenceService {
     }
 
     private PersistResult persistWithCommitMessage(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
+            GenerationMode mode, String commitMessage, BooleanSupplier stillOwnsMutationSlot, Runnable beforeDurableMutation) {
+        PersistResult saved = null;
+        try (var reservation = liveSaves.reserveWrite(exercise.getId())) {
+            try {
+                saved = persistCoordinated(exercise, user, outcome, expectedProblemStatement, expectedTitle, mode, commitMessage, () -> {
+                    reservation.verify();
+                    return stillOwnsMutationSlot.getAsBoolean();
+                }, beforeDurableMutation);
+                return saved;
+            }
+            catch (GenerationIncompleteException failure) {
+                if (failure.liveExerciseChanged()) {
+                    reservation.retain();
+                }
+                throw failure;
+            }
+        }
+        catch (RuntimeException failure) {
+            if (saved != null) {
+                throw new GenerationIncompleteException("The exercise was saved, but releasing its reservation failed; manual reconciliation is required", failure, true,
+                        saved.postPersistHeads());
+            }
+            throw failure;
+        }
+    }
+
+    private PersistResult persistCoordinated(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
             GenerationMode mode, String commitMessage, BooleanSupplier stillOwnsMutationSlot, Runnable beforeDurableMutation) {
         if (!outcome.isMechanicallyVerified()) {
             throw new IllegalArgumentException("Refusing to persist an exercise that did not pass mechanical verification");
