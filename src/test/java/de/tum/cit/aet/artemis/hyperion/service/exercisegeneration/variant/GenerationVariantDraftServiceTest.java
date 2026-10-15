@@ -23,7 +23,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
-import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
@@ -55,7 +54,7 @@ class GenerationVariantDraftServiceTest {
     private TeamAssignmentConfigRepository teamConfigs;
 
     @Mock
-    private ExamRepositoryApi exams;
+    private de.tum.cit.aet.artemis.localvc.service.GitService git;
 
     private GenerationVariantDraftService service;
 
@@ -65,7 +64,8 @@ class GenerationVariantDraftServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GenerationVariantDraftService(exercises, buildConfigs, imports, capabilities, teamConfigs, Optional.of(exams));
+        service = new GenerationVariantDraftService(exercises, buildConfigs, imports, capabilities, teamConfigs, git, tools.jackson.databind.json.JsonMapper.builder().build(),
+                "main");
         source = new ProgrammingExercise();
         source.setId(1L);
         source.setTitle("Source");
@@ -131,14 +131,12 @@ class GenerationVariantDraftServiceTest {
         group.setExam(exam);
         source.setCourse(null);
         source.setExerciseGroup(group);
-        when(exercises.findExamIdById(1L)).thenReturn(Optional.of(20L));
         sourceGraph();
         AtomicBoolean inTransaction = new AtomicBoolean();
         when(exercises.prepareAuthoringDraft(any())).thenAnswer(invocation -> {
             inTransaction.set(true);
             return invocation.<Supplier<Object>>getArgument(0).get();
         });
-        when(exams.withExerciseSelectionLock(eq(20L), any())).thenAnswer(invocation -> invocation.<Function<Exam, Object>>getArgument(1).apply(exam));
         doThrow(new IllegalStateException("assigned meanwhile")).when(capabilities).requireMutable(source);
 
         assertThatThrownBy(() -> service.prepare(1L, request, Function.identity())).hasMessage("assigned meanwhile");
@@ -159,4 +157,31 @@ class GenerationVariantDraftServiceTest {
         verify(imports).completeImport(source, destination, true, false);
         verifyNoInteractions(buildConfigs, capabilities);
     }
+
+    @Test
+    void sourceBaselineRejectsChangedGitHeadsWithoutBlockingOrdinaryEdits() {
+        sourceGraph();
+        when(buildConfigs.getProgrammingExerciseBuildConfigElseThrow(1L)).thenReturn(new ProgrammingExerciseBuildConfig());
+        when(git.getLastCommitHash(any(), eq("main"))).thenReturn("before");
+        var baseline = service.captureSource(1L);
+        service.verifySource(1L, baseline);
+        when(git.getLastCommitHash(any(), eq("main"))).thenReturn("after");
+
+        assertThatThrownBy(() -> service.verifySource(1L, baseline)).isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
+        verifyNoInteractions(imports);
+    }
+
+    @Test
+    void sourceBaselineFreezesMetadataAndRejectsAnInterveningEdit() {
+        sourceGraph();
+        when(buildConfigs.getProgrammingExerciseBuildConfigElseThrow(1L)).thenReturn(new ProgrammingExerciseBuildConfig());
+        when(git.getLastCommitHash(any(), eq("main"))).thenReturn("unchanged");
+        var baseline = service.captureSource(1L);
+        source.setTitle("Edited by an instructor");
+
+        assertThatThrownBy(() -> service.verifySource(1L, baseline)).isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
+        assertThat(baseline.metadata().title()).isEqualTo("Source");
+        verifyNoInteractions(imports);
+    }
+
 }

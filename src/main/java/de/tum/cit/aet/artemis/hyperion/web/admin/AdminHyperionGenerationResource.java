@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationWedgedSlotDTO;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 
 /** Audited recovery of fail-closed slots; it never runs commands on generation workers. */
@@ -39,21 +38,18 @@ public class AdminHyperionGenerationResource {
 
     private final Optional<GenerationJobService> jobs;
 
-    private final GenerationExternalMutationService mutations;
-
     private final AuditEventRepository audit;
 
-    public AdminHyperionGenerationResource(Optional<GenerationJobService> jobs, GenerationExternalMutationService mutations, AuditEventRepository audit) {
+    public AdminHyperionGenerationResource(Optional<GenerationJobService> jobs, AuditEventRepository audit) {
         this.jobs = jobs;
-        this.mutations = mutations;
         this.audit = audit;
     }
 
     /**
-     * Returns an exact recovery token without releasing the slot.
+     * Returns a stale authoring, save, or undo reservation without releasing it or checking process liveness.
      *
-     * @param exerciseId exercise blocked by a non-cancellable slot
-     * @return administrator-only ownership evidence, or 404
+     * @param exerciseId exercise whose Hyperion reservation should be inspected
+     * @return administrator-only reservation details, or 404
      */
     @GetMapping("{exerciseId}/wedged-slot")
     public ResponseEntity<ExerciseGenerationWedgedSlotDTO> getWedgedSlot(@PathVariable long exerciseId) {
@@ -64,12 +60,13 @@ public class AdminHyperionGenerationResource {
     }
 
     /**
-     * Releases an exact departed-owner slot after the operator has confirmed its JVM is stopped.
+     * Releases an exact reservation after the operator has stopped the old core and worker executions and reconciled any incomplete writes.
+     * This operation does not check process liveness or cluster topology.
      *
      * @param exerciseId exercise to recover
      * @param token      expected ownership token from the diagnostic operation
      * @param reason     incident reason recorded before attempting recovery
-     * @return 204 on recovery, 400 for an invalid reason, or 404 for stale ownership evidence
+     * @return 204 on recovery, 400 for an invalid reason, or 404 if the reservation no longer matches
      */
     @DeleteMapping("{exerciseId}/wedged-slot/{token}")
     public ResponseEntity<Void> recoverWedgedSlot(@PathVariable long exerciseId, @PathVariable String token, @RequestParam String reason) {
@@ -84,12 +81,12 @@ public class AdminHyperionGenerationResource {
         var info = wedged.get();
         audit.add(new AuditEvent(SecurityUtils.getCurrentUserLogin().orElse("unknown"), "HYPERION_SLOT_RECOVERY_ATTEMPT", Map.of("exerciseId", exerciseId, "token", token, "kind",
                 info.kind().name(), "ownerNodeId", info.ownerNodeId() == null ? "unknown" : info.ownerNodeId(), "reason", boundedReason)));
-        boolean recovered = jobs.isPresent() ? jobs.get().recoverWedgedSlot(exerciseId, token) : mutations.recoverWedgedSlot(exerciseId, token);
+        boolean recovered = jobs.map(service -> service.recoverWedgedSlot(exerciseId, token)).orElse(false);
         return recovered ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 
     private Optional<GenerationJobService.WedgedSlotInfo> slotInfo(long exerciseId) {
-        return jobs.isPresent() ? jobs.get().getWedgedSlotInfo(exerciseId) : mutations.getWedgedSlotInfo(exerciseId);
+        return jobs.flatMap(service -> service.getWedgedSlotInfo(exerciseId));
     }
 
 }

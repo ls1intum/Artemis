@@ -33,7 +33,6 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
-import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisNodeIdentity;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
 import de.tum.cit.aet.artemis.hyperion.domain.AuthoringRun;
 import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
@@ -116,13 +115,12 @@ class GenerationRunStoreServiceTest {
     void redisSupportsAtomicActivityAndExpiry() throws Exception {
         try (var redis = ValkeyTestContainerFactory.create()) {
             redis.start();
-            var identity = new RedisNodeIdentity("artemis-core", true, false);
             var config = new Config();
             config.useSingleServer().setAddress("redis://" + redis.getHost() + ":" + redis.getMappedPort(6379));
-            new RedissonCodecConfiguration().artemisRedissonSerializationCodecCustomizer(identity).customize(config);
+            new RedissonCodecConfiguration().artemisRedissonSerializationCodecCustomizer().customize(config);
             var client = Redisson.create(config);
             try {
-                verifyStore(new RedissonDistributedDataProviderService(client, new RedisClientListResolver(new RedissonConnectionFactory(client)), identity));
+                verifyStore(new RedissonDistributedDataProviderService(client, new RedisClientListResolver(new RedissonConnectionFactory(client))));
             }
             finally {
                 client.shutdown();

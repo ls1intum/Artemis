@@ -75,7 +75,7 @@ class GenerationVariantPlacementServiceTest {
 
     private GenerationStartedEvent event(VariantPlacementDTO.PlacementType type) {
         return new GenerationStartedEvent("job", null, destination, "Library", GenerationMode.ADAPT, null, null, null, null, null, null,
-                new GenerationVariantPreparation(1L, "copy", request(type)));
+                new GenerationVariantPreparation(1L, org.mockito.Mockito.mock(GenerationVariantPreparation.SourceSnapshot.class), request(type)));
     }
 
     @Test
@@ -99,12 +99,12 @@ class GenerationVariantPlacementServiceTest {
 
         assertThat(service.place(event(VariantPlacementDTO.PlacementType.EXISTING_GROUP), ownership)).isEmpty();
 
-        verify(groupService).assignToGroupWhileAuthoring(2L, group, ownership);
+        verify(groupService).assignToGroupWhileAuthoring(destination, group, ownership);
         var order = inOrder(ownership, exercises, groups, groupService);
         order.verify(ownership).run();
         order.verify(exercises).findByIdElseThrow(Long.valueOf(2L));
         order.verify(groups).findByIdAndCourseIdElseThrow(30L, 10L);
-        order.verify(groupService).assignToGroupWhileAuthoring(2L, group, ownership);
+        order.verify(groupService).assignToGroupWhileAuthoring(destination, group, ownership);
         order.verifyNoMoreInteractions();
     }
 
@@ -121,8 +121,8 @@ class GenerationVariantPlacementServiceTest {
         var order = inOrder(groupService);
         order.verify(groupService).createGroup(eq(10L), any());
         order.verify(groupService).seedGroupDatesFromExercise(group, source);
-        order.verify(groupService).assignToGroupWhileAuthoring(2L, group, ownership);
-        order.verify(groupService).assignProgrammingSourceIfUngrouped(1L, group);
+        order.verify(groupService).assignToGroupWhileAuthoring(destination, group, ownership);
+        order.verify(groupService).assignProgrammingSourceIfUngrouped(source, group);
     }
 
     @Test

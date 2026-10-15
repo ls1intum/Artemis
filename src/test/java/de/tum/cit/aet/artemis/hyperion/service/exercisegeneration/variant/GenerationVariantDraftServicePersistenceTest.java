@@ -2,33 +2,18 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.awaitility.Awaitility.await;
 
-import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.service.StudentExamAssignmentService;
-import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
-import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
@@ -65,16 +50,13 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
     private TeamAssignmentConfigRepository teamConfigurations;
 
     @Autowired
-    private ExamTestRepository exams;
+    private de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService imports;
 
     @Autowired
-    private ExamUtilService examUtil;
+    private de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService capabilities;
 
     @Autowired
-    private StudentExamAssignmentService assignment;
-
-    @Autowired
-    private DataSource dataSource;
+    private tools.jackson.databind.json.JsonMapper mapper;
 
     private ProgrammingExercise source;
 
@@ -95,78 +77,43 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
         configurations.save(configuration);
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = { true, false })
-    void examDraftAndStudentAssignmentHoldTheSameLockThroughCommitInEitherOrder(boolean draftFirst) throws Exception {
-        userUtilService.addUsers("hypvariantexam", 1, 0, 0, 0);
-        Exam exam = examUtil.addExamWithExerciseGroup(source.getCourseViaExerciseGroupOrCourseMember(), true);
-        exam.setStartDate(ZonedDateTime.now().plusDays(2));
-        exam.setVisibleDate(ZonedDateTime.now().plusDays(1));
-        exam.setEndDate(ZonedDateTime.now().plusDays(3));
-        exam = examUtil.registerUsersForExamAndSaveExam(exam, "hypvariantexam", 1);
-        source.setCourse(null);
-        source.setExerciseGroup(exam.getExerciseGroups().iterator().next());
-        programmingExerciseRepository.save(source);
-        long examId = exam.getId();
-        long exerciseCount = programmingExerciseRepository.count();
-        JdbcTemplate jdbc = new JdbcTemplate(dataSource);
-        AtomicInteger holderPid = new AtomicInteger();
-        CountDownLatch holderReady = new CountDownLatch(1);
-        CountDownLatch releaseHolder = new CountDownLatch(1);
+    @Test
+    void sourceBaselineSurvivesRealDraftImportAndRejectsLaterMetadataChanges() {
+        var git = org.mockito.Mockito.mock(de.tum.cit.aet.artemis.localvc.service.GitService.class);
+        org.mockito.Mockito.when(git.getLastCommitHash(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyString())).thenReturn("source-head");
+        var optimisticDrafts = new GenerationVariantDraftService(programmingExerciseRepository, configurations, imports, capabilities, teamConfigurations, git, mapper,
+                defaultBranch);
+        var baseline = optimisticDrafts.captureSource(source.getId());
 
-        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            var first = executor.submit(() -> {
-                if (draftFirst) {
-                    return drafts.prepare(source.getId(), request, destination -> {
-                        programmingExerciseRepository.flush();
-                        holdExamTransaction(jdbc, holderPid, holderReady, releaseHolder);
-                        return destination.getId();
-                    });
-                }
-                return exams.withExerciseSelectionLock(examId, locked -> {
-                    assignment.assignRegisteredStudents(examId, false);
-                    holdExamTransaction(jdbc, holderPid, holderReady, releaseHolder);
-                    return 0L;
-                });
-            });
-            assertThat(holderReady.await(20, TimeUnit.SECONDS)).isTrue();
-            var second = executor
-                    .submit(() -> draftFirst ? assignment.assignRegisteredStudents(examId, false) : drafts.prepare(source.getId(), request, destination -> destination.getId()));
-            try {
-                // Observe PostgreSQL's actual waiter, rather than inferring lock acquisition from thread submission or elapsed time.
-                await().atMost(Duration.ofSeconds(20))
-                        .until(() -> jdbc.queryForObject("SELECT COUNT(*) FROM pg_stat_activity WHERE ? = ANY(pg_blocking_pids(pid))", Integer.class, holderPid.get()) > 0);
-                assertThat(second.isDone()).isFalse();
-            }
-            finally {
-                releaseHolder.countDown();
-            }
-            long destinationId = first.get(20, TimeUnit.SECONDS);
-            if (draftFirst) {
-                assertThat(second.get(20, TimeUnit.SECONDS)).isInstanceOf(java.util.List.class);
-                assertThat(exams.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId).getExerciseGroups()).singleElement()
-                        .satisfies(group -> assertThat(group.getExercises()).extracting(exercise -> exercise.getId()).containsExactlyInAnyOrder(source.getId(), destinationId));
-            }
-            else {
-                assertThatThrownBy(() -> second.get(20, TimeUnit.SECONDS)).hasRootCauseInstanceOf(BadRequestAlertException.class);
-                assertThat(programmingExerciseRepository.count()).isEqualTo(exerciseCount);
-            }
-        }
-        finally {
-            releaseHolder.countDown();
-        }
+        var destinationId = optimisticDrafts.prepare(source.getId(), request, ProgrammingExercise::getId);
+
+        assertThat(destinationId).isNotEqualTo(source.getId());
+        optimisticDrafts.verifySource(source.getId(), baseline);
+        var edited = programmingExerciseRepository.findByIdElseThrow(source.getId());
+        edited.setTitle("An intervening instructor edit");
+        programmingExerciseRepository.saveAndFlush(edited);
+        assertThatThrownBy(() -> optimisticDrafts.verifySource(source.getId(), baseline)).isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
     }
 
-    private static void holdExamTransaction(JdbcTemplate jdbc, AtomicInteger holderPid, CountDownLatch holderReady, CountDownLatch releaseHolder) {
-        holderPid.set(jdbc.queryForObject("SELECT pg_backend_pid()", Integer.class));
-        holderReady.countDown();
-        try {
-            assertThat(releaseHolder.await(30, TimeUnit.SECONDS)).isTrue();
-        }
-        catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            throw new AssertionError("Interrupted while holding the exam transaction", exception);
-        }
+    @Test
+    void changedSourceAtReservationRollsBackTheImportedDraft() {
+        var git = org.mockito.Mockito.mock(de.tum.cit.aet.artemis.localvc.service.GitService.class);
+        org.mockito.Mockito.when(git.getLastCommitHash(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyString())).thenReturn("source-head");
+        var optimisticDrafts = new GenerationVariantDraftService(programmingExerciseRepository, configurations, imports, capabilities, teamConfigurations, git, mapper,
+                defaultBranch);
+        var baseline = optimisticDrafts.captureSource(source.getId());
+        var destinationId = new AtomicLong();
+        org.mockito.Mockito.when(git.getLastCommitHash(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyString())).thenReturn("changed-head");
+
+        assertThatThrownBy(() -> optimisticDrafts.prepare(source.getId(), request, destination -> {
+            destinationId.set(destination.getId());
+            optimisticDrafts.verifySource(source.getId(), baseline);
+            return destination.getId();
+        })).isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
+
+        assertThat(destinationId.get()).isPositive();
+        assertThat(programmingExerciseRepository.existsById(destinationId.get())).isFalse();
+        assertThat(configurations.findById(destinationId.get())).isEmpty();
     }
 
     @Test
@@ -231,7 +178,8 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
 
         assertThatThrownBy(() -> drafts.prepare(source.getId(), request, destination -> {
             destinationId.set(destination.getId());
-            return jobs.prepareVariantJob(user, destination, "Variant", null, null, null, new GenerationVariantPreparation(source.getId(), "source", request));
+            return jobs.prepareVariantJob(user, destination, "Variant", null, null, null,
+                    new GenerationVariantPreparation(source.getId(), org.mockito.Mockito.mock(GenerationVariantPreparation.SourceSnapshot.class), request));
         })).isInstanceOf(org.springframework.dao.InvalidDataAccessApiUsageException.class).hasRootCauseMessage("activity store unavailable");
 
         assertThat(rejected.get()).isNotBlank();

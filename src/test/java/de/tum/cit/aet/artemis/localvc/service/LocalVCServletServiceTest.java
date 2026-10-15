@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -22,14 +21,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.function.Supplier;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,9 +39,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -77,23 +71,17 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
-import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.AuxiliaryRepositoryService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseChangedService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
@@ -103,9 +91,6 @@ class LocalVCServletServiceTest {
 
     @Mock
     private AuthenticationManager authenticationManager;
-
-    @Mock
-    private RateLimitService rateLimitService;
 
     @Mock
     private UserTestRepository userRepository;
@@ -138,18 +123,6 @@ class LocalVCServletServiceTest {
     private ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
 
     @Mock
-    private ExerciseVersionService exerciseVersionService;
-
-    @Mock
-    private ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
-
-    @Mock
-    private ProgrammingMessagingService programmingMessagingService;
-
-    @Mock
-    private ProgrammingTriggerService programmingTriggerService;
-
-    @Mock
     private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Mock
@@ -163,6 +136,12 @@ class LocalVCServletServiceTest {
 
     @Mock
     private UserVcsAccessTokenService userVcsAccessTokenService;
+
+    @Mock
+    private RateLimitService rateLimitService;
+
+    @Mock
+    private ExerciseVersionService exerciseVersionService;
 
     @Mock
     private MailSendingService mailSendingService;
@@ -211,7 +190,8 @@ class LocalVCServletServiceTest {
         testRepositoryUri = mock(LocalVCRepositoryUri.class);
         // Use lenient() to avoid unnecessary stubbing errors for tests that don't use this mock
         lenient().when(testRepositoryUri.getRelativeRepositoryPath()).thenReturn(java.nio.file.Path.of("test/repo"));
-        lenient().when(testRepositoryUri.toString()).thenReturn("http://localhost/git/TEST/EXERCISE-template.git");
+        lenient().when(testRepositoryUri.toString()).thenReturn("http://localhost/git/TEST/test-testuser.git");
+
         lenient().when(distributedDataProvider.<Long, Boolean>getExpiringMap(anyString(), any())).thenReturn(httpsCloneEmailCache);
 
         // Setup the VcsAccessLogService as an Optional containing the mock
@@ -378,7 +358,7 @@ class LocalVCServletServiceTest {
 
         RepositoryVCSAccessToken repositoryToken = new RepositoryVCSAccessToken();
         repositoryToken.setVcsAccessToken(token);
-        when(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(testUser.getId(), "http://localhost/git/TEST/EXERCISE-template.git"))
+        when(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(testUser.getId(), "http://localhost/git/TEST/test-testuser.git"))
                 .thenReturn(Optional.of(repositoryToken));
 
         AuthenticationContext.Request context = new AuthenticationContext.Request(request);
@@ -409,124 +389,75 @@ class LocalVCServletServiceTest {
         assertThat(RepositoryActionType.CLONE_FAIL).isNotNull();
     }
 
-    @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    void processNewPushVersionsBeforeCreatingTheTestSubmissionWithConfiguredDispatch(boolean coordinated) {
-        when(programmingExerciseMutationGuard.isCoordinationEnabled()).thenReturn(coordinated);
-        Repository repository = mock(Repository.class);
-        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
-        ProgrammingSubmission submission = new ProgrammingSubmission();
-        String projectKey = testExercise.getProjectKey();
-        Path repositoryPath = Path.of("/tmp/test-repos", projectKey, projectKey.toLowerCase(java.util.Locale.ROOT) + "-tests.git");
-
-        when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
-        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TESTS)).thenReturn(true);
-        when(programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(testExercise.getId(), "commit-hash")).thenReturn(submission);
-
-        localVCServletService.processNewPush("commit-hash", repository, testUser, Optional.of(testExercise), Optional.of(solutionParticipation), Optional.empty());
-
-        InOrder inOrder = inOrder(exerciseVersionService, programmingSubmissionService);
-        if (coordinated) {
-            inOrder.verify(exerciseVersionService).createExerciseVersionSynchronously(testExercise, testUser, RepositoryType.TESTS, null, "commit-hash");
-            verify(exerciseVersionService, never()).createExerciseVersion(testExercise, testUser, RepositoryType.TESTS, null, "commit-hash");
-        }
-        else {
-            inOrder.verify(exerciseVersionService).createExerciseVersion(testExercise, testUser, RepositoryType.TESTS, null, "commit-hash");
-            verify(exerciseVersionService, never()).createExerciseVersionSynchronously(testExercise, testUser, RepositoryType.TESTS, null, "commit-hash");
-        }
-        inOrder.verify(programmingSubmissionService).createSolutionParticipationSubmissionWithTypeTest(testExercise.getId(), "commit-hash");
-    }
-
     @Test
-    void claimProgrammingExerciseMutationClaimsVersionableStaffRepository() {
-        Repository repository = mock(Repository.class);
-        Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase(java.util.Locale.ROOT) + "-exercise.git");
-        var expectedLease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
-        });
-        when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
-        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.TEMPLATE)).thenReturn(true);
-        when(programmingExerciseMutationGuard.claimExternalMutation(testExercise.getId())).thenReturn(expectedLease);
+    void testUpdateAndStoreVCSAccessLogForCloneAndPullHTTPS_sendsEmailOnPasswordCloneWhenNotInCache() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/git-upload-pack");
+        lenient().doReturn(testUser).when(request).getAttribute("artemis.authenticatedUser");
+        lenient().doReturn(AuthenticationMechanism.PASSWORD).when(request).getAttribute("artemis.authenticationMechanism");
 
-        var lease = localVCServletService.claimProgrammingExerciseMutation(repository, testExercise);
+        String password = "plain-password";
+        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("testuser:" + password).getBytes());
 
-        assertThat(lease).isSameAs(expectedLease);
-    }
-
-    @Test
-    void claimProgrammingExerciseMutationKeepsUserRepositoryUnguarded() {
-        Repository repository = mock(Repository.class);
-        Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase(java.util.Locale.ROOT) + "-testuser.git");
-        var expectedLease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
-        });
-        when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
-        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.USER)).thenReturn(false);
-        when(programmingExerciseMutationGuard.claimExternalMutation(OptionalLong.empty())).thenReturn(expectedLease);
-
-        var lease = localVCServletService.claimProgrammingExerciseMutation(repository, testExercise);
-
-        assertThat(lease).isSameAs(expectedLease);
-        verify(programmingExerciseMutationGuard).claimExternalMutation(OptionalLong.empty());
-    }
-
-    @Test
-    void claimProgrammingExerciseMutationClaimsVersionableAuxiliaryRepository() {
-        Repository repository = mock(Repository.class);
-        Path repositoryPath = Path.of("/tmp/test-repos", testExercise.getProjectKey(), testExercise.getProjectKey().toLowerCase(java.util.Locale.ROOT) + "-customrepo.git");
-        var expectedLease = new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
-        });
-        when(repository.getDirectory()).thenReturn(repositoryPath.toFile());
-        when(auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise("customrepo", testExercise.getId())).thenReturn(true);
-        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.AUXILIARY)).thenReturn(true);
-        when(programmingExerciseMutationGuard.claimExternalMutation(testExercise.getId())).thenReturn(expectedLease);
-
-        var lease = localVCServletService.claimProgrammingExerciseMutation(repository, testExercise);
-
-        assertThat(lease).isSameAs(expectedLease);
-    }
-
-    @Test
-    void updateAndStoreVCSAccessLogForCloneAndPullHTTPS_sendsEmailOnFirstPasswordClone() {
-        HttpServletRequest request = passwordCloneRequest(AuthenticationMechanism.PASSWORD);
+        // putIfAbsent return null, first clone with HTTPS
         when(httpsCloneEmailCache.putIfAbsent(eq(testUser.getId()), eq(Boolean.TRUE), any(Duration.class))).thenReturn(null);
 
-        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, basicAuthorization("plain-password"), 0);
+        // clientOffered == 0 means CLONE operation
+        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, authHeader, 0);
 
         verify(mailSendingService).buildAndSendAsync(any(MailRecipientDTO.class), eq("email.httpsCloneTip.title"), eq("mail/httpsCloneTipEmail"), eq(Map.of()));
     }
 
     @Test
-    void updateAndStoreVCSAccessLogForCloneAndPullHTTPS_doesNotRepeatTheEmail() {
-        HttpServletRequest request = passwordCloneRequest(AuthenticationMechanism.PASSWORD);
+    void testUpdateAndStoreVCSAccessLogForCloneAndPullHTTPS_doesNotSendEmailWhenAlreadyInCache() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/git-upload-pack");
+        lenient().doReturn(testUser).when(request).getAttribute("artemis.authenticatedUser");
+        lenient().doReturn(AuthenticationMechanism.PASSWORD).when(request).getAttribute("artemis.authenticationMechanism");
+
+        String password = "plain-password";
+        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("testuser:" + password).getBytes());
+
         when(httpsCloneEmailCache.putIfAbsent(eq(testUser.getId()), eq(Boolean.TRUE), any(Duration.class))).thenReturn(Boolean.TRUE);
 
-        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, basicAuthorization("plain-password"), 0);
+        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, authHeader, 0);
 
-        verifyNoInteractions(mailSendingService);
+        verify(mailSendingService, never()).buildAndSendAsync(any(), any(), any(), any());
     }
 
     @Test
-    void updateAndStoreVCSAccessLogForCloneAndPullHTTPS_doesNotEmailTokenClonesOrPulls() {
-        HttpServletRequest tokenRequest = passwordCloneRequest(AuthenticationMechanism.USER_VCS_ACCESS_TOKEN);
-        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(tokenRequest, basicAuthorization("vcpat-" + "a".repeat(44)), 0);
+    void testUpdateAndStoreVCSAccessLogForCloneAndPullHTTPS_doesNotSendEmailWhenUsingToken() {
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/git-upload-pack");
+        lenient().doReturn(testUser).when(request).getAttribute("artemis.authenticatedUser");
+        lenient().doReturn(AuthenticationMechanism.USER_VCS_ACCESS_TOKEN).when(request).getAttribute("artemis.authenticationMechanism");
 
-        HttpServletRequest pullRequest = passwordCloneRequest(AuthenticationMechanism.PASSWORD);
-        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(pullRequest, basicAuthorization("plain-password"), 1);
+        String token = "vcpat-" + "a".repeat(44);
+        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("testuser:" + token).getBytes());
+
+        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, authHeader, 0);
 
         verifyNoInteractions(mailSendingService);
         verifyNoInteractions(httpsCloneEmailCache);
     }
 
-    private HttpServletRequest passwordCloneRequest(AuthenticationMechanism mechanism) {
+    @Test
+    void testUpdateAndStoreVCSAccessLogForCloneAndPullHTTPS_doesNotSendEmailOnPullOperation() {
         HttpServletRequest request = mock(HttpServletRequest.class);
         when(request.getMethod()).thenReturn("POST");
         when(request.getRequestURI()).thenReturn("/git/TEST/test-testuser.git/git-upload-pack");
-        lenient().doReturn(testUser).when(request).getAttribute("artemis.authenticatedUser");
-        lenient().doReturn(mechanism).when(request).getAttribute("artemis.authenticationMechanism");
-        return request;
-    }
 
-    private static String basicAuthorization(String credential) {
-        return "Basic " + java.util.Base64.getEncoder().encodeToString(("testuser:" + credential).getBytes());
+        String password = "plain-password";
+        String authHeader = "Basic " + java.util.Base64.getEncoder().encodeToString(("testuser:" + password).getBytes());
+
+        // clientOffered > 0 means a PULL operation instead of clone
+        localVCServletService.updateAndStoreVCSAccessLogForCloneAndPullHTTPS(request, authHeader, 1);
+
+        verifyNoInteractions(mailSendingService);
+        verifyNoInteractions(httpsCloneEmailCache);
     }
 
     @Test

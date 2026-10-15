@@ -89,7 +89,8 @@ class GenerationRunJournalServicePersistenceTest extends AbstractSpringIntegrati
                 java.time.Duration.ofMinutes(30), Runnable::run);
         jobs.init();
         if (prepared) {
-            var event = jobs.prepareVariantJob(user, exercise, "Variant", null, null, null, new GenerationVariantPreparation(exercise.getId(), "source", null));
+            var event = jobs.prepareVariantJob(user, exercise, "Variant", null, null, null,
+                    new GenerationVariantPreparation(exercise.getId(), org.mockito.Mockito.mock(GenerationVariantPreparation.SourceSnapshot.class), null));
             assertThat(jobs.dispatchPreparedJob(event)).isFalse();
         }
         else {

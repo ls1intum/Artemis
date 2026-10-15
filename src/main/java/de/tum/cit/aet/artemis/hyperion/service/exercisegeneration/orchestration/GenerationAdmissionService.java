@@ -144,7 +144,7 @@ public class GenerationAdmissionService {
         }
         capabilities.requireSupportedConfiguration(exercise);
         if (!newDestination) {
-            jobService.rejectIfActiveJobCannotBeReclaimed(exerciseId);
+            jobService.rejectIfActiveJob(exerciseId);
         }
         if (request.mode() == GenerationMode.GENERATE && (request.prompt() == null || request.prompt().isBlank())
                 && !generationRequestService.isAuthoritativeProblemStatement(exercise)) {

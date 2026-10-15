@@ -476,7 +476,8 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         source.setBuildAndTestStudentSubmissionsAfterDueDate(originalDue.plusHours(1));
         exerciseRepository.save(source);
 
-        assertThatThrownBy(() -> variantGroupService.assignProgrammingSourceIfUngrouped(source.getId(), group)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> variantGroupService.assignProgrammingSourceIfUngrouped((ProgrammingExercise) exerciseRepository.findByIdElseThrow(source.getId()), group))
+                .isInstanceOf(BadRequestAlertException.class);
         ProgrammingExercise reloaded = (ProgrammingExercise) exerciseRepository.findByIdElseThrow(source.getId());
         assertThat(reloaded.getExerciseVariantGroup() == null).as("rejected source must remain ungrouped").isTrue();
         assertThat(reloaded.getDueDate().toInstant()).isEqualTo(originalDue.toInstant());
@@ -513,11 +514,11 @@ class ExerciseVariantGroupIntegrationTest extends AbstractSpringIntegrationIndep
         var created = createGroupAsEditor();
         var group = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(created.id(), course.getId());
         group.setCourse(course);
-        assertThat(variantGroupService.assignProgrammingSourceIfUngrouped(source.getId(), group)).isTrue();
+        assertThat(variantGroupService.assignProgrammingSourceIfUngrouped((ProgrammingExercise) exerciseRepository.findByIdElseThrow(source.getId()), group)).isTrue();
         var other = createGroupAsEditor();
         var otherGroup = exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(other.id(), course.getId());
         otherGroup.setCourse(course);
-        assertThat(variantGroupService.assignProgrammingSourceIfUngrouped(source.getId(), otherGroup)).isFalse();
+        assertThat(variantGroupService.assignProgrammingSourceIfUngrouped((ProgrammingExercise) exerciseRepository.findByIdElseThrow(source.getId()), otherGroup)).isFalse();
         assertThat(exerciseVariantGroupRepository.findByExerciseId(source.getId())).get().extracting(ExerciseVariantGroup::getId).isEqualTo(group.getId());
         Exercise saved = exerciseRepository.findByIdElseThrow(source.getId());
         assertThat(saved.getDueDate().toInstant()).isEqualTo(group.getDueDate().toInstant());

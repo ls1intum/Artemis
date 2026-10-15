@@ -382,7 +382,6 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testGenerateIndividualStudentExam_ignoresStaleCallerExerciseGroups() {
         // Simulates a caller (ExamAccessService) that loaded the exam before a concurrent exercise-group move: the
         // in-memory exercise groups no longer match the database, which actually has exerciseGroup1 with a quiz.
-        studentExamRepository.delete(studentExam1);
         Exam staleExam = new Exam();
         staleExam.setId(exam1.getId());
 

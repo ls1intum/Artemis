@@ -23,14 +23,13 @@ class GenerationMonitoringServiceTest {
     private final GenerationMonitoringService service = new GenerationMonitoringService(jobs, provider);
 
     @Test
-    void activeGenerationsCarryModeTitleAndCourseAndSkipRevertsAndExternalMutations() {
+    void activeGenerationsCarryModeTitleAndCourseAndSkipReverts() {
         DistributedMap<String, JobInfo> active = provider.getMap(GenerationJobService.JOB_MAP_NAME);
         Instant earlier = Instant.parse("2026-09-11T08:00:00Z");
         Instant later = Instant.parse("2026-09-11T09:00:00Z");
         active.put("2", new JobInfo("adapt-job", "editor", 2, later, later.plusSeconds(600), "node", later, true, null, GenerationMode.ADAPT, "Bubble Sort", 7L));
         active.put("1", new JobInfo("generate-job", "instructor", 1, earlier, earlier.plusSeconds(600), "node", earlier, true, null, GenerationMode.GENERATE, "Linked List", 7L));
         active.put("3", new JobInfo("revert-x", "editor", 3, earlier, null, "node", earlier, false, null));
-        active.put("4", new JobInfo(GenerationJobService.EXTERNAL_MUTATION_JOB_PREFIX + "y", "external", 4, earlier, null, "node", earlier, false, null));
         // A slot recorded before display context was tracked still lists, without a mode or title.
         active.put("5", new JobInfo("legacy-job", "instructor", 5, later.plusSeconds(1), null, "node", later, true, null));
         when(jobs.isCancelled("adapt-job")).thenReturn(true);

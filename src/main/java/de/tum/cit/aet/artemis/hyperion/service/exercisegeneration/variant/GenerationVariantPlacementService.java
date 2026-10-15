@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVariantGroup;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVariantGroupService;
@@ -106,16 +105,10 @@ public class GenerationVariantPlacementService {
                 groupService.seedGroupDatesFromExercise(group, source);
             }
         }
-        groupService.assignToGroupWhileAuthoring(destination.getId(), group, verifyOwnership);
-        if (choice.type() == VariantPlacementDTO.PlacementType.NEW_GROUP) {
-            try {
-                if (!groupService.assignProgrammingSourceIfUngrouped(preparation.sourceExerciseId(), group)) {
-                    return List.of("The variant was saved in its new group, but the source is no longer eligible to join it.");
-                }
-            }
-            catch (ConflictException busySource) {
-                return List.of("The variant was saved in its new group, but another operation currently protects the source. Add the source after that operation finishes.");
-            }
+        groupService.assignToGroupWhileAuthoring(destination, group, verifyOwnership);
+        if (choice.type() == VariantPlacementDTO.PlacementType.NEW_GROUP
+                && !groupService.assignProgrammingSourceIfUngrouped(exercises.findByIdElseThrow(preparation.sourceExerciseId()), group)) {
+            return List.of("The variant was saved in its new group, but the source is no longer eligible to join it.");
         }
         return List.of();
     }

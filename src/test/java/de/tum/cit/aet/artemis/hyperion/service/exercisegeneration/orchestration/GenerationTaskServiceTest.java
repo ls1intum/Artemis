@@ -173,7 +173,7 @@ class GenerationTaskServiceTest {
 
     private GenerationStartedEvent variantEvent() {
         return new GenerationStartedEvent(JOB_ID, user, exercise, "Change the domain", GenerationMode.ADAPT, exercise.getProblemStatement(), exercise.getTitle(), null, "budget",
-                null, null, new GenerationVariantPreparation(999L, "source-copy", null));
+                null, null, new GenerationVariantPreparation(999L, org.mockito.Mockito.mock(GenerationVariantPreparation.SourceSnapshot.class), null));
     }
 
     @Test
@@ -193,7 +193,6 @@ class GenerationTaskServiceTest {
         order.verify(orchestrator).generate(any(), eq(user), eq("Change the domain"), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any(), any(), any(), any(), any(), any());
         order.verify(persistenceService).persist(any(), eq(user), any(), any(), any(), eq(JOB_ID), eq(GenerationMode.ADAPT), any(), any());
         order.verify(variants).place(eq(event), any());
-        verify(variants).releaseSource(event);
         assertThat(sentEvents().getLast().completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.SUCCESS);
     }
 
@@ -206,7 +205,6 @@ class GenerationTaskServiceTest {
         variantTask(variants).runAsync(event);
 
         verify(orchestrator, never()).generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any());
-        verify(variants).releaseSource(event);
         verify(jobService).clearJob(EXERCISE_ID, JOB_ID);
         assertThat(sentEvents().getLast().type()).isEqualTo(ExerciseGenerationEventDTO.Type.ERROR);
     }

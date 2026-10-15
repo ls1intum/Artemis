@@ -554,14 +554,7 @@ public class GenerationTaskService {
                 jobService.sealTokenAccountingOnWorkerExit(exerciseId, jobId);
             }
             finally {
-                try {
-                    if (event.variantPreparation() != null) {
-                        variants.releaseSource(event);
-                    }
-                }
-                finally {
-                    clearJobAndReleaseBudget(exerciseId, jobId, event, tokenAccountingFailed.get(), recoveryRequired.get());
-                }
+                clearJobAndReleaseBudget(exerciseId, jobId, event, tokenAccountingFailed.get(), recoveryRequired.get());
             }
         }
     }

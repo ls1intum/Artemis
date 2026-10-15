@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantPlacementDTO;
 import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmissionService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationStartedEvent;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationVariantPreparation;
@@ -48,7 +47,7 @@ class GenerationVariantServiceTest {
     private GenerationVariantDraftService drafts;
 
     @Mock
-    private GenerationExternalMutationService mutations;
+    private GenerationVariantPreparation.SourceSnapshot sourceSnapshot;
 
     @Mock
     private GenerationJobService jobs;
@@ -72,7 +71,7 @@ class GenerationVariantServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new GenerationVariantService(admission, drafts, mutations, jobs, placement);
+        service = new GenerationVariantService(admission, drafts, jobs, placement);
         user = new User();
         user.setLogin("instructor");
         source = new ProgrammingExercise();
@@ -84,12 +83,12 @@ class GenerationVariantServiceTest {
         reservation = new GenerationAdmissionService.ReservedRun(user, source, new ExerciseGenerationRequestDTO(GenerationMode.ADAPT, "A library", null), settings, "A library",
                 null, new ExerciseGenerationInputDTO("A library", List.of(), 1L), "budget");
         event = new GenerationStartedEvent("job", user, target, "A library", GenerationMode.ADAPT, null, null, null, "budget", null, settings,
-                new GenerationVariantPreparation(1L, "copy-token", request));
+                new GenerationVariantPreparation(1L, sourceSnapshot, request));
     }
 
     private void admit() {
         when(admission.reserveVariant(user, 1L, request)).thenReturn(reservation);
-        when(mutations.claimParticipationSlot(1L)).thenReturn("copy-token");
+        when(drafts.captureSource(1L)).thenReturn(sourceSnapshot);
     }
 
     private void reserveJob() {
@@ -104,6 +103,7 @@ class GenerationVariantServiceTest {
         when(drafts.prepare(eq(1L), eq(request), any())).thenAnswer(invocation -> {
             Function<ProgrammingExercise, GenerationStartedEvent> reserve = invocation.getArgument(2);
             GenerationStartedEvent start = reserve.apply(target);
+            verify(drafts).verifySource(1L, sourceSnapshot);
             verify(jobs, never()).dispatchPreparedJob(any());
             committed.set(true);
             return start;
@@ -119,7 +119,7 @@ class GenerationVariantServiceTest {
         assertThat(result.sourceExerciseId()).isEqualTo(1L);
         assertThat(result.exerciseId()).isEqualTo(2L);
         verify(admission, never()).release(any());
-        verify(mutations, never()).clearParticipationSlot(eq(1L), any());
+
     }
 
     @Test
@@ -136,7 +136,7 @@ class GenerationVariantServiceTest {
 
         verify(jobs).clearJob(2L, "job");
         verify(jobs, never()).dispatchPreparedJob(any());
-        verify(mutations).clearParticipationSlot(1L, "copy-token");
+
         verify(admission).release(reservation);
     }
 
@@ -148,16 +148,15 @@ class GenerationVariantServiceTest {
 
         assertThat(service.start(user, 1L, request).exerciseId()).isEqualTo(2L);
 
-        verify(mutations).clearParticipationSlot(1L, "copy-token");
         verify(admission).release(reservation);
     }
 
     @Test
     void sourceConflictDoesNotCreateADestinationAndReleasesBudget() {
         when(admission.reserveVariant(user, 1L, request)).thenReturn(reservation);
-        when(mutations.claimParticipationSlot(1L)).thenThrow(new IllegalStateException("source busy"));
+        when(drafts.captureSource(1L)).thenThrow(new IllegalStateException("source changed"));
 
-        assertThatThrownBy(() -> service.start(user, 1L, request)).hasMessage("source busy");
+        assertThatThrownBy(() -> service.start(user, 1L, request)).hasMessage("source changed");
 
         verify(drafts, never()).prepare(anyLong(), any(), any());
         verify(admission).release(reservation);
@@ -179,7 +178,7 @@ class GenerationVariantServiceTest {
             assertThatThrownBy(() -> service.prepareInfrastructure(event)).hasMessage("copy failed");
 
             assertThat(SecurityContextHolder.getContext()).isSameAs(previous);
-            verify(mutations).clearParticipationSlot(1L, "copy-token");
+
         }
         finally {
             SecurityContextHolder.setContext(original);
@@ -191,17 +190,56 @@ class GenerationVariantServiceTest {
         assertThatThrownBy(() -> service.prepareInfrastructure(event)).hasMessageContaining("reservation was lost");
 
         verify(drafts, never()).complete(1L, 2L);
-        verify(mutations).clearParticipationSlot(1L, "copy-token");
+
     }
 
     @Test
-    void invalidPlacementReleasesBudgetBeforeAnySourceReservation() {
+    void invalidPlacementReleasesBudgetBeforeSourceCapture() {
         when(admission.reserveVariant(user, 1L, request)).thenReturn(reservation);
         doThrow(new IllegalArgumentException("foreign group")).when(placement).validate(source, request);
 
         assertThatThrownBy(() -> service.start(user, 1L, request)).hasMessage("foreign group");
 
-        verify(mutations, never()).claimParticipationSlot(1L);
+        verify(drafts, never()).captureSource(1L);
         verify(admission).release(reservation);
     }
+
+    @Test
+    void changedSourceBeforeDraftCommitClearsReservationAndNeverDispatchesTheWorker() {
+        admit();
+        reserveJob();
+        when(drafts.prepare(eq(1L), eq(request), any())).thenAnswer(invocation -> {
+            Function<ProgrammingExercise, GenerationStartedEvent> reserve = invocation.getArgument(2);
+            return reserve.apply(target);
+        });
+        doThrow(new IllegalStateException("source changed")).when(drafts).verifySource(1L, sourceSnapshot);
+
+        assertThatThrownBy(() -> service.start(user, 1L, request)).hasMessage("source changed");
+
+        verify(jobs, never()).dispatchPreparedJob(any());
+        verify(jobs).clearJob(2L, "job");
+        verify(admission).release(reservation);
+    }
+
+    @Test
+    void changedSourceBeforeCopyNeverWritesDestinationRepositories() {
+        when(jobs.isOwnedActiveJob(2L, "job")).thenReturn(true);
+        doThrow(new IllegalStateException("source changed")).when(drafts).verifySource(1L, sourceSnapshot);
+
+        assertThatThrownBy(() -> service.prepareInfrastructure(event)).hasMessage("source changed");
+
+        verify(drafts, never()).complete(1L, 2L);
+    }
+
+    @Test
+    void sourceIsCheckedAgainAfterCopyBeforeTheWorkerCanProceed() {
+        when(jobs.isOwnedActiveJob(2L, "job")).thenReturn(true);
+        org.mockito.Mockito.doNothing().doThrow(new IllegalStateException("source changed during copy")).when(drafts).verifySource(1L, sourceSnapshot);
+
+        assertThatThrownBy(() -> service.prepareInfrastructure(event)).hasMessage("source changed during copy");
+
+        verify(drafts).complete(1L, 2L);
+        verify(drafts, org.mockito.Mockito.times(2)).verifySource(1L, sourceSnapshot);
+    }
+
 }

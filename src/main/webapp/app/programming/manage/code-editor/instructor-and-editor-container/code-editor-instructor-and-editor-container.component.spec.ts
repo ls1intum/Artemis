@@ -47,7 +47,10 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExerciseReviewCommentService, ReviewAdaptationAvailability } from 'app/exercise/review/exercise-review-comment.service';
 import { ExerciseEditorSyncService } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
-import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
+import {
+    CodeEditorInstructorBaseContainerComponent,
+    LOADING_STATE,
+} from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
@@ -2193,9 +2196,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
 
         const jenkinsFixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
         const jenkinsComp = jenkinsFixture.componentInstance;
+        setCodeEditorContainer(jenkinsComp, { canDeactivate: () => true });
         jenkinsComp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true }));
         const jenkinsAttach = vi.fn();
-        (jenkinsComp as any).generationActivity = { attachToJob: jenkinsAttach };
+        (jenkinsComp as any).generationActivity = { attachToJob: jenkinsAttach, running: () => false, statusLoading: () => false, statusLoadFailed: () => false };
 
         expect((jenkinsComp as any).hyperionEnabled).toBe(true);
         expect((jenkinsComp as any).hyperionGenerationSupported).toBe(false);
@@ -2203,6 +2207,23 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         const availability = reviewCommentService.connectAdaptation.mock.calls.at(-1)![0] as ReviewAdaptationAvailability;
         expect(availability.offered()).toBe(false);
         expect(availability.feedbackOffered!()).toBe(true);
+        expect(availability.blockedReason()).toBeUndefined();
+        jenkinsComp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, releaseDate: dayjs().subtract(1, 'minute') }));
+        expect(availability.feedbackOffered!()).toBe(true);
+        expect(availability.blockedReason()).toBeUndefined();
+        jenkinsComp.loadingState.set(LOADING_STATE.CREATING_ASSIGNMENT_REPO);
+        expect(availability.blockedReason()).toBe('artemisApp.hyperion.generation.blocker.repositorySetupBusy');
+        jenkinsComp.loadingState.set(LOADING_STATE.CLEAR);
+        const applying = signal(true);
+        vi.spyOn(jenkinsComp, 'isAiApplying').mockImplementation(() => applying());
+        expect(availability.blockedReason()).toBe('artemisApp.hyperion.generation.blocker.problemStatementBusy');
+        const clean = signal(false);
+        setCodeEditorContainer(jenkinsComp, { canDeactivate: () => clean() });
+        applying.set(false);
+        expect(availability.blockedReason()).toBe('artemisApp.hyperion.generationActivity.saveChangesFirst');
+        clean.set(true);
+        expect(availability.blockedReason()).toBeUndefined();
+
         expect((jenkinsComp as any).adaptOffered()).toBe(false);
         expect((jenkinsComp as any).generationSupported()).toBe(false);
         expect((jenkinsComp as any).canAdaptNow()).toBe(false);

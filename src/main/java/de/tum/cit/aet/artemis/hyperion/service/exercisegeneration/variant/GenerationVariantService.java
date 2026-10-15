@@ -15,7 +15,6 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.VariantGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmissionService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationStartedEvent;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationVariantPreparation;
@@ -30,17 +29,14 @@ public class GenerationVariantService {
 
     private final GenerationVariantDraftService drafts;
 
-    private final GenerationExternalMutationService mutations;
-
     private final GenerationJobService jobs;
 
     private final GenerationVariantPlacementService placement;
 
-    public GenerationVariantService(GenerationAdmissionService admission, GenerationVariantDraftService drafts, GenerationExternalMutationService mutations,
-            GenerationJobService jobs, GenerationVariantPlacementService placement) {
+    public GenerationVariantService(GenerationAdmissionService admission, GenerationVariantDraftService drafts, GenerationJobService jobs,
+            GenerationVariantPlacementService placement) {
         this.admission = admission;
         this.drafts = drafts;
-        this.mutations = mutations;
         this.jobs = jobs;
         this.placement = placement;
     }
@@ -56,16 +52,16 @@ public class GenerationVariantService {
     public ExerciseGenerationJobStartDTO start(User user, long sourceId, VariantGenerationRequestDTO request) {
         var reservation = admission.reserveVariant(user, sourceId, request);
         AtomicReference<GenerationStartedEvent> prepared = new AtomicReference<>();
-        String sourceToken = null;
         boolean dispatched = false;
         try {
             placement.validate(reservation.source(), request);
-            sourceToken = mutations.claimParticipationSlot(sourceId);
-            var context = new GenerationVariantPreparation(sourceId, sourceToken, request);
+            var sourceSnapshot = drafts.captureSource(sourceId);
+            var context = new GenerationVariantPreparation(sourceId, sourceSnapshot, request);
             GenerationStartedEvent event = drafts.prepare(sourceId, request, destination -> {
                 var start = jobs.prepareVariantJob(user, destination, reservation.prompt(), reservation.budgetReservationId(), reservation.settings(), reservation.input(),
                         context);
                 prepared.set(start);
+                drafts.verifySource(sourceId, sourceSnapshot);
                 return start;
             });
             // prepare returns only after its repository-owned transaction commits. A worker can never race an invisible draft.
@@ -81,20 +77,13 @@ public class GenerationVariantService {
         }
         finally {
             if (!dispatched) {
-                try {
-                    if (sourceToken != null) {
-                        mutations.clearParticipationSlot(sourceId, sourceToken);
-                    }
-                }
-                finally {
-                    admission.release(reservation);
-                }
+                admission.release(reservation);
             }
         }
     }
 
     /**
-     * Copies the source while its shared reservation excludes edits; the common destination slot excludes student starts.
+     * Copies a stable source baseline into the reserved destination without blocking ordinary edits.
      *
      * @param event admitted common job
      */
@@ -103,18 +92,15 @@ public class GenerationVariantService {
         if (preparation == null) {
             return;
         }
-        try {
-            if (!jobs.isOwnedActiveJob(event.exercise().getId(), event.jobId())) {
-                throw new IllegalStateException("The destination reservation was lost before preparation");
-            }
-            asInitiator(event.user(), () -> {
-                drafts.complete(preparation.sourceExerciseId(), event.exercise().getId());
-                return null;
-            });
+        if (!jobs.isOwnedActiveJob(event.exercise().getId(), event.jobId())) {
+            throw new IllegalStateException("The destination reservation was lost before preparation");
         }
-        finally {
-            releaseSource(event);
-        }
+        asInitiator(event.user(), () -> {
+            drafts.verifySource(preparation.sourceExerciseId(), preparation.sourceSnapshot());
+            drafts.complete(preparation.sourceExerciseId(), event.exercise().getId());
+            drafts.verifySource(preparation.sourceExerciseId(), preparation.sourceSnapshot());
+            return null;
+        });
     }
 
     /**
@@ -126,18 +112,6 @@ public class GenerationVariantService {
      */
     public List<String> place(GenerationStartedEvent event, Runnable verifyOwnership) {
         return asInitiator(event.user(), () -> placement.place(event, verifyOwnership));
-    }
-
-    /**
-     * Releases the source even when cancellation wins before repository preparation starts. Exact-token release is idempotent.
-     *
-     * @param event common job with optional source preparation
-     */
-    public void releaseSource(GenerationStartedEvent event) {
-        var preparation = event.variantPreparation();
-        if (preparation != null) {
-            mutations.clearParticipationSlot(preparation.sourceExerciseId(), preparation.sourceReservationToken());
-        }
     }
 
     private <T> T asInitiator(User user, Supplier<T> operation) {
