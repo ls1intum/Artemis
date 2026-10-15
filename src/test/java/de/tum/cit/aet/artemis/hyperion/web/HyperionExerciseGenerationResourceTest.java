@@ -467,7 +467,7 @@ class HyperionExerciseGenerationResourceTest {
         verify(sandboxClient, never()).hasAvailableGenerationSandboxSlot(any());
         verify(generationBudgetService, never()).reserveGenerationBudget(any(), any(), anyLong());
         verify(jobService, never()).startJob(any(), any(), any(), any(), any(), any(), any(), any());
-        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.revertExerciseGeneration(1L))
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> resource.revertExerciseGeneration(1L, "exam-run"))
                 .satisfies(exception -> assertThat(exception.getErrorKey()).isEqualTo("unsupportedGenerationLanguage"));
         verify(jobService, never()).claimRevertSlot(any(), anyLong());
     }
