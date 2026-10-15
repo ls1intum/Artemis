@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.EurekaInstanceHelper;
 import de.tum.cit.aet.artemis.core.config.HazelcastConfiguration;
+import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -69,6 +70,55 @@ class GenerationSavePartitionTest {
         }
         finally {
             member.getLifecycleService().terminate();
+        }
+    }
+
+    @Test
+    void ownerChecksCurrentMembersBeforeTheCachedProtectionUpdates() throws Exception {
+        String cluster = "generation-policy-lag-" + UUID.randomUUID();
+        HazelcastInstance owner = Hazelcast.newHazelcastInstance(configuration(cluster, 2, List.of()));
+        HazelcastInstance peer = null;
+        var assessmentBlocked = new CountDownLatch(1);
+        var releaseAssessment = new CountDownLatch(1);
+        try {
+            String seed = "127.0.0.1:" + owner.getCluster().getLocalMember().getSocketAddress().getPort();
+            peer = Hazelcast.newHazelcastInstance(configuration(cluster, 2, List.of(seed)));
+            String mapName = Constants.HYPERION_LIVE_SAVE_COORDINATION_MAP;
+            String policyName = owner.getConfig().getMapConfig(mapName).getSplitBrainProtectionName();
+            var cachedPolicy = owner.getSplitBrainProtectionService().getSplitBrainProtection(policyName);
+            await().atMost(Duration.ofSeconds(30)).until(cachedPolicy::hasMinimumSize);
+            await().atMost(Duration.ofSeconds(30)).until(() -> owner.getPartitionService().isClusterSafe());
+            var guarded = new HazelcastDistributedDataProviderService(owner).<String, String>getMap(mapName);
+            // These traverse the real processor serialization and backup paths while membership is complete.
+            assertThat(guarded.putIfAbsent("existing", "one")).isNull();
+            assertThat(guarded.replace("existing", "one", "two")).isTrue();
+            assertThat(guarded.get("existing")).isEqualTo("two");
+            assertThat(guarded.remove("existing", "two")).isTrue();
+            ((HazelcastInstanceProxy) owner).getOriginal().node.nodeEngine.getExecutionService().execute("hz:splitBrainProtection", () -> {
+                assessmentBlocked.countDown();
+                try {
+                    releaseAssessment.await(90, TimeUnit.SECONDS);
+                }
+                catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+            assertThat(assessmentBlocked.await(10, TimeUnit.SECONDS)).isTrue();
+            peer.getLifecycleService().terminate();
+            await().atMost(Duration.ofSeconds(30)).until(() -> owner.getCluster().getMembers().size() == 1);
+            assertThat(cachedPolicy.hasMinimumSize()).isTrue();
+            // Native protection still accepts a fresh key. The owner-side processor must reject it now.
+            assertThat(owner.<String, String>getMap(mapName).putIfAbsent("native-control", "accepted")).isNull();
+            assertThatThrownBy(() -> guarded.putIfAbsent("fresh-owner", "forbidden")).isInstanceOf(SplitBrainProtectionException.class);
+            assertThatThrownBy(() -> guarded.get("fresh-owner")).isInstanceOf(SplitBrainProtectionException.class);
+            assertThat(owner.<String, String>getMap(mapName).containsKey("fresh-owner")).isFalse();
+        }
+        finally {
+            releaseAssessment.countDown();
+            if (peer != null && peer.getLifecycleService().isRunning()) {
+                peer.getLifecycleService().terminate();
+            }
+            owner.getLifecycleService().terminate();
         }
     }
 
