@@ -51,6 +51,8 @@ class CourseNotificationQueryCountIntegrationTest extends AbstractSpringIntegrat
             return null;
         }).hasBeenCalledAtMostTimes(QUERIES_INDEPENDENT_OF_THE_RECIPIENTS);
 
-        assertThat(userCourseNotificationStatusRepository.findAll()).hasSizeGreaterThanOrEqualTo(RECIPIENTS);
+        // every recipient has exactly one status for this notification, which other rows in the table cannot satisfy
+        assertThat(userCourseNotificationStatusRepository.findAllByCourseNotificationId(notification.notificationId)).extracting(status -> status.getUser().getId())
+                .containsExactlyInAnyOrderElementsOf(recipients.stream().map(User::getId).toList());
     }
 }
