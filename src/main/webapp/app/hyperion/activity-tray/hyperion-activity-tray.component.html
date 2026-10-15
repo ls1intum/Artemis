@@ -28,7 +28,7 @@
         }
     </button>
     <tumaet-ui-popover #tray placement="bottom" [ariaLabel]="'artemisApp.hyperion.activity.title' | artemisTranslate" (openChange)="refresh($event)">
-        <section class="flex w-[min(26rem,calc(100vw-2rem))] flex-col gap-3" data-testid="ai-activity-tray">
+        <section class="flex max-h-[calc(100dvh-6rem)] w-[min(26rem,calc(100vw-2rem))] flex-col gap-3" data-testid="ai-activity-tray">
             <div class="flex items-center justify-between gap-2">
                 <span role="heading" aria-level="2" class="text-base font-semibold">{{ 'artemisApp.hyperion.activity.title' | artemisTranslate }}</span>
                 @if (hiddenCount()) {
@@ -52,7 +52,10 @@
                     <button type="button" tumAetUiButton variant="text" size="small" (click)="refresh(true)">{{ 'artemisApp.hyperion.jobs.retry' | artemisTranslate }}</button>
                 </tumaet-ui-message>
             }
-            <ul class="m-0 flex max-h-[min(65vh,36rem)] list-none flex-col gap-3 overflow-y-auto p-0" [attr.aria-label]="'artemisApp.hyperion.activity.title' | artemisTranslate">
+            <ul
+                class="m-0 flex min-h-0 max-h-[min(65vh,36rem)] list-none flex-col gap-3 overflow-y-auto overscroll-contain p-0"
+                [attr.aria-label]="'artemisApp.hyperion.activity.title' | artemisTranslate"
+            >
                 @for (row of visibleRows(); track row.key) {
                     <li
                         class="activity-card rounded-xl border border-border p-4"

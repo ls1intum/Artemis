@@ -659,6 +659,26 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(click).not.toHaveBeenCalled();
     });
 
+    it('does not move the canonical baseline backwards when HTTP save responses arrive out of order', () => {
+        fixture.componentRef.setInput('canonicalBaseIsolation', true);
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+        (comp as any).problemStatementSyncState = { doc: yDoc, text: yText, awareness: yAwareness };
+        const currentContent = { value: 'older persisted statement' };
+        setMarkdownEditorMonaco(comp, { monacoEditor: () => ({ getText: () => currentContent.value }) } as unknown as MarkdownEditorMonacoComponent);
+        const oldResponse = new Subject<HttpResponse<ProgrammingExercise>>();
+        const newResponse = new Subject<HttpResponse<ProgrammingExercise>>();
+        vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValueOnce(oldResponse).mockReturnValueOnce(newResponse);
+        comp.saveInstructions({ stopPropagation: () => {} } as Event);
+        currentContent.value = 'new persisted statement';
+        comp.updateProblemStatement(currentContent.value);
+        comp.saveInstructions({ stopPropagation: () => {} } as Event);
+        newResponse.next(new HttpResponse({ body: { ...exercise, problemStatement: 'new persisted statement' } }));
+        oldResponse.next(new HttpResponse({ body: { ...exercise, problemStatement: 'older persisted statement' } }));
+        expect(problemStatementSyncServiceMock.acknowledgeCanonicalSave).toHaveBeenCalledExactlyOnceWith(exercise.id, 'new persisted statement', yDoc);
+    });
+
     it('keeps a newer edit dirty and advances the shared canonical base when an older save completes', () => {
         fixture.componentRef.setInput('canonicalBaseIsolation', true);
         fixture.componentRef.setInput('editMode', true);

@@ -111,6 +111,20 @@ describe('HyperionActivityTrayComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('keeps thirty historical runs and their last dismiss control inside a viewport-bounded scroll list', () => {
+        entries.set(Array.from({ length: 30 }, (_, index) => ({ ...running, jobId: `history-${index}`, status: 'saved' })));
+        open();
+        const tray = query('ai-activity-tray')!;
+        const list = tray.querySelector('ul')!;
+        expect(tray.classList.contains('max-h-[calc(100dvh-6rem)]')).toBe(true);
+        expect(list.classList.contains('min-h-0')).toBe(true);
+        expect(list.classList.contains('overflow-y-auto')).toBe(true);
+        expect(list.querySelectorAll('[data-testid="ai-activity-entry"]')).toHaveLength(30);
+        list.querySelectorAll<HTMLButtonElement>('[data-testid="ai-activity-dismiss"]').item(29).click();
+        fixture.detectChanges();
+        expect(list.querySelectorAll('[data-testid="ai-activity-entry"]')).toHaveLength(29);
+    });
+
     it('renders no header control without jobs', () => expect(query('ai-activity-trigger')).toBeNull());
 
     it('shows one trigger with running AND attention states from both workflows', () => {

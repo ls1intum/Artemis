@@ -120,6 +120,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private problemStatementStateReplacementSubscription?: Subscription;
     private problemStatementInitialSyncFinalizedSubscription?: Subscription;
     private problemStatementSyncState?: ProblemStatementSyncState;
+    private canonicalSaveSequence = 0;
     private problemStatementBinding?: MonacoBinding;
     private problemStatementBindingDestroyed = false;
     private problemStatementChangeToSuppress?: string;
@@ -265,6 +266,18 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.persistProblemStatement().subscribe();
     }
 
+    /** Capture the document at dispatch so a late Save response cannot acknowledge a replacement editor. */
+    createCanonicalSaveAcknowledgement(): (content: string | undefined) => void {
+        const exerciseId = this.exercise().id;
+        const doc = this.problemStatementSyncState?.doc;
+        const sequence = ++this.canonicalSaveSequence;
+        return (content) => {
+            if (sequence === this.canonicalSaveSequence && this.canonicalBaseIsolation() && exerciseId !== undefined && doc) {
+                this.problemStatementSyncService.acknowledgeCanonicalSave(exerciseId, content, doc);
+            }
+        };
+    }
+
     private persistProblemStatement(): Observable<void> {
         if (this.isGeneratingOrRefining() || this.awaitingCanonicalSync()) {
             return EMPTY;
@@ -273,13 +286,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         const currentProblemStatement = this.getCurrentContent() ?? this.exercise().problemStatement;
         const problemStatementToSave = currentProblemStatement?.trim() || undefined;
         const submittedRevision = this.problemStatementRevision;
-        const submittedExerciseId = this.exercise().id!;
-        const submittedDoc = this.problemStatementSyncState?.doc;
+        const acknowledgeCanonicalSave = this.createCanonicalSaveAcknowledgement();
         return this.programmingExerciseService.updateProblemStatement(this.exercise().id!, problemStatementToSave).pipe(
             tap((response) => {
-                if (this.canonicalBaseIsolation() && response.body && submittedDoc) {
-                    this.problemStatementSyncService.acknowledgeCanonicalSave(submittedExerciseId, response.body.problemStatement, submittedDoc);
-                }
+                if (response.body) acknowledgeCanonicalSave(response.body.problemStatement);
                 if (submittedRevision === this.problemStatementRevision && (this.getCurrentContent() ?? this.exercise().problemStatement) === currentProblemStatement) {
                     this.unsavedChanges = false;
                     this.onProblemStatementSaved.emit();

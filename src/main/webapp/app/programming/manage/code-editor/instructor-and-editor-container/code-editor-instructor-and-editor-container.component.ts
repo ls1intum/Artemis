@@ -67,7 +67,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { HyperionGenerationActivityFacade, HyperionGenerationCompletedEvent } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { Router } from '@angular/router';
-import { HYPERION_GENERATION_BLOCKER_KEY, hyperionGenerationBlocker, supportsHyperionExerciseGeneration } from 'app/hyperion/exercise-generation/hyperion-generation-support';
+import { HYPERION_GENERATION_BLOCKER_KEY, hyperionGenerationBlocker, usesCanonicalProblemStatementSync } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 import { serverTimeSignal } from 'app/hyperion/exercise-generation/hyperion-server-time.util';
 import { CodeEditorAiActionsComponent } from 'app/hyperion/code-editor/ai-actions/code-editor-ai-actions.component';
 
@@ -476,7 +476,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /** Whether the run machinery (status polling, editing locks, reload after a save) applies to this exercise at all. */
     protected readonly generationSupported = computed(() => {
         const exercise = this.exercise();
-        return this.adaptOffered() && (exercise?.isAtLeastEditor ?? false) && supportsHyperionExerciseGeneration(exercise?.programmingLanguage, exercise?.projectType);
+        return usesCanonicalProblemStatementSync(exercise, this.hyperionGenerationSupported);
     });
 
     private readonly generationCapabilities = injectGenerationCapabilities(this.exercise, this.generationSupported);

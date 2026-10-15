@@ -172,6 +172,7 @@ export class HyperionGenerationActivityFacade {
     private readonly statusPoll = new DelayedCall(this.destroyRef);
     private cancellationStatusChecks = 0;
     private statusLoadAttempts = 0;
+    private emptyActiveStatusPolls = 0;
     private ownershipResolved = false;
     private readonly emittedTerminalJobs = new Set<string>();
 
@@ -349,13 +350,21 @@ export class HyperionGenerationActivityFacade {
                     this.statusLoadAttempts = 0;
                     this.ownershipResolved = true;
                     if (!status) {
+                        if (expectedJobId !== undefined && this.jobId() !== expectedJobId) return;
                         if (this.cancelRequested()) {
                             this.reset();
                             this.ownershipResolved = true;
                             return;
                         }
                         if (expectedJobId !== undefined && this.running() && this.ownedByCaller()) {
-                            this.scheduleActiveStatusRefresh(exerciseId, expectedJobId);
+                            if (!background || ++this.emptyActiveStatusPolls < 2) {
+                                this.scheduleActiveStatusRefresh(exerciseId, expectedJobId);
+                                return;
+                            }
+                            this.exerciseContentsInvalidated.next(expectedJobId);
+                            this.reset();
+                            this.ownershipResolved = true;
+                            this.scheduleIdleStatusRefresh(exerciseId);
                             return;
                         }
                         if (expectedJobId === undefined || !this.ownedByCaller()) {
@@ -369,6 +378,7 @@ export class HyperionGenerationActivityFacade {
                         }
                         return;
                     }
+                    this.emptyActiveStatusPolls = 0;
                     if (expectedJobId !== undefined && status.jobId !== expectedJobId) {
                         if (!background && !this.cancelRequested() && this.ownedByCaller() && !status.running) {
                             this.scheduleActiveStatusRefresh(exerciseId, expectedJobId);
@@ -794,6 +804,7 @@ export class HyperionGenerationActivityFacade {
         this.statusLoading.set(false);
         this.statusLoadFailed.set(false);
         this.statusLoadAttempts = 0;
+        this.emptyActiveStatusPolls = 0;
         this.ownershipResolved = false;
         this.resetRevertState();
         this.emittedTerminalJobs.clear();

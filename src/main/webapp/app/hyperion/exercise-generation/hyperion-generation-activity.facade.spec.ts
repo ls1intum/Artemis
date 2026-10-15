@@ -1161,6 +1161,55 @@ describe('HyperionGenerationActivityFacade', () => {
         expect(invalidated).toHaveBeenCalledOnce();
     });
 
+    it('revalidates contents and unlocks an active run after authoritative empty background polls following remote undo', () => {
+        vi.useFakeTimers();
+        const fixture = createWith({ jobId: 'A', running: true, events: [], fileChanges: [] });
+        const activity = fixture.componentInstance.facade;
+        const invalidated = vi.fn(() => expect(activity.jobId()).toBe('A'));
+        activity.exerciseContentsInvalidated.subscribe(invalidated);
+        service.status = null;
+        vi.advanceTimersByTime(5_000);
+        expect(activity.running()).toBe(true);
+        expect(invalidated).not.toHaveBeenCalled();
+        vi.advanceTimersByTime(5_000);
+        expect(invalidated).toHaveBeenCalledExactlyOnceWith('A');
+        expect(activity.running()).toBe(false);
+        expect(activity.jobId()).toBeUndefined();
+        vi.advanceTimersByTime(30_000);
+        expect(invalidated).toHaveBeenCalledOnce();
+        expect(activity.statusLoadFailed()).toBe(false);
+    });
+
+    it('ignores an old active background null after a newer run attaches', () => {
+        vi.useFakeTimers();
+        const fixture = createWith({ jobId: 'A', running: true, events: [], fileChanges: [] });
+        const oldPoll = new Subject<HyperionGenerationStatus | null>();
+        const getStatus = vi.spyOn(service, 'getStatus').mockReturnValueOnce(oldPoll);
+        vi.advanceTimersByTime(5_000);
+        getStatus.mockReturnValue(of(normalizeStatus({ jobId: 'B', running: true, events: [], fileChanges: [] })));
+        const activity = fixture.componentInstance.facade;
+        const invalidated = vi.fn();
+        activity.exerciseContentsInvalidated.subscribe(invalidated);
+        activity.attachToJob('B', 'GENERATE');
+        oldPoll.next(null);
+        oldPoll.complete();
+        expect(activity.jobId()).toBe('B');
+        expect(activity.running()).toBe(true);
+        expect(invalidated).not.toHaveBeenCalled();
+    });
+
+    it('preserves a newly attached run when its initial foreground status is empty', () => {
+        vi.useFakeTimers();
+        const fixture = createWith(null);
+        const activity = fixture.componentInstance.facade;
+        const invalidated = vi.fn();
+        activity.exerciseContentsInvalidated.subscribe(invalidated);
+        activity.attachToJob('new', 'GENERATE');
+        expect(activity.jobId()).toBe('new');
+        expect(activity.running()).toBe(true);
+        expect(invalidated).not.toHaveBeenCalled();
+    });
+
     it('does not invalidate untouched editor contents when idle status is absent', () => {
         vi.useFakeTimers();
         const fixture = createWith(null);
