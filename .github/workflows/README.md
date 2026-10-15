@@ -36,7 +36,8 @@ ci.yml                                                            (single entry 
 ├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
 ├── dead-code       ── uses ci-dead-code.yml      (always; unreachable Java classes + unreachable client files)
-├── e2e             ── uses ci-e2e.yml            (after build; required but flakiness-aware — reds only on a real, non-flaky regression; a known-flaky-only run is exonerated)
+├── liquibase       ── uses ci-liquibase.yml      (if has_liquibase; changelogs, seed data and baseline replayed on PostgreSQL and MySQL)
+├── e2e             ── uses ci-e2e.yml            (after build; required; known-flaky-only failures are exonerated when history is available)
 │
 │   ADVISORY — runs for signal, never blocks merge:
 ├── codeql          ── uses ci-codeql.yml         (Java + JS/TS security scan; non-fork; not gated)
@@ -68,8 +69,8 @@ The single required check is `CI / All required CI Passed`. It gates on every jo
 within `test`'s window (the lightweight area checks in a minute or two; `bean-instantiations` boots
 the app on H2 in a few minutes; `quality`'s slowest job, the ArchUnit run, still under `test`),
 so requiring them adds no merge latency. The one slow required check is `e2e` (detailed below):
-it is gated too, but with a flakiness-aware verdict, so it blocks only on a real, non-flaky
-regression and never on ambient flakiness. Path-skipped jobs report `skipped`, which the gate
+it is gated too, with a flakiness-aware verdict that exonerates failures known to be flaky.
+Without history, failures after Playwright retries remain blocking. Path-skipped jobs report `skipped`, which the gate
 accepts — so a job only blocks merge when it is *relevant and red*.
 
 `quality` (`ci-quality.yml`) is where all static analysis lives, for **both** server and
@@ -79,8 +80,8 @@ client test suites. This split (mirroring Angular/TypeScript/Vite) keeps a 30-se
 failure from being buried behind the multi-minute test jobs; the Java analyses are the server
 half of a symmetric `quality` stage, alongside the client checks.
 
-`e2e` **is** part of the required `all-required-ci-passed` gate, but with a flakiness-aware verdict
-so it blocks only on genuine regressions rather than on noise:
+`e2e` **is** part of the required `all-required-ci-passed` gate. Helios history can exonerate known
+flakes; without history, the ordinary Playwright verdict applies:
 
 - **`e2e`.** E2E takes up to ~2 hours and is flaky enough that a naive required gate would block
   good PRs on noise. Instead, `report-results` classifies each surviving failure against Helios
@@ -89,6 +90,14 @@ so it blocks only on genuine regressions rather than on noise:
   per-test detail (✅/⚪/❌ per phase, plus Helios flakiness scores) lives in the E2E PR comment. The
   test steps are `continue-on-error`, so the honest verdict is decided once in `report-results`, not
   by any single phase job.
+
+  Helios is optional. A missing secret, HTTP 401/403, outage, timeout or invalid response produces a
+  warning and falls back to Playwright: passing tests (including those recovered by its existing
+  retries) pass, while failures after retries remain blocking. Tests without matching history are
+  classified as `unknown`, not as confirmed regressions or known flakes. An unknown failure cannot
+  be exonerated by a known-flaky failure in another phase, and an unknown Phase 1 failure stops
+  Phase 2. Infrastructure failures and missing results remain blocking. The history request has a
+  ten-second deadline covering the complete response.
 
 `codeql` is deliberately **advisory** (not in the gate's `needs:`): it runs for signal and reds the
 run on a genuine failure, but never blocks merge.
@@ -167,13 +176,22 @@ the suite ran).
   `packages`. Playwright specs are `*.spec.ts` too, which is why client specs are matched by
   location, and a change under `src/test/playwright` always runs E2E. `build` and the other required
   checks still run.
+- A **draft** pull request does not start E2E either; marking it ready for review starts a CI run,
+  which runs E2E only if the changes also pass the `e2e_tests` filter above (a pull request that only
+  changes tests still skips it). The PR Docker image (`docker-pr` in `ci-build.yml`) is built for
+  internal pull requests only, because fork pull requests cannot push to GHCR, and only if the changes
+  pass that same filter (`build_pr_image`). That includes Playwright files and drafts: a test server
+  deploys the image of an open pull request, drafts included. A pull request that only changes tests
+  gets no image, because neither E2E nor a deploy needs it, and a deploy of such a commit has no
+  `sha-<commit>` image to find.
 - Only `pull_request` events skip. A push to `develop`, a merge group, a manual run and a release
   other than a `@tumaet/*` one run both suites, because the coverage badge and Sonar read both
   suites' coverage there and `develop` is where anything that slipped past a pull request's own run
   would show up. `@tumaet/*` release tags skip `detect-changes` and with it `test`, like every other
   Artemis job.
 - A pull request with 3000 changed files or more never skips: the changed files come from the pulls
-  API, which stops at 3000, so the filters may not have seen all of them.
+  API, which stops at 3000, so the filters may not have seen all of them. That covers the server
+  suite, the client suite, E2E, the PR image and the Liquibase checks (`has_liquibase`).
 - Codacy coverage is uploaded by the server report job only, so an internal pull request that skips
   the server suite uploads none.
 

@@ -1,5 +1,6 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
+import { SKIP_HTTP_ERROR_ALERT } from 'app/core/interceptor/errorhandler.interceptor';
 import { Observable } from 'rxjs';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 
@@ -14,9 +15,10 @@ export class LectureSearchService {
      * @param limit            the maximum number of hits
      * @param courseIds        the courses to search, or undefined to search everything the user can reach
      * @param excludeCourseIds the courses to hide from the search
+     * @param silent           true when the caller hides a failure itself, so no global error alert is shown for it
      * @return the matching content hits
      */
-    search(query: string, limit = 10, courseIds?: number[], excludeCourseIds?: number[]): Observable<LectureSearchResult[]> {
+    search(query: string, limit = 10, courseIds?: number[], excludeCourseIds?: number[], silent = false): Observable<LectureSearchResult[]> {
         const body: { query: string; limit: number; courseIds?: number[]; excludeCourseIds?: number[] } = { query, limit };
         if (courseIds?.length) {
             body.courseIds = courseIds;
@@ -24,6 +26,6 @@ export class LectureSearchService {
         if (excludeCourseIds?.length) {
             body.excludeCourseIds = excludeCourseIds;
         }
-        return this.http.post<LectureSearchResult[]>('api/iris/lecture-search', body);
+        return this.http.post<LectureSearchResult[]>('api/iris/lecture-search', body, { context: new HttpContext().set(SKIP_HTTP_ERROR_ALERT, silent) });
     }
 }

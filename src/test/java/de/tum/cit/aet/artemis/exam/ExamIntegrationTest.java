@@ -1994,6 +1994,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExamStatistics_tutorReceivesComplaintCounts() throws Exception {
+        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, false);
+        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
+                ExamChecklistDTO.class);
+        // without the complaint counts the exam status of a tutor would claim that 100% of the complaints are done
+        assertThat(returnedStatistics.numberOfAllComplaints()).isNotNull().isEqualTo(actualStatistics.numberOfAllComplaints());
+        assertThat(returnedStatistics.numberOfAllComplaintsDone()).isNotNull().isEqualTo(actualStatistics.numberOfAllComplaintsDone());
+        // the remaining instructor-only values stay hidden from tutors
+        assertThat(returnedStatistics.numberOfGeneratedStudentExams()).isNull();
+        assertThat(returnedStatistics.numberOfExamsStarted()).isNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamStatistics_considersOnlyInitializedParticipationsForPreparedExercises() throws Exception {
         ExerciseGroup exerciseGroup = exam2.getExerciseGroups().getFirst();
