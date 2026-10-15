@@ -750,6 +750,7 @@ dependencies {
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.springframework:spring-test"
     testImplementation "org.assertj:assertj-core:3.27.7"
+    testImplementation "io.micrometer:micrometer-registry-otlp"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     // needed to add mockito as agent and avoid its warning
     mockitoAgent ("org.mockito:mockito-core:${mockito_version}") {
