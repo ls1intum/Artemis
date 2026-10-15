@@ -64,7 +64,7 @@ export class TutorialEditContainerComponent {
                 next: () => {
                     this.isTutorialGroupLoading.set(false);
                     this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
-                    void this.router.navigate(['..'], { relativeTo: this.activatedRoute });
+                    void this.router.navigate(['/course-management', courseId, 'tutorial-groups']);
                 },
                 error: () => {
                     this.alertService.addErrorAlert('artemisApp.pages.createOrEditTutorialGroup.networkError.updateGroup');

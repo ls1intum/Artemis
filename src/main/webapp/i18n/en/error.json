@@ -47,6 +47,7 @@
         "emptyLegalDocument": "The privacy statement or the imprint must not be empty.",
         "cantSaveFile": "The uploaded file {{ fileName }} could not be saved.",
         "emptyFile": "The uploaded file {{ fileName }} is empty. Please check the file and try again.",
+        "invalidPdf": "The uploaded PDF file is invalid or corrupted. Please upload a valid PDF.",
         "externalSubmissionBeforeDueDate": "External submissions are not supported before the exercise due date.",
         "externalSubmissionForQuizExercise": "External submissions are not supported for Quiz exercises.",
         "noSubmissions": "No existing user was specified, or no submission exists.",

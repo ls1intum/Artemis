@@ -90,6 +90,13 @@
     --step-hero-bg-start: rgba(16, 185, 129, 0.06);
 }
 
+// ── Indented settings below a toggle ──────────────────
+// The date pickers inside need at least 15rem. On a phone the nested indents would push them past the clipping edge of
+// the wizard card and hide the clear and calendar buttons, so the indent only applies from the sm breakpoint up.
+.step-indent {
+    margin-inline-start: 1.5rem;
+}
+
 // ── Step page form body ───────────────────────────────
 .step-body {
     padding: 1.5rem 2rem 2rem;
@@ -193,5 +200,15 @@
 
     .step-body {
         padding: 1rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .step-indent {
+        margin-inline-start: 0;
+    }
+
+    .step-body {
+        padding: 0.75rem;
     }
 }
