@@ -424,6 +424,32 @@ describe('HyperionGenerationActivityFacade', () => {
         expect(fixture.componentInstance.facade.mode()).toBe('ADAPT');
         expect(fixture.componentInstance.facade.running()).toBe(true);
     });
+    it('adopts a terminal replacement run when both prior terminal and replacement start events were missed', () => {
+        vi.useFakeTimers();
+        const fixture = createWith({ jobId: 'j1', mode: 'GENERATE', running: true, events: [], fileChanges: [] });
+        const facade = fixture.componentInstance.facade;
+        const completed = vi.fn();
+        facade.generationCompleted.subscribe(completed);
+        service.status = {
+            jobId: 'j2',
+            mode: 'ADAPT',
+            running: false,
+            events: [{ type: 'DONE', liveExerciseChanged: true }],
+            fileChanges: [],
+            revertAvailable: true,
+        };
+
+        vi.advanceTimersByTime(5_000);
+
+        expect(facade.jobId()).toBe('j2');
+        expect(facade.mode()).toBe('ADAPT');
+        expect(facade.running()).toBe(false);
+        expect(facade.canRevert()).toBe(true);
+        expect(completed).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ jobId: 'j2', liveExerciseChanged: true }));
+        service.stream$.next({ type: 'PROGRESS', message: 'Delayed progress from j1' });
+        expect(facade.running()).toBe(false);
+        expect(facade.jobId()).toBe('j2');
+    });
     it('caps retained progress events to the latest entries', () => {
         const fixture = createWith({ jobId: 'j1', running: true, events: [], fileChanges: [] });
         const component = fixture.componentInstance.facade;
