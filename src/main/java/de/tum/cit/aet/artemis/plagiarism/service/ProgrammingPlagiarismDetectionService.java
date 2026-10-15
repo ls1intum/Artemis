@@ -19,7 +19,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.eclipse.jgit.api.errors.CanceledException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -428,10 +427,6 @@ public class ProgrammingPlagiarismDetectionService {
                 }
             }
             catch (GitException | GitAPIException | InvalidPathException ex) {
-                if (ex instanceof CanceledException) {
-                    // This batch skips failed repositories; clear cancellation before the worker processes another repository.
-                    Thread.interrupted();
-                }
                 log.error("Clone student repository {} in exercise '{}' did not work as expected: {}", participation.getVcsRepositoryUri(), programmingExercise.getTitle(),
                         ex.getMessage());
                 return null;

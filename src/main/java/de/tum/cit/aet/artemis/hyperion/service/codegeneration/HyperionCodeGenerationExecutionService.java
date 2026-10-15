@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.hyperion.dto.HyperionCodeGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationExternalMutationService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
@@ -164,8 +163,6 @@ public class HyperionCodeGenerationExecutionService {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final GenerationExternalMutationService mutationService;
-
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
     public HyperionCodeGenerationExecutionService(@Value("${artemis.version-control.default-branch:main}") String defaultBranch, GitService gitService,
@@ -176,7 +173,7 @@ public class HyperionCodeGenerationExecutionService {
             HyperionSolutionRepositoryService solutionStrategy, HyperionTemplateRepositoryService templateStrategy, HyperionTestRepositoryService testStrategy,
             ProgrammingSubmissionService programmingSubmissionService, HyperionConsistencyCheckService consistencyCheckService,
             HyperionReviewCommentContextRendererService reviewCommentContextRendererService, ExerciseVersionService exerciseVersionService,
-            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService, GenerationExternalMutationService mutationService) {
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.defaultBranch = defaultBranch;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
@@ -195,7 +192,6 @@ public class HyperionCodeGenerationExecutionService {
         this.consistencyCheckService = consistencyCheckService;
         this.reviewCommentContextRendererService = reviewCommentContextRendererService;
         this.exerciseVersionService = exerciseVersionService;
-        this.mutationService = mutationService;
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
     }
 
@@ -461,12 +457,7 @@ public class HyperionCodeGenerationExecutionService {
         }
 
         if (executionResult.lastCommitHash != null && exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
-            if (mutationService.isCoordinationEnabled()) {
-                exerciseVersionService.createExerciseVersionSynchronously(exercise, user);
-            }
-            else {
-                exerciseVersionService.createExerciseVersion(exercise, user);
-            }
+            exerciseVersionService.createExerciseVersion(exercise, user);
         }
 
         HyperionCodeGenerationEventDTO.CompletionStatus completionStatus = determineCompletionStatus(executionResult.generatedFilesCommitted, executionResult.buildResultOutcome);

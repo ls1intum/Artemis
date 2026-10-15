@@ -185,14 +185,14 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createExerciseVersionSynchronouslyUsesExactCallerCapturedCommitIds() {
+    void createExerciseVersionOrThrowUsesExactCallerCapturedCommitIds() {
         ProgrammingExercise exercise = createProgrammingExercise();
         User author = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
         String exactTemplateCommit = "a".repeat(40);
         String exactSolutionCommit = "b".repeat(40);
         String exactTestsCommit = "c".repeat(40);
 
-        exerciseVersionService.createExerciseVersionSynchronously(exercise, author,
+        exerciseVersionService.createExerciseVersionOrThrow(exercise, author,
                 Map.of(RepositoryType.TEMPLATE, exactTemplateCommit, RepositoryType.SOLUTION, exactSolutionCommit, RepositoryType.TESTS, exactTestsCommit));
 
         ProgrammingExerciseSnapshotDTO snapshot = exerciseVersionRepository.findTopByExerciseIdOrderByCreatedDateDesc(exercise.getId()).orElseThrow().getExerciseSnapshot()

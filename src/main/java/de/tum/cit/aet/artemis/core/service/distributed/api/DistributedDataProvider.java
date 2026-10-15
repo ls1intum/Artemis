@@ -29,12 +29,6 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopi
  */
 public interface DistributedDataProvider {
 
-    /** Advertises that a data owner applies deployment-wide writer admission fencing. */
-    String WRITER_FENCING_MEMBER_ATTRIBUTE = "artemis.coordination.writer-fencing";
-
-    /** Expected membership advertised by a fenced data owner; mixed deployment counts reject admission. */
-    String WRITER_FENCING_MEMBERS_ATTRIBUTE = "artemis.coordination.writer-fencing-members";
-
     /**
      * Returns a distributed queue with the given name.
      *
@@ -142,26 +136,6 @@ public interface DistributedDataProvider {
      * @return the address of the local member
      */
     String getLocalMemberAddress();
-
-    /**
-     * Returns the stable identity used to attribute ownership of distributed state to this node.
-     *
-     * <p>
-     * This is deliberately distinct from {@link #getLocalMemberAddress()}: an address may change after a reconnect,
-     * while an ownership token must remain stable for the lifetime of the middleware client/member.
-     *
-     * @return the local node identity
-     */
-    String getLocalNodeId();
-
-    /**
-     * Returns a complete coordination view from the store serving this node. An unavailable or incomplete lookup returns empty, never an empty membership guess.
-     * Member-hosted stores require a configured data-member quorum; external stores report connected process incarnations without pretending clients host the data.
-     * Absence never proves that Git or database writes stopped. Destructive recovery additionally requires exact ownership and operator-confirmed quiescence.
-     *
-     * @return the observed coordination membership, or empty when it cannot be established
-     */
-    Optional<CoordinationSnapshot> getCoordinationSnapshot();
 
     /**
      * Gets the addresses of all cluster members.

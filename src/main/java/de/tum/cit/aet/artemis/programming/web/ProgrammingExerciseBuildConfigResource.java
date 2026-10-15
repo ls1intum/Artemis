@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildPlanService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCreationScheduleService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 
 /**
@@ -75,13 +74,11 @@ public class ProgrammingExerciseBuildConfigResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ProgrammingExerciseMutationGuardService mutationGuard;
-
     public ProgrammingExerciseBuildConfigResource(ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingExerciseBuildPlanService programmingExerciseBuildPlanService,
             ProgrammingTriggerService programmingTriggerService, Optional<AutomaticAfterDueDateService> automaticAfterDueDateService,
             ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, UserRepository userRepository, ExerciseService exerciseService,
-            ExerciseVersionService exerciseVersionService, ProgrammingExerciseMutationGuardService mutationGuard) {
+            ExerciseVersionService exerciseVersionService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingExerciseBuildPlanService = programmingExerciseBuildPlanService;
@@ -91,7 +88,6 @@ public class ProgrammingExerciseBuildConfigResource {
         this.userRepository = userRepository;
         this.exerciseService = exerciseService;
         this.exerciseVersionService = exerciseVersionService;
-        this.mutationGuard = mutationGuard;
     }
 
     /**
@@ -110,32 +106,25 @@ public class ProgrammingExerciseBuildConfigResource {
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<UpdateProgrammingExerciseBuildConfigDTO> updateBuildConfig(@PathVariable long exerciseId, @Valid @RequestBody UpdateBuildPlanConfigurationDTO dto) {
         log.debug("REST request to update the build plan configuration of programming exercise {}", exerciseId);
-        try (var lease = mutationGuard.claimExternalMutation(exerciseId)) {
-            ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-            // the configuration is a row of its own that names the exercise, so it is read here rather than fetched with the exercise
-            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId);
-            final var user = userRepository.getUserWithAuthorities();
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        // the configuration is a row of its own that names the exercise, so it is read here rather than fetched with the exercise
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId);
+        final var user = userRepository.getUserWithAuthorities();
 
-            // the offset has to be read before the build plan changes, so that a build and test date an instructor moved
-            // manually keeps its distance to the due date instead of being reset to the default offset
-            final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
+        // the offset has to be read before the build plan changes, so that a build and test date an instructor moved
+        // manually keeps its distance to the due date instead of being reset to the default offset
+        final Duration originalBuildAndTestOffset = automaticAfterDueDateService.map(service -> service.getOriginalBuildAndTestOffset(programmingExercise)).orElse(null);
 
-            ProgrammingExerciseBuildConfig updatedBuildConfig = programmingExerciseBuildPlanService.updateBuildPlanConfiguration(programmingExercise, buildConfig, dto);
-            updateBuildAndTestDate(programmingExercise, updatedBuildConfig, originalBuildAndTestOffset);
+        ProgrammingExerciseBuildConfig updatedBuildConfig = programmingExerciseBuildPlanService.updateBuildPlanConfiguration(programmingExercise, buildConfig, dto);
+        updateBuildAndTestDate(programmingExercise, updatedBuildConfig, originalBuildAndTestOffset);
 
-            programmingTriggerService.triggerTemplateAndSolutionBuild(exerciseId);
+        programmingTriggerService.triggerTemplateAndSolutionBuild(exerciseId);
 
-            // record the change like the full update path does, so it appears in the exercise version history and the audit log;
-            // the version entry is also what warns a colleague who has the exercise form open (the page shows its own success message)
-            exerciseService.logUpdate(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-            if (lease.coordinated()) {
-                exerciseVersionService.createExerciseVersionSynchronously(programmingExercise, user);
-            }
-            else {
-                exerciseVersionService.createExerciseVersion(programmingExercise, user);
-            }
-            return ResponseEntity.ok(UpdateProgrammingExerciseBuildConfigDTO.of(updatedBuildConfig));
-        }
+        // record the change like the full update path does, so it appears in the exercise version history and the audit log;
+        // the version entry is also what warns a colleague who has the exercise form open (the page shows its own success message)
+        exerciseService.logUpdate(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseVersionService.createExerciseVersion(programmingExercise, user);
+        return ResponseEntity.ok(UpdateProgrammingExerciseBuildConfigDTO.of(updatedBuildConfig));
     }
 
     /**

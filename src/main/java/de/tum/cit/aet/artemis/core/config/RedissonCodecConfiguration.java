@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.core.config;
 
-import org.redisson.config.ConfigSupport;
 import org.redisson.spring.starter.RedissonAutoConfigurationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -10,7 +9,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.BackwardCompatibleSerializationCodec;
-import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisNodeIdentity;
 
 /**
  * Makes Redis serialize values the same way Hazelcast does.
@@ -56,16 +54,12 @@ import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisNodeIdentit
 public class RedissonCodecConfiguration {
 
     /**
-     * @param identity this process incarnation, visible through the store
      * @return a customizer that makes the Redisson client write map values with JDK serialization while reading both
      *         formats, and leave every other encoding on Kryo
      */
     @Bean
-    public RedissonAutoConfigurationCustomizer artemisRedissonSerializationCodecCustomizer(RedisNodeIdentity identity) {
-        return config -> {
-            config.setCodec(new BackwardCompatibleSerializationCodec());
-            ConfigSupport.getConfig(config).setClientName(identity.connectionName());
-        };
+    public RedissonAutoConfigurationCustomizer artemisRedissonSerializationCodecCustomizer() {
+        return config -> config.setCodec(new BackwardCompatibleSerializationCodec());
     }
 
     /** Starts the existing Redisson client only in a standalone worker that selected Redis. */

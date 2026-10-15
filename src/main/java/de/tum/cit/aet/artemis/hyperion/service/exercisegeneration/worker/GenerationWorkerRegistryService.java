@@ -1,7 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker;
 
+import java.util.List;
+
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.aiworker.api.AiWorkerApi;
@@ -22,7 +27,11 @@ public class GenerationWorkerRegistryService {
 
     private final WorkerMessageCodec codec;
 
-    public GenerationWorkerRegistryService(AiWorkerApi workers, WorkerMessageCodec codec) {
+    public GenerationWorkerRegistryService(AiWorkerApi workers, WorkerMessageCodec codec, Environment environment) {
+        var workerIds = Binder.get(environment).bind("artemis.aiworker.ids", Bindable.listOf(String.class)).orElse(List.of());
+        if (workerIds.size() != 1) {
+            throw new IllegalArgumentException("Hyperion exercise generation requires exactly one configured AI worker ID");
+        }
         this.workers = workers;
         this.codec = codec;
     }
