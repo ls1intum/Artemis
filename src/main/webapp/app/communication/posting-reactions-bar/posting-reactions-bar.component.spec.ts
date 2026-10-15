@@ -397,6 +397,20 @@ describe('PostingReactionsBarComponent', () => {
         expect(component.showReactionSelector()).toBeFalsy();
     });
 
+    it('should close the reacting users tooltip when a reaction button is clicked so that no outdated list stays open', () => {
+        fixture.componentRef.setInput('isEmojiCount', true);
+        fixture.changeDetectorRef.detectChanges();
+        vi.spyOn(communicationService, 'deleteReaction').mockReturnValue(of(undefined));
+
+        const reactionButton = fixture.debugElement.query(By.css('button.reaction-button.clickable[class*="reaction-button--reacted"]'));
+        const tooltip = reactionButton.injector.get(NgbTooltip);
+        const closeSpy = vi.spyOn(tooltip, 'close');
+
+        reactionButton.nativeElement.click();
+
+        expect(closeSpy).toHaveBeenCalledOnce();
+    });
+
     it('should invoke communication service method with own reaction to delete it', () => {
         post.author!.id = 99;
         fixture.componentRef.setInput('posting', post);

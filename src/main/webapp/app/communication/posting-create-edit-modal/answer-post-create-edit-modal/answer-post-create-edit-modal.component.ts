@@ -68,8 +68,9 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup();
                 this.isLoading.set(false);
-                this.onCreate.emit(answerPost);
+                // clear before emitting so that a parent can reopen the editor in its onCreate handler
                 this.createEditAnswerPostContainerRef()?.clear();
+                this.onCreate.emit(answerPost);
             },
             error: () => {
                 this.isLoading.set(false);
