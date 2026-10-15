@@ -423,7 +423,7 @@ test.describe.serial('Exam assessment dashboard and scores across two correction
         await expect(page.locator('[data-testid="manage-assessment-link"][data-correction-round="1"]')).toBeVisible();
         await expect(page.locator('[data-testid="manage-assessment-link"][data-assessment-action="assess"]')).toHaveCount(1);
 
-        await exerciseAssessment.clickStartNewAssessment();
+        await exerciseAssessment.clickStartNewAssessment(2);
         await examAssessment.fillFeedback(9, 'Second corrector');
         const response = await examAssessment.submitTextAssessment();
         expect(response.status()).toBe(200);

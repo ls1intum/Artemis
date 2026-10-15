@@ -707,7 +707,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getSubmissionById_asTA() throws Exception {
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
+        fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(finishedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
 
         long submissionID = fileUploadSubmission.getId();
         FileUploadSubmissionDTO receivedSubmission = request.get("/api/fileupload/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmissionDTO.class);
@@ -719,8 +719,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getSubmissionByID_asTA_withResult() throws Exception {
         FileUploadSubmission fileUploadSubmission = ParticipationFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(releasedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
-        Participation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(releasedFileUploadExercise, TEST_PREFIX + "student1");
+        fileUploadSubmission = fileUploadExerciseUtilService.addFileUploadSubmission(finishedFileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1");
+        Participation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(finishedFileUploadExercise, TEST_PREFIX + "student1");
         Result result = participationUtilService.addResultToSubmission(studentParticipation, fileUploadSubmission);
 
         long submissionID = fileUploadSubmission.getId();
