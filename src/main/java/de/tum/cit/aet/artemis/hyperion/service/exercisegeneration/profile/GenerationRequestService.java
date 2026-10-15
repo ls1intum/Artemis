@@ -63,17 +63,13 @@ public class GenerationRequestService {
     }
 
     /**
-     * Dateless course drafts remain authorable. Exam drafts require a scheduled future start; an absent exam schedule fails closed.
+     * Dateless course drafts remain authorable. Exam exercises are outside whole-exercise generation.
      *
      * @param exercise the draft to check
-     * @return whether its configured release date has arrived
+     * @return whether authoring is unavailable because this is an exam or its release date has arrived
      */
     public static boolean hasReleaseDateInThePast(ProgrammingExercise exercise) {
-        if (exercise.isExamExercise()) {
-            var exam = exercise.getExerciseGroup().getExam();
-            return exam == null || exam.getStartDate() == null || !exam.getStartDate().isAfter(ZonedDateTime.now());
-        }
-        return exercise.getReleaseDate() != null && !exercise.getReleaseDate().isAfter(ZonedDateTime.now());
+        return exercise.isExamExercise() || exercise.getReleaseDate() != null && !exercise.getReleaseDate().isAfter(ZonedDateTime.now());
     }
 
     private Optional<String> defaultTemplateReadme(ProgrammingExercise exercise) {
@@ -158,6 +154,7 @@ public class GenerationRequestService {
     }
 
     public boolean isGenerationSupported(@Nullable ProgrammingExercise exercise) {
-        return LanguageGenerationProfile.isSupported(exercise, exercise == null ? null : buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()));
+        return exercise != null && !exercise.isExamExercise()
+                && LanguageGenerationProfile.isSupported(exercise, buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()));
     }
 }

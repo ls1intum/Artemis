@@ -196,6 +196,9 @@ public class GenerationPersistenceService {
 
     private PersistResult persistWithCommitMessage(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
             GenerationMode mode, String commitMessage, BooleanSupplier stillOwnsMutationSlot, Runnable beforeDurableMutation) {
+        if (exercise.isExamExercise()) {
+            throw new IllegalArgumentException("Whole-exercise generation is available only for course exercises.");
+        }
         PersistResult saved = null;
         try (var reservation = liveSaves.reserveWrite(exercise.getId())) {
             try {
