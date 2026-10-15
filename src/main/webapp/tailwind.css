@@ -146,9 +146,8 @@
 @source inline("aria-disabled:opacity-60");
 @source inline("aria-disabled:cursor-not-allowed");
 
-/* The drag-and-drop question editor is still Bootstrap-heavy; its text drag-item length hint is capped to the item's
-   text area with this utility. */
-@source inline("max-w-[150px]");
+/* The Bootstrap-heavy drag-and-drop question editor uses these utilities for its text length hint and live counter. */
+@source inline("max-w-[150px] pointer-events-none absolute bottom-2 right-3 z-[4] text-xs leading-none text-muted-color text-state-danger");
 
 /* Test prose can contain class-shaped words and does not contribute runtime utilities. */
 @source not './app/**/*.spec.ts';
