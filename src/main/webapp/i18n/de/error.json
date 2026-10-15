@@ -48,6 +48,7 @@
         "studentNotFound": "Studierende:r konnte in diesem Kurs nicht gefunden werden.",
         "cantSaveFile": "Die hochgeladene Datei {{ fileName }} konnte nicht gespeichert werden.",
         "emptyFile": "Die hochgeladene Datei {{ fileName }} ist leer. Bitte überprüfe die Datei und versuche es erneut.",
+        "invalidPdf": "Die hochgeladene PDF-Datei ist ungültig oder beschädigt. Bitte lade eine gültige PDF-Datei hoch.",
         "externalSubmissionBeforeDueDate": "Externe Einreichungen können nur nach der Einreichungsfrist erstellt werden.",
         "externalSubmissionForQuizExercise": "Externe Einreichungen können nicht für Quiz Übungen erstellt werden.",
         "noWorkingPeriod": "Für diese:n Studierende:n gibt es in dieser Klausur keine Bearbeitungszeit, weil keine individuelle Klausur existiert. Erstelle zuerst die individuellen Klausuren.",

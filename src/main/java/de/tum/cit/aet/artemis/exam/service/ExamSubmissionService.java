@@ -217,8 +217,9 @@ public class ExamSubmissionService {
         if (submissionGate.hasWorkingTime()) {
             calculatedEndDate = submissionGate.individualEndDate(examSchedule, withGracePeriod);
         }
-        // A test exam attempt that has not been started yet has no individual end date, so nothing can be submitted to it
         if (calculatedEndDate == null) {
+            // A test exam has no end date before the student started it, because the working time counts from that start. Treat it as not in time
+            // rather than as open-ended.
             return false;
         }
         return examSchedule.startDate().isBefore(ZonedDateTime.now()) && calculatedEndDate.isAfter(ZonedDateTime.now());

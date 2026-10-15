@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,25 @@ class SearchableEntityVectorWriterTest {
 
         assertThat(row.chunks()).isEmpty();
         assertThat(row.missingChunks()).isEmpty();
+    }
+
+    @Test
+    void aPreparedRowComparesItsVectorsByContentAndDoesNotPrintThem() {
+        var row = new SearchableEntityVectorWriter.PreparedRow("uuid", Map.of("title", "T"), List.of("a", "b"), new float[][] { { 1f, 2f }, null });
+        var sameContent = new SearchableEntityVectorWriter.PreparedRow("uuid", Map.of("title", "T"), List.of("a", "b"), new float[][] { { 1f, 2f }, null });
+
+        assertThat(row).isEqualTo(sameContent).hasSameHashCodeAs(sameContent);
+        assertThat(row).isNotEqualTo(new SearchableEntityVectorWriter.PreparedRow("uuid", Map.of("title", "T"), List.of("a", "b"), new float[][] { { 1f, 9f }, null }));
+        assertThat(row).isNotEqualTo(new SearchableEntityVectorWriter.PreparedRow("uuid", Map.of("title", "T"), List.of("a", "b"), new float[][] { { 1f, 2f }, { 3f } }));
+        assertThat(row).isNotEqualTo(new SearchableEntityVectorWriter.PreparedRow("other", Map.of("title", "T"), List.of("a", "b"), new float[][] { { 1f, 2f }, null }));
+        assertThat(row).hasToString("PreparedRow[uuid=uuid, chunks=2, reusedVectors=1]");
+    }
+
+    @Test
+    void aPreparedRowStillNeedsAnEmbeddingOnlyForChunksWithoutAVector() {
+        var row = new SearchableEntityVectorWriter.PreparedRow("uuid", Map.of(), List.of("a", "b"), new float[][] { { 1f, 2f }, null });
+
+        assertThat(row.missingChunks()).containsExactly("b");
     }
 
     @Test

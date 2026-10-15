@@ -8,3 +8,39 @@
         transform: translateY(0.1em);
     }
 }
+
+// The classes of this template are not part of the Tailwind sources, so the size of the chart is set here. The chart fills
+// its wrapper, which is a square that never grows beyond the screen, and the label is centered over the same square.
+.statistic-summary .chart-container {
+    // On a phone the chart fills the whole row, so keep it centered there
+    justify-content: center;
+
+    @media (min-width: 768px) {
+        justify-content: flex-end;
+    }
+
+    .doughnut-wrapper {
+        position: relative;
+        width: 350px;
+        max-width: 100%;
+        aspect-ratio: 1 / 1;
+    }
+
+    tumaet-ui-doughnut-chart {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .chart-text {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+
+        // The label sits on top of the chart, but the tooltips of the chart must stay reachable
+        pointer-events: none;
+    }
+}
