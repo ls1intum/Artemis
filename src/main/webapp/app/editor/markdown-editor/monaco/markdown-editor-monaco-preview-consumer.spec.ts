@@ -202,7 +202,8 @@ describe('MarkdownEditorMonacoComponent with the programming exercise instructio
         expect(request.request.params.get('plantuml')).toContain('class Policy');
         request.flush('<svg xmlns="http://www.w3.org/2000/svg"><text>rendered-diagram</text></svg>');
 
-        const container = document.getElementById(`plantUml-${EXERCISE_ID}-0`);
+        // The container id is scoped by exercise and component instance: plantUml-{exerciseId}-{instanceId}-{index}
+        const container = previewWrapper().querySelector<HTMLElement>(`[id^="plantUml-${EXERCISE_ID}-"]`);
         expect(container).not.toBeNull();
         expect(container!.isConnected).toBe(true);
         expect(previewWrapper().contains(container)).toBe(true);
@@ -218,6 +219,6 @@ describe('MarkdownEditorMonacoComponent with the programming exercise instructio
         httpMock.expectNone('api/programming/plantuml/svg');
         expect(previewWrapper().querySelectorAll('.task-name')).toHaveLength(0);
         expect(previewWrapper().textContent).toContain('Just text without tasks or diagrams.');
-        expect(document.getElementById(`plantUml-${EXERCISE_ID}-0`)).toBeNull();
+        expect(document.querySelector(`[id^="plantUml-${EXERCISE_ID}-"]`)).toBeNull();
     });
 });

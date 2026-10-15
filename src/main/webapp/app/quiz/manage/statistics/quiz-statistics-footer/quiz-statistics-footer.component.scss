@@ -29,6 +29,11 @@
     }
 }
 
+/* The footer is fixed, so it takes no space in the page flow and would cover the last content of the page (e.g. the solution and rating buttons). */
+.quiz-statistic-footer-spacer {
+    height: calc(60px + 4vh);
+}
+
 #remaining-time > * {
     width: 100%;
 }

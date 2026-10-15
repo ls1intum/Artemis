@@ -126,9 +126,14 @@ export class GlobalSearchFilterService {
         const from = this.literalFrom();
         return from !== undefined && this.searchQuery().startsWith(from);
     });
-    // The `facet:` operator being typed (drives the value menu + operator colouring), if any. Suppressed
-    // once the user has accepted the text as a literal search, which is what closes the menu on that choice.
-    readonly operator = computed(() => (this.literalAccepted() ? undefined : parseOperator(this.searchQuery())));
+    // The `facet:` operator being typed (drives the value menu + operator colouring), if any. One inside text the
+    // user accepted as a literal search is text, which is what closes the menu on that choice; one opened after
+    // the accepted text (a chip click, or a freshly typed `facet:`) is live, so a literal can still be filtered.
+    readonly operator = computed(() => {
+        const op = parseOperator(this.searchQuery());
+        const literalLength = this.literalAccepted() ? (this.literalFrom()?.length ?? 0) : 0;
+        return op && op.start >= literalLength ? op : undefined;
+    });
     /**
      * The text sent to the server: everything before a trailing operator, or the whole input. Because it is
      * independent of the operator, the results for the query keep updating behind an open filter menu.
@@ -334,7 +339,7 @@ export class GlobalSearchFilterService {
         const editing = this.editingChip();
         this.editingChip.set(-1);
         // Only the operator leaves the input; whatever the user was searching for stays exactly as typed.
-        this.searchQuery.set(stripOperator(this.searchQuery()));
+        this.searchQuery.set(this.withoutOperator());
         this.filterPickerOpen.set(false);
         this.excludeMode.set(false);
         this.sideEffects.requestFocus();
@@ -357,7 +362,7 @@ export class GlobalSearchFilterService {
     /** Steps one level back: an exclude value menu returns to the exclude chooser, everything else to the root. */
     back(): void {
         const op = this.operator();
-        this.searchQuery.set(stripOperator(this.searchQuery()));
+        this.searchQuery.set(this.withoutOperator());
         this.excludeMode.set(!!op?.negate);
         this.filterPickerOpen.set(true);
         this.editingChip.set(-1);
@@ -370,7 +375,7 @@ export class GlobalSearchFilterService {
      * dead-end row, or by pressing Escape there, where "cancel" cannot mean deleting text the user typed.
      */
     private acceptLiteral(): void {
-        this.literalFrom.set(this.searchQuery());
+        this.rememberLiteral();
         this.filterPickerOpen.set(false);
         this.excludeMode.set(false);
         this.editingChip.set(-1);
@@ -386,18 +391,39 @@ export class GlobalSearchFilterService {
      */
     private dropOperatorWithoutLosingText(): void {
         if (this.deadEnd()) {
-            this.literalFrom.set(this.searchQuery());
+            this.rememberLiteral();
             this.sideEffects.refreshSearch();
             return;
         }
-        if (!this.literalAccepted()) {
-            this.searchQuery.set(stripOperator(this.searchQuery()));
-        }
+        this.searchQuery.set(this.withoutOperator());
     }
 
-    /** Appends an operator prefix to the input, keeping the search text in front of it. */
+    /**
+     * Marks the current input as accepted literal text. Trailing whitespace is left out of the marker, because
+     * appending an operator trims it off the input and the marker would otherwise stop matching.
+     */
+    private rememberLiteral(): void {
+        this.literalFrom.set(this.searchQuery().replace(/\s+$/, ''));
+    }
+
+    /**
+     * The input without the live operator. Only the operator the store recognises is removed: the raw input may
+     * also end in a `facet:` that belongs to an accepted literal, and that one is text.
+     */
+    private withoutOperator(): string {
+        return this.operator() ? stripOperator(this.searchQuery()) : this.searchQuery();
+    }
+
+    /**
+     * Replaces whatever operator is pending with the given prefix, keeping the search text in front of it. Only
+     * one operator can be pending, so a second is never stacked behind the first: stacking them turned every
+     * earlier operator into search text. A value that matches nothing is not an operator and stays as text.
+     * <p>
+     * Whether the pending value is a dead end depends on which chip is being edited, because the menu offers
+     * that chip's own value. Callers that move the edited chip therefore call this first and move the chip after.
+     */
     private appendPrefix(prefix: string): void {
-        this.literalFrom.set(undefined);
+        this.dropOperatorWithoutLosingText();
         this.searchQuery.set(appendOperator(this.searchQuery(), prefix));
         this.excludeMode.set(false);
         this.menuActiveIndex.set(0);
@@ -455,9 +481,10 @@ export class GlobalSearchFilterService {
      * touched, which is the whole point: composing a filter must not cost the user what they were looking for.
      */
     openFilterPicker(): void {
+        // Settled before the edited chip is released, for the reason given on appendPrefix.
+        this.dropOperatorWithoutLosingText();
         this.editingChip.set(-1);
         this.selectedChip.set(-1);
-        this.dropOperatorWithoutLosingText();
         this.excludeMode.set(false);
         this.filterPickerOpen.set(true);
         this.menuActiveIndex.set(0);
@@ -481,8 +508,9 @@ export class GlobalSearchFilterService {
         }
         this.selectedChip.set(-1);
         this.filterPickerOpen.set(false);
-        this.editingChip.set(index);
+        // Settled before this chip takes over from the one the pending operator was opened for (see appendPrefix).
         this.appendPrefix(token.negate ? `-${token.facet}:` : `${token.facet}:`);
+        this.editingChip.set(index);
     }
 
     /** Removes the chip at the given index (its remove button was clicked). */
@@ -492,65 +520,42 @@ export class GlobalSearchFilterService {
     }
 
     /**
-     * Backspace on the empty input intentionally does nothing: a filter must not disappear from an accidental
-     * keystroke. To remove a chip, click its × button, or arrow-navigate to it (which selects it) and press
-     * Delete / Backspace — that path is handled by the modal's chip-navigation keydown handler.
+     * Backspace with the cursor at the start of the input selects the last chip instead of removing it, so a filter
+     * never disappears from one stray keystroke; a second Backspace removes the selected chip through the modal's
+     * chip-navigation keydown handler. A held key selects as well, so holding Backspace clears the text, then selects
+     * and removes the chips one after another, as in Gmail. Marks the event as handled so that same handler does not
+     * remove the chip it just selected.
+     *
+     * @returns whether a chip was selected
      */
-    onBackspaceRemoveFilter(): void {
-        // no-op by design (see doc comment)
+    selectLastChipOnBackspace(event: KeyboardEvent): boolean {
+        const tokenCount = this.tokens().length;
+        if (tokenCount === 0 || this.selectedChip() >= 0 || this.filterMenuOpen()) {
+            return false;
+        }
+        event.preventDefault();
+        this.selectedChip.set(tokenCount - 1);
+        return true;
     }
 
     /**
-     * Derives the course + type tokens implied by a course-scoped URL (student `/courses/:id` or instructor
-     * `/course-management/:id`, optionally with a tab like `exercises`). Returns undefined when the URL is not
-     * course-scoped, so the caller leaves the filters untouched.
+     * Derives the course token implied by a course-scoped URL (student `/courses/:id` or instructor
+     * `/course-management/:id`). Returns undefined when the URL is not course-scoped, so the caller leaves the filters
+     * untouched.
+     *
+     * The current tab (for example `exercises`) adds no type token: a search started from the exercises tab is often
+     * about a lecture or a post, and a type chip would hide those results until the user removed it.
      */
     deriveContextTokens(url: string): FilterToken[] | undefined {
         const match = url.match(GlobalSearchFilterService.COURSE_URL_PATTERN);
         if (!match) {
             return undefined;
         }
-        const courseId = Number(match[1]);
-        const tabSegment = match[2];
-        const newTokens: FilterToken[] = [{ facet: 'course', value: String(courseId) }];
-        if (tabSegment) {
-            const filterTags = GlobalSearchFilterService.ROUTE_TO_FILTER_TAG[tabSegment];
-            const facetValue = filterTags ? this.typeFacetForTags(filterTags) : undefined;
-            if (facetValue) {
-                newTokens.push({ facet: 'type', value: facetValue });
-            }
-        }
-        return newTokens;
+        return [{ facet: 'course', value: match[1] }];
     }
 
     /**
-     * Resolves the `type` facet value whose server types match the given tags exactly
-     * (e.g. `['channel', 'post', 'answer_post']` -> `communication`).
+     * Matches course URLs in both student view (`/courses/:courseId`) and instructor view (`/course-management/:courseId`).
      */
-    private typeFacetForTags(tags: SearchEntityType[]): TypeFacetValue | undefined {
-        const target = new Set(tags);
-        return (Object.keys(TYPE_FACETS) as TypeFacetValue[]).find((value) => {
-            const serverTypes = TYPE_FACETS[value].serverTypes;
-            return serverTypes.length === target.size && serverTypes.every((type) => target.has(type));
-        });
-    }
-
-    /**
-     * Matches course URLs in both student view (`/courses/:courseId`) and instructor view (`/course-management/:courseId`),
-     * optionally capturing a tab segment (e.g. `exercises`, `lectures`).
-     */
-    private static readonly COURSE_URL_PATTERN = /\/(?:courses|course-management)\/(\d+)(?:\/([^/?#]+))?/;
-
-    /**
-     * Maps route segments (e.g. 'exercises') to search filter tags (e.g. ['exercise']).
-     * Includes both student view segments (e.g. 'faq') and instructor view segments (e.g. 'faqs').
-     */
-    private static readonly ROUTE_TO_FILTER_TAG: Record<string, SearchEntityType[]> = {
-        exercises: ['exercise'],
-        lectures: ['lecture', 'lecture_unit'],
-        exams: ['exam'],
-        communication: ['channel', 'post', 'answer_post'],
-        faq: ['faq'],
-        faqs: ['faq'],
-    };
+    private static readonly COURSE_URL_PATTERN = /\/(?:courses|course-management)\/(\d+)/;
 }

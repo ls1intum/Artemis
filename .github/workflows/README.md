@@ -36,7 +36,8 @@ ci.yml                                                            (single entry 
 ├── skills          ── uses ci-skills.yml         (if has_skills; every path an agent skill cites still resolves)
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
 ├── dead-code       ── uses ci-dead-code.yml      (always; unreachable Java classes + unreachable client files)
-├── e2e             ── uses ci-e2e.yml            (after build; required but flakiness-aware — reds only on a real, non-flaky regression; a known-flaky-only run is exonerated)
+├── liquibase       ── uses ci-liquibase.yml      (if has_liquibase; changelogs, seed data and baseline replayed on PostgreSQL and MySQL)
+├── e2e             ── uses ci-e2e.yml            (after build; required; known-flaky-only failures are exonerated when history is available)
 │
 │   ADVISORY — runs for signal, never blocks merge:
 ├── codeql          ── uses ci-codeql.yml         (Java + JS/TS security scan; non-fork; not gated)
@@ -68,8 +69,8 @@ The single required check is `CI / All required CI Passed`. It gates on every jo
 within `test`'s window (the lightweight area checks in a minute or two; `bean-instantiations` boots
 the app on H2 in a few minutes; `quality`'s slowest job, the ArchUnit run, still under `test`),
 so requiring them adds no merge latency. The one slow required check is `e2e` (detailed below):
-it is gated too, but with a flakiness-aware verdict, so it blocks only on a real, non-flaky
-regression and never on ambient flakiness. Path-skipped jobs report `skipped`, which the gate
+it is gated too, with a flakiness-aware verdict that exonerates failures known to be flaky.
+Without history, failures after Playwright retries remain blocking. Path-skipped jobs report `skipped`, which the gate
 accepts — so a job only blocks merge when it is *relevant and red*.
 
 `quality` (`ci-quality.yml`) is where all static analysis lives, for **both** server and
@@ -79,8 +80,8 @@ client test suites. This split (mirroring Angular/TypeScript/Vite) keeps a 30-se
 failure from being buried behind the multi-minute test jobs; the Java analyses are the server
 half of a symmetric `quality` stage, alongside the client checks.
 
-`e2e` **is** part of the required `all-required-ci-passed` gate, but with a flakiness-aware verdict
-so it blocks only on genuine regressions rather than on noise:
+`e2e` **is** part of the required `all-required-ci-passed` gate. Helios history can exonerate known
+flakes; without history, the ordinary Playwright verdict applies:
 
 - **`e2e`.** E2E takes up to ~2 hours and is flaky enough that a naive required gate would block
   good PRs on noise. Instead, `report-results` classifies each surviving failure against Helios
@@ -90,18 +91,31 @@ so it blocks only on genuine regressions rather than on noise:
   test steps are `continue-on-error`, so the honest verdict is decided once in `report-results`, not
   by any single phase job.
 
+  Helios is optional. A missing secret, HTTP 401/403, outage, timeout or invalid response produces a
+  warning and falls back to Playwright: passing tests (including those recovered by its existing
+  retries) pass, while failures after retries remain blocking. Tests without matching history are
+  classified as `unknown`, not as confirmed regressions or known flakes. An unknown failure cannot
+  be exonerated by a known-flaky failure in another phase, and an unknown Phase 1 failure stops
+  Phase 2. Infrastructure failures and missing results remain blocking. The history request has a
+  ten-second deadline covering the complete response.
+
 `codeql` is deliberately **advisory** (not in the gate's `needs:`): it runs for signal and reds the
 run on a genuine failure, but never blocks merge.
 
-- **`codeql`.** Static security analysis (Java + JS/TS) on every code-relevant PR/push. It is
-  advisory because CodeQL must build the code itself to trace it (it cannot reuse `build`'s WAR),
-  so it is a slow, heavyweight job that should not pace merge — but it runs on the abundant
+- **`codeql`.** Static security analysis (Java + JS/TS) on every PR/push that changes scanned
+  code. It is advisory because CodeQL must build the code itself to trace it (it cannot reuse
+  `build`'s WAR), so it is a slow, heavyweight job that should not pace merge — but it runs on the
   GitHub-hosted pool, in parallel, so it adds no load on the self-hosted runners and no merge
-  latency. Fork PRs are excluded (the SARIF upload needs `security-events: write`, which fork
-  tokens lack); forks are still covered by the post-merge push scan and the weekly scheduled
-  scan. The `schedule:` cron lives in `codeql-analysis.yml` because cron cannot be expressed in a
-  `workflow_call` reusable; that thin remnant reuses `ci-codeql.yml`, so the scan steps exist in
-  one place.
+  latency. That pool is shared with the required jobs, though, and a scan holds a slot for about
+  12 minutes, so the job is skipped when it has nothing new to look at: for draft PRs (promoting
+  one runs it), and when every changed file is a test, a translation, the generated OpenAPI
+  client, a workflow, a skill or documentation (the `codeql_relevant` output of `detect-changes`).
+  The same paths are excluded from analysis in `.github/codeql/codeql-config.yml`; keep the two
+  lists in sync. Edits to `ci.yml`, `ci-codeql.yml` or the config file still run the scan. Fork
+  PRs are excluded (the SARIF upload needs `security-events: write`, which fork tokens lack); forks
+  are still covered by the post-merge push scan and the weekly scheduled scan. The `schedule:` cron
+  lives in `codeql-analysis.yml` because cron cannot be expressed in a `workflow_call` reusable;
+  that thin remnant reuses `ci-codeql.yml`, so the scan steps exist in one place.
 
 To change the required set, edit `all-required-ci-passed`'s `needs:` (and mirror it in
 `ci-summary`'s `ADVISORY` env, which labels the table). Branch protection still references one
@@ -130,6 +144,56 @@ second step. Area filters include their own `ci-*.yml` workflow and helper-scrip
 a PR that edits a required check also runs that check. Cascading skips don't bypass the gate
 either: `detect-changes` is in the gate's `needs:`, so a change-detection failure fails the
 gate closed.
+
+### Skipping tests on a pull request
+
+The server suite is by far the largest consumer of the self-hosted `aet-large-ubuntu` runners
+(seven shards per run), and E2E is the slowest stage, so a **pull request** skips what it cannot
+affect. `detect-changes` emits `run_server_tests` and `run_client_tests`, which `ci.yml` passes to
+`ci-test.yml`, and `run_e2e`, which gates the `e2e` job. The skipped jobs report `skipped`; the `test` call as a whole still reports `success` when the other
+suite passes, which is all the gate sees. A skipped suite produces no coverage artifact (the
+coverage reporters only fetch an artifact when the matching `has_*_changes` is true, which implies
+the suite ran).
+
+- All three outputs are **deny-lists** in the `relevant` step, so a path nobody has classified runs
+  the suite. The server suite is skipped only if every changed file is markdown, `LICENSE`,
+  documentation, a client file (`src/main/webapp/**`), a client test (`src/test/javascript`,
+  `src/test/vitest`), Playwright (`src/test/playwright`), or under `packages/` or `skills/`. The
+  client suite is skipped only if every changed file is markdown, `LICENSE`, documentation, or under
+  `src/main/java`, `src/main/resources`, `src/test/java` or `src/test/resources`. `build.gradle`
+  and `gradle/` are deliberately in neither list: `supporting_scripts/client/prebuild.mjs` reads the
+  app version from `build.gradle`, and the `test:rules` spec reads `gradle/profile_{dev,prod}.gradle`.
+- Server tests read some files that the deny-lists (and `build`) treat as irrelevant: the
+  translations under `src/main/webapp/i18n/`, `documentation/docs/developer/feature-usage-catalogue.mdx`
+  and the markdown templates under `src/main/resources/` (`has_server_test_inputs`). Changing any of
+  them runs the server suite, and `test` runs for it even when `build` would skip the whole run (a
+  documentation-only change that includes the catalogue runs only the server suite). If a server
+  test starts reading another client, documentation or markdown file, add it there, or the suite can
+  be skipped under it.
+- E2E runs against the built Docker image, so it is skipped only if every changed file is markdown,
+  `LICENSE`, documentation, or a test that is not an E2E test: `src/test/java`, `src/test/resources`,
+  `src/test/javascript`, `src/test/vitest`, and the `*.spec.ts` files under `src/main/webapp` and
+  `packages`. Playwright specs are `*.spec.ts` too, which is why client specs are matched by
+  location, and a change under `src/test/playwright` always runs E2E. `build` and the other required
+  checks still run.
+- A **draft** pull request does not start E2E either; marking it ready for review starts a CI run,
+  which runs E2E only if the changes also pass the `e2e_tests` filter above (a pull request that only
+  changes tests still skips it). The PR Docker image (`docker-pr` in `ci-build.yml`) is built for
+  internal pull requests only, because fork pull requests cannot push to GHCR, and only if the changes
+  pass that same filter (`build_pr_image`). That includes Playwright files and drafts: a test server
+  deploys the image of an open pull request, drafts included. A pull request that only changes tests
+  gets no image, because neither E2E nor a deploy needs it, and a deploy of such a commit has no
+  `sha-<commit>` image to find.
+- Only `pull_request` events skip. A push to `develop`, a merge group, a manual run and a release
+  other than a `@tumaet/*` one run both suites, because the coverage badge and Sonar read both
+  suites' coverage there and `develop` is where anything that slipped past a pull request's own run
+  would show up. `@tumaet/*` release tags skip `detect-changes` and with it `test`, like every other
+  Artemis job.
+- A pull request with 3000 changed files or more never skips: the changed files come from the pulls
+  API, which stops at 3000, so the filters may not have seen all of them. That covers the server
+  suite, the client suite, E2E, the PR image and the Liquibase checks (`has_liquibase`).
+- Codacy coverage is uploaded by the server report job only, so an internal pull request that skips
+  the server suite uploads none.
 
 ## Action pinning policy
 
@@ -175,6 +239,7 @@ These workflows are intentionally NOT folded into the umbrella:
 | `test-android.yml` | Different self-hosted runner pool, clones a separate repo, 60-minute job. |
 | `test-mysql.yml` | Manual-only (`workflow_dispatch`). Sibling DB engine to PostgreSQL. |
 | `nightly-lti-interop.yml` | Scheduled default-branch interop check; not part of PR/push CI. |
+| `dependency-submission.yml` | Submits the Gradle dependency graph on `develop` pushes that change a build file, weekly, and on demand (`workflow_dispatch`). Replaces the repository setting "Automatic dependency submission", which ran on every branch and pull request although GitHub discards a snapshot of any non-default branch. Keep that setting off. |
 | `deploy-documentation.yml` | **Split:** the automatic develop-push docs deploy is now ci.yml's `deploy-docs` job (reusing `ci-docs.yml`'s build); this file is the `workflow_dispatch` manual-redeploy fallback. Both share the `pages` concurrency group. |
 | `testserver-deployment.yml`, `prod-like-deployment.yml` | Manual deploy workflows. |
 | `pullrequest-coverage-reporter.yml` | **Fork PRs only.** Posts the coverage table for fork PRs (where an in-run token can't write); hardened against a `workflow_run` pwn-request. Internal PRs use `ci.yml`'s in-run `coverage-report` job instead, so the table appears at ~test time rather than after the run. |

@@ -58,8 +58,15 @@ jobs:
       has_workflows: ${{ steps.decide.outputs.has_workflows }}
       has_version: ${{ steps.decide.outputs.has_version }}
       has_beans: ${{ steps.decide.outputs.has_beans }}
+      has_liquibase: ${{ steps.decide.outputs.has_liquibase }}
       has_skills: ${{ steps.decide.outputs.has_skills }}
       has_tum_aet_ui: ${{ steps.decide.outputs.has_tum_aet_ui }}
+      codeql_relevant: ${{ steps.decide.outputs.codeql_relevant }}
+      run_server_tests: ${{ steps.decide.outputs.run_server_tests }}
+      run_client_tests: ${{ steps.decide.outputs.run_client_tests }}
+      server_test_inputs: ${{ steps.decide.outputs.server_test_inputs }}
+      run_e2e: ${{ steps.decide.outputs.run_e2e }}
+      build_pr_image: ${{ steps.decide.outputs.build_pr_image }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -83,6 +90,59 @@ jobs:
               - '!**/*.md'
               - '!LICENSE'
               - '!documentation/**'
+            # CodeQL scans what ships: server and client sources. Tests, translations, the generated
+            # OpenAPI client, workflows and skills are not analysed (see .github/codeql/codeql-config.yml),
+            # so a change that touches only those has nothing new for CodeQL to look at. A deny-list,
+            # so a new top-level directory is scanned until someone decides it is not worth it.
+            codeql:
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!documentation/**'
+              - '!src/test/**'
+              - '!**/*.spec.ts'
+              - '!src/main/webapp/i18n/**'
+              - '!src/main/webapp/app/openapi/**'
+              - '!skills/**'
+              - '!.github/**'
+            # Which test suites a pull request has to run. Each is a deny-list of what cannot change the
+            # outcome of that suite, so a path nobody has classified runs both (see `decide` below, and
+            # `has_server_test_inputs` for the inputs of the server suite that live in client, doc or
+            # markdown paths). The server suite also needs Docker-backed shards, so it is the expensive one.
+            server_tests:
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!documentation/**'
+              - '!src/main/webapp/**'
+              - '!src/test/javascript/**'
+              - '!src/test/vitest/**'
+              - '!src/test/playwright/**'
+              - '!packages/**'
+              - '!skills/**'
+            # `build.gradle` and `gradle/` are deliberately absent: supporting_scripts/client/prebuild.mjs
+            # reads the app version from build.gradle, and prebuild runs in front of every client test;
+            # config/eslint/rules/tum-aet-ui-package.spec.mjs reads gradle/profile_{dev,prod}.gradle.
+            client_tests:
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!documentation/**'
+              - '!src/main/java/**'
+              - '!src/test/java/**'
+              - '!src/test/resources/**'
+              - '!src/main/resources/**'
+            # E2E runs against the built Docker image, so only what ships in it, or the Playwright tests
+            # themselves, can change its outcome. A change confined to server tests, client tests or
+            # documentation cannot. Playwright specs are named `*.spec.ts` as well, which is why the client
+            # specs are listed by location (src/main/webapp, packages) and not by suffix alone.
+            e2e_tests:
+              - '!**/*.md'
+              - '!LICENSE'
+              - '!documentation/**'
+              - '!src/test/java/**'
+              - '!src/test/resources/**'
+              - '!src/test/javascript/**'
+              - '!src/test/vitest/**'
+              - '!src/main/webapp/**/*.spec.ts'
+              - '!packages/**/*.spec.ts'
       #   area (default `some`): positive allow-lists (OR logic) gating the per-area jobs.
       #   Each area includes its own workflow/helper files so edited checks run themselves.
       - id: area
@@ -112,6 +172,20 @@ jobs:
               - 'src/main/java/**'
               - 'src/main/resources/**'
               - 'build.gradle'
+              - 'gradle/**'
+            # ci-liquibase.yml reads the changelogs and the seed data (src/main/resources/config/liquibase), the
+            # oldest supported release from DatabaseMigration.java, the database versions from gradle.properties,
+            # the JDBC drivers that Gradle resolves, and the contexts an end-to-end stack starts with
+            # (playwright.env). A change to none of them cannot change what it concludes.
+            has_liquibase:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-liquibase.yml'
+              - 'src/main/resources/config/liquibase/**'
+              - 'src/main/java/de/tum/cit/aet/artemis/core/config/migration/DatabaseMigration.java'
+              - 'supporting_scripts/liquibase/**'
+              - 'deployment/docker/artemis/config/playwright.env'
+              - 'build.gradle'
+              - 'gradle.properties'
               - 'gradle/**'
             has_skills:
               - '.github/workflows/ci.yml'
@@ -178,6 +252,21 @@ jobs:
               - 'supporting_scripts/test_template_test_requirements.py'
               - 'src/main/resources/templates/c/gcc/test/testUtils/**'
               - 'src/main/resources/templates/c_plus_plus/test/testUtils/**'
+            # Files that server tests read from disk but that the deny-lists above (and `build`) treat as
+            # irrelevant: the translations (GlobalSearchResultDTOTest, FeatureUsageAnnotationTest), the
+            # feature usage catalogue (FeatureUsageAnnotationTest compares it byte for byte) and the
+            # markdown templates under src/main/resources (served by FileResource and copied by
+            # DataExportCreationService, asserted on by FileIntegrationTest and DataExportCreationServiceTest).
+            # A change to any of them runs the server suite, even when `build` would skip the whole run.
+            has_server_test_inputs:
+              - 'src/main/webapp/i18n/**'
+              - 'documentation/docs/developer/feature-usage-catalogue.mdx'
+              - 'src/main/resources/**/*.md'
+            # The `codeql` deny-list above excludes `.github/**`; edits to the scan itself must still run it.
+            has_codeql_config:
+              - '.github/workflows/ci.yml'
+              - '.github/workflows/ci-codeql.yml'
+              - '.github/codeql/**'
             has_version:
               - '.github/workflows/ci.yml'
               - '.github/workflows/ci-version-consistency.yml'
@@ -202,12 +291,22 @@ jobs:
           F_WORKFLOWS: ${{ steps.area.outputs.has_workflows }}
           F_VERSION: ${{ steps.area.outputs.has_version }}
           F_BEANS: ${{ steps.area.outputs.has_beans }}
+          F_LIQUIBASE: ${{ steps.area.outputs.has_liquibase }}
           F_SKILLS: ${{ steps.area.outputs.has_skills }}
           F_TUM_AET_UI: ${{ steps.area.outputs.has_tum_aet_ui }}
+          F_CODEQL: ${{ steps.relevant.outputs.codeql }}
+          F_CODEQL_CONFIG: ${{ steps.area.outputs.has_codeql_config }}
+          F_SERVER_TESTS: ${{ steps.relevant.outputs.server_tests }}
+          F_SERVER_TEST_INPUTS: ${{ steps.area.outputs.has_server_test_inputs }}
+          F_CLIENT_TESTS: ${{ steps.relevant.outputs.client_tests }}
+          F_E2E: ${{ steps.relevant.outputs.e2e_tests }}
+          EVENT_NAME: ${{ github.event_name }}
+          IS_DRAFT: ${{ github.event.pull_request.draft || false }}
+          CHANGED_FILES: ${{ github.event.pull_request.changed_files || 0 }}
         run: |
           set -Eeuo pipefail
           if [ "$FORCE" = "true" ]; then
-            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_skills has_tum_aet_ui; do
+            for k in build_relevant has_java has_docs has_i18n has_gradle has_workflows has_version has_beans has_liquibase has_skills has_tum_aet_ui codeql_relevant run_server_tests run_client_tests server_test_inputs run_e2e build_pr_image; do
               echo "$k=true" >> "$GITHUB_OUTPUT"
             done
           else
@@ -220,8 +319,54 @@ jobs:
               echo "has_workflows=${F_WORKFLOWS:-false}"
               echo "has_version=${F_VERSION:-false}"
               echo "has_beans=${F_BEANS:-false}"
+              # The Liquibase checks follow the path filter, so a pull request with 3000 changed files or more
+              # always runs them: the pulls API stops at 3000, and a changelog beyond that limit would
+              # otherwise leave this output false, and all-required-ci-passed accepts a skipped check.
+              if [ "${F_LIQUIBASE:-false}" = "true" ] || { [ "$EVENT_NAME" = "pull_request" ] && [ "${CHANGED_FILES:-0}" -ge 3000 ]; }; then
+                echo "has_liquibase=true"
+              else
+                echo "has_liquibase=false"
+              fi
               echo "has_skills=${F_SKILLS:-false}"
               echo "has_tum_aet_ui=${F_TUM_AET_UI:-false}"
+              if [ "${F_CODEQL:-false}" = "true" ] || [ "${F_CODEQL_CONFIG:-false}" = "true" ]; then
+                echo "codeql_relevant=true"
+              else
+                echo "codeql_relevant=false"
+              fi
+              echo "server_test_inputs=${F_SERVER_TEST_INPUTS:-false}"
+              # Only a pull request may skip a suite or E2E. A push to develop, a merge group and a manual run
+              # still run both: the coverage badge and Sonar read both suites' coverage on develop, and
+              # develop is where a change that slipped past the pull request's own run would show up.
+              # A pull request that large is also never trusted with a skip: for a pull request the
+              # changed files come from the pulls API, which stops at 3000 files, so the filters may
+              # not have seen all of them.
+              if [ "$EVENT_NAME" != "pull_request" ] || [ "${CHANGED_FILES:-0}" -ge 3000 ]; then
+                echo "run_server_tests=true"
+                echo "run_client_tests=true"
+                echo "run_e2e=true"
+                echo "build_pr_image=true"
+              else
+                # E2E is the slowest stage, so a draft does not start it; `ready_for_review` starts a
+                # run that does. The image stays for a draft, because a test server deploys the image of
+                # an open pull request, drafts included. A pull request that only changes tests builds none.
+                echo "build_pr_image=${F_E2E:-false}"
+                if [ "${F_E2E:-false}" = "true" ] && [ "$IS_DRAFT" != "true" ]; then
+                  echo "run_e2e=true"
+                else
+                  echo "run_e2e=false"
+                fi
+                if [ "${F_SERVER_TESTS:-false}" = "true" ] || [ "${F_SERVER_TEST_INPUTS:-false}" = "true" ]; then
+                  echo "run_server_tests=true"
+                else
+                  echo "run_server_tests=false"
+                fi
+                if [ "${F_CLIENT_TESTS:-false}" = "true" ]; then
+                  echo "run_client_tests=true"
+                else
+                  echo "run_client_tests=false"
+                fi
+              fi
             } >> "$GITHUB_OUTPUT"
           fi
 
@@ -247,6 +392,9 @@ jobs:
       attestations: write
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      # The PR image only feeds E2E and test-server deploys; a pull request that only changes tests needs neither.
+      # `!= 'false'`, so an output that went missing builds it.
+      build_pr_image: ${{ needs.detect-changes.outputs.build_pr_image != 'false' }}
       is_pr: ${{ github.event_name == 'pull_request' }}
       is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
       is_release: ${{ github.event_name == 'release' }}
@@ -258,7 +406,11 @@ jobs:
   test:
     name: Test
     needs: detect-changes
-    if: needs.detect-changes.outputs.build_relevant == 'true'
+    # `server_test_inputs` keeps a change that `build` ignores but a server test reads (the feature usage
+    # catalogue, the markdown templates) from merging unchecked; only the server suite runs for it.
+    if: >-
+      needs.detect-changes.outputs.build_relevant == 'true' ||
+      needs.detect-changes.outputs.server_test_inputs == 'true'
     uses: ./.github/workflows/ci-test.yml
     permissions:
       contents: read
@@ -268,6 +420,11 @@ jobs:
       base_branch: ${{ github.event.pull_request.base.ref || github.event.repository.default_branch }}
       # Module-affected mode is opt-in for draft PRs. Default branch and non-PR events run everything.
       run_all_tests: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
+      # A pull request that cannot affect one suite does not run it (see `detect-changes`). Always true
+      # for anything but a pull request.
+      # `!= 'false'`, so that an output that went missing runs the suite instead of silently skipping it.
+      run_server_tests: ${{ needs.detect-changes.outputs.run_server_tests != 'false' }}
+      run_client_tests: ${{ needs.detect-changes.outputs.run_client_tests != 'false' }}
       is_internal_pr: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
       pr_author: ${{ github.event.pull_request.user.login || '' }}
     secrets:
@@ -668,10 +825,13 @@ jobs:
     with:
       commit_sha: ${{ github.event.pull_request.head.sha || github.sha }}
 
-  # Check baseline consistency and misplaced migrations regardless of which area changed.
+  # Check baseline consistency and misplaced migrations. Two jobs start a container and replay every
+  # changelog, so it runs only when something it reads changed (`has_liquibase` in `detect-changes`).
+  # `detect-changes` is skipped for `@tumaet/*` releases, and so is this job with it.
   liquibase:
-    if: github.event_name != 'release' || !startsWith(github.event.release.tag_name, '@tumaet/')
     name: Liquibase Schema
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_liquibase == 'true'
     uses: ./.github/workflows/ci-liquibase.yml
     permissions:
       contents: read
@@ -687,9 +847,13 @@ jobs:
   e2e:
     name: E2E
     needs: [detect-changes, build]
+    # A pull request that only changes tests (server, client) or documentation cannot change the outcome of
+    # E2E, the slowest stage, and neither can a draft be merged, so neither starts it (`run_e2e`, see
+    # `detect-changes`). `!= 'false'`, so an output that went missing runs E2E instead of skipping it.
     if: >-
-      github.event_name != 'pull_request' ||
-      github.event.pull_request.head.repo.full_name == github.repository
+      (github.event_name != 'pull_request' ||
+       github.event.pull_request.head.repo.full_name == github.repository) &&
+      needs.detect-changes.outputs.run_e2e != 'false'
     uses: ./.github/workflows/ci-e2e.yml
     permissions:
       contents: read
@@ -713,13 +877,19 @@ jobs:
   # excluded: `security-events: write` (the SARIF upload) is downgraded to read-only on fork
   # tokens, so CodeQL would only fail at upload. Forks are still covered post-merge by the push
   # scan on `develop`/`main` and the weekly scheduled scan (codeql-analysis.yml).
+  #
+  # The hosted pool is shared with the required jobs and a scan holds a slot for ~12 minutes, so it
+  # is not run when it cannot tell us anything new: not for a change confined to tests, translations,
+  # generated code or docs (`codeql_relevant`), and not for a draft PR. `ready_for_review` is one of
+  # the pull_request types above, so promoting a draft starts the scan.
   codeql:
     name: CodeQL
     needs: detect-changes
     if: >-
-      needs.detect-changes.outputs.build_relevant == 'true' &&
+      needs.detect-changes.outputs.codeql_relevant == 'true' &&
       (github.event_name != 'pull_request' ||
-       github.event.pull_request.head.repo.full_name == github.repository)
+       (github.event.pull_request.head.repo.full_name == github.repository &&
+        !github.event.pull_request.draft))
     uses: ./.github/workflows/ci-codeql.yml
     permissions:
       security-events: write
@@ -730,11 +900,11 @@ jobs:
 
   # The single required status check. Depends on every deterministic job — build, test, and
   # the quality gates — plus `e2e`. `e2e` is required, but with a flakiness-aware verdict: an E2E
-  # result of `failure` means ci-e2e's report-results classified at least one failure as a REAL
-  # (non-flaky) regression against Helios history (classify-failures.js) — a genuine regression
-  # worth blocking a merge on. A run whose only failures are known-flaky is exonerated and reports
-  # success, so ambient flakiness does NOT block a good PR (flaky-recovered runs, where Playwright
-  # exits 0, also stay green). This does add merge latency — the gate now waits for the full E2E
+  # result of `failure` includes test, infrastructure and unclassified failures. Helios history
+  # (classify-failures.js) can exonerate known flakes; when history is unavailable, the ordinary
+  # Playwright verdict applies and failures after retries remain blocking. A run whose only
+  # failures are known-flaky is exonerated and reports success (flaky-recovered runs, where
+  # Playwright exits 0, also stay green). This does add merge latency — the gate waits for the full E2E
   # run — the accepted trade-off for not merging over a reproducible regression. `e2e` reflects its
   # honest outcome via ci-e2e's report-results job (continue-on-error test steps, then a final step
   # that fails the job only on a real / infra / unclassified verdict).
