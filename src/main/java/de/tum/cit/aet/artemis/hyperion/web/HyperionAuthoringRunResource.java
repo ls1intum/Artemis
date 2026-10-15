@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.hyperion.web;
 
 import java.util.List;
 
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
@@ -73,7 +72,7 @@ public class HyperionAuthoringRunResource {
     @EnforceAtLeastEditor
     @ApiResponse(responseCode = "200", description = "Currently authorized run identities", content = @Content(array = @ArraySchema(maxItems = 500, schema = @Schema(type = "string", maxLength = 128))))
     public ResponseEntity<List<String>> checkAuthoringRunAccess(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(array = @ArraySchema(minItems = 1, maxItems = 500, schema = @Schema(type = "string", minLength = 1, maxLength = 128)))) @RequestBody @Valid @NotEmpty @Size(max = 500) List<@NotBlank @Size(max = 128) String> jobIds) {
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(array = @ArraySchema(minItems = 1, maxItems = 500, schema = @Schema(type = "string", minLength = 1, maxLength = 128)))) @RequestBody @NotEmpty @Size(max = 500) List<@NotBlank @Size(max = 128) String> jobIds) {
         return ResponseEntity.ok(history.authorizedRunIds(users.getUserWithCourseRolesAndAuthorities(), jobIds));
     }
 

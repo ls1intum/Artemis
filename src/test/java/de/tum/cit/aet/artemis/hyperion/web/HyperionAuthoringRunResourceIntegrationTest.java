@@ -123,11 +123,12 @@ class HyperionAuthoringRunResourceIntegrationTest extends AbstractSpringIntegrat
     @Test
     @WithMockUser(username = PREFIX + "editor1", roles = "EDITOR")
     void bulkAccessRejectsEmptyOversizedAndMalformedBatches() throws Exception {
-        for (var invalid : List.of(List.<String>of(), Collections.nCopies(501, jobId), List.of(" "), List.of("x".repeat(129)))) {
+        for (var invalid : List.of(List.<String>of(), Collections.nCopies(501, jobId), List.of(" "), List.of("x".repeat(129)), Collections.<String>singletonList(null))) {
             request.postWithoutResponseBody("/api/hyperion/authoring-runs/access", invalid, HttpStatus.BAD_REQUEST);
         }
         assertThat(request.postListWithResponseBody("/api/hyperion/authoring-runs/access", Collections.nCopies(500, jobId), String.class, HttpStatus.OK, null, null))
                 .containsExactly(jobId);
+        assertThat(request.postListWithResponseBody("/api/hyperion/authoring-runs/access", List.of("x".repeat(128)), String.class, HttpStatus.OK, null, null)).isEmpty();
     }
 
 }
