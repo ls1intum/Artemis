@@ -679,6 +679,27 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(problemStatementSyncServiceMock.acknowledgeCanonicalSave).toHaveBeenCalledExactlyOnceWith(exercise.id, 'new persisted statement', yDoc);
     });
 
+    it('acknowledges an earlier successful save after a newer save fails', () => {
+        fixture.componentRef.setInput('canonicalBaseIsolation', true);
+        fixture.componentRef.setInput('editMode', true);
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+        (comp as any).problemStatementSyncState = { doc: yDoc, text: yText, awareness: yAwareness };
+        const currentContent = { value: 'persisted first save' };
+        setMarkdownEditorMonaco(comp, { monacoEditor: () => ({ getText: () => currentContent.value }) } as unknown as MarkdownEditorMonacoComponent);
+        const firstResponse = new Subject<HttpResponse<ProgrammingExercise>>();
+        const failedResponse = new Subject<HttpResponse<ProgrammingExercise>>();
+        vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValueOnce(firstResponse).mockReturnValueOnce(failedResponse);
+        comp.saveInstructions({ stopPropagation: () => {} } as Event);
+        currentContent.value = 'newer unsaved edit';
+        comp.updateProblemStatement(currentContent.value);
+        comp.saveInstructions({ stopPropagation: () => {} } as Event);
+        failedResponse.error(new Error('Save failed'));
+        firstResponse.next(new HttpResponse({ body: { ...exercise, problemStatement: 'persisted first save' } }));
+        expect(problemStatementSyncServiceMock.acknowledgeCanonicalSave).toHaveBeenCalledExactlyOnceWith(exercise.id, 'persisted first save', yDoc);
+        expect(comp.unsavedChangesValue()).toBe(true);
+    });
+
     it('keeps a newer edit dirty and advances the shared canonical base when an older save completes', () => {
         fixture.componentRef.setInput('canonicalBaseIsolation', true);
         fixture.componentRef.setInput('editMode', true);
