@@ -124,7 +124,7 @@ class GenerationVariantDraftServiceTest {
     }
 
     @Test
-    void examEligibilityIsRecheckedInsideTheDraftTransaction() {
+    void examConfigurationIsRejectedInsideTheDraftTransaction() {
         var exam = new Exam();
         exam.setId(20L);
         var group = new ExerciseGroup();
@@ -137,9 +137,9 @@ class GenerationVariantDraftServiceTest {
             inTransaction.set(true);
             return invocation.<Supplier<Object>>getArgument(0).get();
         });
-        doThrow(new IllegalStateException("assigned meanwhile")).when(capabilities).requireMutable(source);
+        doThrow(new IllegalStateException("course exercises only")).when(capabilities).requireSupportedConfiguration(source);
 
-        assertThatThrownBy(() -> service.prepare(1L, request, Function.identity())).hasMessage("assigned meanwhile");
+        assertThatThrownBy(() -> service.prepare(1L, request, Function.identity())).hasMessage("course exercises only");
 
         assertThat(inTransaction).isTrue();
         verifyNoInteractions(imports, buildConfigs);

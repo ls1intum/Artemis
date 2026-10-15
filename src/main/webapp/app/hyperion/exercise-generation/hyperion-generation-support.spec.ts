@@ -59,7 +59,8 @@ describe('Hyperion draft eligibility', () => {
         expect(hyperionGenerationBlocker(exercise, now)).toBe('unsupportedProjectType');
         exercise.projectType = ProjectType.GRADLE_GRADLE;
         exercise.exerciseGroup = new ExerciseGroup();
-        expect(hyperionGenerationBlocker(exercise, now)).toBe('staticCodeAnalysis');
+        expect(hyperionGenerationBlocker(exercise, now)).toBe('examExercise');
+        expect(isHyperionGenerationDraft(exercise, now)).toBe(false);
         exercise.exerciseGroup = undefined;
         expect(hyperionGenerationBlocker(exercise, now)).toBe('staticCodeAnalysis');
         exercise.staticCodeAnalysisEnabled = false;

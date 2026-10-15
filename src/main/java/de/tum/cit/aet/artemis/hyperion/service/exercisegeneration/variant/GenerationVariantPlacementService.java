@@ -49,10 +49,7 @@ public class GenerationVariantPlacementService {
             throw new BadRequestAlertException("A placement choice is required", ENTITY_NAME, "missingPlacement");
         }
         if (source.isExamExercise()) {
-            if (placement.type() != VariantPlacementDTO.PlacementType.SAME_EXAM_GROUP) {
-                throw new BadRequestAlertException("Exam variants stay in their source exercise group", ENTITY_NAME, "invalidExamPlacement");
-            }
-            return;
+            throw new BadRequestAlertException("Programming variants are available only for course exercises", ENTITY_NAME, "unsupportedGenerationLanguage");
         }
         switch (placement.type()) {
             case SAME_EXAM_GROUP -> throw new BadRequestAlertException("SAME_EXAM_GROUP requires an exam exercise", ENTITY_NAME, "invalidPlacement");
@@ -88,7 +85,7 @@ public class GenerationVariantPlacementService {
             return List.of();
         }
         var choice = preparation.request().placement();
-        if (choice.type() == VariantPlacementDTO.PlacementType.STANDALONE || choice.type() == VariantPlacementDTO.PlacementType.SAME_EXAM_GROUP) {
+        if (choice.type() == VariantPlacementDTO.PlacementType.STANDALONE) {
             return List.of();
         }
         verifyOwnership.run();

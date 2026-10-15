@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 class GenerationCapabilityServiceTest {
 
@@ -34,13 +33,11 @@ class GenerationCapabilityServiceTest {
 
     private final AuxiliaryRepositoryRepository auxiliaries = mock();
 
-    private final ProgrammingExerciseTestRepository exercises = mock();
-
     private final GenerationJobService jobs = mock();
 
     private final GenerationWorkerRegistryService workers = mock();
 
-    private final GenerationCapabilityService service = new GenerationCapabilityService(requests, auxiliaries, exercises, jobs, workers);
+    private final GenerationCapabilityService service = new GenerationCapabilityService(requests, auxiliaries, jobs, workers);
 
     private final ProgrammingExercise exercise = new ProgrammingExercise();
 
@@ -113,18 +110,20 @@ class GenerationCapabilityServiceTest {
     }
 
     @Test
-    void examActionsShareTheAssignmentBoundary() {
+    void examActionsAreUnavailableEvenBeforeAssignment() {
         var exam = new Exam();
         exam.setStartDate(ZonedDateTime.now().plusDays(1));
         var group = new ExerciseGroup();
         group.setExam(exam);
         exercise.setExerciseGroup(group);
-        when(exercises.isUnreleasedAndWithoutStudentParticipations(1L)).thenReturn(true);
-        assertThat(service.describe(exercise).canCreateVariant()).isTrue();
-        service.requireMutable(exercise);
-        when(exercises.isUnreleasedAndWithoutStudentParticipations(1L)).thenReturn(false);
-        assertThat(service.describe(exercise).canCreateVariant()).isFalse();
-        assertThat(service.describe(exercise).restriction()).isEqualTo("exerciseAlreadyAssigned");
+        var result = service.describe(exercise);
+        assertThat(result.supported()).isFalse();
+        assertThat(result.canGenerate()).isFalse();
+        assertThat(result.canAdapt()).isFalse();
+        assertThat(result.canCreateVariant()).isFalse();
+        assertThat(result.capacityAvailable()).isFalse();
+        assertThatThrownBy(() -> service.requireSupportedConfiguration(exercise)).isInstanceOf(BadRequestAlertException.class);
         assertThatThrownBy(() -> service.requireMutable(exercise)).isInstanceOf(BadRequestAlertException.class);
+        verifyNoInteractions(workers);
     }
 }

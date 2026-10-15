@@ -119,9 +119,6 @@ public class GenerationVariantDraftService {
 
     private <T> T prepareAndReserve(long sourceId, VariantGenerationRequestDTO request, Function<ProgrammingExercise, T> reserve) {
         ProgrammingExercise source = loadSource(sourceId);
-        if (source.isExamExercise()) {
-            capabilities.requireMutable(source);
-        }
         capabilities.requireSupportedConfiguration(source);
         ProgrammingExercise destination = skeleton(source, request);
         ProgrammingExercise prepared = imports.prepareImport(source, buildConfigs.getProgrammingExerciseBuildConfigElseThrow(sourceId), destination, null);
@@ -149,14 +146,9 @@ public class GenerationVariantDraftService {
     private ProgrammingExercise skeleton(ProgrammingExercise source, VariantGenerationRequestDTO request) {
         ProgrammingExercise draft = new ProgrammingExercise();
         draft.copyImportSettingsFrom(source);
-        if (source.isExamExercise()) {
-            draft.setExerciseGroup(source.getExerciseGroup());
-        }
-        else {
-            draft.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
-            // Like a newly generated draft, a variant is not automatically released by copying a source's past date.
-            draft.setReleaseDate(ZonedDateTime.now().plusYears(1));
-        }
+        draft.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
+        // A variant is not automatically released by copying a source's past date.
+        draft.setReleaseDate(ZonedDateTime.now().plusYears(1));
         String title = source.getTitle() == null ? "Exercise" : source.getTitle();
         draft.setTitle(title.substring(0, Math.min(title.length(), 240)) + " variant");
         draft.setShortName("Variant" + UUID.randomUUID().toString().replace("-", "").substring(0, 12));

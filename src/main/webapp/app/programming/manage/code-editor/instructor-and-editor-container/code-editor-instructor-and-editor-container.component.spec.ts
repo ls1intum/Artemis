@@ -1,3 +1,4 @@
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
 import { HttpErrorResponse } from '@angular/common/http';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
@@ -2188,6 +2189,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         expect(selectedIds()).toEqual([9]);
         expect(attachToJob).not.toHaveBeenCalled();
         expect(warningSpy).toHaveBeenCalledWith('artemisApp.hyperion.generationActivity.saveChangesFirst');
+    });
+
+    it('offers only the existing legacy workflow for an exam exercise', () => {
+        comp.exercise.set(createMockExercise({ programmingLanguage: ProgrammingLanguage.JAVA, isAtLeastEditor: true, exerciseGroup: new ExerciseGroup() }));
+        expect((comp as any).adaptOffered()).toBe(false);
+        expect((comp as any).generationSupported()).toBe(false);
+        expect((comp as any).legacyCodeGenerationOffered()).toBe(true);
+        const availability = reviewCommentService.connectAdaptation.mock.calls.at(-1)![0] as ReviewAdaptationAvailability;
+        expect(availability.offered()).toBe(false);
+        expect(availability.feedbackOffered!()).toBe(true);
+        expect(availability.blockedReason()).toBeUndefined();
     });
 
     it('does not offer adaptation when whole-exercise generation is disabled', () => {

@@ -38,7 +38,7 @@ The action is hidden for exercises it cannot handle, and for anyone below the Ed
 
 ## Starting a Generation
 
-On the course's **Exercises** page in course management, the overflow menu (**…**) of an exercise row offers **Create Variant with AI**. In exams, the same action sits on the rows of an exercise group.
+On the course's **Exercises** page in course management, the overflow menu (**…**) of an exercise row offers **Create Variant with AI**. For quiz exercises in exams, the same action sits on the rows of an exercise group.
 
 <Image src={createVariantAction} alt="Create Variant with AI in the row actions" size={ImageSize.medium} caption="The AI action in the overflow menu of an exercise row" />
 
@@ -93,7 +93,12 @@ A programming variant runs real template and solution builds, so a generation ty
 
 For a quiz variant, click **Run in Background** to close the wizard and let the job continue. The shared **AI activity** tray shows quiz variants alongside programming authoring. Open a row to inspect its progress and available cancellation controls; closing or dismissing the tray does not cancel the run.
 
-<Image src={navbarTray} alt="Shared AI activity tray with running, saved, and recovery states" size={ImageSize.medium} caption="The shared activity tray, illustrated with programming runs" />
+<Image
+    src={navbarTray}
+    alt="Shared AI activity tray with running, saved, and recovery states"
+    size={ImageSize.medium}
+    caption="The shared activity tray, illustrated with programming runs"
+/>
 
 For quiz variants, canceling ends the job and removes the half-finished copy,
 including its repositories and builds where applicable. Quiz job details remain
@@ -177,12 +182,10 @@ not replace your teaching review.
 
 ## Exam Exercises
 
-Programming variants are available only during preparation, before student exams
-or test runs exist. Authoring and assignment share a mutation guard, so assignment
-cannot race a repository copy or save. These restrictions also apply to adapting
-an exam exercise in place. Quiz behavior is unchanged.
+Whole-exercise programming generation, adaptation, and variants are not available
+for exam exercises. Existing legacy repository generation is unchanged.
 
-Generation works the same way for exercises inside an exam exercise group, with two deliberate differences:
+Quiz variant generation remains available for exam exercises. It has two deliberate differences:
 
 - There is **no placement step**. The variant always joins the exercise group of its source, which is what makes it usable as a per-student variant, and it inherits the exam's timing.
 - There is **no difficulty option**. Exam difficulty is reviewed in advance, and handing students variants of differing difficulty would be unfair.

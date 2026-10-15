@@ -12,7 +12,6 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /** Shared admission and presentation policy; cloning a released course source does not grant permission to modify it. */
 @Service
@@ -26,17 +25,14 @@ public class GenerationCapabilityService {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final ProgrammingExerciseRepository exerciseRepository;
-
     private final GenerationJobService jobs;
 
     private final GenerationWorkerRegistryService workers;
 
-    public GenerationCapabilityService(GenerationRequestService requestService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            ProgrammingExerciseRepository exerciseRepository, GenerationJobService jobs, GenerationWorkerRegistryService workers) {
+    public GenerationCapabilityService(GenerationRequestService requestService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GenerationJobService jobs,
+            GenerationWorkerRegistryService workers) {
         this.requestService = requestService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-        this.exerciseRepository = exerciseRepository;
         this.jobs = jobs;
         this.workers = workers;
     }
@@ -51,7 +47,7 @@ public class GenerationCapabilityService {
         boolean supported = supportsConfiguration(exercise);
         String restriction = supported ? mutationRestriction(exercise) : "unsupportedGenerationLanguage";
         boolean mutable = supported && restriction == null;
-        boolean variant = supported && (!exercise.isExamExercise() || mutable);
+        boolean variant = supported;
         return new ExerciseGenerationCapabilitiesDTO(supported, mutable, mutable, variant, jobs.hasActiveJob(exercise.getId()),
                 supported && workers.hasAvailableGenerationSandboxSlot(LanguageGenerationProfile.toolchainFor(exercise)), restriction);
     }
@@ -62,6 +58,9 @@ public class GenerationCapabilityService {
      * @param exercise authoritative exercise
      */
     public void requireSupportedConfiguration(ProgrammingExercise exercise) {
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("Whole-exercise generation is available only for course exercises.", ENTITY_NAME, "unsupportedGenerationLanguage");
+        }
         if (!requestService.isGenerationSupported(exercise)) {
             throw new BadRequestAlertException("Whole-exercise generation is not available for programming language '" + exercise.getProgrammingLanguage() + "' and project type '"
                     + exercise.getProjectType() + "': the verifier does not support this configuration.", ENTITY_NAME, "unsupportedGenerationLanguage");
@@ -73,7 +72,7 @@ public class GenerationCapabilityService {
     }
 
     /**
-     * Checks the lifecycle restriction shared by in-place authoring and undo. A mutation slot still fences concurrent assignment and participation starts.
+     * Checks the course-only lifecycle restriction shared by in-place authoring and undo.
      *
      * @param exercise authoritative exercise including its student participations
      */
@@ -83,14 +82,14 @@ public class GenerationCapabilityService {
             String message = switch (restriction) {
                 case "exerciseAlreadyReleased" -> "Hyperion generation can only modify unreleased draft exercises.";
                 case "exerciseHasParticipations" -> "Hyperion generation can only modify exercises without student participations.";
-                default -> "Hyperion can only modify an exam before student exams or test runs are assigned.";
+                default -> "Whole-exercise generation is available only for course exercises.";
             };
             throw new BadRequestAlertException(message, ENTITY_NAME, restriction);
         }
     }
 
     private boolean supportsConfiguration(ProgrammingExercise exercise) {
-        return requestService.isGenerationSupported(exercise) && auxiliaryRepositoryRepository.findByExerciseId(exercise.getId()).isEmpty();
+        return !exercise.isExamExercise() && requestService.isGenerationSupported(exercise) && auxiliaryRepositoryRepository.findByExerciseId(exercise.getId()).isEmpty();
     }
 
     /**
@@ -101,14 +100,14 @@ public class GenerationCapabilityService {
      */
     @Nullable
     public String mutationRestriction(ProgrammingExercise exercise) {
+        if (exercise.isExamExercise()) {
+            return "unsupportedGenerationLanguage";
+        }
         if (GenerationRequestService.hasReleaseDateInThePast(exercise)) {
             return "exerciseAlreadyReleased";
         }
         if (exercise.getStudentParticipations() != null && !exercise.getStudentParticipations().isEmpty()) {
             return "exerciseHasParticipations";
-        }
-        if (exercise.isExamExercise() && !exerciseRepository.isUnreleasedAndWithoutStudentParticipations(exercise.getId())) {
-            return "exerciseAlreadyAssigned";
         }
         return null;
     }

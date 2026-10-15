@@ -14,6 +14,7 @@ export function hasSupportedProgrammingConfiguration(exercise: Exercise | undefi
     if (exercise?.type !== ExerciseType.PROGRAMMING) return false;
     const programming = exercise as ProgrammingExercise;
     return (
+        !programming.exerciseGroup &&
         supportsHyperionExerciseGeneration(programming.programmingLanguage, programming.projectType) &&
         !programming.staticCodeAnalysisEnabled &&
         !programming.buildConfig?.sequentialTestRuns &&
@@ -53,9 +54,4 @@ export function generationCapabilityBlocker(capabilities: ExerciseGenerationCapa
         default:
             return prefix + 'preparationOnly';
     }
-}
-
-/** Only a definite assignment restriction selects the existing legacy workflow; request failure and busy state do not. */
-export function hasLegacyGenerationRestriction(capabilities: ExerciseGenerationCapabilities | undefined): boolean {
-    return capabilities?.supported === true && capabilities.canAdapt !== true && !capabilities.busy && capabilities.restriction === 'exerciseAlreadyAssigned';
 }

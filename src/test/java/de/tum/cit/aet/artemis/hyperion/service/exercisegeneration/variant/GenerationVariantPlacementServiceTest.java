@@ -134,7 +134,7 @@ class GenerationVariantPlacementServiceTest {
     }
 
     @Test
-    void examSourceOnlyAcceptsItsOwnExamGroup() {
+    void examSourceIsRejectedForEveryPlacement() {
         var exam = new Exam();
         exam.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
         var group = new ExerciseGroup();
@@ -143,7 +143,7 @@ class GenerationVariantPlacementServiceTest {
         source.setExerciseGroup(group);
 
         assertThatThrownBy(() -> service.validate(source, request(VariantPlacementDTO.PlacementType.STANDALONE))).isInstanceOf(BadRequestAlertException.class);
-        service.validate(source, request(VariantPlacementDTO.PlacementType.SAME_EXAM_GROUP));
+        assertThatThrownBy(() -> service.validate(source, request(VariantPlacementDTO.PlacementType.SAME_EXAM_GROUP))).isInstanceOf(BadRequestAlertException.class);
         verifyNoInteractions(groups, groupService, exercises);
     }
 }

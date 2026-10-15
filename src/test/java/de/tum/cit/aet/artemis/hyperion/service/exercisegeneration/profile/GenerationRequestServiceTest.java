@@ -43,7 +43,7 @@ class GenerationRequestServiceTest {
     private final GenerationRequestService service = new GenerationRequestService(buildConfigRepository, resources);
 
     @Test
-    void examEligibilityUsesExamStartAndFailsClosedWithoutSchedule() {
+    void examGenerationIsUnsupportedRegardlessOfSchedule() {
         var exercise = exercise();
         var exam = new de.tum.cit.aet.artemis.exam.domain.Exam();
         var group = new de.tum.cit.aet.artemis.exam.domain.ExerciseGroup();
@@ -55,10 +55,11 @@ class GenerationRequestServiceTest {
         exam.setStartDate(java.time.ZonedDateTime.now().minusDays(1));
         assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isTrue();
         exam.setStartDate(java.time.ZonedDateTime.now().plusDays(1));
-        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isFalse();
-        // The course-only release field must not override the exam schedule in either direction.
+        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isTrue();
+        assertThat(service.isGenerationSupported(exercise)).isFalse();
+        // A course release field cannot make an exam eligible.
         exercise.setReleaseDate(java.time.ZonedDateTime.now().minusDays(1));
-        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isFalse();
+        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isTrue();
     }
 
     @ParameterizedTest

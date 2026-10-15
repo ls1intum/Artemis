@@ -900,7 +900,7 @@ class HyperionExerciseGenerationResourceTest {
     }
 
     private HyperionExerciseGenerationResource createResource(HyperionEffortProfileService profiles, ExerciseGenerationRevertService revertService) {
-        var capabilities = new GenerationCapabilityService(agentSystemPromptService, auxiliaryRepositoryRepository, programmingExerciseRepository, jobService, sandboxClient);
+        var capabilities = new GenerationCapabilityService(agentSystemPromptService, auxiliaryRepositoryRepository, jobService, sandboxClient);
         var admission = new GenerationAdmissionService(programmingExerciseRepository, capabilities, jobService, agentSystemPromptService, reviewCommentContextRenderer,
                 sandboxClient, generationBudgetService, generationCapacityHealthIndicator, profiles);
         return new HyperionExerciseGenerationResource(userRepository, programmingExerciseRepository, capabilities, jobService, agentSystemPromptService, admission, revertService,

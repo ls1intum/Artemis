@@ -285,6 +285,7 @@
                 },
                 "blocker": {
                     "requiresEditor": "Du brauchst Editor-Rechte in diesem Kurs, um die Aufgabe mit KI zu ändern.",
+                    "examExercise": "Die KI-Erstellung ganzer Aufgaben ist nur für Kursaufgaben verfügbar. Die bestehende Generierung einzelner Repositories bleibt verfügbar.",
                     "unsupportedLanguage": "KI-Erstellung unterstützt nur Java-Aufgaben.",
                     "unsupportedProjectType": "Diese Java-Aufgabe wird mit Maven oder einem anderen Werkzeug gebaut. KI-Erstellung prüft nur Gradle-Builds; das Build-Werkzeug lässt sich nach dem Anlegen nicht ändern, lege dafür eine Gradle-Aufgabe an.",
                     "staticCodeAnalysis": "Deaktiviere zuerst die statische Codeanalyse in den Aufgabeneinstellungen. Die KI-Prüfung bildet deren Abzüge nicht ab.",

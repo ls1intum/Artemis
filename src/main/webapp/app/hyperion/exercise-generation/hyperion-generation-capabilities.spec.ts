@@ -6,7 +6,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
 import { ExerciseGenerationCapabilities } from 'app/openapi/model/exercise-generation-capabilities';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { generationCapabilityBlocker, hasLegacyGenerationRestriction, injectGenerationCapabilities } from './hyperion-generation-capabilities';
+import { generationCapabilityBlocker, injectGenerationCapabilities } from './hyperion-generation-capabilities';
 
 describe('Shared programming authoring capabilities', () => {
     const exercise = signal<Exercise | undefined>(undefined);
@@ -40,7 +40,8 @@ describe('Shared programming authoring capabilities', () => {
         expect(generationCapabilityBlocker(capabilities.value())).toMatch(/released$/);
     });
 
-    it.each(['quiz', 'unsupported', 'unauthorized', 'disabled'])('does not request capabilities for %s', (reason) => {
+    it.each(['quiz', 'unsupported', 'exam', 'unauthorized', 'disabled'])('does not request capabilities for %s', (reason) => {
+        if (reason === 'exam') exercise.set(Object.assign(supported(), { exerciseGroup: { id: 4 } }));
         if (reason === 'quiz') exercise.set({ id: 12, type: ExerciseType.QUIZ } as Exercise);
         if (reason === 'unsupported') exercise.set(Object.assign(supported(), { projectType: ProjectType.PLAIN_MAVEN }));
         if (reason === 'unauthorized') authorized.set(false);
@@ -61,15 +62,6 @@ describe('Shared programming authoring capabilities', () => {
         previous.next({ canAdapt: true });
         expect(capabilities.value()?.canAdapt).toBe(false);
         expect(generationCapabilityBlocker(capabilities.value())).toMatch(/preparationOnly$/);
-    });
-
-    it('uses legacy generation only for the confirmed assignment restriction', () => {
-        expect(hasLegacyGenerationRestriction({ supported: true, canAdapt: false, restriction: 'exerciseAlreadyAssigned' })).toBe(true);
-        expect(hasLegacyGenerationRestriction({ supported: true, canAdapt: false, busy: true, restriction: 'exerciseAlreadyAssigned' })).toBe(false);
-        expect(hasLegacyGenerationRestriction({ supported: false, canAdapt: false, restriction: 'exerciseAlreadyAssigned' })).toBe(false);
-        expect(hasLegacyGenerationRestriction({ supported: true, canAdapt: true, restriction: 'exerciseAlreadyAssigned' })).toBe(false);
-        expect(hasLegacyGenerationRestriction({ supported: true, canAdapt: false, restriction: 'requiresEditor' })).toBe(false);
-        expect(hasLegacyGenerationRestriction(undefined)).toBe(false);
     });
 
     it('fails closed on a denied or unavailable capability response', () => {

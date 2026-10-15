@@ -1,9 +1,4 @@
-import {
-    generationCapabilityBlocker,
-    hasLegacyGenerationRestriction,
-    hasSupportedProgrammingConfiguration,
-    injectGenerationCapabilities,
-} from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
+import { generationCapabilityBlocker, hasSupportedProgrammingConfiguration, injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { LegacyCodeGenerationComponent } from 'app/programming/manage/code-editor/legacy-code-generation/legacy-code-generation.component';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
 import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnDestroy, computed, inject, linkedSignal, signal, viewChild } from '@angular/core';
@@ -468,9 +463,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             !!exercise?.id &&
             !!exercise.isAtLeastEditor &&
             exercise.programmingLanguage === ProgrammingLanguage.JAVA &&
-            (!this.hyperionGenerationSupported ||
-                hyperionGenerationBlocker(exercise, this.now()) !== undefined ||
-                hasLegacyGenerationRestriction(this.generationCapabilities.value()))
+            (!this.hyperionGenerationSupported || hyperionGenerationBlocker(exercise, this.now()) !== undefined)
         );
     });
     protected readonly legacyCodeGenerationRunning = signal(false);

@@ -285,6 +285,7 @@
                 },
                 "blocker": {
                     "requiresEditor": "You need editor rights in this course to change the exercise with AI.",
+                    "examExercise": "Whole-exercise AI authoring is available for course exercises only. Existing repository-level generation remains available.",
                     "unsupportedLanguage": "AI authoring supports Java exercises only.",
                     "unsupportedProjectType": "This Java exercise builds with Maven or another tool. AI authoring only verifies Gradle builds; the build tool cannot be changed after creation, so create a Gradle exercise to use it.",
                     "staticCodeAnalysis": "Disable static code analysis in the exercise settings first. The AI verifier does not model its penalties.",
