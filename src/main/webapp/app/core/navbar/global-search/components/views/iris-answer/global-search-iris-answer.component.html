@@ -101,6 +101,7 @@
                                         (mouseenter)="setChipHighlight(view.markerNumber)"
                                         [routerLink]="view.source.lectureUnit.link"
                                         [queryParams]="view.source.lectureUnit.queryParams"
+                                        [state]="lectureDeepLinkNavigationState"
                                     >
                                         @if (hasCitations()) {
                                             <span class="iris-chip-n flex-shrink-0" data-testid="iris-chip-number">{{ view.markerNumber }}</span>
@@ -153,6 +154,11 @@
                 }
             </div>
         </div>
+
+        <!-- Footer, right after the sources: where the reader ends up once the answer is read. -->
+        @if (canContinueInIris()) {
+            <jhi-global-search-iris-handoff [question]="searchQuery()" [answer]="irisResult()?.answer ?? ''" [citedSources]="citedSources()" [runId]="answerRunId()" />
+        }
 
         @if (citationPopover(); as popover) {
             <div class="iris-cite-popover" role="tooltip" data-testid="iris-citation-popover" [style.left.px]="popover.left" [style.top.px]="popover.top">

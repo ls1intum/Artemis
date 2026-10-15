@@ -1,4 +1,4 @@
-@if (participationCouldNotBeFetched() || lockLimitReached() || assessmentNotPossibleYet()) {
+@if (participationCouldNotBeFetched() || lockLimitReached() || assessmentNotPossibleYet() || resultNotFound()) {
     <nav class="card">
         <div class="card-body">
             @if (assessmentNotPossibleYet(); as assessmentNotPossibleYetReason) {
@@ -13,6 +13,13 @@
                     <span jhiTranslate="artemisApp.editor.errors.participationNotFound"></span>
                 </span>
             }
+            @if (resultNotFound()) {
+                <span data-testid="assessment-result-not-found">
+                    <fa-icon [icon]="faTimesCircle" class="text-state-danger" />
+                    <span jhiTranslate="artemisApp.programmingAssessment.resultNotFound"></span>
+                    <a [routerLink]="exerciseDashboardLink()" class="ms-2" jhiTranslate="entity.action.exerciseDashboard"></a>
+                </span>
+            }
             @if (lockLimitReached()) {
                 <div>
                     <fa-icon [icon]="faTimesCircle" class="text-danger" />
@@ -23,45 +30,48 @@
     </nav>
 }
 <div [id]="'exercise-' + exercise()?.id">
-    <jhi-assessment-layout
-        [isLoading]="loadingParticipation()"
-        [saveBusy]="saveBusy()"
-        [submitBusy]="submitBusy()"
-        [cancelBusy]="cancelBusy()"
-        [nextSubmissionBusy]="nextSubmissionBusy()"
-        [isTeamMode]="!!exercise()?.teamMode"
-        [isAssessor]="isAssessor()"
-        [isTestRun]="isTestRun()"
-        [exerciseDashboardLink]="exerciseDashboardLink()"
-        [canOverride]="canOverride"
-        [result]="manualResult()"
-        [assessmentsAreValid]="assessmentsAreValid()"
-        [complaint]="complaint()"
-        [exercise]="exercise()"
-        [submission]="submission()"
-        [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed()"
-        [correctionRound]="correctionRound()"
-        [isProgrammingExercise]="true"
-        (save)="save()"
-        (onSubmit)="submit()"
-        (onCancel)="cancel()"
-        (nextSubmission)="nextSubmission()"
-        (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
-    >
-        <jhi-feedback-suggestions-banner
-            jhiBannerSlot
-            [isLoading]="loadingFeedbackSuggestions()"
-            [hasAutomaticFeedback]="hasAutomaticFeedback()"
+    <!-- without a result there is nothing to save or submit, so the header with its buttons stays away -->
+    @if (!resultNotFound()) {
+        <jhi-assessment-layout
+            [isLoading]="loadingParticipation()"
+            [saveBusy]="saveBusy()"
+            [submitBusy]="submitBusy()"
+            [cancelBusy]="cancelBusy()"
+            [nextSubmissionBusy]="nextSubmissionBusy()"
+            [isTeamMode]="!!exercise()?.teamMode"
             [isAssessor]="isAssessor()"
-            [resultCompletionDate]="manualResult()?.completionDate"
-            [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
-        />
-        @if (submission()) {
-            <ng-container *ngTemplateOutlet="assessment" />
-        } @else {
-            <ng-container *ngTemplateOutlet="noSubmission" />
-        }
-    </jhi-assessment-layout>
+            [isTestRun]="isTestRun()"
+            [exerciseDashboardLink]="exerciseDashboardLink()"
+            [canOverride]="canOverride"
+            [result]="manualResult()"
+            [assessmentsAreValid]="assessmentsAreValid()"
+            [complaint]="complaint()"
+            [exercise]="exercise()"
+            [submission]="submission()"
+            [hasAssessmentDueDatePassed]="hasAssessmentDueDatePassed()"
+            [correctionRound]="correctionRound()"
+            [isProgrammingExercise]="true"
+            (save)="save()"
+            (onSubmit)="submit()"
+            (onCancel)="cancel()"
+            (nextSubmission)="nextSubmission()"
+            (updateAssessmentAfterComplaint)="onUpdateAssessmentAfterComplaint($event)"
+        >
+            <jhi-feedback-suggestions-banner
+                jhiBannerSlot
+                [isLoading]="loadingFeedbackSuggestions()"
+                [hasAutomaticFeedback]="hasAutomaticFeedback()"
+                [isAssessor]="isAssessor()"
+                [resultCompletionDate]="manualResult()?.completionDate"
+                [isFeedbackSuggestionsEnabled]="isFeedbackSuggestionsEnabled()"
+            />
+            @if (submission()) {
+                <ng-container *ngTemplateOutlet="assessment" />
+            } @else {
+                <ng-container *ngTemplateOutlet="noSubmission" />
+            }
+        </jhi-assessment-layout>
+    }
 
     <ng-template #assessment>
         @if (!loadingParticipation() && !participationCouldNotBeFetched()) {
@@ -73,6 +83,7 @@
                 [referencedFeedback]="referencedFeedbackForEditor()"
                 [showEditorInstructions]="showEditorInstructions"
                 [isTutorAssessment]="true"
+                [commitId]="submission()?.commitHash"
                 [highlightFileChanges]="true"
                 [readOnlyManualFeedback]="readOnly()"
                 [highlightDifferences]="highlightDifferences"
@@ -111,6 +122,18 @@
                 <a class="btn btn-secondary btn-sm me-2 open-repository-button" [routerLink]="localRepositoryLink()" target="_blank" rel="noopener noreferrer">
                     <fa-icon [icon]="faExternalLink" />
                     <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"></span>
+                </a>
+            }
+            @if (commitHistoryLink(); as link) {
+                <a
+                    class="btn btn-secondary btn-sm me-2 open-commit-history-button"
+                    data-testid="open-commit-history-button"
+                    [routerLink]="link"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <fa-icon [icon]="faClockRotateLeft" />
+                    <span jhiTranslate="artemisApp.repository.commitHistory.openCommitHistory"></span>
                 </a>
             }
             <jhi-programming-assessment-repo-export
@@ -165,7 +188,7 @@
 
     <ng-template #noSubmission>
         <!-- while assessment is not possible yet the submission does exist, so the card above explains that instead -->
-        @if (!loadingInitialSubmission() && !assessmentNotPossibleYet()) {
+        @if (!loadingInitialSubmission() && !assessmentNotPossibleYet() && !resultNotFound()) {
             <div class="alert alert-warning text-center mt-4" role="alert">
                 <p jhiTranslate="artemisApp.programmingAssessment.notFound"></p>
                 <a [routerLink]="exerciseDashboardLink()" class="btn btn-info btn-sm me-1 mb-1 assessment-dashboard">

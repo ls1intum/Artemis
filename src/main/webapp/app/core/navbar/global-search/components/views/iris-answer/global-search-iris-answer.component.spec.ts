@@ -5,6 +5,7 @@ import { MockDirective, MockPipe } from 'ng-mocks';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Subject, throwError } from 'rxjs';
 import { Router, provideRouter } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { faFile, faFilePdf, faFileVideo, faKeyboard, faVideo } from '@fortawesome/free-solid-svg-icons';
@@ -13,6 +14,7 @@ import { GlobalSearchIrisAnswerComponent } from './global-search-iris-answer.com
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { SEARCH_DEBOUNCE_MS } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
 const SOURCES: LectureSearchResult[] = [
     {
@@ -375,6 +377,25 @@ describe('GlobalSearchIrisAnswerComponent', () => {
 
         const chips = fixture.nativeElement.querySelectorAll('a.iris-chip');
         expect(chips.length).toBe(2);
+    });
+
+    it('should precompute source chip lecture deep-link query params', () => {
+        const source: LectureSearchResult = {
+            course: SOURCES[0].course,
+            lecture: SOURCES[0].lecture,
+            lectureUnit: {
+                id: 1,
+                name: 'Unit 1',
+                link: '/u/1',
+                pageNumber: 1,
+                sourceType: 'lecture_unit_slide',
+                queryParams: { unit: '1', timestamp: '-1', page: '2', unrelated: 'kept' },
+            },
+        };
+        // @ts-expect-error
+        component.irisResult.set({ answer: 'Some answer', sources: [source] });
+
+        expect(component['sources']()[0].lectureUnit.queryParams).toEqual({ unrelated: 'kept', unit: 1, page: 2 });
     });
 
     it('should show the "+N more" button when there are more than 2 sources', () => {
@@ -961,7 +982,10 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             const sup = injectRenderedCitation('3');
             sup.dispatchEvent(new MouseEvent('click', { bubbles: true }));
             fixture.detectChanges();
-            expect(navigateSpy).toHaveBeenCalledWith(['/u/3'], { queryParams: SOURCES[2].lectureUnit.queryParams });
+            expect(navigateSpy).toHaveBeenCalledWith(['/u/3'], {
+                queryParams: SOURCES[2].lectureUnit.queryParams,
+                state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+            });
         });
 
         it('ignores a click on a draft citation before sources arrived', () => {
@@ -1096,7 +1120,10 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             const body = fixture.nativeElement.querySelector('.iris-answer-text');
             body.innerHTML = '<p>About the slide.<sup class="iris-cite" data-n="2">2</sup></p>';
             body.querySelector('.iris-cite').dispatchEvent(new MouseEvent('click', { bubbles: true }));
-            expect(navigateSpy).toHaveBeenCalledWith(['/u/1'], { queryParams: SOURCES[0].lectureUnit.queryParams });
+            expect(navigateSpy).toHaveBeenCalledWith(['/u/1'], {
+                queryParams: SOURCES[0].lectureUnit.queryParams,
+                state: LECTURE_DEEP_LINK_NAVIGATION_STATE,
+            });
             expect(navigateByUrlSpy).not.toHaveBeenCalled();
         });
 
@@ -1420,6 +1447,16 @@ describe('GlobalSearchIrisAnswerComponent', () => {
             expect(component['phase']()).toBe('idle');
             expect(fixture.nativeElement.querySelector('[data-testid="iris-no-answer"]')).toBeNull();
             expect(fixture.nativeElement.querySelector('.iris-inline-answer')).toBeNull();
+        });
+
+        it('stays hidden when Iris is off in every course in scope', () => {
+            startQuery();
+
+            askSubject.error(new HttpErrorResponse({ status: 403 }));
+            fixture.detectChanges();
+
+            expect(component['phase']()).toBe('idle');
+            expect(component.occupiesSpace()).toBe(false);
         });
 
         it('clears a pending reveal timer when the stream fails after a partial already arrived', () => {

@@ -266,6 +266,30 @@ class IrisCitationServiceTest {
         verify(materialVersionService).getSnapshot("job");
     }
 
+    @Test
+    void stampCitationVersionsForGlobalSearch_pinsTheVersionsCapturedForTheSearchRun() {
+        when(materialVersionService.getGlobalSearchSnapshot("run", "student"))
+                .thenReturn(Map.of(LECTURE_UNIT_ID, ingested(LECTURE_UNIT_ID, 3, 2), SECOND_LECTURE_UNIT_ID, ingested(SECOND_LECTURE_UNIT_ID, 8, null)));
+
+        var stamped = citationService.stampCitationVersionsForGlobalSearch("A [cite:L:42::30::Locks:] and B [cite:L:7:2:::Threads:]", "run", "student");
+
+        // Pinned to the material the answer was written from, never to the versions the material has now.
+        assertThat(stamped).isEqualTo("A [cite:L:42::30::Locks::vt2] and B [cite:L:7:2:::Threads::va8]");
+        verifyNoInteractions(lectureUnitRepositoryApi);
+    }
+
+    @Test
+    void stampCitationVersionsForGlobalSearch_marksCitationsUnverifiedWithoutASearchRun() {
+        assertThat(citationService.stampCitationVersionsForGlobalSearch("[cite:L:42:7:::Deadlocks:]", null, "student")).isEqualTo("[cite:L:42:7:::Deadlocks::va0]");
+        verifyNoInteractions(materialVersionService, lectureUnitRepositoryApi);
+    }
+
+    @Test
+    void stampCitationVersionsForGlobalSearch_loadsNoVersionsWithoutACitation() {
+        assertThat(citationService.stampCitationVersionsForGlobalSearch("No citations here.", "run", "student")).isEqualTo("No citations here.");
+        verifyNoInteractions(materialVersionService, lectureUnitRepositoryApi);
+    }
+
     /**
      * The citation pattern accepts any run of digits, so a model inventing an ID beyond {@code long} produces a well-formed citation that cannot name a lecture unit. It
      * has to be skipped rather than throw: the lookup already ignores it, and a valid citation next to it is enough to reach the stamping loop, where an escaping

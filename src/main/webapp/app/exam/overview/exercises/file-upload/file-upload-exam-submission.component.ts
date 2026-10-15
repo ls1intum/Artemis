@@ -11,14 +11,14 @@ import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
 import { ResizeableContainerComponent } from 'app/shared-ui/resizeable-container/resizeable-container.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamExerciseUpdateHighlighterComponent } from '../exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
@@ -34,7 +34,7 @@ import { FileService } from 'app/foundation/service/file.service';
     providers: [{ provide: ExamSubmissionComponent, useExisting: FileUploadExamSubmissionComponent }],
     imports: [
         TranslateDirective,
-        IncludedInScoreBadgeComponent,
+        ExamExerciseHeaderComponent,
         ResizeableContainerComponent,
         FaIconComponent,
         ExamExerciseUpdateHighlighterComponent,
@@ -68,7 +68,6 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
 
     readonly ButtonType = ButtonType;
 
-    readonly IncludedInOverallScore = IncludedInOverallScore;
     filePath?: string;
 
     // Icons

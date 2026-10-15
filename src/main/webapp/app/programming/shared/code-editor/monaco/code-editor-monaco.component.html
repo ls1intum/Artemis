@@ -1,4 +1,4 @@
-<div class="card">
+<div class="card" data-testid="cardEditor">
     <jhi-code-editor-header [showTabSizeSelector]="false" [fileName]="selectedFile()" [isLoading]="loadingCount() > 0" [secondary]="secondaryHeader()" />
     <div class="card-body card-body-monaco">
         @if (selectedFile()) {

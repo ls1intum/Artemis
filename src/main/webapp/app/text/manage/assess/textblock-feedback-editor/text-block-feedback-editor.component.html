@@ -74,9 +74,9 @@
                         ></button>
                         <!--if there is only one criterion, dropdown-menu contains its instructions-->
                         @if (criteria()!.length === 1) {
-                            <ul ngbDropdownMenu>
+                            <div ngbDropdownMenu>
                                 <jhi-textblock-feedback-dropdown [criterion]="criteria()![0]" [feedback]="feedback()" (didChange)="didChange()" />
-                            </ul>
+                            </div>
                         } @else {
                             <ul class="dropdown-menu" ngbDropdownMenu>
                                 @for (criterion of criteria(); track criterion) {
@@ -91,9 +91,9 @@
                                                 />
                                             </button>
                                         }
-                                        <ul class="dropdown-menu dropdown-submenu">
+                                        <div class="dropdown-menu dropdown-submenu">
                                             <jhi-textblock-feedback-dropdown [criterion]="criterion" [feedback]="feedback()" (didChange)="didChange()" />
-                                        </ul>
+                                        </div>
                                     </li>
                                 }
                             </ul>

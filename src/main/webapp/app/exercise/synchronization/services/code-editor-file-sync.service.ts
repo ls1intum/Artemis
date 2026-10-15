@@ -553,7 +553,7 @@ export class CodeEditorFileSyncService {
                 }
                 // Tie-breaker: lexicographically smaller sessionId wins for determinism
                 return (next.sessionId ?? '') < (best.sessionId ?? '') ? next : best;
-            });
+            }, responses[0]);
             const update = decodeBase64ToUint8Array(selected.yjsUpdate);
             Y.applyUpdate(entry.doc, update, FileSyncOrigin.Remote);
             entry.activeLeaderTimestamp = selected.leaderTimestamp;

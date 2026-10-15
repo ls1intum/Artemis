@@ -1,10 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -17,7 +14,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
@@ -35,7 +31,8 @@ import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.ReferenceProperty;
 import io.weaviate.client6.v1.api.collections.Tokenization;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
-import io.weaviate.client6.v1.api.collections.vectorizers.Text2VecOpenAiVectorizer;
+import io.weaviate.client6.v1.api.collections.vectorindex.Hnsw;
+import io.weaviate.client6.v1.api.collections.vectorindex.MultiVector;
 
 /**
  * Infrastructure service for Weaviate vector database.
@@ -115,10 +112,8 @@ public class WeaviateService {
      * Ensures every collection in {@link WeaviateSchemas#ALL_SCHEMAS} exists, creating any that are missing.
      * <p>
      * Runs on every Weaviate-enabled node during startup (via {@link #initializeCollections()}) so the indexing
-     * and search paths always have their target collections available. It is idempotent and is invoked again by
-     * {@link WeaviateMigrationStartupService} after a migration completes as future-proofing: should a later migration
-     * drop one of the managed {@link WeaviateSchemas#ALL_SCHEMAS} collections, it is recreated here. (The current V0→V1
-     * migration drops only the unmanaged legacy {@code Exercises} collection, so this pass is a no-op for it.)
+     * and search paths always have their target collections available. It is idempotent; the index rebuild
+     * ({@link SearchableEntityIndexRebuildService}) calls it again to recreate the collections it deleted.
      */
     public void ensureAllCollectionsExist() {
         for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
@@ -144,34 +139,17 @@ public class WeaviateService {
             log.info("Creating collection '{}' with vectorizer '{}'...", collectionName, properties.vectorizerModule());
 
             client.collections.create(collectionName, collection -> {
-                // Configure vectorizer based on deployment setup
-                // - "none": Use self-provided vectors (respective weaviate instance can be started via docker/weaviate.yml)
-                // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (respective weaviate instance can be started via docker/weaviate-embeddings.yml)
-                // - "text2vec-openai": OpenAI-compatible API embeddings, e.g. Ollama (weaviate started with docker/weaviate/openai.env)
+                // Artemis provides the vectors itself. With "text2vec-openai" every row carries one vector per chunk of its
+                // embedding inputs (a multi-vector scored by MaxSim, i.e. by its best chunk); with "none" rows carry no vectors
+                // and search is keyword-only.
                 if (SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(properties.vectorizerModule())) {
-                    collection.vectorConfig(VectorConfig.text2vecOpenAi(builder -> {
-                        if (StringUtils.hasText(properties.openAiBaseUrl())) {
-                            builder.baseUrl(properties.openAiBaseUrl());
-                        }
-                        if (StringUtils.hasText(properties.openAiEmbeddingModel())) {
-                            builder.model(properties.openAiEmbeddingModel());
-                        }
-                        return builder;
-                    }));
-                    log.info("Configured collection '{}' with text2vec-openai: baseUrl='{}', model='{}', apiKey configured={}", collectionName, properties.openAiBaseUrl(),
-                            properties.openAiEmbeddingModel(), StringUtils.hasText(properties.gpuApiKey()));
-                }
-                else if (SupportedVectorizer.TEXT2VEC_TRANSFORMERS.configValue().equals(properties.vectorizerModule())) {
-                    log.info("Configured collection '{}' with text2vec-transformers vectorizer", collectionName);
-                    collection.vectorConfig(VectorConfig.text2vecTransformers());
-                }
-                else if (SupportedVectorizer.NONE.configValue().equals(properties.vectorizerModule())) {
-                    log.info("Configured collection '{}' with self-provided vectors (no automatic embeddings)", collectionName);
-                    collection.vectorConfig(VectorConfig.selfProvided());
+                    collection.vectorConfig(VectorConfig.selfProvided(vector -> vector
+                            .vectorIndex(Hnsw.of(hnsw -> hnsw.multiVector(MultiVector.of(multiVector -> multiVector.aggregation(MultiVector.Aggregation.MAX_SIM)))))));
+                    log.info("Configured collection '{}' with chunk vectors provided by Artemis (model '{}')", collectionName, properties.openAiEmbeddingModel());
                 }
                 else {
-                    log.warn("Unknown vectorizer module '{}', defaulting to self-provided vectors", properties.vectorizerModule());
                     collection.vectorConfig(VectorConfig.selfProvided());
+                    log.info("Configured collection '{}' without vectors (keyword search only)", collectionName);
                 }
 
                 // Enable null state indexing so that properties with null values can be used in filters
@@ -212,8 +190,8 @@ public class WeaviateService {
     }
 
     /**
-     * Reconciles an existing Weaviate collection with the Java schema definition:
-     * adds any missing properties and checks for vectorizer configuration drift.
+     * Reconciles an existing Weaviate collection with the Java schema definition by adding any missing properties.
+     * Whether its vectors still match the configuration is checked by {@link SearchableEntityIndexRebuildService}.
      * Fetches the collection config exactly once to avoid redundant REST calls.
      *
      * @param collectionName the fully-qualified collection name (with prefix)
@@ -227,7 +205,6 @@ public class WeaviateService {
             }
 
             addMissingProperties(collectionName, schema, existingConfig.get());
-            checkForConfigurationDrift(collectionName, existingConfig.get());
         }
         catch (Exception e) {
             log.warn("Could not reconcile existing collection '{}': {}", collectionName, e.getMessage());
@@ -252,62 +229,6 @@ public class WeaviateService {
     }
 
     /**
-     * Compares the existing collection's vectorizer configuration with the application config.
-     * Logs a warning if there is a mismatch, guiding the developer to delete and recreate the collection.
-     */
-    private void checkForConfigurationDrift(String collectionName, CollectionConfig existingConfig) {
-        Map<String, VectorConfig> vectors = existingConfig.vectors();
-        if (vectors == null || vectors.isEmpty()) {
-            return;
-        }
-
-        VectorConfig defaultVector = vectors.get("default");
-        if (defaultVector == null) {
-            log.warn("Collection '{}' has no 'default' vector key; found keys: {}. Skipping configuration drift check.", collectionName, vectors.keySet());
-            return;
-        }
-
-        List<String> mismatches = detectVectorizerMismatches(defaultVector);
-        if (!mismatches.isEmpty()) {
-            log.warn(
-                    "Collection '{}' exists but its vectorizer configuration differs from the application config: {}. "
-                            + "Delete the collection and restart Artemis to apply the new settings: curl -X DELETE \"http://{}:{}/v1/schema/{}\"",
-                    collectionName, String.join("; ", mismatches), properties.httpHost(), properties.httpPort(), collectionName);
-        }
-    }
-
-    /**
-     * Compares the existing vector configuration against the application's configured vectorizer
-     * and returns a list of human-readable mismatch descriptions.
-     *
-     * @param existingVector the vector configuration currently stored in Weaviate
-     * @return a list of mismatch descriptions (empty if configurations match)
-     */
-    private List<String> detectVectorizerMismatches(VectorConfig existingVector) {
-        VectorConfig.Kind existingKind = existingVector._kind();
-        VectorConfig.Kind expectedKind = SupportedVectorizer.fromConfigValue(properties.vectorizerModule()).vectorConfigKind();
-
-        List<String> mismatches = new ArrayList<>();
-
-        if (existingKind != expectedKind) {
-            mismatches.add("vectorizer module: existing='%s', configured='%s'".formatted(existingKind.jsonValue(), properties.vectorizerModule()));
-        }
-
-        boolean shouldCompareOpenAiProperties = existingKind == VectorConfig.Kind.TEXT2VEC_OPENAI && expectedKind == VectorConfig.Kind.TEXT2VEC_OPENAI;
-        if (shouldCompareOpenAiProperties) {
-            Text2VecOpenAiVectorizer existingOpenAi = existingVector._as(VectorConfig.Kind.TEXT2VEC_OPENAI);
-            if (!Objects.equals(existingOpenAi.baseUrl(), properties.openAiBaseUrl())) {
-                mismatches.add("open-ai-base-url: existing='%s', configured='%s'".formatted(existingOpenAi.baseUrl(), properties.openAiBaseUrl()));
-            }
-            if (!Objects.equals(existingOpenAi.model(), properties.openAiEmbeddingModel())) {
-                mismatches.add("open-ai-embedding-model: existing='%s', configured='%s'".formatted(existingOpenAi.model(), properties.openAiEmbeddingModel()));
-            }
-        }
-
-        return mismatches;
-    }
-
-    /**
      * Creates a Weaviate property from a property definition.
      *
      * @param definition the property definition
@@ -327,6 +248,8 @@ public class WeaviateService {
                 }
                 return builder;
             });
+            case TEXT_ARRAY ->
+                Property.textArray(definition.name(), property -> property.indexSearchable(definition.indexSearchable()).indexFilterable(definition.indexFilterable()));
             case NUMBER -> Property.number(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case BOOLEAN -> Property.bool(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
             case DATE -> Property.date(definition.name(), property -> property.indexFilterable(definition.indexFilterable()));
@@ -374,18 +297,5 @@ public class WeaviateService {
         catch (IOException exception) {
             throw new WeaviateException("Failed to check whether external collection '" + exactCollectionName + "' exists: " + exception.getMessage(), exception);
         }
-    }
-
-    /**
-     * Returns whether a text vectorizer is configured that can automatically
-     * create embeddings from text. When this returns {@code false}, only keyword
-     * (BM25) search should be used instead of hybrid search because hybrid search
-     * requires a vectorizer to convert the query text into a vector.
-     *
-     * @return {@code true} if a text vectorizer is available, {@code false} otherwise
-     */
-    public boolean isVectorizerAvailable() {
-        return SupportedVectorizer.TEXT2VEC_TRANSFORMERS.configValue().equals(properties.vectorizerModule())
-                || SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(properties.vectorizerModule());
     }
 }

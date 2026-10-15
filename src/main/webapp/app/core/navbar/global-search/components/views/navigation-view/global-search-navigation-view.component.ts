@@ -1,10 +1,12 @@
-import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, viewChild, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChild, viewChildren } from '@angular/core';
 import { SkeletonModule } from 'primeng/skeleton';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     faBook,
     faCalendarCheck,
     faCheckDouble,
     faComment,
+    faCompass,
     faFileUpload,
     faFont,
     faGraduationCap,
@@ -17,6 +19,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { MIN_SEARCH_QUERY_LENGTH, SHORT_QUERY_MAX_LENGTH, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { LECTURE_CONTENT_TYPE } from 'app/core/navbar/global-search/models/lecture-content-result.util';
+import { COURSE_PAGE_TYPE } from 'app/core/navbar/global-search/models/course-page-results.util';
 import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -28,12 +31,14 @@ import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
+import { LECTURE_DEEP_LINK_NAVIGATION_STATE } from 'app/lecture/overview/course-lectures/lecture-deep-link.model';
 
+import { SEARCH_RESULTS_LISTBOX_ID, searchResultOptionDomId } from 'app/core/navbar/global-search/models/search-menu.model';
 @Component({
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GlobalSearchIrisAnswerComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe],
+    imports: [GlobalSearchIrisAnswerComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe, FaIconComponent],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
@@ -57,6 +62,27 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly excludeCourseIds = input<number[]>([]);
     /** True while the slides and videos filter is the active one, which searches content instead of metadata. */
     readonly contentSearchActive = input<boolean>(false);
+    /** Slide and video hits for the query, offered as one row above the results. */
+    readonly contentPreview = input<GlobalSearchResult[]>([]);
+    readonly showContentHits = output<void>();
+
+    protected readonly faPhotoFilm = faPhotoFilm;
+    protected readonly hasContentRow = computed(() => !this.contentSearchActive() && this.contentPreview().length > 0);
+    /** The row is the first selectable item, so the results start one position later while it is shown. */
+    protected readonly contentRowOffset = computed(() => (this.hasContentRow() ? 1 : 0));
+
+    protected readonly resultsListboxId = SEARCH_RESULTS_LISTBOX_ID;
+    /** Whether the result rows are on screen; while loading, skeletons take their place. */
+    protected readonly resultRowsShown = computed(() => this.showResults() && !this.isLoading() && !this.searchError() && this.results().length > 0);
+    protected readonly optionDomId = searchResultOptionDomId;
+    /** The distinct lectures of the hits, the first two by name, in hit order. */
+    protected readonly contentLectureNames = computed(() => {
+        const names = [...new Set(this.contentPreview().map((hit) => hit.metadata?.['lectureName'] as string | undefined))].filter((name): name is string => !!name);
+        return names.length > 2 ? `${names.slice(0, 2).join(', ')}, …` : names.join(', ');
+    });
+    /** Whether the list was cut at the result limit and more results can be loaded. */
+    readonly canShowMore = input<boolean>(false);
+    readonly showMore = output<void>();
 
     /**
      * True when the query is too short to send to the server (1-2 chars).
@@ -129,11 +155,14 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected readonly faCalendarCheck = faCalendarCheck;
 
     // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
-    readonly itemCount = computed(() => this.results().length);
+    readonly itemCount = computed(() => this.results().length + this.contentRowOffset());
 
     protected readonly faHashtag = faHashtag;
 
     protected getIconForType(type?: string, badge?: string): IconDefinition {
+        if (type === COURSE_PAGE_TYPE) {
+            return faCompass;
+        }
         if (type === LECTURE_CONTENT_TYPE) {
             return faPhotoFilm;
         }
@@ -168,12 +197,21 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     }
 
     protected navigateToResult(result: GlobalSearchResult) {
+        // A course page carries its route, since the palette offers it itself and no entity stands behind it.
+        if (result.type === COURSE_PAGE_TYPE) {
+            const link = result.metadata?.['link'];
+            if (link) {
+                void this.router.navigate([link]);
+            }
+            this.overlay.close();
+            return;
+        }
         // A content hit points at a slide or a video timestamp, so it carries its own deep link instead of an entity id.
         if (result.type === LECTURE_CONTENT_TYPE) {
             const link = result.metadata?.['link'];
             const queryParams = result.metadata?.['queryParams'];
             if (link) {
-                void this.router.navigate([link], { queryParams });
+                void this.router.navigate([link], { queryParams, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
             }
             this.overlay.close();
             return;
@@ -202,7 +240,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
                 if (result.id) this.navigateToExam(result, courseId);
                 break;
             case 'faq':
-                void this.router.navigate(['/courses', courseId, 'faq']);
+                // The FAQ page scrolls to the FAQ named by faqId.
+                void this.router.navigate(['/courses', courseId, 'faq'], result.id ? { queryParams: { faqId: result.id } } : undefined);
                 break;
             case 'channel':
                 if (result.id) this.navigateToChannel(courseId, result.id);
@@ -263,7 +302,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     private navigateToLectureUnit(result: GlobalSearchResult, courseId: string) {
         const lectureId = result.metadata?.['lectureId'];
         if (lectureId) {
-            this.navigateToLecture(courseId, lectureId);
+            // The same deep link the slide and video hits use, so the lecture page opens at the unit.
+            void this.router.navigate(['/courses', courseId, 'lectures', lectureId], { queryParams: { unit: result.id }, state: LECTURE_DEEP_LINK_NAVIGATION_STATE });
         }
     }
 
@@ -300,14 +340,26 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
-        if (event.key !== 'Enter' || event.defaultPrevented || (event.target instanceof Element && event.target.closest('jhi-global-search-iris-answer'))) {
+        // A modified Enter (Cmd/Ctrl+Enter) continues the Iris answer in the chat; it never opens a result. Enter on a
+        // focused control (the Iris card, or "Show more results" reached with Tab) belongs to that control.
+        if (
+            event.key !== 'Enter' ||
+            event.metaKey ||
+            event.ctrlKey ||
+            event.defaultPrevented ||
+            (event.target instanceof Element && (event.target.closest('jhi-global-search-iris-answer') || event.target.closest('button')))
+        ) {
             return;
         }
         const idx = this.selectedIndex();
         if (idx < 0) return;
 
         event.preventDefault();
-        const result = this.results()[idx];
+        if (this.hasContentRow() && idx === 0) {
+            this.showContentHits.emit();
+            return;
+        }
+        const result = this.results()[idx - this.contentRowOffset()];
         if (result) {
             this.navigateToResult(result);
         }

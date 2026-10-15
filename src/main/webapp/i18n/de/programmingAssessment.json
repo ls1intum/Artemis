@@ -8,6 +8,7 @@
             "confirmLeave": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Fortschritt wird verloren gehen.",
             "saveInlineFeedbackFirst": "Verwende Speichern oder Abbrechen auf der Inline-Feedback-Karte, bevor du fortfährst.",
             "notFound": "Wir haben keine neue Programmierabgabe ohne Bewertung gefunden, bitte gehe zurück.",
+            "resultNotFound": "Die Abgabe hat für diese Korrekturrunde kein Ergebnis, daher kann sie hier nicht bewertet und ihre Beschwerde nicht beantwortet werden. Bitte gehe zurück zum Aufgaben-Dashboard und melde dies der Administration.",
             "penalty": "Penalty",
             "issues": "Issues",
             "deductions": "Punkte",

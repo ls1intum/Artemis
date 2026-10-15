@@ -214,6 +214,13 @@ describe('ExamNavigationSidebarComponent', () => {
         expect(comp.getExerciseIcon(1)).toEqual(facSaveSuccess);
     });
 
+    it('should mark the card of the sidebar and its foot for the layout contract', () => {
+        const sidebar: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-sidebar"]');
+        expect(sidebar).not.toBeNull();
+        expect(sidebar.classList).toContain('sidebar');
+        expect(sidebar.querySelector('[data-testid="exam-sidebar-footer"]')!.classList).toContain('sidebar-footer');
+    });
+
     it('should toggle sidebar based on isCollapsed', () => {
         comp.isCollapsed.set(true);
         fixture.changeDetectorRef.detectChanges();

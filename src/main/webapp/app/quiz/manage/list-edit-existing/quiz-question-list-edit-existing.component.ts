@@ -22,6 +22,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { FileService } from 'app/foundation/service/file.service';
 import { parseJson } from 'app/foundation/util/json.util';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 export enum State {
     COURSE = 'Course',
@@ -35,7 +36,7 @@ export enum State {
     changeDetection: ChangeDetectionStrategy.OnPush,
     styleUrls: ['../../shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [NgClass, TranslateDirective, FormsModule, KeyValuePipe],
+    imports: [NgClass, TranslateDirective, FormsModule, KeyValuePipe, ArtemisTranslatePipe],
 })
 export class QuizQuestionListEditExistingComponent {
     private dialogService = inject(DialogService);

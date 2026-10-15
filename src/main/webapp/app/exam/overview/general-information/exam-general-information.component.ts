@@ -32,12 +32,6 @@ export class ExamGeneralInformationComponent {
     readonly studentExam = input<StudentExam>(undefined!);
     readonly reviewIsOpen = input(false);
 
-    /**
-     * The exam cover will contain e.g. the number of exercises which is hidden in the exam summary as
-     * the information is shown in the {@link ExamResultOverviewComponent}
-     */
-    readonly displayOnExamCover = input(false);
-
     readonly examEndDate = signal<dayjs.Dayjs | undefined>(undefined);
     normalWorkingTime?: number;
     additionalWorkingTime?: number;

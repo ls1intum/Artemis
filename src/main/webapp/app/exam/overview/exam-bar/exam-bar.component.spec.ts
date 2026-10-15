@@ -12,7 +12,6 @@ import { LocalStorageService } from 'app/foundation/service/local-storage.servic
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
-import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -24,8 +23,6 @@ describe('ExamBarComponent', () => {
         TestBed.configureTestingModule({
             providers: [LocalStorageService, SessionStorageService, { provide: TranslateService, useClass: MockTranslateService }, MockProvider(AlertService), provideHttpClient()],
         }).compileComponents();
-        // Required because exam bar uses the ResizeObserver for height calculations
-        global.ResizeObserver = MockResizeObserver as any;
 
         fixture = TestBed.createComponent(ExamBarComponent);
         comp = fixture.componentInstance;
@@ -67,12 +64,44 @@ describe('ExamBarComponent', () => {
         expect(comp.examAboutToEnd.emit).toHaveBeenCalledOnce();
     });
 
+    it('should mark the bar itself, not its host, for the layout contract', () => {
+        const bar: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-bar"]');
+        expect(bar.classList).toContain('exam-bar');
+        expect(bar.classList).toContain('h-10');
+    });
+
+    it('should inset its title and its buttons by 12px, where the title of every page of the exam starts', () => {
+        const bar: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exam-bar"]');
+        expect(bar.classList).toContain('px-3!');
+        expect(bar.classList).not.toContain('px-4!');
+        expect(bar.classList).not.toContain('px-6!');
+    });
+
+    it('should make the hand-in early button 30px high like the buttons of a title row, so that it has 5px of air above and below it in the 40px bar', () => {
+        const button: HTMLElement = fixture.nativeElement.querySelector('[data-testid="hand-in-early"]');
+        expect(button.classList).toContain('tumaet-ui-btn');
+        // 4px padding, a 20px line and the 1px border on both sides are 30px, where the small size of the kit alone is 34px. The important spelling beats the padding of the kit.
+        expect([...button.parentElement!.classList]).toEqual(expect.arrayContaining(['[&_.tumaet-ui-btn]:py-1!', '[&_.tumaet-ui-btn]:leading-5!']));
+    });
+
     it('should hand in the exam early', () => {
         vi.spyOn(comp.onExamHandInEarly, 'emit');
         vi.spyOn(comp, 'saveExercise');
 
         comp.handInEarly();
         expect(comp.onExamHandInEarly.emit).toHaveBeenCalledOnce();
+    });
+
+    it('should show the test run badge only while conducting a test run', () => {
+        expect(fixture.nativeElement.querySelector('#testRunRibbon')).toBeNull();
+
+        const testRun = new StudentExam();
+        testRun.testRun = true;
+        testRun.exercises = [];
+        fixture.componentRef.setInput('studentExam', testRun);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('#testRunRibbon')).not.toBeNull();
     });
 
     describe('signal-derived properties', () => {
@@ -158,16 +187,6 @@ describe('ExamBarComponent', () => {
             comp.saveExercise();
 
             expect(submission.submitted).toBe(false);
-        });
-    });
-
-    describe('onHeightChange', () => {
-        it('should emit heightChange event', () => {
-            vi.spyOn(comp.heightChange, 'emit');
-
-            comp.onHeightChange(100);
-
-            expect(comp.heightChange.emit).toHaveBeenCalledWith(100);
         });
     });
 });

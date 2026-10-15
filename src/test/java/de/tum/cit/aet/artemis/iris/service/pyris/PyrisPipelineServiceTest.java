@@ -96,7 +96,7 @@ class PyrisPipelineServiceTest {
         user.setId(7L);
         user.setLogin("student");
         when(userRepository.findByIdElseThrow(7L)).thenReturn(user);
-        when(pyrisJobService.addChatJob(1L, 2L, 3L, 11L, null)).thenReturn("run-1");
+        when(pyrisJobService.addChatJob(1L, 2L, 3L, null, null)).thenReturn("run-1");
 
         var service = new PyrisPipelineService(mock(PyrisConnectorService.class), pyrisJobService, mock(PyrisDTOService.class), mock(IrisChatWebsocketService.class),
                 mock(StudentParticipationRepository.class), userRepository, mock(CourseLoadService.class), mock(FeatureToggleService.class), mock(UserAiPreferenceService.class),
@@ -108,7 +108,8 @@ class PyrisPipelineServiceTest {
         session.setId(2L);
         session.setEntityId(3L);
         session.setUserId(7L);
-        // An event-triggered run starts without a new user message, after a turn whose compaction was stored last.
+        // An event-triggered run starts without a new user message, after a turn whose compaction was stored last. It carries no user message id, so neither the summary
+        // nor an earlier message gets the memories the run reports.
         session.getMessages().add(message(10L, IrisMessageSender.USER));
         session.getMessages().add(message(11L, IrisMessageSender.LLM));
         session.getMessages().add(message(12L, IrisMessageSender.SUMMARY));
@@ -117,7 +118,7 @@ class PyrisPipelineServiceTest {
                 (executionDto, ignoredUser, ignoredPyrisUser) -> new PyrisChatPipelineExecutionDTO(null, List.of(), executionDto.settings(), null, ignoredPyrisUser, null, null,
                         null, null, null, null, null, null, null));
 
-        verify(pyrisJobService).addChatJob(1L, 2L, 3L, 11L, null);
+        verify(pyrisJobService).addChatJob(1L, 2L, 3L, null, null);
     }
 
     private static IrisMessage message(long id, IrisMessageSender sender) {

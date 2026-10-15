@@ -411,6 +411,104 @@ describe('IrisChatService', () => {
             // Re-opening the same page context short-circuits before re-resolving the session.
             expect(httpStub).toHaveBeenCalledTimes(1);
         });
+
+        describe('with a session to open', () => {
+            const handedOffSession = { ...mockConversationWithNoMessages, id: 777, mode: ChatServiceMode.LECTURE, entityId: lectureId } as IrisSession;
+
+            beforeEach(() => {
+                service.setCourseId(courseId);
+                vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+                vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+            });
+
+            it('should load that session instead of resolving the current one', async () => {
+                const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
+                const currentStub = vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists');
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                await waitForSessionIdValue(777);
+
+                expect(byIdStub).toHaveBeenCalledExactlyOnceWith(courseId, 777);
+                expect(currentStub).not.toHaveBeenCalled();
+                // The session's own topic becomes the committed context, so the chip shows the lecture the chat was opened on.
+                expect(service['contextService'].committed()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: lectureId });
+            });
+
+            it('should load that session even when the course page is already open', async () => {
+                vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithId(999)));
+                const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
+
+                service.openChat(ChatServiceMode.COURSE, courseId);
+                await waitForSessionIdValue(999);
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                await waitForSessionIdValue(777);
+
+                expect(byIdStub).toHaveBeenCalledOnce();
+            });
+
+            it('should reload the open session when it is asked for by id, since the page opened it on its own', async () => {
+                // The course page opens an empty chat; a global search handoff reuses that chat, fills it and asks for it by id.
+                vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithId(777)));
+                const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
+
+                service.openChat(ChatServiceMode.COURSE, courseId);
+                await waitForSessionIdValue(777);
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+
+                expect(byIdStub).toHaveBeenCalledExactlyOnceWith(courseId, 777);
+            });
+
+            it('should load a linked session again after switching away from it through the history', async () => {
+                const byIdStub = vi
+                    .spyOn(httpService, 'getChatSessionById')
+                    .mockImplementation((_courseId: number, sessionId: number) => of({ ...handedOffSession, id: sessionId }));
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                await waitForSessionIdValue(777);
+                service.switchToSession({ id: 778 } as IrisSessionDTO);
+                await waitForSessionIdValue(778);
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                await waitForSessionIdValue(777);
+
+                expect(byIdStub).toHaveBeenCalledTimes(3);
+                expect(byIdStub).toHaveBeenLastCalledWith(courseId, 777);
+            });
+
+            it('should not let a linked session that arrives late replace the session chosen from the history meanwhile', async () => {
+                const linkedLoad = new Subject<IrisSession>();
+                vi.spyOn(httpService, 'getChatSessionById').mockImplementation((_courseId: number, sessionId: number) =>
+                    sessionId === 777 ? linkedLoad.asObservable() : of({ ...handedOffSession, id: sessionId }),
+                );
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                service.switchToSession({ id: 778 } as IrisSessionDTO);
+                await waitForSessionIdValue(778);
+                // The linked session's response arrives after the student already picked another chat.
+                linkedLoad.next(handedOffSession);
+                linkedLoad.complete();
+
+                expect(service.sessionId).toBe(778);
+            });
+
+            it('should not reload the session when it is already open', async () => {
+                const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                await waitForSessionIdValue(777);
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+
+                expect(byIdStub).toHaveBeenCalledOnce();
+            });
+
+            it('should report a session that cannot be loaded', async () => {
+                vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+
+                expect(await firstValueFrom(service.currentError())).toBeDefined();
+                expect(service.sessionId).toBeUndefined();
+            });
+        });
     });
 
     describe('close', () => {
@@ -977,6 +1075,52 @@ describe('IrisChatService', () => {
         service.openChat(ChatServiceMode.PROGRAMMING_EXERCISE, id + 1);
 
         expect(await firstValueFrom(service.currentLiveAssistantDraft())).toBeUndefined();
+    });
+
+    describe('automatic context switch adoption', () => {
+        const ctxswapMessage = (marker: Record<string, unknown>): IrisChatWebsocketDTO => ({
+            type: IrisChatWebsocketPayloadType.MESSAGE,
+            message: {
+                sender: IrisSender.CTXSWAP,
+                id: 77,
+                content: [{ type: 'json', attributes: marker }],
+                sentAt: '2024-01-01T10:00:00Z',
+            },
+        });
+
+        it('should commit the marker context and update the sidebar entry on an incoming CTXSWAP message', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            const sidebarSessions = [{ id, title: 'Chat', creationDate: new Date(), mode: ChatServiceMode.COURSE, entityId: id } as IrisSessionDTO];
+            await startSessionWithWebsocket(websocketSubject, sidebarSessions);
+
+            websocketSubject.next(ctxswapMessage({ transition: 'added', entityMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 11, name: 'Sorting' }));
+
+            expect(service.committedContext()).toEqual({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 11, entityName: 'Sorting' });
+            expect(service.chatSessions.getValue().find((session) => session.id === id)).toMatchObject({
+                mode: ChatServiceMode.PROGRAMMING_EXERCISE,
+                entityId: 11,
+                entityName: 'Sorting',
+            });
+        });
+
+        it('should commit the course context on a removed transition', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+
+            websocketSubject.next(ctxswapMessage({ transition: 'removed' }));
+
+            expect(service.committedContext()).toEqual({ mode: ChatServiceMode.COURSE, entityId: courseId });
+        });
+
+        it('should ignore a CTXSWAP message with an incomplete marker', async () => {
+            const websocketSubject = new Subject<IrisChatWebsocketDTO>();
+            await startSessionWithWebsocket(websocketSubject);
+            const committedBefore = service.committedContext();
+
+            websocketSubject.next(ctxswapMessage({ transition: 'changed' }));
+
+            expect(service.committedContext()).toEqual(committedBefore);
+        });
     });
 
     describe('run-state frame policy', () => {
