@@ -94,6 +94,129 @@ public interface UserRecoveryKeyRepository extends ArtemisJpaRepository<UserReco
     int clearPendingEmailChangeOfRequest(@Param("userId") long userId, @Param("currentKeyId") String currentKeyId, @Param("newKeyId") String newKeyId);
 
     /**
+     * Sets the activation key and nothing else on the row. The other columns are left as they are, which a read followed by a save of the whole row would not do:
+     * it writes back what the row held when it was read, such as a pending e-mail change that was cancelled in the meantime.
+     *
+     * @param userId        the account
+     * @param activationKey the key
+     * @return 1 if the row exists and was written, 0 if the account has no row
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE UserRecoveryKey recoveryKey
+            SET recoveryKey.activationKey = :activationKey
+            WHERE recoveryKey.userId = :userId
+            """)
+    int updateActivationKey(@Param("userId") long userId, @Param("activationKey") String activationKey);
+
+    /**
+     * Clears the activation key and nothing else on the row.
+     *
+     * @param userId the account
+     * @return 1 if the row exists and was written, 0 if the account has no row
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE UserRecoveryKey recoveryKey
+            SET recoveryKey.activationKey = NULL
+            WHERE recoveryKey.userId = :userId
+            """)
+    int clearActivationKey(@Param("userId") long userId);
+
+    /**
+     * Sets the password reset key and nothing else on the row, with the guarantee of {@link #updateActivationKey}.
+     *
+     * @param userId       the account
+     * @param resetKeyId   the id of the key
+     * @param resetKeyHash the hash of the secret of the key
+     * @param resetDate    when the key was issued
+     * @return 1 if the row exists and was written, 0 if the account has no row
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE UserRecoveryKey recoveryKey
+            SET recoveryKey.resetKeyId = :resetKeyId,
+                recoveryKey.resetKeyHash = :resetKeyHash,
+                recoveryKey.resetDate = :resetDate
+            WHERE recoveryKey.userId = :userId
+            """)
+    int updateResetKey(@Param("userId") long userId, @Param("resetKeyId") String resetKeyId, @Param("resetKeyHash") String resetKeyHash, @Param("resetDate") Instant resetDate);
+
+    /**
+     * Clears the password reset key and nothing else on the row.
+     *
+     * @param userId the account
+     * @return 1 if the row exists and was written, 0 if the account has no row
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE UserRecoveryKey recoveryKey
+            SET recoveryKey.resetKeyId = NULL,
+                recoveryKey.resetKeyHash = NULL,
+                recoveryKey.resetDate = NULL
+            WHERE recoveryKey.userId = :userId
+            """)
+    int clearResetKey(@Param("userId") long userId);
+
+    /**
+     * Sets the pending e-mail change and nothing else on the row, with the guarantee of {@link #updateActivationKey}.
+     *
+     * @param userId           the account
+     * @param newEmail         the address the account will have once both addresses have confirmed
+     * @param currentKeyId     the id of the key mailed to the current address
+     * @param currentKeyHash   the hash of the secret mailed to the current address
+     * @param newKeyId         the id of the key mailed to the new address
+     * @param newKeyHash       the hash of the secret mailed to the new address
+     * @param requestedAt      when the request was made
+     * @param currentConfirmed when the current address was confirmed, or null
+     * @param newConfirmed     when the new address was confirmed, or null
+     * @return 1 if the row exists and was written, 0 if the account has no row
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE UserRecoveryKey recoveryKey
+            SET recoveryKey.pendingEmailChange.newEmail = :newEmail,
+                recoveryKey.pendingEmailChange.currentKeyId = :currentKeyId,
+                recoveryKey.pendingEmailChange.currentKeyHash = :currentKeyHash,
+                recoveryKey.pendingEmailChange.newKeyId = :newKeyId,
+                recoveryKey.pendingEmailChange.newKeyHash = :newKeyHash,
+                recoveryKey.pendingEmailChange.requestedAt = :requestedAt,
+                recoveryKey.pendingEmailChange.currentConfirmedAt = :currentConfirmed,
+                recoveryKey.pendingEmailChange.newConfirmedAt = :newConfirmed
+            WHERE recoveryKey.userId = :userId
+            """)
+    int updatePendingEmailChange(@Param("userId") long userId, @Param("newEmail") String newEmail, @Param("currentKeyId") String currentKeyId,
+            @Param("currentKeyHash") String currentKeyHash, @Param("newKeyId") String newKeyId, @Param("newKeyHash") String newKeyHash, @Param("requestedAt") Instant requestedAt,
+            @Param("currentConfirmed") Instant currentConfirmed, @Param("newConfirmed") Instant newConfirmed);
+
+    /**
+     * Clears the pending e-mail change, whichever request it is, and nothing else on the row.
+     *
+     * @param userId the account
+     * @return 1 if the row exists and was written, 0 if the account has no row
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE UserRecoveryKey recoveryKey
+            SET recoveryKey.pendingEmailChange.newEmail = NULL,
+                recoveryKey.pendingEmailChange.currentKeyId = NULL,
+                recoveryKey.pendingEmailChange.currentKeyHash = NULL,
+                recoveryKey.pendingEmailChange.newKeyId = NULL,
+                recoveryKey.pendingEmailChange.newKeyHash = NULL,
+                recoveryKey.pendingEmailChange.requestedAt = NULL,
+                recoveryKey.pendingEmailChange.currentConfirmedAt = NULL,
+                recoveryKey.pendingEmailChange.newConfirmedAt = NULL
+            WHERE recoveryKey.userId = :userId
+            """)
+    int clearPendingEmailChange(@Param("userId") long userId);
+
+    /**
      * Removes the row of an account when nothing is outstanding on it any more.
      *
      * @param userId the account
