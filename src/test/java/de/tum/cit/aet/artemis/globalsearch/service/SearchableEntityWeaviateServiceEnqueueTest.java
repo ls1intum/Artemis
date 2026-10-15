@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -12,6 +13,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -68,7 +70,55 @@ class SearchableEntityWeaviateServiceEnqueueTest {
     @BeforeEach
     void setUp() {
         service = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
-                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class));
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), Runnable::run);
+    }
+
+    @Test
+    void testRequestRowsAreWrittenOnTheExecutorAndNotOnTheCallingThread() {
+        List<Runnable> queued = new ArrayList<>();
+        var queueingService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), queued::add);
+        when(resolver.findChannelIdOf(SearchableEntitySchema.TypeValues.EXERCISE, 9L)).thenReturn(Optional.of(77L));
+
+        queueingService.upsertExerciseAsync(exerciseDto(9L));
+        queueingService.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXERCISE, 5L);
+        queueingService.deleteAllForCourseAsync(3L);
+
+        // The request returned without a round trip: nothing has been looked up or written yet.
+        verifyNoInteractions(outboxRepository, resolver);
+        assertThat(queued).hasSize(3);
+
+        queued.forEach(Runnable::run);
+
+        ArgumentCaptor<WeaviateOutboxEntry> captor = ArgumentCaptor.forClass(WeaviateOutboxEntry.class);
+        verify(outboxRepository, times(4)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(WeaviateOutboxEntry::getOperation, WeaviateOutboxEntry::getEntityId).containsExactly(tuple(WeaviateOutboxOperation.UPSERT, 9L),
+                tuple(WeaviateOutboxOperation.UPSERT, 77L), tuple(WeaviateOutboxOperation.DELETE_ENTITY, 5L), tuple(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, null));
+    }
+
+    @Test
+    void testAReconcileRowIsStillWrittenOnTheCallingThread() {
+        List<Runnable> queued = new ArrayList<>();
+        var queueingService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), queued::add);
+
+        queueingService.enqueueUpsert(SearchableEntitySchema.TypeValues.COURSE, 1L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+
+        // A reconcile pass relies on the exception of a failed write to retry the entity, which a queued write could not give it.
+        assertThat(queued).isEmpty();
+        verify(outboxRepository).save(any(WeaviateOutboxEntry.class));
+    }
+
+    @Test
+    void testAFailingWriteDoesNotEndTheThreadThatWritesTheRowsOfOtherRequests() {
+        doThrow(new DataAccessResourceFailureException("database down")).when(outboxRepository).save(any(WeaviateOutboxEntry.class));
+        List<Runnable> queued = new ArrayList<>();
+        var queueingService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), queued::add);
+
+        queueingService.upsertCourseAsync(new CourseSearchableEntityDTO(1L, "c", null, null));
+
+        assertThatCode(() -> queued.forEach(Runnable::run)).doesNotThrowAnyException();
     }
 
     @Test
