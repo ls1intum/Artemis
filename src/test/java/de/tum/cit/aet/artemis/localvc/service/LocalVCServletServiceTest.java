@@ -144,6 +144,9 @@ class LocalVCServletServiceTest {
     private ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
 
     @Mock
+    private org.springframework.beans.factory.ObjectProvider<ProgrammingExerciseMutationGuardService> programmingExerciseMutationGuardProvider;
+
+    @Mock
     private ProgrammingMessagingService programmingMessagingService;
 
     @Mock
@@ -186,6 +189,7 @@ class LocalVCServletServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        org.mockito.Mockito.lenient().when(programmingExerciseMutationGuardProvider.getObject()).thenReturn(programmingExerciseMutationGuard);
         testUser = new User();
         testUser.setId(1L);
         testUser.setLogin("testuser");

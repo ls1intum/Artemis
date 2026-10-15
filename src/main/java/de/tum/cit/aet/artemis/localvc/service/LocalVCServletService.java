@@ -37,6 +37,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -158,7 +159,7 @@ public class LocalVCServletService {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard;
+    private final ObjectProvider<ProgrammingExerciseMutationGuardService> programmingExerciseMutationGuard;
 
     private final UserVcsAccessTokenService userVcsAccessTokenService;
 
@@ -226,7 +227,7 @@ public class LocalVCServletService {
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
-            ExerciseVersionService exerciseVersionService, @Lazy ProgrammingExerciseMutationGuardService programmingExerciseMutationGuard,
+            ExerciseVersionService exerciseVersionService, ObjectProvider<ProgrammingExerciseMutationGuardService> programmingExerciseMutationGuard,
             UserVcsAccessTokenService userVcsAccessTokenService, Optional<DistributedDataAccessService> distributedDataAccessService,
             Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService,
             BuildAgentNetworkPolicy buildAgentNetworkPolicy, MailSendingService mailSendingService, DistributedDataProvider distributedDataProvider,
@@ -456,9 +457,9 @@ public class LocalVCServletService {
         LocalVCRepositoryUri repositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
         RepositoryType repositoryType = getRepositoryType(repositoryUri.getRepositoryTypeOrUserName(), exerciseId);
         if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
-            return programmingExerciseMutationGuard.claimExternalMutation(exerciseId);
+            return programmingExerciseMutationGuard.getObject().claimExternalMutation(exerciseId);
         }
-        return programmingExerciseMutationGuard.claimExternalMutation(OptionalLong.empty());
+        return programmingExerciseMutationGuard.getObject().claimExternalMutation(OptionalLong.empty());
     }
 
     /**
@@ -1445,7 +1446,7 @@ public class LocalVCServletService {
                 Long triggeringAuxiliaryRepositoryId = repositoryType == RepositoryType.AUXILIARY
                         ? auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise(repositoryTypeOrUserName, exercise).orElse(null)
                         : null;
-                if (programmingExerciseMutationGuard.isCoordinationEnabled()) {
+                if (programmingExerciseMutationGuard.getObject().isCoordinationEnabled()) {
                     exerciseVersionService.createExerciseVersionSynchronously(exercise, user, repositoryType, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
                 }
                 else {
