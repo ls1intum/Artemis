@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalLong;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -37,7 +36,6 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -67,6 +65,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.localci.service.BuildAgentAddressRegistryService;
 import de.tum.cit.aet.artemis.localci.service.BuildJobCloneTokenService;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
@@ -159,7 +158,7 @@ public class LocalVCServletService {
 
     private final ExerciseVersionService exerciseVersionService;
 
-    private final ObjectProvider<ProgrammingExerciseMutationGuardService> programmingExerciseMutationGuard;
+    private final Optional<HyperionExerciseMutationApi> hyperionMutationApi;
 
     private final UserVcsAccessTokenService userVcsAccessTokenService;
 
@@ -227,11 +226,10 @@ public class LocalVCServletService {
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
             ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, RepositoryVCSAccessTokenRepository repositoryVCSAccessTokenRepository,
             Optional<VcsAccessLogService> vcsAccessLogService, AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService,
-            ExerciseVersionService exerciseVersionService, ObjectProvider<ProgrammingExerciseMutationGuardService> programmingExerciseMutationGuard,
-            UserVcsAccessTokenService userVcsAccessTokenService, Optional<DistributedDataAccessService> distributedDataAccessService,
-            Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService, Optional<BuildJobCloneTokenService> buildJobCloneTokenService,
-            BuildAgentNetworkPolicy buildAgentNetworkPolicy, MailSendingService mailSendingService, DistributedDataProvider distributedDataProvider,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ExerciseVersionService exerciseVersionService, Optional<HyperionExerciseMutationApi> hyperionMutationApi, UserVcsAccessTokenService userVcsAccessTokenService,
+            Optional<DistributedDataAccessService> distributedDataAccessService, Optional<BuildAgentAddressRegistryService> buildAgentAddressRegistryService,
+            Optional<BuildJobCloneTokenService> buildJobCloneTokenService, BuildAgentNetworkPolicy buildAgentNetworkPolicy, MailSendingService mailSendingService,
+            DistributedDataProvider distributedDataProvider, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
         this.authenticationManager = authenticationManager;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.userRepository = userRepository;
@@ -249,7 +247,7 @@ public class LocalVCServletService {
         this.authorizationCheckService = authorizationCheckService;
         this.rateLimitService = rateLimitService;
         this.exerciseVersionService = exerciseVersionService;
-        this.programmingExerciseMutationGuard = programmingExerciseMutationGuard;
+        this.hyperionMutationApi = hyperionMutationApi;
         this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildAgentAddressRegistryService = buildAgentAddressRegistryService;
@@ -456,10 +454,14 @@ public class LocalVCServletService {
     public ProgrammingExerciseMutationGuardService.MutationLease claimProgrammingExerciseMutation(Repository repository, long exerciseId) {
         LocalVCRepositoryUri repositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
         RepositoryType repositoryType = getRepositoryType(repositoryUri.getRepositoryTypeOrUserName(), exerciseId);
-        if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
-            return programmingExerciseMutationGuard.getObject().claimExternalMutation(exerciseId);
+        if (exerciseVersionService.isRepositoryTypeVersionable(repositoryType) && hyperionMutationApi.map(HyperionExerciseMutationApi::isCoordinationEnabled).orElse(false)
+                && !programmingExerciseRepository.existsByIdAndExerciseGroupIsNotNull(exerciseId)) {
+            HyperionExerciseMutationApi api = hyperionMutationApi.orElseThrow();
+            String token = api.claimExternalMutationSlot(exerciseId);
+            return new ProgrammingExerciseMutationGuardService.MutationLease(() -> api.clearExternalMutationSlot(exerciseId, token));
         }
-        return programmingExerciseMutationGuard.getObject().claimExternalMutation(OptionalLong.empty());
+        return new ProgrammingExerciseMutationGuardService.MutationLease(() -> {
+        }, false);
     }
 
     /**
@@ -1446,7 +1448,7 @@ public class LocalVCServletService {
                 Long triggeringAuxiliaryRepositoryId = repositoryType == RepositoryType.AUXILIARY
                         ? auxiliaryRepositoryService.findAuxiliaryRepositoryIdOfExercise(repositoryTypeOrUserName, exercise).orElse(null)
                         : null;
-                if (programmingExerciseMutationGuard.getObject().isCoordinationEnabled()) {
+                if (hyperionMutationApi.map(HyperionExerciseMutationApi::isCoordinationEnabled).orElse(false) && !exercise.isExamExercise()) {
                     exerciseVersionService.createExerciseVersionSynchronously(exercise, user, repositoryType, triggeringAuxiliaryRepositoryId, triggeringCommitHash);
                 }
                 else {
