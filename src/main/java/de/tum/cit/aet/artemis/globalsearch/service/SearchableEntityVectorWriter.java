@@ -2,10 +2,12 @@ package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
@@ -67,6 +69,26 @@ public class SearchableEntityVectorWriter {
                 }
             }
             return new ArrayList<>(missing);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof PreparedRow that && Objects.equals(uuid, that.uuid) && Objects.equals(properties, that.properties) && Objects.equals(chunks, that.chunks)
+                    && Arrays.deepEquals(vectors, that.vectors);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(uuid, properties, chunks, Arrays.deepHashCode(vectors));
+        }
+
+        /**
+         * Leaves out the property map and the vectors, which are large, and reports how many chunks already have one.
+         */
+        @Override
+        public String toString() {
+            long reused = vectors == null ? 0 : Arrays.stream(vectors).filter(Objects::nonNull).count();
+            return "PreparedRow[uuid=" + uuid + ", chunks=" + (chunks == null ? 0 : chunks.size()) + ", reusedVectors=" + reused + "]";
         }
     }
 

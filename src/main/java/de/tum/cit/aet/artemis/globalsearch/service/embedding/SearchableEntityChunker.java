@@ -80,17 +80,23 @@ public final class SearchableEntityChunker {
      */
     private static final int LINES = Pattern.UNIX_LINES;
 
+    // The Markdown link rule repeats its target group possessively: the same matches as a greedy repetition, but without the engine
+    // recursing once per character of the target, which overflows the stack for a very long link.
     private static final List<Rule> CLEANING_RULES = List.of(new Rule(Pattern.compile("@startuml.*?@enduml", Pattern.DOTALL | LINES), " "),
             new Rule(Pattern.compile("```.*?```", Pattern.DOTALL | LINES), " "), new Rule(Pattern.compile("\\$\\$.*?\\$\\$", Pattern.DOTALL | LINES), " "),
             new Rule(Pattern.compile("<testid>" + DIGIT + "*</testid>", LINES), ""), new Rule(Pattern.compile("\\[task\\]\\[([^\\]]*)\\]\\([^)]*\\)", LINES), "$1"),
-            new Rule(Pattern.compile("!\\[[^\\]]*\\]\\([^)]*\\)", LINES), " "), new Rule(Pattern.compile("\\[([^\\]]*)\\]\\((?:[^()]|\\([^)]*\\))*\\)", LINES), "$1"),
+            new Rule(Pattern.compile("!\\[[^\\]]*\\]\\([^)]*\\)", LINES), " "), new Rule(Pattern.compile("\\[([^\\]]*)\\]\\((?:[^()]|\\([^)]*\\))*+\\)", LINES), "$1"),
             new Rule(Pattern.compile("<[^>]+>", LINES), " "), new Rule(Pattern.compile("https?://" + NOT_S + "+", LINES), " "),
             new Rule(Pattern.compile("^" + S + "{0,3}#{1,6}" + S + "*", Pattern.MULTILINE | LINES), ""), new Rule(Pattern.compile("[*_`~]{1,3}", LINES), ""),
             new Rule(Pattern.compile("^" + S + "*\\|?[-:| ]{3,}\\|?" + S + "*$", Pattern.MULTILINE | LINES), " "), new Rule(Pattern.compile("\\|", LINES), " "));
 
     private static final Pattern HORIZONTAL_SPACE = Pattern.compile("[ \\t\\f\\x0B]+", LINES);
 
-    private static final Pattern BLANK_LINES = Pattern.compile(S + "*\\n" + S + "*(\\n" + S + "*)+", LINES);
+    /**
+     * A run of whitespace with at least two line breaks. {@code S} contains {@code \n} itself, so a further repetition of a
+     * line break group after the second one adds nothing, and leaving it out keeps the stack use constant for any input.
+     */
+    private static final Pattern BLANK_LINES = Pattern.compile(S + "*\\n" + S + "*\\n" + S + "*", LINES);
 
     private static final Pattern SPACED_NEWLINE = Pattern.compile(" ?\\n ?", LINES);
 

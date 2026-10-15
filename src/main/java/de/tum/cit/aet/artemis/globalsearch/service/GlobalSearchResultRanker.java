@@ -43,7 +43,7 @@ public final class GlobalSearchResultRanker {
 
     /** Semester markers in course titles, such as "WS23/24", "SS 2024", "WiSe 2023/24" or "Summer 2024", and bare years. */
     private static final Pattern SEMESTER = Pattern.compile(
-            "\\b(?:ws|ss|wise|sose|winter(?:semester)?|summer(?:semester)?|sommer(?:semester)?|wintersemester|sommersemester)\\s*\\d{2,4}(?:\\s*/\\s*\\d{2,4})?\\b|\\b(?:19|20)\\d{2}(?:\\s*/\\s*\\d{2,4})?\\b");
+            "\\b(?:ws|ss|wise|sose|winter(?:semester)?|summer(?:semester)?|sommer(?:semester)?)\\s*\\d{2,4}(?:\\s*/\\s*\\d{2,4})?\\b|\\b(?:19|20)\\d{2}(?:\\s*/\\s*\\d{2,4})?\\b");
 
     private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^\\p{L}\\p{N}]+");
 
