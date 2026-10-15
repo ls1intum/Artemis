@@ -13,17 +13,27 @@ exercise generation and its teaching-quality review.
 
 ## Deployment topology
 
-| Environment             | Recommended placement                                 | Required separation                                                                              |
-| ----------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Staging                 | Dedicated worker VM with one execution slot initially | Separate provider access, image qualification, model credentials and budgets from production     |
-| Production              | Dedicated worker VM or host                           | No core, database, LocalVC or exam-critical build services on the worker host                    |
-| Small test installation | Separate VM on the same physical machine              | Independent Docker daemon and restricted network; never mount the core/build-agent Docker socket |
+A VM is not required. A dedicated worker host or VM is recommended for production
+isolation. A single-host installation can run the worker as a separate process
+with its own unprivileged rootless Docker daemon, subject to the checks below.
 
-The supervisor's Docker socket grants control over its daemon and potentially its
-host. Running the supervisor as an unprivileged container does not remove that
-privilege. A separate rootful daemon on the core host is **not** equivalent to VM
-isolation. An explicitly isolated daemon is an advanced test-only deployment option;
-its host and network isolation must be established outside the application.
+| Environment             | Recommended placement                     | Required separation                                                                                    |
+| ----------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Staging                 | Dedicated worker host or separate process | Separate provider access, image qualification, model credentials and budgets from production           |
+| Production              | Dedicated worker host or VM               | Keep core, database, LocalVC and exam-critical build services outside the worker execution environment |
+| Small test installation | Separate worker process on the same host  | Dedicated rootless Docker daemon; no shared core/build-agent socket, credentials or repository mounts  |
+
+The supervisor's Docker socket grants control over its daemon. A rootful daemon
+can also grant host-level authority; putting its supervisor in an unprivileged
+container does not remove that authority. For a host-only installation, use a
+dedicated unprivileged worker account and rootless daemon. Verify that cgroup
+resource limits apply, generated-code containers have network `none`, and the
+worker cannot access the core/build-agent Docker socket or application data.
+Leave generation disabled if these controls cannot be established.
+
+Rootless containers still share the host kernel. They do not provide the same
+isolation as a separate VM or host. Include that residual risk in the deployment
+review, especially when the host also serves core or grading workloads.
 
 Generated-code containers use network `none`, a read-only root filesystem, dropped
 capabilities, `no-new-privileges`, and bounded CPU, memory, processes and writable
