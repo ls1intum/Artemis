@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -620,9 +619,9 @@ public class FileUploadExerciseResource {
         teamAssignmentConfigRepository.attachTo(exercise);
         plagiarismDetectionConfigRepository.attachTo(exercise);
         if (exercise.isCourseExercise()) {
-            Channel channel = channelRepository.findChannelByExerciseId(exercise.getId());
-            if (channel != null) {
-                exercise.setChannelName(channel.getName());
+            String channelName = channelRepository.findChannelNameByExerciseId(exercise.getId());
+            if (channelName != null) {
+                exercise.setChannelName(channelName);
             }
         }
 
