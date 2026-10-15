@@ -319,7 +319,14 @@ jobs:
               echo "has_workflows=${F_WORKFLOWS:-false}"
               echo "has_version=${F_VERSION:-false}"
               echo "has_beans=${F_BEANS:-false}"
-              echo "has_liquibase=${F_LIQUIBASE:-false}"
+              # The Liquibase checks follow the path filter, so a pull request with 3000 changed files or more
+              # always runs them: the pulls API stops at 3000, and a changelog beyond that limit would
+              # otherwise leave this output false, and all-required-ci-passed accepts a skipped check.
+              if [ "${F_LIQUIBASE:-false}" = "true" ] || { [ "$EVENT_NAME" = "pull_request" ] && [ "${CHANGED_FILES:-0}" -ge 3000 ]; }; then
+                echo "has_liquibase=true"
+              else
+                echo "has_liquibase=false"
+              fi
               echo "has_skills=${F_SKILLS:-false}"
               echo "has_tum_aet_ui=${F_TUM_AET_UI:-false}"
               if [ "${F_CODEQL:-false}" = "true" ] || [ "${F_CODEQL_CONFIG:-false}" = "true" ]; then

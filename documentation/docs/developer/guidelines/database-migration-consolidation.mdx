@@ -194,7 +194,9 @@ still matches, and a changelog filed in the wrong place inside that directory is
 these catch. The filter does not look for a changelog filed outside
 `src/main/resources/config/liquibase`; such a file is not part of `master.xml`, so it is not applied
 either. A pull request that touches none of those paths cannot change what the checks conclude, so it
-skips them. A push to `develop` applies the same filter to the files of that push.
+skips them, except a pull request with 3000 changed files or more: the changed files come from the
+pulls API, which stops at 3000, so such a pull request always runs them. A push to `develop` applies
+the same filter to the files of that push.
 
 <Callout variant={CalloutVariant.info}>
     All six run against empty databases, where every backfill and every guarded `NOT NULL` passes

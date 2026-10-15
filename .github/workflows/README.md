@@ -182,7 +182,8 @@ the suite ran).
   would show up. `@tumaet/*` release tags skip `detect-changes` and with it `test`, like every other
   Artemis job.
 - A pull request with 3000 changed files or more never skips: the changed files come from the pulls
-  API, which stops at 3000, so the filters may not have seen all of them.
+  API, which stops at 3000, so the filters may not have seen all of them. That covers the server
+  suite, the client suite, E2E, the PR image and the Liquibase checks (`has_liquibase`).
 - Codacy coverage is uploaded by the server report job only, so an internal pull request that skips
   the server suite uploads none.
 
