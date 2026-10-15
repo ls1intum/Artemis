@@ -154,6 +154,9 @@ public class FaqIngestionReconcileService {
                 pushesSinceMatch.remove(faq.faqId());
             }
         }
+        // FAQs that were deleted or are not accepted anymore are not counted further
+        Set<Long> expectedFaqIds = expected.stream().map(ActionKey::faqId).collect(Collectors.toSet());
+        pushesSinceMatch.keySet().retainAll(expectedFaqIds);
         for (FaqCensusEntryDTO entry : census.faqs()) {
             ActionKey key = new ActionKey(entry.courseId(), entry.faqId());
             // Only rows of this instance are deleted; legacy rows of an unknown owner stay, as they did before FAQ rows carried an instance
