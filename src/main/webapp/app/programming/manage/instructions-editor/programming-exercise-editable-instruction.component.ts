@@ -121,6 +121,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private problemStatementInitialSyncFinalizedSubscription?: Subscription;
     private problemStatementSyncState?: ProblemStatementSyncState;
     private canonicalSaveSequence = 0;
+    private acknowledgedCanonicalSaveSequence = 0;
     private problemStatementBinding?: MonacoBinding;
     private problemStatementBindingDestroyed = false;
     private problemStatementChangeToSuppress?: string;
@@ -272,8 +273,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         const doc = this.problemStatementSyncState?.doc;
         const sequence = ++this.canonicalSaveSequence;
         return (content) => {
-            if (sequence === this.canonicalSaveSequence && this.canonicalBaseIsolation() && exerciseId !== undefined && doc) {
+            if (sequence > this.acknowledgedCanonicalSaveSequence && this.canonicalBaseIsolation() && exerciseId !== undefined && doc) {
                 this.problemStatementSyncService.acknowledgeCanonicalSave(exerciseId, content, doc);
+                this.acknowledgedCanonicalSaveSequence = sequence;
             }
         };
     }
