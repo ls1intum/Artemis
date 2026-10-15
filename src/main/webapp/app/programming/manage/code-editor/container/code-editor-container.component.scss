@@ -11,12 +11,19 @@
 // tab row reads as the same kind of header.
 .code-editor-bottom-panel {
     --feedback-panel-header-padding-block: 0;
+    --feedback-panel-header-align: stretch;
+    --feedback-panel-title-overlap: -1px;
     --feedback-panel-header-border: var(--code-editor-file-browser-header-border);
     --feedback-panel-header-background: var(--code-editor-file-browser-header-background);
 
     &__tabs {
         min-width: 0;
         flex: 1 1 auto;
+
+        // The list runs down to the header's line, which puts the indicator of the selected tab on it
+        tumaet-ui-tab-list {
+            flex: 1 1 auto;
+        }
     }
 
     &__count {

@@ -102,10 +102,13 @@ export class ExerciseSplitPanelComponent {
     readonly quizSubmitTitle = computed(() => this._quizComponent()?.submitTitleKey() ?? 'entity.action.submit');
     readonly quizLiveHeaderInfo = computed(() => this._quizComponent()?.liveHeaderInfo());
     /**
-     * The text and modeling editors keep at least this share of the split, the canvas share of the assessment workspace,
-     * so the slider cannot squeeze them away. The right panel is not bounded: dragging it narrow collapses it.
+     * The programming, text and modeling editors keep at least this share of the split, the canvas share of the assessment
+     * workspace, so the slider cannot squeeze them away. The right panel is not bounded: dragging it narrow collapses it.
      */
-    readonly leftMinSizePercent = computed(() => (this.exercise().type === ExerciseType.TEXT || this.exercise().type === ExerciseType.MODELING ? 36 : 0));
+    readonly leftMinSizePercent = computed(() => {
+        const type = this.exercise().type;
+        return type === ExerciseType.PROGRAMMING || type === ExerciseType.TEXT || type === ExerciseType.MODELING ? 36 : 0;
+    });
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faGear = faGear;

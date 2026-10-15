@@ -7,7 +7,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { SplitterModule } from 'primeng/splitter';
-import { TabsModule } from 'primeng/tabs';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { parseJson } from 'app/foundation/util/json.util';
@@ -26,7 +26,7 @@ export class PanelDirective {
     selector: 'jhi-resizable-panels',
     templateUrl: './resizable-panels.component.html',
     styleUrls: ['./resizable-panels.component.scss'],
-    imports: [CdkScrollable, FaIconComponent, NgTemplateOutlet, SplitterModule, TabsModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [CdkScrollable, FaIconComponent, NgTemplateOutlet, SplitterModule, TumAetUiTabsComponent, TumAetUiTabListComponent, TumAetUiTabComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     private readonly elementRef = inject(ElementRef);

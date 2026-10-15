@@ -155,6 +155,19 @@ describe('ExerciseSplitPanelComponent', () => {
         expect(panels.flushLeftPanel()).toBe(true);
     });
 
+    it.each([
+        [ExerciseType.PROGRAMMING, 36],
+        [ExerciseType.TEXT, 36],
+        [ExerciseType.MODELING, 36],
+        [ExerciseType.FILE_UPLOAD, 0],
+        [ExerciseType.QUIZ, 0],
+    ])('should keep the share of the %s editor panel at %s percent', (type, share) => {
+        fixture.componentRef.setInput('exercise', { id: 1, type } as Exercise);
+        fixture.detectChanges();
+
+        expect(fixture.componentInstance.leftMinSizePercent()).toBe(share);
+    });
+
     it.each([ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])('should make the %s editor panel full bleed, as the editor adds its own padding', (type) => {
         fixture.componentRef.setInput('exercise', { id: 1, type } as Exercise);
         fixture.componentRef.setInput('studentParticipation', { id: 5 } as StudentParticipation);

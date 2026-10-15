@@ -495,9 +495,19 @@
         flex: 1 1 auto;
     }
 
+    /* The instructions fill the panel above the splitter: the card inside runs to its bottom edge and scrolls its own content */
+    &__instructions {
+        display: flex;
+        height: 100%;
+        min-height: 0;
+        flex-direction: column;
+    }
+
     &__instructions > jhi-code-editor-instructions {
+        display: flex;
         min-height: 0;
         flex: 1 1 auto;
+        flex-direction: column;
     }
 }
 

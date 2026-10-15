@@ -39,7 +39,8 @@
     display: flex;
     min-height: 2.5rem;
     flex: none;
-    align-items: center;
+    // A page whose header holds tabs lets them run down to the line below the header, so their indicator sits on it
+    align-items: var(--feedback-panel-header-align, center);
     padding: var(--feedback-panel-header-padding-block, 0.3rem) 0.75rem;
     border-bottom: 1px solid var(--feedback-panel-header-border, var(--border-color));
     background-color: var(--feedback-panel-header-background, var(--hover-slightly-darker-body-bg));
@@ -54,8 +55,10 @@
     display: flex;
     min-width: 0;
     flex: 1 1 auto;
-    align-items: center;
+    align-items: var(--feedback-panel-header-align, center);
     gap: 0.5rem;
+    // A page with tabs in the header lays their indicator over the line below it, by a negative margin of that line's width
+    margin-bottom: var(--feedback-panel-title-overlap, 0);
 }
 
 .feedback-bottom-panel__heading {
@@ -72,6 +75,7 @@
 
 .feedback-bottom-panel__collapse {
     flex-shrink: 0;
+    align-self: center;
     color: inherit;
 }
 
@@ -84,10 +88,12 @@
     transform: rotate(180deg);
 }
 
-// Only the content scrolls, so the header stays in reach
+// Only the content scrolls, so the header stays in reach. It is grey, so the cards in it stand out and the room below short
+// content does not read as a gap in a white panel.
 .feedback-bottom-panel__content {
     min-height: 0;
     flex: 1 1 auto;
     padding: 0.75rem;
     overflow-y: auto;
+    background-color: var(--feedback-panel-content-background, var(--hover-slightly-darker-body-bg));
 }

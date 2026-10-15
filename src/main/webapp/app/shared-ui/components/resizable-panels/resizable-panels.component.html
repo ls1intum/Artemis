@@ -28,21 +28,29 @@
         <ng-template #panel>
             @if (!isRightPanelCollapsed()) {
                 <div class="d-flex flex-column w-100 h-100 overflow-hidden rounded-3 module-bg">
-                    <div class="right-panel-header d-flex align-items-center">
-                        <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="right-panel-tabs flex-grow-1">
-                            <p-tablist>
+                    <div class="right-panel-header d-flex">
+                        <tumaet-ui-tabs
+                            class="right-panel-tabs flex-grow-1"
+                            size="small"
+                            selectedColor="text"
+                            surface="muted"
+                            [value]="activeRightIndex()"
+                            (valueChange)="setActiveRight($event)"
+                        >
+                            <!-- The panel header draws the line below the tabs, so the tab list's own line would double it. -->
+                            <tumaet-ui-tab-list style="border-bottom: 0">
                                 @for (panel of rightPanels(); track panel; let i = $index) {
-                                    <p-tab [value]="i" data-testid="resizable-panel-tab">
+                                    <tumaet-ui-tab [value]="i" data-testid="resizable-panel-tab">
                                         @if (panel.iconTemplate()) {
                                             <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
                                         } @else if (panel.icon()) {
                                             <fa-icon [icon]="panel.icon()!" />
                                         }
                                         <span [jhiTranslate]="panel.label()"></span>
-                                    </p-tab>
+                                    </tumaet-ui-tab>
                                 }
-                            </p-tablist>
-                        </p-tabs>
+                            </tumaet-ui-tab-list>
+                        </tumaet-ui-tabs>
                         <button
                             type="button"
                             class="right-panel-collapse-button"
@@ -84,20 +92,20 @@
     <!-- ── Narrow mode: single tabbed panel, no resize ────────────────── -->
     <div class="d-flex flex-column h-100 w-100 overflow-hidden rounded-3 module-bg">
         @if (showCombinedTabHeader()) {
-            <p-tabs [value]="activeSingleIndex()" (valueChange)="setActiveSingle($event)" class="flex-shrink-0">
-                <p-tablist>
+            <tumaet-ui-tabs class="flex-shrink-0" size="small" selectedColor="text" surface="muted" [value]="activeSingleIndex()" (valueChange)="setActiveSingle($event)">
+                <tumaet-ui-tab-list>
                     @for (panel of panels(); track panel; let i = $index) {
-                        <p-tab [value]="i" data-testid="resizable-panel-tab">
+                        <tumaet-ui-tab [value]="i" data-testid="resizable-panel-tab">
                             @if (panel.iconTemplate()) {
                                 <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
                             } @else if (panel.icon()) {
                                 <fa-icon [icon]="panel.icon()!" />
                             }
                             <span [jhiTranslate]="panel.label()"></span>
-                        </p-tab>
+                        </tumaet-ui-tab>
                     }
-                </p-tablist>
-            </p-tabs>
+                </tumaet-ui-tab-list>
+            </tumaet-ui-tabs>
         }
         <div class="flex-grow-1 overflow-y-auto" [class.p-2]="!flushLeftPanel() || activeSingleIndex() !== 0" cdkScrollable>
             @if (panels()[activeSingleIndex()]) {

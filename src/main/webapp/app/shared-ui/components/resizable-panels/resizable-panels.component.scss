@@ -41,6 +41,13 @@
     }
 }
 
+// The tab row of the right panel is grey like the header of the general feedback panel, so the headers of the page read alike. It
+// draws the line below the tabs, and the tabs run down to it, so the indicator of the selected tab sits on that line.
+.right-panel-header {
+    background-color: var(--hover-slightly-darker-body-bg);
+    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+}
+
 .right-panel-collapse-button {
     display: flex;
     align-items: center;
@@ -52,7 +59,6 @@
     background: transparent;
     border: 0;
     border-left: var(--bs-border-width) solid var(--bs-border-color);
-    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
 
     &:hover,
     &:focus-visible {
@@ -63,6 +69,13 @@
 
 .right-panel-tabs {
     min-width: 0;
+
+    // The header's line is below the tabs; the indicator of the selected tab lies over it
+    margin-bottom: calc(-1 * var(--bs-border-width));
+
+    tumaet-ui-tab-list {
+        flex: 1 1 auto;
+    }
 }
 
 .collapsed-right-panel {
@@ -91,43 +104,5 @@
     &.active {
         color: var(--bs-primary);
         background: var(--bs-tertiary-bg);
-    }
-}
-
-:host ::ng-deep {
-    .p-tablist-tab-list {
-        border-width: 0 0 var(--bs-border-width) 0;
-        border-color: var(--bs-border-color);
-        gap: 0.5rem;
-    }
-
-    .p-tablist-active-bar {
-        display: none;
-    }
-
-    .p-tab {
-        border-width: 0 0 var(--bs-border-width) 0;
-        padding: 8px;
-
-        &.p-tab-active {
-            color: var(--bs-body-color);
-            border-color: var(--bs-primary);
-            background: transparent;
-        }
-
-        &:not(.p-disabled):focus-visible {
-            outline: 2px solid var(--bs-primary);
-            outline-offset: 2px;
-        }
-
-        &:not(.p-tab-active):not(.p-disabled):hover {
-            color: var(--bs-body-color);
-            background: transparent;
-            border-color: transparent;
-        }
-    }
-
-    .p-tablist {
-        background: transparent;
     }
 }
