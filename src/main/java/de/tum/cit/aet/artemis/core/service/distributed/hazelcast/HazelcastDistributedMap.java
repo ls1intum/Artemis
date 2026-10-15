@@ -13,12 +13,12 @@ import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
 import com.hazelcast.map.EntryProcessor;
-import com.hazelcast.splitbrainprotection.SplitBrainProtectionException;
 import com.hazelcast.map.ExtendedMapEntry;
 import com.hazelcast.map.IMap;
 import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
+import com.hazelcast.splitbrainprotection.SplitBrainProtectionException;
 
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.listener.MapEntryAddedEvent;
@@ -57,10 +57,17 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
 
         private final V replacement;
 
+        private final boolean validateMembership;
+
         private transient HazelcastInstance instance;
 
         private ProtectedEntryProcessor(String mapName, Mutation mutation, V expected, V replacement) {
+            this(mapName, mutation, expected, replacement, true);
+        }
+
+        private ProtectedEntryProcessor(String mapName, Mutation mutation, V expected, V replacement, boolean validateMembership) {
             this.mapName = mapName;
+            this.validateMembership = validateMembership;
             this.mutation = mutation;
             this.expected = expected;
             this.replacement = replacement;
@@ -72,11 +79,19 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
         }
 
         @Override
+        public EntryProcessor<K, V, Object> getBackupProcessor() {
+            // Backups replay the primary decision; membership must not invalidate a mutation already accepted there.
+            return mutation == Mutation.GET ? null : new ProtectedEntryProcessor<>(mapName, mutation, expected, replacement, false);
+        }
+
+        @Override
         public Object process(Map.Entry<K, V> entry) {
-            String policy = instance.getConfig().findMapConfig(mapName).getSplitBrainProtectionName();
-            var protection = instance.getConfig().getSplitBrainProtectionConfig(policy);
-            if (!protection.getFunctionImplementation().apply(instance.getCluster().getMembers())) {
-                throw new SplitBrainProtectionException("Current membership does not satisfy " + policy);
+            if (validateMembership) {
+                String policy = instance.getConfig().findMapConfig(mapName).getSplitBrainProtectionName();
+                var protection = instance.getConfig().getSplitBrainProtectionConfig(policy);
+                if (!protection.getFunctionImplementation().apply(instance.getCluster().getMembers())) {
+                    throw new SplitBrainProtectionException("Current membership does not satisfy " + policy);
+                }
             }
             V current = entry.getValue();
             return switch (mutation) {
@@ -98,7 +113,12 @@ public class HazelcastDistributedMap<K, V> implements DistributedMap<K, V> {
                 case REMOVE_EXPECTED, REPLACE_EXPECTED -> {
                     boolean matches = current != null && Objects.equals(current, expected);
                     if (matches) {
-                        entry.setValue(mutation == Mutation.REMOVE_EXPECTED ? null : replacement);
+                        if (mutation == Mutation.REMOVE_EXPECTED) {
+                            entry.setValue(null);
+                        }
+                        else {
+                            ((ExtendedMapEntry<K, V>) entry).setValueWithoutChangingExpiryTime(replacement);
+                        }
                     }
                     yield matches;
                 }
