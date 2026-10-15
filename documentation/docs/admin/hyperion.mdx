@@ -230,9 +230,9 @@ management:
 ## Whole-exercise generation workers
 
 Whole-exercise generation uses a separate worker supervisor and the application
-DistributedDataProvider. It does not execute generated code in the core JVM or
-on ordinary LocalCI build agents. Provision the worker's access to the selected
-provider following the [AI Worker deployment instructions](/admin/aiworker).
+DistributedDataProvider. Authoring and verification do not execute generated code
+in the core JVM or on ordinary LocalCI build agents. Provision the worker's access
+to the selected provider following the [AI Worker deployment instructions](/admin/aiworker).
 A reachable worker without a generation engine advertises no capacity.
 
 Enable the core integration only on nodes with the `core`, `localci`, and
@@ -569,7 +569,10 @@ The LocalCI build that synchronizes saved tests is restricted to network `none`
 and receives no exercise-configured environment variables. Its persisted build
 job ID carries the `hyperion-sync-` prefix so retries retain the same restrictions.
 Provision the matching offline Gradle toolchain and dependencies on those build
-agents; retries do not fall back to a network-enabled build.
+agents; retries do not fall back to a network-enabled build. This post-save
+synchronization consumes ordinary LocalCI build capacity. A separate AI Worker
+does not isolate these jobs from exam builds. Use suitable build agents and
+qualify available capacity before enabling generation during exams.
 
 ### Module flags, profiles, and process boundaries
 
