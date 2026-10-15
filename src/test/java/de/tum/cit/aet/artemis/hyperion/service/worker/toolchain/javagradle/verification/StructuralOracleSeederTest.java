@@ -182,7 +182,25 @@ class StructuralOracleSeederTest {
                 .isInstanceOf(AssertionFailedError.class);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "class", "abstract class" })
+    void seededConstructorOracleRejectsInterfaceReplacingApprovedClass(String kind) throws Exception {
+        String declaration = "public " + kind + " Box {}";
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        var seeded = seederWith(sandbox, Map.of(), Map.of(), Map.of(), approvedSpec("Box", declaration)).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        assertThat(seeded.testNames()).containsExactlyInAnyOrder("testClass[Box]", "testConstructors[Box]");
+        String oracle = seeded.repositoryFiles().get("test/test.json");
+        executeSeededClassProperties(tempDir.resolve("class"), declaration, oracle, true);
+        executeSeededClassProperties(tempDir.resolve("interfaceBasicProperties"), "public interface Box {}", oracle);
+        assertThatThrownBy(() -> executeSeededClassProperties(tempDir.resolve("interfaceFullOracle"), "public interface Box {}", oracle, true))
+                .isInstanceOf(AssertionFailedError.class);
+    }
+
     private void executeSeededClassProperties(Path directory, String source, String oracle) throws Exception {
+        executeSeededClassProperties(directory, source, oracle, false);
+    }
+
+    private void executeSeededClassProperties(Path directory, String source, String oracle, boolean checkConstructors) throws Exception {
         FileUtils.writeStringToFile(directory.resolve("Box.java").toFile(), source, StandardCharsets.UTF_8);
         var compiler = ToolProvider.getSystemJavaCompiler();
         try (var files = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
@@ -192,10 +210,15 @@ class StructuralOracleSeederTest {
         try (var loader = new URLClassLoader(
                 new java.net.URL[] { directory.toUri().toURL(), Path.of(System.getProperty("artemis.test.structuralOracleGraderJar")).toUri().toURL() },
                 getClass().getClassLoader())) {
-            var properties = new com.fasterxml.jackson.databind.ObjectMapper().readTree(oracle).get(0).get("class");
+            var entry = new com.fasterxml.jackson.databind.ObjectMapper().readTree(oracle).get(0);
+            var properties = entry.get("class");
             // Run the pinned Ares class-property grader used by the seeded ClassTest, without its unrelated source-name scanner.
             org.springframework.test.util.ReflectionTestUtils.invokeMethod(loader.loadClass("de.tum.cit.ase.ares.api.structural.ClassTestProvider"), "checkBasicClassProperties",
                     "Box", loader.loadClass("Box"), properties);
+            if (checkConstructors) {
+                org.springframework.test.util.ReflectionTestUtils.invokeMethod(loader.loadClass("de.tum.cit.ase.ares.api.structural.ConstructorTestProvider"), "checkConstructors",
+                        "Box", loader.loadClass("Box"), entry.get("constructors"));
+            }
         }
     }
 
