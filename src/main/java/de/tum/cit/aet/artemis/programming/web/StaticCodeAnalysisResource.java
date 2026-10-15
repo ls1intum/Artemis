@@ -121,7 +121,9 @@ public class StaticCodeAnalysisResource {
 
         validateCategories(categories, exerciseId);
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            if (lease.coordinated()) {
+                programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            }
             checkSCAEnabledForExerciseElseThrow(programmingExercise);
             Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.updateCategories(exerciseId,
                     categories.stream().map(StaticCodeAnalysisCategoryUpdateDTO::toEntity).toList());
@@ -148,7 +150,9 @@ public class StaticCodeAnalysisResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            if (lease.coordinated()) {
+                programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            }
             checkSCAEnabledForExerciseElseThrow(programmingExercise);
             Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.resetCategories(programmingExercise);
             if (lease.coordinated()) {
@@ -184,7 +188,9 @@ public class StaticCodeAnalysisResource {
         }
 
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            targetExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            if (lease.coordinated()) {
+                targetExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            }
             checkSCAEnabledForExerciseElseThrow(targetExercise);
             if (targetExercise.getProgrammingLanguage() != sourceExercise.getProgrammingLanguage()) {
                 throw new ConflictException("SCA configurations can only be imported from exercises with the same programming language", ENTITY_NAME,

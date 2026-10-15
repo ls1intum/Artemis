@@ -139,7 +139,9 @@ public class ProgrammingExerciseDeletionResource {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         }
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
+            if (lease.coordinated()) {
+                programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
+            }
             if (programmingExerciseResetOptionsDTO.recreateBuildPlans()) {
                 continuousIntegrationService.orElseThrow().recreateBuildPlansForExercise(programmingExercise);
             }
@@ -174,7 +176,9 @@ public class ProgrammingExerciseDeletionResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, user);
 
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
-            exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            if (lease.coordinated()) {
+                exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+            }
             programmingExerciseDeletionService.deleteTasks(exercise.getId());
             if (lease.coordinated()) {
                 exerciseVersionService.createExerciseVersionSynchronously(exercise, user);

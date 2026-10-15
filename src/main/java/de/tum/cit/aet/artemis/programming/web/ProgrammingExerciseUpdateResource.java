@@ -177,7 +177,7 @@ public class ProgrammingExerciseUpdateResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, authorizationCourse, user);
 
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(updateDTO.id())) {
-            var programmingExerciseBeforeUpdate = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
+            var programmingExerciseBeforeUpdate = lease.coordinated() ? programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id()) : authorizationExercise;
             var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(updateDTO.id());
             validateCourseAndExerciseGroupUnchanged(updateDTO, programmingExerciseBeforeUpdate);
 
@@ -547,7 +547,7 @@ public class ProgrammingExerciseUpdateResource {
 
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
             // Reload after claiming so a request that waited for another mutation cannot apply a stale managed entity.
-            var programmingExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(exerciseId);
+            var programmingExercise = lease.coordinated() ? programmingExerciseRepository.findForUpdateByIdElseThrow(exerciseId) : authorizationExercise;
             var buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exerciseId);
 
             // Capture ALL original values BEFORE update() mutates the entity via L1 cache.
