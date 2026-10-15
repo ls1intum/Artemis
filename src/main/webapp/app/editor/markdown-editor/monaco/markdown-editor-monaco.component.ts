@@ -747,6 +747,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
+     * Emits a user edit that is still inside the textChanged debounce window as {@link markdownChange} right away.
+     * Call this before reading the bound value for an immediate action such as submitting a message.
+     */
+    flushPendingTextChange(): void {
+        this.monacoEditor()?.flushPendingTextChange();
+    }
+
+    /**
      * Imperatively sets the markdown content (live value + editor), WITHOUT emitting markdownChange. This mirrors the
      * legacy `editor.markdown = value` input setter and is intended for consumers holding a reference to this editor.
      * @param value The markdown content to apply.

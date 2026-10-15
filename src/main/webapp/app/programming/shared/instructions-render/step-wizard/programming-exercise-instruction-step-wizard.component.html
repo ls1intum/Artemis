@@ -14,7 +14,7 @@
                         [class.stepwizard-step--failed]="step.done === TestCaseState.FAIL"
                         [class.stepwizard-step--not-executed]="step.done === TestCaseState.NOT_EXECUTED"
                         [class.stepwizard-step--no-result]="step.done === TestCaseState.NO_RESULT"
-                        (click)="showDetailsForTests(step.testIds, step.title)"
+                        (click)="showDetailsForTests(step.testIds, step.taskName)"
                     >
                         @if (step.done === TestCaseState.SUCCESS) {
                             <fa-icon [icon]="faCheck" size="lg" class="text-success" />

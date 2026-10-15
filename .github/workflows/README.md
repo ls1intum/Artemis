@@ -37,7 +37,7 @@ ci.yml                                                            (single entry 
 ├── terminology     ── uses ci-terminology.yml    (always, incl. docs-only PRs; repo-wide component-naming gate)
 ├── dead-code       ── uses ci-dead-code.yml      (always; unreachable Java classes + unreachable client files)
 ├── liquibase       ── uses ci-liquibase.yml      (if has_liquibase; changelogs, seed data and baseline replayed on PostgreSQL and MySQL)
-├── e2e             ── uses ci-e2e.yml            (after build; required but flakiness-aware — reds only on a real, non-flaky regression; a known-flaky-only run is exonerated)
+├── e2e             ── uses ci-e2e.yml            (after build; required; known-flaky-only failures are exonerated when history is available)
 │
 │   ADVISORY — runs for signal, never blocks merge:
 ├── codeql          ── uses ci-codeql.yml         (Java + JS/TS security scan; non-fork; not gated)
@@ -69,8 +69,8 @@ The single required check is `CI / All required CI Passed`. It gates on every jo
 within `test`'s window (the lightweight area checks in a minute or two; `bean-instantiations` boots
 the app on H2 in a few minutes; `quality`'s slowest job, the ArchUnit run, still under `test`),
 so requiring them adds no merge latency. The one slow required check is `e2e` (detailed below):
-it is gated too, but with a flakiness-aware verdict, so it blocks only on a real, non-flaky
-regression and never on ambient flakiness. Path-skipped jobs report `skipped`, which the gate
+it is gated too, with a flakiness-aware verdict that exonerates failures known to be flaky.
+Without history, failures after Playwright retries remain blocking. Path-skipped jobs report `skipped`, which the gate
 accepts — so a job only blocks merge when it is *relevant and red*.
 
 `quality` (`ci-quality.yml`) is where all static analysis lives, for **both** server and
@@ -80,8 +80,8 @@ client test suites. This split (mirroring Angular/TypeScript/Vite) keeps a 30-se
 failure from being buried behind the multi-minute test jobs; the Java analyses are the server
 half of a symmetric `quality` stage, alongside the client checks.
 
-`e2e` **is** part of the required `all-required-ci-passed` gate, but with a flakiness-aware verdict
-so it blocks only on genuine regressions rather than on noise:
+`e2e` **is** part of the required `all-required-ci-passed` gate. Helios history can exonerate known
+flakes; without history, the ordinary Playwright verdict applies:
 
 - **`e2e`.** E2E takes up to ~2 hours and is flaky enough that a naive required gate would block
   good PRs on noise. Instead, `report-results` classifies each surviving failure against Helios
@@ -90,6 +90,14 @@ so it blocks only on genuine regressions rather than on noise:
   per-test detail (✅/⚪/❌ per phase, plus Helios flakiness scores) lives in the E2E PR comment. The
   test steps are `continue-on-error`, so the honest verdict is decided once in `report-results`, not
   by any single phase job.
+
+  Helios is optional. A missing secret, HTTP 401/403, outage, timeout or invalid response produces a
+  warning and falls back to Playwright: passing tests (including those recovered by its existing
+  retries) pass, while failures after retries remain blocking. Tests without matching history are
+  classified as `unknown`, not as confirmed regressions or known flakes. An unknown failure cannot
+  be exonerated by a known-flaky failure in another phase, and an unknown Phase 1 failure stops
+  Phase 2. Infrastructure failures and missing results remain blocking. The history request has a
+  ten-second deadline covering the complete response.
 
 `codeql` is deliberately **advisory** (not in the gate's `needs:`): it runs for signal and reds the
 run on a genuine failure, but never blocks merge.
