@@ -74,26 +74,50 @@ class SearchableEntityWeaviateServiceEnqueueTest {
     }
 
     @Test
-    void testRequestRowsAreWrittenOnTheExecutorAndNotOnTheCallingThread() {
+    void testAnUpsertOfAReconciledTypeIsWrittenOnTheExecutorAndNotOnTheCallingThread() {
         List<Runnable> queued = new ArrayList<>();
         var queueingService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
                 mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), queued::add);
         when(resolver.findChannelIdOf(SearchableEntitySchema.TypeValues.EXERCISE, 9L)).thenReturn(Optional.of(77L));
 
         queueingService.upsertExerciseAsync(exerciseDto(9L));
-        queueingService.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXERCISE, 5L);
-        queueingService.deleteAllForCourseAsync(3L);
 
         // The request returned without a round trip: nothing has been looked up or written yet.
         verifyNoInteractions(outboxRepository, resolver);
-        assertThat(queued).hasSize(3);
+        assertThat(queued).hasSize(1);
 
         queued.forEach(Runnable::run);
 
         ArgumentCaptor<WeaviateOutboxEntry> captor = ArgumentCaptor.forClass(WeaviateOutboxEntry.class);
-        verify(outboxRepository, times(4)).save(captor.capture());
+        verify(outboxRepository, times(2)).save(captor.capture());
         assertThat(captor.getAllValues()).extracting(WeaviateOutboxEntry::getOperation, WeaviateOutboxEntry::getEntityId).containsExactly(tuple(WeaviateOutboxOperation.UPSERT, 9L),
-                tuple(WeaviateOutboxOperation.UPSERT, 77L), tuple(WeaviateOutboxOperation.DELETE_ENTITY, 5L), tuple(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, null));
+                tuple(WeaviateOutboxOperation.UPSERT, 77L));
+    }
+
+    /**
+     * A delete that is lost leaves removed data searchable, and nothing would put it back: the reconcile passes skip posts and answer posts by default and a node
+     * that stops takes what is queued in memory with it. So deletes, and the upserts of the types the passes skip, are written before the request returns.
+     */
+    @Test
+    void testDeletesAndTheUpsertsOfUnreconciledTypesAreWrittenBeforeTheRequestReturns() {
+        List<Runnable> queued = new ArrayList<>();
+        var queueingService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), queued::add);
+
+        queueingService.upsertPostAsync(new PostSearchableEntityDTO(7L, 10L, 30L, "t", "content"));
+        queueingService.upsertAnswerPostAsync(new AnswerPostSearchableEntityDTO(8L, 7L, 10L, 30L, "reply"));
+        queueingService.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXERCISE, 5L);
+        queueingService.deleteAllPostsForChannelAsync(4L);
+        queueingService.deleteAllPostsForCourseAsync(3L);
+        queueingService.deleteAllAnswerPostsForPostAsync(7L);
+        queueingService.deleteAllForCourseAsync(3L);
+
+        assertThat(queued).isEmpty();
+        ArgumentCaptor<WeaviateOutboxEntry> captor = ArgumentCaptor.forClass(WeaviateOutboxEntry.class);
+        verify(outboxRepository, times(7)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(WeaviateOutboxEntry::getOperation).containsExactly(WeaviateOutboxOperation.UPSERT, WeaviateOutboxOperation.UPSERT,
+                WeaviateOutboxOperation.DELETE_ENTITY, WeaviateOutboxOperation.DELETE_POSTS_FOR_CHANNEL, WeaviateOutboxOperation.DELETE_POSTS_FOR_COURSE,
+                WeaviateOutboxOperation.DELETE_ANSWER_POSTS_FOR_POST, WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE);
     }
 
     @Test

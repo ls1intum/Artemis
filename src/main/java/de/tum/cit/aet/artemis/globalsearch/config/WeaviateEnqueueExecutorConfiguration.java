@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.globalsearch.config;
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import org.springframework.context.annotation.Bean;
@@ -22,7 +24,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
  * scheduling node has.
  * <p>
  * It has one thread so that the rows of one node are written in the order the changes were made. The queue is long enough that it is not expected to fill, and a
- * request that finds it full writes its rows itself instead of losing them.
+ * request that finds it full waits for room, see {@link WaitForRoomPolicy}: running the work on the request thread instead would let it overtake what is queued.
  */
 @Configuration
 @Lazy
@@ -54,11 +56,35 @@ public class WeaviateEnqueueExecutorConfiguration {
         executor.setCorePoolSize(1);
         executor.setMaxPoolSize(1);
         executor.setQueueCapacity(QUEUE_CAPACITY);
-        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.setRejectedExecutionHandler(new WaitForRoomPolicy());
         executor.setThreadNamePrefix("weaviate-enqueue-");
         // Rows still waiting at shutdown are written rather than dropped; whatever is lost anyway is repaired by the reconcile passes.
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(SHUTDOWN_WAIT_SECONDS);
         return executor;
+    }
+
+    /**
+     * What happens to a task when the queue is full: the caller waits until there is room and queues it behind the others.
+     * <p>
+     * The task is neither run by the caller nor dropped. A caller that ran it would put it ahead of the tasks that are still queued, and the
+     * rows of two changes to the same entity would be written in the opposite order. The wait is the backpressure of an executor that falls
+     * behind, and ends with a {@link RejectedExecutionException} when the executor shuts down or the caller is interrupted.
+     */
+    public static final class WaitForRoomPolicy implements RejectedExecutionHandler {
+
+        @Override
+        public void rejectedExecution(Runnable task, ThreadPoolExecutor executor) {
+            if (executor.isShutdown()) {
+                throw new RejectedExecutionException("The executor of the search index updates has been shut down");
+            }
+            try {
+                executor.getQueue().put(task);
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new RejectedExecutionException("Interrupted while waiting for room to queue a search index update", e);
+            }
+        }
     }
 }

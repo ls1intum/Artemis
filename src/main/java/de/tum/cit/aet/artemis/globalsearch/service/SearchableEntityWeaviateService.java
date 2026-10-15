@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.jspecify.annotations.Nullable;
@@ -62,11 +64,14 @@ import io.weaviate.client6.v1.api.collections.query.NearVector;
  * <p>
  * <b>Durability.</b> Metadata writes are never issued to Weaviate directly from the request path.
  * Each public {@code upsert*Async} / {@code delete*Async} method records the intent as a durable
- * {@link WeaviateOutboxEntry} row (a plain repository save that joins any ambient transaction) and returns. A
- * request-path row is written on the {@code weaviateOutboxEnqueueExecutor} thread, not on the request thread, so
- * nobody who edits an entity waits for the index bookkeeping; the executor has one thread, which keeps the rows of
- * a node in the order the changes were made, and a request that finds its queue full writes its rows itself. A row
- * that is still queued when the node dies is lost like a failed write is, and the reconcile passes repair both.
+ * {@link WeaviateOutboxEntry} row (a plain repository save that joins any ambient transaction) and returns. An upsert
+ * of a type that the reconcile passes cover is written on the {@code weaviateOutboxEnqueueExecutor} thread, not on the
+ * request thread, so nobody who edits an entity waits for the index bookkeeping. The executor has one thread, which
+ * keeps the rows of a node in the order the changes were made, and a request that finds its queue full waits for room
+ * instead of overtaking what is queued. An upsert that is still queued when the node dies is lost like a failed write
+ * is, and the reconcile passes repair both. Deletes, and the upserts of posts and answer posts, which the passes do
+ * not cover, are written before the request returns, because nothing would put them back if they were lost: a delete
+ * that is lost leaves removed data searchable.
  * The single-writer {@code WeaviateOutboxDispatcher} on the scheduling node later claims the row and calls
  * {@link #applyOutboxEntry(WeaviateOutboxEntry)}, which performs the actual Weaviate write with retry. A
  * Weaviate outage or node death therefore no longer loses a write.
@@ -105,6 +110,14 @@ public class SearchableEntityWeaviateService {
     private static final int MAX_DELETE_ITERATIONS = 1000;
 
     private static final long KEYWORD_FALLBACK_WARNING_INTERVAL_MILLIS = 60_000;
+
+    /**
+     * The types whose upserts of a request are written on the enqueue executor: the ones the reconcile passes cover by default, so an upsert that is lost with a node
+     * that stops is repaired by them. Posts and answer posts are left out because the passes skip them, so their rows are written before the request returns.
+     */
+    private static final Set<String> ASYNC_UPSERT_TYPES = Set.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.EXAM,
+            SearchableEntitySchema.TypeValues.LECTURE, SearchableEntitySchema.TypeValues.LECTURE_UNIT, SearchableEntitySchema.TypeValues.FAQ,
+            SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.TypeValues.COURSE);
 
     private final WeaviateService weaviateService;
 
@@ -624,7 +637,7 @@ public class SearchableEntityWeaviateService {
      * @param origin   which path is asking
      */
     public void enqueueUpsert(String type, Long entityId, WeaviateOutboxOrigin origin) {
-        if (origin == WeaviateOutboxOrigin.LIVE) {
+        if (origin == WeaviateOutboxOrigin.LIVE && ASYNC_UPSERT_TYPES.contains(type)) {
             enqueueLive(() -> saveUpsertAndSignal(type, entityId, origin));
         }
         else {
@@ -645,14 +658,21 @@ public class SearchableEntityWeaviateService {
      * {@link #save}), and a task that nevertheless throws must not end the thread that writes the rows of the other requests.
      */
     private void enqueueLive(Runnable enqueue) {
-        enqueueExecutor.execute(() -> {
-            try {
-                enqueue.run();
-            }
-            catch (RuntimeException e) {
-                log.error("Failed to enqueue a search index update; the index stays stale for it until it is written again or a reconcile pass repairs it: {}", e.getMessage(), e);
-            }
-        });
+        try {
+            enqueueExecutor.execute(() -> {
+                try {
+                    enqueue.run();
+                }
+                catch (RuntimeException e) {
+                    log.error("Failed to enqueue a search index update; the index stays stale for it until it is written again or a reconcile pass repairs it: {}", e.getMessage(),
+                            e);
+                }
+            });
+        }
+        catch (RejectedExecutionException e) {
+            // The executor is shutting down, or the wait for room in its queue was interrupted.
+            log.error("Could not queue a search index update; the index stays stale for it until it is written again or a reconcile pass repairs it: {}", e.getMessage(), e);
+        }
     }
 
     /**
@@ -666,12 +686,8 @@ public class SearchableEntityWeaviateService {
      * @param origin   which path is asking
      */
     public void enqueueDeleteEntity(String type, long entityId, WeaviateOutboxOrigin origin) {
-        if (origin == WeaviateOutboxOrigin.LIVE) {
-            enqueueLive(() -> saveDeleteEntityAndSignal(type, entityId, origin));
-        }
-        else {
-            saveDeleteEntityAndSignal(type, entityId, origin);
-        }
+        // A delete is written before the request returns, see the class documentation.
+        saveDeleteEntityAndSignal(type, entityId, origin);
     }
 
     private void saveDeleteEntityAndSignal(String type, long entityId, WeaviateOutboxOrigin origin) {
@@ -683,14 +699,12 @@ public class SearchableEntityWeaviateService {
     }
 
     private void enqueueBulkDelete(WeaviateOutboxOperation operation, Map<String, Object> params) {
-        // Only the request path issues bulk deletes; a reconcile pass works entity by entity.
-        enqueueLive(() -> {
-            if (!save(WeaviateOutboxEntry.forBulkDelete(operation, serializeMap(params), WeaviateOutboxOrigin.LIVE))) {
-                return;
-            }
-            log.debug("Enqueued {} with params {}", operation, params);
-            signalEnqueued();
-        });
+        // Only the request path issues bulk deletes; a reconcile pass works entity by entity. Like every delete, it is written before the request returns.
+        if (!save(WeaviateOutboxEntry.forBulkDelete(operation, serializeMap(params), WeaviateOutboxOrigin.LIVE))) {
+            return;
+        }
+        log.debug("Enqueued {} with params {}", operation, params);
+        signalEnqueued();
     }
 
     /**
