@@ -108,6 +108,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private CourseNotificationTestRepository courseNotificationRepository;
 
     @Autowired
+    private de.tum.cit.aet.artemis.core.test_repository.UserCourseRoleTestRepository diagUserCourseRoleRepository;
+
+    @Autowired
+    private de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPresetRegistryService diagPresetRegistry;
+
+    @Autowired
     private CourseNotificationParameterTestRepository courseNotificationParameterRepository;
 
     @Autowired
@@ -1508,7 +1514,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         });
     }
 
-    @Test
+    @org.junit.jupiter.api.RepeatedTest(15)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldNotSendAnAnnouncementEmailToATestUserThatNeverConfiguredIt() throws Exception {
         var regularMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
@@ -1532,7 +1538,20 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED);
 
             // The regular member is the control: the announcement e-mail is sent, so the absence of the other one means something.
-            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(recipientsOfSentMails()).contains(regularMember.getEmail()));
+            try {
+                await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(recipientsOfSentMails()).contains(regularMember.getEmail()));
+            }
+            catch (AssertionError diagnosed) {
+                System.out.println("DIAG javaMailSender invocations: " + org.mockito.Mockito.mockingDetails(javaMailSender).getInvocations().stream().map(i -> i.getMethod().getName()).toList());
+                System.out.println("DIAG mailSendingService invocations: " + org.mockito.Mockito.mockingDetails(mailSendingService).getInvocations().stream().map(i -> i.getMethod().getName()).toList());
+                var diagRecipients = userTestRepository.findAllNotificationRecipientsInCourseForConversation(channel.getId(), courseId);
+                System.out.println("DIAG recipients of the conversation: " + diagRecipients.stream().map(r -> r.userLogin() + "(testUser=" + r.isTestUser() + ",muted=" + r.isConversationMuted() + ")").sorted().toList());
+                System.out.println("DIAG course roles of the course: " + diagUserCourseRoleRepository.findAll().stream().filter(r -> r.getCourse().getId().equals(courseId)).map(r -> r.getUser().getLogin() + ":" + r.getRole()).sorted().toList());
+                System.out.println("DIAG users: " + userTestRepository.findAll().stream().filter(u -> u.getLogin().startsWith(TEST_PREFIX + "student")).map(u -> u.getLogin() + "(id=" + u.getId() + ",testUser=" + u.isTestUser() + ",deleted=" + u.isDeleted() + ")").sorted().toList());
+                System.out.println("DIAG preset registry: " + org.springframework.test.util.ReflectionTestUtils.invokeMethod(diagPresetRegistry, "getSettingPresetDTOs"));
+                System.out.println("DIAG course notifications of the course: " + courseNotificationRepository.findAll().stream().filter(n -> n.getCourse().getId().equals(courseId)).map(n -> "type=" + n.getType()).toList());
+                throw diagnosed;
+            }
             await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(recipientsOfSentMails()).doesNotContain(testUserMember.getEmail()));
         }
         finally {
