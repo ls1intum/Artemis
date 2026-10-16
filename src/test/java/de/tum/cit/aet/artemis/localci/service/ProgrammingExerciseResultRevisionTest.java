@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
@@ -100,10 +101,10 @@ class ProgrammingExerciseResultRevisionTest {
         doAnswer(call -> {
             Set<ProgrammingExerciseTestCase> savedCases = call.getArgument(0);
             for (ProgrammingExerciseTestCase saved : savedCases) {
-                if (saved.getId().equals(generated.getId())) {
+                if (generated.getId().equals(saved.getId())) {
                     generated.setActive(saved.isActive());
                 }
-                if (saved.getId().equals(old.getId())) {
+                if (old.getId().equals(saved.getId())) {
                     old.setActive(saved.isActive());
                 }
             }
@@ -115,7 +116,7 @@ class ProgrammingExerciseResultRevisionTest {
 
     private BuildResult result(String solution, String tests, String test) {
         var jobs = test == null ? List.<LocalCIJobDTO>of() : List.of(new LocalCIJobDTO(List.of(), List.of(new LocalCITestJobDTO(test, List.of()))));
-        return new BuildResult("main", solution, tests, true, null, jobs, List.of(), List.of(), false, 0);
+        return new BuildResult("main", solution, tests, false, null, jobs, List.of(), List.of(), false, 0);
     }
 
     @ParameterizedTest
@@ -184,6 +185,39 @@ class ProgrammingExerciseResultRevisionTest {
             assertThat(saves.testCaseSynchronizationCompleted(1L, solutionHead.get(), testsHead.get())).isTrue();
             assertThat(old.isActive()).isTrue();
             assertThat(generated.isActive()).isFalse();
+            verify(exercises).save(same(current));
+            writer.verify();
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "true,1,true,true", "true,0,true,true", "false,1,false,true", "true,0,false,false", "false,,false,true" })
+    void expectedSynchronizationRequiresCleanExitAndPassingReports(boolean rawSuccess, Integer exitCode, boolean failedTests, boolean passingTests) {
+        var failures = failedTests ? List.of(new LocalCITestJobDTO("failedTest", List.of())) : List.<LocalCITestJobDTO>of();
+        var passes = passingTests ? List.of(new LocalCITestJobDTO("oldTest", List.of())) : List.<LocalCITestJobDTO>of();
+        var build = new BuildResult("main", solutionHead.get(), testsHead.get(), rawSuccess, null, List.of(new LocalCIJobDTO(failures, passes)), List.of(), List.of(), false,
+                exitCode);
+        try (var writer = saves.reserveWrite(1L)) {
+            saves.expectTestCaseSynchronization(1L, solutionHead.get(), testsHead.get());
+            service.extractTestCasesFromResultAndBroadcastUpdates(build, stale);
+            assertThat(saves.testCaseSynchronizationCompleted(1L, solutionHead.get(), testsHead.get())).isFalse();
+            assertThat(generated.isActive()).isTrue();
+            assertThat(old.isActive()).isFalse();
+            verifyNoInteractions(tasks);
+            verify(cases, never()).saveAll(any());
+            verify(exercises, never()).save(any());
+            writer.verify();
+        }
+    }
+
+    @org.junit.jupiter.api.Test
+    void parserShapedAllPassingReportCompletesExpectedSynchronizationDespiteLegacyFalseFlag() {
+        var tests = java.util.stream.IntStream.range(0, 15).mapToObj(i -> new LocalCITestJobDTO("reportedTest" + i, List.of())).toList();
+        var build = new BuildResult("main", solutionHead.get(), testsHead.get(), false, null, List.of(new LocalCIJobDTO(List.of(), tests)), List.of(), List.of(), false, 0);
+        try (var writer = saves.reserveWrite(1L)) {
+            saves.expectTestCaseSynchronization(1L, solutionHead.get(), testsHead.get());
+            service.extractTestCasesFromResultAndBroadcastUpdates(build, stale);
+            assertThat(saves.testCaseSynchronizationCompleted(1L, solutionHead.get(), testsHead.get())).isTrue();
             verify(exercises).save(same(current));
             writer.verify();
         }
