@@ -1,6 +1,8 @@
 import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { HyperionAuthoringRunApi } from 'app/openapi/api/hyperion-authoring-run-api';
+import { AuthoringRunPage } from 'app/openapi/model/authoring-run-page';
 import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
 import {
     ExerciseGenerationRevertResult,
@@ -17,6 +19,7 @@ import { ProjectType } from 'app/programming/shared/entities/programming-exercis
 @Service()
 export class HyperionExerciseGenerationService {
     private readonly api = inject(HyperionExerciseGenerationApi);
+    private readonly history = inject(HyperionAuthoringRunApi);
     private readonly websocketService = inject(WebsocketService);
 
     generate(exerciseId: number, request: HyperionGenerationRequest): Observable<HyperionGenerationJobStart> {
@@ -32,6 +35,18 @@ export class HyperionExerciseGenerationService {
 
     getStatus(exerciseId: number): Observable<HyperionGenerationStatus | null> {
         return this.api.getExerciseGenerationStatus(exerciseId);
+    }
+
+    getRuns(beforeId?: number): Observable<AuthoringRunPage> {
+        return this.history.getAuthoringRuns(beforeId);
+    }
+
+    getRunAccess(jobIds: string[]): Observable<string[]> {
+        return this.history.checkAuthoringRunAccess(jobIds);
+    }
+
+    getRunStatus(exerciseId: number, runId: string): Observable<HyperionGenerationStatus> {
+        return this.history.getAuthoringRunStatus(exerciseId, runId);
     }
 
     cancel(exerciseId: number, jobId: string): Observable<void> {

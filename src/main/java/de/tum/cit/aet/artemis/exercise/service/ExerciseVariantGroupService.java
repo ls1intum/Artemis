@@ -227,22 +227,80 @@ public class ExerciseVariantGroupService {
     public void assignToGroup(Exercise exercise, @Nullable ExerciseVariantGroup group) {
         if (exercise instanceof ProgrammingExercise) {
             try (var lease = mutationGuard.claimExternalMutation(exercise.getId())) {
-                assignCurrentExerciseToGroup(lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(exercise.getId()) : exercise, group, lease.coordinated());
+                assignToGroup(lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(exercise.getId()) : exercise, group, () -> {
+                }, true, lease.coordinated());
             }
         }
         else {
-            assignCurrentExerciseToGroup(exercise, group, false);
+            assignToGroup(exercise, group, () -> {
+            }, true, false);
         }
     }
 
-    private void assignCurrentExerciseToGroup(Exercise exercise, @Nullable ExerciseVariantGroup group, boolean coordinated) {
+    /**
+     * Assigns an authoring destination within its short live-save boundary.
+     *
+     * @param exercise        destination loaded by the authoring caller
+     * @param group           validated destination group
+     * @param verifyOwnership current generation reservation check
+     */
+    public void assignToGroupWhileAuthoring(ProgrammingExercise exercise, ExerciseVariantGroup group, Runnable verifyOwnership) {
+        try (var lease = mutationGuard.claimExternalMutation(exercise.getId())) {
+            verifyOwnership.run();
+            assignToGroup(lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(exercise.getId()) : exercise, group, verifyOwnership, false, lease.coordinated());
+        }
+    }
+
+    /**
+     * Joins an eligible source only if its existing group membership is still empty.
+     *
+     * @param current freshly loaded source
+     * @param group   validated course group
+     * @return whether the conditional membership change committed
+     */
+    public boolean assignProgrammingSourceIfUngrouped(ProgrammingExercise current, ExerciseVariantGroup group) {
+        MutationLease lease;
+        try {
+            lease = mutationGuard.claimExternalMutation(current.getId());
+        }
+        catch (de.tum.cit.aet.artemis.core.exception.ConflictException busy) {
+            return false;
+        }
+        try (lease) {
+            return assignProgrammingSourceIfUngroupedCoordinated(lease.coordinated() ? programmingExerciseRepository.findByIdElseThrow(current.getId()) : current, group,
+                    lease.coordinated());
+        }
+    }
+
+    private boolean assignProgrammingSourceIfUngroupedCoordinated(ProgrammingExercise current, ExerciseVariantGroup group, boolean coordinated) {
+        if (current.isExamExercise() || !java.util.Objects.equals(current.getCourseViaExerciseGroupOrCourseMember().getId(), group.getCourse().getId())) {
+            return false;
+        }
+        Duration originalBuildAndTestOffset = getBuildAndTestOffset(current);
+        boolean assigned = exerciseVariantGroupRepository.claimAndAssignExerciseIfUngrouped(current.getId(), group.getId(), () -> {
+            boolean groupTimelineChanged = adoptMissingDatesFromExercise(group, current);
+            current.setExerciseVariantGroup(group);
+            applyGroupTimeline(group, current);
+            validateProgrammingExerciseTimeline(current, originalBuildAndTestOffset);
+            if (groupTimelineChanged) {
+                exerciseVariantGroupRepository.save(group);
+            }
+            exerciseRepository.save(current);
+        });
+        if (assigned) {
+            runProgrammingPostTimelineUpdateSideEffects(updateProgrammingExerciseTimeline(current, group, originalBuildAndTestOffset), coordinated);
+        }
+        return assigned;
+    }
+
+    private void assignToGroup(Exercise exercise, @Nullable ExerciseVariantGroup group, Runnable verifyOwnership, boolean adoptDraftDates, boolean coordinated) {
         boolean groupTimelineChanged = false;
         if (group != null) {
             // Joining stamps the group's timeline onto the exercise, so a started/ended quiz can't be added at all — there
             // is no "no-op" case to allow through here, unlike a group update.
             rejectIfQuizMemberNotEditable(exercise);
             // Let a brand-new, empty group adopt its first exercise's dates instead of forcing everything to null.
-            groupTimelineChanged = adoptMissingDatesFromExercise(group, exercise);
+            groupTimelineChanged = adoptDraftDates && adoptMissingDatesFromExercise(group, exercise);
         }
         // Joining changes the dates as much as a group edit, so snapshot here too; unassignment makes the side effects no-ops.
         TimelineSnapshot snapshot = TimelineSnapshot.of(exercise);
@@ -255,9 +313,12 @@ public class ExerciseVariantGroupService {
             applyGroupTimeline(group, programmingExercise);
             validateProgrammingExerciseTimeline(programmingExercise, originalBuildAndTestOffset);
             if (groupTimelineChanged) {
+                verifyOwnership.run();
                 exerciseVariantGroupRepository.save(group);
             }
+            verifyOwnership.run();
             exerciseRepository.save(programmingExercise);
+            verifyOwnership.run();
             runProgrammingPostTimelineUpdateSideEffects(updateProgrammingExerciseTimeline(programmingExercise, group, originalBuildAndTestOffset), coordinated);
             return;
         }
@@ -266,8 +327,10 @@ public class ExerciseVariantGroupService {
         }
         validateDates(exercise);
         if (groupTimelineChanged && group != null) {
+            verifyOwnership.run();
             exerciseVariantGroupRepository.save(group);
         }
+        verifyOwnership.run();
         Exercise saved = exerciseRepository.save(exercise);
         runPostTimelineUpdateSideEffects(saved, snapshot, coordinated);
     }

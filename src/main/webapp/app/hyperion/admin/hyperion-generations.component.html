@@ -6,110 +6,110 @@
         </tumaet-ui-button>
     </div>
     <p class="m-0 text-muted-color" jhiTranslate="artemisApp.hyperion.workers.description"></p>
+    @if (liveUpdatesPaused()) {
+        <tumaet-ui-message severity="warn" data-testid="hyperion-live-updates-paused">
+            <span jhiTranslate="artemisApp.hyperion.workers.liveUpdatesPaused"></span>
+        </tumaet-ui-message>
+    }
     @if (failed()) {
         <tumaet-ui-message severity="error" data-testid="hyperion-workers-error">
             <span jhiTranslate="artemisApp.hyperion.workers.loadFailed"></span>
         </tumaet-ui-message>
     }
-    @if (updatedAt(); as updated) {
-        <p class="m-0 text-xs text-muted-color" data-testid="hyperion-workers-updated">
-            <span jhiTranslate="artemisApp.hyperion.workers.updated"></span> {{ updated | date: 'mediumTime' }}
-        </p>
-    }
-    <section aria-labelledby="hyperion-active-generations-title" class="flex flex-col gap-3">
-        <h2 id="hyperion-active-generations-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.workers.activeRuns"></h2>
-        <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.cancelHint"></p>
-        @if (updatedAt() && !generations().length && !failed()) {
-            <p data-testid="hyperion-no-active-runs" jhiTranslate="artemisApp.hyperion.workers.noActiveRuns"></p>
-        }
-        @if (generations().length) {
-            <div class="overflow-x-auto">
-                <table tumAetUiTable data-testid="hyperion-active-runs">
-                    <caption class="sr-only" jhiTranslate="artemisApp.hyperion.workers.activeRuns"></caption>
-                    <thead>
-                        <tr>
-                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.exercise"></th>
-                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.kind"></th>
-                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.workerSlot"></th>
-                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.owner"></th>
-                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.started"></th>
-                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.status"></th>
-                            <th scope="col" jhiTranslate="artemisApp.hyperion.workers.actions"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (row of generationRows(); track row.run.jobId) {
-                            @let run = row.run;
+    @if (generationEnabled) {
+        <section aria-labelledby="hyperion-active-generations-title" class="flex flex-col gap-3">
+            <h2 id="hyperion-active-generations-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.workers.activeRuns"></h2>
+            @if (generationsUpdatedAt(); as updated) {
+                <p class="m-0 text-xs text-muted-color" data-testid="hyperion-generations-updated">
+                    <span jhiTranslate="artemisApp.hyperion.workers.updated"></span> {{ updated | date: 'mediumTime' }}
+                </p>
+            }
+            @if (generationsUpdatedAt() && !generations().length && !failed()) {
+                <p data-testid="hyperion-no-active-runs" jhiTranslate="artemisApp.hyperion.workers.noActiveRuns"></p>
+            }
+            @if (generations().length) {
+                <div class="overflow-x-auto">
+                    <table tumAetUiTable data-testid="hyperion-active-runs">
+                        <caption class="sr-only" jhiTranslate="artemisApp.hyperion.workers.activeRuns"></caption>
+                        <thead>
                             <tr>
-                                <td>
-                                    @if (row.exerciseLink; as link) {
-                                        <a [routerLink]="link" data-testid="hyperion-admin-run-exercise">{{ run.exerciseTitle || '#' + run.exerciseId }}</a>
-                                    } @else {
-                                        {{ run.exerciseTitle || '#' + run.exerciseId }}
-                                    }
-                                    <div class="text-xs text-muted-color">
-                                        #{{ run.exerciseId }}
-                                        @if (row.runLink; as link) {
-                                            · <a [routerLink]="link" data-testid="hyperion-admin-run-page" jhiTranslate="artemisApp.hyperion.workers.openRun"></a>
-                                        }
-                                    </div>
-                                </td>
-                                <td>
-                                    <!-- Adaptation rewrites an exercise instructors may already have polished; that is worth seeing before cancelling. -->
-                                    <tumaet-ui-tag
-                                        [severity]="run.mode === 'ADAPT' ? 'warn' : 'info'"
-                                        [value]="'artemisApp.hyperion.workers.mode.' + (run.mode ?? 'GENERATE') | artemisTranslate"
-                                        data-testid="hyperion-admin-run-kind"
-                                    />
-                                </td>
-                                <td>{{ row.workerId ?? '—' }} / {{ row.slot ?? '—' }}</td>
-                                <td>{{ run.userLogin }}</td>
-                                <td>{{ run.startedAt | date: 'medium' }}</td>
-                                <td>
-                                    {{
-                                        (run.cancellationRequested
-                                            ? 'artemisApp.hyperion.workers.cancelling'
-                                            : run.cancellable
-                                              ? 'artemisApp.hyperion.workers.running'
-                                              : 'artemisApp.hyperion.workers.saving'
-                                        ) | artemisTranslate
-                                    }}
-                                </td>
-                                <td>
-                                    <span
-                                        class="inline-flex"
-                                        [attr.tabindex]="!run.cancellable || run.cancellationRequested ? 0 : undefined"
-                                        [tumAetUiTooltip]="
-                                            (!run.cancellable
-                                                ? 'artemisApp.hyperion.workers.savingHint'
-                                                : run.cancellationRequested
-                                                  ? 'artemisApp.hyperion.workers.cancellingHint'
-                                                  : ''
-                                            ) | artemisTranslate
-                                        "
-                                    >
-                                        <tumaet-ui-button
-                                            severity="danger"
-                                            variant="outlined"
-                                            size="small"
-                                            [disabled]="!run.cancellable || run.cancellationRequested || failed()"
-                                            [class.pointer-events-none]="!run.cancellable || run.cancellationRequested"
-                                            (clicked)="selectCancellation(run)"
-                                            data-testid="hyperion-admin-cancel-run"
-                                        >
-                                            <span jhiTranslate="artemisApp.hyperion.workers.cancel"></span>
-                                        </tumaet-ui-button>
-                                    </span>
-                                </td>
+                                <th scope="col" jhiTranslate="artemisApp.hyperion.workers.exercise"></th>
+                                <th scope="col" jhiTranslate="artemisApp.hyperion.workers.kind"></th>
+                                <th scope="col" jhiTranslate="artemisApp.hyperion.workers.workerSlot"></th>
+                                <th scope="col" jhiTranslate="artemisApp.hyperion.workers.owner"></th>
+                                <th scope="col" jhiTranslate="artemisApp.hyperion.workers.started"></th>
+                                <th scope="col" jhiTranslate="artemisApp.hyperion.workers.status"></th>
+                                <th scope="col" jhiTranslate="artemisApp.hyperion.workers.actions"></th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </section>
-    <a routerLink="/admin/ai-workers" jhiTranslate="artemisApp.aiworker.title"></a>
-    <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.snapshotHint"></p>
+                        </thead>
+                        <tbody>
+                            @for (row of generationRows(); track row.run.jobId) {
+                                @let run = row.run;
+                                <tr>
+                                    <td>
+                                        @if (row.exerciseLink; as link) {
+                                            <a [routerLink]="link" data-testid="hyperion-admin-run-exercise">{{ run.exerciseTitle || '#' + run.exerciseId }}</a>
+                                        } @else {
+                                            {{ run.exerciseTitle || '#' + run.exerciseId }}
+                                        }
+                                        <div class="text-xs text-muted-color">#{{ run.exerciseId }}</div>
+                                    </td>
+                                    <td>
+                                        <!-- Adaptation rewrites an exercise instructors may already have polished; that is worth seeing before cancelling. -->
+                                        <tumaet-ui-tag
+                                            [severity]="run.mode === 'ADAPT' ? 'warn' : 'info'"
+                                            [value]="'artemisApp.hyperion.workers.mode.' + (run.mode ?? 'GENERATE') | artemisTranslate"
+                                            data-testid="hyperion-admin-run-kind"
+                                        />
+                                    </td>
+                                    <td>{{ row.workerId ?? '—' }}</td>
+                                    <td>{{ run.userLogin }}</td>
+                                    <td>{{ run.startedAt | date: 'medium' }}</td>
+                                    <td>
+                                        {{
+                                            (run.cancellationRequested
+                                                ? 'artemisApp.hyperion.workers.cancelling'
+                                                : run.cancellable
+                                                  ? 'artemisApp.hyperion.workers.running'
+                                                  : 'artemisApp.hyperion.workers.saving'
+                                            ) | artemisTranslate
+                                        }}
+                                    </td>
+                                    <td>
+                                        <span
+                                            class="inline-flex"
+                                            [attr.tabindex]="!run.cancellable || run.cancellationRequested ? 0 : undefined"
+                                            [tumAetUiTooltip]="
+                                                (!run.cancellable
+                                                    ? 'artemisApp.hyperion.workers.savingHint'
+                                                    : run.cancellationRequested
+                                                      ? 'artemisApp.hyperion.workers.cancellingHint'
+                                                      : ''
+                                                ) | artemisTranslate
+                                            "
+                                        >
+                                            <tumaet-ui-button
+                                                severity="danger"
+                                                variant="outlined"
+                                                size="small"
+                                                [disabled]="!run.cancellable || run.cancellationRequested || failed()"
+                                                [class.pointer-events-none]="!run.cancellable || run.cancellationRequested"
+                                                (clicked)="selectCancellation(run)"
+                                                data-testid="hyperion-admin-cancel-run"
+                                            >
+                                                <span jhiTranslate="artemisApp.hyperion.workers.cancel"></span>
+                                            </tumaet-ui-button>
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    }
+    <jhi-ai-workers [workers]="workers()" [loading]="loading()" [failed]="workersFailed()" [updatedAt]="workersUpdatedAt()" />
 </section>
 
 <tumaet-ui-dialog

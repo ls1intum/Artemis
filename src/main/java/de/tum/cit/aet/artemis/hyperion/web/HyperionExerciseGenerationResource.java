@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
 
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -24,20 +22,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
-import de.tum.cit.aet.artemis.hyperion.config.HyperionGenerationCapacityHealthIndicator;
+import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationCapabilitiesDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationEffortProfileDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationFileChangeDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationInputDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationJobStartDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationMetadataSuggestionRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationMetadataSuggestionResponseDTO;
@@ -46,20 +40,16 @@ import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRetainedArtifactsDT
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRevertResultDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationStatusDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
-import de.tum.cit.aet.artemis.hyperion.runtime.agent.HyperionGenerationSettings;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseMetadataSuggestionService;
-import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationAdmissionService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionEffortProfileService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationRevertService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
-import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationWorkerRegistryService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
@@ -80,46 +70,35 @@ public class HyperionExerciseGenerationResource {
 
     private static final String ENTITY_NAME = "hyperionExerciseGeneration";
 
+    private final GenerationAdmissionService admission;
+
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+    private final GenerationCapabilityService capabilities;
 
     private final GenerationJobService jobService;
 
     private final GenerationRequestService generationRequestService;
 
-    private final HyperionReviewCommentContextRendererService reviewCommentContextRenderer;
-
     private final ExerciseGenerationRevertService generationRevertService;
-
-    private final GenerationWorkerRegistryService workerRegistry;
-
-    private final HyperionGenerationBudgetService generationBudgetService;
-
-    private final HyperionGenerationCapacityHealthIndicator generationCapacityHealthIndicator;
 
     private final HyperionEffortProfileService effortProfileService;
 
     private final HyperionExerciseMetadataSuggestionService metadataSuggestionService;
 
-    public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, GenerationJobService jobService, GenerationRequestService generationRequestService,
-            HyperionReviewCommentContextRendererService reviewCommentContextRenderer, ExerciseGenerationRevertService generationRevertService,
-            GenerationWorkerRegistryService workerRegistry, HyperionGenerationBudgetService generationBudgetService,
-            HyperionGenerationCapacityHealthIndicator generationCapacityHealthIndicator, HyperionEffortProfileService effortProfileService,
+    public HyperionExerciseGenerationResource(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, GenerationCapabilityService capabilities,
+            GenerationJobService jobService, GenerationRequestService generationRequestService, GenerationAdmissionService admission,
+            ExerciseGenerationRevertService generationRevertService, HyperionEffortProfileService effortProfileService,
             HyperionExerciseMetadataSuggestionService metadataSuggestionService) {
+        this.admission = admission;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
+        this.capabilities = capabilities;
         this.jobService = jobService;
         this.generationRequestService = generationRequestService;
-        this.reviewCommentContextRenderer = reviewCommentContextRenderer;
         this.generationRevertService = generationRevertService;
-        this.workerRegistry = workerRegistry;
-        this.generationBudgetService = generationBudgetService;
-        this.generationCapacityHealthIndicator = generationCapacityHealthIndicator;
         this.effortProfileService = effortProfileService;
         this.metadataSuggestionService = metadataSuggestionService;
     }
@@ -155,52 +134,20 @@ public class HyperionExerciseGenerationResource {
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<ExerciseGenerationJobStartDTO> generateExercise(@PathVariable long exerciseId, @Valid @RequestBody ExerciseGenerationRequestDTO request) {
         log.debug("REST request to run agentic exercise generation ({}) for exercise [{}]", request.mode(), exerciseId);
-        validateSelectedFeedbackThreadIds(request.selectedFeedbackThreadIds());
-        validateRequestedJobDuration(request.maxJobDuration());
-        // Fail-closed on an unknown profile name: falling back to the default profile would silently spend a budget nobody asked for.
-        HyperionGenerationSettings settings = effortProfileService.resolve(request.effortProfile()).tightenedBy(request.maxTokens(), request.maxJobDuration());
-        ProgrammingExercise exercise = loadExercise(exerciseId);
-        validateDraftExercise(exercise);
-        ProgrammingLanguage language = exercise.getProgrammingLanguage();
-        if (!generationRequestService.isGenerationSupported(exercise)) {
-            throw new BadRequestAlertException("Whole-exercise generation is not available for programming language '" + language + "' and project type '"
-                    + exercise.getProjectType() + "': the verifier does not support this configuration.", ENTITY_NAME, "unsupportedGenerationLanguage");
-        }
-        // Queried separately: the entity's auxiliary-repository collection is lazy and not initialized on this detached instance.
-        if (!auxiliaryRepositoryRepository.findByExerciseId(exerciseId).isEmpty()) {
-            throw new BadRequestAlertException("Whole-exercise generation is not available for exercises with auxiliary repositories: the verifier only models the solution, "
-                    + "template, and tests repositories.", ENTITY_NAME, "unsupportedGenerationLanguage");
-        }
-        jobService.rejectIfActiveJob(exerciseId);
-        if (request.mode() == GenerationMode.GENERATE && (request.prompt() == null || request.prompt().isBlank())
-                && !generationRequestService.isAuthoritativeProblemStatement(exercise)) {
-            throw new BadRequestAlertException("Enter a brief before generating an exercise without a problem statement.", ENTITY_NAME, "generationBriefRequired");
-        }
-        if (!workerRegistry.hasAvailableGenerationSandboxSlot(LanguageGenerationProfile.toolchainFor(exercise))) {
-            generationCapacityHealthIndicator.warnGenerationRejectedForMissingCapacity();
-            throw new ServiceUnavailableAlertException("No compatible Hyperion worker currently has a free generation slot.", ENTITY_NAME, "generationCapacityUnavailable");
-        }
-        User user = userRepository.getUserWithAuthorities();
-        Long courseId = courseIdOf(exercise);
-        var feedback = selectedFeedback(exerciseId, request);
-        String prompt = generationRequestService.resolvePrompt(request, exercise);
-        if (!feedback.prompt().isBlank()) {
-            prompt += "\n\n" + feedback.prompt();
-        }
-        // Reserves what this run may spend rather than the fleet-wide worst case, so a course drafting small exercises is not throttled at the largest job's cost.
-        HyperionGenerationBudgetService.BudgetReservation budgetReservation = generationBudgetService.reserveGenerationBudget(user.getId(), courseId, settings.maxTokensPerJob());
-        String jobId;
-        try {
-            String sourceBrief = request.mode() == GenerationMode.GENERATE && request.prompt() != null && !request.prompt().isBlank() ? request.prompt().strip() : null;
-            jobId = jobService.startJob(user, exercise, prompt, request.mode(), budgetReservation.id(), sourceBrief, settings,
-                    new ExerciseGenerationInputDTO(request.prompt(), feedback.feedback()));
-        }
-        catch (RuntimeException e) {
-            generationBudgetService.releaseReservation(budgetReservation.id());
-            throw e;
-        }
-        log.info("Started agentic exercise generation job [{}] ({}) for exercise [{}]", jobId, request.mode(), exerciseId);
-        return ResponseEntity.accepted().body(new ExerciseGenerationJobStartDTO(jobId));
+        return ResponseEntity.accepted()
+                .body(new ExerciseGenerationJobStartDTO(admission.start(userRepository.getUserWithAuthorities(), exerciseId, request), exerciseId, exerciseId));
+    }
+
+    /**
+     * Reads the same exercise-specific policy used at admission. Unsupported actions can be hidden while busy workers remain a retryable state.
+     *
+     * @param exerciseId exercise whose authoring actions are requested
+     * @return supported actions and current availability
+     */
+    @GetMapping("programming-exercises/{exerciseId}/generation/capabilities")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<ExerciseGenerationCapabilitiesDTO> getGenerationCapabilities(@PathVariable long exerciseId) {
+        return ResponseEntity.ok(capabilities.describe(loadExercise(exerciseId)));
     }
 
     /**
@@ -350,22 +297,10 @@ public class HyperionExerciseGenerationResource {
         }
     }
 
-    private HyperionReviewCommentContextRendererService.SelectedFeedback selectedFeedback(long exerciseId, ExerciseGenerationRequestDTO request) {
-        if (request.mode() != GenerationMode.ADAPT || request.selectedFeedbackThreadIds() == null || request.selectedFeedbackThreadIds().isEmpty()) {
-            return new HyperionReviewCommentContextRendererService.SelectedFeedback("", List.of());
-        }
-        return reviewCommentContextRenderer.captureWholeExerciseSelectedFeedback(exerciseId, request.selectedFeedbackThreadIds());
-    }
-
     private ProgrammingExercise loadExercise(long exerciseId) {
         ProgrammingExercise exercise = programmingExerciseRepository.findWithAllParticipationsById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
         return exercise;
-    }
-
-    private static Long courseIdOf(ProgrammingExercise exercise) {
-        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        return course == null ? null : course.getId();
     }
 
     /**
@@ -381,48 +316,13 @@ public class HyperionExerciseGenerationResource {
         };
     }
 
-    /**
-     * Only course drafts without student participations may be changed. A missing release date is valid during authoring. Generation does not block participation starts;
-     * eligibility is checked again before saving, and the short live-save boundary excludes repository copies during durable writes.
-     */
+    /** Rejects released exercises and exercises with student participations before repository mutation. */
     private void validateDraftExercise(ProgrammingExercise exercise) {
-        if (exercise.isExamExercise()) {
-            throw new BadRequestAlertException("Whole-exercise generation is available only for course exercises.", ENTITY_NAME, "unsupportedGenerationLanguage");
-        }
-        if (GenerationRequestService.hasReleaseDateInThePast(exercise)) {
-            throw new BadRequestAlertException("Hyperion generation can only modify unreleased draft exercises.", ENTITY_NAME, "exerciseAlreadyReleased");
-        }
-        if (hasStudentParticipations(exercise)) {
-            throw new BadRequestAlertException("Hyperion generation can only modify exercises without student participations.", ENTITY_NAME, "exerciseHasParticipations");
-        }
+        capabilities.requireMutable(exercise);
     }
 
     private boolean canOfferRevert(ProgrammingExercise exercise) {
-        return !GenerationRequestService.hasReleaseDateInThePast(exercise) && !hasStudentParticipations(exercise)
-                && (!jobService.hasActiveJob(exercise.getId()) || jobService.isRevertRecoveryPending(exercise.getId()));
+        return capabilities.mutationRestriction(exercise) == null && (!jobService.hasActiveJob(exercise.getId()) || jobService.isRevertRecoveryPending(exercise.getId()));
     }
 
-    private static boolean hasStudentParticipations(ProgrammingExercise exercise) {
-        return exercise.getStudentParticipations() != null && !exercise.getStudentParticipations().isEmpty();
-    }
-
-    /**
-     * Bean validation has no positivity constraint for {@link Duration}, and a non-positive bound would clamp the run to a deadline it can never meet rather than tighten it.
-     */
-    private void validateRequestedJobDuration(@Nullable Duration maxJobDuration) {
-        if (maxJobDuration != null && (maxJobDuration.isZero() || maxJobDuration.isNegative())) {
-            throw new BadRequestAlertException("The requested maximum job duration must be positive.", ENTITY_NAME, "invalidMaxJobDuration");
-        }
-    }
-
-    /** Complements the {@code @Size} cap on the DTO, which bounds how many ids may be sent but not what they may be. */
-    private void validateSelectedFeedbackThreadIds(List<Long> selectedFeedbackThreadIds) {
-        if (selectedFeedbackThreadIds == null) {
-            return;
-        }
-        boolean hasInvalidThreadId = selectedFeedbackThreadIds.stream().anyMatch(threadId -> threadId == null || threadId <= 0);
-        if (hasInvalidThreadId) {
-            throw new BadRequestAlertException("Selected feedback thread ids must be positive", ENTITY_NAME, "invalidSelectedFeedbackThreadIds");
-        }
-    }
 }

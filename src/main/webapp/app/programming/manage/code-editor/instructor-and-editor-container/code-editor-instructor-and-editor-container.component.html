@@ -173,6 +173,10 @@
                     }
                     <jhi-code-editor-ai-actions
                         [adaptOffered]="adaptOffered()"
+                        [variantOffered]="variantOffered()"
+                        [variantBlockedReason]="variantBlockedReason()"
+                        (variantRequested)="openVariantDialog()"
+                        (progressRequested)="openGenerationPage()"
                         [adaptBlockedReason]="adaptBlockedReason()"
                         [selectedFeedbackCount]="selectedAdaptFeedbackCount()"
                         [progressLink]="progressLink()"
@@ -195,7 +199,7 @@
                 <!-- Consistency Issue Navigator Toolbar -->
                 @if (showConsistencyIssuesToolbar() && sortedIssues().length) {
                     <nav
-                        class="ml-2 flex min-w-0 items-center gap-1"
+                        class="ml-2 flex shrink-0 items-center gap-2"
                         [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.issues' | artemisTranslate"
                         data-testid="consistency-issue-navigation"
                     >
@@ -203,24 +207,27 @@
                             tumAetUiButton
                             type="button"
                             size="small"
+                            class="rounded-[0.15rem]! px-3! text-[0.9rem]! leading-normal!"
                             severity="secondary"
-                            variant="text"
+                            variant="outlined"
                             (click)="navigateGlobal(-1)"
+                            data-testid="consistency-previous-issue"
                             [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.prevIssue' | artemisTranslate"
                         >
                             <fa-icon [icon]="faArrowLeft" />
                         </button>
                         <span class="text-sm whitespace-nowrap" aria-live="polite">
-                            <span jhiTranslate="artemisApp.hyperion.consistencyCheck.issues"></span>
                             <span class="ml-1 tabular-nums">{{ currentGlobalIndex }} / {{ totalLocationsCount() }}</span>
                         </span>
                         <button
                             tumAetUiButton
                             type="button"
                             size="small"
+                            class="rounded-[0.15rem]! px-3! text-[0.9rem]! leading-normal!"
                             severity="secondary"
-                            variant="text"
+                            variant="outlined"
                             (click)="navigateGlobal(1)"
+                            data-testid="consistency-next-issue"
                             [attr.aria-label]="'artemisApp.hyperion.consistencyCheck.nextIssue' | artemisTranslate"
                         >
                             <fa-icon [icon]="faArrowRight" />
@@ -229,6 +236,7 @@
                             tumAetUiButton
                             type="button"
                             size="small"
+                            class="rounded-[0.15rem]! px-3! text-[0.9rem]! leading-normal!"
                             severity="secondary"
                             variant="text"
                             (click)="toggleConsistencyIssuesToolbar()"
@@ -352,6 +360,15 @@
                 [generateHtmlEvents]="previewEvents$"
             />
         </jhi-code-editor-container>
+        @if (variantDialogVisible()) {
+            <jhi-exercise-variant-ai-modal-wizard
+                [visible]="true"
+                (visibleChange)="variantDialogVisible.set($event)"
+                [sourceExercise]="exercise"
+                [courseId]="exercise.course?.id"
+                [examExercise]="false"
+            />
+        }
         @if (generationSupported()) {
             <tumaet-ui-confirm-dialog key="hyperionReloadSavedExerciseConfirmation" />
             @if (generationRefreshFailed()) {

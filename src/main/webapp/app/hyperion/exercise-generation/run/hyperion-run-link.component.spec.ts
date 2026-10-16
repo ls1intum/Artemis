@@ -44,12 +44,26 @@ describe('HyperionRunLinkComponent', () => {
 
     afterEach(() => fixture.destroy());
 
+    it.each([true, false])('uses sanitized latest status for non-owner links when running=%s', async (running) => {
+        service.getStatus.mockReturnValue(of({ jobId: 'private-run', running, ownedByCaller: false }));
+        await render();
+        expect(link()?.getAttribute('href')).toContain('aiRun=authoring:42:latest');
+        expect(link()?.getAttribute('href')).not.toContain('private-run');
+    });
+
+    it.each([true, false])('pins owner links to their exact run when running=%s', async (running) => {
+        service.getStatus.mockReturnValue(of({ jobId: 'owned-run', running, ownedByCaller: true }));
+        await render();
+        expect(link()?.getAttribute('href')).toContain('aiRun=authoring:42:owned-run');
+    });
+
     it('offers re-entry to an active generation', async () => {
         await render();
         expect(link()?.textContent).toContain('viewRun');
         expect(link()?.textContent).toContain('generation.status.running');
-        expect(link()?.querySelector('tumaet-ui-status-dot')).not.toBeNull();
-        expect(link()?.getAttribute('href')).toBe('/generation');
+        expect(link()?.querySelector('jhi-hyperion-status')).not.toBeNull();
+        expect(link()?.getAttribute('href')).toContain('aiRun=authoring:');
+        expect(link()?.getAttribute('href')).not.toContain('/generation');
         expect(service.getStatus).toHaveBeenCalledWith(42);
     });
 

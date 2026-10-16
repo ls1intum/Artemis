@@ -35,7 +35,7 @@ import { ProblemStatementGenerationResponse } from 'app/openapi/model/problem-st
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ProblemStatementGenerationRequest } from 'app/openapi/model/problem-statement-generation-request';
 import { ProblemStatementRefinementResponse } from 'app/openapi/model/problem-statement-refinement-response';
-import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
+import { ProblemStatementAiOperationsHelper } from 'app/hyperion/problem-statement/problem-statement-ai-operations.helper';
 
 /**
  * Typed view onto the private `currentAiOperationSubscription` field of the AI operations helper so the

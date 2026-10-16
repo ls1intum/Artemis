@@ -27,6 +27,15 @@ function view(events: readonly HyperionGenerationEvent[]) {
 }
 
 describe('hyperion generation activity view', () => {
+    it('does not report the internal design document as the current repository file', () => {
+        const files = [
+            { type: 'FILE_CHANGE' as const, repo: 'solution' as const, path: 'solution/Stack.java', action: 'write' as const, turn: 1, timestamp: '2026-01-01T00:00:00Z' },
+            { type: 'FILE_CHANGE' as const, repo: 'other' as const, path: 'SPEC.md', action: 'write' as const, turn: 2, timestamp: '2026-01-01T00:01:00Z' },
+        ];
+
+        expect(activityView([event({ type: 'STARTED' })], undefined, files).latestFile).toBe('Stack.java');
+    });
+
     describe('liveness', () => {
         it('counts from the event that announced the model call while the agent is waiting on it', () => {
             const waiting = event({ type: 'PROGRESS', message: 'Asking the model', activity: activity({ waitingOnModel: true }) });

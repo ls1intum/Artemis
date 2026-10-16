@@ -12,7 +12,7 @@
         <div class="flex min-w-0 flex-col gap-2">
             <!-- The verdict is the answer, so it is the largest thing on the page once a run is over. -->
             <h2 class="text-xl font-medium" id="hyperion-run-outcome-title">{{ view().titleKey | artemisTranslate }}</h2>
-            <p class="m-0 text-sm wrap-anywhere">{{ view().bodyKey | artemisTranslate: view().bodyParams }}</p>
+            <p class="m-0 text-sm wrap-anywhere">{{ view().bodyKey | artemisTranslate }}</p>
             @if (view().terminationReasonKey; as reasonKey) {
                 <p class="m-0 text-sm wrap-anywhere" data-testid="hyperion-run-outcome-reason" [jhiTranslate]="reasonKey"></p>
             }
@@ -37,7 +37,7 @@
                             the message's own foreground - three reds were visible at once in dark. The dot resolves the
                             design system's corrected colours, and its label carries the state as a word.
                         -->
-                        <tumaet-ui-status-dot class="shrink-0" [state]="check.dotState" [label]="check.stateKey | artemisTranslate" [showLabel]="false" />
+                        <jhi-hyperion-status class="shrink-0" [state]="check.dotState" [label]="check.stateKey | artemisTranslate" [showLabel]="false" />
                         <span [jhiTranslate]="check.labelKey"></span>
                     </li>
                 }

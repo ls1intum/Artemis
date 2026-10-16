@@ -1,6 +1,9 @@
+import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
+import { variantGenerationBlocker } from 'app/hyperion/variants/exercise-variant-ai-modal.utils';
+import { generationCapabilityBlocker, hasSupportedProgrammingConfiguration, injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { LegacyCodeGenerationComponent } from 'app/programming/manage/code-editor/legacy-code-generation/legacy-code-generation.component';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
-import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnDestroy, computed, inject, linkedSignal, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, Injector, OnDestroy, computed, effect, inject, linkedSignal, signal, untracked, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { A11yModule } from '@angular/cdk/a11y';
@@ -41,16 +44,16 @@ import { facArtemisIntelligence } from 'app/foundation/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Observable, Subject, finalize, take, takeUntil, tap } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
+import { ProblemStatementAiOperationsHelper } from 'app/hyperion/problem-statement/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
-import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssueCategoryEnum, ConsistencyIssueSeverityEnum } from 'app/openapi/model/consistency-issue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
-import { ExerciseReviewCommentService, ReviewAdaptationRequest } from 'app/exercise/review/exercise-review-comment.service';
-import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/exercise/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { ReviewAdaptExerciseDialogComponent, ReviewAdaptExerciseDialogResult } from 'app/hyperion/review/adapt-exercise-dialog/review-adapt-exercise-dialog.component';
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
@@ -59,8 +62,8 @@ import { AdaptFinding, getFirstCommentByCreatedDateThenId, mapRepositoryToThread
 import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
-import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
-import { InlineRefinementEvent } from 'app/programming/manage/shared/problem-statement.utils';
+import { ProblemStatementService } from 'app/hyperion/problem-statement/problem-statement.service';
+import { InlineRefinementEvent } from 'app/hyperion/problem-statement/problem-statement.utils';
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
@@ -68,7 +71,7 @@ import { HyperionGenerationActivityFacade, HyperionGenerationCompletedEvent } fr
 import { Router } from '@angular/router';
 import { HYPERION_GENERATION_BLOCKER_KEY, hyperionGenerationBlocker, usesCanonicalProblemStatementSync } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 import { serverTimeSignal } from 'app/hyperion/exercise-generation/hyperion-server-time.util';
-import { CodeEditorAiActionsComponent } from 'app/programming/manage/code-editor/ai-actions/code-editor-ai-actions.component';
+import { CodeEditorAiActionsComponent } from 'app/hyperion/code-editor/ai-actions/code-editor-ai-actions.component';
 
 const SEVERITY_ORDER: Record<ConsistencyIssueSeverityEnum, number> = {
     ['HIGH']: 0,
@@ -107,6 +110,7 @@ interface ConsistencyIssueNavigationIssue {
     providers: [ExerciseReviewCommentService, TumAetUiConfirmationService, HyperionGenerationActivityFacade],
     imports: [
         LegacyCodeGenerationComponent,
+        ExerciseVariantAiModalWizardComponent,
         FaIconComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
@@ -207,8 +211,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return issues[0] ?? current;
         },
     });
+    readonly variantDialogVisible = signal(false);
     readonly generationStartPending = signal(false);
     readonly generationRefreshPending = signal(false);
+    private readonly deferredGenerationRefreshExerciseId = signal<number | undefined>(undefined);
     readonly generationRefreshFailed = signal(false);
     readonly generationRefreshBaselineUnknown = signal(false);
     readonly problemStatementHasUnsavedChanges = signal(false);
@@ -219,7 +225,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private generationStartSequence = 0;
     private pendingGenerationRefreshJobId?: string;
     /** Present exactly while an adapt dialog opened by {@link openAdaptDialog} is still awaiting the user's decision. */
-    private pendingAdaptDialog?: { exerciseId: number; onCancel?: () => void };
+    private pendingAdaptDialog?: { exerciseId: number };
     private readonly exerciseChanged = new Subject<void>();
 
     // Icons
@@ -273,14 +279,20 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.pendingGenerationRefreshJobId = jobId;
             this.refreshAfterHyperionRepositoryChange();
         });
-        // Review threads offer feedback selection and the adaptation shortcut through the shared review service, so the
+        effect(() => {
+            const exerciseId = this.deferredGenerationRefreshExerciseId();
+            if (exerciseId === undefined || exerciseId !== this.exercise()?.id) return;
+            const editor = this.codeEditorContainer();
+            if (!editor || editor.repositoryLoading()) return;
+            untracked(() => this.refreshAfterHyperionRepositoryChange());
+        });
+        // Review threads offer feedback selection through the shared review service, so the
         // generic editors between here and the thread widgets carry no Hyperion inputs.
         this.exerciseReviewCommentService.connectAdaptation({
             offered: this.adaptOffered,
             feedbackOffered: computed(() => this.adaptOffered() || this.legacyCodeGenerationOffered()),
-            blockedReason: this.adaptBlockedReason,
+            blockedReason: computed(() => (this.adaptOffered() ? this.adaptBlockedReason() : this.legacyCodeGenerationBlockedReason())),
         });
-        this.exerciseReviewCommentService.adaptationRequests.pipe(takeUntilDestroyed()).subscribe((request) => this.adaptFromThread(request));
     }
 
     override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
@@ -339,13 +351,39 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly generationLink = computed(() => {
         const exerciseId = this.exercise()?.id;
         const courseId = this.exercise()?.course?.id;
-        return exerciseId !== undefined && courseId !== undefined ? ['/course-management', courseId, 'programming-exercises', exerciseId, 'generation'] : undefined;
+        return exerciseId !== undefined && courseId !== undefined
+            ? this.reviewRouter.createUrlTree([], {
+                  queryParams: { aiRun: `authoring:${exerciseId}:${this.generationActivity.jobId() ?? 'latest'}` },
+                  queryParamsHandling: 'merge',
+              })
+            : undefined;
     });
+
+    protected readonly variantOffered = computed(
+        () => this.hyperionEnabled && this.hyperionGenerationSupported && !!this.exercise()?.id && !!this.exercise()?.isAtLeastEditor && !this.exercise()?.exerciseGroup,
+    );
+
+    protected readonly variantBlockedReason = computed(() => {
+        const blocker = variantGenerationBlocker(this.exercise(), this.generationCapabilities.value(), this.generationCapabilities.isLoading());
+        if (blocker) return blocker;
+        const runBlocker = this.runStateBlockedReason();
+        if (runBlocker) return runBlocker;
+        return undefined;
+    });
+
+    protected openVariantDialog(): void {
+        if (!this.variantOffered() || this.variantBlockedReason()) return;
+        if (!this.canRefreshAfterHyperionRepositoryChange()) {
+            this.alertService.warning('artemisApp.hyperion.generationActivity.saveChangesFirst');
+            return;
+        }
+        this.variantDialogVisible.set(true);
+    }
 
     protected openGenerationPage(): void {
         const link = this.generationLink();
         if (link) {
-            void this.reviewRouter.navigate(link);
+            void this.reviewRouter.navigateByUrl(link);
         }
     }
 
@@ -354,6 +392,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (exerciseId === undefined || this.generationRefreshPending()) {
             return;
         }
+        const editor = this.codeEditorContainer();
+        if (!editor || editor.repositoryLoading()) {
+            this.deferredGenerationRefreshExerciseId.set(exerciseId);
+            return;
+        }
+        this.deferredGenerationRefreshExerciseId.set(undefined);
         if (this.adaptDialogVisible() || !this.canRefreshAfterHyperionRepositoryChange()) {
             this.generationRefreshFailed.set(true);
             this.generationRefreshBaselineUnknown.set(true);
@@ -450,7 +494,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     }
 
     /** Whether this deployment offers whole-exercise adaptation for the open exercise; why it may still be blocked is {@link adaptBlockedReason}. */
-    protected readonly adaptOffered = computed(() => this.hyperionGenerationSupported && !!this.exercise()?.id);
+    protected readonly adaptOffered = computed(
+        () => this.hyperionGenerationSupported && !!this.exercise()?.id && (this.exercise()?.isAtLeastEditor ?? false) && hasSupportedProgrammingConfiguration(this.exercise()),
+    );
 
     protected readonly legacyCodeGenerationOffered = computed(() => {
         const exercise = this.exercise();
@@ -475,6 +521,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         return usesCanonicalProblemStatementSync(exercise, this.hyperionGenerationSupported);
     });
 
+    private readonly generationCapabilities = injectGenerationCapabilities(this.exercise, this.generationSupported);
+
     protected readonly isExerciseGenerationRunning = computed(() => {
         const activity = this.generationActivity;
         return this.generationStartPending() || this.generationRefreshPending() || (this.generationSupported() && (activity.statusLoading() || activity.running()));
@@ -482,12 +530,22 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     protected readonly isExerciseGenerationActionBlocked = computed(() => {
         const activity = this.generationActivity;
-        return this.isExerciseGenerationRunning() || this.generationRefreshFailed() || (this.generationSupported() && activity.statusLoadFailed());
+        return (
+            this.deferredGenerationRefreshExerciseId() !== undefined ||
+            this.isExerciseGenerationRunning() ||
+            this.generationRefreshFailed() ||
+            (this.generationSupported() && activity.statusLoadFailed())
+        );
     });
 
     protected readonly isProblemStatementEditingLocked = computed(() => {
         const activity = this.generationActivity;
-        return this.isExerciseGenerationRunning() || this.generationRefreshBaselineUnknown() || (this.generationSupported() && activity.statusLoadFailed());
+        return (
+            this.deferredGenerationRefreshExerciseId() !== undefined ||
+            this.isExerciseGenerationRunning() ||
+            this.generationRefreshBaselineUnknown() ||
+            (this.generationSupported() && activity.statusLoadFailed())
+        );
     });
 
     /** Server-adjusted clock, so an exercise whose release date passes while the editor is open turns ineligible on time. */
@@ -506,9 +564,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (blocker) {
             return HYPERION_GENERATION_BLOCKER_KEY + blocker;
         }
+        if (this.generationCapabilities.isLoading()) return HYPERION_GENERATION_BLOCKER_KEY + 'capabilitiesLoading';
+        const capabilityBlocker = generationCapabilityBlocker(this.generationCapabilities.value());
+        if (capabilityBlocker) return capabilityBlocker;
         if (this.repositorySetupBusy()) {
             return HYPERION_GENERATION_BLOCKER_KEY + 'repositorySetupBusy';
         }
+        if (this.deferredGenerationRefreshExerciseId() !== undefined) return 'artemisApp.review.adaptExercise.checkingStatus';
         if (this.generationStartPending()) {
             return 'artemisApp.review.adaptExercise.starting';
         }
@@ -583,17 +645,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /** Operations with no indicator of their own; a generation run already shows as the progress link's status dot. */
     protected readonly aiActionsBusy = computed(() => this.isAiApplying() || this.isCheckingConsistency() || this.repositorySetupBusy() || this.legacyCodeGenerationRunning());
 
-    /** Adaptation can be requested from the toolbar and from any review thread; both go through here. */
+    /** Adapt the exercise using the selected review feedback. */
     protected readonly canAdaptNow = computed(() => this.adaptOffered() && this.adaptBlockedReason() === undefined);
 
-    /** A review thread's "Adapt with feedback": the thread joins the selection, and leaves it again if the dialog is dismissed. */
-    private adaptFromThread({ threadId, wasAlreadySelected }: ReviewAdaptationRequest): void {
-        this.openAdaptDialog(wasAlreadySelected ? undefined : () => this.exerciseReviewCommentService.toggleThreadFeedbackSelection(threadId));
-    }
-
-    protected openAdaptDialog(onCancel?: () => void): void {
+    protected openAdaptDialog(): void {
         if (!this.canAdaptNow()) {
-            onCancel?.();
             return;
         }
         const exerciseId = this.exercise()?.id;
@@ -601,7 +657,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
         if (!this.canRefreshAfterHyperionRepositoryChange()) {
-            onCancel?.();
             this.alertService.warning('artemisApp.hyperion.generationActivity.saveChangesFirst');
             return;
         }
@@ -615,7 +670,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             ),
         );
         this.adaptDialogSelectedIds.set(this.selectedAdaptFeedbackThreadIds());
-        this.pendingAdaptDialog = { exerciseId, onCancel };
+        this.pendingAdaptDialog = { exerciseId };
         this.adaptDialogVisible.set(true);
     }
 
@@ -632,11 +687,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     /** Runs for every dismissal — the cancel button, Escape, the backdrop, and the close icon alike. */
     protected onAdaptDialogHidden(): void {
-        const pending = this.pendingAdaptDialog;
         this.pendingAdaptDialog = undefined;
-        if (pending && this.exercise()?.id === pending.exerciseId) {
-            pending.onCancel?.();
-        }
     }
 
     private startAdaptation(instructions?: string): void {
@@ -719,6 +770,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.exerciseChanged.next();
         this.generationStartPending.set(false);
         this.generationRefreshPending.set(false);
+        this.deferredGenerationRefreshExerciseId.set(undefined);
         this.generationRefreshFailed.set(false);
         this.generationRefreshBaselineUnknown.set(false);
         this.problemStatementHasUnsavedChanges.set(false);
@@ -730,6 +782,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         // Dropping the pending decision before hiding keeps this programmatic close from running the cancel callback.
         this.pendingAdaptDialog = undefined;
         this.adaptDialogVisible.set(false);
+        this.variantDialogVisible.set(false);
         this.aiActions()?.close();
     }
 

@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
-import static de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -43,6 +41,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionExerciseGenerationEnabled;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
@@ -249,7 +248,7 @@ public class GenerationPersistenceService {
         boolean shouldSaveProblemStatement = !producedProblemStatement.isBlank() && !producedProblemStatement.equals(exercise.getProblemStatement());
         // Only from scratch: the brief-derived draft title yields to a valid generated H1. An adapt run keeps the instructor's title.
         if (mode == GenerationMode.GENERATE && shouldSaveProblemStatement && (exercise.getProblemStatement() == null || exercise.getProblemStatement().isBlank())) {
-            String generatedTitle = fromProblemStatementHeading(producedProblemStatement);
+            String generatedTitle = HyperionExerciseTitleSanitizer.fromProblemStatementHeading(producedProblemStatement);
             if (generatedTitle != null) {
                 targetTitle = generatedTitle;
             }
@@ -391,7 +390,13 @@ public class GenerationPersistenceService {
         return Map.copyOf(copy);
     }
 
-    private String repositoryBranch(ProgrammingExercise exercise) {
+    /**
+     * Resolves the concrete branch shared by persistence and its durable recovery record.
+     *
+     * @param exercise destination exercise
+     * @return configured branch, or the deployment default
+     */
+    public String repositoryBranch(ProgrammingExercise exercise) {
         String branch = buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
         return branch == null || branch.isBlank() ? defaultBranch : branch;
     }

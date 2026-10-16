@@ -1,3 +1,6 @@
+import { createExerciseMetadataHandlers } from 'app/exercise/synchronization/metadata/exercise-metadata-handlers';
+import { isEqual } from 'lodash-es';
+import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
 import { hyperionGenerationBlocker } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 import { serverTimeSignal } from 'app/hyperion/exercise-generation/hyperion-server-time.util';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -94,6 +97,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
     templateUrl: './programming-exercise-update.component.html',
     styleUrls: ['../../shared/programming-exercise-form.scss'],
     imports: [
+        CreateVariantWithAiButtonComponent,
         TranslateDirective,
         DocumentationButtonComponent,
         FormStatusBarComponent,
@@ -232,6 +236,30 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     set programmingExercise(value: ProgrammingExercise) {
         value.id = value.id ?? undefined;
         this._programmingExercise.set(value);
+    }
+
+    private readonly variantMetadataFields = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
+
+    /** Compare editable metadata, not hydrated course, participation, result or presentation state. */
+    get variantSourceHasUnsavedChanges(): boolean {
+        if (this.hasUnsavedChanges || !this.backupExercise) return true;
+        const current = this.programmingExercise;
+        const baseline = this.backupExercise;
+        if (current.problemStatement !== baseline.problemStatement) return true;
+        if (
+            !isEqual(
+                [current.programmingLanguage, current.projectType, current.packageName, current.staticCodeAnalysisEnabled],
+                [baseline.programmingLanguage, baseline.projectType, baseline.packageName, baseline.staticCodeAnalysisEnabled],
+            )
+        )
+            return true;
+        return this.variantMetadataFields.some((field) => {
+            const currentValue = field.getCurrentValue(current);
+            const baselineValue = field.getBaselineValue(baseline);
+            // The settings page initializes absent category/repository lists to an empty array.
+            const list = field.key === 'categories' || field.key === 'programmingData.auxiliaryRepositories';
+            return !isEqual(list ? (currentValue ?? []) : currentValue, list ? (baselineValue ?? []) : baselineValue);
+        });
     }
 
     backupExercise!: ProgrammingExercise; // set in ngOnInit() from the loaded programming exercise, before any edit/update action reads it

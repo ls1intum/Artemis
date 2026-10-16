@@ -18,6 +18,7 @@ import { Observable } from 'rxjs';
 import { ExerciseGenerationRequest } from '../model/exercise-generation-request';
 import { ExerciseGenerationJobStart } from '../model/exercise-generation-job-start';
 import { ExerciseGenerationStatus } from '../model/exercise-generation-status';
+import { ExerciseGenerationCapabilities } from '../model/exercise-generation-capabilities';
 import { ExerciseGenerationEffortProfile } from '../model/exercise-generation-effort-profile';
 import { ExerciseGenerationRetainedArtifacts } from '../model/exercise-generation-retained-artifacts';
 import { ExerciseGenerationRevertResult } from '../model/exercise-generation-revert-result';
@@ -60,6 +61,16 @@ export class HyperionExerciseGenerationApi {
     getExerciseGenerationStatus(exerciseId: number): Observable<ExerciseGenerationStatus> {
         const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generate-exercise/status`;
         return this.http.get<ExerciseGenerationStatus>(url);
+    }
+
+    /**
+     *
+     *
+     * @param exerciseId
+     */
+    getGenerationCapabilities(exerciseId: number): Observable<ExerciseGenerationCapabilities> {
+        const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/generation/capabilities`;
+        return this.http.get<ExerciseGenerationCapabilities>(url);
     }
 
     /**

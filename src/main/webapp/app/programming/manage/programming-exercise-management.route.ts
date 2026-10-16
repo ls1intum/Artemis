@@ -1,4 +1,5 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_TUTOR } from 'app/foundation/constants/authority.constants';
@@ -87,19 +88,24 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        // A generation run creates a real exercise and takes many minutes, so it gets a URL: it survives a reload,
-        // it can be shared with a colleague, and an instructor can leave and come back to it.
+        path: 'programming-exercises/:exerciseId/generation/runs/:runId',
+        canActivate: [
+            ({ params }) =>
+                inject(Router).createUrlTree(['/course-management', params['courseId'], 'programming-exercises', params['exerciseId']], {
+                    queryParams: { aiRun: `authoring:${params['exerciseId']}:${params['runId']}` },
+                }),
+        ],
+        children: [],
+    },
+    {
         path: 'programming-exercises/:exerciseId/generation',
-        loadComponent: () => import('app/hyperion/exercise-generation/run/hyperion-run-page.component').then((m) => m.HyperionRunPageComponent),
-        resolve: {
-            programmingExercise: ProgrammingExerciseResolve,
-        },
-        data: {
-            authorities: IS_AT_LEAST_EDITOR,
-            // Neutral: the same page follows a generation and an adaptation; the run header names which one.
-            pageTitle: 'artemisApp.hyperion.generation.run.breadcrumb',
-        },
-        canActivate: [UserRouteAccessService],
+        canActivate: [
+            ({ params, queryParams }) =>
+                inject(Router).createUrlTree(['/course-management', params['courseId'], 'programming-exercises', params['exerciseId']], {
+                    queryParams: { aiRun: `authoring:${params['exerciseId']}:${queryParams['run'] ?? 'latest'}` },
+                }),
+        ],
+        children: [],
     },
     {
         path: 'programming-exercises/:exerciseId/version-history',

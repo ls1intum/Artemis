@@ -64,8 +64,6 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
     private routerSubscription?: Subscription;
 
     ngOnInit() {
-        this.aiWorkerEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_AIWORKER));
-        this.hyperionGenerationEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
         this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
         this.examEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM));
         this.localCIActive.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
@@ -73,6 +71,8 @@ export class AdminContainerComponent implements OnInit, OnDestroy {
         this.passkeyEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_PASSKEY));
         this.isSuperAdmin.set(this.accountService.hasAnyAuthorityDirect(IS_AT_LEAST_SUPER_ADMIN));
         this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
+        this.hyperionGenerationEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION));
+        this.aiWorkerEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_AIWORKER));
         this.weaviateEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_GLOBAL_SEARCH));
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {

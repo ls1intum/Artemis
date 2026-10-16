@@ -1,5 +1,7 @@
+import { HyperionStatusState } from 'app/hyperion/shared/status/hyperion-status.component';
+import { HyperionStatusComponent } from 'app/hyperion/shared/status/hyperion-status.component';
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { TumAetUiButtonComponent, TumAetUiStatusDotComponent, TumAetUiStatusDotState } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -13,7 +15,7 @@ interface LivenessLine {
     waiting: boolean;
     /** The silence has lasted longer than a pause, which changes the tone, the words and what is offered. */
     stalled: boolean;
-    dotState: TumAetUiStatusDotState;
+    dotState: HyperionStatusState;
 }
 
 /**
@@ -32,7 +34,7 @@ interface LivenessLine {
     templateUrl: './hyperion-run-activity.component.html',
     styleUrl: './hyperion-run-activity.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, TranslateDirective, TumAetUiButtonComponent, TumAetUiStatusDotComponent],
+    imports: [ArtemisTranslatePipe, TranslateDirective, TumAetUiButtonComponent, HyperionStatusComponent],
 })
 export class HyperionRunActivityComponent {
     readonly view = input.required<HyperionActivityView>();
