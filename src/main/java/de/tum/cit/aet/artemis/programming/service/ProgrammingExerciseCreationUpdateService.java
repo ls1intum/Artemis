@@ -270,9 +270,9 @@ public class ProgrammingExerciseCreationUpdateService {
             savedProgrammingExercise = setupBuildPlansAndTriggerInitialBuilds(savedProgrammingExercise);
         }
 
+        // The tasks are written by the task service itself and nothing on the exercise has changed since it was last saved or read, so there is nothing to save and read back here.
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
-        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
         if (automaticAfterDueDateService.isPresent()) {
             final ZonedDateTime computedBuildAndTestDate = automaticAfterDueDateService.orElseThrow().computeBuildAndTestDate(savedProgrammingExercise, savedBuildConfig);
             final boolean buildAndTestDateChanged = !Objects.equals(savedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate(), computedBuildAndTestDate);

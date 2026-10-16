@@ -3,8 +3,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { of } from 'rxjs';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { Subject, of } from 'rxjs';
+import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -38,12 +38,13 @@ import {
 } from 'test/helpers/sample/communication-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { PostContextFilter, SortDirection } from 'app/communication/communication.util';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
 import { User } from 'app/account/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Directive, input, output } from '@angular/core';
+import { ApplicationRef, Directive, input, output } from '@angular/core';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { MockCourseConversationsService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-conversations.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -298,6 +299,7 @@ describe('DiscussionSectionComponent', () => {
             { ...component.currentPostContextFilter, conversationIds: [communicationExerciseChannelDTO.id] } as PostContextFilter,
             true,
             communicationExerciseChannelDTO,
+            expect.objectContaining({ beforeApply: expect.any(Function), complete: expect.any(Function) }),
         );
         expect(component.channel()).toBe(communicationExerciseChannelDTO);
     });
@@ -313,6 +315,7 @@ describe('DiscussionSectionComponent', () => {
             { ...component.currentPostContextFilter, conversationIds: [communicationLectureChannelDTO.id] },
             true,
             communicationLectureChannelDTO,
+            expect.objectContaining({ beforeApply: expect.any(Function), complete: expect.any(Function) }),
         );
         expect(component.channel()).toBe(communicationLectureChannelDTO);
     });
@@ -347,6 +350,206 @@ describe('DiscussionSectionComponent', () => {
         component.content()!.nativeElement.dispatchEvent(scrolledUp);
 
         expect(fetchNextPageSpy).toHaveBeenCalledOnce();
+    });
+
+    describe('request-scoped pagination', () => {
+        const page = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, index) => ({ id: first + index }) as Post);
+        const response = (posts: Post[], total = 120) => new HttpResponse({ body: posts, headers: new HttpHeaders({ 'X-Total-Count': String(total) }) });
+        const scrollUp = () => component.content()!.nativeElement.dispatchEvent(new CustomEvent('scrolledUp'));
+
+        beforeEach(() => {
+            fixture.componentRef.setInput('lecture', { ...communicationLecture, course: communicationCourse });
+            fixture.detectChanges();
+            component.currentPostId = undefined;
+            component.currentPost.set(undefined);
+        });
+
+        it('serializes repeated top-scroll events and keeps live updates from unlocking a pending page', () => {
+            const delayed = new Subject<HttpResponse<Post[]>>();
+            const request = vi
+                .spyOn(TestBed.inject(PostService), 'getPosts')
+                .mockReturnValueOnce(of(response(page(1, 50))))
+                .mockReturnValueOnce(delayed)
+                .mockReturnValueOnce(of(response(page(101, 120))));
+            component.fetchPosts(true);
+            scrollUp();
+            scrollUp();
+            communicationService.setPosts(page(1, 50));
+            scrollUp();
+            expect(request).toHaveBeenCalledTimes(2);
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 1]);
+
+            delayed.next(response(page(51, 100)));
+            delayed.complete();
+            expect(component.posts()).toHaveLength(100);
+            scrollUp(); // Pagination stays locked until the response has rendered and its viewport is restored.
+            expect(request).toHaveBeenCalledTimes(2);
+            fixture.detectChanges();
+            TestBed.inject(ApplicationRef).tick();
+            vi.advanceTimersByTime(16);
+            scrollUp();
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 1, 2]);
+            expect(new Set(component.posts().map((post) => post.id))).toEqual(new Set(Array.from({ length: 120 }, (_, index) => index + 1)));
+        });
+
+        it('rolls back an unsuccessful page and retries that index', () => {
+            const failed = new Subject<HttpResponse<Post[]>>();
+            const request = vi
+                .spyOn(TestBed.inject(PostService), 'getPosts')
+                .mockReturnValueOnce(of(response(page(1, 50))))
+                .mockReturnValueOnce(failed)
+                .mockReturnValueOnce(of(response(page(51, 100))));
+            component.fetchPosts(true);
+            scrollUp();
+            failed.complete(); // No response was applied, as for an unsuccessful HTTP request.
+            expect(component.posts()).toHaveLength(50);
+            expect(component['page']).toBe(1);
+            expect(component.currentPostContextFilter.page).toBe(0);
+
+            scrollUp();
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 1, 1]);
+            expect(component.posts()).toHaveLength(100);
+        });
+
+        it('retries an unsuccessful initial load at page zero and replaces the old cache', () => {
+            const failed = new Subject<HttpResponse<Post[]>>();
+            const request = vi
+                .spyOn(TestBed.inject(PostService), 'getPosts')
+                .mockReturnValueOnce(failed)
+                .mockReturnValueOnce(of(response(page(201, 220), 20)));
+            component.fetchPosts(true);
+            failed.complete();
+            scrollUp();
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 0]);
+            expect(component.posts().map((post) => post.id)).toEqual(
+                page(201, 220)
+                    .map((post) => post.id)
+                    .reverse(),
+            );
+            expect(component['page']).toBe(1);
+            expect(component.isLoading()).toBe(false);
+        });
+
+        it('keeps an older completion from unlocking or rolling back a new search', () => {
+            const oldPage = new Subject<HttpResponse<Post[]>>();
+            const newSearch = new Subject<HttpResponse<Post[]>>();
+            const request = vi
+                .spyOn(TestBed.inject(PostService), 'getPosts')
+                .mockReturnValueOnce(of(response(page(1, 50))))
+                .mockReturnValueOnce(oldPage)
+                .mockReturnValueOnce(newSearch);
+            component.fetchPosts(true);
+            scrollUp();
+            component.onSearch('new search');
+            oldPage.next(response(page(51, 100)));
+            oldPage.complete();
+            communicationService.setPosts(page(1, 50));
+            scrollUp();
+            expect(request).toHaveBeenCalledTimes(3);
+            expect(component.isLoading()).toBe(true);
+            expect(component.currentPostContextFilter.page).toBe(0);
+            expect(component.currentPostContextFilter.searchText).toBe('new search');
+
+            newSearch.next(response(page(201, 220), 20));
+            newSearch.complete();
+            expect(component.posts().map((post) => post.id)).toEqual(
+                page(201, 220)
+                    .map((post) => post.id)
+                    .reverse(),
+            );
+            expect(component.isLoading()).toBe(false);
+            expect(component['page']).toBe(1);
+        });
+    });
+
+    describe('rendered pagination and sentinel rearming', () => {
+        class ScrollObserver implements IntersectionObserver {
+            static instances: ScrollObserver[] = [];
+            readonly root: Element | Document | null;
+            readonly rootMargin = '0px';
+            readonly scrollMargin = '0px';
+            readonly thresholds = [0];
+            constructor(
+                private callback: IntersectionObserverCallback,
+                options?: IntersectionObserverInit,
+            ) {
+                this.root = options?.root ?? null;
+                ScrollObserver.instances.push(this);
+            }
+            observe = vi.fn((_target: Element) => {});
+            unobserve = vi.fn((_target: Element) => {});
+            disconnect = vi.fn();
+            takeRecords = () => [];
+            emitTop(container: HTMLElement): void {
+                const target = container.querySelector('[data-infinite-scroll-sentinel="top"]')!;
+                const rect = new DOMRect(0, 0, 100, 1);
+                this.callback(
+                    [
+                        {
+                            target,
+                            isIntersecting: container.scrollTop <= 1,
+                            intersectionRatio: container.scrollTop <= 1 ? 1 : 0,
+                            boundingClientRect: rect,
+                            intersectionRect: rect,
+                            rootBounds: null,
+                            time: performance.now(),
+                        },
+                    ],
+                    this,
+                );
+            }
+        }
+        const page = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, index) => ({ id: first + index }) as Post);
+        const response = (posts: Post[]) => new HttpResponse({ body: posts, headers: new HttpHeaders({ 'X-Total-Count': '120' }) });
+        const render = () => {
+            fixture.detectChanges();
+            TestBed.inject(ApplicationRef).tick();
+            vi.advanceTimersByTime(16);
+        };
+
+        beforeEach(() => {
+            ScrollObserver.instances = [];
+            vi.stubGlobal('IntersectionObserver', ScrollObserver);
+            fixture.componentRef.setInput('lecture', { ...communicationLecture, course: communicationCourse });
+            render();
+            component.currentPostId = undefined;
+            component.currentPost.set(undefined);
+            render();
+        });
+        afterEach(() => vi.unstubAllGlobals());
+
+        it('restores the live viewport after rendering and rearms the real directive for the next page', () => {
+            const delayed = new Subject<HttpResponse<Post[]>>();
+            const request = vi
+                .spyOn(TestBed.inject(PostService), 'getPosts')
+                .mockReturnValueOnce(of(response(page(1, 50))))
+                .mockReturnValueOnce(delayed)
+                .mockReturnValueOnce(of(response(page(101, 120))));
+            component.fetchPosts(true);
+            render();
+            const container: HTMLElement = component.content()!.nativeElement;
+            Object.defineProperty(container, 'scrollHeight', { configurable: true, get: () => container.querySelectorAll('jhi-posting-thread').length * 20 });
+            Object.defineProperty(container, 'clientHeight', { configurable: true, value: 200 });
+            const observer = ScrollObserver.instances.find((instance) => instance.root === container)!;
+            expect(observer).toBeDefined();
+            container.scrollTop = 800;
+            observer.emitTop(container); // Top sentinel leaves and arms.
+            container.scrollTop = 0;
+            observer.emitTop(container); // Genuine re-entry invokes the directive output.
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 1]);
+            container.scrollTop = 120; // Reader moves while the response is delayed.
+            delayed.next(response(page(51, 100)));
+            delayed.complete();
+            render();
+            expect(container.scrollTop).toBe(1120);
+            observer.emitTop(container); // Restoration moved the top sentinel out, rearming it.
+            container.scrollTop = 0;
+            observer.emitTop(container);
+            render();
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 1, 2]);
+            expect(container.scrollTop).toBe(400);
+            expect(component.posts()).toHaveLength(120);
+        });
     });
 
     it('should toggle send message', () => {

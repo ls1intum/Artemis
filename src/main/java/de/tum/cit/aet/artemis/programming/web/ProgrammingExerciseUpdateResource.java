@@ -173,7 +173,7 @@ public class ProgrammingExerciseUpdateResource {
         var authorizationExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
         validateCourseAndExerciseGroupUnchanged(updateDTO, authorizationExercise);
         var user = userRepository.getUserWithAuthorities();
-        Course authorizationCourse = courseService.retrieveCourseOverExerciseGroupOrCourseId(authorizationExercise);
+        Course authorizationCourse = courseService.retrieveCourseOfLoadedExercise(authorizationExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, authorizationCourse, user);
 
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(updateDTO.id())) {
@@ -221,7 +221,7 @@ public class ProgrammingExerciseUpdateResource {
             programmingExerciseValidationService.validateStaticCodeAnalysisSettings(updatedProgrammingExercise, buildConfig);
 
             // Fetch the course from the entity reloaded under the mutation lease.
-            Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
+            Course course = courseService.retrieveCourseOfLoadedExercise(updatedProgrammingExercise);
 
             programmingExerciseValidationService.checkProgrammingExerciseForError(updatedProgrammingExercise, buildConfig);
             // Validate plagiarism detection config
@@ -542,7 +542,7 @@ public class ProgrammingExerciseUpdateResource {
         }
 
         var user = userRepository.getUserWithAuthorities();
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(authorizationExercise);
+        Course course = courseService.retrieveCourseOfLoadedExercise(authorizationExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         try (var lease = programmingExerciseMutationGuard.claimExternalMutation(exerciseId)) {
