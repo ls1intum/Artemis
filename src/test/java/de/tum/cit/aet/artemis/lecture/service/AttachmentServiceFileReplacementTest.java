@@ -91,31 +91,34 @@ class AttachmentServiceFileReplacementTest {
         attachment.setAttachmentVideoUnit(attachmentVideoUnit);
         attachment.setStudentVersion(OLD_STUDENT_VERSION);
         attachment.setVersion(1);
+        attachment.setSha256Hash("hash-1");
         // Lenient: the tests that never regenerate do not read it.
-        lenient().when(attachmentRepository.findStudentVersionStateById(ATTACHMENT_ID)).thenReturn(Optional.of(new AttachmentStudentVersionStateDTO(OLD_STUDENT_VERSION, 1)));
+        lenient().when(attachmentRepository.findStudentVersionStateById(ATTACHMENT_ID))
+                .thenReturn(Optional.of(new AttachmentStudentVersionStateDTO(OLD_STUDENT_VERSION, 1, "hash-1")));
     }
 
     @Test
     void uploadedStudentVersionStoresReferenceBeforeDeletingOldFile() throws IOException {
-        when(attachmentRepository.updateStudentVersionIfFileUnchanged(eq(ATTACHMENT_ID), anyString(), eq(1))).thenReturn(1);
+        when(attachmentRepository.updateStudentVersionIfFileUnchanged(eq(ATTACHMENT_ID), anyString(), eq(1), eq("hash-1"))).thenReturn(1);
 
         attachmentService.replaceUploadedStudentVersionFile(new byte[] { 1, 2, 3 }, attachment, ATTACHMENT_VIDEO_UNIT_ID, "student.pdf");
 
         var installedPath = ArgumentCaptor.forClass(Path.class);
         var order = inOrder(tempFileUtilService, attachmentRepository, fileService);
         order.verify(tempFileUtilService).replaceFileAtomically(any(Path.class), installedPath.capture(), any(byte[].class));
-        order.verify(attachmentRepository).updateStudentVersionIfFileUnchanged(eq(ATTACHMENT_ID), anyString(), eq(1));
+        order.verify(attachmentRepository).updateStudentVersionIfFileUnchanged(eq(ATTACHMENT_ID), anyString(), eq(1), eq("hash-1"));
         order.verify(fileService).schedulePathForDeletion(oldStudentVersionPath(), 0);
 
         String newFilename = installedPath.getValue().getFileName().toString();
         assertThat(newFilename).isNotEqualTo(OLD_STUDENT_VERSION).endsWith(".pdf");
-        verify(attachmentRepository).updateStudentVersionIfFileUnchanged(ATTACHMENT_ID, newFilename, 1);
+        verify(attachmentRepository).updateStudentVersionIfFileUnchanged(ATTACHMENT_ID, newFilename, 1, "hash-1");
         assertThat(FileSystemLocation.storedFilename(attachment.getStudentVersion())).isEqualTo(newFilename);
     }
 
     @Test
     void failureToStoreReferenceDeletesNewFileAndKeepsOldOne() throws IOException {
-        doThrow(new IllegalStateException("database unavailable")).when(attachmentRepository).updateStudentVersionIfFileUnchanged(eq(ATTACHMENT_ID), anyString(), eq(1));
+        doThrow(new IllegalStateException("database unavailable")).when(attachmentRepository).updateStudentVersionIfFileUnchanged(eq(ATTACHMENT_ID), anyString(), eq(1),
+                eq("hash-1"));
 
         assertThatThrownBy(() -> attachmentService.replaceUploadedStudentVersionFile(new byte[] { 1, 2, 3 }, attachment, ATTACHMENT_VIDEO_UNIT_ID, "student.pdf"))
                 .isInstanceOf(IllegalStateException.class);
@@ -174,7 +177,7 @@ class AttachmentServiceFileReplacementTest {
     @Test
     void failedRegenerationWithoutStudentVersionClearsNothing() {
         attachment.setStudentVersion(null);
-        when(attachmentRepository.findStudentVersionStateById(ATTACHMENT_ID)).thenReturn(Optional.of(new AttachmentStudentVersionStateDTO(null, 1)));
+        when(attachmentRepository.findStudentVersionStateById(ATTACHMENT_ID)).thenReturn(Optional.of(new AttachmentStudentVersionStateDTO(null, 1, "hash-1")));
         when(slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(ATTACHMENT_VIDEO_UNIT_ID)).thenReturn(List.of(hiddenSlide()));
 
         assertThat(attachmentService.regenerateStudentVersionOrRemoveOutdated(attachment)).isFalse();
@@ -211,7 +214,7 @@ class AttachmentServiceFileReplacementTest {
     @Test
     void uploadedStudentVersionIsDiscardedWhenANewerFileReplacedItsFile() throws IOException {
         // Another save stored a newer file and its own student version before this upload's student version was published.
-        when(attachmentRepository.updateStudentVersionIfFileUnchanged(eq(ATTACHMENT_ID), anyString(), eq(1))).thenReturn(0);
+        when(attachmentRepository.updateStudentVersionIfFileUnchanged(eq(ATTACHMENT_ID), anyString(), eq(1), eq("hash-1"))).thenReturn(0);
 
         attachmentService.replaceUploadedStudentVersionFile(new byte[] { 1, 2, 3 }, attachment, ATTACHMENT_VIDEO_UNIT_ID, "student.pdf");
 
@@ -226,7 +229,7 @@ class AttachmentServiceFileReplacementTest {
     void failedRegenerationRemovesTheReferenceItReadNotTheCallersOlderOne() {
         // The caller loaded the attachment while it pointed at old.pdf; a regeneration in between published fresh.pdf. This regeneration reads fresh.pdf and then fails
         // (the stored file does not exist), so fresh.pdf no longer matches the slides and must stop being served.
-        when(attachmentRepository.findStudentVersionStateById(ATTACHMENT_ID)).thenReturn(Optional.of(new AttachmentStudentVersionStateDTO("fresh.pdf", 1)));
+        when(attachmentRepository.findStudentVersionStateById(ATTACHMENT_ID)).thenReturn(Optional.of(new AttachmentStudentVersionStateDTO("fresh.pdf", 1, "hash-1")));
         when(slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(ATTACHMENT_VIDEO_UNIT_ID)).thenReturn(List.of(hiddenSlide()));
         when(attachmentRepository.clearStudentVersionIfUnchanged(ATTACHMENT_ID, "fresh.pdf")).thenReturn(1);
 
@@ -244,9 +247,9 @@ class AttachmentServiceFileReplacementTest {
         when(slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(ATTACHMENT_VIDEO_UNIT_ID)).thenReturn(firstState, laterState);
         doReturn(new byte[] { 1 }).when(spiedService).generateStudentVersionPdf(any(File.class), anyList());
         // An overlapping update hid slide 2 before the first PDF was published, so publishing it matches nothing.
-        when(attachmentRepository.publishStudentVersionIfUnchanged(eq(ATTACHMENT_ID), eq(ATTACHMENT_VIDEO_UNIT_ID), anyString(), eq(1), eq(OLD_STUDENT_VERSION), eq(List.of(1L)),
-                eq(1L))).thenReturn(0);
-        when(attachmentRepository.publishStudentVersionIfUnchanged(eq(ATTACHMENT_ID), eq(ATTACHMENT_VIDEO_UNIT_ID), anyString(), eq(1), eq(OLD_STUDENT_VERSION),
+        when(attachmentRepository.publishStudentVersionIfUnchanged(eq(ATTACHMENT_ID), eq(ATTACHMENT_VIDEO_UNIT_ID), anyString(), eq(1), eq("hash-1"), eq(OLD_STUDENT_VERSION),
+                eq(List.of(1L)), eq(1L))).thenReturn(0);
+        when(attachmentRepository.publishStudentVersionIfUnchanged(eq(ATTACHMENT_ID), eq(ATTACHMENT_VIDEO_UNIT_ID), anyString(), eq(1), eq("hash-1"), eq(OLD_STUDENT_VERSION),
                 eq(List.of(1L, 2L)), eq(2L))).thenReturn(1);
 
         spiedService.regenerateStudentVersion(attachment);
@@ -267,7 +270,7 @@ class AttachmentServiceFileReplacementTest {
         var spiedService = spy(attachmentService);
         when(slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(ATTACHMENT_VIDEO_UNIT_ID)).thenReturn(List.of(slide(1L, 1)));
         doReturn(new byte[] { 1 }).when(spiedService).generateStudentVersionPdf(any(File.class), anyList());
-        when(attachmentRepository.publishStudentVersionIfUnchanged(anyLong(), anyLong(), anyString(), any(), any(), anyList(), anyLong())).thenReturn(0);
+        when(attachmentRepository.publishStudentVersionIfUnchanged(anyLong(), anyLong(), anyString(), any(), any(), any(), anyList(), anyLong())).thenReturn(0);
 
         assertThatThrownBy(() -> spiedService.regenerateStudentVersion(attachment)).isInstanceOf(InternalServerErrorException.class);
 
@@ -283,14 +286,14 @@ class AttachmentServiceFileReplacementTest {
         when(slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(ATTACHMENT_VIDEO_UNIT_ID)).thenReturn(List.of(slide(1L, 1)));
         doReturn(new byte[] { 1 }).when(spiedService).generateStudentVersionPdf(any(File.class), anyList());
         // An editor stored a new file with its own student version before the first PDF was published.
-        when(attachmentRepository.findStudentVersionStateById(ATTACHMENT_ID)).thenReturn(Optional.of(new AttachmentStudentVersionStateDTO(OLD_STUDENT_VERSION, 1)),
-                Optional.of(new AttachmentStudentVersionStateDTO("editor.pdf", 2)));
-        when(attachmentRepository.publishStudentVersionIfUnchanged(anyLong(), anyLong(), anyString(), any(), any(), anyList(), anyLong())).thenReturn(0);
+        when(attachmentRepository.findStudentVersionStateById(ATTACHMENT_ID)).thenReturn(Optional.of(new AttachmentStudentVersionStateDTO(OLD_STUDENT_VERSION, 1, "hash-1")),
+                Optional.of(new AttachmentStudentVersionStateDTO("editor.pdf", 2, "hash-2")));
+        when(attachmentRepository.publishStudentVersionIfUnchanged(anyLong(), anyLong(), anyString(), any(), any(), any(), anyList(), anyLong())).thenReturn(0);
 
         spiedService.regenerateStudentVersion(attachment);
 
         verify(spiedService, times(1)).generateStudentVersionPdf(any(File.class), anyList());
-        verify(attachmentRepository, times(1)).publishStudentVersionIfUnchanged(anyLong(), anyLong(), anyString(), any(), any(), anyList(), anyLong());
+        verify(attachmentRepository, times(1)).publishStudentVersionIfUnchanged(anyLong(), anyLong(), anyString(), any(), any(), any(), anyList(), anyLong());
     }
 
     @Test
@@ -300,7 +303,7 @@ class AttachmentServiceFileReplacementTest {
         spiedService.generateMissingStudentVersion(attachment);
 
         verify(spiedService, never()).generateStudentVersionPdf(any(File.class), anyList());
-        verify(attachmentRepository, never()).publishStudentVersionIfUnchanged(anyLong(), anyLong(), anyString(), any(), any(), anyList(), anyLong());
+        verify(attachmentRepository, never()).publishStudentVersionIfUnchanged(anyLong(), anyLong(), anyString(), any(), any(), any(), anyList(), anyLong());
     }
 
     private static Slide slide(long id, int slideNumber) {

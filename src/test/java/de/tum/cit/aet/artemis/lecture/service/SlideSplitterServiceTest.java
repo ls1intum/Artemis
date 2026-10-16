@@ -162,7 +162,8 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         long unitId = testAttachmentVideoUnit.getId();
         AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId).orElseThrow();
         // A student version built while the split was pending, from the previous slides
-        attachmentRepository.updateStudentVersionIfFileUnchanged(unit.getAttachment().getId(), "built-from-previous-slides.pdf", unit.getAttachment().getVersion());
+        attachmentRepository.updateStudentVersionIfFileUnchanged(unit.getAttachment().getId(), "built-from-previous-slides.pdf", unit.getAttachment().getVersion(),
+                unit.getAttachment().getSha256Hash());
 
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(unit, null, null)).join();
 

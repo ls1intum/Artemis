@@ -116,15 +116,15 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         var state = attachmentRepository.findStudentVersionStateById(testAttachment2.getId()).orElseThrow();
 
         // Generated while only the first of the two hidden slides was hidden
-        assertThat(attachmentRepository.publishStudentVersionIfUnchanged(testAttachment2.getId(), unitId, "stale.pdf", state.version(), state.studentVersion(),
+        assertThat(attachmentRepository.publishStudentVersionIfUnchanged(testAttachment2.getId(), unitId, "stale.pdf", state.version(), state.sha256Hash(), state.studentVersion(),
                 List.of(hiddenSlideIds.getFirst()), 1)).isZero();
         // Generated from a different student version reference
-        assertThat(attachmentRepository.publishStudentVersionIfUnchanged(testAttachment2.getId(), unitId, "stale.pdf", state.version(), "other.pdf", hiddenSlideIds,
-                hiddenSlideIds.size())).isZero();
+        assertThat(attachmentRepository.publishStudentVersionIfUnchanged(testAttachment2.getId(), unitId, "stale.pdf", state.version(), state.sha256Hash(), "other.pdf",
+                hiddenSlideIds, hiddenSlideIds.size())).isZero();
         assertThat(attachmentRepository.findStudentVersionStateById(testAttachment2.getId()).orElseThrow().studentVersion()).isNull();
 
-        assertThat(attachmentRepository.publishStudentVersionIfUnchanged(testAttachment2.getId(), unitId, "current.pdf", state.version(), state.studentVersion(), hiddenSlideIds,
-                hiddenSlideIds.size())).isEqualTo(1);
+        assertThat(attachmentRepository.publishStudentVersionIfUnchanged(testAttachment2.getId(), unitId, "current.pdf", state.version(), state.sha256Hash(),
+                state.studentVersion(), hiddenSlideIds, hiddenSlideIds.size())).isEqualTo(1);
         assertThat(attachmentRepository.findStudentVersionStateById(testAttachment2.getId()).orElseThrow().studentVersion()).isEqualTo("current.pdf");
     }
 

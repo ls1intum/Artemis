@@ -89,13 +89,15 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
     List<AttachmentFileLocationDTO> findAttachmentFileLocationsAfter(@Param("minimumAttachmentId") long minimumAttachmentId, Pageable pageable);
 
     /**
-     * Stores the filename of a newly written student version, but only while the attachment still has the file version the student version belongs to. Only this column is
-     * written, so a concurrent change to other attachment fields is not overwritten.
+     * Stores the filename of a newly written student version, but only while the attachment still has the file the student version belongs to. The file is identified by its
+     * version and hash: two saves that start from the same version store different files under the same version number. Only this column is written, so a concurrent change
+     * to other attachment fields is not overwritten.
      *
      * @param attachmentId           the id of the attachment
      * @param studentVersionFilename the stored filename of the new student version
      * @param expectedVersion        the version of the file the student version was made for
-     * @return 1 when stored, 0 when a newer file has replaced that one in the meantime
+     * @param expectedSha256Hash     the hash of that file
+     * @return 1 when stored, 0 when another file has replaced that one in the meantime
      */
     @Transactional // ok because of modifying query
     @Modifying
@@ -104,9 +106,10 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
             SET a.studentVersion = :studentVersionFilename
             WHERE a.id = :attachmentId
                 AND (a.version = :expectedVersion OR (:expectedVersion IS NULL AND a.version IS NULL))
+                AND (a.sha256Hash = :expectedSha256Hash OR (:expectedSha256Hash IS NULL AND a.sha256Hash IS NULL))
             """)
     int updateStudentVersionIfFileUnchanged(@Param("attachmentId") long attachmentId, @Param("studentVersionFilename") String studentVersionFilename,
-            @Param("expectedVersion") Integer expectedVersion);
+            @Param("expectedVersion") Integer expectedVersion, @Param("expectedSha256Hash") String expectedSha256Hash);
 
     /**
      * Reads the stored student version reference and the file version of an attachment.
@@ -115,7 +118,7 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
      * @return the state, or empty if the attachment does not exist
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.lecture.dto.AttachmentStudentVersionStateDTO(a.studentVersion, a.version)
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.AttachmentStudentVersionStateDTO(a.studentVersion, a.version, a.sha256Hash)
             FROM Attachment a
             WHERE a.id = :attachmentId
             """)
@@ -130,6 +133,7 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
      * @param attachmentVideoUnitId    the id of its attachment video unit
      * @param newStudentVersion        the stored filename of the regenerated student version
      * @param expectedVersion          the file version the student version was generated from
+     * @param expectedSha256Hash       the hash of that file
      * @param expectedStudentVersion   the stored student version value the regeneration started from, or null if there was none
      * @param expectedHiddenSlideIds   the ids of the hidden slides that were left out; never empty
      * @param expectedHiddenSlideCount the number of those slides
@@ -142,6 +146,7 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
             SET a.studentVersion = :newStudentVersion
             WHERE a.id = :attachmentId
                 AND (a.version = :expectedVersion OR (:expectedVersion IS NULL AND a.version IS NULL))
+                AND (a.sha256Hash = :expectedSha256Hash OR (:expectedSha256Hash IS NULL AND a.sha256Hash IS NULL))
                 AND (a.studentVersion = :expectedStudentVersion OR (:expectedStudentVersion IS NULL AND a.studentVersion IS NULL))
                 AND (
                     SELECT COUNT(s.id)
@@ -160,8 +165,9 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
                 )
             """)
     int publishStudentVersionIfUnchanged(@Param("attachmentId") long attachmentId, @Param("attachmentVideoUnitId") long attachmentVideoUnitId,
-            @Param("newStudentVersion") String newStudentVersion, @Param("expectedVersion") Integer expectedVersion, @Param("expectedStudentVersion") String expectedStudentVersion,
-            @Param("expectedHiddenSlideIds") Collection<Long> expectedHiddenSlideIds, @Param("expectedHiddenSlideCount") long expectedHiddenSlideCount);
+            @Param("newStudentVersion") String newStudentVersion, @Param("expectedVersion") Integer expectedVersion, @Param("expectedSha256Hash") String expectedSha256Hash,
+            @Param("expectedStudentVersion") String expectedStudentVersion, @Param("expectedHiddenSlideIds") Collection<Long> expectedHiddenSlideIds,
+            @Param("expectedHiddenSlideCount") long expectedHiddenSlideCount);
 
     /**
      * Removes the student version reference, but only if the attachment still points at the given file.

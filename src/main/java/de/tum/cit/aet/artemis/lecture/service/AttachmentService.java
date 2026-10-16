@@ -110,7 +110,7 @@ public class AttachmentService {
             if (state.isEmpty() || (onlyIfMissing && state.get().studentVersion() != null)) {
                 return;
             }
-            if (!Objects.equals(state.get().version(), attachment.getVersion())) {
+            if (!Objects.equals(state.get().version(), attachment.getVersion()) || !Objects.equals(state.get().sha256Hash(), attachment.getSha256Hash())) {
                 // The file was replaced after the caller loaded the attachment, so its file location is outdated. Whoever replaced the file takes care of the student version:
                 // an editor change submits one, and a plain upload removes the old one.
                 log.debug("Attachment {} has a newer file than the one to regenerate the student version from; leaving the student version to that change", attachment.getId());
@@ -148,7 +148,7 @@ public class AttachmentService {
             int published;
             try {
                 published = attachmentRepository.publishStudentVersionIfUnchanged(attachment.getId(), attachmentVideoUnit.getId(), filename, state.get().version(),
-                        startedFromStudentVersion, hiddenSlideIds, hiddenSlideIds.size());
+                        state.get().sha256Hash(), startedFromStudentVersion, hiddenSlideIds, hiddenSlideIds.size());
             }
             catch (RuntimeException exception) {
                 deleteStudentVersionFile(attachmentVideoUnit.getId(), filename);
@@ -352,7 +352,7 @@ public class AttachmentService {
         String oldStudentVersion = FileSystemLocation.storedFilename(attachment.getStudentVersion());
         int updated;
         try {
-            updated = attachmentRepository.updateStudentVersionIfFileUnchanged(attachment.getId(), filename, attachment.getVersion());
+            updated = attachmentRepository.updateStudentVersionIfFileUnchanged(attachment.getId(), filename, attachment.getVersion(), attachment.getSha256Hash());
         }
         catch (RuntimeException exception) {
             deleteStudentVersionFile(attachmentVideoUnitId, filename);

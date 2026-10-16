@@ -212,8 +212,11 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     void clearingStudentVersionOnlyMatchesTheExpectedFile() {
         AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture1, 1, true);
         long attachmentId = unit.getAttachment().getId();
-        Integer fileVersion = attachmentRepository.findById(attachmentId).orElseThrow().getVersion();
-        assertThat(attachmentRepository.updateStudentVersionIfFileUnchanged(attachmentId, "current.pdf", fileVersion)).isEqualTo(1);
+        Attachment storedAttachment = attachmentRepository.findById(attachmentId).orElseThrow();
+        // Another file stored under the same version number, by a save that started from the same version
+        assertThat(attachmentRepository.updateStudentVersionIfFileUnchanged(attachmentId, "other-file.pdf", storedAttachment.getVersion(), "another-hash")).isZero();
+        assertThat(attachmentRepository.updateStudentVersionIfFileUnchanged(attachmentId, "current.pdf", storedAttachment.getVersion(), storedAttachment.getSha256Hash()))
+                .isEqualTo(1);
 
         assertThat(attachmentRepository.clearStudentVersionIfUnchanged(attachmentId, "older.pdf")).isZero();
         assertThat(attachmentRepository.findById(attachmentId).orElseThrow().getStudentVersion()).endsWith("current.pdf");
