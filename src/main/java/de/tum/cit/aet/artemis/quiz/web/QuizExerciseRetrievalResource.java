@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -185,9 +184,9 @@ public class QuizExerciseRetrievalResource {
             studentParticipationRepository.checkTestRunsExist(quizExercise);
         }
         if (quizExercise.isCourseExercise()) {
-            Channel channel = channelRepository.findChannelByExerciseId(quizExercise.getId());
-            if (channel != null) {
-                quizExercise.setChannelName(channel.getName());
+            String channelName = channelRepository.findChannelNameByExerciseId(quizExercise.getId());
+            if (channelName != null) {
+                quizExercise.setChannelName(channelName);
             }
         }
         setQuizBatches(user, quizExercise);
