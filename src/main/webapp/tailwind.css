@@ -65,6 +65,8 @@
 @source './app/exercise/result';
 @source './app/exercise/import';
 @source './app/iris/manage/settings';
+@source './app/course/manage/athena-settings-update';
+@source './app/course/manage/control-center/about-athena-modal';
 @source './app/editor/markdown-editor';
 
 /* The whole exam mode, and the example solution that only its summary shows. */

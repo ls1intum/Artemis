@@ -1,6 +1,6 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, catchError, concatMap, finalize, of, shareReplay } from 'rxjs';
+import { Observable, catchError, concat, concatMap, finalize, ignoreElements, of, shareReplay } from 'rxjs';
 
 /**
  * The course-level Athena feedback configuration an instructor can edit.
@@ -43,10 +43,15 @@ export class AthenaCourseConfigService {
     /**
      * Get the Athena configuration of a course.
      *
+     * Waits for the updates already queued for the course, so a page opened right after a switch elsewhere reads the
+     * configuration those updates stored rather than the one they are about to replace.
+     *
      * @param courseId the id of the course
      */
     getCourseConfig(courseId: number): Observable<AthenaCourseConfigDTO> {
-        return this.http.get<AthenaCourseConfigDTO>(`${this.resourceUrl}/${courseId}/athena-configuration`);
+        const request = this.http.get<AthenaCourseConfigDTO>(`${this.resourceUrl}/${courseId}/athena-configuration`);
+        const queued = this.queuedUpdates.get(courseId);
+        return queued ? concat(queued.pipe(ignoreElements()), request) : request;
     }
 
     /**
