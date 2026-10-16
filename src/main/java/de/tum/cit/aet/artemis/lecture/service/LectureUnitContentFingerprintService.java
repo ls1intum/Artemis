@@ -11,6 +11,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -39,20 +40,39 @@ public class LectureUnitContentFingerprintService {
     private static final String VERSION_PREFIX = "v1:";
 
     /**
-     * Compute the content fingerprint for the given unit's current source material.
+     * Compute the content fingerprint of the given unit's current source material, and the fingerprint of the same material without its video, reading
+     * the PDF once.
+     * The second one certifies a run that ingested the unit without its video because the video could not be resolved; it equals the fingerprint of the
+     * unit with its video removed.
      *
      * @param unit the attachment video unit
-     * @return the versioned fingerprint string
+     * @return both versioned fingerprints
      * @throws IllegalStateException if the attachment file exists in the database but cannot be read from disk
      */
-    public String computeFingerprint(AttachmentVideoUnit unit) {
-        String pdfHash = "";
+    public ContentFingerprints computeFingerprints(AttachmentVideoUnit unit) {
+        String pdfHash = pdfHashOf(unit);
+        return new ContentFingerprints(combine(pdfHash, unit.getVideoSource()), combine(pdfHash, null));
+    }
+
+    /**
+     * The fingerprints of a unit's content.
+     *
+     * @param full         the fingerprint of the PDF and the video source
+     * @param withoutVideo the fingerprint of the PDF alone
+     */
+    public record ContentFingerprints(String full, String withoutVideo) {
+    }
+
+    private String pdfHashOf(AttachmentVideoUnit unit) {
         // Same rule as the ingestion payload, so the fingerprint certifies exactly the bytes Iris is sent: an external link has no stored file and counts as no PDF.
         if (unit.getAttachment() != null && unit.getAttachment().isStoredPdf()) {
-            pdfHash = hashAttachment(unit);
+            return hashAttachment(unit);
         }
-        String videoSource = unit.getVideoSource() != null ? unit.getVideoSource() : "";
-        String canonicalInput = pdfHash + "\n" + videoSource;
+        return "";
+    }
+
+    private static String combine(String pdfHash, @Nullable String videoSource) {
+        String canonicalInput = pdfHash + "\n" + (videoSource != null ? videoSource : "");
         return VERSION_PREFIX + HexFormat.of().formatHex(sha256().digest(canonicalInput.getBytes(StandardCharsets.UTF_8)));
     }
 

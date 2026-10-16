@@ -85,6 +85,8 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     readonly hideLabelName = input(false, { transform: booleanAttribute });
     /** Hides the built-in validation message without changing validity or `aria-invalid`. */
     readonly hideValidationMessage = input(false, { transform: booleanAttribute });
+    /** Defer text errors until blur while continuing to emit validity during typing. */
+    readonly validateOnBlur = input(false, { transform: booleanAttribute });
     /** Shows the browser time-zone indicator beside the label. */
     readonly shouldDisplayTimeZoneWarning = input(true, { transform: booleanAttribute });
     /** Edit `HH:mm` without a calendar, preserving the value's date or using today when empty. */
@@ -169,8 +171,10 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     private restoreFocusElement?: HTMLElement;
     private pendingHourFocus = false;
 
-    protected readonly showErrorBorder = computed(() => this.invalid() || !this.isInputValid());
-    protected readonly showValidationMessage = computed(() => !this.hideValidationMessage() && !this.isInputValid());
+    private readonly isEditingText = signal(false);
+    private readonly showTextError = computed(() => !this.isInputValid() && (!this.validateOnBlur() || !this.isEditingText()));
+    protected readonly showErrorBorder = computed(() => this.invalid() || this.showTextError());
+    protected readonly showValidationMessage = computed(() => !this.hideValidationMessage() && this.showTextError());
     protected readonly describedBy = computed(() => {
         const ids = [this.showValidationMessage() ? `${this.inputId()}-error` : undefined, this.ariaDescribedBy()].filter(Boolean);
         return ids.length ? ids.join(' ') : null;
@@ -214,6 +218,7 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     readonly isValid = computed(() => !this.invalid() && this.isInputValid());
 
     protected onInput(raw: string): void {
+        this.isEditingText.set(true);
         this.inputText.set(raw);
         const parsed = parseDisplay(raw, this.timeOnly(), this.value(), this.dateOnly());
         if (parsed) {
@@ -230,6 +235,7 @@ export class TumAetUiDatePickerComponent implements FormValueControl<dayjs.Dayjs
     }
 
     protected onBlur(raw: string): void {
+        this.isEditingText.set(false);
         const trimmed = normalizeDisplayText(raw);
         const current = this.value();
         if (trimmed && !matchesDisplayFormat(trimmed, this.timeOnly(), this.dateOnly())) {

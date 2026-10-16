@@ -462,7 +462,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         if (!this.submission()) {
             return true;
         }
-        return this.submission().text === this.answer();
+        // an untouched submission has no text, whereas the answer is normalised to an empty string
+        return (this.submission().text ?? '') === this.answer();
     }
 
     /**

@@ -113,6 +113,18 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
+     * Checks whether a commit belongs to a recorded submission of the specified participation.
+     * A full Git hash alone does not establish that code is part of an assessment snapshot.
+     *
+     * @param participationId the participation whose submissions may be read
+     * @param commitHash      the full hash of the requested commit
+     * @return whether a matching submission exists for this participation
+     */
+    public boolean isCommitSubmitted(long participationId, String commitHash) {
+        return programmingSubmissionRepository.existsByParticipationIdAndCommitHash(participationId, commitHash);
+    }
+
+    /**
      * This method gets called if a new commit was pushed to the VCS
      *
      * @param participation     The Participation, where the push happened

@@ -12,6 +12,7 @@ import { DomainService } from 'app/programming/shared/code-editor/services/code-
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ParticipationPrivacyService } from 'app/exercise/participation/participation-privacy.service';
 import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
@@ -104,6 +105,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private athenaService = inject(AthenaService);
     private datePipe = inject(ArtemisDatePipe);
     private injector = inject(Injector);
+    private participationPrivacyService = inject(ParticipationPrivacyService);
 
     readonly codeEditorContainer = viewChild<CodeEditorContainerComponent>(CodeEditorContainerComponent);
     ButtonSize = ButtonSize;
@@ -166,11 +168,18 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly localRepositoryLink = signal<string[]>([]);
     /**
      * Link to the commit history of the assessed student repository. Unlike {@link localRepositoryLink} it does not
-     * depend on the editor-only template participation request, because every tutor may inspect the commit history.
+     * depend on the editor-only template participation request. A tutor is only offered it while participant
+     * information is visible: the history identifies the student, and the server refuses it during anonymous assessment.
+     * Editors and instructors keep their access.
      */
     readonly commitHistoryLink = computed(() => {
         const participationId = this.participation()?.id;
         if (participationId === undefined) {
+            return undefined;
+        }
+        // Read from the exercise and not from isAtLeastEditor, which is only set once the editor-only template participation request has returned.
+        const exercise = this.exercise();
+        if (!exercise?.isAtLeastEditor && this.participationPrivacyService.isParticipantInformationHidden(exercise)) {
             return undefined;
         }
         return [...getLocalRepositoryLink(this.courseId, this.exerciseId, RepositoryType.USER, participationId, this.exerciseGroupId, this.examId), 'commit-history'];

@@ -15,7 +15,7 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLe
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertLectureUnitNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 
 import java.util.Optional;
@@ -99,7 +99,7 @@ class CourseDeletionWeaviateIntegrationTest extends AbstractProgrammingIntegrati
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         // Pyris is not running in integration tests — stub the FAQ deletion to prevent PyrisConnectorException
-        doNothing().when(pyrisFaqApi).deleteFaq(any());
+        doNothing().when(pyrisFaqApi).deleteFaq(anyLong(), anyLong());
     }
 
     @Test
