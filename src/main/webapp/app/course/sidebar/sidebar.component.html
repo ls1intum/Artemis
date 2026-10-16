@@ -15,7 +15,7 @@
 
                 <div class="sidebar-body">
                     @if (searchFieldEnabled()) {
-                        <div class="mt-2 d-flex align-items-center">
+                        <div class="mt-2 flex items-stretch">
                             <jhi-search-filter [size]="searchFieldSize()" (newSearchEvent)="setSearchValue($event)" class="flex-grow-1 search-filter" />
                             @if (showFilter()) {
                                 <div class="ms-2">
@@ -40,7 +40,7 @@
                             }
 
                             @if (inCommunication()) {
-                                <div class="ms-2" ngbDropdown>
+                                <div class="ms-2 flex" ngbDropdown>
                                     <button type="button" data-testid="sidebar-create-menu-button" class="btn btn-primary btn-sm square-button" ngbDropdownToggle>
                                         <fa-icon [icon]="faPlusCircle" class="item-icon" />
                                     </button>
