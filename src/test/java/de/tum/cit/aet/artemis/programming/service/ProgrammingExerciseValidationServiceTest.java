@@ -218,6 +218,20 @@ class ProgrammingExerciseValidationServiceTest {
     }
 
     @Test
+    void validateContainerDockerFlags_resolvesAnExplicitZeroSwapLimitAgainstTheInstanceDefault() {
+        // a container that sets memorySwap to 0 replaces the exercise's 512 MB with the instance default, as the run config and the agent do
+        ProgrammingExerciseBuildConfig buildConfig = buildConfigWithDockerFlags(flags(1, 512, 512));
+        when(programmingExerciseBuildConfigService.isAllowedNetwork(any())).thenReturn(true);
+        when(programmingExerciseBuildConfigService.getDefaultMemorySwapLimitMB()).thenReturn(2048);
+
+        assertThatCode(() -> validationService.validateContainerDockerFlags(planWithContainerFlags(new BuildContainerDockerFlagsDTO(null, null, null, 1024, 0)), buildConfig))
+                .as("the instance default of 2048 MB covers the override").doesNotThrowAnyException();
+        assertThatExceptionOfType(BadRequestAlertException.class).as("the instance default does not cover a larger override")
+                .isThrownBy(() -> validationService.validateContainerDockerFlags(planWithContainerFlags(new BuildContainerDockerFlagsDTO(null, null, null, 4096, 0)), buildConfig))
+                .extracting(BadRequestAlertException::getErrorKey).isEqualTo("buildContainerMemorySwapBelowMemory");
+    }
+
+    @Test
     void validateDockerFlags_rejectsAMemoryLimitAboveTheInstanceDefaultSwapLimit() {
         when(programmingExerciseBuildConfigService.getDefaultMemorySwapLimitMB()).thenReturn(2048);
 

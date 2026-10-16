@@ -305,18 +305,20 @@ public class ProgrammingExerciseValidationService {
     }
 
     /**
-     * Resolves the memory and swap limits a build job runs with: the value set at the level being validated, else the
-     * value it inherits, else the instance's default Docker flags, which the build agent applies to a limit nobody sets.
+     * Resolves the memory and swap limits a build job runs with, as {@link ProgrammingExerciseBuildConfigService#getDockerRunConfig}
+     * and the build agent do: the value set at the level being validated, else the value it inherits, and a limit that
+     * is 0 after that falls to the instance's default Docker flags. A container that sets 0 therefore overrides the
+     * exercise's limit with the instance default instead of inheriting the exercise's.
      *
-     * @param memory              the memory limit set at this level, or null or 0 if unset
-     * @param memorySwap          the memory swap limit set at this level, or null or 0 if unset
+     * @param memory              the memory limit set at this level, or null if unset
+     * @param memorySwap          the memory swap limit set at this level, or null if unset
      * @param inheritedMemory     the memory limit inherited from the enclosing level, or 0 if unset
      * @param inheritedMemorySwap the memory swap limit inherited from the enclosing level, or 0 if unset
      * @return the effective limits
      */
     private MemoryLimits resolveMemoryLimits(@Nullable Integer memory, @Nullable Integer memorySwap, int inheritedMemory, int inheritedMemorySwap) {
-        int effectiveMemory = memory != null && memory > 0 ? memory : inheritedMemory;
-        int effectiveMemorySwap = memorySwap != null && memorySwap > 0 ? memorySwap : inheritedMemorySwap;
+        int effectiveMemory = memory != null ? memory : inheritedMemory;
+        int effectiveMemorySwap = memorySwap != null ? memorySwap : inheritedMemorySwap;
         if (effectiveMemory <= 0) {
             effectiveMemory = programmingExerciseBuildConfigService.getDefaultMemoryLimitMB();
         }
