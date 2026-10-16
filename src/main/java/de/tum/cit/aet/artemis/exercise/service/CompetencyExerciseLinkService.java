@@ -153,8 +153,8 @@ public class CompetencyExerciseLinkService {
      * <p>
      * This method must be called AFTER the exercise has been saved and has an ID.
      * It sets the proper exercise reference on each link (required for @MapsId) and
-     * adds them to the exercise. The caller must save the exercise again after this call
-     * to persist the links via cascade.
+     * adds them to the exercise. The caller must persist the links afterwards, either directly via
+     * {@link #saveAll(Collection)} or by saving the exercise to cascade them.
      *
      * @param exercise        the saved exercise (must have an ID)
      * @param competencyLinks the links previously extracted via extractCompetencyLinksForCreation

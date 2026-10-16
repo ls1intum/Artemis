@@ -247,9 +247,9 @@ public class ProgrammingExerciseCreationUpdateService {
         final var storedTeamAssignmentConfig = savedProgrammingExercise.getStoredTeamAssignmentConfig();
         final var storedPlagiarismDetectionConfig = savedProgrammingExercise.getPlagiarismDetectionConfig();
 
+        buildConfig.setBranch(defaultBranch);
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, savedProgrammingExercise);
         savedProgrammingExercise.generateAndSetProjectKey();
-        savedBuildConfig.setBranch(defaultBranch);
 
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
         initParticipations(savedProgrammingExercise);
@@ -258,7 +258,6 @@ public class ProgrammingExerciseCreationUpdateService {
 
         connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
-        programmingExerciseBuildConfigRepository.saveAndFlush(savedBuildConfig);
         savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
 
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
@@ -285,10 +284,12 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
 
-        // Restore competency links with proper exercise reference before final save
+        // Only the competency links still need writing. Saving the exercise again would merge and re-fetch its
+        // entire graph even when no links were selected; the link API persists them independently.
         competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
+        competencyExerciseLinkService.saveAll(savedProgrammingExercise.getCompetencyLinks());
 
-        ProgrammingExercise createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        ProgrammingExercise createdProgrammingExercise = savedProgrammingExercise;
         createdProgrammingExercise.setTeamAssignmentConfig(storedTeamAssignmentConfig);
         createdProgrammingExercise.setPlagiarismDetectionConfig(storedPlagiarismDetectionConfig);
 
