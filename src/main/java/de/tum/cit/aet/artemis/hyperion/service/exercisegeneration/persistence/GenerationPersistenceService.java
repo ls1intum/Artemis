@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
 import de.tum.cit.aet.artemis.hyperion.runtime.security.HyperionSecretMaterialPolicy;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationOutcome;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.LanguageGenerationProfile;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.workspace.BinaryContent;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -230,6 +231,11 @@ public class GenerationPersistenceService {
             throw new IllegalArgumentException("Refusing to persist an exercise that did not pass mechanical verification");
         }
         requirePersistenceInputsSafe(outcome);
+        ProgrammingExercise current = programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(exercise.getId());
+        if (!LanguageGenerationProfile.isSupported(current, buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()),
+                !current.getAuxiliaryRepositories().isEmpty())) {
+            throw new IllegalStateException("The exercise configuration changed and is no longer supported for generation");
+        }
         GenerationGrading.Snapshot previousGrading = gradingService.capture(exercise.getId());
         Runnable beforeFirstDurableMutation = oneShot(beforeDurableMutation);
         String repositoryBranch = repositoryBranch(exercise);

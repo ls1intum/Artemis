@@ -181,6 +181,9 @@ class GenerationPersistenceServiceTest {
             return null;
         }).when(exercise).setTitle(any());
         when(programmingExerciseRepository.findById(1L)).thenReturn(Optional.of(exercise));
+        when(programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(1L)).thenReturn(exercise);
+        when(exercise.getProgrammingLanguage()).thenReturn(de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA);
+        when(exercise.getProjectType()).thenReturn(de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_GRADLE);
         ProgrammingExerciseParticipation solutionParticipation = mock(ProgrammingExerciseParticipation.class);
         when(solutionParticipation.getId()).thenReturn(1L);
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
@@ -301,6 +304,43 @@ class GenerationPersistenceServiceTest {
         when(outcome.testPlanJson()).thenReturn(testPlanJson);
         when(outcome.seedRepositoryHeads()).thenReturn(Map.of());
         return outcome;
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "sequential", "sca", "auxiliary", "language", "project" })
+    void persistRejectsConfigurationChangedDuringAuthoringBeforeAnyDurableWrite(String change) {
+        ProgrammingExercise current = new ProgrammingExercise();
+        current.setId(exercise.getId());
+        current.setProgrammingLanguage(de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA);
+        current.setProjectType(de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_GRADLE);
+        ProgrammingExerciseBuildConfig currentBuild = new ProgrammingExerciseBuildConfig();
+        switch (change) {
+            case "sequential" -> currentBuild.setSequentialTestRuns(true);
+            case "sca" -> current.setStaticCodeAnalysisEnabled(true);
+            case "auxiliary" -> current.setAuxiliaryRepositories(Set.of(new de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository()));
+            case "language" -> current.setProgrammingLanguage(de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTHON);
+            case "project" -> current.setProjectType(de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_MAVEN);
+            default -> throw new IllegalArgumentException(change);
+        }
+        when(programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(1L)).thenAnswer(_ -> {
+            try (var reader = Executors.newSingleThreadExecutor()) {
+                assertThatThrownBy(() -> reader.submit(() -> liveSaves.claimReader(1L)).get(5, TimeUnit.SECONDS)).hasCauseInstanceOf(ConflictException.class);
+            }
+            return current;
+        });
+        when(buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(1L)).thenReturn(currentBuild);
+        AtomicBoolean durableMutation = new AtomicBoolean();
+        GenerationOutcome outcome = outcomeWith(Map.of("Template.java", "template"), Map.of("Solution.java", "solution"), Map.of("Test.java", "test"), "statement");
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome, null, null, "changed-config", GenerationMode.GENERATE, () -> true, () -> durableMutation.set(true)))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("configuration changed");
+
+        assertThat(durableMutation).isFalse();
+        Mockito.verifyNoInteractions(gitService, repositoryService, testCaseRepository, continuousIntegrationTriggerService, exerciseVersionService,
+                programmingExerciseTaskService);
+        verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
+        String token = liveSaves.claimReader(1L);
+        liveSaves.releaseReader(1L, token);
     }
 
     @Test
