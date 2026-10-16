@@ -246,4 +246,31 @@ class PyrisJobServiceCallbackAuthenticationTest {
 
         assertThat(service.getJob(runId)).isNull();
     }
+
+    @Test
+    void aStaleCallbackOfAnotherJobTypeNeitherOverwritesNorRemovesAGlobalSearchRequestWithItsRunId() {
+        String runId = service.addTutorSuggestionJob(1L, 2L, 3L);
+        var tutorJob = service.getJob(runId);
+        // The tutor suggestion callback was authenticated, then its entry expired and a client sent the run id for a global search request.
+        service.removeJobByRunId(runId);
+        GlobalSearchAnswerJob globalSearchJob = service.addGlobalSearchAnswerJob("bob", runId);
+
+        service.updateJob(tutorJob);
+        assertThat(service.getJob(runId)).as("a stale update of another job type does not overwrite the request").isEqualTo(globalSearchJob);
+        service.removeJob(tutorJob);
+        assertThat(service.getJob(runId)).as("a stale removal of another job type does not delete the request").isEqualTo(globalSearchJob);
+    }
+
+    @Test
+    void jobsWithoutInvocationAreUpdatedAndRemovedAsBefore() {
+        String runId = chatRun();
+        var job = service.getJob(runId);
+
+        service.updateJob(job);
+        assertThat(service.getJob(runId)).isEqualTo(job);
+        service.removeJob(job);
+        assertThat(service.getJob(runId)).isNull();
+        service.updateJob(job);
+        assertThat(service.getJob(runId)).as("a job whose run id Artemis generated may still be stored again after it expired").isEqualTo(job);
+    }
 }

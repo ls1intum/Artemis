@@ -75,6 +75,7 @@ class PyrisJobServiceTest {
         verify(clientIdMap).put(job.jobId(), "tab-7", Duration.ofSeconds(300));
         assertThat(service.getChatJobClientId(job.jobId())).isEqualTo("tab-7");
 
+        when(jobMap.get(job.jobId())).thenReturn(job);
         service.removeJob(job);
 
         verify(materialVersionService).refresh(job.jobId());

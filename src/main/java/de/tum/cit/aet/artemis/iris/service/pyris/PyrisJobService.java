@@ -492,13 +492,10 @@ public class PyrisJobService {
         getPyrisJobMap().remove(job.jobId());
     }
 
-    // Whether the job map still holds this invocation of the job's run. Always true for a job without an invocation id, whose run id is never reused.
+    // Whether the job map still holds this invocation of the job's run.
     private boolean isCurrentInvocation(PyrisJob job) {
-        if (job.invocationId() == null) {
-            return true;
-        }
         var current = getPyrisJobMap().get(job.jobId());
-        return current != null && job.invocationId().equals(current.invocationId());
+        return current != null && isSameInvocation(current, job);
     }
 
     /**
@@ -529,22 +526,19 @@ public class PyrisJobService {
     }
 
     /**
-     * Remove a job from the job map.
+     * Remove a job from the job map. Only the stored entry of the same invocation is removed: a client can register a global search
+     * request under the run id of an expired job, and a callback for the expired job must leave that request alone.
      *
      * @param job the job to remove
      */
     public void removeJob(PyrisJob job) {
-        if (job.invocationId() != null) {
-            // The run id can belong to a newer request by now; only this invocation is removed.
-            runWithJobLock(job.jobId(), () -> {
-                if (isCurrentInvocation(job)) {
-                    getPyrisJobMap().remove(job.jobId());
-                }
-                return null;
-            });
-            return;
-        }
-        getPyrisJobMap().remove(job.jobId());
+        runWithJobLock(job.jobId(), () -> {
+            var current = getPyrisJobMap().get(job.jobId());
+            if (current != null && isSameInvocation(current, job)) {
+                getPyrisJobMap().remove(job.jobId());
+            }
+            return null;
+        });
         if (job instanceof ChatJob) {
             getChatJobClientIdMap().remove(job.jobId());
             materialVersionService.remove(job.jobId());
@@ -570,25 +564,28 @@ public class PyrisJobService {
      */
     public void updateJob(PyrisJob job) {
         int ttl = (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob) ? ingestionJobTimeout : jobTimeout;
-        if (job.invocationId() != null) {
-            // Only this invocation is refreshed: a run id that expired or belongs to a newer request by now is left alone.
-            runWithJobLock(job.jobId(), () -> {
-                var current = getPyrisJobMap().get(job.jobId());
-                if (current != null && job.invocationId().equals(current.invocationId())) {
-                    getPyrisJobMap().put(job.jobId(), job, Duration.ofSeconds(ttl));
-                }
-                return null;
-            });
-            return;
-        }
-        getPyrisJobMap().put(job.jobId(), job, Duration.ofSeconds(ttl));
-        if (job instanceof ChatJob) {
+        boolean stored = runWithJobLock(job.jobId(), () -> {
+            var current = getPyrisJobMap().get(job.jobId());
+            // A run id that belongs to another invocation by now is left alone, and an invocation-bound job that expired is not
+            // brought back, because a later request may take its run id at any time.
+            if (current == null ? job.invocationId() != null : !isSameInvocation(current, job)) {
+                return false;
+            }
+            getPyrisJobMap().put(job.jobId(), job, Duration.ofSeconds(ttl));
+            return true;
+        });
+        if (stored && job instanceof ChatJob) {
             materialVersionService.refresh(job.jobId());
             var clientId = getChatJobClientIdMap().get(job.jobId());
             if (clientId != null) {
                 getChatJobClientIdMap().put(job.jobId(), clientId, Duration.ofSeconds(ttl));
             }
         }
+    }
+
+    // Whether two jobs for the same run id are the same invocation: both without an invocation id (run ids Artemis generates), or with the same one.
+    private static boolean isSameInvocation(PyrisJob stored, PyrisJob job) {
+        return Objects.equals(stored.invocationId(), job.invocationId());
     }
 
     /**
