@@ -52,7 +52,7 @@ ci.yml                                                            (single entry 
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 
-`ci-summary` is a second terminal job (`needs:` every required and advisory job, `if: always()`).
+`ci-summary` is a second terminal job (`needs:` every required and advisory job, `if: ${{ !cancelled() }}`).
 The develop-only deploy jobs — `deploy-docs`, `coverage-badge`, `sonar` — are deliberately outside
 its `needs:`, so they never appear in its table and never hold it up. On the run's
 **Summary** page it renders a per-job table (job · required/advisory · result), a failure-only
@@ -130,6 +130,23 @@ context, so it never needs touching again.
   hand-rolled cancellation workaround for queue-stacking. Keep E2E a direct `needs:` edge.
 - **Stable required check.** Branch protection requires exactly one job:
   `CI / All required CI Passed`. Renaming or adding child jobs does not require updating it.
+
+### Cancellation of superseded pull request runs
+
+The umbrella workflow groups runs by PR number and sets `cancel-in-progress` for pull requests.
+A new push cancels the previous revision so its E2E jobs release their self-hosted runners and the
+new revision can start.
+
+Jobs that must evaluate failed or skipped dependencies use `!cancelled()` in their job-level `if`,
+including Phase 2, the E2E reporter, coverage reporting, the required gate and the CI summary.
+This overrides the implicit `success()` check while allowing cancellation. Keep the explicit
+result checks that decide whether Phase 2 is eligible and whether required jobs passed.
+
+Do not use job-level `always()` for these jobs: GitHub re-evaluates job conditions during
+cancellation, and a true condition keeps the job alive. An obsolete Phase 2 can then wait hours
+for a runner while holding the PR concurrency slot and blocking the latest revision. Step-level
+`always()` is still appropriate for bounded cleanup and diagnostics inside a cancellable job.
+See [GitHub's cancellation reference](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-cancellation).
 
 ### Why `build_relevant` uses ignore-semantics
 

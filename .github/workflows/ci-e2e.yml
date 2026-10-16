@@ -284,8 +284,9 @@ jobs:
   run-e2e-remaining:
     name: 'Phase 2: Remaining E2E Tests'
     needs: [determine-tests, run-e2e-relevant]
+    # Evaluate skipped dependencies, but release the runner and PR concurrency slot on cancellation.
     if: |
-      always() &&
+      !cancelled() &&
       inputs.is_pr &&
       needs.determine-tests.result == 'success' &&
       needs.determine-tests.outputs.run_all_tests != 'true' &&
@@ -744,7 +745,7 @@ jobs:
   report-results:
     name: Report E2E Overall Status
     needs: [determine-tests, run-e2e-relevant, run-e2e-remaining, run-e2e-all-pr, run-e2e-all-non-pr]
-    if: always()
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
