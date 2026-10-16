@@ -44,7 +44,7 @@ import { Course, CourseInformationSharingConfiguration } from 'app/course/shared
 import { User } from 'app/account/user/user.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Directive, input, output } from '@angular/core';
+import { ApplicationRef, Directive, input, output } from '@angular/core';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { MockCourseConversationsService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-conversations.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -360,6 +360,8 @@ describe('DiscussionSectionComponent', () => {
         beforeEach(() => {
             fixture.componentRef.setInput('lecture', { ...communicationLecture, course: communicationCourse });
             fixture.detectChanges();
+            component.currentPostId = undefined;
+            component.currentPost.set(undefined);
         });
 
         it('serializes repeated top-scroll events and keeps live updates from unlocking a pending page', () => {
@@ -380,6 +382,11 @@ describe('DiscussionSectionComponent', () => {
             delayed.next(response(page(51, 100)));
             delayed.complete();
             expect(component.posts()).toHaveLength(100);
+            scrollUp(); // Pagination stays locked until the response has rendered and its viewport is restored.
+            expect(request).toHaveBeenCalledTimes(2);
+            fixture.detectChanges();
+            TestBed.inject(ApplicationRef).tick();
+            vi.advanceTimersByTime(16);
             scrollUp();
             expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 1, 2]);
             expect(new Set(component.posts().map((post) => post.id))).toEqual(new Set(Array.from({ length: 120 }, (_, index) => index + 1)));
@@ -452,6 +459,96 @@ describe('DiscussionSectionComponent', () => {
             );
             expect(component.isLoading()).toBe(false);
             expect(component['page']).toBe(1);
+        });
+    });
+
+    describe('rendered pagination and sentinel rearming', () => {
+        class ScrollObserver implements IntersectionObserver {
+            static instances: ScrollObserver[] = [];
+            readonly root: Element | Document | null;
+            readonly rootMargin = '0px';
+            readonly scrollMargin = '0px';
+            readonly thresholds = [0];
+            constructor(
+                private callback: IntersectionObserverCallback,
+                options?: IntersectionObserverInit,
+            ) {
+                this.root = options?.root ?? null;
+                ScrollObserver.instances.push(this);
+            }
+            observe = vi.fn((_target: Element) => {});
+            unobserve = vi.fn((_target: Element) => {});
+            disconnect = vi.fn();
+            takeRecords = () => [];
+            emitTop(container: HTMLElement): void {
+                const target = container.querySelector('[data-infinite-scroll-sentinel="top"]')!;
+                const rect = new DOMRect(0, 0, 100, 1);
+                this.callback(
+                    [
+                        {
+                            target,
+                            isIntersecting: container.scrollTop <= 1,
+                            intersectionRatio: container.scrollTop <= 1 ? 1 : 0,
+                            boundingClientRect: rect,
+                            intersectionRect: rect,
+                            rootBounds: null,
+                            time: performance.now(),
+                        },
+                    ],
+                    this,
+                );
+            }
+        }
+        const page = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, index) => ({ id: first + index }) as Post);
+        const response = (posts: Post[]) => new HttpResponse({ body: posts, headers: new HttpHeaders({ 'X-Total-Count': '120' }) });
+        const render = () => {
+            fixture.detectChanges();
+            TestBed.inject(ApplicationRef).tick();
+            vi.advanceTimersByTime(16);
+        };
+
+        beforeEach(() => {
+            ScrollObserver.instances = [];
+            vi.stubGlobal('IntersectionObserver', ScrollObserver);
+            fixture.componentRef.setInput('lecture', { ...communicationLecture, course: communicationCourse });
+            render();
+            component.currentPostId = undefined;
+            component.currentPost.set(undefined);
+            render();
+        });
+        afterEach(() => vi.unstubAllGlobals());
+
+        it('restores the live viewport after rendering and rearms the real directive for the next page', () => {
+            const delayed = new Subject<HttpResponse<Post[]>>();
+            const request = vi
+                .spyOn(TestBed.inject(PostService), 'getPosts')
+                .mockReturnValueOnce(of(response(page(1, 50))))
+                .mockReturnValueOnce(delayed)
+                .mockReturnValueOnce(of(response(page(101, 120))));
+            component.fetchPosts(true);
+            render();
+            const container: HTMLElement = component.content()!.nativeElement;
+            Object.defineProperty(container, 'scrollHeight', { configurable: true, get: () => container.querySelectorAll('jhi-posting-thread').length * 20 });
+            Object.defineProperty(container, 'clientHeight', { configurable: true, value: 200 });
+            const observer = ScrollObserver.instances.find((instance) => instance.root === container)!;
+            expect(observer).toBeDefined();
+            container.scrollTop = 800;
+            observer.emitTop(container); // Top sentinel leaves and arms.
+            container.scrollTop = 0;
+            observer.emitTop(container); // Genuine re-entry invokes the directive output.
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 1]);
+            container.scrollTop = 120; // Reader moves while the response is delayed.
+            delayed.next(response(page(51, 100)));
+            delayed.complete();
+            render();
+            expect(container.scrollTop).toBe(1120);
+            observer.emitTop(container); // Restoration moved the top sentinel out, rearming it.
+            container.scrollTop = 0;
+            observer.emitTop(container);
+            render();
+            expect(request.mock.calls.map((call) => call[1].page)).toEqual([0, 1, 2]);
+            expect(container.scrollTop).toBe(400);
+            expect(component.posts()).toHaveLength(120);
         });
     });
 

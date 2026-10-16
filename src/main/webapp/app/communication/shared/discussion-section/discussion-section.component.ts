@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, signal, untracked, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, afterRenderEffect, effect, inject, input, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DisplayPriority, PageType, PostSortCriterion, SortDirection } from 'app/communication/communication.util';
@@ -69,6 +69,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     private page = 1;
     private postRequestId = 0;
     private isFetchingPosts = false;
+    private readonly pendingPageScrollDistance = signal<number | undefined>(undefined);
+    private pageScrollFrame?: number;
     private readonly PAGE_SIZE = 50;
     private totalNumberOfPosts = 0;
     private get messagesContainerHeight(): number {
@@ -99,6 +101,22 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             const exerciseValue = this.exercise();
             const lectureValue = this.lecture();
             untracked(() => this.loadData(exerciseValue, lectureValue));
+        });
+        afterRenderEffect(() => {
+            this.messages();
+            const distance = this.pendingPageScrollDistance();
+            if (distance === undefined) return;
+            untracked(() => {
+                if (this.pageScrollFrame !== undefined) window.cancelAnimationFrame(this.pageScrollFrame);
+                const requestId = this.postRequestId;
+                this.pageScrollFrame = window.requestAnimationFrame(() => {
+                    this.pageScrollFrame = undefined;
+                    if (requestId !== this.postRequestId) return;
+                    const element = this.content()?.nativeElement;
+                    if (element) element.scrollTop = element.scrollHeight - distance;
+                    this.pendingPageScrollDistance.set(undefined);
+                });
+            });
         });
     }
 
@@ -157,6 +175,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      */
     ngOnDestroy(): void {
         ++this.postRequestId;
+        this.clearPageScroll();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         super.onDestroy();
@@ -236,6 +255,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     }
 
     handleScrollOnNewMessage = () => {
+        if (this.pendingPageScrollDistance() !== undefined) return;
         if ((this.posts().length > 0 && this.content()?.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
             this.scrollToBottomOfMessages();
         }
@@ -249,7 +269,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
     /** Loads one older page at a time. An initial request without an applied response retries page zero. */
     fetchNextPage(): void {
-        if (this.isFetchingPosts) return;
+        if (this.isFetchingPosts || this.pendingPageScrollDistance() !== undefined) return;
         if (this.page === 0) {
             this.page = 1;
             this.fetchPosts(true, 0);
@@ -270,22 +290,36 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      */
     public fetchPosts(forceUpdate = false, previousPage = forceUpdate ? 0 : this.page): void {
         if (!this.currentPostContextFilter || (this.isFetchingPosts && !forceUpdate)) return;
+        if (forceUpdate) this.clearPageScroll();
         const requestId = ++this.postRequestId;
         this.isFetchingPosts = true;
         if (forceUpdate) this.isLoading.set(true);
         this.currentPostContextFilter = cloneWith(this.currentPostContextFilter, { page: this.page - 1 });
         this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this.channel(), {
-            beforeApply: () => {},
+            beforeApply: () => {
+                if (requestId !== this.postRequestId || forceUpdate) return;
+                // Capture after any reader movement/live updates, immediately before this page changes the list.
+                const element = this.content()?.nativeElement;
+                this.pendingPageScrollDistance.set(element ? element.scrollHeight - element.scrollTop : undefined);
+            },
             complete: (applied) => {
                 if (requestId !== this.postRequestId) return;
                 this.isFetchingPosts = false;
                 this.isLoading.set(false);
                 if (!applied) {
+                    this.clearPageScroll();
                     this.page = previousPage;
                     this.currentPostContextFilter = cloneWith(this.currentPostContextFilter, { page: Math.max(previousPage - 1, 0) });
                 }
             },
         });
+    }
+
+    /** Cancels deferred viewport restoration when a context is replaced, fails or is destroyed. */
+    private clearPageScroll(): void {
+        if (this.pageScrollFrame !== undefined) window.cancelAnimationFrame(this.pageScrollFrame);
+        this.pageScrollFrame = undefined;
+        this.pendingPageScrollDistance.set(undefined);
     }
 
     /** Replaces the context through the same request lifecycle used by initial loads and pagination. */
@@ -299,6 +333,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      */
     setFilterAndSort(): void {
         ++this.postRequestId;
+        this.clearPageScroll();
         this.isFetchingPosts = false;
         this.page = 1;
         this.scrollToBottomOfMessages();
