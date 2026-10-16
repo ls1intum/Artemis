@@ -215,8 +215,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         long attachmentId = unit.getAttachment().getId();
         Attachment storedAttachment = attachmentRepository.findById(attachmentId).orElseThrow();
         // Another file stored under the same version number, by a save that started from the same version
-        assertThat(attachmentRepository.updateStudentVersionIfFileUnchanged(attachmentId, "other-file.pdf", storedAttachment.getVersion(), "another-hash")).isZero();
-        assertThat(attachmentRepository.updateStudentVersionIfFileUnchanged(attachmentId, "current.pdf", storedAttachment.getVersion(), storedAttachment.getSha256Hash()))
+        assertThat(attachmentRepository.updateStudentVersionIfUnchangedSince(attachmentId, "other-file.pdf", storedAttachment.getVersion(), "another-hash", null)).isZero();
+        assertThat(attachmentRepository.updateStudentVersionIfUnchangedSince(attachmentId, "current.pdf", storedAttachment.getVersion(), storedAttachment.getSha256Hash(), null))
                 .isEqualTo(1);
         // A submitted student version from a request that started before current.pdf was published
         assertThat(attachmentRepository.updateStudentVersionIfUnchangedSince(attachmentId, "submitted.pdf", storedAttachment.getVersion(), storedAttachment.getSha256Hash(), null))

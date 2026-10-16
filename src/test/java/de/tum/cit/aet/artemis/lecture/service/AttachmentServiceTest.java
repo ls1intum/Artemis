@@ -114,7 +114,8 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         long unitId = testAttachment2.getAttachmentVideoUnit().getId();
         markSlidesAsSplitFromAnotherFile(unitId);
         var state = attachmentRepository.findStudentVersionStateById(testAttachment2.getId()).orElseThrow();
-        assertThat(attachmentRepository.updateStudentVersionIfFileUnchanged(testAttachment2.getId(), "submitted.pdf", state.version(), state.sha256Hash())).isEqualTo(1);
+        assertThat(attachmentRepository.updateStudentVersionIfUnchangedSince(testAttachment2.getId(), "submitted.pdf", state.version(), state.sha256Hash(), state.studentVersion()))
+                .isEqualTo(1);
         testAttachment2.setStudentVersion("submitted.pdf");
 
         assertThat(attachmentService.regenerateStudentVersionOrRemoveOutdated(testAttachment2)).isTrue();

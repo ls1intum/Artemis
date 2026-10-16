@@ -89,29 +89,6 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
     List<AttachmentFileLocationDTO> findAttachmentFileLocationsAfter(@Param("minimumAttachmentId") long minimumAttachmentId, Pageable pageable);
 
     /**
-     * Stores the filename of a newly written student version, but only while the attachment still has the file the student version belongs to. The file is identified by its
-     * version and hash: two saves that start from the same version store different files under the same version number. Only this column is written, so a concurrent change
-     * to other attachment fields is not overwritten.
-     *
-     * @param attachmentId           the id of the attachment
-     * @param studentVersionFilename the stored filename of the new student version
-     * @param expectedVersion        the version of the file the student version was made for
-     * @param expectedSha256Hash     the hash of that file
-     * @return 1 when stored, 0 when another file has replaced that one in the meantime
-     */
-    @Transactional // ok because of modifying query
-    @Modifying
-    @Query("""
-            UPDATE Attachment a
-            SET a.studentVersion = :studentVersionFilename
-            WHERE a.id = :attachmentId
-                AND (a.version = :expectedVersion OR (:expectedVersion IS NULL AND a.version IS NULL))
-                AND (a.sha256Hash = :expectedSha256Hash OR (:expectedSha256Hash IS NULL AND a.sha256Hash IS NULL))
-            """)
-    int updateStudentVersionIfFileUnchanged(@Param("attachmentId") long attachmentId, @Param("studentVersionFilename") String studentVersionFilename,
-            @Param("expectedVersion") Integer expectedVersion, @Param("expectedSha256Hash") String expectedSha256Hash);
-
-    /**
      * Stores the filename of a student version submitted together with an editor change, but only while nothing changed since the request started: the attachment still has
      * the file the request stored and the student version reference it read at its start. A student version published in the meantime, for example one regenerated after
      * the split or after another visibility change, is newer and stays.

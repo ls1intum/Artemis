@@ -506,6 +506,30 @@ class AttachmentVideoUnitServiceTest {
     }
 
     @Test
+    void failureAfterTheNewFileWasSavedRemovesThePreviousStudentVersion() throws Exception {
+        var attachment = attachment();
+        attachment.setStudentVersion("student.pdf");
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED);
+        var uploadedFile = pdfUpload("different content");
+        var studentVersionFile = new MockMultipartFile("studentVersion", "unit_student.pdf", "application/pdf", "filtered content".getBytes(StandardCharsets.UTF_8));
+        when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", NEW_HASH));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        when(attachmentService.findStoredStudentVersion(attachment.getId())).thenReturn("student.pdf");
+        when(attachmentService.stageUploadedStudentVersionFile(any(), eq(LECTURE_UNIT_ID), eq("unit_student.pdf"))).thenReturn("staged.pdf");
+        // The split is scheduled, then telling the content processing about the new file fails
+        doThrow(new IllegalStateException("database unavailable")).when(contentProcessingService).triggerProcessing(unit);
+
+        assertThatCode(
+                () -> service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, studentVersionFile, false, List.of(), List.of(new SlideOrderDTO("21", 1)), Set.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
+        verify(attachmentService).discardStagedStudentVersionFile(LECTURE_UNIT_ID, "staged.pdf");
+        verify(attachmentService).removeStudentVersionIfStill(attachment, "student.pdf");
+    }
+
+    @Test
     void failureAfterStagingDiscardsTheStagedStudentVersion() throws Exception {
         var attachment = attachment();
         var unit = attachmentVideoUnit("Unit", attachment);

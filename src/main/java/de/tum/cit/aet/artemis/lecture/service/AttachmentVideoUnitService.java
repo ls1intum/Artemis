@@ -141,6 +141,7 @@ public class AttachmentVideoUnitService {
         String studentVersionAtStart = acceptsStudentVersion ? attachmentService.findStoredStudentVersion(existingAttachmentVideoUnit.getAttachment().getId()) : null;
         String stagedStudentVersion = acceptsStudentVersion ? stageStudentVersionFile(studentVersionFile, existingAttachmentVideoUnit.getId()) : null;
         boolean stagedStudentVersionHandedOver = false;
+        boolean completed = false;
         try {
             AppliedUpdate appliedUpdate = applyUpdate(existingAttachmentVideoUnit, updateUnitDTO, updateAttachment, updateFile, stagedStudentVersion != null, keepFilename,
                     hiddenPages, pageOrder, originalCompetencyIds);
@@ -151,11 +152,17 @@ public class AttachmentVideoUnitService {
                 publishStagedStudentVersion(savedAttachmentVideoUnit, stagedStudentVersion, studentVersionAtStart);
             }
             prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
+            completed = true;
             return savedAttachmentVideoUnit;
         }
         finally {
             if (stagedStudentVersion != null && !stagedStudentVersionHandedOver) {
                 attachmentService.discardStagedStudentVersionFile(existingAttachmentVideoUnit.getId(), stagedStudentVersion);
+            }
+            if (stagedStudentVersion != null && !completed) {
+                // The update failed after it may have saved a new file, so the student version read at the start may belong to the previous one. Remove it unless a
+                // newer one was published meanwhile; downloads then fail closed, and the repair job generates a missing one once the slides belong to the stored file.
+                attachmentService.removeStudentVersionIfStill(existingAttachmentVideoUnit.getAttachment(), studentVersionAtStart);
             }
         }
     }
