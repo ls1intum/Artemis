@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Subject, Subscription } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -46,6 +46,8 @@ import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { ParticipationPrivacyService } from 'app/exercise/participation/participation-privacy.service';
+import { ParticipationAccessNoticeComponent } from 'app/exercise/participation/participation-access-notice.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { Course } from 'app/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -88,6 +90,7 @@ export enum FilterProp {
     providers: [ExerciseCacheService],
     imports: [
         TranslateDirective,
+        ParticipationAccessNoticeComponent,
         FormsModule,
         ProgrammingExerciseInstructorSubmissionStateComponent,
         RouterLink,
@@ -122,6 +125,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly resultService = inject(ResultService);
+    private readonly privacyService = inject(ParticipationPrivacyService);
     private readonly participationService = inject(ParticipationService);
     private readonly alertService = inject(AlertService);
     private readonly exerciseService = inject(ExerciseService);
@@ -169,6 +173,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         new Range(90, 100),
     ];
     readonly rangeFilter = signal<Range | undefined>(undefined);
+    readonly hideParticipantInformation = computed(() => this.privacyService.isParticipantInformationHidden(this.exercise()));
+    /** Editors retain live repository access even when participant identities are masked. */
+    readonly canAccessLiveRepository = computed(() => !!this.exercise()?.isAtLeastEditor || !!this.exercise()?.isAtLeastInstructor || !this.hideParticipantInformation());
     readonly participations = signal<ParticipationManagementDTO[]>([]);
     readonly totalRows = signal(0);
     readonly isLoading = signal(false);
@@ -232,7 +239,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         striped: true,
         scrollable: true,
         scrollHeight: 'flex',
-        showSearch: !!this.exercise()?.isAtLeastInstructor,
+        showSearch: !this.hideParticipantInformation(),
         searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents',
     }));
 
@@ -270,7 +277,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
         const cols: ColumnDef<ParticipationManagementDTO>[] = [];
 
-        if (!ex.isAtLeastInstructor) {
+        if (this.hideParticipantInformation()) {
             cols.push({ headerKey: 'artemisApp.participation.participationId', field: 'participationId', width: '150px', sort: true });
         } else {
             cols.push({
@@ -282,7 +289,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             });
         }
 
-        if (ex.type === ExerciseType.PROGRAMMING && ex.isAtLeastInstructor) {
+        if (ex.type === ExerciseType.PROGRAMMING && !this.hideParticipantInformation()) {
             cols.push({
                 headerKey: 'artemisApp.participation.repository',
                 width: '80px',
@@ -361,6 +368,20 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
         return cols;
     });
+
+    constructor() {
+        let previouslyHidden = true;
+        effect(() => {
+            const hidden = this.hideParticipantInformation();
+            if (hidden && !previouslyHidden) {
+                untracked(() => {
+                    this.participations.set([]);
+                    this.loadPage();
+                });
+            }
+            previouslyHidden = hidden;
+        });
+    }
 
     ngOnInit() {
         const scoreRangeFilter = this.route.snapshot.queryParamMap.get('scoreRangeFilter');
@@ -444,8 +465,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         const requestId = ++this.currentLoadRequestId;
         const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
         const search: ParticipationSearch = cloneWith(base, {
-            searchTerm: ex.isAtLeastInstructor ? base.searchTerm : '',
-            sortedColumn: !ex.isAtLeastInstructor && ['participantName', 'participantIdentifier', 'buildPlanId'].includes(base.sortedColumn) ? 'id' : base.sortedColumn,
+            searchTerm: this.hideParticipantInformation() ? '' : base.searchTerm,
+            sortedColumn: this.hideParticipantInformation() && ['participantName', 'participantIdentifier', 'buildPlanId'].includes(base.sortedColumn) ? 'id' : base.sortedColumn,
             filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
             scoreRangeLower: this.rangeFilter()?.lowerBound,
             scoreRangeUpper: this.rangeFilter()?.upperBound,

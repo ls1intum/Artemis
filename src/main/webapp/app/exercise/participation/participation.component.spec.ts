@@ -1,9 +1,12 @@
+import { signal } from '@angular/core';
+import { ParticipationPrivacyService } from './participation-privacy.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { FilterProp, ParticipationComponent } from 'app/exercise/participation/participation.component';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -29,7 +32,6 @@ import { WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
 import { DialogService } from 'primeng/dynamicdialog';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -207,9 +209,129 @@ describe('ParticipationComponent', () => {
         });
     });
 
+    describe('Live repository actions', () => {
+        it('hides the online editor for tutors after the manual deadline and in exams', () => {
+            component.exercise.set({
+                ...exercise,
+                type: ExerciseType.PROGRAMMING,
+                isAtLeastTutor: true,
+                assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                dueDate: dayjs().subtract(1, 'hour'),
+            });
+            expect(component.canAccessLiveRepository()).toBe(false);
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, isAtLeastTutor: true, exerciseGroup: { id: 1 } });
+            expect(component.canAccessLiveRepository()).toBe(false);
+        });
+
+        it('keeps the online editor for automatic assessment and tutors before the manual deadline', () => {
+            component.exercise.set({
+                ...exercise,
+                type: ExerciseType.PROGRAMMING,
+                isAtLeastTutor: true,
+                assessmentType: AssessmentType.AUTOMATIC,
+                dueDate: dayjs().subtract(1, 'hour'),
+            });
+            expect(component.canAccessLiveRepository()).toBe(true);
+            component.exercise.set({
+                ...exercise,
+                type: ExerciseType.PROGRAMMING,
+                isAtLeastTutor: true,
+                assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                dueDate: dayjs().add(1, 'hour'),
+            });
+            expect(component.canAccessLiveRepository()).toBe(true);
+        });
+
+        it('preserves editor and instructor access while identities are masked', () => {
+            component.exercise.set({
+                ...exercise,
+                type: ExerciseType.PROGRAMMING,
+                isAtLeastEditor: true,
+                assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                dueDate: dayjs().subtract(1, 'hour'),
+            });
+            expect(component.hideParticipantInformation()).toBe(true);
+            expect(component.canAccessLiveRepository()).toBe(true);
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, isAtLeastEditor: true, exerciseGroup: { id: 1 } });
+            expect(component.canAccessLiveRepository()).toBe(true);
+            component.exercise.set({ ...exercise, type: ExerciseType.PROGRAMMING, isAtLeastInstructor: true, exerciseGroup: { id: 1 } });
+            expect(component.canAccessLiveRepository()).toBe(true);
+        });
+    });
+
+    describe('Tutor support access', () => {
+        it.each([AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC])('shows names, code and an explanation before the deadline (%s)', async (assessmentType) => {
+            const supportExercise = {
+                ...exercise,
+                type: ExerciseType.PROGRAMMING,
+                assessmentType,
+                isAtLeastTutor: true,
+                isAtLeastInstructor: false,
+                dueDate: dayjs().add(1, 'day'),
+            };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(
+                of({ content: [{ ...sampleDto, repositoryUri: 'https://localhost/git/EX/alice.git' }], totalElements: 1 }),
+            );
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+
+            expect(component.tableOptions().showSearch).toBe(true);
+            expect(component.columns()[0].field).toBe('participantName');
+            expect(component.columns().some((column) => column.headerKey === 'artemisApp.participation.repository')).toBe(true);
+            expect(componentFixture.nativeElement.querySelector('jhi-code-button')).not.toBeNull();
+            expect(componentFixture.nativeElement.querySelector('a[href*="code-editor"]')).not.toBeNull();
+            const notice = componentFixture.nativeElement.querySelector('[data-testid="tutor-participation-access-notice"]');
+            expect(notice).not.toBeNull();
+            expect(notice.textContent).toContain(assessmentType === AssessmentType.AUTOMATIC ? 'tutorAccess.available' : 'tutorAccess.untilDueDate');
+        });
+
+        it('removes named data and reloads anonymously when an open page switches to anonymous assessment', async () => {
+            const anonymous = signal(false);
+            vi.spyOn(TestBed.inject(ParticipationPrivacyService), 'isParticipantInformationHidden').mockImplementation(() => anonymous());
+            const dueDate = dayjs().add(2, 'seconds');
+            const supportExercise = {
+                ...exercise,
+                type: ExerciseType.PROGRAMMING,
+                assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                isAtLeastTutor: true,
+                isAtLeastInstructor: false,
+                dueDate,
+            };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
+            const search = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
+            componentFixture.detectChanges();
+            component.onLazyLoad({ globalFilter: 'alice', sortField: 'participantName' });
+            componentFixture.detectChanges();
+            expect(component.hideParticipantInformation()).toBe(false);
+            search.mockReturnValue(of({ content: [{ participationId: 3, submissionCount: 1, testRun: false }], totalElements: 1 }));
+            anonymous.set(true);
+            componentFixture.detectChanges();
+
+            expect(component.hideParticipantInformation()).toBe(true);
+            expect(component.tableOptions().showSearch).toBe(false);
+            expect(component.participations()[0].participantName).toBeUndefined();
+            expect(search).toHaveBeenLastCalledWith(1, expect.objectContaining({ searchTerm: '', sortedColumn: 'id' }));
+            expect(componentFixture.nativeElement.querySelector('jhi-code-button')).toBeNull();
+            expect(componentFixture.nativeElement.querySelector('a[href*="code-editor"]')).toBeNull();
+            expect(componentFixture.nativeElement.querySelector('[data-testid="tutor-participation-access-notice"]').textContent).toContain('tutorAccess.anonymousAssessment');
+            expect(componentFixture.nativeElement.querySelector('a[href*="assessment-dashboard"]')).not.toBeNull();
+        });
+    });
+
     describe('Anonymous participation list', () => {
         it.each([false, true])('should show participation IDs without identity search or team links for tutors (team mode: %s)', async (teamMode) => {
-            const tutorExercise = { ...exercise, course: undefined, type: ExerciseType.PROGRAMMING, isAtLeastTutor: true, isAtLeastInstructor: false, teamMode };
+            const tutorExercise = {
+                ...exercise,
+                course: undefined,
+                type: ExerciseType.PROGRAMMING,
+                isAtLeastTutor: true,
+                isAtLeastInstructor: false,
+                teamMode,
+                assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                dueDate: dayjs().subtract(1, 'day'),
+            };
             vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: tutorExercise })));
             vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
 

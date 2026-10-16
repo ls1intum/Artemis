@@ -8,7 +8,10 @@
         }
     }
 
-    .ng-invalid {
-        border: none;
+    // The CVA host is inline and wraps block content. The global invalid accent otherwise appears
+    // as a detached red bar above the toolbar after switching from a touched draft to an empty form.
+    // Message validity is conveyed by the editor's length feedback and disabled Send button.
+    jhi-posting-markdown-editor.ng-invalid {
+        border-left: none !important;
     }
 }
