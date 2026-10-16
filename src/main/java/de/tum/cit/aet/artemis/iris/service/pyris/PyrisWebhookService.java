@@ -324,7 +324,7 @@ public class PyrisWebhookService {
     public String addFaq(Faq faq) {
         if (irisSettingsService.isEnabledForCourse(faq.getCourse())) {
             return executeFaqAdditionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(),
-                    faq.getCourse().getTitle(), faq.getCourse().getDescription()), faq.getCourse());
+                    faq.getCourse().getTitle(), faq.getCourse().getDescription(), faq.computeContentFingerprint()), faq.getCourse());
         }
         return null;
     }
@@ -356,8 +356,18 @@ public class PyrisWebhookService {
      */
     public String deleteFaq(Faq faq) {
         return executeFaqDeletionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(), faq.getCourse().getTitle(),
-                faq.getCourse().getDescription()));
+                faq.getCourse().getDescription(), null));
+    }
 
+    /**
+     * Delete an FAQ from Pyris by its ids alone, for an FAQ that no longer exists in Artemis or is not accepted anymore.
+     *
+     * @param faqId    the FAQ to delete
+     * @param courseId its course
+     * @return jobToken of the deletion job
+     */
+    public String deleteFaq(long faqId, long courseId) {
+        return executeFaqDeletionWebhook(new PyrisFaqWebhookDTO(faqId, null, null, courseId, null, null, null));
     }
 
     /**
