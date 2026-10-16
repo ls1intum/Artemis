@@ -32,6 +32,7 @@ export class MessageEditorToolsComponent {
     private readonly destroyRef = inject(DestroyRef);
 
     readonly courseId = input.required<number>();
+    readonly controlsVisible = input(true);
     readonly conversationId = input<number>();
     readonly editorRevision = input(0);
     readonly draftIdentity = input<string>();
@@ -108,7 +109,8 @@ export class MessageEditorToolsComponent {
         }
     }
 
-    protected close(restoreFocus = true): void {
+    /** Closes the picker without interrupting a pending file upload. */
+    close(restoreFocus = true): void {
         this.request++;
         this.picker.set(undefined);
         this.preview.set(undefined);

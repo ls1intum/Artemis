@@ -1,6 +1,6 @@
 <div class="message-composer rounded-md">
     <div class="message-editor-divider flex flex-wrap gap-1 border-b p-1" role="group" [attr.aria-label]="'artemisApp.communication.formattedEditor.formatting' | artemisTranslate">
-        @for (format of formats; track format.tag) {
+        @for (format of basicFormats; track format.tag) {
             <button
                 type="button"
                 tumAetUiButton
@@ -15,23 +15,6 @@
                 (click)="applyFormat(format.tag)"
             >
                 <fa-icon [icon]="format.icon" />
-            </button>
-        }
-        @for (block of blocks; track block.tag) {
-            <button
-                type="button"
-                tumAetUiButton
-                variant="text"
-                severity="secondary"
-                size="small"
-                [attr.aria-label]="'artemisApp.communication.formattedEditor.' + block.label | artemisTranslate"
-                [title]="'artemisApp.communication.formattedEditor.' + block.label | artemisTranslate"
-                [attr.data-testid]="'message-block-' + block.tag"
-                [attr.aria-pressed]="activeFormatting().includes(block.tag)"
-                (mousedown)="remember($event)"
-                (click)="applyBlock(block.tag)"
-            >
-                <fa-icon [icon]="block.icon" />
             </button>
         }
         <button
@@ -78,7 +61,69 @@
         >
             <fa-icon [icon]="icons.faHashtag" />
         </button>
+        <button
+            type="button"
+            tumAetUiButton
+            variant="text"
+            severity="secondary"
+            size="small"
+            data-testid="message-toolbar-toggle"
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.' + (toolbarExpanded() ? 'fewerOptions' : 'moreOptions') | artemisTranslate"
+            [title]="'artemisApp.communication.formattedEditor.' + (toolbarExpanded() ? 'fewerOptions' : 'moreOptions') | artemisTranslate"
+            [attr.aria-expanded]="toolbarExpanded()"
+            [attr.aria-controls]="advancedToolbarId"
+            (mousedown)="remember($event)"
+            (click)="toggleToolbar()"
+        >
+            <fa-icon [icon]="toolbarExpanded() ? icons.faChevronUp : icons.faEllipsis" />
+        </button>
+    </div>
+    <div
+        class="message-editor-divider message-editor-advanced-toolbar flex flex-wrap items-center gap-1 border-b p-1"
+        [id]="advancedToolbarId"
+        [hidden]="!toolbarExpanded() && !uploading() && !tools()?.error()"
+        [attr.role]="toolbarExpanded() ? 'group' : null"
+        [attr.aria-label]="toolbarExpanded() ? ('artemisApp.communication.formattedEditor.moreOptions' | artemisTranslate) : null"
+        data-testid="message-advanced-toolbar"
+    >
+        <div class="message-editor-advanced-controls flex flex-wrap gap-1" [hidden]="!toolbarExpanded()">
+            @for (format of advancedFormats; track format.tag) {
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="text"
+                    severity="secondary"
+                    size="small"
+                    [attr.aria-label]="'artemisApp.communication.formattedEditor.' + format.label | artemisTranslate"
+                    [title]="'artemisApp.communication.formattedEditor.' + format.label | artemisTranslate"
+                    [attr.data-testid]="'message-format-' + format.tag"
+                    [attr.aria-pressed]="activeFormatting().includes(format.tag)"
+                    (mousedown)="remember($event)"
+                    (click)="applyFormat(format.tag)"
+                >
+                    <fa-icon [icon]="format.icon" />
+                </button>
+            }
+            @for (block of blocks; track block.tag) {
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="text"
+                    severity="secondary"
+                    size="small"
+                    [attr.aria-label]="'artemisApp.communication.formattedEditor.' + block.label | artemisTranslate"
+                    [title]="'artemisApp.communication.formattedEditor.' + block.label | artemisTranslate"
+                    [attr.data-testid]="'message-block-' + block.tag"
+                    [attr.aria-pressed]="activeFormatting().includes(block.tag)"
+                    (mousedown)="remember($event)"
+                    (click)="applyBlock(block.tag)"
+                >
+                    <fa-icon [icon]="block.icon" />
+                </button>
+            }
+        </div>
         <jhi-message-editor-tools
+            [controlsVisible]="toolbarExpanded()"
             [courseId]="courseId()"
             [conversationId]="conversation()?.id"
             [editorRevision]="editorRevision()"

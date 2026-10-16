@@ -54,6 +54,141 @@ describe('Formatted message composer', () => {
         fixture.destroy();
     });
 
+    function toggleToolbar() {
+        const button = fixture.nativeElement.querySelector('[data-testid="message-toolbar-toggle"]') as HTMLButtonElement;
+        expect(button).not.toBeNull();
+        button.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+        button.click();
+        fixture.detectChanges();
+        return button;
+    }
+
+    it('starts compact and exposes the advanced controls through an accessible toggle', () => {
+        const advanced = fixture.nativeElement.querySelector('[data-testid="message-advanced-toolbar"]') as HTMLElement;
+        expect(advanced).not.toBeNull();
+        expect(advanced.hidden).toBe(true);
+        for (const id of ['message-format-strong', 'message-format-em', 'message-link-button', 'message-mention-button', 'message-reference-button']) {
+            expect(fixture.nativeElement.querySelector(`[data-testid="${id}"]`).closest('[hidden]')).toBeNull();
+        }
+        const button = toggleToolbar();
+        expect(button.getAttribute('aria-controls')).toBe(advanced.id);
+        expect(button.getAttribute('aria-expanded')).toBe('true');
+        expect(advanced.hidden).toBe(false);
+        toggleToolbar();
+        expect(button.getAttribute('aria-expanded')).toBe('false');
+        expect(advanced.hidden).toBe(true);
+    });
+
+    it('keeps advanced control IDs unique for simultaneously mounted composers', () => {
+        const other = TestBed.createComponent(MessageEditorComponent);
+        try {
+            other.componentRef.setInput('courseId', 1);
+            other.detectChanges();
+            const first = fixture.nativeElement.querySelector('[data-testid="message-toolbar-toggle"]') as HTMLButtonElement;
+            const second = other.nativeElement.querySelector('[data-testid="message-toolbar-toggle"]') as HTMLButtonElement;
+            expect(first).not.toBeNull();
+            expect(second).not.toBeNull();
+            expect(first.getAttribute('aria-controls')).not.toBe(second.getAttribute('aria-controls'));
+        } finally {
+            other.destroy();
+        }
+    });
+
+    it('retains keyboard focus on the disclosure for repeated activation', () => {
+        const button = fixture.nativeElement.querySelector('[data-testid="message-toolbar-toggle"]') as HTMLButtonElement;
+        button.focus();
+        button.click();
+        fixture.detectChanges();
+        expect(button.getAttribute('aria-expanded')).toBe('true');
+        expect(document.activeElement).toBe(button);
+        button.click();
+        fixture.detectChanges();
+        expect(button.getAttribute('aria-expanded')).toBe('false');
+        expect(document.activeElement).toBe(button);
+    });
+
+    it('preserves a selected range through expansion and collapse before applying formatting', () => {
+        editable.focus();
+        const range = document.createRange();
+        range.setStart(editable.querySelector('p')!.firstChild!, 1);
+        range.setEnd(editable.querySelector('p')!.firstChild!, 4);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        toggleToolbar();
+        expect(window.getSelection()!.toString()).toBe('ell');
+        toggleToolbar();
+        expect(window.getSelection()!.toString()).toBe('ell');
+        (fixture.nativeElement.querySelector('[data-testid="message-format-strong"]') as HTMLButtonElement).click();
+        expect(editable.querySelector('strong')!.textContent).toBe('ell');
+        expect(editable.textContent).toBe('Hello');
+    });
+
+    it('collapses advanced controls on a draft switch without collapsing for normal content updates', () => {
+        toggleToolbar();
+        fixture.componentRef.setInput('content', 'Updated draft');
+        fixture.detectChanges();
+        const advanced = fixture.nativeElement.querySelector('[data-testid="message-advanced-toolbar"]') as HTMLElement;
+        expect(advanced.hidden).toBe(false);
+        fixture.componentRef.setInput('draftIdentity', 'reply:2:new');
+        fixture.detectChanges();
+        expect(advanced.hidden).toBe(true);
+    });
+
+    it('closes an advanced picker while retaining a pending upload and its insertion range', async () => {
+        fixture.componentRef.setInput('conversation', { id: 22 });
+        fixture.detectChanges();
+        caretAtEnd();
+        const tools = fixture.debugElement.query(By.directive(MessageEditorToolsComponent)).componentInstance as MessageEditorToolsComponent;
+        let resolve!: (value: { path: string }) => void;
+        vi.spyOn(TestBed.inject(FileUploaderService), 'uploadMarkdownFileInCurrentConversation').mockReturnValue(new Promise((done) => (resolve = done)));
+        const emit = vi.spyOn(component.contentChange, 'emit');
+        const upload = tools.uploadFiles([new File(['image'], 'image.png')]);
+        toggleToolbar();
+        tools.picker.set('faq');
+        fixture.detectChanges();
+        toggleToolbar();
+        expect(tools.picker()).toBeUndefined();
+        expect(fixture.debugElement.query(By.directive(MessageEditorToolsComponent)).componentInstance).toBe(tools);
+        expect(tools.uploading()).toBe(true);
+        expect(component['uploading']()).toBe(true);
+        resolve({ path: '/api/core/files/image.png' });
+        await upload;
+        fixture.detectChanges();
+        expect(emit).toHaveBeenLastCalledWith('Hello![image.png](/api/core/files/image.png)');
+        expect(tools.uploading()).toBe(false);
+        expect(component['uploading']()).toBe(false);
+    });
+
+    it.each(['paste', 'drop'])('keeps upload progress and failure feedback visible for a collapsed %s upload', async (eventType) => {
+        fixture.componentRef.setInput('conversation', { id: 22 });
+        fixture.detectChanges();
+        editable.focus();
+        caretAtEnd();
+        let reject!: (error: Error) => void;
+        const pending = new Promise<{ path: string }>((_resolve, fail) => (reject = fail));
+        vi.spyOn(TestBed.inject(FileUploaderService), 'uploadMarkdownFileInCurrentConversation').mockReturnValue(pending);
+        const event = new Event(eventType, { bubbles: true, cancelable: true });
+        Object.defineProperty(event, eventType === 'paste' ? 'clipboardData' : 'dataTransfer', { value: { files: [new File(['image'], 'missing.png')] } });
+        editable.dispatchEvent(event);
+        fixture.detectChanges();
+        const status = fixture.nativeElement.querySelector('[role="status"]') as HTMLElement;
+        expect(status).not.toBeNull();
+        expect(status.closest('[hidden]')).toBeNull();
+        expect(component['uploading']()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[data-testid="message-toolbar-toggle"]').getAttribute('aria-expanded')).toBe('false');
+        expect(fixture.nativeElement.querySelector('[data-testid="message-attachment-button"]').closest('[hidden]')).not.toBeNull();
+        reject(new Error('offline'));
+        await pending.catch(() => undefined);
+        fixture.detectChanges();
+        const alert = fixture.nativeElement.querySelector('[role="alert"]') as HTMLElement;
+        expect(alert).not.toBeNull();
+        expect(alert.closest('[hidden]')).toBeNull();
+        expect(alert.textContent).toContain('artemisApp.communication.formattedEditor.errors.upload');
+        expect(fixture.nativeElement.querySelector('[role="status"]')).toBeNull();
+        expect(component['uploading']()).toBe(false);
+        expect(editable.textContent).toBe('Hello');
+    });
+
     it('closes the link popup when the link toolbar button is clicked again', () => {
         caretAtEnd();
         const button = fixture.nativeElement.querySelector('[data-testid="message-link-button"]') as HTMLButtonElement;

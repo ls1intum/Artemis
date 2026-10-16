@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { test as artemisTest } from '../../support/fixtures';
 import { admin, studentOne, studentTwo, studentThree, studentFour } from '../../support/users';
 import { generateUUID, readResponseJson } from '../../support/utils';
-import { expectWithinViewport, forEachViewport } from '../../support/layout';
+import { expectNoHorizontalOverflow, expectNoHorizontalScrollAround, expectWithinViewport, forEachViewport } from '../../support/layout';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -16,8 +16,9 @@ interface Composer {
 
 // Every test owns its course and conversations. Browser editing never depends on seed message IDs,
 // another worker's messages, or direct DOM content assignment that bypasses beforeinput/input.
-const test = artemisTest.extend<{ composer: Composer }>({
-    composer: async ({ page, login, courseManagementAPIRequests, communicationAPIRequests }, use) => {
+const test = artemisTest.extend<{ composer: Composer; expandedToolbar: boolean }>({
+    expandedToolbar: [true, { option: true }],
+    composer: async ({ page, login, courseManagementAPIRequests, communicationAPIRequests, expandedToolbar }, use) => {
         await login(admin);
         const course = await courseManagementAPIRequests.createCourse({ courseName: `Formatted editor ${generateUUID()}` });
         try {
@@ -32,6 +33,10 @@ const test = artemisTest.extend<{ composer: Composer }>({
             const editor = page.getByTestId('formatted-message-input');
             await expect(editor).toBeVisible();
             await expect(editor).toHaveAttribute('contenteditable', 'true');
+            if (expandedToolbar) {
+                await page.getByTestId('message-toolbar-toggle').click();
+                await expect(page.getByTestId('message-advanced-toolbar')).toBeVisible();
+            }
             await use({ course, channel, editor, route });
         } finally {
             await courseManagementAPIRequests.deleteCourse(course, admin);
@@ -911,5 +916,156 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         await expect(editor).toBeVisible();
         await expectText(editor, '');
         await expect(postContent(page, saved.id!)).toContainText('draft restored');
+    });
+});
+
+test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
+    test.use({ expandedToolbar: false });
+
+    test('shows basic controls by default and reveals advanced controls without overflow at every viewport', async ({ page, composer }) => {
+        const host = page.locator('jhi-message-editor').filter({ has: composer.editor });
+        const toggle = host.getByTestId('message-toolbar-toggle');
+        const advanced = host.getByTestId('message-advanced-toolbar');
+        await forEachViewport(page, async () => {
+            await host.scrollIntoViewIfNeeded();
+            await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+            await expect(toggle).toHaveAccessibleName('More options');
+            await expect(advanced).toBeHidden();
+            for (const id of ['message-format-strong', 'message-format-em', 'message-link-button', 'message-mention-button', 'message-reference-button']) {
+                await expect(host.getByTestId(id)).toBeVisible();
+                await expectWithinViewport(host.getByTestId(id), ['left', 'right'], { name: id });
+            }
+            await expect(host.getByTestId('message-format-ins')).toBeHidden();
+            await expect(host.getByTestId('message-attachment-button')).toBeHidden();
+            await toggle.click();
+            await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+            await expect(toggle).toHaveAccessibleName('Fewer options');
+            await expect(toggle).toHaveAttribute('aria-controls', (await advanced.getAttribute('id'))!);
+            for (const id of [
+                'message-format-ins',
+                'message-format-s',
+                'message-format-code',
+                'message-block-ul',
+                'message-block-ol',
+                'message-block-blockquote',
+                'message-block-pre',
+                'message-attachment-button',
+                'message-slides-button',
+                'message-faq-button',
+                'message-emoji-button',
+            ]) {
+                await expect(host.getByTestId(id)).toBeVisible();
+                await expectWithinViewport(host.getByTestId(id), ['left', 'right'], { name: id });
+            }
+            await expectNoHorizontalOverflow(page, [host], { name: 'expanded message composer' });
+            await expectNoHorizontalScrollAround(host, { name: 'expanded message composer' });
+            await toggle.click();
+            await expect(advanced).toBeHidden();
+            await expectNoHorizontalOverflow(page, [host], { name: 'compact message composer' });
+            await expectNoHorizontalScrollAround(host, { name: 'compact message composer' });
+        });
+    });
+
+    test('preserves a native range and caret through toolbar toggles and formats the selected text', async ({ page, composer }) => {
+        const { editor } = composer;
+        const toggle = page.getByTestId('message-toolbar-toggle');
+        await editor.pressSequentially('alpha beta gamma');
+        await selectText(editor, 6, 10, 'beta');
+        await toggle.click();
+        await expect.poll(() => editor.evaluate(() => window.getSelection()?.toString())).toBe('beta');
+        await page.getByTestId('message-format-ins').click();
+        await expect(editor.locator('ins')).toHaveText('beta');
+        await toggle.click();
+        await expect.poll(() => editor.evaluate(() => window.getSelection()?.toString())).toBe('beta');
+        await page.getByTestId('message-format-strong').click();
+        await expect(editor.locator('strong ins, ins strong')).toHaveText('beta');
+        await selectText(editor, 16, 16);
+        await toggle.click();
+        await expectCaret(editor, 16);
+        await toggle.click();
+        await expectCaret(editor, 16);
+        await page.keyboard.type(' tail');
+        expect((await send(page, composer)).content).toBe('alpha **<ins>beta</ins>** gamma tail');
+    });
+
+    test('supports repeated keyboard disclosure activation without moving focus', async ({ page, composer }) => {
+        const toggle = page.getByTestId('message-toolbar-toggle');
+        await composer.editor.pressSequentially('Draft text');
+        await toggle.focus();
+        await toggle.press('Space');
+        await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+        await expect(toggle).toBeFocused();
+        await toggle.press('Space');
+        await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        await expect(toggle).toBeFocused();
+        await toggle.press('Enter');
+        await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+        await expect(toggle).toBeFocused();
+        await expectText(composer.editor, 'Draft text');
+    });
+
+    for (const eventType of ['paste', 'drop'] as const) {
+        test(`shows pending and failed ${eventType} uploads while the advanced controls stay collapsed`, async ({ page, composer }) => {
+            const { editor } = composer;
+            const host = page.locator('jhi-message-editor').filter({ has: editor });
+            const toggle = host.getByTestId('message-toolbar-toggle');
+            const sendButton = page.getByTestId('send-formatted-message');
+            let release!: () => void;
+            const responseGate = new Promise<void>((resolve) => (release = resolve));
+            let requested!: () => void;
+            const uploadRequested = new Promise<void>((resolve) => (requested = resolve));
+            await page.route(
+                (url) => url.pathname === `/api/core/files/courses/${composer.course.id}/conversations/${composer.channel.id}`,
+                async (route) => {
+                    requested();
+                    await responseGate;
+                    await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
+                },
+            );
+            try {
+                await editor.pressSequentially('Keep my draft');
+                await expect(sendButton).toBeEnabled();
+                await editor.evaluate((element, type) => {
+                    const data = new DataTransfer();
+                    data.items.add(new File(['attachment fixture'], 'missing.png', { type: 'image/png' }));
+                    const event =
+                        type === 'paste'
+                            ? new ClipboardEvent('paste', { clipboardData: data, bubbles: true, cancelable: true })
+                            : new DragEvent('drop', { dataTransfer: data, bubbles: true, cancelable: true });
+                    // Firefox strips files from constructed ClipboardEvents; provide the synthetic clipboard payload explicitly.
+                    if (type === 'paste') Object.defineProperty(event, 'clipboardData', { value: data });
+                    element.dispatchEvent(event);
+                }, eventType);
+                await uploadRequested;
+                await expect(host.getByRole('status')).toBeVisible();
+                await expect(host.getByRole('status')).toHaveText('Uploading attachments…');
+                await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+                await expect(host.getByTestId('message-attachment-button')).toBeHidden();
+                await expect(host.getByTestId('message-format-ins')).toBeHidden();
+                await expect(sendButton).toBeDisabled();
+                release();
+                await expect(host.getByRole('alert')).toBeVisible();
+                await expect(host.getByRole('alert')).toContainText('Could not attach “missing.png”');
+                await expect(host.getByRole('status')).toBeHidden();
+                await expect(sendButton).toBeEnabled();
+                await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+                await expect(host.getByTestId('message-attachment-button')).toBeHidden();
+                await expectText(editor, 'Keep my draft');
+                await expect(editor.locator('img')).toHaveCount(0);
+            } finally {
+                release();
+            }
+        });
+    }
+
+    test('keeps hidden formatting shortcuts available while advanced controls stay collapsed', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('underlined');
+        await selectText(editor, 0, 10, 'underlined');
+        await page.keyboard.press('ControlOrMeta+u');
+        await expect(editor.locator('ins')).toHaveText('underlined');
+        await expect(page.getByTestId('message-toolbar-toggle')).toHaveAttribute('aria-expanded', 'false');
+        await expect(page.getByTestId('message-format-ins')).toBeHidden();
+        expect((await send(page, composer)).content).toBe('<ins>underlined</ins>');
     });
 });

@@ -213,6 +213,8 @@
                 "previewUnavailable": "Die Folienvorschau ist nicht verfügbar.",
                 "unsupported": "Diese Nachricht verwendet Formatierungen, die derzeit nur in Markdown bearbeitet werden können.",
                 "formatting": "Nachricht formatieren",
+                "moreOptions": "Weitere Optionen",
+                "fewerOptions": "Weniger Optionen",
                 "bold": "Fett (Strg/Cmd+B)",
                 "italic": "Kursiv (Strg/Cmd+I)",
                 "underline": "Unterstrichen (Strg/Cmd+U)",
