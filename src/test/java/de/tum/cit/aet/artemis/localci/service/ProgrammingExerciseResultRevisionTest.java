@@ -210,10 +210,11 @@ class ProgrammingExerciseResultRevisionTest {
         }
     }
 
-    @org.junit.jupiter.api.Test
-    void parserShapedAllPassingReportCompletesExpectedSynchronizationDespiteLegacyFalseFlag() {
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void parserShapedAllPassingReportCompletesExpectedSynchronizationRegardlessOfLegacyFlag(boolean rawSuccess) {
         var tests = java.util.stream.IntStream.range(0, 15).mapToObj(i -> new LocalCITestJobDTO("reportedTest" + i, List.of())).toList();
-        var build = new BuildResult("main", solutionHead.get(), testsHead.get(), false, null, List.of(new LocalCIJobDTO(List.of(), tests)), List.of(), List.of(), false, 0);
+        var build = new BuildResult("main", solutionHead.get(), testsHead.get(), rawSuccess, null, List.of(new LocalCIJobDTO(List.of(), tests)), List.of(), List.of(), false, 0);
         try (var writer = saves.reserveWrite(1L)) {
             saves.expectTestCaseSynchronization(1L, solutionHead.get(), testsHead.get());
             service.extractTestCasesFromResultAndBroadcastUpdates(build, stale);
