@@ -1,6 +1,6 @@
 import { Component, OnInit, forwardRef, inject, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, FormsModule, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { faLightbulb, faQuestionCircle, faStar } from '@fortawesome/free-solid-svg-icons';
+import { faLightbulb, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { HttpClient } from '@angular/common/http';
 import {
     CompetencyLearningObjectLink,
@@ -16,24 +16,19 @@ import { ActivatedRoute } from '@angular/router';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
 import { finalize } from 'rxjs';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiSelectComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
-import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-/**
- * @deprecated Use {@link CompetencySelectionPrimengComponent} instead.
- */
 @Component({
     selector: 'jhi-competency-selection',
     templateUrl: './competency-selection.component.html',
-    styleUrls: ['./competency-selection.component.scss'],
     providers: [
         {
             provide: NG_VALUE_ACCESSOR,
@@ -42,15 +37,14 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         },
     ],
     imports: [
-        FaStackComponent,
-        NgbTooltip,
+        TumAetUiButtonComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiSelectComponent,
+        TumAetUiTooltipDirective,
         FaIconComponent,
-        FaStackItemSizeDirective,
         FormsModule,
-        TranslateDirective,
         ArtemisTranslatePipe,
         FeatureToggleHideDirective,
-        ButtonComponent,
     ],
 })
 export class CompetencySelectionComponent implements OnInit, ControlValueAccessor {
@@ -59,12 +53,14 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     private courseCompetencyService = inject(CourseCompetencyService);
     private profileService = inject(ProfileService);
     private http = inject(HttpClient);
+    private translateService = inject(TranslateService);
 
     labelName = input<string>('');
     labelTooltip = input<string>('');
     exerciseDescription = input<string | undefined>(undefined);
 
     valueChange = output<CompetencyLearningObjectLink[] | undefined>();
+    availableCount = output<number>();
 
     readonly disabled = signal(false);
     // selected competencies
@@ -72,7 +68,6 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     // all course competencies
     readonly competencyLinks = signal<CompetencyLearningObjectLink[] | undefined>(undefined);
 
-    readonly isLoading = signal(false);
     readonly isSuggesting = signal(false);
     readonly checkboxStates = signal<Record<number, boolean>>(undefined!);
     suggestedCompetencyIds = new Set<number>();
@@ -81,12 +76,12 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
 
     getIcon = getIcon;
     faQuestionCircle = faQuestionCircle;
-    faStar = faStar;
     faLightbulb = faLightbulb;
 
     protected readonly FeatureToggle = FeatureToggle;
 
     _onChange = (_value: CompetencyLearningObjectLink[] | undefined) => {};
+    private onTouched = () => {};
 
     protected readonly HIGH_COMPETENCY_LINK_WEIGHT = HIGH_COMPETENCY_LINK_WEIGHT;
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT = MEDIUM_COMPETENCY_LINK_WEIGHT;
@@ -95,13 +90,20 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF = MEDIUM_COMPETENCY_LINK_WEIGHT_CUT_OFF;
     // halfway between medium and high
 
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
+    protected get weightOptions() {
+        return [
+            { value: LOW_COMPETENCY_LINK_WEIGHT, label: this.translateService.instant('artemisApp.competency.link.weightLabels.low') },
+            { value: MEDIUM_COMPETENCY_LINK_WEIGHT, label: this.translateService.instant('artemisApp.competency.link.weightLabels.medium') },
+            { value: HIGH_COMPETENCY_LINK_WEIGHT, label: this.translateService.instant('artemisApp.competency.link.weightLabels.high') },
+        ];
+    }
 
     ngOnInit(): void {
         // it's an explicit design decision to not clutter every component that uses this component with the need to check if the atlas profile is enabled
         if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS)) {
             this.initialize();
+        } else {
+            this.availableCount.emit(0);
         }
     }
 
@@ -113,29 +115,21 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             if (course?.competencies?.length || course?.prerequisites?.length) {
                 this.setCompetencyLinks([...(course.competencies ?? []), ...(course.prerequisites ?? [])]);
             } else {
-                this.isLoading.set(true);
-                this.courseCompetencyService
-                    .getAllForCourse(courseId)
-                    .pipe(
-                        finalize(() => {
-                            this.isLoading.set(false);
-                        }),
-                    )
-                    .subscribe({
-                        next: (response) => {
-                            this.setCompetencyLinks(response.body!);
-                            // Apply any links that arrived via refreshWithLinks() while still loading
-                            if (this.pendingRefreshLinks) {
-                                this.refreshWithLinks(this.pendingRefreshLinks);
-                                this.pendingRefreshLinks = undefined;
-                            } else {
-                                this.writeValue(this.selectedCompetencyLinks);
-                            }
-                        },
-                        error: () => {
-                            this.disabled.set(true);
-                        },
-                    });
+                this.courseCompetencyService.getAllForCourse(courseId).subscribe({
+                    next: (response) => {
+                        this.setCompetencyLinks(response.body!);
+                        // Apply links received while the request was pending.
+                        if (this.pendingRefreshLinks) {
+                            this.refreshWithLinks(this.pendingRefreshLinks);
+                            this.pendingRefreshLinks = undefined;
+                        } else {
+                            this.writeValue(this.selectedCompetencyLinks);
+                        }
+                    },
+                    error: () => {
+                        this.disabled.set(true);
+                    },
+                });
             }
         }
     }
@@ -145,6 +139,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
      * @param competencies The competencies of the course
      */
     setCompetencyLinks(competencies: CourseCompetency[]) {
+        this.availableCount.emit(competencies.length);
         const competencyLinks = competencies.map((competency) => {
             // Remove unnecessary properties
             competency.course = undefined;
@@ -180,6 +175,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
                 this.selectedCompetencyLinks = undefined;
             }
 
+            this.onTouched();
             this._onChange(this.selectedCompetencyLinks);
             this.valueChange.emit(this.selectedCompetencyLinks);
         }
@@ -188,6 +184,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     updateLinkWeight(link: CompetencyLearningObjectLink, value: number) {
         link.weight = value;
 
+        this.onTouched();
         this._onChange(this.selectedCompetencyLinks);
         this.valueChange.emit(this.selectedCompetencyLinks);
     }
@@ -212,6 +209,17 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             this.selectedCompetencyLinks = competencyLinks.filter((competencyLink) => ids.includes(competencyLink.competency?.id));
         } else {
             this.selectedCompetencyLinks = value ?? [];
+        }
+        if (competencyLinks) {
+            const selectedIds = new Set(this.selectedCompetencyLinks.map((link) => link.competency?.id));
+            this.checkboxStates.set(
+                competencyLinks.reduce<Record<number, boolean>>((states, link) => {
+                    if (link.competency?.id) {
+                        states[link.competency.id] = selectedIds.has(link.competency.id);
+                    }
+                    return states;
+                }, {}),
+            );
         }
     }
 
@@ -266,7 +274,9 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
         this._onChange = fn;
     }
 
-    registerOnTouched(_fn: () => void): void {}
+    registerOnTouched(fn: () => void): void {
+        this.onTouched = fn;
+    }
 
     suggestCompetencies(): void {
         if (!this.exerciseDescription()?.trim()) {

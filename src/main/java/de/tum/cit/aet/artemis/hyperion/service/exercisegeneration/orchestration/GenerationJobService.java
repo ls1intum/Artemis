@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -679,6 +680,7 @@ public class GenerationJobService {
     }
 
     private static WedgedSlotKind slotKind(JobInfo job) {
+        Objects.requireNonNull(job, "A reservation is required to determine its kind");
         if (GenerationRecoverySlots.isPending(job)) {
             return WedgedSlotKind.REVERT_RECOVERY;
         }

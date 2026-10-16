@@ -15,7 +15,7 @@
     <jhi-form-status-bar [formStatusSections]="formSectionStatus()" />
     <div>
         <h3 jhiTranslate="artemisApp.exercise.sections.general" id="artemisApp.exercise.sections.general"></h3>
-        <jhi-exercise-title-channel-name-primeng
+        <jhi-exercise-title-channel-name
             [(exercise)]="modelingExercise"
             [course]="modelingExercise.course"
             [courseId]="modelingExercise.course?.id"
@@ -52,7 +52,7 @@
         </div>
         @if (!isExamMode()) {
             <div class="form-group">
-                <jhi-competency-selection-primeng
+                <jhi-competency-selection
                     id="competencies"
                     [labelName]="'artemisApp.competency.link.title' | artemisTranslate"
                     [labelTooltip]="'artemisApp.competency.link.exercise' | artemisTranslate"

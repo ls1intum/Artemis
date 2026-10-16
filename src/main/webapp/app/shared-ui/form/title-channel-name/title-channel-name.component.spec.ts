@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-deprecated */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { FormsModule, NgForm } from '@angular/forms';
+import { FormsModule, NgForm, NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { TitleChannelNameComponent } from 'app/shared-ui/form/title-channel-name/title-channel-name.component';
 import { CustomNotIncludedInValidatorDirective } from 'app/foundation/validators/custom-not-included-in-validator.directive';
@@ -39,6 +38,29 @@ describe('TitleChannelNameComponent', () => {
         const channelNameInput = fixture.debugElement.query(By.css('#field_channel_name'));
         expect(channelNameInput).not.toBeNull();
         expect(channelNameInput.nativeElement.value).toBe(component.channelName());
+    });
+
+    it.each(['field_title', 'field_channel_name'])('should expose touched validation errors for %s and clear them when corrected', async (fieldId) => {
+        await fixture.whenStable();
+        const input = fixture.nativeElement.querySelector(`#${fieldId}`) as HTMLInputElement;
+        const control = fixture.debugElement.query(By.css(`#${fieldId}`)).injector.get(NgModel);
+        expect(control.invalid).toBe(true);
+        expect(input.hasAttribute('aria-invalid')).toBe(false);
+
+        input.dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(control.touched).toBe(true);
+        expect(input.getAttribute('aria-invalid')).toBe('true');
+
+        input.value = 'Valid';
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(control.valid).toBe(true);
+        expect(input.hasAttribute('aria-invalid')).toBe(false);
     });
 
     it('should only display title input field if channel name is hidden', () => {
