@@ -12,10 +12,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.ExerciseCourseScoreDTO;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -39,6 +41,42 @@ public class ExerciseDateService {
         this.participationRepository = participationRepository;
         this.examDateApi = examDateApi;
         this.studentExamApi = studentExamApi;
+    }
+
+    /**
+     * Whether participation identities must be hidden from non-instructor staff. Course programming exercises allow
+     * student support until their exercise due date, and indefinitely when assessment is automatic or no due date is set.
+     * Other exercise types and exams retain anonymous assessment throughout.
+     *
+     * @param exercise the exercise being accessed
+     * @return whether anonymous assessment applies
+     */
+    public boolean isAssessmentAnonymizationActive(Exercise exercise) {
+        return !(exercise instanceof ProgrammingExercise) || isAssessmentAnonymizationActive(exercise.isExamExercise(), exercise.getAssessmentType(), exercise.getDueDate());
+    }
+
+    /**
+     * Applies the same deadline rule to the projection used on every Git operation, including previously issued tokens.
+     *
+     * @param exercise the programming exercise access projection
+     * @return whether anonymous assessment applies
+     */
+    public boolean isAssessmentAnonymizationActive(GitRepositoryAccessDTO exercise) {
+        return isAssessmentAnonymizationActive(exercise.isExamExercise(), exercise.assessmentType(), exercise.dueDate());
+    }
+
+    /**
+     * Applies the same cutoff to loaded exercises and repository access projections. Exam assessment always hides
+     * identities; course assessment does so from the due date onward only for manual or semi-automatic assessment.
+     *
+     * @param examExercise   whether the exercise belongs to an exam
+     * @param assessmentType the configured assessment mode
+     * @param dueDate        the course exercise deadline, or {@code null} when none is configured
+     * @return whether anonymous assessment is active now
+     */
+    private boolean isAssessmentAnonymizationActive(boolean examExercise, AssessmentType assessmentType, ZonedDateTime dueDate) {
+        return examExercise
+                || ((assessmentType == AssessmentType.MANUAL || assessmentType == AssessmentType.SEMI_AUTOMATIC) && dueDate != null && !ZonedDateTime.now().isBefore(dueDate));
     }
 
     /**
@@ -314,7 +352,8 @@ public class ExerciseDateService {
             throw new IllegalArgumentException("This method should only be used for exam exercises");
         }
         ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
-        return computeExamAssessmentDates(exercise, api.getLatestIndividualExamEndDate(exercise.getExam()));
+        Exam exam = exercise.getExam();
+        return computeExamAssessmentDates(exercise, exam, api.getLatestIndividualExamEndDate(exam));
     }
 
     /**
@@ -323,16 +362,17 @@ public class ExerciseDateService {
      * programming build-and-test date on top.
      *
      * @param exercise                    an exam exercise
+     * @param exam                        the exam of the exercise
      * @param latestIndividualExamEndDate the latest individual exam end date, as returned by
      *                                        {@code ExamDateApi#getLatestIndividualExamEndDate}
      * @return both relevant dates, or {@code null} if the given end date is {@code null}, i.e. the exam has no dates yet
      */
     @Nullable
-    public static ExamAssessmentDates computeExamAssessmentDates(Exercise exercise, @Nullable ZonedDateTime latestIndividualExamEndDate) {
+    public static ExamAssessmentDates computeExamAssessmentDates(Exercise exercise, Exam exam, @Nullable ZonedDateTime latestIndividualExamEndDate) {
         if (latestIndividualExamEndDate == null) {
             return null;
         }
-        ZonedDateTime latestExamEndDate = latestIndividualExamEndDate.plusSeconds(Objects.requireNonNullElse(exercise.getExam().getGracePeriod(), 0));
+        ZonedDateTime latestExamEndDate = latestIndividualExamEndDate.plusSeconds(Objects.requireNonNullElse(exam.getGracePeriod(), 0));
 
         ZonedDateTime assessmentPossibleFrom = latestExamEndDate;
         if (exercise instanceof ProgrammingExercise programmingExercise) {

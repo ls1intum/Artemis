@@ -147,6 +147,8 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     readonly isOwnerOfParticipation = signal<boolean>(undefined!);
 
     readonly modelingExercise = signal<ModelingExercise>(undefined!);
+    // The team works on one shared diagram of the graded participation. A practice participation of a team exercise belongs to a single student, so it is not shared.
+    readonly teamCollaborationEnabled = computed(() => !!this.modelingExercise()?.teamMode && !isPracticeMode(this.participation()));
     readonly course = signal<Course | undefined>(undefined);
     readonly result = signal<Result | undefined>(undefined);
     readonly resultWithComplaint = signal<Result | undefined>(undefined);
@@ -282,7 +284,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     private setupMode(): void {
-        if (this.modelingExercise().teamMode) {
+        if (this.teamCollaborationEnabled()) {
             this.setupSubmissionStreamForTeam();
         } else {
             this.setAutoSaveTimer();
@@ -480,7 +482,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private refreshNonCollaborativeEditorFromSavedSubmission(): void {
         const model = this.submission().model;
         // Importing a persisted team snapshot can discard newer edits in the live Yjs document.
-        if (this.modelingExercise().teamMode || !model) {
+        if (this.teamCollaborationEnabled() || !model) {
             return;
         }
         this.umlModel.set(importDiagram(parseJson(model)));
@@ -571,7 +573,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     }
 
     onModelPatch(patch: string) {
-        if (this.modelingExercise().teamMode) {
+        if (this.teamCollaborationEnabled()) {
             this.submissionPatchObservable.next(new SubmissionPatch(patch));
         }
     }

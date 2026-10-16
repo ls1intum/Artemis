@@ -69,6 +69,17 @@ describe('TumAetUiCheckboxComponent', () => {
         expect(input().getAttribute('aria-label')).toBe('Accept terms');
     });
 
+    it('references the describing element with aria-describedby, also while disabled', () => {
+        expect(input().hasAttribute('aria-describedby')).toBe(false);
+
+        fixture.componentRef.setInput('ariaDescribedBy', 'terms-hint');
+        fixture.componentRef.setInput('disabled', true);
+        fixture.detectChanges();
+
+        expect(input().getAttribute('aria-describedby')).toBe('terms-hint');
+        expect(input().disabled).toBe(true);
+    });
+
     it('disables the native input and does not emit on a disabled toggle attempt', () => {
         const onChangeSpy = vi.fn();
         component.changed.subscribe(onChangeSpy);

@@ -583,8 +583,11 @@
         width: 80px;
     }
 
+    // Wide enough for DD.MM.YYYY HH:mm with the clear and calendar buttons.
     &__date {
-        width: 160px;
+        display: block;
+        width: 16rem;
+        max-width: 100%;
     }
 }
 

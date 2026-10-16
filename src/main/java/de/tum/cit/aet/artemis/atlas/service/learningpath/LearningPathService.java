@@ -401,11 +401,9 @@ public class LearningPathService {
      */
     public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(long learningPathId) {
         LearningPath learningPath = learningPathRepositoryService.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
-        if (learningPath.getUser() != null) {
-            // The navigation reads the per-course profile, and a path can be older than the profile, so make sure one
-            // exists. Creating it is idempotent: an existing profile is returned rather than replaced.
-            courseLearnerProfileService.createCourseLearnerProfile(learningPath.getCourse(), learningPath.getUser());
-        }
+        // The navigation reads the per-course profile, and a path can be older than the profile, so make sure one
+        // exists. Creating it is idempotent: an existing profile is returned rather than replaced.
+        courseLearnerProfileService.createCourseLearnerProfile(learningPath.getCourse(), learningPath.getUser());
 
         // Remove exercises that are not visible to students
         learningPath.getCompetencies().forEach(competency -> competency
@@ -415,15 +413,6 @@ public class LearningPathService {
                 .forEach(competency -> competency.setLectureUnitLinks(competency.getLectureUnitLinks().stream()
                         .filter(lectureUnitLink -> !(lectureUnitLink.getLectureUnit() instanceof ExerciseUnit) && lectureUnitLink.getLectureUnit().isVisibleToStudents())
                         .collect(Collectors.toSet())));
-
-        if (learningPath.getUser() == null) {
-            learningPath.getCompetencies().forEach(competency -> {
-                competency.setUserProgress(Set.of());
-                competency.getLectureUnitLinks().forEach(lectureUnitLink -> lectureUnitLink.getLectureUnit().setCompletedUsers(Set.of()));
-                competency.getExerciseLinks().forEach(exerciseLink -> exerciseLink.getExercise().setStudentParticipations(Set.of()));
-            });
-            return learningPath;
-        }
 
         LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
         Long userId = learningPath.getUser().getId();

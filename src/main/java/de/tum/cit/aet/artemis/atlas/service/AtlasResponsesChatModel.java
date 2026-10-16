@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 
 import org.jspecify.annotations.Nullable;
@@ -213,8 +214,9 @@ public final class AtlasResponsesChatModel implements ChatModel {
             }
             else if (message instanceof ToolResponseMessage toolResponseMessage) {
                 for (ToolResponseMessage.ToolResponse response : toolResponseMessage.getResponses()) {
-                    inputItems.add(ResponseInputItem.ofFunctionCallOutput(
-                            ResponseInputItem.FunctionCallOutput.builder().callId(response.id()).output(response.responseData() == null ? "" : response.responseData()).build()));
+                    // the record is deserialised from chat memory and built by tool callbacks, so tolerate a missing result
+                    String output = Objects.requireNonNullElse(response.responseData(), "");
+                    inputItems.add(ResponseInputItem.ofFunctionCallOutput(ResponseInputItem.FunctionCallOutput.builder().callId(response.id()).output(output).build()));
                 }
             }
             else {

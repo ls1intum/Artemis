@@ -1,8 +1,3 @@
-<ng-template #headerTemplate let-label="label" let-colSize="colSize">
-    <th scope="col" [class]="colSize">
-        <span [jhiTranslate]="label"></span>
-    </th>
-</ng-template>
 <div class="modal-header">
     <h4 class="modal-title" [jhiTranslate]="TRANSLATION_BASE + '.header'"></h4>
     <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
@@ -21,9 +16,9 @@
         <table class="table table-striped mb-3">
             <thead>
                 <tr>
-                    <ng-container *ngTemplateOutlet="headerTemplate; context: { label: TRANSLATION_BASE + '.name', colSize: 'col-4' }" />
-                    <ng-container *ngTemplateOutlet="headerTemplate; context: { label: TRANSLATION_BASE + '.login', colSize: 'col-4' }" />
-                    <ng-container *ngTemplateOutlet="headerTemplate; context: { label: TRANSLATION_BASE + '.repository', colSize: 'col-2' }" />
+                    <th scope="col" class="col-4" [jhiTranslate]="TRANSLATION_BASE + '.name'"></th>
+                    <th scope="col" class="col-4" [jhiTranslate]="TRANSLATION_BASE + '.login'"></th>
+                    <th scope="col" class="col-2" [jhiTranslate]="TRANSLATION_BASE + '.repository'"></th>
                 </tr>
             </thead>
             <tbody class="table-group-divider">

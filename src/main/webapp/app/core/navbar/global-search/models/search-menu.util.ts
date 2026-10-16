@@ -7,10 +7,12 @@ import { FilterChipView, FilterMenuOption } from './search-menu.model';
 /** Translate function passed in from the component so these builders stay pure and framework-free. */
 type Translate = (key: string, params?: object) => string;
 
-/** Minimal course shape the value menu needs (from `CourseStorageService`). */
+/** Minimal course shape the value menu needs (from the course options endpoint, or `CourseStorageService` while it loads). */
 export interface MenuCourse {
     id?: number;
     title?: string;
+    /** Whether the course has not ended yet. Unknown (the store fallback) ranks as active, keeping the plain title order. */
+    active?: boolean;
 }
 
 /** Maximum number of course options shown in the `course:` value menu. */
@@ -195,13 +197,19 @@ function courseOptions(courses: MenuCourse[], applied: Set<string>, query: strin
     return (
         courses
             .filter((course) => course.id !== undefined && !applied.has(String(course.id)) && (!query || (course.title ?? '').toLowerCase().includes(query)))
-            // Sorted before the cap, so the visible rows are the first N by title rather than an arbitrary N: the server
-            // returns an unordered set, and the fallback store's order is whatever the pages visited happened to produce.
-            // Untitled courses sort last, being the least useful thing to spend one of the rows on.
+            // Sorted before the cap, so the visible rows are the first N rather than an arbitrary N: the server returns
+            // past courses too, in no particular order, and the fallback store's order is whatever the pages visited
+            // happened to produce. Active courses come first, so a past course only takes a row when no active one
+            // matches what was typed; within each group, untitled courses sort last, being the least useful thing to
+            // spend one of the rows on.
             .sort((a, b) => {
+                const activeA = a.active !== false;
+                if (activeA !== (b.active !== false)) {
+                    return activeA ? -1 : 1;
+                }
                 const titleA = a.title ?? '';
                 const titleB = b.title ?? '';
-                if (!titleA !== !titleB) {
+                if ((titleA === '') !== (titleB === '')) {
                     // An untitled course renders as its fallback label, so it is the least useful row to spend one of the
                     // capped slots on. Comparing the empty title directly would sort it first, since '' precedes every name.
                     return titleA ? -1 : 1;

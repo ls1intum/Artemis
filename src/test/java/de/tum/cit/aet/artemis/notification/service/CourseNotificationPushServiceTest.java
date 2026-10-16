@@ -67,8 +67,8 @@ class CourseNotificationPushServiceTest {
     }
 
     private List<CourseNotificationRecipientDTO> createTestRecipients() {
-        var user1 = new CourseNotificationRecipientDTO(1L, "user1", null, null, null, null);
-        var user2 = new CourseNotificationRecipientDTO(2L, "user2", null, null, null, null);
+        var user1 = new CourseNotificationRecipientDTO(1L, "user1", null, null, null, null, false);
+        var user2 = new CourseNotificationRecipientDTO(2L, "user2", null, null, null, null, false);
         return List.of(user1, user2);
     }
 }

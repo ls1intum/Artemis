@@ -1,0 +1,43 @@
+---
+# Local OpenAI-compatible embedding server for global search (CPU is enough for development).
+# Start it next to deployment/docker/weaviate.yml:
+#   docker compose -f ollama-embeddings.yml up -d
+# The ollama-pull service downloads the model once into the volume and then exits.
+# Artemis configuration: see documentation/docs/developer/weaviate-setup.mdx
+#   vectorizer-module: text2vec-openai
+#   open-ai-base-url: http://localhost:11434
+#   open-ai-embedding-model: qwen3-embedding:0.6b
+#   gpu-api-key: ollama
+
+services:
+  ollama:
+    container_name: artemis-ollama
+    image: docker.io/ollama/ollama:${OLLAMA_VERSION:-0.40.3}
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    environment:
+      # Keep the model in memory; by default Ollama unloads it after 5 idle minutes and the next search waits for the reload.
+      OLLAMA_KEEP_ALIVE: "-1"
+    volumes:
+      - artemis-ollama:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: on-failure:3
+
+  ollama-pull:
+    container_name: artemis-ollama-pull
+    image: docker.io/ollama/ollama:${OLLAMA_VERSION:-0.40.3}
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: ["ollama", "pull", "${OLLAMA_EMBEDDING_MODEL:-qwen3-embedding:0.6b}"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  artemis-ollama:
+    name: artemis-ollama

@@ -363,7 +363,7 @@ export class ProblemStatementSyncService {
                 }
                 // Tie-breaker: lexicographically smaller sessionId wins for determinism
                 return (next.sessionId ?? '') < (best.sessionId ?? '') ? next : best;
-            });
+            }, responses[0]);
             const update = decodeBase64ToUint8Array(selected.yjsUpdate);
             if (this.yDoc) {
                 Y.applyUpdate(this.yDoc, update, ProblemStatementSyncOrigin.Remote);

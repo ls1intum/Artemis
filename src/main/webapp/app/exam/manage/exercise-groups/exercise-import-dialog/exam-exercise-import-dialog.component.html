@@ -1,0 +1,21 @@
+@if (visible()) {
+    <tumaet-ui-dialog [(visible)]="visible" [header]="headerKey() | artemisTranslate" size="large">
+        @if (fromFileAvailable()) {
+            <tumaet-ui-tabs class="mb-4" [value]="activeTab()" (valueChange)="selectTab($event)" data-testid="exercise-import-tabs">
+                <tumaet-ui-tab-list>
+                    <tumaet-ui-tab value="existing">
+                        <span jhiTranslate="artemisApp.exercise.import.tabTitle"></span>
+                    </tumaet-ui-tab>
+                    <tumaet-ui-tab value="file">
+                        <span jhiTranslate="artemisApp.exercise.importFromFile.tabTitle"></span>
+                    </tumaet-ui-tab>
+                </tumaet-ui-tab-list>
+            </tumaet-ui-tabs>
+        }
+        @if (activeTab() === 'existing') {
+            <jhi-exercise-import [exerciseType]="exerciseType()" (selected)="imported.emit($event)" />
+        } @else {
+            <jhi-exercise-import-from-file [exerciseType]="exerciseType()" (imported)="imported.emit($event)" />
+        }
+    </tumaet-ui-dialog>
+}

@@ -2,9 +2,9 @@
 @if (currentUser(); as currentUser) {
     <tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.vcsAccessTokenSettings' | artemisTranslate">
         <li tumAetUiListItem>
-            <dt>
+            <p class="mb-0 font-medium">
                 <span jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.infoText"></span>
-            </dt>
+            </p>
         </li>
         @if (!edit()) {
             <li tumAetUiListItem>
@@ -69,14 +69,17 @@
                 <h4 jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.addTokenTitle"></h4>
 
                 <div class="mb-3 sm:w-1/2">
-                    <jhi-date-time-picker
-                        [shouldDisplayTimeZoneWarning]="false"
-                        labelName="{{ 'artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate' | artemisTranslate }}"
-                        [(ngModel)]="expiryDate"
-                        (valueChange)="validateDate()"
-                        [error]="!!expiryDate && !validExpiryDate()"
-                        name="expiryDate"
+                    <tumaet-ui-date-picker
                         id="expiryDate"
+                        inputId="vcs-token-expiry-date"
+                        [min]="earliestExpiryDay"
+                        [max]="latestExpiryDay"
+                        [shouldDisplayTimeZoneWarning]="false"
+                        labelName="artemisApp.userSettings.vcsAccessTokensSettingsPage.expiryDate"
+                        [value]="expiryDate()"
+                        [invalid]="!!expiryDate() && !validExpiryDate()"
+                        (valueChange)="onExpiryDateChange($event)"
+                        (inputValidityChange)="onExpiryTextValidityChange($event)"
                     />
                 </div>
 

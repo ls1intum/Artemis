@@ -28,6 +28,18 @@ skills into an instruction file: imports load at startup rather than on demand. 
 [Agent Skills specification](https://agentskills.io/specification) and
 [Codex skill documentation](https://developers.openai.com/codex/skills) for discovery behavior.
 
+## Preparing Pull Requests with an Agent
+
+Coding agents follow the same [PR readiness requirements](/developer/development-process#pull-request-readiness)
+as human authors. When creating or updating a PR, have the agent clean up the template, check only work
+actually completed, remove inapplicable tasks and empty sections, and set the intended release milestone.
+Applicable review tasks remain unchecked until the reviews or tests take place. Keep the draft state and
+**ready for review** / **ready to merge** labels accurate after updates.
+
+An agent must not invent test results, reviewer approvals or a release target. If it cannot edit PR
+metadata or determine the milestone, it reports the missing action and requests maintainer help.
+The shared rules in `AGENTS.md` make this part of every PR task, independent of the implementation skill.
+
 ## Installing
 
 ### Skills CLI
@@ -78,7 +90,7 @@ not `.agents/skills/`. Use `npx skills list --agent codex` to check discovery.
 
 | Skill                                                                                                         | Use it when                                                           |
 | ------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| [`e2e-pr-check`](https://github.com/ls1intum/Artemis/blob/develop/skills/e2e-pr-check/SKILL.md)               | You need to select, run or debug Playwright tests                     |
+| [`e2e-pr-check`](https://github.com/ls1intum/Artemis/blob/develop/skills/e2e-pr-check/SKILL.md)               | You need to select, run, write or debug Playwright tests              |
 | [`ci-triage`](https://github.com/ls1intum/Artemis/blob/develop/skills/ci-triage/SKILL.md)                     | A pull request is red, or a check never appeared                      |
 | [`server-arch-gates`](https://github.com/ls1intum/Artemis/blob/develop/skills/server-arch-gates/SKILL.md)     | You changed server Java or need to diagnose an ArchUnit violation     |
 | [`liquibase-migration`](https://github.com/ls1intum/Artemis/blob/develop/skills/liquibase-migration/SKILL.md) | You are adding, changing, or dropping anything in the database schema |

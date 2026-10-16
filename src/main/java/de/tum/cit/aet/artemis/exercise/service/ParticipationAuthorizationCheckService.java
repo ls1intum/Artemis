@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -70,6 +71,27 @@ public class ParticipationAuthorizationCheckService {
         this.submissionRepository = submissionRepository;
         this.studentExamApi = studentExamApi;
         this.studentParticipationRepository = studentParticipationRepository;
+    }
+
+    /**
+     * Whether authorized course staff may see participant identities and identifying repository metadata.
+     * Callers must check access to the exercise separately.
+     *
+     * @param exercise the exercise being accessed
+     * @return whether the current user may see identities
+     */
+    public boolean canSeeParticipantInformation(Exercise exercise) {
+        return authCheckService.isAtLeastInstructorForExercise(exercise) || !exerciseDateService.isAssessmentAnonymizationActive(exercise);
+    }
+
+    /**
+     * Keeps an owner's direct access to their own data during anonymous assessment.
+     *
+     * @param participation the participation being accessed
+     * @return whether the current user may see its identifying data
+     */
+    public boolean canSeeParticipantInformation(StudentParticipation participation) {
+        return authCheckService.isOwnerOfParticipation(participation) || canSeeParticipantInformation(participation.getExercise());
     }
 
     /**
@@ -182,7 +204,7 @@ public class ParticipationAuthorizationCheckService {
 
         // if the user is not the owner of the participation, the user can only see it in case they are
         // a teaching assistant, an editor or an instructor of the course, or in case they are an admin
-        final Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        final Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMemberElseThrow();
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
     }
 

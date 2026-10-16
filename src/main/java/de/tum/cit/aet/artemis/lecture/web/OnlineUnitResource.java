@@ -6,6 +6,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -123,6 +124,10 @@ public class OnlineUnitResource {
         Set<Long> originalCompetencyIds = existingOnlineUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
                 .collect(Collectors.toSet());
 
+        // Snapshot the content-bearing fields before the update so the Atlas content-changed event only fires on a real edit.
+        String previousDescription = existingOnlineUnit.getDescription();
+        String previousSource = existingOnlineUnit.getSource();
+
         // copy all attributes
         existingOnlineUnit.setDescription(onlineUnitDto.description());
         existingOnlineUnit.setSource(onlineUnitDto.source());
@@ -139,6 +144,11 @@ public class OnlineUnitResource {
         if (competencyProgressApi.isPresent()) {
             // NOTE: this can be a very expensive operation, depending on how many users have progress for this learning object
             competencyProgressApi.get().updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, existingOnlineUnit);
+        }
+
+        // Notify the Atlas auto-orchestration pipeline only when the learning-relevant content (description or source) actually changed.
+        if (!Objects.equals(previousDescription, savedOnlineUnit.getDescription()) || !Objects.equals(previousSource, savedOnlineUnit.getSource())) {
+            lectureUnitService.publishContentChangedEvent(savedOnlineUnit);
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {
@@ -191,6 +201,9 @@ public class OnlineUnitResource {
         onlineUnitRepository.save(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
+        // A newly created online unit carries learning-relevant content (a required source, optionally a description); notify the pipeline.
+        lectureUnitService.publishContentChangedEvent(persistedUnit);
+
         searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
                 service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
@@ -202,7 +215,14 @@ public class OnlineUnitResource {
         return ResponseEntity.created(new URI("/api/online-units/" + persistedUnit.getId())).body(OnlineUnitDTO.of(persistedUnit));
     }
 
-    private static final Pattern DOMAIN_PATTERN = Pattern.compile("^(?=.{1,253}$)(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\\.(?!-)[A-Za-z0-9-]{1,63}(?<!-))*\\.[A-Za-z]{2,}$");
+    private static final int MAX_DOMAIN_LENGTH = 253;
+
+    private static final Pattern LINE_BREAK_PATTERN = Pattern.compile("[\\r\\n]");
+
+    /** A single DNS label: 1 to 63 letters, digits or hyphens, neither starting nor ending with a hyphen. */
+    private static final Pattern DOMAIN_LABEL_PATTERN = Pattern.compile("[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?");
+
+    private static final Pattern TOP_LEVEL_DOMAIN_PATTERN = Pattern.compile("[A-Za-z]{2,}");
 
     private static boolean isValidDomain(String host) {
         if (host == null || host.isBlank()) {
@@ -215,9 +235,29 @@ public class OnlineUnitResource {
         }
 
         // Convert to ASCII (punycode) for IDN safety
-        String asciiHost = IDN.toASCII(host);
+        String asciiHost;
+        try {
+            asciiHost = IDN.toASCII(host);
+        }
+        catch (IllegalArgumentException e) {
+            // an empty label ("example..com") or a label longer than 63 characters cannot be converted
+            return false;
+        }
 
-        return DOMAIN_PATTERN.matcher(asciiHost).matches();
+        if (asciiHost.length() > MAX_DOMAIN_LENGTH) {
+            return false;
+        }
+
+        String[] labels = asciiHost.split("\\.", -1);
+        if (labels.length < 2 || !TOP_LEVEL_DOMAIN_PATTERN.matcher(labels[labels.length - 1]).matches()) {
+            return false;
+        }
+        for (String label : labels) {
+            if (!DOMAIN_LABEL_PATTERN.matcher(label).matches()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -240,7 +280,7 @@ public class OnlineUnitResource {
             throw new BadRequestException("The specified link does not contain a valid domain");
         }
 
-        log.info("Requesting online resource at {}", url);
+        log.info("Requesting online resource at {}", LINE_BREAK_PATTERN.matcher(url.toString()).replaceAll("_"));
 
         try {
             // Request the document, limited to 3 seconds and 500 KB (enough for most websites)

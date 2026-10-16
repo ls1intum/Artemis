@@ -26,6 +26,7 @@
                         <input
                             tumAetUiInput
                             id="lectureTitleInput"
+                            [attr.aria-label]="'artemisApp.lecture.pdfUpload.lectureTitle' | artemisTranslate"
                             type="text"
                             required
                             [value]="newLectureTitle()"

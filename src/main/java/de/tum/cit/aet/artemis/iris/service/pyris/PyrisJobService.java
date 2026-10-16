@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -9,6 +12,8 @@ import java.util.function.Supplier;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -23,6 +28,8 @@ import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.dto.IrisStruggleInterventionRequestDTO;
+import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
@@ -31,6 +38,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.StruggleInterventionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitProcessingStateRepositoryApi;
 
 /**
  * The PyrisJobService class is responsible for managing Pyris jobs in the Artemis system.
@@ -44,6 +52,8 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 @Conditional(IrisEnabled.class)
 public class PyrisJobService {
 
+    private static final Logger log = LoggerFactory.getLogger(PyrisJobService.class);
+
     private static final String PYRIS_JOB_MAP_NAME = "pyris-job-map";
 
     private static final String CHAT_JOB_CLIENT_ID_MAP_NAME = "pyris-chat-job-client-id-map";
@@ -55,6 +65,10 @@ public class PyrisJobService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final DistributedDataProvider distributedDataProvider;
+
+    private final Optional<LectureUnitProcessingStateRepositoryApi> processingStateRepositoryApi;
+
+    private final IrisLectureMaterialVersionService materialVersionService;
 
     @Nullable
     private DistributedMap<String, PyrisJob> jobMap;
@@ -82,9 +96,12 @@ public class PyrisJobService {
 
     private final IrisProactiveProperties proactiveProperties;
 
-    public PyrisJobService(DistributedDataProvider distributedDataProvider, IrisProactiveProperties proactiveProperties) {
+    public PyrisJobService(DistributedDataProvider distributedDataProvider, Optional<LectureUnitProcessingStateRepositoryApi> processingStateRepositoryApi,
+            IrisProactiveProperties proactiveProperties, IrisLectureMaterialVersionService materialVersionService) {
         this.distributedDataProvider = distributedDataProvider;
+        this.processingStateRepositoryApi = processingStateRepositoryApi;
         this.proactiveProperties = proactiveProperties;
+        this.materialVersionService = materialVersionService;
     }
 
     /**
@@ -428,6 +445,38 @@ public class PyrisJobService {
     }
 
     /**
+     * Captures the material a global search answer may cite, before its request is dispatched to Pyris, so that continuing the answer in the chat pins its citations to
+     * the material the answer was written from, as a chat run does.
+     *
+     * @param userLogin the login of the user who initiated the search
+     * @param runId     the global search answer run
+     * @param courseIds the courses the answer is scoped to
+     */
+    public void captureGlobalSearchMaterialVersions(String userLogin, String runId, Collection<Long> courseIds) {
+        materialVersionService.captureForGlobalSearch(runId, userLogin, courseIds);
+    }
+
+    /**
+     * Removes a finished global search answer job. An answer that can be continued in the chat keeps the material versions of the lecture units it cites; any other
+     * ending drops them.
+     *
+     * @param job       the finished job
+     * @param sources   the lecture sources of the answer
+     * @param hasAnswer whether the run ended with an answer that can be continued in the chat
+     */
+    public void finishGlobalSearchAnswerJob(GlobalSearchAnswerJob job, @Nullable List<PyrisLectureSearchResultDTO> sources, boolean hasAnswer) {
+        var citedSources = sources == null ? List.<PyrisLectureSearchResultDTO>of()
+                : sources.stream().filter(Objects::nonNull).filter(source -> source.lectureUnit() != null && source.course() != null).toList();
+        if (hasAnswer && !citedSources.isEmpty()) {
+            materialVersionService.keepCitedForGlobalSearch(job.jobId(), job.userLogin(), citedSources.stream().map(source -> source.lectureUnit().id()).toList());
+        }
+        else {
+            materialVersionService.removeGlobalSearch(job.jobId(), job.userLogin());
+        }
+        removeJob(job);
+    }
+
+    /**
      * Adds a new lecture ingestion webhook job to the job map with a timeout.
      *
      * @param courseId      the ID of the course associated with the webhook job
@@ -465,7 +514,19 @@ public class PyrisJobService {
         getPyrisJobMap().remove(job.jobId());
         if (job instanceof ChatJob) {
             getChatJobClientIdMap().remove(job.jobId());
+            materialVersionService.remove(job.jobId());
         }
+    }
+
+    /**
+     * Remove a job from the job map by its token alone, for a caller that registered the job but never
+     * built (or no longer holds) the {@link PyrisJob} object itself — e.g. releasing a prepared job whose
+     * claim lapsed before it could be handed to a worker.
+     *
+     * @param token the job token to remove
+     */
+    public void removeJobByToken(String token) {
+        getPyrisJobMap().remove(token);
     }
 
     /**
@@ -478,6 +539,7 @@ public class PyrisJobService {
         int ttl = (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob) ? ingestionJobTimeout : jobTimeout;
         getPyrisJobMap().put(job.jobId(), job, Duration.ofSeconds(ttl));
         if (job instanceof ChatJob) {
+            materialVersionService.refresh(job.jobId());
             var clientId = getChatJobClientIdMap().get(job.jobId());
             if (clientId != null) {
                 getChatJobClientIdMap().put(job.jobId(), clientId, Duration.ofSeconds(ttl));
@@ -536,12 +598,34 @@ public class PyrisJobService {
         var token = authHeader.substring(7);
         var job = getJob(token);
         if (job == null) {
+            job = recoverIngestionJobFromDatabase(token);
+        }
+        if (job == null) {
             throw new AccessForbiddenException("No valid token provided");
         }
         if (!jobClass.isInstance(job)) {
             throw new ConflictException("Run ID is not a " + jobClass.getSimpleName(), "Job", "invalidRunId");
         }
         return jobClass.cast(job);
+    }
+
+    /**
+     * Reconstruct a lecture ingestion job from the processing state that still carries its token.
+     * <p>
+     * The distributed job map entry expires after a TTL, but an ingestion run can legitimately outlive it.
+     * The processing state row keeps the token for as long as the job is in flight, so a late callback for a
+     * job Artemis still tracks is authenticated against the database instead of being rejected with a 403.
+     * A token that was already cleared (job superseded, recovered, or completed) stays invalid.
+     *
+     * @param token the token from the callback's Authorization header
+     * @return the reconstructed job, or null if no processing state carries this token
+     */
+    @Nullable
+    private PyrisJob recoverIngestionJobFromDatabase(String token) {
+        return processingStateRepositoryApi.flatMap(api -> api.findIngestionJobIdentityByToken(token)).map(identity -> {
+            log.info("Authenticated ingestion callback for unit {} from the processing state after job map expiry", identity.lectureUnitId());
+            return (PyrisJob) new LectureIngestionWebhookJob(token, identity.courseId(), identity.lectureId(), identity.lectureUnitId());
+        }).orElse(null);
     }
 
     /**

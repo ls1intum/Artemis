@@ -233,6 +233,14 @@ public class ScaFeedback extends DomainObject {
         return ScaFeedback.class.hashCode();
     }
 
+    /**
+     * Id-based equality as inherited from {@link DomainObject}; declared here so that it is visibly paired with the constant {@link #hashCode()}.
+     */
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+
     @Override
     public String toString() {
         return "ScaFeedback{id=" + getId() + ", tool=" + tool + ", rule='" + rule + "', filePath='" + filePath + "'}";

@@ -284,9 +284,6 @@ public final class SecurityUtils {
             return Role.ANONYMOUS;
         }
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        if (authorities == null) {
-            return Role.ANONYMOUS;
-        }
         int highest = ROLES_BY_PRECEDENCE.length;
         for (GrantedAuthority granted : authorities) {
             String authority = granted.getAuthority();

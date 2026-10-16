@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
@@ -9,10 +10,13 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.localci.exception.DockerImagePullException;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
 class SharedQueueProcessingServiceTest {
+
+    private static final ZonedDateTime SUBMISSION_DATE = ZonedDateTime.parse("2026-01-01T00:00:00Z");
 
     @Test
     void shouldPublishCurrentAttempt() {
@@ -82,6 +86,7 @@ class SharedQueueProcessingServiceTest {
     }
 
     private BuildJobQueueItem buildJob(int retryCount, BuildStatus status, String agentName) {
-        return new BuildJobQueueItem("job-1", "job", new BuildAgentDTO(agentName, "address", agentName), 1, 2, 3, retryCount, 1, status, null, null, null, null);
+        return new BuildJobQueueItem("job-1", "job", new BuildAgentDTO(agentName, "address", agentName), 1, 2, 3, retryCount, 1, status, null,
+                new JobTimingInfo(SUBMISSION_DATE, null, null, null, 0), null, null);
     }
 }

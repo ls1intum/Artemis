@@ -35,7 +35,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -62,6 +61,9 @@ import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRep
 import de.tum.cit.aet.artemis.lecture.test_repository.LectureTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -96,6 +98,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private ExamUtilService examUtilService;
 
     @Autowired
+    private QuizExerciseUtilService quizExerciseUtilService;
+
+    @Autowired
     private ConversationUtilService conversationUtilService;
 
     @Autowired
@@ -107,8 +112,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void initTestCase() {
         irisRequestMockProvider.enableMockingOfRequests();
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
-        }, ExpectedCount.manyTimes());
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
     }
@@ -791,4 +794,13 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         return attachment;
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetDragAndDropBackgroundFile_questionWithoutBackground_notFound() throws Exception {
+        var quiz = quizExerciseUtilService.createAndSaveEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1), QuizMode.INDIVIDUAL);
+        var dndQuestion = quiz.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast).findFirst().orElseThrow();
+        assertThat(dndQuestion.getBackgroundFilePath()).isNull();
+
+        request.get("/api/core/files/drag-and-drop/questions/" + dndQuestion.getId() + "/backgrounds/background.png", HttpStatus.NOT_FOUND, byte[].class);
+    }
 }

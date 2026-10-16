@@ -112,7 +112,7 @@
             <div class="justify-content-center">
                 <div class="row">
                     <!-- loading messages -->
-                    @if (isFetchingPosts()) {
+                    @if (isFetchingPosts() && posts().length === 0) {
                         <div class="envelope">
                             <fa-icon size="3x" [icon]="faCircleNotch" animation="spin" />
                         </div>
@@ -130,9 +130,10 @@
                     <div
                         id="scrollableDiv"
                         #container
-                        [ngClass]="{ 'posting-infinite-scroll-container': posts().length !== 0, 'is-fetching-posts': isFetchingPosts() }"
+                        [ngClass]="{ 'posting-infinite-scroll-container': posts().length !== 0, 'is-fetching-posts': isFetchingPosts() && posts().length === 0 }"
                         infinite-scroll
                         [scrollWindow]="false"
+                        [infiniteScrollDisabled]="isFetchingPosts() || posts().length >= totalNumberOfPosts()"
                         (scrolledUp)="fetchNextPage()"
                     >
                         <!-- list of all top level posts -->

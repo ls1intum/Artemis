@@ -412,7 +412,7 @@ public class AtlasMLService {
             return true;
         }
         catch (Exception e) {
-            final String opStr = operationType != null ? operationType.value().toLowerCase(Locale.ROOT) : "update";
+            final String opStr = operationType.value().toLowerCase(Locale.ROOT);
             log.error("Failed to {} {} competencies", opStr, competencies.size(), e);
             return false;
         }
@@ -440,7 +440,7 @@ public class AtlasMLService {
             return true;
         }
         catch (Exception e) {
-            final String opStr = operationType != null ? operationType.value().toLowerCase(Locale.ROOT) : "update";
+            final String opStr = operationType.value().toLowerCase(Locale.ROOT);
             log.error("Failed to {} exercise with id {}", opStr, exerciseId, e);
             return false;
         }

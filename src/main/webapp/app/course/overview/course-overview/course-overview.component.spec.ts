@@ -793,6 +793,7 @@ describe('CourseOverviewComponent', () => {
         type CourseOverviewInternals = {
             handleComponentActivation(componentRef: unknown): void;
             showCourseTitleBar(): boolean;
+            isolatedView(): boolean;
         };
         const internals = (): CourseOverviewInternals => component as unknown as CourseOverviewInternals;
 
@@ -826,6 +827,35 @@ describe('CourseOverviewComponent', () => {
 
             titleBarService.setActionsTemplate(undefined);
             expect(internals().showCourseTitleBar()).toBe(false);
+        });
+
+        it('should drop the course sidebar and title bar for a page that is shown on its own', () => {
+            // e.g. a text unit in full screen: only the main navbar and the footer remain around it
+            component.hasSidebar.set(false);
+            expect(internals().isolatedView()).toBe(false);
+            expect(internals().showCourseTitleBar()).toBe(true);
+
+            route.snapshot.firstChild!.data = { isolatedView: true };
+            internals().handleComponentActivation({});
+
+            expect(internals().isolatedView()).toBe(true);
+            expect(internals().showCourseTitleBar()).toBe(false);
+
+            route.snapshot.firstChild!.data = {};
+            internals().handleComponentActivation({});
+
+            expect(internals().isolatedView()).toBe(false);
+        });
+
+        it('should hide the course sidebar from the start when the page is opened directly in isolation', () => {
+            // a reload or shared link: the router outlet only activates once the course is loaded
+            route.snapshot.firstChild!.data = { isolatedView: true };
+
+            component.ngOnInit();
+            fixture.changeDetectorRef.detectChanges();
+
+            expect(internals().isolatedView()).toBe(true);
+            expect(fixture.nativeElement.querySelector('.sidebar').hidden).toBe(true);
         });
     });
 });

@@ -196,7 +196,6 @@
         <button
             type="button"
             tumAetUiButton
-            jhiDeleteButton
             data-testid="remove-student-button"
             severity="danger"
             variant="outlined"
@@ -204,18 +203,7 @@
             [tumAetUiTooltip]="'artemisApp.examManagement.examStudents.table.remove' | artemisTranslate"
             [attr.aria-label]="'artemisApp.examManagement.examStudents.table.remove' | artemisTranslate"
             [disabled]="isTestExam()"
-            [renderButtonStyle]="false"
-            [renderButtonText]="false"
-            [actionType]="ActionType.Remove"
-            [entityTitle]="examUser.login || ''"
-            deleteQuestion="artemisApp.examManagement.examStudents.removeFromExam.modalQuestion"
-            deleteConfirmationText="artemisApp.examManagement.examStudents.removeFromExam.typeNameToConfirm"
-            (delete)="removeFromExam(examUser, $event)"
-            [additionalChecks]="{
-                deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',
-            }"
-            [dialogError]="dialogError$"
-            [requireConfirmationOnlyForAdditionalChecks]="true"
+            (click)="openRemoveStudentDialog(examUser)"
         >
             <fa-icon [icon]="faUserMinus" />
         </button>
@@ -308,15 +296,18 @@
     <span data-testid="table-cell" [attr.data-column]="cell.col.field" class="block">
         @if (attendanceCheckFailed(dto)) {
             <div [title]="'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate">
-                <fa-icon [icon]="faTimes" size="2x" class="text-state-danger" />
+                <fa-icon [icon]="faTimes" size="2x" class="text-state-danger" aria-hidden="true" />
+                <span class="sr-only">{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}</span>
             </div>
         } @else if (attendanceCheckPassed(dto)) {
             <div [title]="'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate">
-                <fa-icon [icon]="faCheck" size="2x" class="text-state-success" />
+                <fa-icon [icon]="faCheck" size="2x" class="text-state-success" aria-hidden="true" />
+                <span class="sr-only">{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}</span>
             </div>
         } @else if (didNotAttendExam(dto)) {
             <div [title]="'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate">
-                <fa-icon [icon]="faUserTimes" size="2x" />
+                <fa-icon [icon]="faUserTimes" size="2x" aria-hidden="true" />
+                <span class="sr-only">{{ 'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate }}</span>
             </div>
         }
     </span>
@@ -368,5 +359,26 @@
     [searchFn]="searchUsersForExamFn"
     [registerFn]="registerUsersForExamFn"
     (registered)="reloadStudentsView()"
+/>
+<jhi-exam-delete-dialog
+    [(visible)]="removeStudentDialogVisible"
+    [actionType]="ActionType.Remove"
+    [entityTitle]="studentToRemove()?.login || ''"
+    deleteQuestion="artemisApp.examManagement.examStudents.removeFromExam.modalQuestion"
+    deleteConfirmationText="artemisApp.examManagement.examStudents.removeFromExam.typeNameToConfirm"
+    [additionalChecks]="removeStudentChecks"
+    [requireConfirmationOnlyForAdditionalChecks]="true"
+    [dialogError]="dialogError$"
+    (confirmed)="removeFromExam(studentToRemove()!, $event)"
+/>
+<jhi-exam-delete-dialog
+    [(visible)]="removeAllDialogVisible"
+    [actionType]="ActionType.Remove"
+    [entityTitle]="exam().title || ''"
+    deleteQuestion="artemisApp.studentExams.removeAllStudents.question"
+    deleteConfirmationText="artemisApp.studentExams.removeAllStudents.confirmationText"
+    [additionalChecks]="removeStudentChecks"
+    [dialogError]="dialogError$"
+    (confirmed)="removeAllStudents($event)"
 />
 <tumaet-ui-confirm-dialog />

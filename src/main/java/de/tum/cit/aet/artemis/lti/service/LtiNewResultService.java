@@ -26,7 +26,12 @@ public class LtiNewResultService {
      */
     @Async
     public void onNewResult(StudentParticipation participation) {
-        if (!participation.getExercise().getCourseViaExerciseGroupOrCourseMember().isOnlineCourse()) {
+        var exercise = participation.getExercise();
+        if (exercise == null) {
+            return;
+        }
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        if (course == null || !course.isOnlineCourse()) {
             return;
         }
         lti13Service.onNewResult(participation);

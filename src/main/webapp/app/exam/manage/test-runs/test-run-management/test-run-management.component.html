@@ -107,13 +107,9 @@
                                                 tumAetUiButton
                                                 severity="danger"
                                                 size="small"
-                                                jhiDeleteButton
                                                 data-testid="test-run-delete"
-                                                [entityTitle]="'artemisApp.examManagement.testRun.testRun' | artemisTranslate"
-                                                deleteQuestion="artemisApp.examManagement.testRun.delete.question"
-                                                deleteConfirmationText="artemisApp.examManagement.testRun.delete.typeNameToConfirm"
-                                                (delete)="deleteTestRun(testRun.id)"
-                                                [dialogError]="dialogError$"
+                                                [attr.aria-label]="'entity.action.delete' | artemisTranslate"
+                                                (click)="openDeleteDialog(testRun)"
                                             >
                                                 <fa-icon [icon]="faTimes" />
                                             </button>
@@ -130,4 +126,12 @@
     @if (createTestRunDialogVisible()) {
         <jhi-create-test-run-modal [exam]="exam()!" [(visible)]="createTestRunDialogVisible" (testRunCreate)="createTestRun($event)" />
     }
+    <jhi-exam-delete-dialog
+        [(visible)]="deleteDialogVisible"
+        [entityTitle]="'artemisApp.examManagement.testRun.testRun' | artemisTranslate"
+        deleteQuestion="artemisApp.examManagement.testRun.delete.question"
+        deleteConfirmationText="artemisApp.examManagement.testRun.delete.typeNameToConfirm"
+        [dialogError]="dialogError$"
+        (confirmed)="deleteTestRun(testRunToDelete()!.id!)"
+    />
 </div>
