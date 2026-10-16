@@ -17,7 +17,7 @@
         </p>
     }
     <section aria-labelledby="hyperion-active-generations-title" class="flex flex-col gap-3">
-        <h2 id="hyperion-active-generations-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.hyperion.workers.activeRuns"></h2>
+        <h2 id="hyperion-active-generations-title" class="m-0 text-lg font-semibold">{{ 'artemisApp.hyperion.workers.activeRuns' | artemisTranslate }}</h2>
         <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.workers.cancelHint"></p>
         @if (updatedAt() && !generations().length && !failed()) {
             <p data-testid="hyperion-no-active-runs" jhiTranslate="artemisApp.hyperion.workers.noActiveRuns"></p>
