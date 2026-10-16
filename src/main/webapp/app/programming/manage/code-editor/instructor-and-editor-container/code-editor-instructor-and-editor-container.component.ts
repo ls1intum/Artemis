@@ -351,9 +351,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly generationLink = computed(() => {
         const exerciseId = this.exercise()?.id;
         const courseId = this.exercise()?.course?.id;
+        const jobId = this.generationActivity.jobId();
+        const runId = jobId !== undefined && this.generationActivity.ownedByCaller() ? jobId : 'latest';
         return exerciseId !== undefined && courseId !== undefined
             ? this.reviewRouter.createUrlTree([], {
-                  queryParams: { aiRun: `authoring:${exerciseId}:${this.generationActivity.jobId() ?? 'latest'}` },
+                  queryParams: { aiRun: `authoring:${exerciseId}:${runId}` },
                   queryParamsHandling: 'merge',
               })
             : undefined;

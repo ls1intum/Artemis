@@ -187,6 +187,8 @@ function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
                 generationCompleted: new Subject(),
                 generationReverted: new Subject(),
                 exerciseContentsInvalidated: new Subject(),
+                jobId: signal<string | undefined>(undefined),
+                ownedByCaller: signal(true),
                 running: signal(false),
                 statusLoading: signal(false),
                 statusLoadFailed: signal(false),
@@ -1525,7 +1527,14 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         attachToJob = vi.fn();
         openEditorBottomPanel = vi.fn();
         setCodeEditorContainer(comp, { ...createDefaultContainerStub(), openEditorBottomPanel });
-        (comp as any).generationActivity = { jobId: () => undefined, attachToJob, running: () => false, statusLoading: () => false, statusLoadFailed: () => false };
+        (comp as any).generationActivity = {
+            jobId: signal<string | undefined>(undefined),
+            ownedByCaller: signal(true),
+            attachToJob,
+            running: signal(false),
+            statusLoading: () => false,
+            statusLoadFailed: () => false,
+        };
     });
 
     afterEach(() => {
@@ -1567,10 +1576,24 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         expect((comp as any).legacyCodeGenerationBlockedReason()).toBeUndefined();
     });
 
-    it('opens the exact current run rather than resolving a later latest run', () => {
-        (comp as any).generationActivity = { jobId: () => 'job-target', running: () => true, statusLoading: () => false, statusLoadFailed: () => false };
-        (comp as any).generationLink();
+    it.each([true, false])("opens the owner's exact run when running=%s", (running) => {
+        comp['generationActivity'].jobId.set('job-target');
+        comp['generationActivity'].ownedByCaller.set(true);
+        comp['generationActivity'].running.set(running);
+
+        comp['generationLink']();
+
         expect(TestBed.inject(Router).createUrlTree).toHaveBeenCalledWith([], { queryParams: { aiRun: 'authoring:42:job-target' }, queryParamsHandling: 'merge' });
+    });
+
+    it.each([true, false])('opens the authorized latest view for a non-owner when running=%s', (running) => {
+        comp['generationActivity'].jobId.set('another-editors-job');
+        comp['generationActivity'].ownedByCaller.set(false);
+        comp['generationActivity'].running.set(running);
+
+        comp['generationLink']();
+
+        expect(TestBed.inject(Router).createUrlTree).toHaveBeenCalledWith([], { queryParams: { aiRun: 'authoring:42:latest' }, queryParamsHandling: 'merge' });
     });
 
     it('allows a variant of a released source without allowing in-place adaptation', () => {

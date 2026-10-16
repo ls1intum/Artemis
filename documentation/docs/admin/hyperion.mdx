@@ -589,20 +589,22 @@ Hyperion uses the same startup module condition as Iris and Athena, not an
 administrator-switchable runtime feature toggle. Core configuration and the
 `activeModuleFeatures` reported to the client use the same condition:
 
-| Node and settings                                                | What happens                                                                                                                       |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| Core with both settings false                                    | No Hyperion tools or generation. Distributed mutation guards remain active.                                                        |
-| Core with only `artemis.hyperion.enabled=true`                   | AI help for problem statements, quizzes, FAQs, and quiz variants. No programming exercise generation or worker connection.         |
-| Core with both settings true and profiles `core,localci,localvc` | All Hyperion tools plus programming exercise generation and AI Worker coordination. Worker and provider configuration is required. |
-| Writer with both Hyperion settings false                         | Protects repository writes against generation on another node. It does not load Hyperion tools or connect to AI Workers.           |
-| Core with both settings true but a required profile missing      | Generation stays off. Mutation guards still protect writes if this node is a repository writer.                                    |
+| Node and settings                                                | What happens                                                                                                                                                           |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Core with both settings false                                    | No Hyperion tools, generation, or cross-node Hyperion mutation coordination.                                                                                           |
+| Core with only `artemis.hyperion.enabled=true`                   | AI help for problem statements, quizzes, FAQs, and quiz variants. No programming exercise generation, worker connection, or cross-node Hyperion mutation coordination. |
+| Core with both settings true and profiles `core,localci,localvc` | All Hyperion tools plus programming exercise generation and AI Worker coordination. Worker and provider configuration is required.                                     |
+| Writer with both Hyperion settings false                         | Does not coordinate repository writes with generation on another node. Do not admit generation elsewhere until this writer enables the generation setting.             |
+| Core with both settings true but a required profile missing      | Generation stays off. Cross-node mutation coordination remains active if this node is a core or LocalVC writer.                                                        |
 
 The Administration > Features page shows AI authoring and programming exercise
 generation as separate module cards. Their status reports which features this
 core offers; it does not report worker capacity. A missing ready worker or a
 full worker returns `503 generationCapacityUnavailable` without changing the
-status. On a writer-only node, the mutation guard can be active even though
-the generation card is inactive.
+status. A core or LocalVC writer participates in cross-node mutation coordination
+only when `artemis.hyperion.exercise-generation.enabled=true`, even if its
+generation card is inactive. Set this flag on every writer before admitting
+generation on any node.
 
 The standalone worker is a separate process of the normal Artemis WAR, not an additional core
 profile. It uses the normal Artemis component scan, with profiles and feature
