@@ -523,6 +523,10 @@ If a core process dies during saving or undo, confirm that its JVM is stopped,
 not merely disconnected. Inspect all affected repository heads, exercise metadata,
 and grading state. Resolve incomplete writes before admitting another Hyperion
 operation. Do not retry saving automatically after a crash.
+Before releasing the exact reservation token, stop or drain generation execution
+and build-result processing on all affected core nodes, as well as the worker.
+A result callback can still update test cases on another core after the original
+generation core has stopped.
 
 A stale authoring heartbeat requests cancellation but does not release the
 exercise reservation. Before manually releasing it, confirm that both the old
