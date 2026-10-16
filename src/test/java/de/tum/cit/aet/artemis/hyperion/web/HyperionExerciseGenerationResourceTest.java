@@ -358,11 +358,15 @@ class HyperionExerciseGenerationResourceTest {
         when(userRepository.getUserWithAuthorities()).thenReturn(testUser);
         when(jobService.claimRevertSlot(testUser, 1L)).thenReturn("revert-slot");
         when(jobService.isRevertRecoveryRetry("revert-slot")).thenReturn(recovering);
+        when(generationRevertService.findRevertibleJobId(1L)).thenReturn(Optional.of("adapt-job"));
         when(generationRevertService.revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class))).thenReturn(Optional.empty());
 
         ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L, "adapt-job");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isNull();
+        verify(generationRevertService).revert(eq(testExercise), eq(testUser), any(BooleanSupplier.class));
+        verify(jobService, never()).discardRetainedRun(anyLong(), any());
         if (recovering) {
             verify(jobService, never()).clearRevertSlot(1L, "revert-slot");
             verify(jobService).retainRevertRecoverySlot(1L, "revert-slot");

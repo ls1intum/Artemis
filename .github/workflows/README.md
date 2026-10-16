@@ -42,18 +42,18 @@ ci.yml                                                            (single entry 
 │   ADVISORY — runs for signal, never blocks merge:
 ├── codeql          ── uses ci-codeql.yml         (Java + JS/TS security scan; non-fork; not gated)
 ├── coverage-report                 (internal PRs; posts the coverage table at ~test time; not a check, not gated)
+├── sonar           ── uses ci-sonar.yml          (develop pushes and internal PRs; needs a GREEN `test`; also dispatchable)
 │
 │   DEPLOY — develop only, never on a PR:
 ├── deploy-docs                  (publishes the docs to GitHub Pages; needs `docs`; job-level `pages` concurrency)
 ├── coverage-badge               (publishes the README coverage figure to the orphan `badges` branch; needs a GREEN `test`)
-├── sonar           ── uses ci-sonar.yml          (SonarQube Cloud grade; needs a GREEN `test`; also dispatchable standalone)
 │
 ├── all-required-ci-passed       (jq gate over the required jobs — excludes the advisory codeql/coverage-report — the required check)
 └── ci-summary                   (Gantt timeline + per-job table; informational)
 ```
 
-`ci-summary` is a second terminal job (`needs:` every required and advisory job, `if: always()`).
-The develop-only deploy jobs — `deploy-docs`, `coverage-badge`, `sonar` — are deliberately outside
+`ci-summary` is a second terminal job (`needs:` every required and advisory job, `if: ${{ !cancelled() }}`).
+The develop-only deploy jobs — `deploy-docs`, `coverage-badge` — and advisory `sonar` analysis are outside
 its `needs:`, so they never appear in its table and never hold it up. On the run's
 **Summary** page it renders a per-job table (job · required/advisory · result), a failure-only
 local-fix table, and a Gantt timeline (`Kesin11/actions-timeline`) covering the reusable
@@ -130,6 +130,23 @@ context, so it never needs touching again.
   hand-rolled cancellation workaround for queue-stacking. Keep E2E a direct `needs:` edge.
 - **Stable required check.** Branch protection requires exactly one job:
   `CI / All required CI Passed`. Renaming or adding child jobs does not require updating it.
+
+### Cancellation of superseded pull request runs
+
+The umbrella workflow groups runs by PR number and sets `cancel-in-progress` for pull requests.
+A new push cancels the previous revision so its E2E jobs release their self-hosted runners and the
+new revision can start.
+
+Jobs that must evaluate failed or skipped dependencies use `!cancelled()` in their job-level `if`,
+including Phase 2, the E2E reporter, coverage reporting, the required gate and the CI summary.
+This overrides the implicit `success()` check while allowing cancellation. Keep the explicit
+result checks that decide whether Phase 2 is eligible and whether required jobs passed.
+
+Do not use job-level `always()` for these jobs: GitHub re-evaluates job conditions during
+cancellation, and a true condition keeps the job alive. An obsolete Phase 2 can then wait hours
+for a runner while holding the PR concurrency slot and blocking the latest revision. Step-level
+`always()` is still appropriate for bounded cleanup and diagnostics inside a cancellable job.
+See [GitHub's cancellation reference](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-cancellation).
 
 ### Why `build_relevant` uses ignore-semantics
 
@@ -331,7 +348,7 @@ not reflect Spotless, Checkstyle, Modernizer, the ArchUnit rules, the custom ESL
 coverage floors, all of which are enforced here instead. Codacy's *coverage* figure is separately
 stale, which is why the coverage badge is self-hosted (see above).
 
-**SonarQube Cloud** runs from `ci-sonar.yml` on `develop` pushes, after a green `test`, importing the
+**SonarQube Cloud** runs from `ci-sonar.yml` on `develop` pushes and same-repository pull requests, after a green `test`, importing the
 `Server JaCoCo XML` and `Vitest Coverage Report` artifacts that job already uploaded — no suite is
 re-run. It serves five badges in the root `README.md`, straight from `sonarcloud.io/api/project_badges`
 for the `develop` branch: the **quality gate** (which judges the new code of the last 30 days: ratings,
@@ -341,6 +358,17 @@ whole-project values and has no badge for the new-code metrics, so the three rat
 open finding of the project, including the ones from before the new-code window, while the quality gate
 keeps new code at A. The reliability badge therefore trails the gate until the older bugs are fixed. The
 coverage badge stays the self-hosted one described above. Configuration lives in `gradle/sonar.gradle`.
+
+PR analysis uses the exact head commit and the PR number, source branch, and target branch.
+It does not set `sonar.branch.name`: a branch analysis is not a PR analysis. Fork PRs cannot
+receive `SONAR_TOKEN` and are skipped. Do not use `pull_request_target` to run fork code with
+that secret. The analysis parameters follow the
+[SonarQube Cloud parameter contract](https://docs.sonarsource.com/sonarqube-cloud/analyzing-source-code/analysis-parameters/parameters-not-settable-in-ui).
+
+A green required-CI check does not imply a clean Sonar result. Check that the Sonar job ran,
+that Sonar analysed the current commit, and that its quality gate passed. An empty issue list
+for a PR with no analysis is **unknown**, not a clean result. The `ci-triage` skill gives the
+read-only API queries for agents.
 
 Three things about it are worth knowing before changing it:
 

@@ -17,7 +17,7 @@ name: Sonar
 # it applies live in the quality gate the project is assigned in SonarQube Cloud, not in this file.
 
 # Two entry points on purpose:
-#   workflow_call     — from ci.yml on develop pushes, after a green `test`, importing its coverage.
+#   workflow_call     — from ci.yml on develop pushes and same-repository PRs, after a green `test`, importing its coverage.
 #   workflow_dispatch — standalone, to get a grade on demand without waiting out a full CI run
 #                       (~2 h with the e2e tail). Analyses the ref it is dispatched on. A manual run
 #                       has no `test` job of its own, so it imports the coverage of the latest
@@ -38,6 +38,21 @@ on:
           downloads and analyzes without coverage, which still yields the ratings and issue counts.
         required: true
         type: boolean
+      pull_request_key:
+        description: 'PR number, or empty for branch analysis.'
+        required: false
+        type: string
+        default: ''
+      pull_request_branch:
+        description: 'Source branch of a PR analysis.'
+        required: false
+        type: string
+        default: ''
+      pull_request_base:
+        description: 'Target branch of a PR analysis.'
+        required: false
+        type: string
+        default: ''
     secrets:
       SONAR_TOKEN:
         description: 'SonarQube Cloud analysis token for the ls1intum organization.'
@@ -70,6 +85,14 @@ jobs:
       contents: read
       actions: read  # lists the CI runs of the commit and downloads their coverage artifacts
     steps:
+      - name: Require analysis credentials
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [[ -z "$SONAR_TOKEN" ]]; then
+            echo "::error::Sonar analysis is unavailable: SONAR_TOKEN is missing. This is not a clean analysis result."
+            exit 1
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Undefined on a dispatched run, which declares no inputs; the dispatched ref is what we want.
@@ -212,4 +235,18 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           # Manual dispatches must not publish a feature branch as the main branch.
           SONAR_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-        run: ./gradlew compileJava sonar -x webapp "-Dsonar.branch.name=${SONAR_BRANCH_NAME}"
+          SONAR_PR_KEY: ${{ inputs.pull_request_key }}
+          SONAR_PR_BRANCH: ${{ inputs.pull_request_branch }}
+          SONAR_PR_BASE: ${{ inputs.pull_request_base }}
+        run: |
+          set -Eeuo pipefail
+          if [[ -n "$SONAR_PR_KEY" ]]; then
+            if [[ -z "$SONAR_PR_BRANCH" || -z "$SONAR_PR_BASE" ]]; then
+              echo "::error::PR analysis needs source and target branches"
+              exit 1
+            fi
+            analysis_args=("-Dsonar.pullrequest.key=$SONAR_PR_KEY" "-Dsonar.pullrequest.branch=$SONAR_PR_BRANCH" "-Dsonar.pullrequest.base=$SONAR_PR_BASE")
+          else
+            analysis_args=("-Dsonar.branch.name=$SONAR_BRANCH_NAME")
+          fi
+          ./gradlew compileJava sonar -x webapp "-Dsonar.scm.revision=$(git rev-parse HEAD)" "${analysis_args[@]}"

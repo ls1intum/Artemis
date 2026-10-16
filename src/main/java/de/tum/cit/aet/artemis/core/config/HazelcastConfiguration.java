@@ -1041,9 +1041,8 @@ public class HazelcastConfiguration {
      * Configures client identity and cluster name.
      *
      * <p>
-     * <strong>Instance Name:</strong> Uses the build agent's short name for identification
-     * in logs and management tools. Falls back to instance name + "-client" suffix if not
-     * configured.
+     * AI Workers use their required worker id with an {@code aiworker-} prefix. Build agents retain their short name,
+     * or the instance name with a {@code -client} suffix when no short name is configured.
      *
      * <p>
      * <strong>Cluster Name:</strong> In production mode ({@code spring.hazelcast.localInstances=false}),
@@ -1053,11 +1052,16 @@ public class HazelcastConfiguration {
      * @param clientConfig the client configuration to modify
      */
     private void configureClientIdentity(ClientConfig clientConfig) {
-        String buildAgentShortName = env.getProperty("artemis.continuous-integration.build-agent.short-name");
-        if (buildAgentShortName == null || buildAgentShortName.trim().isEmpty()) {
-            buildAgentShortName = instanceName + "-client";
+        if (env.acceptsProfiles(Profiles.of(PROFILE_AIWORKER))) {
+            clientConfig.setInstanceName("aiworker-" + env.getRequiredProperty("artemis.aiworker.id"));
         }
-        clientConfig.setInstanceName(buildAgentShortName);
+        else {
+            String buildAgentShortName = env.getProperty("artemis.continuous-integration.build-agent.short-name");
+            if (buildAgentShortName == null || buildAgentShortName.trim().isEmpty()) {
+                buildAgentShortName = instanceName + "-client";
+            }
+            clientConfig.setInstanceName(buildAgentShortName);
+        }
 
         if (!hazelcastLocalInstances) {
             clientConfig.setClusterName("prod");

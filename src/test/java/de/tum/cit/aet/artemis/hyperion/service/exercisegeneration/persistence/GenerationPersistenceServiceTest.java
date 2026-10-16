@@ -534,7 +534,10 @@ class GenerationPersistenceServiceTest {
 
         assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOfSatisfying(GenerationIncompleteException.class, failure -> {
             assertThat(failure.liveExerciseChanged()).isTrue();
-            assertThat(failure.savedRepositoryCommits()).containsEntry(RepositoryType.TEMPLATE, "hash-template");
+            assertThat(failure.savedRepositoryCommits()).containsEntry(RepositoryType.TEMPLATE, "hash-template").containsEntry(RepositoryType.SOLUTION, "hash-solution")
+                    .containsEntry(RepositoryType.TESTS, "hash-tests");
+            assertThat(failure).hasMessageContaining("The exercise was saved, but releasing its reservation failed").hasCauseInstanceOf(IllegalStateException.class);
+            assertThat(failure.getCause()).hasMessage("coordination unavailable");
         });
         assertThat(liveSaves.getSlotInfo(exercise.getId())).isPresent();
         assertThatThrownBy(() -> liveSaves.claim(exercise.getId())).isInstanceOf(de.tum.cit.aet.artemis.core.exception.ConflictException.class);
