@@ -492,6 +492,14 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     boolean existsBySubmissionId(long submissionId);
 
     /**
+     * All results of a submission, newest first.
+     *
+     * @param submissionId the id of the submission
+     * @return the submission's results, newest first
+     */
+    List<Result> findAllBySubmissionIdOrderByIdDesc(long submissionId);
+
+    /**
      * Checks if the given submission has a manual result (manual or semi-automatic) for the given correction round.
      *
      * @param submissionId    the ID of the submission to check.

@@ -110,14 +110,14 @@ class SharedQueueManagementServiceEstimationTest {
         return new BuildJobQueueItem(id, id, new BuildAgentDTO("agent", "127.0.0.1:5701", "agent"), participationId, 1L, 3L, 0, priority, BuildStatus.QUEUED,
                 new RepositoryInfo("repo", RepositoryType.USER, RepositoryType.USER, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(submittedAt, null, null, null, estimatedDuration),
-                new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null);
+                new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null, null);
     }
 
     private static BuildJobQueueItem runningJob(String id, ZonedDateTime estimatedCompletionDate) {
         return new BuildJobQueueItem(id, id, new BuildAgentDTO("agent", "127.0.0.1:5701", "agent"), 99L, 1L, 3L, 0, 1, BuildStatus.BUILDING,
                 new RepositoryInfo("repo", RepositoryType.USER, RepositoryType.USER, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().minusMinutes(1), null, estimatedCompletionDate, 0),
-                new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null);
+                new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null, null);
     }
 
     private void withQueuedJobs(BuildJobQueueItem... jobs) {

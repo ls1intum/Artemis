@@ -64,6 +64,24 @@ class KubernetesBuildArchiveServiceTest {
         Files.delete(archive);
     }
 
+    /**
+     * A container of a multi-container build plan that is scoped to run without the test repository is prepared with a
+     * null test path. The archive then carries the assignment only: the instructor's test files must not reach a
+     * container that did not list them, and packing a null path must not fail the build.
+     */
+    @Test
+    void omitsTheTestRepositoryOfAContainerScopedWithoutIt() throws Exception {
+        Path assignment = repository("assignment", "src/main.c", "int main() { return 0; }");
+        var preparedJob = new PreparedBuildJob(assignment, null, null, List.of());
+
+        Path archive = archiveService.createInputArchive(buildJob("student", "tests", "solution", new String[0]), preparedJob);
+        Map<String, byte[]> entries = readEntries(archive);
+
+        assertThat(entries).containsKeys("testing-dir/student/src/main.c", "script.sh");
+        assertThat(entries.keySet()).noneMatch(entry -> entry.startsWith("testing-dir/tests/"));
+        Files.delete(archive);
+    }
+
     @Test
     void rejectsPathsThatCouldEscapeTheWorkspace() {
         assertThatThrownBy(() -> KubernetesBuildArchiveService.validateRelativePath("../outside")).isInstanceOf(LocalCIException.class);

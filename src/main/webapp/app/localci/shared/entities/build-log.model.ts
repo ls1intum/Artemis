@@ -13,6 +13,8 @@ export type BuildLogEntry = {
     time: string;
     log: string;
     type?: BuildLogType;
+    /** The build container that produced this line, absent for a submission built by a single container. */
+    containerName?: string;
 };
 
 // flag(error, warning),filePath,fileName,line,row,error

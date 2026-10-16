@@ -60,6 +60,10 @@ public class FailedBuildLogService {
 
     private static final char SEPARATOR = '\t';
 
+    // Encloses the container name in front of a line of a multi-container build. Build logs never contain this control
+    // character, so an unlabeled line of an older file is never mistaken for a labeled one.
+    private static final char CONTAINER_MARKER = '\u001F';
+
     private static final String LOG_SUFFIX = ".log";
 
     private static final int SUBMISSION_LOOKUP_BATCH_SIZE = 1_000;
@@ -100,6 +104,9 @@ public class FailedBuildLogService {
 
         StringBuilder content = new StringBuilder();
         for (BuildLogEntry entry : normalized) {
+            if (entry.getContainerName() != null) {
+                content.append(CONTAINER_MARKER).append(entry.getContainerName()).append(CONTAINER_MARKER);
+            }
             content.append(entry.getTime() == null ? "" : TIMESTAMP_FORMAT.format(entry.getTime())).append(SEPARATOR).append(entry.getLog()).append('\n');
         }
 
@@ -131,6 +138,35 @@ public class FailedBuildLogService {
         }
 
         return normalized;
+    }
+
+    /**
+     * Adds the build logs of one container to the file of a multi-container build's aggregated result, replacing the lines
+     * the container stored before (it may be retried after its agent was lost). Callers must serialize the containers of
+     * one build.
+     *
+     * @param exerciseId    the programming exercise the result belongs to
+     * @param submissionId  the programming submission the result belongs to
+     * @param resultId      the aggregated result the logs belong to
+     * @param retentionTime the result or submission timestamp used for retention
+     * @param containerName the container the logs came from
+     * @param buildLogs     the container's entries to store
+     * @return the container's entries as they were stored
+     * @throws UncheckedIOException if the logs could not be written
+     */
+    public List<BuildLogEntry> appendBuildLogs(long exerciseId, long submissionId, long resultId, ZonedDateTime retentionTime, String containerName,
+            List<BuildLogEntry> buildLogs) {
+        List<BuildLogEntry> combined = new ArrayList<>(readBuildLogs(pathFor(exerciseId, submissionId, resultId), submissionId, resultId).orElse(List.of()).stream()
+                .filter(entry -> !containerName.equals(entry.getContainerName())).toList());
+        List<BuildLogEntry> containerLogs = new ArrayList<>();
+        for (BuildLogEntry entry : buildLogs) {
+            BuildLogEntry labeled = new BuildLogEntry(entry.getTime(), entry.getLog());
+            labeled.setContainerName(containerName);
+            containerLogs.add(labeled);
+        }
+        combined.addAll(containerLogs);
+        saveBuildLogs(exerciseId, submissionId, resultId, retentionTime, combined);
+        return splitIntoLines(containerLogs);
     }
 
     /**
@@ -291,6 +327,7 @@ public class FailedBuildLogService {
             }
             for (String line : entry.getLog().split("\\R")) {
                 BuildLogEntry lineEntry = new BuildLogEntry(entry.getTime(), line);
+                lineEntry.setContainerName(entry.getContainerName());
                 lineEntry.truncateLogToMaxLength();
                 normalized.add(lineEntry);
             }
@@ -299,6 +336,22 @@ public class FailedBuildLogService {
     }
 
     private Optional<BuildLogEntry> parseLine(String line, long submissionId, long resultId) {
+        if (line.isEmpty() || line.charAt(0) != CONTAINER_MARKER) {
+            return parseEntry(line, submissionId, resultId);
+        }
+        int end = line.indexOf(CONTAINER_MARKER, 1);
+        if (end < 0) {
+            log.warn("Skipping a line with an unterminated container name in the failed build logs of result {} of submission {}", resultId, submissionId);
+            return Optional.empty();
+        }
+        String containerName = line.substring(1, end);
+        return parseEntry(line.substring(end + 1), submissionId, resultId).map(entry -> {
+            entry.setContainerName(containerName);
+            return entry;
+        });
+    }
+
+    private Optional<BuildLogEntry> parseEntry(String line, long submissionId, long resultId) {
         int separator = line.indexOf(SEPARATOR);
         if (separator < 0) {
             log.warn("Skipping a malformed line in the failed build logs of result {} of submission {}", resultId, submissionId);

@@ -331,13 +331,27 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @param exercise    the programming exercise for which the test cases should be extracted from the new result
      */
     public void extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification buildResult, ProgrammingExercise exercise) {
-        boolean haveTestCasesChanged = generateTestCasesFromBuildResult(buildResult, exercise);
-        if (haveTestCasesChanged) {
-            // Notify the client about the updated testCases
-            Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
-            Set<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
-            websocketMessagingService.sendMessage(TEST_CASES.at(exercise.getId()), testCaseDTOs);
+        extractTestCasesFromResultAndBroadcastUpdates(buildResult, exercise, true);
+    }
+
+    /**
+     * Same as {@link #extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification, ProgrammingExercise)}, but the
+     * caller decides whether test cases absent from this result are deactivated.
+     *
+     * @param buildResult               the build result to extract test cases from
+     * @param exercise                  the programming exercise the test cases belong to
+     * @param deactivateAbsentTestCases whether existing active test cases absent from this result are deactivated
+     */
+    public void extractTestCasesFromResultAndBroadcastUpdates(BuildResultNotification buildResult, ProgrammingExercise exercise, boolean deactivateAbsentTestCases) {
+        if (generateTestCasesFromBuildResult(buildResult, exercise, deactivateAbsentTestCases)) {
+            broadcastTestCases(exercise);
         }
+    }
+
+    private void broadcastTestCases(ProgrammingExercise exercise) {
+        Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
+        Set<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
+        websocketMessagingService.sendMessage(TEST_CASES.at(exercise.getId()), testCaseDTOs);
     }
 
     /**
@@ -350,14 +364,39 @@ public class ProgrammingExerciseFeedbackCreationService {
      * @return Returns true if the test cases have changed, false if they haven't.
      */
     public boolean generateTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise) {
-        Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
+        return generateTestCasesFromBuildResult(buildResult, exercise, true);
+    }
+
+    /**
+     * Same as {@link #generateTestCasesFromBuildResult(BuildResultNotification, ProgrammingExercise)}, but the caller
+     * decides whether test cases absent from this result are deactivated.
+     *
+     * @param buildResult               the build result to extract test cases from
+     * @param exercise                  the programming exercise the test cases belong to
+     * @param deactivateAbsentTestCases whether existing active test cases absent from this result are deactivated
+     * @return true if the test cases have changed, false otherwise
+     */
+    public boolean generateTestCasesFromBuildResult(BuildResultNotification buildResult, ProgrammingExercise exercise, boolean deactivateAbsentTestCases) {
         // Do not generate test cases for static code analysis feedback
-        Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks = getTestCasesFromBuildResult(buildResult, exercise);
+        return reconcileTestCases(getTestCasesFromBuildResult(buildResult, exercise), exercise, deactivateAbsentTestCases);
+    }
+
+    /**
+     * Registers the reported test cases that are new, reactivates the ones that reappear and, if requested, deactivates
+     * the active ones that are absent.
+     *
+     * @param testCasesFromFeedbacks    the test cases the build reported, identified by name
+     * @param exercise                  the programming exercise the test cases belong to
+     * @param deactivateAbsentTestCases whether existing active test cases absent from the reported ones are deactivated
+     * @return true if the test cases have changed, false otherwise
+     */
+    private boolean reconcileTestCases(Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks, ProgrammingExercise exercise, boolean deactivateAbsentTestCases) {
+        Set<ProgrammingExerciseTestCase> existingTestCases = testCaseRepository.findByExerciseId(exercise.getId());
         // Get test cases that are not already in database - those will be added as new entries.
         Set<ProgrammingExerciseTestCase> newTestCases = testCasesFromFeedbacks.stream().filter(testCase -> existingTestCases.stream().noneMatch(testCase::isSameTestCase))
                 .collect(Collectors.toSet());
         // Get test cases where the activate state has changed (re-added or removed tests).
-        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks);
+        Set<ProgrammingExerciseTestCase> testCasesWithUpdatedActivation = getTestCasesWithUpdatedActivation(existingTestCases, testCasesFromFeedbacks, deactivateAbsentTestCases);
 
         Set<ProgrammingExerciseTestCase> testCasesToSave = new HashSet<>();
         testCasesToSave.addAll(newTestCases);
@@ -384,13 +423,28 @@ public class ProgrammingExerciseFeedbackCreationService {
         return false;
     }
 
+    /**
+     * Deactivates the exercise's active test cases that no container of a multi-container solution build reported, and
+     * broadcasts the change.
+     *
+     * @param presentTestCaseNames the names of the test cases the merged build result reported
+     * @param exercise             the solution's programming exercise
+     */
+    public void deactivateSolutionTestCasesAbsentFromMergedResult(Set<String> presentTestCaseNames, ProgrammingExercise exercise) {
+        Set<ProgrammingExerciseTestCase> testCasesFromMergedResult = presentTestCaseNames.stream()
+                .map(name -> new ProgrammingExerciseTestCase().testName(name).exercise(exercise).active(true)).collect(Collectors.toSet());
+        if (reconcileTestCases(testCasesFromMergedResult, exercise, true)) {
+            broadcastTestCases(exercise);
+        }
+    }
+
     private Set<ProgrammingExerciseTestCase> getTestCasesWithUpdatedActivation(Set<ProgrammingExerciseTestCase> existingTestCases,
-            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks) {
+            Set<ProgrammingExerciseTestCase> testCasesFromFeedbacks, boolean deactivateAbsentTestCases) {
         // We compare the new generated test cases from feedback with the existing test cases from the database
         return existingTestCases.stream().filter(existing -> {
             Optional<ProgrammingExerciseTestCase> matchingTestCase = testCasesFromFeedbacks.stream().filter(existing::isSameTestCase).findFirst();
             // Either the test case was active and is not part of the feedback anymore
-            boolean existingTestCaseRemoved = matchingTestCase.isEmpty() && existing.isActive();
+            boolean existingTestCaseRemoved = deactivateAbsentTestCases && matchingTestCase.isEmpty() && existing.isActive();
             // OR was not active before and is now part of the feedback again.
             boolean inactiveTestReactivated = matchingTestCase.isPresent() && !existing.isActive();
             return existingTestCaseRemoved || inactiveTestReactivated;

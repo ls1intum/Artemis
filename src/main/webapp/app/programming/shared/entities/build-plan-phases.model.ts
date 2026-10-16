@@ -1,5 +1,5 @@
-import { parseJson } from 'app/foundation/util/json.util';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { parseJson } from 'app/foundation/util/json.util';
 
 /**
  * Supported execution conditions for a build phase.
@@ -25,16 +25,134 @@ export interface BuildPhase {
 }
 
 /**
- * Complete serialized build plan configuration stored on the exercise.
+ * The repository types that can be checked out into a build container.
+ * Note: Matches RepositoryType.java. The client's own RepositoryType (code-editor.model.ts) additionally knows
+ * ASSIGNMENT, which the server does not accept here, so the types are mirrored instead of reused.
+ */
+export const BUILD_CONTAINER_REPOSITORY_TYPE = {
+    TEMPLATE: 'TEMPLATE',
+    SOLUTION: 'SOLUTION',
+    TESTS: 'TESTS',
+    AUXILIARY: 'AUXILIARY',
+    USER: 'USER',
+} as const;
+
+export type BuildContainerRepositoryType = keyof typeof BUILD_CONTAINER_REPOSITORY_TYPE;
+
+/**
+ * A repository of the exercise that a build container checks out, at the path configured on the exercise. It is
+ * identified by its type alone, so AUXILIARY selects every auxiliary repository of the exercise.
+ * Note: Matches BuildContainerRepositoryDTO.java
+ */
+export interface BuildContainerRepository {
+    type: BuildContainerRepositoryType;
+}
+
+/**
+ * The Docker flags a build container overrides for its own job. An unset field keeps the exercise's value; environment
+ * variables are merged into the exercise's, replacing one of the same name.
+ * Note: Matches BuildContainerDockerFlagsDTO.java
+ */
+export interface BuildContainerDockerFlags {
+    network?: string;
+    env?: { [key: string]: string };
+    cpuCount?: number;
+    memory?: number;
+    memorySwap?: number;
+}
+
+/**
+ * A named container of a build plan that runs as its own build job, with its own Docker image, repositories and phases.
+ * Note: Matches BuildContainerDTO.java
+ */
+export interface BuildContainer {
+    name: string;
+    /** undefined means the exercise's language default image at build time, so the container follows updates of it */
+    dockerImage?: string;
+    /** undefined means the repositories configured on the exercise; an empty list checks out only the assignment repository */
+    repositories?: BuildContainerRepository[];
+    phases: BuildPhase[];
+    /** the timeout of this container's build job in seconds; undefined means the timeout configured on the exercise */
+    timeoutSeconds?: number;
+    /** the Docker flags this container overrides; undefined means the container runs with the flags of the exercise */
+    dockerFlags?: BuildContainerDockerFlags;
+}
+
+/**
+ * Complete serialized build plan configuration stored on the exercise. A configuration written before multi-container
+ * support carries a flat list of phases and one Docker image instead of containers.
  * Note: Matches BuildPlanPhasesDTO.java
  */
 export interface BuildPlanPhases {
-    phases: BuildPhase[];
+    phases?: BuildPhase[];
     dockerImage?: string;
+    containers?: BuildContainer[];
 }
 
 export const BUILD_PHASE_NAME_PATTERN = RegExp('^[A-Za-z_][A-Za-z0-9_]*$');
 export const BUILD_PHASE_RESERVED_NAMES = new Set(['main', 'final_force_run_post_action']);
+
+export const BUILD_CONTAINER_NAME_PATTERN = RegExp('^[A-Za-z_][A-Za-z0-9_]*$');
+export const DEFAULT_BUILD_CONTAINER_NAME = 'default';
+
+// the bounds the server applies in ProgrammingExerciseValidationService#validateDockerFlagValues, mirrored here so an
+// invalid value is caught inline instead of only by the save request
+export const MIN_DOCKER_CPU_COUNT = 1;
+export const MIN_DOCKER_MEMORY_MB = 6;
+export const MIN_DOCKER_MEMORY_SWAP_MB = 0;
+
+/** an unset resource limit is valid (the exercise's value applies); a set one has to be a whole number of at least the minimum */
+export function isDockerResourceLimitValid(value: number | undefined, minimum: number): boolean {
+    return value == undefined || (Number.isInteger(value) && value >= minimum);
+}
+
+export function areBuildContainerDockerFlagsValid(dockerFlags: BuildContainerDockerFlags | undefined): boolean {
+    return (
+        isDockerResourceLimitValid(dockerFlags?.cpuCount, MIN_DOCKER_CPU_COUNT) &&
+        isDockerResourceLimitValid(dockerFlags?.memory, MIN_DOCKER_MEMORY_MB) &&
+        isDockerResourceLimitValid(dockerFlags?.memorySwap, MIN_DOCKER_MEMORY_SWAP_MB)
+    );
+}
+
+/** Returns the Docker flags with only the fields that are set, or undefined if none is set. */
+export function normalizedBuildContainerDockerFlags(dockerFlags: BuildContainerDockerFlags | null | undefined): BuildContainerDockerFlags | undefined {
+    if (dockerFlags == undefined) {
+        return undefined;
+    }
+    const normalized: BuildContainerDockerFlags = {};
+    if (dockerFlags.network) {
+        normalized.network = dockerFlags.network;
+    }
+    if (dockerFlags.env && Object.keys(dockerFlags.env).length > 0) {
+        normalized.env = dockerFlags.env;
+    }
+    if (dockerFlags.cpuCount != undefined) {
+        normalized.cpuCount = dockerFlags.cpuCount;
+    }
+    if (dockerFlags.memory != undefined) {
+        normalized.memory = dockerFlags.memory;
+    }
+    if (dockerFlags.memorySwap != undefined) {
+        normalized.memorySwap = dockerFlags.memorySwap;
+    }
+    return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
+/** Returns the containers of a build plan, normalizing a legacy plan into a single unscoped container. */
+export function effectiveContainers(buildPlan: BuildPlanPhases | undefined): BuildContainer[] {
+    if (buildPlan?.containers?.length) {
+        return buildPlan.containers;
+    }
+    if (!buildPlan?.phases?.length) {
+        return [];
+    }
+    return [{ name: DEFAULT_BUILD_CONTAINER_NAME, dockerImage: buildPlan.dockerImage, phases: buildPlan.phases }];
+}
+
+/** Returns the phases of every container of a build plan, for questions about the plan as a whole. */
+export function allPhases(buildPlan: BuildPlanPhases | undefined): BuildPhase[] {
+    return effectiveContainers(buildPlan).flatMap((container) => container.phases ?? []);
+}
 
 export function hasExpectedTestsBeforeDueDate(phase: BuildPhase | undefined): boolean {
     return !!phase && (phase.resultPaths?.length ?? 0) > 0 && phase.condition !== 'AFTER_DUE_DATE';
@@ -54,14 +172,24 @@ export function parseBuildPlanPhases(json: string | undefined): BuildPlanPhases 
         return undefined;
     }
     return cloneWith(data, {
-        phases: data.phases.map((parsed: BuildPhase) =>
-            cloneWith(parsed, {
-                script: parsed.script ?? '',
-                condition: parsed.condition ?? 'ALWAYS',
-                forceRun: parsed.forceRun ?? false,
-                resultPaths: parsed.resultPaths ?? [],
+        phases: data.phases?.map(withPhaseDefaults),
+        containers: data.containers?.map((container: BuildContainer) =>
+            cloneWith(container, {
+                // the server writes an unscoped container with an explicit null, which must not read as "scoped to nothing"
+                repositories: container.repositories ?? undefined,
+                phases: (container.phases ?? []).map(withPhaseDefaults),
+                dockerFlags: normalizedBuildContainerDockerFlags(container.dockerFlags),
             }),
         ),
+    });
+}
+
+function withPhaseDefaults(parsed: BuildPhase): BuildPhase {
+    return cloneWith(parsed, {
+        script: parsed.script ?? '',
+        condition: parsed.condition ?? 'ALWAYS',
+        forceRun: parsed.forceRun ?? false,
+        resultPaths: parsed.resultPaths ?? [],
     });
 }
 
@@ -69,8 +197,35 @@ function isBuildPlanPhases(value: unknown): value is BuildPlanPhases {
     if (typeof value !== 'object' || value === null) {
         return false;
     }
-    const v = value as { phases?: unknown; dockerImage?: unknown };
-    return Array.isArray(v.phases) && v.phases.every(isBuildPhase) && (v.dockerImage == null || typeof v.dockerImage === 'string');
+    const v = value as { phases?: unknown; dockerImage?: unknown; containers?: unknown };
+    if (v.phases === undefined && v.containers === undefined) {
+        return false;
+    }
+    const phasesValid = v.phases === undefined || (Array.isArray(v.phases) && v.phases.every(isBuildPhase));
+    const containersValid = v.containers === undefined || (Array.isArray(v.containers) && v.containers.every(isBuildContainer));
+    return phasesValid && containersValid && (v.dockerImage == null || typeof v.dockerImage === 'string');
+}
+
+function isBuildContainer(value: unknown): value is BuildContainer {
+    if (typeof value !== 'object' || value === null) {
+        return false;
+    }
+    const v = value as { name?: unknown; dockerImage?: unknown; repositories?: unknown; phases?: unknown };
+    return (
+        typeof v.name === 'string' &&
+        (v.dockerImage == null || typeof v.dockerImage === 'string') &&
+        (v.repositories == undefined || (Array.isArray(v.repositories) && v.repositories.every(isBuildContainerRepository))) &&
+        Array.isArray(v.phases) &&
+        v.phases.every(isBuildPhase)
+    );
+}
+
+function isBuildContainerRepository(value: unknown): value is BuildContainerRepository {
+    if (typeof value !== 'object' || value === null) {
+        return false;
+    }
+    const v = value as { type?: unknown; name?: unknown };
+    return typeof v.type === 'string' && v.type in BUILD_CONTAINER_REPOSITORY_TYPE && (v.name == null || typeof v.name === 'string');
 }
 
 function isBuildPhase(value: unknown): value is BuildPhase {

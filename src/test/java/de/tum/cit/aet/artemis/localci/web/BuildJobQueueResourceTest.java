@@ -93,7 +93,7 @@ class BuildJobQueueResourceTest {
         return new BuildJobQueueItem(id, id, new BuildAgentDTO("agent", "127.0.0.1:5701", "agent"), 10L, courseId, 3L, 0, 1, BuildStatus.QUEUED,
                 new RepositoryInfo("repo", RepositoryType.USER, RepositoryType.USER, "assignment", "tests", "solution", new String[0], new String[0]),
                 new JobTimingInfo(ZonedDateTime.now(), null, null, null, 0),
-                new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null);
+                new BuildConfig(null, null, "commit", "commit", "commit", "main", null, null, false, false, List.of(), 0, null, null, null, null), null, null, null);
     }
 
     /**
