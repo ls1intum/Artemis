@@ -293,13 +293,21 @@ final class ApprovedStructuralContract {
             signatures.add("superclass:" + genericShape(superclass, type, exerciseTypes));
         }
         type.getImplements().stream().map(supertype -> "interface:" + genericShape(supertype, type, exerciseTypes)).forEach(signatures::add);
-        type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible).map(method -> "method:" + method.getName()
-                + genericParameters(method.getParameters(), type, exerciseTypes) + ":" + genericShape(method.getReturnType(), type, exerciseTypes)).forEach(signatures::add);
+        type.getMethods().stream().filter(ApprovedStructuralContract::isContractVisible)
+                .map(method -> "method:" + method.getName() + genericParameters(method.getParameters(), type, exerciseTypes) + ":"
+                        + genericShape(method.getReturnType(), type, exerciseTypes) + ":throws="
+                        + method.getExceptionTypes().stream().map(exception -> genericShape(exception, type, exerciseTypes)).sorted().toList())
+                .forEach(signatures::add);
         type.getConstructors().stream().filter(ApprovedStructuralContract::isContractVisible)
-                .map(constructor -> "constructor:" + genericParameters(constructor.getParameters(), type, exerciseTypes)).forEach(signatures::add);
+                .map(constructor -> "constructor:" + genericParameters(constructor.getParameters(), type, exerciseTypes) + ":throws="
+                        + constructor.getExceptionTypes().stream().map(exception -> genericShape(exception, type, exerciseTypes)).sorted().toList())
+                .forEach(signatures::add);
+        if (type.getConstructors().isEmpty() && !type.isInterface() && !type.isEnum()) {
+            signatures.add("constructor:[]:throws=[]");
+        }
         type.getFields().stream().filter(ApprovedStructuralContract::isContractVisible)
                 .map(field -> "field:" + field.getName() + ":" + genericShape(field.getType(), type, exerciseTypes)).forEach(signatures::add);
-        if (type.getTypeParameters().isEmpty() && signatures.stream().noneMatch(signature -> signature.contains("<"))) {
+        if (type.getTypeParameters().isEmpty() && signatures.stream().noneMatch(signature -> signature.contains("<") || signature.contains(":throws="))) {
             return null;
         }
         contract.set("signatures", mapper.valueToTree(signatures));

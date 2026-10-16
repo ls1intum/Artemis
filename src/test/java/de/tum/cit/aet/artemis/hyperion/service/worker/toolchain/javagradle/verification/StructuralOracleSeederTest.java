@@ -30,6 +30,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.opentest4j.AssertionFailedError;
+import org.springframework.core.io.ClassPathResource;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -163,6 +164,99 @@ class StructuralOracleSeederTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "method", "constructor" })
+    void seededExceptionContractRejectsBroaderMissingAndAdditionalThrows(String member) throws Throwable {
+        String signature = member.equals("method") ? "public int read()" : "public Box()";
+        String body = member.equals("method") ? "{ return 1; }" : "{}";
+        String approved = "public class Box { " + signature + " throws java.io.IOException " + body + " }";
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        var seeded = seederWith(sandbox, Map.of(), Map.of(), Map.of(), approvedSpec("Box", approved)).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        assertThat(seeded.testNames()).contains("testClass[GenericApi:Box]");
+        String testSource = seeded.repositoryFiles().get("test/GenericTypeTest.java");
+        String oracle = seeded.repositoryFiles().get("test/test.json");
+        executeSeededGenericTest(tempDir.resolve("exact"), approved, testSource, oracle);
+        String imported = "import java.io.IOException; " + approved.replace("java.io.IOException", "IOException");
+        executeSeededGenericTest(tempDir.resolve("imported"), imported, testSource, oracle);
+        for (String replacement : List.of("throws Exception", "", "throws java.io.IOException, IllegalArgumentException")) {
+            assertThatThrownBy(() -> executeSeededGenericTest(tempDir.resolve("mutation-" + replacement.hashCode()), approved.replace("throws java.io.IOException", replacement),
+                    testSource, oracle)).isInstanceOf(AssertionFailedError.class).hasMessageContaining("Missing generic API contract").hasMessageContaining("throws=");
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "method", "constructor", "implicit constructor" })
+    void seededEmptyExceptionContractRejectsAddedThrows(String member) throws Throwable {
+        String declaration = switch (member) {
+            case "method" -> "public int read() { return 1; }";
+            case "constructor" -> "public Box() {}";
+            default -> "";
+        };
+        String approved = "public class Box { " + declaration + " }";
+        String changed = switch (member) {
+            case "method" -> "public int read() throws java.io.IOException { return 1; }";
+            default -> "public Box() throws java.io.IOException {}";
+        };
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        var seeded = seederWith(sandbox, Map.of(), Map.of(), Map.of(), approvedSpec("Box", approved)).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        String testSource = seeded.repositoryFiles().get("test/GenericTypeTest.java");
+        String oracle = seeded.repositoryFiles().get("test/test.json");
+        executeSeededGenericTest(tempDir.resolve("exact"), approved, testSource, oracle);
+        assertThatThrownBy(() -> executeSeededGenericTest(tempDir.resolve("added"), "public class Box { " + changed + " }", testSource, oracle))
+                .isInstanceOf(AssertionFailedError.class).hasMessageContaining("Missing generic API contract").hasMessageContaining("throws=");
+    }
+
+    @Test
+    void seededExceptionContractTreatsDeclarationOrderAsIrrelevant() throws Throwable {
+        String approved = "public class Box { public Box() throws java.io.IOException, java.sql.SQLException {} "
+                + "public void read() throws java.sql.SQLException, java.io.IOException {} }";
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        var seeded = seederWith(sandbox, Map.of(), Map.of(), Map.of(), approvedSpec("Box", approved)).seedIfStructuralDiff(sandbox, "s", javaExercise());
+        String reordered = "public class Box { public Box() throws java.sql.SQLException, java.io.IOException {} "
+                + "public void read() throws java.io.IOException, java.sql.SQLException {} }";
+        executeSeededGenericTest(tempDir.resolve("reordered"), reordered, seeded.repositoryFiles().get("test/GenericTypeTest.java"),
+                seeded.repositoryFiles().get("test/test.json"));
+    }
+
+    @Test
+    void seededExceptionContractResolvesExerciseOwnedImportedAndQualifiedNames() throws Throwable {
+        ApprovedSpecRegistry registry = new ApprovedSpecRegistry();
+        registry.approve("s", """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | Failure | supplied checked exception | given |
+                | Box | student-owned API | student-creates |
+
+                ## Public API
+                ```java
+                public class Failure extends Exception {}
+                ```
+                ```java
+                public class Box {
+                    public Box() throws Failure;
+                    public int read() throws Failure;
+                }
+                ```
+                """);
+        InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
+        var seeded = seederWith(sandbox, Map.of(), Map.of(), Map.of(), registry).seedIfStructuralDiff(sandbox, "s", new GenerationInput(0, "exercise", null, false, Set.of()));
+        String testSource = seeded.repositoryFiles().get("test/exercise/GenericTypeTest.java");
+        String oracle = seeded.repositoryFiles().get("test/exercise/test.json");
+        for (String exceptionType : List.of("Failure", "exercise.Failure")) {
+            Path directory = tempDir.resolve(exceptionType);
+            FileUtils.writeStringToFile(directory.resolve("Failure.java").toFile(), "package exercise; public class Failure extends Exception {}", StandardCharsets.UTF_8);
+            String source = "package exercise; import exercise.Failure; public class Box { public Box() throws " + exceptionType + " {} public int read() throws " + exceptionType
+                    + " { return 1; } }";
+            executeSeededGenericTest(directory, source, testSource, oracle);
+        }
+        Path wrong = tempDir.resolve("wrong-exception");
+        FileUtils.writeStringToFile(wrong.resolve("Failure.java").toFile(), "package exercise; public class Failure extends Exception {}", StandardCharsets.UTF_8);
+        assertThatThrownBy(() -> executeSeededGenericTest(wrong,
+                "package exercise; public class Box { public Box() throws java.io.IOException {} public int read() throws java.io.IOException { return 1; } }", testSource, oracle))
+                .isInstanceOf(AssertionFailedError.class).hasMessageContaining("throws=[Failure]");
+    }
+
     @Test
     void graderJarIsNotOnTheSharedTestClasspath() throws Exception {
         assertThat(getClass().getClassLoader().getResource("de/tum/cit/ase/ares/api/structural/ClassTestProvider.class")).isNull();
@@ -188,7 +282,7 @@ class StructuralOracleSeederTest {
         String declaration = "public " + kind + " Box {}";
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         var seeded = seederWith(sandbox, Map.of(), Map.of(), Map.of(), approvedSpec("Box", declaration)).seedIfStructuralDiff(sandbox, "s", javaExercise());
-        assertThat(seeded.testNames()).containsExactlyInAnyOrder("testClass[Box]", "testConstructors[Box]");
+        assertThat(seeded.testNames()).containsExactlyInAnyOrder("testClass[Box]", "testConstructors[Box]", "testClass[GenericApi:Box]");
         String oracle = seeded.repositoryFiles().get("test/test.json");
         executeSeededClassProperties(tempDir.resolve("class"), declaration, oracle, true);
         executeSeededClassProperties(tempDir.resolve("interfaceBasicProperties"), "public interface Box {}", oracle);
@@ -229,17 +323,21 @@ class StructuralOracleSeederTest {
                 .replace("import de.tum.cit.ase.ares.api.jupiter.Public;", "").replace("@Public", "").replace("@Policy(value = \"SecurityPolicy.yaml\")", "")
                 .replace("@StrictTimeout(10)", "");
         FileUtils.writeStringToFile(directory.resolve("GenericTypeTest.java").toFile(), reflectionTest, StandardCharsets.UTF_8);
-        FileUtils.writeStringToFile(directory.resolve("test.json").toFile(), oracle, StandardCharsets.UTF_8);
+        String packageName = JsonMapper.builder().build().readTree(oracle).get(0).get("class").get("package").asString();
+        String classPrefix = packageName.isEmpty() ? "" : packageName + ".";
+        FileUtils.writeStringToFile(directory.resolve(packageName.replace('.', '/')).resolve("test.json").toFile(), oracle, StandardCharsets.UTF_8);
         var compiler = ToolProvider.getSystemJavaCompiler();
         try (var files = compiler.getStandardFileManager(null, null, StandardCharsets.UTF_8)) {
             List<Path> dependencies = List.of(DynamicTest.class, org.json.JSONString.class).stream()
                     .map(type -> Path.of(type.getProtectionDomain().getCodeSource().getLocation().getPath())).toList();
             files.setLocationFromPaths(javax.tools.StandardLocation.CLASS_PATH, dependencies);
-            assertThat(compiler.getTask(null, files, null, List.of("-proc:none", "-d", directory.toString()), null,
-                    files.getJavaFileObjects(directory.resolve("Box.java"), directory.resolve("GenericTypeTest.java"))).call()).isTrue();
+            assertThat(compiler
+                    .getTask(null, files, null, List.of("-proc:none", "-d", directory.toString()), null,
+                            files.getJavaFileObjectsFromPaths(FileUtils.listFiles(directory.toFile(), new String[] { "java" }, false).stream().map(file -> file.toPath()).toList()))
+                    .call()).isTrue();
         }
         try (var loader = new URLClassLoader(new java.net.URL[] { directory.toUri().toURL() }, getClass().getClassLoader())) {
-            Class<?> provider = loader.loadClass("GenericTypeTest");
+            Class<?> provider = loader.loadClass(classPrefix + "GenericTypeTest");
             var constructor = provider.getDeclaredConstructor();
             constructor.setAccessible(true);
             var factory = provider.getDeclaredMethod("genericApi");
@@ -247,7 +345,7 @@ class StructuralOracleSeederTest {
             @SuppressWarnings("unchecked")
             List<DynamicTest> tests = (List<DynamicTest>) factory.invoke(constructor.newInstance());
             assertThat(tests).singleElement().extracting(DynamicTest::getDisplayName).isEqualTo("testClass[GenericApi:Box]");
-            assertThat(loader.loadClass("Box").getTypeParameters()).isEmpty();
+            assertThat(loader.loadClass(classPrefix + "Box").getTypeParameters()).isEmpty();
             tests.getFirst().getExecutable().execute();
         }
     }
@@ -279,11 +377,12 @@ class StructuralOracleSeederTest {
         // The oracle enforces the created class, not the already-present interface.
         assertThat(seeded.get("tests/test/sorting/test.json")).contains("MergeSort");
         assertThat(seededTests.repositoryFiles()).containsOnlyKeys("test/sorting/ClassTest.java", "test/sorting/MethodTest.java", "test/sorting/ConstructorTest.java",
-                "test/sorting/test.json");
+                "test/sorting/GenericTypeTest.java", "test/sorting/test.json");
         assertThat(seededTests.repositoryFiles().get("test/sorting/test.json")).isEqualTo(seeded.get("tests/test/sorting/test.json"));
         // Only providers with something to check are seeded: empty factories all report under the shared factory-method name generateTestsForAllClasses, which creates
         // duplicate production test cases and fails an otherwise correct solution.
-        assertThat(seededTests.testNames()).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testConstructors[MergeSort]");
+        assertThat(seededTests.testNames()).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testConstructors[MergeSort]",
+                "testClass[GenericApi:MergeSort]");
     }
 
     @Test
@@ -306,7 +405,7 @@ class StructuralOracleSeederTest {
         verify(sandbox).copyIn(eq("s"), eq("/workspace"), tarCaptor.capture());
         assertThat(readTar(tarCaptor.getValue())).containsKeys("tests/test/navigation/ClassTest.java", "tests/test/navigation/MethodTest.java",
                 "tests/test/navigation/ConstructorTest.java", "tests/test/navigation/test.json");
-        assertThat(seededTests.testNames()).containsExactlyInAnyOrder("testClass[Warp]", "testMethods[Warp]", "testConstructors[Warp]");
+        assertThat(seededTests.testNames()).containsExactlyInAnyOrder("testClass[Warp]", "testMethods[Warp]", "testConstructors[Warp]", "testClass[GenericApi:Warp]");
     }
 
     @Test
@@ -511,7 +610,8 @@ class StructuralOracleSeederTest {
         assertThat(cleanupCommand.getValue()).anyMatch(argument -> argument.contains("ClassTest.java")).anyMatch(argument -> argument.contains("MethodTest.java"))
                 .anyMatch(argument -> argument.contains("AttributeTest.java")).anyMatch(argument -> argument.contains("ConstructorTest.java"))
                 .anyMatch(argument -> argument.contains("test.json"));
-        assertThat(seededTests.testNames()).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testConstructors[MergeSort]");
+        assertThat(seededTests.testNames()).containsExactlyInAnyOrder("testClass[MergeSort]", "testMethods[MergeSort]", "testConstructors[MergeSort]",
+                "testClass[GenericApi:MergeSort]");
     }
 
     @Test
@@ -654,6 +754,8 @@ class StructuralOracleSeederTest {
         for (String provider : java.util.List.of("ClassTest", "MethodTest", "AttributeTest", "ConstructorTest")) {
             baseline.put("test/sorting/" + provider + ".java", "class " + provider + " extends " + provider + "Provider { void load(){ retrieveStructureOracleJSON(null); } }");
         }
+        baseline.put("test/sorting/GenericTypeTest.java", GENERATED_MARKER + "\n"
+                + new ClassPathResource("templates/hyperion/structural/GenericTypeTest.java").getContentAsString(StandardCharsets.UTF_8).replace("${packageName}", "sorting"));
         StructuralOracleSeeder seeder = seederWith(sandbox, Map.of(), Map.of(), baseline);
         seeder.captureBaseline("s", baseline);
 

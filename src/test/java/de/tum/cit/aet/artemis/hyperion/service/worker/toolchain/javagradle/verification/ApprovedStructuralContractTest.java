@@ -355,6 +355,32 @@ class ApprovedStructuralContractTest {
     }
 
     @Test
+    void serializesExactExceptionDeclarationsForNonGenericMethodsAndConstructors() throws Exception {
+        var parsed = ApprovedStructuralContract.parse("""
+                ## Public API
+                ```java
+                public class Reader {
+                    public Reader() throws java.io.IOException;
+                    public int read() throws java.sql.SQLException, java.io.IOException;
+                    public void close();
+                }
+                ```
+                """, Set.of("Reader"));
+        assertThat(parsed.errors()).isEmpty();
+        var oracle = MAPPER.readTree(parsed.contract().toOracle("example", MAPPER));
+        assertThat(oracle.at("/0/genericApi/signatures").size()).isEqualTo(3);
+        assertThat(oracle.at("/0/genericApi/signatures").toString()).contains("constructor:[]:throws=[java.io.IOException]",
+                "method:read[]:int:throws=[java.io.IOException, java.sql.SQLException]", "method:close[]:void:throws=[]");
+    }
+
+    @Test
+    void serializesTheImplicitConstructorsEmptyExceptionContract() throws Exception {
+        var parsed = ApprovedStructuralContract.parse("## Public API\n```java\npublic class Reader {}\n```", Set.of("Reader"));
+        var oracle = MAPPER.readTree(parsed.contract().toOracle("example", MAPPER));
+        assertThat(oracle.at("/0/genericApi/signatures/0").asString()).isEqualTo("constructor:[]:throws=[]");
+    }
+
+    @Test
     void rejectsAuthorityTheStructuralGraderCannotRepresentExactly() {
         ApprovedStructuralContract.ParseResult result = ApprovedStructuralContract.parse("""
                 ## Public API
@@ -469,6 +495,9 @@ class ApprovedStructuralContractTest {
                 """, Set.of("GivenType", "StudentType"), Set.of("StudentType"));
 
         assertThat(result.errors()).isEmpty();
-        assertThat(MAPPER.readTree(result.contract().toOracle("example", MAPPER, Set.of("StudentType"))).toString()).contains("StudentType").doesNotContain("GivenType");
+        var oracle = MAPPER.readTree(result.contract().toOracle("example", MAPPER, Set.of("StudentType")));
+        assertThat(oracle.size()).isEqualTo(1);
+        assertThat(oracle.at("/0/class/name").asString()).isEqualTo("StudentType");
+        assertThat(result.contract().typeNames()).containsExactlyInAnyOrder("GivenType", "StudentType");
     }
 }

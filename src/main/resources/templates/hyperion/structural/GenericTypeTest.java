@@ -24,7 +24,7 @@ import de.tum.cit.ase.ares.api.StrictTimeout;
 import de.tum.cit.ase.ares.api.Policy;
 import de.tum.cit.ase.ares.api.jupiter.Public;
 
-/** Checks the generic API from the approved specification, independently of the reference implementation. */
+/** Checks generic types and exact declared exceptions from the approved specification, independently of the reference implementation. */
 @Public
 @Policy(value = "SecurityPolicy.yaml")
 class GenericTypeTest {
@@ -71,12 +71,14 @@ class GenericTypeTest {
         for (var method : owner.getDeclaredMethods()) {
             if (visible(method.getModifiers()) && !method.isSynthetic()) {
                 actual.add("method:" + method.getName() + parameters(method.getGenericParameterTypes(), owner, contract) + ":"
-                        + shape(method.getGenericReturnType(), owner, contract));
+                        + shape(method.getGenericReturnType(), owner, contract) + ":throws="
+                        + Arrays.stream(method.getGenericExceptionTypes()).map(type -> shape(type, owner, contract)).sorted().toList());
             }
         }
         for (var constructor : owner.getDeclaredConstructors()) {
             if (visible(constructor.getModifiers())) {
-                actual.add("constructor:" + parameters(constructor.getGenericParameterTypes(), owner, contract));
+                actual.add("constructor:" + parameters(constructor.getGenericParameterTypes(), owner, contract) + ":throws="
+                        + Arrays.stream(constructor.getGenericExceptionTypes()).map(type -> shape(type, owner, contract)).sorted().toList());
             }
         }
         for (var field : owner.getDeclaredFields()) {
