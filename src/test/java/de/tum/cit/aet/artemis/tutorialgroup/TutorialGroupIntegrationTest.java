@@ -496,7 +496,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     class UpdateTutorialGroupTests {
 
         @ParameterizedTest
-        @ValueSource(strings = { "tutorgroup-tg-mo-13", "tutorgroup-tg-mo-137" })
+        @ValueSource(strings = { "tutorgroup-tg-mo-13", "tutorgroup-tg-mo-137", "tutorgroup-tg-mo-13-7" })
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void update_withUnchangedTitle_preservesChannelName(String channelName) throws Exception {
             firstCourseChannel1.setName(channelName);
@@ -528,7 +528,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                     HttpStatus.NO_CONTENT);
 
             var updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup1.getId()).orElseThrow();
-            assertThat(updatedChannel.getName()).matches("tutorgroup-renamed[0-9]+").hasSizeLessThanOrEqualTo(30);
+            assertThat(updatedChannel.getName()).matches("tutorgroup-renamed-[0-9]+").hasSizeLessThanOrEqualTo(30);
             assertThat(channelRepository.findByIdElseThrow(otherChannel.getId()).getName()).isEqualTo("tutorgroup-renamed");
         }
 

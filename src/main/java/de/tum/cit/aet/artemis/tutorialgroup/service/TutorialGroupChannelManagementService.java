@@ -263,23 +263,18 @@ public class TutorialGroupChannelManagementService {
             return channelName;
         }
 
-        // try to make it unique by adding a random number to the end of the channel name
-        // if already max length remove the last 3 characters to get some space to try to make it unique
-        if (channelName.length() >= 30) {
-            channelName = channelName.substring(0, 27);
+        // Keep the separator on every retry, shortening the base to leave room for the numeric suffix.
+        StringBuilder suffix = new StringBuilder("-");
+        // Retain at least the first character of the base name within the 30-character limit.
+        while (suffix.length() < 29) {
+            suffix.append(ThreadLocalRandom.current().nextInt(0, 10));
+            String candidate = channelName.substring(0, Math.min(channelName.length(), 30 - suffix.length())) + suffix;
+            if (candidate.equals(tutorialGroupChannel.getName()) || !channelRepository.existsChannelByNameAndCourseId(candidate, course.getId())) {
+                return candidate;
+            }
         }
 
-        do {
-            channelName += ThreadLocalRandom.current().nextInt(0, 10);
-        }
-        while (!channelName.equals(tutorialGroupChannel.getName()) && channelRepository.existsChannelByNameAndCourseId(channelName, course.getId()) && channelName.length() <= 30);
-
-        if (channelName.length() > 30) {
-            // very unlikely to happen
-            throw new IllegalStateException("Could not create a unique channel name for tutorial group with id " + tutorialGroup.getId());
-        }
-
-        return channelName;
+        throw new IllegalStateException("Could not create a unique channel name for tutorial group with id " + tutorialGroup.getId());
     }
 
     /**
