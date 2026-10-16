@@ -23,6 +23,7 @@ import tutorRoleImg from "../assets/communication/user-authorities/tutor-role.pn
 import studentRoleImg from "../assets/communication/user-authorities/student-role.png";
 
 import messageReferencesImg from "../assets/communication/references.png";
+import formattedMessageEditorImg from "../assets/communication/formatted-message-editor.png";
 import slideMenuImg from "../assets/communication/slide-menu-view.png";
 import slidePreviewImg from "../assets/communication/slide-preview-message.png";
 import slideViewImg from "../assets/communication/slide-open.png";
@@ -309,6 +310,27 @@ Student Authority
 To foster interaction between users, we integrate the well-known emoji reaction bar.
 Each user in the course can react on any message by making use of the emoji selection button.
 The ➕ emoji serves as the up-voting reaction, which influences the display order of messages.
+
+### Try the Formatted Message Editor
+
+In the web app, select **Try formatted editor (experimental)** above a message or reply to edit text with its formatting visible.
+Use the toolbar to format selected text or add a link. Select an existing link to change its text or destination.
+**Remove link** keeps the text and removes its destination.
+Select text before using a formatting control to remove existing formatting.
+
+<Image src={formattedMessageEditorImg} alt={"A message being edited with formatted text, a person mention and an exercise reference"} size={ImageSize.large} />
+
+Type `@` to search for people, or `#` to search for channels, exercises and lectures in the current course.
+Use the arrow keys to choose a result and Enter to insert it. Enter accepts the result without sending the message;
+Escape closes the suggestions. Numeric references such as `#123` remain available for linking to messages.
+
+Pressing Backspace immediately after a reference or link selects the whole item. Press Backspace again to delete it.
+Use Ctrl+Z or Command+Z to undo edits, formatting and reference insertions.
+Enter sends a message in normal text, while Shift+Enter inserts a line break. Inside lists, quotes and code blocks, Enter continues editing.
+
+Select **Use Markdown editor** to return to the existing editor, including file uploads, slide and FAQ references, and emoji search.
+Messages with tables, mathematical formulas or other unsupported formatting remain in the Markdown editor to preserve their content.
+The formatted editor is an exploration for the web app; the iOS app continues to use its existing editor.
 
 ### Reference Course Entities
 

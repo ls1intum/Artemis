@@ -1,9 +1,51 @@
-<div class="col-12">
+<div class="mb-2 flex flex-wrap items-center gap-2">
+    <button
+        type="button"
+        tumAetUiButton
+        variant="text"
+        size="small"
+        data-testid="toggle-formatted-message-editor"
+        [disabled]="!formattedMode() && (!canUseFormatted() || !effectiveCourseId())"
+        [attr.aria-pressed]="formattedMode()"
+        (click)="toggleFormattedMode()"
+        (keydown.enter)="$event.stopPropagation()"
+    >
+        {{ (formattedMode() ? 'artemisApp.communication.formattedEditor.useMarkdown' : 'artemisApp.communication.formattedEditor.tryFormatted') | artemisTranslate }}
+    </button>
+    @if (!canUseFormatted() && !formattedMode()) {
+        <span class="text-xs text-muted-color">{{ 'artemisApp.communication.formattedEditor.unsupported' | artemisTranslate }}</span>
+    }
+</div>
+@if (formattedMode() && effectiveCourseId(); as courseId) {
+    <jhi-message-editor
+        [content]="content() ?? ''"
+        (contentChange)="updateField($event)"
+        [courseId]="courseId"
+        [conversation]="effectiveConversation()"
+        [editing]="isUpdating()"
+        [suppressNewlineOnEnter]="suppressNewlineOnEnter()"
+    />
+    <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
+        <span class="text-xs text-muted-color">{{ 'artemisApp.communication.formattedEditor.moreOptions' | artemisTranslate }}</span>
+        <div class="flex gap-2">
+            @if (showCloseButton()) {
+                <button type="button" tumAetUiButton size="small" variant="text" (click)="closeEditor.emit()">{{ 'artemisApp.communication.cancel' | artemisTranslate }}</button>
+            }
+            @if (!isUpdating()) {
+                <jhi-redirect-to-iris-button [question]="content()" [course]="course()" [buttonLoading]="isButtonLoading()" [disabled]="isButtonLoading() || !isFormGroupValid()" />
+                <button type="submit" tumAetUiButton size="small" data-testid="send-formatted-message" [disabled]="isButtonLoading() || !isFormGroupValid()">
+                    {{ 'artemisApp.conversationsLayout.sendMessage' | artemisTranslate }}
+                </button>
+            }
+        </div>
+    </div>
+}
+<div class="col-12" [hidden]="formattedMode()">
     <jhi-markdown-editor-monaco
         class="markdown-editor background-editor-color w-100"
         [showMarkdownInfoText]="false"
         [markdown]="content()"
-        (markdownChange)="updateField($event)"
+        (markdownChange)="onMarkdownChange($event)"
         (onEditSelect)="previewMode = false"
         (onPreviewSelect)="previewMode = true"
         [metaActions]="[]"
