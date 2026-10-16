@@ -22,7 +22,7 @@ final class JavaSourceInspector {
 
     static final int MAX_STRICT_TIMEOUT_SECONDS = 15;
 
-    private static final Pattern JAVA_PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*)*)\\s*;");
+    private static final Pattern JAVA_PACKAGE_DECLARATION = Pattern.compile("^\\s*package\\s+([A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*)*+)\\s*;");
 
     private static final Pattern JAVA_CLASS_DECLARATION = Pattern.compile("\\b(?:class|interface|enum|record)\\s+[\\w$]+");
 
@@ -33,7 +33,7 @@ final class JavaSourceInspector {
     private static final Pattern UNICODE_ESCAPE = Pattern.compile("\\\\u+");
 
     private static final Pattern ANNOTATION_NAME = Pattern
-            .compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(?:\\s*\\.\\s*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*");
+            .compile("\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(?:\\s*\\.\\s*\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*+");
 
     private static final Pattern EXPLICIT_POLICY_ARGUMENT = Pattern.compile("value\\s*=\\s*\"SecurityPolicy\\.yaml\"");
 
