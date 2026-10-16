@@ -8,18 +8,8 @@
  * NOTE: This file is auto-generated. Do not edit manually.
  */
 
-import type { AnswerOptionWithSolution } from './answer-option-with-solution';
-import type { QuizQuestionWithSolution } from './quiz-question-with-solution';
-import type { DragAndDropMapping } from './drag-and-drop-mapping';
-import type { ShortAnswerSubmittedText } from './short-answer-submitted-text';
+import type { MultipleChoiceSubmittedAnswerAfterEvaluation } from './multiple-choice-submitted-answer-after-evaluation';
+import type { DragAndDropSubmittedAnswerAfterEvaluation } from './drag-and-drop-submitted-answer-after-evaluation';
+import type { ShortAnswerSubmittedAnswerAfterEvaluation } from './short-answer-submitted-answer-after-evaluation';
 
-export interface SubmittedAnswerAfterEvaluation {
-    type: string;
-    id?: number;
-    scoreInPoints?: number;
-    quizQuestion?: QuizQuestionWithSolution;
-    selectedOptions?: Array<AnswerOptionWithSolution>;
-    mappings?: Array<DragAndDropMapping>;
-    submittedTexts?: Array<ShortAnswerSubmittedText>;
-}
-
+export type SubmittedAnswerAfterEvaluation = MultipleChoiceSubmittedAnswerAfterEvaluation | DragAndDropSubmittedAnswerAfterEvaluation | ShortAnswerSubmittedAnswerAfterEvaluation;
