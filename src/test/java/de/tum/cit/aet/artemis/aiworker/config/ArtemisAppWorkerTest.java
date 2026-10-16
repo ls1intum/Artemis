@@ -3,11 +3,13 @@ package de.tum.cit.aet.artemis.aiworker.config;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import de.tum.cit.aet.artemis.ArtemisApp;
 
+@Isolated("SpringApplication resets JVM-wide logging")
 class ArtemisAppWorkerTest {
 
     @Test

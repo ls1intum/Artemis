@@ -109,9 +109,10 @@ worker WAR.
 The [worker image recipe](https://github.com/ls1intum/Artemis/blob/develop/deployment/docker/aiworker/worker.Dockerfile)
 sets worker launch defaults around that WAR and runs as UID 1000. It does not
 remove application classes from the WAR. It starts the normal `ArtemisApp` with
-`prod,aiworker` in a separate process. On a worker-only node, component scanning
-loads only AI Worker services and the selected workload. The `aiworker` profile disables the HTTP
-server and database services and loads only the selected distributed-data client.
+`prod,aiworker` in a separate process. It uses the normal Artemis component scan.
+Profiles and feature conditions select AI Worker services and the configured workload.
+The `aiworker` profile disables server modules, the HTTP server, and database services.
+The selected distributed-data provider supplies the shared client.
 Startup rejects `core`, `localci`, `localvc`, and `buildagent` with `aiworker`,
 and rejects any attempt to turn the HTTP server back on. Do not run this profile
 on a core node. Keep the core container away from the worker's Docker socket.
