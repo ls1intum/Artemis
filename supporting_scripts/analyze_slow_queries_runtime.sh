@@ -69,6 +69,7 @@ fi
 
 # Static source scan -- informational only, never fails this step even if it errors (that's
 # ci-quality.yml's job; this one just wants the findings for cross-referencing, if available).
+rm -f "${STATIC_FINDINGS}"
 python3 supporting_scripts/find_slow_queries.py --json "${STATIC_FINDINGS}" > /dev/null 2>&1 || echo "⚠️  Static scan failed; report will render without static-finding correlation."
 
 # Develop baseline: the finding keys of the latest develop run, downloaded by the preceding CI step
@@ -89,8 +90,16 @@ fi
 # full untruncated HTML report to a file (for the CI artifact), and this run's finding keys
 # (uploaded by develop runs as the next baseline).
 # ------------------------------------------------------------------
-python3 supporting_scripts/format_slow_query_report.py \
-    "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" "${STATIC_FINDINGS}" ${BASELINE_ARGS[@]+"${BASELINE_ARGS[@]}"} --keys-out "${KEYS_FILE}" > "${REPORT_MD}"
+if ! python3 supporting_scripts/format_slow_query_report.py \
+    "${REPORT_SOURCE}" "${RUN_URL}" "${REPORT_HTML}" "${STATIC_FINDINGS}" ${BASELINE_ARGS[@]+"${BASELINE_ARGS[@]}"} --keys-out "${KEYS_FILE}" > "${REPORT_MD}"; then
+    # never upload partial keys as a baseline or post a partial summary
+    echo "⚠️  Formatting the slow-query report failed."
+    rm -f "${KEYS_FILE}"
+    echo "## ⚠️ Slow Query Report Unavailable" > "${REPORT_MD}"
+    echo "" >> "${REPORT_MD}"
+    echo "Formatting the slow-query report failed; see the job log." >> "${REPORT_MD}"
+    exit 0
+fi
 
 echo ""
 echo "=== Summary preview ==="

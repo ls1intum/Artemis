@@ -154,14 +154,15 @@ class MissingForeignKeyIndexTest extends AbstractSpringIntegrationIndependentTes
 
     /** table name -> the columns that lead at least one valid index on it. */
     private Map<String, Set<String>> findLeadingIndexColumns() throws SQLException {
-        // a composite index only serves lookups on its prefix, so only its first column counts
+        // a composite index only serves lookups on its prefix, so only its first column counts;
+        // a partial index (indpred set) does not cover all rows, so it does not count either
         String sql = """
                 SELECT t.relname AS table_name, a.attname AS column_name
                 FROM pg_index ix
                 JOIN pg_class t ON t.oid = ix.indrelid
                 JOIN pg_namespace n ON n.oid = t.relnamespace
                 JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ix.indkey[0]
-                WHERE ix.indisvalid AND n.nspname = current_schema()
+                WHERE ix.indisvalid AND ix.indpred IS NULL AND n.nspname = current_schema()
                 """;
         Map<String, Set<String>> result = new TreeMap<>();
         try (Connection connection = dataSource.getConnection(); PreparedStatement statement = connection.prepareStatement(sql); ResultSet resultSet = statement.executeQuery()) {
