@@ -1176,7 +1176,6 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             exercise.setTitle(SEARCH_PREFIX + " " + channelName);
             exercise = exerciseRepository.save(exercise);
             Channel channel = channelService.createExerciseChannel(exercise, Optional.of(channelName));
-            searchableEntityWeaviateService.upsertChannelAsync(ChannelSearchableEntityDTO.fromChannel(channel));
             assertChannelExistsInWeaviate(weaviateService, channel);
             return channel;
         }
