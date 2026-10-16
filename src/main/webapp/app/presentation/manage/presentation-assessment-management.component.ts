@@ -47,6 +47,7 @@ import {
     PresentationAssessmentInstanceFormResult,
 } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
 import { PresentationAssessmentInstanceDetailsComponent } from 'app/presentation/manage/presentation-assessment-instance-details.component';
+import { PresentationAssessmentInstancesTableComponent } from 'app/presentation/manage/presentation-assessment-instances-table.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CollapseState, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
@@ -59,6 +60,7 @@ import {
     AssessmentStatusFilter,
     FilterOption,
     PresentationStudentRow,
+    PresentationStudentTableRow,
     PresentationTypeFilter,
     PresentationViewMode,
     createPresentationSidebarData,
@@ -81,7 +83,7 @@ function studentDisplayName(row: PresentationStudentRow): string {
     return row.student.name || fullName || row.studentLogin;
 }
 
-function decorateStudentRow(row: PresentationStudentRow, expandedRows: string[]) {
+function decorateStudentRow(row: PresentationStudentRow, expandedRows: string[]): PresentationStudentTableRow {
     const rowKey = studentRowKey(row);
     return {
         studentLogin: row.studentLogin,
@@ -115,6 +117,7 @@ function positiveRouteId(value: string | null): number | undefined {
         PresentationAssessmentFormDialogComponent,
         PresentationAssessmentInstanceFormDialogComponent,
         PresentationAssessmentInstanceDetailsComponent,
+        PresentationAssessmentInstancesTableComponent,
         TumAetUiButtonComponent,
         TumAetUiButtonDirective,
         TumAetUiButtonGroupComponent,

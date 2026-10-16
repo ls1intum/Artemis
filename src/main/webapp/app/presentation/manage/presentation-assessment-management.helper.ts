@@ -20,6 +20,13 @@ export interface PresentationStudentRow {
     instance: PresentationAssessmentInstance;
 }
 
+export interface PresentationStudentTableRow extends PresentationStudentRow {
+    rowKey: string;
+    displayName: string;
+    assessed: boolean;
+    expanded: boolean;
+}
+
 export function createPresentationSidebarData(
     presentationAssessments: PresentationAssessment[],
     courseId: number,
