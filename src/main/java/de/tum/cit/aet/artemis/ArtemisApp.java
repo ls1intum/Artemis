@@ -22,22 +22,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.WebApplicationType;
-import org.springframework.boot.autoconfigure.AutoConfigurationExcludeFilter;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.TypeExcludeFilter;
 import org.springframework.boot.context.event.ApplicationEnvironmentPreparedEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.boot.liquibase.autoconfigure.LiquibaseProperties;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
-import de.tum.cit.aet.artemis.core.config.AiWorkerComponentScanFilter;
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.core.config.ArtemisConstants;
@@ -51,9 +46,6 @@ import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @SpringBootApplication
-@ComponentScan(excludeFilters = { @ComponentScan.Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),
-        @ComponentScan.Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class),
-        @ComponentScan.Filter(type = FilterType.CUSTOM, classes = AiWorkerComponentScanFilter.class) })
 @EnableConfigurationProperties({ LiquibaseProperties.class, ProgrammingLanguageConfiguration.class, TheiaConfiguration.class, LicenseConfiguration.class,
         ArtemisCompatibleVersionsConfiguration.class, ArtemisProperties.class })
 public class ArtemisApp {

@@ -272,7 +272,7 @@ public class ArtemisConfigHelper {
      * @return true if OIDC is enabled, false otherwise
      */
     public boolean isOIDCEnabled(Environment environment) {
-        return environment.getProperty(OIDC_ENABLED_PROPERTY_NAME, Boolean.class, false);
+        return !isWorkerOnly(environment) && environment.getProperty(OIDC_ENABLED_PROPERTY_NAME, Boolean.class, false);
     }
 
     /**
@@ -294,7 +294,7 @@ public class ArtemisConfigHelper {
      */
     public boolean isWeaviateEnabled(Environment environment) {
         // For now this is a development feature only, so we default to false instead of throwing an error if the property is missing
-        return environment.getProperty(WEAVIATE_ENABLED_PROPERTY_NAME, Boolean.class, false);
+        return !isWorkerOnly(environment) && environment.getProperty(WEAVIATE_ENABLED_PROPERTY_NAME, Boolean.class, false);
     }
 
     /**
@@ -385,7 +385,14 @@ public class ArtemisConfigHelper {
         return enabledFeatures;
     }
 
+    private boolean isWorkerOnly(Environment environment) {
+        return environment.matchesProfiles(Constants.PROFILE_AIWORKER + " & !" + PROFILE_CORE);
+    }
+
     private boolean getPropertyOrExitArtemis(String key, Environment environment) {
+        if (isWorkerOnly(environment)) {
+            return false;
+        }
         Boolean value = environment.getProperty(key, Boolean.class);
         if (value == null) {
             throw new RuntimeException(

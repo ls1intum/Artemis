@@ -39,6 +39,9 @@ Generated-code containers use network `none`, a read-only root filesystem, dropp
 capabilities, `no-new-privileges`, and bounded CPU, memory, processes and writable
 scratch mounts. They never receive the Docker socket or provider credentials.
 Restrict supervisor egress to approved provider, model, registry and telemetry endpoints.
+The worker does not load the core Langfuse exporter or custom Sentry configuration.
+Configure approved worker telemetry explicitly. The existing Sentry logging appender
+can still send errors when `sentry.dsn` is set; approve that destination as worker egress.
 Block database, repository/NFS, management and cloud-metadata access.
 
 ## Distributed-data access
@@ -109,9 +112,10 @@ worker WAR.
 The [worker image recipe](https://github.com/ls1intum/Artemis/blob/develop/deployment/docker/aiworker/worker.Dockerfile)
 sets worker launch defaults around that WAR and runs as UID 1000. It does not
 remove application classes from the WAR. It starts the normal `ArtemisApp` with
-`prod,aiworker` in a separate process. On a worker-only node, component scanning
-loads only AI Worker services and the selected workload. The `aiworker` profile disables the HTTP
-server and database services and loads only the selected distributed-data client.
+`prod,aiworker` in a separate process. It uses the normal Artemis component scan.
+Profiles and feature conditions select AI Worker services and the configured workload.
+The `aiworker` profile disables server modules, the HTTP server, and database services.
+The selected distributed-data provider supplies the shared client.
 Startup rejects `core`, `localci`, `localvc`, and `buildagent` with `aiworker`,
 and rejects any attempt to turn the HTTP server back on. Do not run this profile
 on a core node. Keep the core container away from the worker's Docker socket.

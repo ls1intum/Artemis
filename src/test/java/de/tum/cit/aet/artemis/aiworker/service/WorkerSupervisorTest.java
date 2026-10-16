@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
 import de.tum.cit.aet.artemis.aiworker.api.WorkloadApi;
@@ -30,6 +32,7 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkerCommandDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerEventDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerTransport;
+import de.tum.cit.aet.artemis.core.config.TaskSchedulingConfiguration;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderService;
 
@@ -552,11 +555,92 @@ class WorkerSupervisorTest {
             nanos.set(Duration.ofSeconds(30).toNanos());
             worker.accept(new WorkerCommandDTO(WorkerCommandDTO.PROTOCOL_VERSION, WorkerCommandType.RENEW, command.identity(), null));
             nanos.set(Duration.ofSeconds(60).toNanos());
-            worker.heartbeat();
+            worker.expireExecutions();
             assertThat(cancelledSandbox.getCount()).isEqualTo(1);
             nanos.set(Duration.ofSeconds(80).toNanos());
-            worker.heartbeat();
+            worker.expireExecutions();
             take(events, WorkerEventType.CANCELLED);
+        }
+    }
+
+    @Test
+    void coordinatorExpiryCancelsTheExactExecutionWhileHeartbeatPublicationIsBlocked() throws InterruptedException {
+        var events = new LinkedBlockingQueue<WorkerEventDTO>();
+        var entered = new CountDownLatch(1);
+        var releaseWorkload = new CountDownLatch(1);
+        var cancelledSandbox = new CountDownLatch(1);
+        var publishing = new CountDownLatch(1);
+        var releasePublisher = new CountDownLatch(1);
+        var publicationFinished = new CountDownLatch(1);
+        var blockHeartbeats = new AtomicBoolean();
+        var calls = new AtomicInteger();
+        var nanos = new AtomicLong();
+        var cancelledIdentity = new java.util.concurrent.atomic.AtomicReference<ExecutionIdentityDTO>();
+        TestWorkload engine = (assignment, cancelled, progress, checkpoint) -> {
+            if (calls.incrementAndGet() == 1) {
+                entered.countDown();
+                await(releaseWorkload);
+                assertThat(cancelled.getAsBoolean()).isTrue();
+            }
+            return result();
+        };
+        var worker = new WorkerSupervisorService(settings(), event -> {
+            if (event.type() == WorkerEventType.HEARTBEAT && blockHeartbeats.get()) {
+                publishing.countDown();
+                try {
+                    releasePublisher.await();
+                }
+                catch (InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    throw new IllegalStateException("Heartbeat publication interrupted", interrupted);
+                }
+                finally {
+                    publicationFinished.countDown();
+                }
+            }
+            events.add(event);
+        }, () -> engine, identity -> {
+            cancelledIdentity.compareAndSet(null, identity);
+            cancelledSandbox.countDown();
+        }, () -> IMAGE, nanos::get);
+        try (var context = new AnnotationConfigApplicationContext()) {
+            context.getEnvironment().setActiveProfiles("aiworker");
+            TestPropertyValues.of("artemis.aiworker.heartbeat-interval=PT0.01S").applyTo(context);
+            context.registerBean(WorkerSupervisorService.class, () -> worker);
+            context.register(TaskSchedulingConfiguration.class);
+            context.refresh();
+            try {
+                assertThat(context.getBean(WorkerSupervisorService.class)).isSameAs(worker);
+                WorkerCommandDTO command = start(worker, events);
+                worker.accept(command);
+                assertThat(entered.await(5, TimeUnit.SECONDS)).isTrue();
+                blockHeartbeats.set(true);
+                assertThat(publishing.await(5, TimeUnit.SECONDS)).isTrue();
+                nanos.set(settings().connectionGrace().plusSeconds(1).toNanos());
+
+                assertThat(cancelledSandbox.await(5, TimeUnit.SECONDS)).isTrue();
+                assertThat(cancelledIdentity).hasValue(command.identity());
+                assertThat(publicationFinished.getCount()).isEqualTo(1);
+                assertThat(events).noneMatch(event -> event.type() == WorkerEventType.CANCELLED);
+                releaseWorkload.countDown();
+                assertThat(take(events, WorkerEventType.CANCELLED).identity()).isEqualTo(command.identity());
+                assertThat(publicationFinished.getCount()).isEqualTo(1);
+                blockHeartbeats.set(false);
+                org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+                    worker.heartbeat();
+                    assertThat(take(events, WorkerEventType.HEARTBEAT).ready()).isTrue();
+                });
+
+                var next = new ExecutionIdentityDTO("next-job", "resource-2", UUID.randomUUID(), command.identity().workerId(), command.identity().workerIncarnation(), 0);
+                worker.accept(new WorkerCommandDTO(WorkerCommandDTO.PROTOCOL_VERSION, WorkerCommandType.START, next,
+                        new ExecutionAssignmentDTO(next, CAPABILITY, Instant.now().plusSeconds(300), IMAGE, "input")));
+                assertThat(take(events, WorkerEventType.FINISHED).identity()).isEqualTo(next);
+                assertThat(calls).hasValue(2);
+            }
+            finally {
+                releaseWorkload.countDown();
+                releasePublisher.countDown();
+            }
         }
     }
 

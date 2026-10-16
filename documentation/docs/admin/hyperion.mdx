@@ -593,8 +593,8 @@ administrator-switchable runtime feature toggle. Core configuration and the
 | No ready worker or no free slot                                                                     | Enabled but unavailable; capacity errors do not turn off the module flag.                                                       |
 
 The standalone worker is a separate process of the normal Artemis WAR, not an additional core
-profile. Its component scan contains only worker code, and it starts without an
-HTTP server. Provision access to the selected provider, an immutable sandbox image and positive
+profile. It uses the normal Artemis component scan, with profiles and feature
+conditions selecting worker services. It starts without an HTTP server. Provision access to the selected provider, an immutable sandbox image and positive
 resource limits. An
 unconfigured worker fails startup; a transport-only worker without a generation
 engine does not advertise usable capacity. Core module flags do not stop a
@@ -619,7 +619,7 @@ continuation of interrupted runs.
 The generation worker uses chat models only; its bundled configuration excludes
 OpenAI embedding, image, speech, transcription, and moderation auto-configuration.
 Keep those exclusions when supplying external Spring configuration. Use the core
-artifact for core services rather than widening the worker's component scan.
+profile for core services; do not enable server modules in the worker process.
 
 A single-host installation still runs core and the generation worker as separate
 processes. The worker requires its own isolated Docker execution environment;
