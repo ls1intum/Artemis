@@ -139,6 +139,22 @@ describe('CourseWideSearchComponent', () => {
         expect(fetchPosts).not.toHaveBeenCalled();
     });
 
+    it('retries the same older page after a failed request', () => {
+        component.totalNumberOfPosts.set(100);
+        const request = vi.spyOn(communicationService, 'getFilteredPosts');
+        component.fetchNextPage();
+        expect(request.mock.calls.at(-1)![0].page).toBe(1);
+        request.mock.calls.at(-1)![3]!.complete(false);
+        expect(component.isFetchingPosts()).toBe(false);
+        expect(component.page).toBe(1);
+
+        component.fetchNextPage();
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(request.mock.calls.at(-1)![0].page).toBe(1);
+        request.mock.calls.at(-1)![3]!.complete(true);
+        expect(component.page).toBe(2);
+    });
+
     it('should preserve scrolling performed during a pending search page and ignore duplicate loads', () => {
         vi.runAllTimers();
         const container = component.content()!.nativeElement;

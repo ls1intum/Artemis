@@ -60,6 +60,8 @@ export class CommunicationService implements OnDestroy {
     private pinnedPosts$: BehaviorSubject<Post[]> = new BehaviorSubject<Post[]>([]);
 
     private currentPostContextFilter: PostContextFilter = {};
+    private filteredPostsRequestId = 0;
+    private filteredPostsRequestFailed = false;
     private currentConversation?: ConversationDTO = undefined;
     private user!: User; // set in constructor from accountService.identity()
     private pageType!: PageType; // set via setPageType() before use
@@ -209,6 +211,7 @@ export class CommunicationService implements OnDestroy {
         // check if the post context did change
         if (
             forceUpdate ||
+            this.filteredPostsRequestFailed ||
             postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
             postContextFilter?.conversationIds !== this.currentPostContextFilter?.conversationIds ||
             this.hasDifferentContexts(postContextFilter) ||
@@ -217,10 +220,18 @@ export class CommunicationService implements OnDestroy {
         ) {
             this.currentPostContextFilter = postContextFilter;
             this.currentConversation = conversation;
+            const requestId = ++this.filteredPostsRequestId;
+            this.filteredPostsRequestFailed = false;
             let applied = false;
             this.postService
                 .getPosts(this.courseId, postContextFilter)
-                .pipe(finalize(() => requestCallbacks?.complete(applied)))
+                .pipe(
+                    finalize(() => {
+                        // A failed page is not cached. Ignore older failures after a newer request has taken ownership.
+                        if (requestId === this.filteredPostsRequestId) this.filteredPostsRequestFailed = !applied;
+                        requestCallbacks?.complete(applied);
+                    }),
+                )
                 .subscribe((res) => {
                     requestCallbacks?.beforeApply();
                     if (!forceUpdate && (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType)) {

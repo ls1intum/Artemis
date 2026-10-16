@@ -138,11 +138,12 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     fetchNextPage() {
         if (this.isFetchingPosts() || this.posts().length >= this.totalNumberOfPosts()) return;
         this.preserveScrollOnNextPage = true;
+        const previousPage = this.page;
         this.page += 1;
-        this.fetchPosts();
+        this.fetchPosts(false, previousPage);
     }
 
-    public fetchPosts(forceUpdate = false) {
+    public fetchPosts(forceUpdate = false, previousPage = this.page) {
         this.refreshConversationPostContextFilter();
         if (this.currentPostContextFilter) {
             this.isFetchingPosts.set(true);
@@ -159,6 +160,10 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
                     if (requestId !== this.postRequestId) return;
                     this.isFetchingPosts.set(false);
                     this.preserveScrollOnNextPage = false;
+                    if (!applied) {
+                        this.page = previousPage;
+                        this.pendingPageScrollDistance = undefined;
+                    }
                     if (applied) {
                         this.handleScrollOnNewMessage();
                     }

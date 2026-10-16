@@ -466,6 +466,22 @@ examples.forEach((activeConversation) => {
             expect(container.scrollTop).toBe(1000);
         });
 
+        it('retries the same older page after a failed request', () => {
+            component.totalNumberOfPosts.set(100);
+            const request = vi.spyOn(communicationService, 'getFilteredPosts');
+            component.fetchNextPage();
+            expect(request.mock.calls.at(-1)![0].page).toBe(1);
+            request.mock.calls.at(-1)![3]!.complete(false);
+            expect(component.isFetchingPosts()).toBe(false);
+            expect(component.page).toBe(1);
+
+            component.fetchNextPage();
+            expect(request).toHaveBeenCalledTimes(2);
+            expect(request.mock.calls.at(-1)![0].page).toBe(1);
+            request.mock.calls.at(-1)![3]!.complete(true);
+            expect(component.page).toBe(2);
+        });
+
         it('should preserve scrolling performed while older messages are loading', () => {
             vi.runAllTimers();
             const container = component.content()!.nativeElement;
@@ -518,6 +534,8 @@ examples.forEach((activeConversation) => {
             vi.runAllTimers();
             // The page response is complete, but the list still contains the previous groups.
             expect(container.scrollTop).toBe(230);
+            component.fetchNextPage();
+            expect(component.page).toBe(2);
 
             container.scrollTop = 330; // Reader movement while forwarded metadata is still loading.
             forwarded.next(new HttpResponse({ body: [{ id: 2, messages: delaySources ? [{ sourceType: PostingType.POST, sourceId: 10 }] : [] }] }));

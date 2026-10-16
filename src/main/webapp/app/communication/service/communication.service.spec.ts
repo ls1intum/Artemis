@@ -155,10 +155,13 @@ describe('CommunicationService', () => {
         subscription.unsubscribe();
     });
 
-    it('finishes cached requests immediately and finalizes a request without a response', () => {
+    it('retries an unsuccessful request before allowing cache hits', () => {
         vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
         const response = new Subject<HttpResponse<Post[]>>();
-        const request = vi.spyOn(postService, 'getPosts').mockReturnValue(response);
+        const request = vi
+            .spyOn(postService, 'getPosts')
+            .mockReturnValueOnce(response)
+            .mockReturnValue(of(new HttpResponse({ body: [post] })));
         const callbacks = { beforeApply: vi.fn(), complete: vi.fn() };
         const filter = { courseId: course.id, page: 0 };
         communicationService.getFilteredPosts(filter, true, undefined, callbacks);
@@ -167,9 +170,30 @@ describe('CommunicationService', () => {
         expect(callbacks.complete).toHaveBeenCalledExactlyOnceWith(false);
         callbacks.complete.mockClear();
         communicationService.getFilteredPosts(filter, false, undefined, callbacks);
-        expect(request).toHaveBeenCalledOnce();
+        expect(request).toHaveBeenCalledTimes(2);
         expect(callbacks.beforeApply).toHaveBeenCalledOnce();
         expect(callbacks.complete).toHaveBeenCalledExactlyOnceWith(true);
+        callbacks.complete.mockClear();
+        communicationService.getFilteredPosts(filter, false, undefined, callbacks);
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(callbacks.complete).toHaveBeenCalledExactlyOnceWith(true);
+    });
+
+    it('does not invalidate a newer successful cache when an older request fails', () => {
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        const older = new Subject<HttpResponse<Post[]>>();
+        const request = vi
+            .spyOn(postService, 'getPosts')
+            .mockReturnValueOnce(older)
+            .mockReturnValue(of(new HttpResponse({ body: [post] })));
+        const filter = { courseId: course.id, page: 1 };
+        communicationService.getFilteredPosts(filter, true);
+        communicationService.getFilteredPosts(filter, true);
+        older.complete();
+
+        communicationService.getFilteredPosts(filter, false);
+
+        expect(request).toHaveBeenCalledTimes(2);
     });
 
     describe('Invoke post service methods', () => {

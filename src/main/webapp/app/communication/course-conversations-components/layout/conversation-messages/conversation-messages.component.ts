@@ -699,18 +699,19 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     fetchNextPage() {
-        if (this.isFetchingPosts()) return;
+        if (this.isFetchingPosts() || this.isPreparingPosts()) return;
         if (this.posts().length >= this.totalNumberOfPosts()) {
             this.canStartSaving = true;
             return;
         }
         // Navigation/restoration must keep looking for its target as pages arrive; only reader-driven pagination keeps a viewport anchor.
         this.preserveScrollOnNextPage = this.canStartSaving && this.focusOnPostId === undefined;
+        const previousPage = this.page;
         this.page += 1;
-        this.fetchPosts();
+        this.fetchPosts(false, previousPage);
     }
 
-    public fetchPosts(forceUpdate = false) {
+    public fetchPosts(forceUpdate = false, previousPage = this.page) {
         this.refreshConversationPostContextFilter();
         if (this.currentPostContextFilter) {
             if (!this.isFetchingPosts()) {
@@ -731,8 +732,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                     if (requestId !== this.postRequestId) return;
                     this.isFetchingPosts.set(false);
                     this.preserveScrollOnNextPage = false;
+                    if (!applied) {
+                        this.page = previousPage;
+                        this.pendingPageScrollDistance = undefined;
+                    }
                     // Position only after grouped posts (including forwarded sources) have rendered.
-                    if (!applied) this.pendingPageScrollDistance = undefined;
                 },
             });
         }
