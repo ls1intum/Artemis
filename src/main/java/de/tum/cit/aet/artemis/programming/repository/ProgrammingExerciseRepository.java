@@ -245,13 +245,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * structured instructions) and competency links.
      * <p>
      * Three queries initialize the main graph, grading criteria and competency links separately. This avoids a Cartesian
-     * product between independent collections and preserves managed collection wrappers. The shared transaction reuses
-     * the loaded exercise and course, including when this read joins an import's write transaction.
+     * product between independent collections and preserves managed collection wrappers. The queries share a persistence
+     * context and initialize its managed collections, including when this read joins an import's write transaction.
      *
      * @param exerciseId of the programming exercise
      * @return the programming exercise with its complete creation graph initialized
      */
-    @Transactional(readOnly = true) // ok because it only reads, and the queries share one session so that the exercise and its course are read once
+    @Transactional(readOnly = true) // ok because it only reads; the queries share a persistence context and initialize managed collections
     default Optional<ProgrammingExercise> findForCreationById(long exerciseId) {
         Optional<ProgrammingExercise> optionalExercise = findForCreationMainGraphById(exerciseId);
         if (optionalExercise.isPresent()) {
