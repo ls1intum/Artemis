@@ -152,6 +152,34 @@ describe('CourseUsersSelectorComponent', () => {
         });
     });
 
+    it('should keep the option activated with the arrow keys visible in the dropdown', () => {
+        // jsdom does not lay out the page, so it has no scrollIntoView.
+        const originalScrollIntoView = Element.prototype.scrollIntoView;
+        const scrollIntoView = vi.fn();
+        Element.prototype.scrollIntoView = scrollIntoView;
+        try {
+            const users = [1, 2, 3, 4].map((id) => generateExampleUserPublicInfoDTO({ id, login: `user${id}` }));
+            vi.spyOn(courseManagementServiceMock, 'searchUsers').mockReturnValue(of(new HttpResponse({ body: users, status: 200 })));
+            changeInput(fixture.debugElement.nativeElement, 'user');
+            vi.advanceTimersByTime(1000);
+            fixture.changeDetectorRef.detectChanges();
+
+            const input = getNativeInput(fixture.debugElement.nativeElement);
+            for (let i = 0; i < 3; i++) {
+                input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+                fixture.changeDetectorRef.detectChanges();
+                TestBed.tick();
+            }
+
+            const lastActivatedOption = document.querySelectorAll('ngb-typeahead-window button.dropdown-item')[2];
+            expect(lastActivatedOption.classList).toContain('active');
+            expect(scrollIntoView.mock.contexts.at(-1)).toBe(lastActivatedOption);
+            expect(scrollIntoView).toHaveBeenLastCalledWith({ block: 'nearest' });
+        } finally {
+            Element.prototype.scrollIntoView = originalScrollIntoView;
+        }
+    });
+
     function getNativeInput(element: HTMLElement): HTMLInputElement {
         return <HTMLInputElement>element.querySelector('input');
     }
