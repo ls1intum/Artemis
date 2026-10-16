@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -59,6 +60,23 @@ class SlideServiceTest {
         order.verify(slideUnhideService).handleSlideHiddenUpdate(slide);
         order.verify(visibilitySyncService).markVisibilityDirty(Set.of(100L));
         order.verify(attachmentService).regenerateStudentVersionOrRemoveOutdated(attachment);
+    }
+
+    @Test
+    void aFailedUnhideSchedulingStillUpdatesIrisAndRegeneratesTheStudentVersion() {
+        var exercise = exercise(ZonedDateTime.now().plusDays(7));
+        var attachment = attachment(10L, 100L);
+        var first = slide(attachment, null, false);
+        var second = slide(attachment, null, false);
+        when(slideRepository.findByExerciseId(exercise.getId())).thenReturn(List.of(first, second));
+        doThrow(new IllegalStateException("scheduling failed")).when(slideUnhideService).handleSlideHiddenUpdate(first);
+
+        slideService.updateSlidesHiddenDate(exercise);
+
+        // The slides are hidden now, so the previous student version must not stay as it is
+        verify(slideUnhideService).handleSlideHiddenUpdate(second);
+        verify(visibilitySyncService).markVisibilityDirty(Set.of(100L));
+        verify(attachmentService).regenerateStudentVersionOrRemoveOutdated(attachment);
     }
 
     @Test

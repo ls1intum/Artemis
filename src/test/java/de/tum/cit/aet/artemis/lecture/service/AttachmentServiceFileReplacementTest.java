@@ -239,6 +239,18 @@ class AttachmentServiceFileReplacementTest {
     }
 
     @Test
+    void failingSlideQueryRemovesTheReferenceTheAttemptRead() {
+        // The visibility change is saved already; the regeneration fails while reading the slides
+        when(slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(ATTACHMENT_VIDEO_UNIT_ID))
+                .thenThrow(new IllegalStateException("database unavailable"));
+        when(attachmentRepository.clearStudentVersionIfUnchanged(ATTACHMENT_ID, OLD_STUDENT_VERSION)).thenReturn(1);
+
+        assertThat(attachmentService.regenerateStudentVersionOrRemoveOutdated(attachment)).isFalse();
+
+        verify(attachmentRepository).clearStudentVersionIfUnchanged(ATTACHMENT_ID, OLD_STUDENT_VERSION);
+    }
+
+    @Test
     void failedRegenerationRemovesTheReferenceItReadNotTheCallersOlderOne() {
         // The caller loaded the attachment while it pointed at old.pdf; a regeneration in between published fresh.pdf. This regeneration reads fresh.pdf and then fails
         // (the stored file does not exist), so fresh.pdf no longer matches the slides and must stop being served.

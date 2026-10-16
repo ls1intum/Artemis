@@ -103,7 +103,15 @@ public class SlideService {
 
         relatedSlides.forEach(slide -> slide.setHidden(newHiddenDate));
         slideRepository.saveAll(relatedSlides);
-        relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate);
+        // The slides are saved now; a failure to schedule one unhide must not skip the others, nor the synchronization and regeneration below.
+        relatedSlides.forEach(slide -> {
+            try {
+                slideUnhideService.handleSlideHiddenUpdate(slide);
+            }
+            catch (RuntimeException exception) {
+                log.error("Could not schedule unhiding slide {} of exercise {}: {}", slide.getId(), exercise.getId(), exception.getMessage(), exception);
+            }
+        });
 
         lectureUnitVisibilitySyncService.markVisibilityDirty(affectedUnitIds);
         attachmentsWithChangedVisibleSlides.values().forEach(attachmentService::regenerateStudentVersionOrRemoveOutdated);

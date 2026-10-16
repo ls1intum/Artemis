@@ -661,14 +661,17 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentVideoUnitWithoutAttachmentPart_shouldKeepTheAttachmentInStepWithTheUnit() throws Exception {
         ZonedDateTime nextWeek = ZonedDateTime.now().plusWeeks(1);
-        attachmentVideoUnit.setReleaseDate(nextWeek);
-        attachment.setReleaseDate(nextWeek);
-        var createResult = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
-        var created = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        // A unit whose slides are already split: creating one through the endpoint starts an asynchronous split, and the student version regeneration after it would race
+        // the student version set below
+        AttachmentVideoUnit splitUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture1, 1, true);
+        splitUnit.setReleaseDate(nextWeek);
+        attachmentVideoUnitRepository.save(splitUnit);
         // The student version leaves out the hidden slides, so a change of the details must keep it.
-        Attachment storedAttachment = attachmentRepository.findById(created.attachment().id()).orElseThrow();
+        Attachment storedAttachment = attachmentRepository.findById(splitUnit.getAttachment().getId()).orElseThrow();
+        storedAttachment.setReleaseDate(nextWeek);
         storedAttachment.setStudentVersion("student-version.pdf");
         attachmentRepository.save(storedAttachment);
+        var created = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + splitUnit.getId(), HttpStatus.OK, AttachmentVideoUnitDTO.class);
         String studentVersion = attachmentRepository.findById(created.attachment().id()).orElseThrow().getStudentVersion();
         assertThat(studentVersion).endsWith("student-version.pdf");
 

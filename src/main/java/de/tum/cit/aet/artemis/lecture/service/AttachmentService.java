@@ -120,69 +120,74 @@ public class AttachmentService {
                 return;
             }
             String startedFromStudentVersion = state.get().studentVersion();
-            // Before anything else, including removing the student version for a deck that hides nothing: slide numbers only mean something for the file they were split
-            // from. While the split of a new file runs, or after it failed and the previous slides were restored, they belong to another file, and removing them by number
-            // would remove the wrong pages. Close the downloads instead; the regeneration after the next successful split builds the student version.
-            if (slideRepository.existsCurrentSlideOfOtherRevision(attachmentVideoUnit.getId(), state.get().version(), state.get().sha256Hash())) {
-                if (!onlyIfMissing) {
-                    removeStudentVersionIfUnchanged(attachment, FileSystemLocation.storedFilename(startedFromStudentVersion));
+            // Everything after reading the state can fail, the slide queries included. A failure leaves the slides saved and the student version possibly outdated, so
+            // remove the reference this attempt read before passing the failure on.
+            try {
+                // Before anything else, including removing the student version for a deck that hides nothing: slide numbers only mean something for the file they were split
+                // from. While the split of a new file runs, or after it failed and the previous slides were restored, they belong to another file, and removing them by number
+                // would remove the wrong pages. Close the downloads instead; the regeneration after the next successful split builds the student version.
+                if (slideRepository.existsCurrentSlideOfOtherRevision(attachmentVideoUnit.getId(), state.get().version(), state.get().sha256Hash())) {
+                    if (!onlyIfMissing) {
+                        removeStudentVersionIfUnchanged(attachment, FileSystemLocation.storedFilename(startedFromStudentVersion));
+                    }
+                    log.debug("The slides of attachment {} do not belong to its stored file, so its student version is not regenerated until they do", attachment.getId());
+                    return;
                 }
-                log.debug("The slides of attachment {} do not belong to its stored file, so its student version is not regenerated until they do", attachment.getId());
-                return;
-            }
-            List<Slide> hiddenSlides = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(attachmentVideoUnit.getId());
+                List<Slide> hiddenSlides = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(attachmentVideoUnit.getId());
 
-            // If no slides are marked as hidden, remove student version if it exists
-            if (hiddenSlides.isEmpty()) {
-                removeStudentVersionIfUnchanged(attachment, FileSystemLocation.storedFilename(startedFromStudentVersion));
-                return;
-            }
+                // If no slides are marked as hidden, remove student version if it exists
+                if (hiddenSlides.isEmpty()) {
+                    removeStudentVersionIfUnchanged(attachment, FileSystemLocation.storedFilename(startedFromStudentVersion));
+                    return;
+                }
 
-            // The attachment says where its file is; a unit created for an attachment that used to hang off a lecture still has it under that lecture's directory. An
-            // attachment that links to a document hosted elsewhere has no file here to redact, and slides are only ever split out of a stored PDF, so hidden slides on such an
-            // attachment are a data inconsistency rather than something to regenerate from.
-            Optional<FileSystemLocation> fileLocation = attachment.fileLocation();
-            if (fileLocation.isEmpty()) {
-                log.warn("Attachment {} links to a document this application does not store, so no student version can be regenerated for its {} hidden slide(s).",
-                        attachment.getId(), hiddenSlides.size());
-                return;
-            }
+                // The attachment says where its file is; a unit created for an attachment that used to hang off a lecture still has it under that lecture's directory. An
+                // attachment that links to a document hosted elsewhere has no file here to redact, and slides are only ever split out of a stored PDF, so hidden slides on such an
+                // attachment are a data inconsistency rather than something to regenerate from.
+                Optional<FileSystemLocation> fileLocation = attachment.fileLocation();
+                if (fileLocation.isEmpty()) {
+                    log.warn("Attachment {} links to a document this application does not store, so no student version can be regenerated for its {} hidden slide(s).",
+                            attachment.getId(), hiddenSlides.size());
+                    return;
+                }
 
-            String filename = newStudentVersionFilename();
-            try {
-                writeStudentVersionFile(generateStudentVersionPdf(fileLocation.get().path().toFile(), hiddenSlides), attachmentVideoUnit.getId(), filename);
-            }
-            catch (Exception e) {
-                removeOutdatedAfterFailure(attachment, startedFromStudentVersion, removeOutdatedOnFailure);
-                throw new InternalServerErrorException("Failed to regenerate student version: " + e.getMessage(), e);
-            }
+                String filename = newStudentVersionFilename();
+                try {
+                    writeStudentVersionFile(generateStudentVersionPdf(fileLocation.get().path().toFile(), hiddenSlides), attachmentVideoUnit.getId(), filename);
+                }
+                catch (Exception e) {
+                    throw new InternalServerErrorException("Failed to regenerate student version: " + e.getMessage(), e);
+                }
 
-            List<Long> hiddenSlideIds = hiddenSlides.stream().map(Slide::getId).toList();
-            int published;
-            try {
-                published = attachmentRepository.publishStudentVersionIfUnchanged(attachment.getId(), attachmentVideoUnit.getId(), filename, state.get().version(),
-                        state.get().sha256Hash(), startedFromStudentVersion, hiddenSlideIds, hiddenSlideIds.size());
+                List<Long> hiddenSlideIds = hiddenSlides.stream().map(Slide::getId).toList();
+                int published;
+                try {
+                    published = attachmentRepository.publishStudentVersionIfUnchanged(attachment.getId(), attachmentVideoUnit.getId(), filename, state.get().version(),
+                            state.get().sha256Hash(), startedFromStudentVersion, hiddenSlideIds, hiddenSlideIds.size());
+                }
+                catch (RuntimeException exception) {
+                    deleteStudentVersionFile(attachmentVideoUnit.getId(), filename);
+                    throw exception;
+                }
+                if (published == 1) {
+                    attachment.setStudentVersion(filename);
+                    String oldStudentVersion = FileSystemLocation.storedFilename(startedFromStudentVersion);
+                    if (oldStudentVersion != null && !oldStudentVersion.equals(filename)) {
+                        deleteStudentVersionFile(attachmentVideoUnit.getId(), oldStudentVersion);
+                    }
+                    return;
+                }
+
+                deleteStudentVersionFile(attachmentVideoUnit.getId(), filename);
+                if (attempt >= MAX_REGENERATION_ATTEMPTS) {
+                    throw new InternalServerErrorException("Failed to regenerate student version: attachment " + attachment.getId() + " kept changing while it was generated");
+                }
+                log.debug("Attachment {} changed while its student version was generated; generating it again", attachment.getId());
             }
             catch (RuntimeException exception) {
-                deleteStudentVersionFile(attachmentVideoUnit.getId(), filename);
                 removeOutdatedAfterFailure(attachment, startedFromStudentVersion, removeOutdatedOnFailure);
                 throw exception;
             }
-            if (published == 1) {
-                attachment.setStudentVersion(filename);
-                String oldStudentVersion = FileSystemLocation.storedFilename(startedFromStudentVersion);
-                if (oldStudentVersion != null && !oldStudentVersion.equals(filename)) {
-                    deleteStudentVersionFile(attachmentVideoUnit.getId(), oldStudentVersion);
-                }
-                return;
-            }
-
-            deleteStudentVersionFile(attachmentVideoUnit.getId(), filename);
-            if (attempt >= MAX_REGENERATION_ATTEMPTS) {
-                removeOutdatedAfterFailure(attachment, startedFromStudentVersion, removeOutdatedOnFailure);
-                throw new InternalServerErrorException("Failed to regenerate student version: attachment " + attachment.getId() + " kept changing while it was generated");
-            }
-            log.debug("Attachment {} changed while its student version was generated; generating it again", attachment.getId());
         }
     }
 
