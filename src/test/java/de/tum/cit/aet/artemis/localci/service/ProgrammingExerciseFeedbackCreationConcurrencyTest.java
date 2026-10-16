@@ -82,7 +82,9 @@ class ProgrammingExerciseFeedbackCreationConcurrencyTest {
     private static Fixture fixture() {
         ProgrammingExerciseTestCaseTestRepository testCaseRepository = mock(ProgrammingExerciseTestCaseTestRepository.class);
         var service = new ProgrammingExerciseFeedbackCreationService(testCaseRepository, mock(WebsocketMessagingService.class), mock(ProgrammingExerciseTaskService.class),
-                mock(ProgrammingExerciseRepository.class), mock(StaticCodeAnalysisCategoryRepository.class), mock(FeedbackMessageService.class));
+                mock(ProgrammingExerciseRepository.class), mock(StaticCodeAnalysisCategoryRepository.class), mock(FeedbackMessageService.class), java.util.Optional.empty(),
+                mock(de.tum.cit.aet.artemis.localvc.service.GitService.class), mock(de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository.class),
+                "main");
         return new Fixture(service, testCaseRepository);
     }
 
