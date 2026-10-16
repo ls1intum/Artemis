@@ -78,7 +78,7 @@
 
 .square-button {
     width: 45px;
-    height: 35px;
+    align-self: stretch;
     padding: 0.2rem;
     display: flex;
     align-items: center;
@@ -87,5 +87,5 @@
 }
 
 .search-filter {
-    height: 35px;
+    min-width: 0;
 }
