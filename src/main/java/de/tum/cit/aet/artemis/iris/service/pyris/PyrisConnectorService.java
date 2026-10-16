@@ -88,8 +88,6 @@ public class PyrisConnectorService {
 
     private final JsonMapper objectMapper;
 
-    private final PyrisJobService pyrisJobService;
-
     private final PyrisCallbackTokenService callbackTokenService;
 
     @Value("${server.url}")
@@ -99,11 +97,10 @@ public class PyrisConnectorService {
     private String pyrisUrl;
 
     public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, @Qualifier("censusPyrisRestTemplate") RestTemplate censusRestTemplate,
-            JsonMapper objectMapper, PyrisJobService pyrisJobService, PyrisCallbackTokenService callbackTokenService) {
+            JsonMapper objectMapper, PyrisCallbackTokenService callbackTokenService) {
         this.restTemplate = restTemplate;
         this.censusRestTemplate = censusRestTemplate;
         this.objectMapper = objectMapper;
-        this.pyrisJobService = pyrisJobService;
         this.callbackTokenService = callbackTokenService;
     }
 
@@ -317,7 +314,7 @@ public class PyrisConnectorService {
      *
      * @param query            the user's question
      * @param limit            the maximum number of source segments to retrieve
-     * @param runId            the run id of the registered global search answer job, used for WebSocket routing
+     * @param job              the global search answer job registered for this request
      * @param aiSelection      the user's LLM selection (LOCAL_AI or CLOUD_AI)
      * @param accessContext    the requesting user's role-grouped course access, applied by Pyris as an opaque filter (may be null)
      * @param entityCandidates pre-fetched, access-filtered entity candidates for the answer pipeline (may be null or empty)
@@ -329,18 +326,17 @@ public class PyrisConnectorService {
      *                             was excluded); distinct from an unscoped {@code courseIds}, and passed as its own
      *                             field since an empty {@code courseIds} list does not survive the wire
      */
-    public void executeGlobalSearchIrisAnswer(String query, int limit, String runId, AiSelectionDecision aiSelection, @Nullable PyrisAccessContextDTO accessContext,
+    public void executeGlobalSearchIrisAnswer(String query, int limit, GlobalSearchAnswerJob job, AiSelectionDecision aiSelection, @Nullable PyrisAccessContextDTO accessContext,
             @Nullable List<PyrisEntityCandidateDTO> entityCandidates, @Nullable List<Long> courseIds, @Nullable List<Long> excludeCourseIds, boolean searchesNothing) {
         var endpoint = "/api/v1/pipelines/global-search/run";
         try {
             // streamResponse: Pyris posts throttled partial-answer snapshots while the LLM generates,
             // which this service forwards to the client as partial WebSocket updates.
-            if (!(pyrisJobService.getJob(runId) instanceof GlobalSearchAnswerJob job)) {
-                throw new IllegalStateException("No global search answer job is registered for run " + runId);
-            }
-            // The token names this request's invocation, so it is never accepted for a later request with the same client-chosen run id.
+            // Issued for exactly the job registered for this request, not for whatever holds the run id by now: the token names this request's
+            // invocation, so it is never accepted for another request with the same client-chosen run id.
             var callbackToken = callbackTokenService.issue(job);
-            var settings = new PyrisPipelineExecutionSettingsDTO(runId, callbackToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue(), Boolean.TRUE);
+            var settings = new PyrisPipelineExecutionSettingsDTO(job.jobId(), callbackToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue(),
+                    Boolean.TRUE);
             var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext, entityCandidates, courseIds, excludeCourseIds, searchesNothing);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);
             if (response.getStatusCode().value() != HttpStatus.ACCEPTED.value()) {

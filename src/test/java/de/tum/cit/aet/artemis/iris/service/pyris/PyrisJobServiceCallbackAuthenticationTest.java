@@ -202,4 +202,48 @@ class PyrisJobServiceCallbackAuthenticationTest {
         assertThatThrownBy(() -> service.addGlobalSearchAnswerJob("attacker", chatRunId)).isInstanceOf(ConflictException.class);
         assertThat(service.getJob(chatRunId)).as("the existing job is unchanged").isEqualTo(chatJob);
     }
+
+    @Test
+    void aRequestDispatchedAfterItsRunIdWasReusedCarriesItsOwnInvocation() {
+        String runId = UUID.randomUUID().toString();
+        GlobalSearchAnswerJob alicesJob = service.addGlobalSearchAnswerJob("alice", runId);
+        // Alice's request stalls before dispatch; its entry expires and Bob registers the same run id.
+        service.removeJobByRunId(runId);
+        service.addGlobalSearchAnswerJob("bob", runId);
+
+        // The dispatch signs the job registered for Alice's request, so her token never authenticates as Bob's job.
+        String alicesToken = tokenService.issue(alicesJob);
+        assertThatThrownBy(() -> service.getAndAuthenticateJobFromHeaderElseThrow(withAuthorization("Bearer " + alicesToken), runId, GlobalSearchAnswerJob.class))
+                .isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    void aStaleCallbackNeitherOverwritesNorRemovesANewerRequestWithTheSameRunId() {
+        String runId = UUID.randomUUID().toString();
+        GlobalSearchAnswerJob alicesJob = service.addGlobalSearchAnswerJob("alice", runId);
+        // Alice's callback was authenticated, then her entry expired and Bob registered the same run id.
+        service.removeJobByRunId(runId);
+        GlobalSearchAnswerJob bobsJob = service.addGlobalSearchAnswerJob("bob", runId);
+
+        service.updateJob(alicesJob);
+        assertThat(service.getJob(runId)).as("a stale update does not restore the older request").isEqualTo(bobsJob);
+        service.removeJob(alicesJob);
+        assertThat(service.getJob(runId)).as("a stale removal does not delete the newer request").isEqualTo(bobsJob);
+        service.finishGlobalSearchAnswerJob(alicesJob, null, false);
+        assertThat(service.getJob(runId)).as("a stale finish does not delete the newer request").isEqualTo(bobsJob);
+
+        service.finishGlobalSearchAnswerJob(bobsJob, null, false);
+        assertThat(service.getJob(runId)).as("the current request finishes as before").isNull();
+    }
+
+    @Test
+    void anUpdateDoesNotBringBackAnExpiredGlobalSearchRequest() {
+        String runId = UUID.randomUUID().toString();
+        GlobalSearchAnswerJob job = service.addGlobalSearchAnswerJob("student", runId);
+        service.removeJobByRunId(runId);
+
+        service.updateJob(job);
+
+        assertThat(service.getJob(runId)).isNull();
+    }
 }

@@ -436,13 +436,15 @@ public class PyrisJobService {
      *
      * @param userLogin the login of the user who initiated the search
      * @param runId     the client-generated UUID that identifies this job and is echoed in WebSocket callbacks
+     * @return the registered job; the caller dispatches exactly this job, never one looked up again by run id
      * @throws ConflictException if a job with this run id exists
      */
-    public void addGlobalSearchAnswerJob(String userLogin, String runId) {
+    public GlobalSearchAnswerJob addGlobalSearchAnswerJob(String userLogin, String runId) {
         var job = new GlobalSearchAnswerJob(runId, userLogin, UUID.randomUUID().toString());
         if (getPyrisJobMap().putIfAbsent(runId, job, Duration.ofSeconds(jobTimeout)) != null) {
             throw new ConflictException("The run id is already in use", "Job", "runIdInUse");
         }
+        return job;
     }
 
     /**
@@ -466,6 +468,16 @@ public class PyrisJobService {
      * @param hasAnswer whether the run ended with an answer that can be continued in the chat
      */
     public void finishGlobalSearchAnswerJob(GlobalSearchAnswerJob job, @Nullable List<PyrisLectureSearchResultDTO> sources, boolean hasAnswer) {
+        // A finished request whose run id already belongs to a newer request must leave that request's job and material alone.
+        runWithJobLock(job.jobId(), () -> {
+            if (isCurrentInvocation(job)) {
+                finishCurrentGlobalSearchAnswerJob(job, sources, hasAnswer);
+            }
+            return null;
+        });
+    }
+
+    private void finishCurrentGlobalSearchAnswerJob(GlobalSearchAnswerJob job, @Nullable List<PyrisLectureSearchResultDTO> sources, boolean hasAnswer) {
         var citedSources = sources == null ? List.<PyrisLectureSearchResultDTO>of()
                 : sources.stream().filter(Objects::nonNull).filter(source -> source.lectureUnit() != null && source.course() != null).toList();
         if (hasAnswer && !citedSources.isEmpty()) {
@@ -474,7 +486,16 @@ public class PyrisJobService {
         else {
             materialVersionService.removeGlobalSearch(job.jobId(), job.userLogin());
         }
-        removeJob(job);
+        getPyrisJobMap().remove(job.jobId());
+    }
+
+    // Whether the job map still holds this invocation of the job's run. Always true for a job without an invocation id, whose run id is never reused.
+    private boolean isCurrentInvocation(PyrisJob job) {
+        if (job.invocationId() == null) {
+            return true;
+        }
+        var current = getPyrisJobMap().get(job.jobId());
+        return current != null && job.invocationId().equals(current.invocationId());
     }
 
     /**
@@ -510,6 +531,16 @@ public class PyrisJobService {
      * @param job the job to remove
      */
     public void removeJob(PyrisJob job) {
+        if (job.invocationId() != null) {
+            // The run id can belong to a newer request by now; only this invocation is removed.
+            runWithJobLock(job.jobId(), () -> {
+                if (isCurrentInvocation(job)) {
+                    getPyrisJobMap().remove(job.jobId());
+                }
+                return null;
+            });
+            return;
+        }
         getPyrisJobMap().remove(job.jobId());
         if (job instanceof ChatJob) {
             getChatJobClientIdMap().remove(job.jobId());
@@ -536,6 +567,17 @@ public class PyrisJobService {
      */
     public void updateJob(PyrisJob job) {
         int ttl = (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob) ? ingestionJobTimeout : jobTimeout;
+        if (job.invocationId() != null) {
+            // Only this invocation is refreshed: a run id that expired or belongs to a newer request by now is left alone.
+            runWithJobLock(job.jobId(), () -> {
+                var current = getPyrisJobMap().get(job.jobId());
+                if (current != null && job.invocationId().equals(current.invocationId())) {
+                    getPyrisJobMap().put(job.jobId(), job, Duration.ofSeconds(ttl));
+                }
+                return null;
+            });
+            return;
+        }
         getPyrisJobMap().put(job.jobId(), job, Duration.ofSeconds(ttl));
         if (job instanceof ChatJob) {
             materialVersionService.refresh(job.jobId());

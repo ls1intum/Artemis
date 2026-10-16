@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntityCandidateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.GlobalSearchAnswerJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
@@ -90,6 +91,13 @@ class IrisGlobalSearchResourceTest {
         // Unrestricted, matching an unscoped request's "no ceiling to narrow" path through
         // lectureSearchScope — resolveAccessContext never legitimately returns null in production.
         when(irisAccessContextService.resolveAccessContext(testUser)).thenReturn(new PyrisAccessContextDTO(null, null, null, null, null, null, true));
+        when(pyrisJobService.addGlobalSearchAnswerJob(anyString(), anyString()))
+                .thenAnswer(invocation -> new GlobalSearchAnswerJob(invocation.getArgument(1), invocation.getArgument(0), "invocation-1"));
+    }
+
+    // The job the resource registered for the request, which is the one it must dispatch.
+    private GlobalSearchAnswerJob registeredJob(GlobalSearchAskRequestDTO requestDTO) {
+        return new GlobalSearchAnswerJob(requestDTO.runId().toString(), principal.getName(), "invocation-1");
     }
 
     @Test
@@ -102,8 +110,8 @@ class IrisGlobalSearchResourceTest {
         ResponseEntity<Void> response = resource.ask(requestDTO, principal);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
-        verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(requestDTO.runId().toString()),
-                eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of(PyrisEntityCandidateDTO.of(candidate))), eq((List<Long>) null), eq((List<Long>) null), eq(false));
+        verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(registeredJob(requestDTO)), eq(AiSelectionDecision.CLOUD_AI),
+                any(), eq(List.of(PyrisEntityCandidateDTO.of(candidate))), eq((List<Long>) null), eq((List<Long>) null), eq(false));
     }
 
     @Test
@@ -117,8 +125,8 @@ class IrisGlobalSearchResourceTest {
         // The endpoint still accepts the run and asks Pyris to answer from lecture content alone,
         // instead of surfacing a 500 for a job token that pyrisJobService already registered.
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
-        verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(requestDTO.runId().toString()),
-                eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of()), eq((List<Long>) null), eq((List<Long>) null), eq(false));
+        verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(registeredJob(requestDTO)), eq(AiSelectionDecision.CLOUD_AI),
+                any(), eq(List.of()), eq((List<Long>) null), eq((List<Long>) null), eq(false));
         verify(pyrisJobService).addGlobalSearchAnswerJob(anyString(), anyString());
     }
 
@@ -135,7 +143,7 @@ class IrisGlobalSearchResourceTest {
 
         assertThatThrownBy(() -> resource.ask(requestDTO, principal)).isInstanceOf(RuntimeException.class).hasMessage("course 42 is no longer accessible");
         verify(pyrisJobService, never()).addGlobalSearchAnswerJob(anyString(), anyString());
-        verify(pyrisConnectorService, never()).executeGlobalSearchIrisAnswer(any(), anyInt(), anyString(), any(), any(), any(), any(), any(), anyBoolean());
+        verify(pyrisConnectorService, never()).executeGlobalSearchIrisAnswer(any(), anyInt(), any(), any(), any(), any(), any(), any(), anyBoolean());
     }
 
     @Test
@@ -147,8 +155,8 @@ class IrisGlobalSearchResourceTest {
         ResponseEntity<Void> response = resource.ask(requestDTO, principal);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
-        verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(requestDTO.runId().toString()),
-                eq(AiSelectionDecision.CLOUD_AI), any(), eq(List.of()), eq((List<Long>) null), eq((List<Long>) null), eq(false));
+        verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(eq(requestDTO.query()), eq(requestDTO.limit()), eq(registeredJob(requestDTO)), eq(AiSelectionDecision.CLOUD_AI),
+                any(), eq(List.of()), eq((List<Long>) null), eq((List<Long>) null), eq(false));
     }
 
     @Test
@@ -172,8 +180,8 @@ class IrisGlobalSearchResourceTest {
 
         assertThat(resource.ask(requestDTO, principal).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         verify(searchableEntityPrefetchApi).prefetchCandidates(any(), eq(requestDTO.query()), anyInt(), eq(List.of(12L)), eq(List.of()));
-        verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), AiSelectionDecision.CLOUD_AI,
-                accessContext, List.of(), List.of(12L), null, false);
+        verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), registeredJob(requestDTO), AiSelectionDecision.CLOUD_AI, accessContext,
+                List.of(), List.of(12L), null, false);
         // The material the answer may cite is captured for the narrowed scope before Pyris is asked, so a handoff pins its citations to it.
         var order = inOrder(pyrisJobService, pyrisConnectorService);
         order.verify(pyrisJobService).captureGlobalSearchMaterialVersions(principal.getName(), requestDTO.runId().toString(), List.of(12L));
@@ -188,8 +196,8 @@ class IrisGlobalSearchResourceTest {
 
         assertThat(resource.ask(requestDTO, principal).getStatusCode()).isEqualTo(HttpStatus.ACCEPTED);
         verifyNoInteractions(searchableEntityPrefetchApi, irisSettingsService);
-        verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), AiSelectionDecision.CLOUD_AI,
-                accessContext, List.of(), null, null, true);
+        verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), registeredJob(requestDTO), AiSelectionDecision.CLOUD_AI, accessContext,
+                List.of(), null, null, true);
     }
 
     private static PyrisAccessContextDTO scopedAccessContext() {

@@ -49,8 +49,7 @@ class PyrisConnectorServiceCensusTest {
     }
 
     private static PyrisConnectorService connectorFor(RestTemplate censusTemplate, String pyrisUrl) {
-        PyrisConnectorService service = new PyrisConnectorService(new RestTemplate(), censusTemplate, JsonObjectMapper.get(), mock(PyrisJobService.class),
-                mock(PyrisCallbackTokenService.class));
+        PyrisConnectorService service = new PyrisConnectorService(new RestTemplate(), censusTemplate, JsonObjectMapper.get(), mock(PyrisCallbackTokenService.class));
         ReflectionTestUtils.setField(service, "pyrisUrl", pyrisUrl);
         ReflectionTestUtils.setField(service, "artemisBaseUrl", "https://artemis.test");
         return service;
