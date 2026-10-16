@@ -233,6 +233,16 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsAContainerMemoryOverrideAboveTheInstanceDefaultSwapLimit() throws Exception {
+        // the exercise flags of the test configuration set no swap limit, so the container would inherit the instance default of 2g below its 4096 MB of memory
+        var flags = new BuildContainerDockerFlagsDTO(null, null, null, 4096, null);
+        var container = new BuildContainerDTO("student_tests", DOCKER_IMAGE, null, List.of(phase("test")), flags);
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(container)), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testRejectsADisallowedContainerDockerNetwork() throws Exception {
         var flags = new BuildContainerDockerFlagsDTO("host", null, null, null, null);
         var container = new BuildContainerDTO("student_tests", DOCKER_IMAGE, null, List.of(phase("test")), flags);

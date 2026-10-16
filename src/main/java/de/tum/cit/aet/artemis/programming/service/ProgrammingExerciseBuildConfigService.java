@@ -21,6 +21,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerFlagsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -39,11 +40,34 @@ public class ProgrammingExerciseBuildConfigService {
 
     private final LicenseService licenseService;
 
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+
     @Value("${artemis.continuous-integration.container-flags-limit.allowed-custom-networks:none}")
     private List<String> allowedNetworks;
 
-    public ProgrammingExerciseBuildConfigService(LicenseService licenseService) {
+    public ProgrammingExerciseBuildConfigService(LicenseService licenseService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.licenseService = licenseService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
+    }
+
+    /**
+     * Returns the memory limit a build job runs with when neither the exercise nor its container sets one, taken from
+     * the instance's default Docker flags.
+     *
+     * @return the default memory limit in MB, or 0 if the instance configures none
+     */
+    public int getDefaultMemoryLimitMB() {
+        return programmingLanguageConfiguration.getDefaultMemoryLimitMB();
+    }
+
+    /**
+     * Returns the memory swap limit a build job runs with when neither the exercise nor its container sets one, taken
+     * from the instance's default Docker flags.
+     *
+     * @return the default memory swap limit in MB, or 0 if the instance configures none
+     */
+    public int getDefaultMemorySwapLimitMB() {
+        return programmingLanguageConfiguration.getDefaultMemorySwapLimitMB();
     }
 
     /**

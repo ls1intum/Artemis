@@ -128,6 +128,19 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
+    void testAMemoryLimitAboveTheDefaultSwapLimitRunsWithoutSwap() {
+        // the instance default is 2g of memory and a 2g total; a job that sets only 4096 MB of memory would inherit a total below its memory, which Docker refuses
+        ReflectionTestUtils.setField(buildJobContainerService, "maxMemory", 8096);
+        ReflectionTestUtils.setField(buildJobContainerService, "maxMemorySwap", 8096);
+        var runConfig = new DockerRunConfig(List.of(), "", 0, 4096, 0);
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
+
+        HostConfig hostConfig = captureHostConfig();
+        assertThat(hostConfig.getMemory()).isEqualTo(4096L * 1024L * 1024L);
+        assertThat(hostConfig.getMemorySwap()).as("the total is raised to the memory, so the job runs without swap").isEqualTo(4096L * 1024L * 1024L);
+    }
+
+    @Test
     void testNullNetworkIsIgnored() {
         var runConfig = new DockerRunConfig(List.of(), null, 1, 1, 1);
         buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);

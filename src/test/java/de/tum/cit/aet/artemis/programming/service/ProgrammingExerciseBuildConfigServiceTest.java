@@ -17,6 +17,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
+import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -33,13 +34,16 @@ class ProgrammingExerciseBuildConfigServiceTest {
     @Mock
     private LicenseService licenseService;
 
+    @Mock
+    private ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+
     private ProgrammingExerciseBuildConfigService service;
 
     private final ProgrammingExercise exercise = new ProgrammingExercise();
 
     @BeforeEach
     void setUp() {
-        service = new ProgrammingExerciseBuildConfigService(licenseService);
+        service = new ProgrammingExerciseBuildConfigService(licenseService, programmingLanguageConfiguration);
         ReflectionTestUtils.setField(service, "allowedNetworks", List.of("none"));
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         lenient().when(licenseService.getEnvironment(any(), any())).thenReturn(Map.of());

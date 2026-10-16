@@ -284,14 +284,54 @@ public class ProgrammingExerciseValidationService {
             return;
         }
         validateDockerFlagValues(dockerFlagsDTO.env(), dockerFlagsDTO.cpuCount(), dockerFlagsDTO.memory(), dockerFlagsDTO.memorySwap());
+        MemoryLimits effective = resolveMemoryLimits(dockerFlagsDTO.memory(), dockerFlagsDTO.memorySwap(), 0, 0);
+        if (effective.swapBelowMemory()) {
+            throw new BadRequestAlertException("The memory swap limit must not be below the memory limit", "Exercise", "memorySwapBelowMemoryLimit");
+        }
+    }
+
+    /**
+     * The memory and swap limits a build job runs with, in MB, with 0 for a limit no configuration sets.
+     *
+     * @param memory     the memory limit
+     * @param memorySwap the memory swap limit, which Docker reads as the total of memory and swap
+     */
+    private record MemoryLimits(int memory, int memorySwap) {
+
+        /** Whether Docker refuses to create a container with these limits: a positive total below the memory. */
+        boolean swapBelowMemory() {
+            return memory > 0 && memorySwap > 0 && memorySwap < memory;
+        }
+    }
+
+    /**
+     * Resolves the memory and swap limits a build job runs with: the value set at the level being validated, else the
+     * value it inherits, else the instance's default Docker flags, which the build agent applies to a limit nobody sets.
+     *
+     * @param memory              the memory limit set at this level, or null or 0 if unset
+     * @param memorySwap          the memory swap limit set at this level, or null or 0 if unset
+     * @param inheritedMemory     the memory limit inherited from the enclosing level, or 0 if unset
+     * @param inheritedMemorySwap the memory swap limit inherited from the enclosing level, or 0 if unset
+     * @return the effective limits
+     */
+    private MemoryLimits resolveMemoryLimits(@Nullable Integer memory, @Nullable Integer memorySwap, int inheritedMemory, int inheritedMemorySwap) {
+        int effectiveMemory = memory != null && memory > 0 ? memory : inheritedMemory;
+        int effectiveMemorySwap = memorySwap != null && memorySwap > 0 ? memorySwap : inheritedMemorySwap;
+        if (effectiveMemory <= 0) {
+            effectiveMemory = programmingExerciseBuildConfigService.getDefaultMemoryLimitMB();
+        }
+        if (effectiveMemorySwap <= 0) {
+            effectiveMemorySwap = programmingExerciseBuildConfigService.getDefaultMemorySwapLimitMB();
+        }
+        return new MemoryLimits(effectiveMemory, effectiveMemorySwap);
     }
 
     /**
      * Validates the Docker flags the containers of a build plan set for their own jobs with the rules that apply to the
      * exercise's flags: a set field has to satisfy the same bounds, and a network has to be allowed on this instance. A
-     * field a container leaves unset takes the exercise's value, which is validated on its own, so the memory and swap
-     * limits are checked as the pair the job runs with: a container that overrides only the memory limit must not end
-     * up with the exercise's swap limit below it, which Docker rejects when the container is created.
+     * field a container leaves unset takes the exercise's value, or the instance's default where the exercise sets none,
+     * so the memory and swap limits are checked as the pair the job runs with: a container that overrides only the memory
+     * limit must not end up with an inherited swap limit below it, which Docker rejects when the container is created.
      *
      * @param buildPlan   the build plan whose containers are validated
      * @param buildConfig the build configuration whose Docker flags a container inherits where it sets none
@@ -318,13 +358,12 @@ public class ProgrammingExerciseValidationService {
             }
             validateDockerFlagValues(flags.env(), flags.cpuCount(), flags.memory(), flags.memorySwap());
 
-            int effectiveMemory = flags.memory() != null ? flags.memory() : exerciseMemory;
-            int effectiveMemorySwap = flags.memorySwap() != null ? flags.memorySwap() : exerciseMemorySwap;
-            if (effectiveMemory > 0 && effectiveMemorySwap > 0 && effectiveMemorySwap < effectiveMemory) {
+            MemoryLimits effective = resolveMemoryLimits(flags.memory(), flags.memorySwap(), exerciseMemory, exerciseMemorySwap);
+            if (effective.swapBelowMemory()) {
                 throw new BadRequestAlertException(ErrorConstants.PARAMETERIZED_TYPE,
                         "The memory swap limit of the build container " + container.name() + " is below its memory limit", "buildConfig", "buildContainerMemorySwapBelowMemory",
                         Map.of("message", "error.buildContainerMemorySwapBelowMemory", "params",
-                                Map.of("container", container.name(), "memory", effectiveMemory, "memorySwap", effectiveMemorySwap)));
+                                Map.of("container", container.name(), "memory", effective.memory(), "memorySwap", effective.memorySwap())));
             }
         }
     }
@@ -357,12 +396,6 @@ public class ProgrammingExerciseValidationService {
 
         if (memorySwap != null && memorySwap < 0) {
             throw new BadRequestAlertException("The memory swap limit is invalid. The minimum memory swap limit is 0", "Exercise", "memorySwapLimitInvalid");
-        }
-
-        // Docker reads the swap limit as the total of memory and swap, so a positive limit below the memory limit cannot
-        // be applied and the container never starts; 0 leaves the swap to Docker's default
-        if (memory != null && memorySwap != null && memorySwap > 0 && memorySwap < memory) {
-            throw new BadRequestAlertException("The memory swap limit must not be below the memory limit", "Exercise", "memorySwapBelowMemoryLimit");
         }
     }
 

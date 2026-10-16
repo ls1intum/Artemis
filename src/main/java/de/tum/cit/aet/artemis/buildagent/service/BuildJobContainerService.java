@@ -216,6 +216,15 @@ public class BuildJobContainerService {
                     ? ((maxMemorySwap > 0) ? Math.min(convertMemoryFromMBToBytes(memorySwap), convertMemoryFromMBToBytes(maxMemorySwap)) : convertMemoryFromMBToBytes(memorySwap))
                     : defaultHostConfig.getMemorySwap();
 
+            // Docker reads the swap limit as the total of memory and swap and refuses to create a container whose total is
+            // below its memory. A job that sets only its memory inherits the default total, so the total is raised to the
+            // memory, which leaves the job without swap instead of without a container.
+            if (adjustedMemory > 0 && adjustedMemorySwap > 0 && adjustedMemorySwap < adjustedMemory) {
+                log.warn("The memory swap limit {} of container {} is below its memory limit {}; the container runs without swap",
+                        BuildAgentConfiguration.formatMemory(adjustedMemorySwap), containerName, BuildAgentConfiguration.formatMemory(adjustedMemory));
+                adjustedMemorySwap = adjustedMemory;
+            }
+
             customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, network, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);
         }
 
