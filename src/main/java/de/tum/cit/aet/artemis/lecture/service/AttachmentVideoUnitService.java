@@ -123,7 +123,8 @@ public class AttachmentVideoUnitService {
      * @param updateUnitDTO               The DTO with the new attachment video unit data.
      * @param updateAttachment            The new attachment data.
      * @param updateFile                  The optional file.
-     * @param studentVersionFile          The optional student PDF matching the updated file and visibility.
+     * @param studentVersionFile          The optional student PDF matching the updated file and visibility. It is only used when the update splits the slides again;
+     *                                        otherwise the server regenerates the student version from the saved slides.
      * @param keepFilename                Whether to keep the original filename or not.
      * @param hiddenPages                 The hidden pages of attachment video unit.
      * @param pageOrder                   The new order of the edited attachment video unit
@@ -139,9 +140,11 @@ public class AttachmentVideoUnitService {
         String stagedStudentVersion = acceptsStudentVersion ? stageStudentVersionFile(studentVersionFile, existingAttachmentVideoUnit.getId()) : null;
         boolean stagedStudentVersionHandedOver = false;
         try {
-            AttachmentVideoUnit savedAttachmentVideoUnit = applyUpdate(existingAttachmentVideoUnit, updateUnitDTO, updateAttachment, updateFile, stagedStudentVersion != null,
-                    keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
-            if (stagedStudentVersion != null) {
+            AppliedUpdate appliedUpdate = applyUpdate(existingAttachmentVideoUnit, updateUnitDTO, updateAttachment, updateFile, stagedStudentVersion != null, keepFilename,
+                    hiddenPages, pageOrder, originalCompetencyIds);
+            AttachmentVideoUnit savedAttachmentVideoUnit = appliedUpdate.attachmentVideoUnit();
+            // A submitted student version the update did not use is discarded below; the server regenerated the student version from the saved slides instead.
+            if (stagedStudentVersion != null && appliedUpdate.usesSubmittedStudentVersion()) {
                 stagedStudentVersionHandedOver = true;
                 publishStagedStudentVersion(savedAttachmentVideoUnit, stagedStudentVersion);
             }
@@ -155,9 +158,17 @@ public class AttachmentVideoUnitService {
         }
     }
 
-    private AttachmentVideoUnit applyUpdate(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment,
-            MultipartFile updateFile, boolean hasStudentVersionFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder,
-            Set<Long> originalCompetencyIds) {
+    /**
+     * The result of {@link #applyUpdate}.
+     *
+     * @param attachmentVideoUnit         the saved attachment video unit
+     * @param usesSubmittedStudentVersion whether the submitted student version belongs to the saved state and is to be published
+     */
+    private record AppliedUpdate(AttachmentVideoUnit attachmentVideoUnit, boolean usesSubmittedStudentVersion) {
+    }
+
+    private AppliedUpdate applyUpdate(AttachmentVideoUnit existingAttachmentVideoUnit, AttachmentVideoUnitDTO updateUnitDTO, Attachment updateAttachment, MultipartFile updateFile,
+            boolean hasStudentVersionFile, boolean keepFilename, List<HiddenPageInfoDTO> hiddenPages, List<SlideOrderDTO> pageOrder, Set<Long> originalCompetencyIds) {
         LectureContentUpdateSnapshot beforeSnapshot = buildSnapshot(existingAttachmentVideoUnit);
         existingAttachmentVideoUnit.setDescription(updateUnitDTO.description());
         existingAttachmentVideoUnit.setName(updateUnitDTO.name());
@@ -170,6 +181,7 @@ public class AttachmentVideoUnitService {
         AttachmentFileUpdateResult fileUpdateResult = AttachmentFileUpdateResult.unchanged(existingAttachment != null ? existingAttachment.getVersion() : null);
         boolean createdNewAttachment = false;
         boolean regenerateStudentVersion = false;
+        boolean usesSubmittedStudentVersion = false;
         boolean visibilitySyncDeferredToSlideSplit = false;
         Map<Integer, ZonedDateTime> projectedSlideHiddenUntilBySlideNumber = null;
 
@@ -208,15 +220,17 @@ public class AttachmentVideoUnitService {
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
                 evictCache(updateFile, savedAttachmentVideoUnit);
 
-                if (!hasStudentVersionFile && fileUpdateResult.fileBytesChanged()) {
-                    // A student version derived from the replaced file no longer matches it. A submitted one replaces it at the end of the request instead.
-                    attachmentService.removeStudentVersionFile(savedAttachment);
-                }
-
                 boolean isPdfUpload = hasUploadedFile && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()));
                 // The same bytes again need no new slides, unless the saved deck does not match them: a split that failed after a re-upload leaves an empty deck, or the
                 // previous deck after an editor change, and uploading the file again is how an instructor retries it.
                 boolean splitsSlides = isPdfUpload && (fileUpdateResult.fileBytesChanged() || !currentDeckMatches(savedAttachmentVideoUnit.getId(), pageOrder));
+                // A submitted student version is only used when the slides are split again: the split runs asynchronously, so the server cannot derive the student
+                // version from them yet. Otherwise the server regenerates it from the saved slides, so it always matches them.
+                usesSubmittedStudentVersion = hasStudentVersionFile && splitsSlides;
+                if (!usesSubmittedStudentVersion && fileUpdateResult.fileBytesChanged()) {
+                    // A student version derived from the replaced file no longer matches it. A submitted one replaces it at the end of the request instead.
+                    attachmentService.removeStudentVersionFile(savedAttachment);
+                }
                 if (splitsSlides) {
                     // Split the PDF into slides, respecting a custom page order if provided
                     if (pageOrder == null) {
@@ -235,7 +249,7 @@ public class AttachmentVideoUnitService {
                     // No file, or one with the same bytes as the stored file: the slides stay as they are, so this is at most a visibility change. Visibility is only
                     // touched when the request carries it; an omitted part leaves slides and student version unchanged.
                     slideSplitterService.updateSlideVisibility(savedAttachmentVideoUnit, hiddenPages);
-                    regenerateStudentVersion = !hasStudentVersionFile;
+                    regenerateStudentVersion = true;
                 }
             }
         }
@@ -251,7 +265,7 @@ public class AttachmentVideoUnitService {
         if (regenerateStudentVersion) {
             attachmentService.regenerateStudentVersionOrRemoveOutdated(savedAttachmentVideoUnit.getAttachment());
         }
-        return savedAttachmentVideoUnit;
+        return new AppliedUpdate(savedAttachmentVideoUnit, usesSubmittedStudentVersion);
     }
 
     /**

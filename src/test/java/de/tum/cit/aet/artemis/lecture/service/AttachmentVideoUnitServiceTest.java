@@ -366,6 +366,48 @@ class AttachmentVideoUnitServiceTest {
     }
 
     @Test
+    void visibilityOnlyUpdateRegeneratesTheStudentVersionInsteadOfUsingTheSubmittedOne() throws Exception {
+        var attachment = attachment();
+        attachment.setStudentVersion("student.pdf");
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.NO_FILE_CHANGE);
+        var studentVersionFile = new MockMultipartFile("studentVersion", "unit_student.pdf", "application/pdf", "filtered content".getBytes(StandardCharsets.UTF_8));
+        var hiddenPages = List.of(new HiddenPageInfoDTO("21", ZonedDateTime.parse("2026-07-10T12:00:00Z"), null));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        when(attachmentService.stageUploadedStudentVersionFile(any(), eq(LECTURE_UNIT_ID), eq("unit_student.pdf"))).thenReturn("staged.pdf");
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(slide(21L, 1, null)));
+
+        service.updateAttachmentVideoUnit(unit, dto, attachment, null, studentVersionFile, false, hiddenPages, null, Set.of());
+
+        verify(slideSplitterService).updateSlideVisibility(unit, hiddenPages);
+        verify(attachmentService).regenerateStudentVersionOrRemoveOutdated(attachment);
+        verify(attachmentService, never()).publishStudentVersionFile(any(), anyLong(), anyString());
+        verify(attachmentService).discardStagedStudentVersionFile(LECTURE_UNIT_ID, "staged.pdf");
+        verify(attachmentService, never()).removeStudentVersionFile(any());
+    }
+
+    @Test
+    void byteIdenticalUploadRegeneratesTheStudentVersionInsteadOfUsingTheSubmittedOne() throws Exception {
+        var attachment = attachment();
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.FILE_UPLOAD);
+        var uploadedFile = pdfUpload("same content");
+        var studentVersionFile = new MockMultipartFile("studentVersion", "unit_student.pdf", "application/pdf", "filtered content".getBytes(StandardCharsets.UTF_8));
+        var hiddenPages = List.of(new HiddenPageInfoDTO("21", ZonedDateTime.parse("2026-07-10T12:00:00Z"), null));
+        when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", HASH));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        when(attachmentService.stageUploadedStudentVersionFile(any(), eq(LECTURE_UNIT_ID), eq("unit_student.pdf"))).thenReturn("staged.pdf");
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(slide(21L, 1, null)));
+
+        service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, studentVersionFile, false, hiddenPages, List.of(new SlideOrderDTO("21", 1)), Set.of());
+
+        verify(slideSplitterService, never()).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
+        verify(attachmentService).regenerateStudentVersionOrRemoveOutdated(attachment);
+        verify(attachmentService, never()).publishStudentVersionFile(any(), anyLong(), anyString());
+        verify(attachmentService).discardStagedStudentVersionFile(LECTURE_UNIT_ID, "staged.pdf");
+    }
+
+    @Test
     void failureAfterStagingDiscardsTheStagedStudentVersion() throws Exception {
         var attachment = attachment();
         var unit = attachmentVideoUnit("Unit", attachment);
