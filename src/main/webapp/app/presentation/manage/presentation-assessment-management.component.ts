@@ -303,68 +303,11 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             const assessmentsLoaded = this.presentationAssessmentsLoaded();
             untracked(() => {
                 if (courseId && courseId !== this.courseId()) {
-                    this.courseContextGeneration++;
-                    this.isSaving.set(false);
-                    this.courseId.set(courseId);
-                    this.presentationAssessmentsLoaded.set(false);
-                    this.presentationLoadFailed.set(false);
-                    this.presentationDialogVisible.set(false);
-                    this.instanceDialogVisible.set(false);
-                    this.dialogPresentationAssessment.set(undefined);
-                    this.dialogInstancePresentationAssessment.set(undefined);
-                    this.dialogInstance.set(undefined);
-                    this.dialogAssignedStudents.set([]);
-                    this.dialogErrorSource.next('');
-                    this.presentationAssessments.set([]);
-                    this.selectedPresentationId.set(undefined);
-                    this.exercises.set([]);
-                    this.overviewPage.set(0);
-                    this.presentationFilter.set('all');
-                    this.studentSearchTerm.set('');
-                    this.assessmentStatusFilter.set('all');
-                    this.presentationTypeFilter.set('all');
-                    this.studentSortField.set('studentLogin');
-                    this.studentSortOrder.set(1);
-                    this.loadAll();
-                    const generation = this.courseContextGeneration;
-                    this.exerciseService.getTitlesForCourse(courseId).subscribe({
-                        next: (exercises) => {
-                            if (generation === this.courseContextGeneration) {
-                                this.exercises.set(exercises);
-                            }
-                        },
-                        error: (res: HttpErrorResponse) => {
-                            if (generation === this.courseContextGeneration) {
-                                onError(this.alertService, res);
-                            }
-                        },
-                    });
-                    return;
-                }
-                if (presentationId === undefined) {
-                    if (this.viewMode() !== 'students') {
-                        this.overviewPage.set(0);
-                    }
-                    this.viewMode.set('students');
-                    return;
-                }
-
-                const presentation = assessments.find((assessment) => assessment.id === presentationId);
-                if (!presentation && assessmentsLoaded) {
-                    void this.router.navigate(['/course-management', this.courseId(), 'presentations'], { replaceUrl: true });
-                    return;
-                }
-                if (!presentation) {
-                    return;
-                }
-
-                if (this.viewMode() !== 'presentations' || this.selectedPresentationId() !== presentation.id) {
-                    this.overviewPage.set(0);
-                }
-                this.selectedPresentationId.set(presentation.id);
-                this.viewMode.set('presentations');
-                if (presentation.exerciseId !== exerciseId) {
-                    this.navigateToPresentation(presentation, true);
+                    this.switchCourse(courseId);
+                } else if (presentationId === undefined) {
+                    this.showOverview();
+                } else {
+                    this.showPresentation(presentationId, exerciseId, assessments, assessmentsLoaded);
                 }
             });
         });
@@ -555,6 +498,82 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     private onWriteError(error: HttpErrorResponse): void {
         if (!isErrorAlert(error)) {
             onError(this.alertService, error);
+        }
+    }
+
+    /** Starts a new course context: drops everything of the previous course and loads the new one. */
+    private switchCourse(courseId: number): void {
+        this.courseContextGeneration++;
+        this.isSaving.set(false);
+        this.courseId.set(courseId);
+        this.resetCourseState();
+        this.loadAll();
+        this.loadExercises(courseId);
+    }
+
+    /** Closes the dialogs and resets data, filters, sorting and paging to the defaults of a fresh visit. */
+    private resetCourseState(): void {
+        this.presentationAssessmentsLoaded.set(false);
+        this.presentationLoadFailed.set(false);
+        this.presentationDialogVisible.set(false);
+        this.instanceDialogVisible.set(false);
+        this.dialogPresentationAssessment.set(undefined);
+        this.dialogInstancePresentationAssessment.set(undefined);
+        this.dialogInstance.set(undefined);
+        this.dialogAssignedStudents.set([]);
+        this.dialogErrorSource.next('');
+        this.presentationAssessments.set([]);
+        this.selectedPresentationId.set(undefined);
+        this.exercises.set([]);
+        this.overviewPage.set(0);
+        this.presentationFilter.set('all');
+        this.studentSearchTerm.set('');
+        this.assessmentStatusFilter.set('all');
+        this.presentationTypeFilter.set('all');
+        this.studentSortField.set('studentLogin');
+        this.studentSortOrder.set(1);
+    }
+
+    private loadExercises(courseId: number): void {
+        const generation = this.courseContextGeneration;
+        this.exerciseService.getTitlesForCourse(courseId).subscribe({
+            next: (exercises) => {
+                if (generation === this.courseContextGeneration) {
+                    this.exercises.set(exercises);
+                }
+            },
+            error: (res: HttpErrorResponse) => {
+                if (generation === this.courseContextGeneration) {
+                    onError(this.alertService, res);
+                }
+            },
+        });
+    }
+
+    private showOverview(): void {
+        if (this.viewMode() !== 'students') {
+            this.overviewPage.set(0);
+        }
+        this.viewMode.set('students');
+    }
+
+    /** Selects the presentation of the route. An unknown id leads to the overview, and a missing or wrong exercise segment is corrected. */
+    private showPresentation(presentationId: number, exerciseId: number | undefined, assessments: PresentationAssessment[], assessmentsLoaded: boolean): void {
+        const presentation = assessments.find((assessment) => assessment.id === presentationId);
+        if (!presentation) {
+            if (assessmentsLoaded) {
+                void this.router.navigate(['/course-management', this.courseId(), 'presentations'], { replaceUrl: true });
+            }
+            return;
+        }
+
+        if (this.viewMode() !== 'presentations' || this.selectedPresentationId() !== presentation.id) {
+            this.overviewPage.set(0);
+        }
+        this.selectedPresentationId.set(presentation.id);
+        this.viewMode.set('presentations');
+        if (presentation.exerciseId !== exerciseId) {
+            this.navigateToPresentation(presentation, true);
         }
     }
 
