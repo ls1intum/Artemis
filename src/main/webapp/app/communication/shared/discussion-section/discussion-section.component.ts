@@ -67,6 +67,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     private ngUnsubscribe = new Subject<void>();
     private previousScrollDistanceFromTop = 0;
     private page = 1;
+    private postRequestId = 0;
+    private isFetchingPosts = false;
     private readonly PAGE_SIZE = 50;
     private totalNumberOfPosts = 0;
     private get messagesContainerHeight(): number {
@@ -138,7 +140,6 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                     })
                     .reverse(),
             );
-            this.isLoading.set(false);
             if (this.currentPostId && this.posts().length > 0) {
                 this.currentPost.set(this.posts().find((post) => post.id === this.currentPostId));
             }
@@ -155,6 +156,9 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      * on leaving the page, the modal should be closed
      */
     ngOnDestroy(): void {
+        ++this.postRequestId;
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
         super.onDestroy();
         this.postCreateEditModal()?.close();
     }
@@ -186,7 +190,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
                         return;
                     }
 
-                    this.communicationService.getFilteredPosts(this.currentPostContextFilter, true, this.channel());
+                    this.fetchPosts(true);
 
                     this.createEmptyPost();
                     this.resetFormGroup();
@@ -243,28 +247,59 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         }
     }
 
-    fetchNextPage() {
-        const morePostsAvailable = this.posts().length < this.totalNumberOfPosts;
-        if (morePostsAvailable) {
-            this.page += 1;
-            this.fetchPosts();
+    /** Loads one older page at a time. An initial request without an applied response retries page zero. */
+    fetchNextPage(): void {
+        if (this.isFetchingPosts) return;
+        if (this.page === 0) {
+            this.page = 1;
+            this.fetchPosts(true, 0);
+            return;
         }
-        if (this.content()?.nativeElement) {
-            this.content()!.nativeElement.scrollTop = this.content()!.nativeElement.scrollTop + this.PAGE_SIZE;
+        if (this.posts().length < this.totalNumberOfPosts) {
+            const previousPage = this.page;
+            this.page += 1;
+            this.fetchPosts(false, previousPage);
         }
     }
 
-    public fetchPosts(forceUpdate = false) {
-        if (this.currentPostContextFilter) {
-            this.currentPostContextFilter = cloneWith(this.currentPostContextFilter, { page: this.page - 1 });
-            this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this.channel());
-        }
+    /**
+     * Fetches this page with request-scoped completion. Live publications cannot unlock pagination, and superseded
+     * completions cannot change a newer context. Restore the last applied page when no response was applied.
+     * @param forceUpdate whether to replace the context rather than append a page
+     * @param previousPage the last applied one-based page; zero means the initial context has not loaded
+     */
+    public fetchPosts(forceUpdate = false, previousPage = forceUpdate ? 0 : this.page): void {
+        if (!this.currentPostContextFilter || (this.isFetchingPosts && !forceUpdate)) return;
+        const requestId = ++this.postRequestId;
+        this.isFetchingPosts = true;
+        if (forceUpdate) this.isLoading.set(true);
+        this.currentPostContextFilter = cloneWith(this.currentPostContextFilter, { page: this.page - 1 });
+        this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this.channel(), {
+            beforeApply: () => {},
+            complete: (applied) => {
+                if (requestId !== this.postRequestId) return;
+                this.isFetchingPosts = false;
+                this.isLoading.set(false);
+                if (!applied) {
+                    this.page = previousPage;
+                    this.currentPostContextFilter = cloneWith(this.currentPostContextFilter, { page: Math.max(previousPage - 1, 0) });
+                }
+            },
+        });
+    }
+
+    /** Replaces the context through the same request lifecycle used by initial loads and pagination. */
+    override onSelectContext(): void {
+        this.setFilterAndSort();
+        this.fetchPosts(true);
     }
 
     /**
      * sets the filter options after receiving user input
      */
     setFilterAndSort(): void {
+        ++this.postRequestId;
+        this.isFetchingPosts = false;
         this.page = 1;
         this.scrollToBottomOfMessages();
         this.currentPostContextFilter = {
