@@ -23,7 +23,7 @@ import org.springframework.security.web.webauthn.management.WebAuthnRelyingParty
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.SessionFreshnessService;
-import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 /**
@@ -53,7 +53,7 @@ class PasskeyRegistrationSessionGuardTest {
 
     private ArtemisWebAuthnRegistrationFilter registrationFilter() {
         return new ArtemisWebAuthnRegistrationFilter(mock(UserCredentialRepository.class), mock(WebAuthnRelyingPartyOperations.class), mock(MailSendingService.class),
-                mock(UserRepository.class), mock(GlobalNotificationSettingRepository.class), sessionFreshnessService);
+                mock(UserRepository.class), mock(GlobalNotificationSettingService.class), sessionFreshnessService);
     }
 
     private static MockHttpServletRequest post(String path) {
