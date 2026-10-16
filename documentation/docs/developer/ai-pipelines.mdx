@@ -12,7 +12,7 @@ Use this page together with the [Artemis Intelligence ecosystem map](../admin/ar
 
 | Family                | Artemis owns                                                                                                                   | Service-owned or infrastructure boundary                                         |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| Iris / Pyris          | Request DTOs, job tokens, authentication, session and message state, Artemis callbacks, and WebSocket delivery                 | Tutor, ingestion, retrieval, answer, and memory-pipeline execution in Iris/Pyris |
+| Iris / Pyris          | Request DTOs, job tokens, authentication, session and message state, Artemis callbacks, WebSocket delivery, and client commands with their acknowledgement | Tutor, ingestion, retrieval, answer, and memory-pipeline execution in Iris/Pyris |
 | Athena                | Module selection/configuration, request forwarding, exercise/submission state, scheduling, and repository export authorization | Module processing and any module-specific model decisions in Athena              |
 | Hyperion              | Authoring workflows, prompts and context assembly, exercise/repository integration, and result persistence                     | Model access selected through Artemis Spring AI configuration                    |
 | Atlas                 | Companion-agent, competency-orchestration, tool, course, and competency contracts                                              | Optional AtlasML ML workflows behind a REST boundary                             |
@@ -46,6 +46,95 @@ These paths are conditional on Iris being enabled. Artemis creates the request a
 - **Callback integrity:** `PyrisInternalStatusUpdateResource` has separate callback contracts for lecture and FAQ ingestion. A callback must authenticate a matching tracked job and have the expected job type before Artemis accepts it.
 
 Iris owns the ingestion implementation, transcription behavior, RAG collections, and vector processing. Read the [Iris RAG pipeline](https://ls1intum.github.io/edutelligence/iris/docs/developer/rag-pipeline) before changing an Artemis payload or relying on service-side retrieval behavior.
+
+### Lecture context on a chat request
+
+A chat request can carry what the student is looking at, so that retrieval is narrowed to it. `IrisMessageContextDTO` is the sealed polymorphic carrier: `IrisSlidesContextDTO` names a lecture unit and the current page, `IrisVideoContextDTO` a lecture unit and the current timestamp in seconds, and `IrisCombinedViewContextDTO` nests either or both for a unit opened in the combined view / fullscreen.
+
+The nested shape follows from what that view is. It always shows exactly one unit, so the unit id is derived from whichever nested context is present rather than repeated at the top level, and `lectureUnitId()` is deliberately not serialised. A combined-view context is only meaningful with at least one of the two nested contexts. The client sends no context when it has neither — a unit whose video has not been played and that has no PDF open — and the server filters out a combined-view context with neither nested value.
+
+Context is **not persisted**. It is attached to the outgoing execution DTO and then discarded, so a reloaded conversation shows its messages without it. Treat it as a retrieval filter rather than as part of the stored session: whatever a later reader of the chat history has to see belongs in a message.
+
+In the combined view, `LectureChatbotComponent` hides the topic selector and selects the containing lecture for the
+next message, even if `openChat` reuses an existing session. The current unit and media positions travel separately
+in the transient message context; they are not the stored chat topic.
+
+### The Iris point-out command
+
+Iris can point out a relevant position while the student has a lecture unit open in the combined view, moving the
+slides to a page or the video to a moment before answering. For this, the Iris pipeline sends a `pointOut` command
+to Artemis and waits for the student's browser to confirm the move. The position must come from retrieved content for the unit the
+student is viewing.
+
+`IrisCommandService` receives an incoming `PyrisCommandDTO` and dispatches on its type. `pointOut` is the only type Artemis implements; any other type is dropped at once rather than forwarded, because no client could carry it out and waiting would stall the answer until the ack timeout expired for nobody. The named lecture unit is resolved **scoped to the course of the chat job**, since a model-generated id must not be trusted to stay inside the course it was generated in.
+
+The round trip runs through three collaborators:
+
+1. `IrisCommandService` pushes an `IrisCommandRequestWebsocketDTO` to the user on `IrisWebsocketTopics.SESSION_COMMANDS` and blocks.
+2. The browser acts and replies to the `/app/iris/command-ack` `@MessageMapping` on `IrisCommandWebsocketController`, which requires an authenticated principal and a server-generated correlation id before it accepts the ack.
+3. `IrisCommandCoordinationService` publishes the ack on a distributed reliable topic, so the node holding the pending future completes it whichever node received the STOMP frame. Only the registering node holds a future for a correlation id; every other node ignores the broadcast.
+
+All of that happens inside one synchronous request. Pyris calls `POST internal/pipelines/chat/runs/{runId}/command` on `PyrisInternalStatusUpdateResource`, which authenticates the tracked job and checks that the run id in the path matches it before handing the command on, and the response is only written once the client has answered or the wait has run out. A request-handling thread is therefore occupied for up to the full ack window. That is the budget to respect when changing this path: do not lengthen the wait, and do not add a retry at this level, since each attempt would hold a thread for its own five seconds while the Pyris agent tool is still waiting for a single answer.
+
+Three properties of that design carry weight, and a change that drops one of them reintroduces a bug the current shape prevents:
+
+- **The deadline travels with the request.** `expiresAt` is computed on the server from the same clock as its own timeout, so a frame delivered late cannot open a fresh client-side window after Artemis has already reported failure to Pyris. The client may act for four seconds; the server waits five, to let an ack sent just inside that window make the return trip.
+- **A target narrows a user-wide send.** The topic is per user, so every open tab receives the request. `targetClientId` names the tab that started the job, and that tab alone acts and answers. Without a target — an event-triggered run that recorded no tab — every subscribed tab may try, negative acks are ignored because another tab may still succeed, and the first positive ack wins.
+- **A marker is written only on success.** An applied command is persisted as a message with sender `COMMAND`, holding the command's own `{type, parameters}` shape so that a reader of the chat history parses a marker exactly like a command rather than a second flattened format. The write is best-effort: the client has already navigated, so a failed marker write must not turn into a 500 for Pyris.
+
+### Citations in Iris answers
+
+Citations are embedded in answer text and pass through two forms. Iris emits a citation without a version:
+
+```
+[cite:L:ENTITY_ID:PAGE:START:END:KEYWORD:SUMMARY]
+```
+
+and Artemis appends one before the answer is stored, so the stored and rendered form carries a version field:
+
+```
+[cite:L:42:3:::Sorting:Pivot placement:va3]
+```
+
+`L` identifies a lecture unit and `F` an FAQ; the client renders both as source chips. The lecture fields have these
+roles:
+
+| Field | Meaning |
+| --- | --- |
+| `ENTITY_ID` | The cited lecture unit. Artemis resolves its lecture and unit names for the citation tooltip. |
+| `PAGE` | The 1-based PDF page for a slide citation, or an optional related page for a video citation. |
+| `START`, `END` | A video segment's times in seconds. An empty `START` makes a positioned citation a slide citation. |
+| `KEYWORD` | The citation chip's short label. |
+| `SUMMARY` | The explanation shown in the chip's tooltip. It may contain colons. |
+
+`IrisCitationService` stamps the version in `stampCitationVersions`, on the incoming answer before it is persisted:
+`va3` pins a slide to attachment version 3, `vt3` pins a video moment to transcription version 3, and `0` means the
+position could not be verified against the run snapshot. Only a positioned citation is stamped — one naming neither a
+page nor a start time stays as it came. A version is recognized only by its leading `va` or `vt` tag, because the
+summary is everything up to the closing bracket and may itself end in a number. Citations stored before versioning
+have no field and still navigate directly.
+
+The version is Artemis's, not the model's. A citation that already arrives with a version field — the model echoing
+an older answer — has it stripped and is stamped `0`, so a pin can only come from the snapshot of the run that
+produced the citation.
+
+This format is the contract between three codebases: the Pyris pipeline that emits it, the server pattern in
+`IrisCitationService`, and the client pattern in `iris-citation-text.model.ts`. The two Artemis patterns carry
+`Keep in sync` comments pointing at each other and at Pyris. Change it in all three, or not at all.
+
+### Material versions for citations and point-outs
+
+A cited page or timestamp can stop referring to the same content when slides or a video are replaced. Artemis stamps
+new lecture citations and point-outs with a version from the run snapshot when one is available; an unavailable
+version is marked unverified. The client checks verified versions when a student follows them. Citations stored
+before versioning have no pin and still navigate directly.
+
+`IrisLectureMaterialVersionService` captures the ingested versions of the run's course **before** its request is dispatched, and keeps the snapshot in a distributed expiring map keyed by job id for the lifetime of the job. That snapshot is the only source of a pinned version: a missing, expired or unreadable one yields no verified version, never the latest database revision, so a new command cannot acquire a pin by bypassing the check. `LectureUnitIngestedVersionsDTO` carries the values, and they are reported only once processing reached `DONE` — while a unit is being reprocessed the vector database still serves the previous material, so there is nothing trustworthy to pin. Slides are versioned by `Attachment#version` and videos by the transcription version, because a cited timestamp comes from a transcription segment.
+
+For a positive pinned version, the client reads `GET lecture-units/{lectureUnitId}/material-versions` at click time and compares. A citation pinned to `0` needs no request: it is already unverified, and the client opens the unit without its position. A point-out differs — `navigateToVersionedPointOut` skips the request only for a marker carrying no pin at all, so a pin of `0` still calls the endpoint before the unit is opened without its position. `LectureUnitMaterialVersionsDTO` reports what the unit offers right now, and the comparison has three outcomes that the student is told apart: the material changed, the material is gone, or the material cannot be checked. The third is not a hedge. A missing transcription version has two causes, because the row is deleted and rewritten whenever the video changes, so during that window the video plays while nothing can be compared against it — `hasVideo` is what keeps Artemis from reporting a visibly playing video as removed. In all three cases the lecture still opens and only the exact position is withheld. A point-out may carry both a timestamp and a related page, but its pin covers only one material type: after a successful check, the client applies the timestamp for a video pin or the page for a slide pin and drops the other coordinate.
+
+After a successful version check, a citation follows the lecture deep link to its position. A point-out marker
+moves an open combined view in place or opens its lecture with the combined view selected.
 
 ### Lecture search and asynchronous answers are separate paths
 
@@ -144,3 +233,4 @@ When changing an AI-related feature, first identify the owning boundary:
 2. Keep service-owned execution claims in the linked service documentation instead of copying or guessing them here.
 3. Treat configuration as configuration. Do not turn a property, feature flag, or source default into a claim about live deployments or provider assignment.
 4. Keep Artemis Global Search separate from Iris RAG, even if both use the same Weaviate infrastructure.
+5. Treat a model-supplied id, position or version as untrusted input. Scope it to the course of the job, and take a version from the run snapshot rather than from the request or the current database state.
