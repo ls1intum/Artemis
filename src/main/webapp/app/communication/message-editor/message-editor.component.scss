@@ -81,6 +81,23 @@ jhi-message-editor .message-editor-content {
     ::selection {
         background: color-mix(in srgb, var(--primary) 25%, var(--artemis-control-background));
     }
+
+    // WebKit paints a whole line for a native selection around contenteditable=false.
+    // Keep the semantic selection, but paint only the selected item ourselves.
+    &:has([data-message-selected]) {
+        &::selection,
+        ::selection {
+            background: transparent;
+            color: inherit;
+        }
+    }
+
+    [data-message-selected] {
+        background: color-mix(in srgb, var(--primary) 25%, var(--artemis-control-background));
+        outline: 2px solid var(--primary);
+        outline-offset: 1px;
+        border-radius: 0.25rem;
+    }
 }
 
 .message-suggestions {
