@@ -1191,7 +1191,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     void lockSubmission_secondCorrectionValidatesLatestCommitSubmission(boolean alreadyAssessedByCurrentTutor) {
         var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
         var requestedSubmission = programmingExerciseUtilService.createProgrammingSubmission(participation, true, "old-commit");
-        participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1), requestedSubmission, TEST_PREFIX + "tutor2", List.of());
+        requestedSubmission.addResult(participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1), requestedSubmission,
+                TEST_PREFIX + "tutor2", List.of()));
         var latestCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
         var latestSubmission = programmingExerciseUtilService.createProgrammingSubmission(participation, true, latestCommitHash);
         if (alreadyAssessedByCurrentTutor) {
@@ -1202,6 +1203,30 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         var storedSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(latestSubmission.getId());
         assertThat(storedSubmission.getResultForCorrectionRound(1)).isNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, 1 })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void lockSubmission_missingHeadSubmissionValidatesBeforePersisting(int correctionRound) {
+        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
+        var requestedSubmission = programmingExerciseUtilService.createProgrammingSubmission(participation, true, "old-commit");
+        requestedSubmission.addResult(participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1), requestedSubmission,
+                TEST_PREFIX + "tutor2", List.of()));
+        var latestCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
+        var originalSubmissionIds = submissionRepository.findAllByParticipationId(participation.getId()).stream().map(Submission::getId).toList();
+
+        if (correctionRound == 1) {
+            assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> programmingSubmissionService.lockSubmission(requestedSubmission, correctionRound));
+            assertThat(submissionRepository.findAllByParticipationId(participation.getId())).extracting(Submission::getId)
+                    .containsExactlyInAnyOrderElementsOf(originalSubmissionIds);
+        }
+        else {
+            var result = programmingSubmissionService.lockSubmission(requestedSubmission, correctionRound);
+            assertThat(((ProgrammingSubmission) result.getSubmission()).getCommitHash()).isEqualTo(latestCommitHash);
+            assertThat(programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(result.getSubmission().getId()).getResultForCorrectionRound(correctionRound))
+                    .isNotNull();
+        }
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {

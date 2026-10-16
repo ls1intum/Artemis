@@ -513,9 +513,17 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         // Create a new manual result and try to reuse the existing submission with the latest commit hash
-        ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
-                SubmissionType.MANUAL);
+        var participation = (ProgrammingExerciseStudentParticipation) submission.getParticipation();
+        String lastCommitHash = getLastCommitHashForParticipation(participation);
+        ProgrammingSubmission existingSubmission = programmingSubmissionRepository
+                .findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(participation.getId(), lastCommitHash);
+        if (existingSubmission == null) {
+            existingSubmission = ProgrammingSubmission.createFallbackSubmission(participation, ZonedDateTime.now(), lastCommitHash);
+        }
         assessmentEligibilityService.checkCanStartAssessmentElseThrow(existingSubmission, correctionRound);
+        if (existingSubmission.getId() == null) {
+            existingSubmission = programmingSubmissionRepository.saveAndFlush(existingSubmission);
+        }
         Result newResult = saveNewEmptyResult(existingSubmission);
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
