@@ -900,11 +900,11 @@ jobs:
 
   # The single required status check. Depends on every deterministic job — build, test, and
   # the quality gates — plus `e2e`. `e2e` is required, but with a flakiness-aware verdict: an E2E
-  # result of `failure` means ci-e2e's report-results classified at least one failure as a REAL
-  # (non-flaky) regression against Helios history (classify-failures.js) — a genuine regression
-  # worth blocking a merge on. A run whose only failures are known-flaky is exonerated and reports
-  # success, so ambient flakiness does NOT block a good PR (flaky-recovered runs, where Playwright
-  # exits 0, also stay green). This does add merge latency — the gate now waits for the full E2E
+  # result of `failure` includes test, infrastructure and unclassified failures. Helios history
+  # (classify-failures.js) can exonerate known flakes; when history is unavailable, the ordinary
+  # Playwright verdict applies and failures after retries remain blocking. A run whose only
+  # failures are known-flaky is exonerated and reports success (flaky-recovered runs, where
+  # Playwright exits 0, also stay green). This does add merge latency — the gate waits for the full E2E
   # run — the accepted trade-off for not merging over a reproducible regression. `e2e` reflects its
   # honest outcome via ci-e2e's report-results job (continue-on-error test steps, then a final step
   # that fails the job only on a real / infra / unclassified verdict).

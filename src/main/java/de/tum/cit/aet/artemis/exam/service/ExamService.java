@@ -1302,7 +1302,7 @@ public class ExamService {
         });
 
         long totalNumberOfComplaints = 0;
-        long totalNumberOfComplaintResponse = 0;
+        long totalNumberOfComplaintsDone = 0;
         Long[] totalNumberOfAssessmentsFinished = new Long[numberOfCorrectionRoundsInExam];
         long totalNumberOfInitializedParticipations = 0;
         long totalNumberOfParticipationsForAssessment = 0;
@@ -1330,7 +1330,7 @@ public class ExamService {
             totalNumberOfComplaints += numberOfComplaints;
         }
         for (Long numberOfComplaintResponse : numberOfComplaintResponsesByExercise) {
-            totalNumberOfComplaintResponse += numberOfComplaintResponse;
+            totalNumberOfComplaintsDone += numberOfComplaintResponse;
         }
 
         boolean existsUnassessedQuizzes = submissionRepository.existsUnassessedQuizzesByExamId(exam.getId());
@@ -1366,13 +1366,14 @@ public class ExamService {
             }
 
             return new ExamChecklistDTO(numberOfGeneratedStudentExams, numberOfTestRuns, Arrays.asList(totalNumberOfAssessmentsFinished), totalNumberOfParticipationsForAssessment,
-                    numberOfStudentExamsSubmitted, numberOfStudentExamsStarted, totalNumberOfComplaints, totalNumberOfComplaintResponse, exercisesPrepared, existsUnassessedQuizzes,
+                    numberOfStudentExamsSubmitted, numberOfStudentExamsStarted, totalNumberOfComplaints, totalNumberOfComplaintsDone, exercisesPrepared, existsUnassessedQuizzes,
                     existsUnsubmittedExercises);
 
         }
 
         // For non-instructors, consider what limited information they should receive and adjust accordingly
-        return new ExamChecklistDTO(Arrays.asList(totalNumberOfAssessmentsFinished), totalNumberOfParticipationsForAssessment, existsUnassessedQuizzes, existsUnsubmittedExercises);
+        return new ExamChecklistDTO(Arrays.asList(totalNumberOfAssessmentsFinished), totalNumberOfParticipationsForAssessment, totalNumberOfComplaints, totalNumberOfComplaintsDone,
+                existsUnassessedQuizzes, existsUnsubmittedExercises);
     }
 
     /**

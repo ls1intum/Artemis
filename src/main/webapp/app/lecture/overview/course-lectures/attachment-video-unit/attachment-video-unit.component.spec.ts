@@ -227,6 +227,13 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(downloadFileSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('should not show the download button when the attachment has no file', () => {
+        fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit, attachment: { ...attachmentVideoUnit.attachment, link: undefined } });
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('#view-isolated-button'))).toBeNull();
+    });
+
     it('should call completion callback when downloaded', () => {
         const scienceLogSpy = vi.spyOn(scienceService, 'logEvent');
         component.handleDownload();
