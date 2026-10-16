@@ -4,7 +4,7 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertCh
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPostNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 
 import java.util.Optional;
@@ -68,7 +68,7 @@ class CourseResetWeaviateIntegrationTest extends AbstractProgrammingIntegrationL
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        doNothing().when(pyrisFaqApi).deleteFaq(any());
+        doNothing().when(pyrisFaqApi).deleteFaq(anyLong(), anyLong());
     }
 
     private Channel createPublicChannel(String name) {

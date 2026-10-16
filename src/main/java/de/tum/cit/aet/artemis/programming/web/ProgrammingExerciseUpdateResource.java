@@ -221,7 +221,7 @@ public class ProgrammingExerciseUpdateResource {
 
         // Fetch course from database to make sure client didn't change groups
         var user = userRepository.getUserWithAuthorities();
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
+        Course course = courseService.retrieveCourseOfLoadedExercise(updatedProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // Verify that the build config text fields do not exceed their maximum allowed length before the configuration is parsed
@@ -526,7 +526,7 @@ public class ProgrammingExerciseUpdateResource {
 
         // Fetch course from database to make sure client didn't change groups
         var user = userRepository.getUserWithAuthorities();
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
+        Course course = courseService.retrieveCourseOfLoadedExercise(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // Capture ALL original values BEFORE update() mutates the entity via L1 cache.

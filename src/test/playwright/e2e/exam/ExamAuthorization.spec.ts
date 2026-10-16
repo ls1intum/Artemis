@@ -43,6 +43,8 @@ test.describe('Exam authorization', { tag: '@slow' }, () => {
         const base = `api/exam/courses/${course.id}`;
         const examBase = `${base}/exams/${exam.id}`;
         const examBody = { ...exam, id: undefined };
+        // The role check runs after the body validation of the import endpoint, so the import has to send a valid body to be refused for the role
+        const examImportBody = { title: exam.title, visibleDate: exam.visibleDate, startDate: exam.startDate, endDate: exam.endDate, courseId: course.id };
         const group = { title: 'Forbidden group', isMandatory: true, exam: { id: exam.id } };
         calls = {
             instructorOnly: [
@@ -50,7 +52,7 @@ test.describe('Exam authorization', { tag: '@slow' }, () => {
                 { method: 'put', path: `${base}/exams`, data: exam },
                 { method: 'patch', path: `${examBase}/working-time`, data: 60 },
                 { method: 'post', path: `${examBase}/announcements`, data: 'Forbidden announcement' },
-                { method: 'post', path: `${base}/exam-import`, data: exam },
+                { method: 'post', path: `${base}/exam-import`, data: examImportBody },
                 { method: 'delete', path: `${examBase}/cleanup` },
                 { method: 'delete', path: examBase },
                 { method: 'delete', path: `${examBase}/reset` },

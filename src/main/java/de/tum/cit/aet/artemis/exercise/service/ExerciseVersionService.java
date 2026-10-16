@@ -27,7 +27,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -349,9 +348,9 @@ public class ExerciseVersionService {
             // carry by itself; a missing one would be recorded as a change.
             teamAssignmentConfigRepository.attachTo(fetched);
             plagiarismDetectionConfigRepository.attachTo(fetched);
-            Channel channel = channelRepository.findChannelByExerciseId(fetched.getId());
-            if (channel != null) {
-                fetched.setChannelName(channel.getName());
+            String channelName = channelRepository.findChannelNameByExerciseId(fetched.getId());
+            if (channelName != null) {
+                fetched.setChannelName(channelName);
             }
         }
         return fetched;

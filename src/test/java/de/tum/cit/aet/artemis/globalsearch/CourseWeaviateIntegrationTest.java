@@ -4,7 +4,7 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertCo
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryCourseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -58,7 +58,7 @@ class CourseWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalC
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         // Pyris is not running in integration tests — stub the FAQ deletion to prevent PyrisConnectorException
-        doNothing().when(pyrisFaqApi).deleteFaq(any());
+        doNothing().when(pyrisFaqApi).deleteFaq(anyLong(), anyLong());
     }
 
     @Test

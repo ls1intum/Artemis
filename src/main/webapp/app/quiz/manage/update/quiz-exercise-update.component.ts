@@ -57,7 +57,6 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
@@ -97,7 +96,6 @@ const MAX_TIMEOUT_DELAY = 2_147_483_647;
         ExerciseTitleChannelNamePrimengComponent,
         HelpIconComponent,
         CategorySelectorPrimengComponent,
-        ButtonComponent,
         CompetencySelectionPrimengComponent,
         QuizQuestionListEditComponent,
         NgbTooltip,
@@ -554,22 +552,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     onBatchStartTimeChange(batch: QuizBatch, date: dayjs.Dayjs | undefined) {
         batch.startTime = date;
         this.cacheValidation();
-    }
-
-    addQuizBatch() {
-        if (!this.quizExercise().quizBatches) {
-            this.quizExercise().quizBatches = [];
-        }
-        this.quizExercise().quizBatches!.push(new QuizBatch());
-    }
-
-    removeQuizBatch(quizBatch: QuizBatch) {
-        if (this.quizExercise().quizBatches) {
-            const idx = this.quizExercise().quizBatches!.indexOf(quizBatch);
-            if (idx >= 0) {
-                this.quizExercise().quizBatches!.splice(idx, 1);
-            }
-        }
     }
 
     /**
