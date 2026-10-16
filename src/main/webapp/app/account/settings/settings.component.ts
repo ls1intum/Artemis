@@ -141,6 +141,9 @@ export class SettingsComponent implements OnInit {
         });
     }
 
+    /**
+     * Loads the current pending request for the internal account without modifying its confirmed address.
+     */
     private loadPendingEmailChange(): void {
         this.accountService.getPendingEmailChange().subscribe((pendingEmailChange) => this.pendingEmailChange.set(pendingEmailChange));
     }
@@ -248,6 +251,9 @@ export class SettingsComponent implements OnInit {
         });
     }
 
+    /**
+     * Clears feedback from the previous settings or email-change action before starting the next action.
+     */
     private resetMessages(): void {
         this.success.set(false);
         this.errorEmailExists.set(false);
@@ -257,6 +263,10 @@ export class SettingsComponent implements OnInit {
         this.emailChangeCancelled.set(false);
     }
 
+    /**
+     * Maps account-save and resend errors to localized feedback while preserving the pending request.
+     * @param response the server error returned by the settings or resend request
+     */
     private handleError(response: { status?: number; error?: { type?: string; errorKey?: string } }): void {
         this.success.set(false);
         const errorKey = response.error?.errorKey;

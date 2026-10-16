@@ -82,6 +82,13 @@ public class SessionFreshnessService {
         return passkeyTokenRenewalService.mayExtendSessionForAccount(authentication.getName(), sessionStartedAt.get());
     }
 
+    /**
+     * Reads the original session start attached by token authentication. Silent token renewal preserves this instant.
+     * Authentication without this metadata follows the documented internal/mock-user path in {@link #isCurrentSession}.
+     *
+     * @param authentication the request authentication, possibly {@code null}
+     * @return the original session start when carried by the authentication
+     */
     private static Optional<Instant> sessionStartedAt(Authentication authentication) {
         if (authentication != null && authentication.getDetails() instanceof Map<?, ?> details && details.get(TokenProvider.SESSION_STARTED_AT) instanceof Instant startedAt) {
             return Optional.of(startedAt);
