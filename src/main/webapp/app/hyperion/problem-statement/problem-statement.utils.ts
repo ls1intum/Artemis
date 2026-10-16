@@ -160,7 +160,7 @@ const PROPOSED_PACKAGE_PREFIX_FOR_DOTTED_LANGUAGES = 'de.tum.cit.aet';
 
 /** Extracts a title from the first level-one Markdown heading. */
 export function extractProblemStatementTitle(problemStatement: string | undefined): string | undefined {
-    const match = problemStatement?.match(/^#\s+(.+)$/m);
+    const match = problemStatement?.match(/^#[ \t]+(\S.*)$/m);
     const title = match?.[1]?.replace(/[*_`~]/g, '').trim();
     return title ? title : undefined;
 }

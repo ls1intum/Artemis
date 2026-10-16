@@ -12,7 +12,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import jakarta.annotation.PostConstruct;
 
@@ -649,18 +648,6 @@ public class GenerationJobService {
             }
             // A delayed heartbeat must not replace a newer run.
             return jobMap.replace(key, job, job.withHeartbeat(Instant.now()));
-        }
-        finally {
-            unlockJobSlot(key);
-        }
-    }
-
-    private boolean withOwnedJob(long exerciseId, String jobId, Predicate<JobInfo> operation) {
-        String key = key(exerciseId);
-        lockJobSlot(key);
-        try {
-            JobInfo job = jobMap.get(key);
-            return job != null && job.jobId().equals(jobId) && localNodeId != null && (job.ownerNodeId() == null || job.ownerNodeId().equals(localNodeId)) && operation.test(job);
         }
         finally {
             unlockJobSlot(key);

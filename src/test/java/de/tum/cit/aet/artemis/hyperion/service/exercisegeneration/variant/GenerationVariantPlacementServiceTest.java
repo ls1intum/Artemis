@@ -92,6 +92,18 @@ class GenerationVariantPlacementServiceTest {
     }
 
     @Test
+    void unresolvedDestinationCourseRejectsPlacementBeforeGroupSideEffects() {
+        destination.setCourse(null);
+        when(exercises.findByIdElseThrow(Long.valueOf(2L))).thenReturn(destination);
+
+        assertThatThrownBy(() -> service.place(event(VariantPlacementDTO.PlacementType.NEW_GROUP), ownership)).isInstanceOf(IllegalStateException.class)
+                .hasMessage("The course of exercise 2 cannot be resolved");
+
+        verify(ownership).run();
+        verifyNoInteractions(groups, groupService);
+    }
+
+    @Test
     void existingGroupIsResolvedInTheDestinationCourseAndDoesNotMoveSource() {
         var group = new ExerciseVariantGroup();
         when(exercises.findByIdElseThrow(Long.valueOf(2L))).thenReturn(destination);

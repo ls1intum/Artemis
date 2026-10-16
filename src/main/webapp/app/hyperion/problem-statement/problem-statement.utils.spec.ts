@@ -201,6 +201,21 @@ describe('ProblemStatementUtils', () => {
         it('should ignore deeper headings before the level-1 heading', () => {
             expect(extractProblemStatementTitle('intro\n# Event Scheduler\n# Second')).toBe('Event Scheduler');
         });
+
+        it.each(['#\nnot a heading', '#\r\nnot a heading', '#   \n## Tasks', '#\t\r\n## Tasks'])('should not use the line after an empty heading as its title: %j', (statement) => {
+            expect(extractProblemStatementTitle(statement)).toBeUndefined();
+        });
+
+        it.each(['#   Event Scheduler   ', '#\tEvent Scheduler', '# \t Event Scheduler\r\n## Tasks'])(
+            'should accept horizontal whitespace around a heading title: %j',
+            (statement) => {
+                expect(extractProblemStatementTitle(statement)).toBe('Event Scheduler');
+            },
+        );
+
+        it('should find the first nonempty level-1 heading after an empty heading', () => {
+            expect(extractProblemStatementTitle('#   \n## Tasks\n# Event Scheduler\n# Second')).toBe('Event Scheduler');
+        });
     });
 
     describe('deriveProposedPackageName', () => {

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -114,6 +115,8 @@ class GenerationVariantDraftServiceTest {
         assertThat(inTransaction).isFalse();
         assertThat(draft.getCourseViaExerciseGroupOrCourseMember()).isSameAs(source.getCourseViaExerciseGroupOrCourseMember());
         assertThat(draft.getReleaseDate()).isAfter(ZonedDateTime.now());
+        assertThat(draft.getReleaseDate().getZone()).isEqualTo(ZoneOffset.UTC);
+        assertThat(draft.isReleased()).isFalse();
         assertThat(draft.getDifficulty()).isEqualTo(DifficultyLevel.HARD);
         assertThat(source.getDifficulty()).isEqualTo(DifficultyLevel.EASY);
         assertThat(source.getReleaseDate()).isBefore(ZonedDateTime.now());

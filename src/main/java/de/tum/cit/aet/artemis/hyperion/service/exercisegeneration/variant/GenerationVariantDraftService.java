@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.variant;
 
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.EnumMap;
 import java.util.Map;
@@ -148,7 +149,7 @@ public class GenerationVariantDraftService {
         draft.copyImportSettingsFrom(source);
         draft.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
         // A variant is not automatically released by copying a source's past date.
-        draft.setReleaseDate(ZonedDateTime.now().plusYears(1));
+        draft.setReleaseDate(ZonedDateTime.now(ZoneOffset.UTC).plusYears(1));
         String title = source.getTitle() == null ? "Exercise" : source.getTitle();
         draft.setTitle(title.substring(0, Math.min(title.length(), 240)) + " variant");
         draft.setShortName("Variant" + UUID.randomUUID().toString().replace("-", "").substring(0, 12));

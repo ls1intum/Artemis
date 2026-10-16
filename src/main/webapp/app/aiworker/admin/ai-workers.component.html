@@ -1,5 +1,5 @@
 <section class="flex flex-col gap-4" aria-labelledby="ai-workers-title" [attr.aria-busy]="loading()">
-    <h2 id="ai-workers-title" class="m-0 text-lg font-semibold" jhiTranslate="artemisApp.aiworker.title"></h2>
+    <h2 id="ai-workers-title" class="m-0 text-lg font-semibold">{{ 'artemisApp.aiworker.title' | artemisTranslate }}</h2>
     @if (updatedAt(); as updated) {
         <p class="m-0 text-xs text-muted-color" data-testid="ai-workers-updated"><span jhiTranslate="artemisApp.aiworker.updated"></span> {{ updated | date: 'mediumTime' }}</p>
     }

@@ -90,7 +90,7 @@ public class GenerationVariantPlacementService {
         }
         verifyOwnership.run();
         ProgrammingExercise destination = exercises.findByIdElseThrow(event.exercise().getId());
-        long courseId = destination.getCourseViaExerciseGroupOrCourseMember().getId();
+        long courseId = destination.getCourseViaExerciseGroupOrCourseMemberElseThrow().getId();
         ExerciseVariantGroup group;
         if (choice.type() == VariantPlacementDTO.PlacementType.EXISTING_GROUP) {
             group = groups.findByIdAndCourseIdElseThrow(choice.existingGroupId(), courseId);
