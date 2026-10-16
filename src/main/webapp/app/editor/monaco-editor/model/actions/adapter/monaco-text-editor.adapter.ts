@@ -221,6 +221,39 @@ export class MonacoTextEditorAdapter implements TextEditor {
         });
     }
 
+    /**
+     * Adds a capture-phase paste listener to the editor's DOM node that calls the handler with the pasted text before Monaco inserts it.
+     * Only pastes into the editor text are intercepted, not pastes into widgets such as the find input.
+     * The handler's edit is kept as its own undo step. If the handler returns true, the paste event is cancelled.
+     * @param handler The handler to call with the pasted text. Returns true if it handled the paste.
+     * @return A disposable that removes the listener.
+     */
+    addPasteInterceptor(handler: (pastedText: string) => boolean): Disposable {
+        const domNode = this.editor.getDomNode();
+        if (!domNode) {
+            return { dispose: () => {} };
+        }
+        // Monaco handles the paste event on an element inside its DOM node, so a capture listener on the DOM node runs before it.
+        const listener = (event: ClipboardEvent) => {
+            const pastedText = event.clipboardData?.getData('text/plain');
+            const selectionCount = this.editor.getSelections()?.length ?? 0;
+            // Widgets such as the find and replace inputs sit inside the DOM node too; a paste there leaves the text without focus.
+            if (!pastedText || !this.editor.hasTextFocus() || this.editor.getOption(monaco.editor.EditorOption.readOnly) || selectionCount > 1) {
+                return;
+            }
+            // Undo stops on both sides keep the handler's edit a separate undo step.
+            this.editor.pushUndoStop();
+            const handled = handler(pastedText);
+            this.editor.pushUndoStop();
+            if (handled) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        };
+        domNode.addEventListener('paste', listener, { capture: true });
+        return { dispose: () => domNode.removeEventListener('paste', listener, { capture: true }) };
+    }
+
     private toMonacoPosition(position: TextEditorPosition): monaco.IPosition {
         return new monaco.Position(position.getLineNumber(), position.getColumn());
     }
