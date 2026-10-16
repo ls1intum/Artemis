@@ -21,6 +21,7 @@ import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import javax.naming.InvalidNameException;
@@ -63,6 +64,8 @@ import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDockerFlagsDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
@@ -545,6 +548,64 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             assertThat(buildJobQueueItem).isNotNull();
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().network()).isEqualTo("none");
             assertThat(buildJobQueueItem.buildConfig().dockerRunConfig().env()).containsExactlyInAnyOrder("key=value", "key1=value1");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testContainerDockerFlagsOverrideTheExercisesForItsJob() {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+            buildConfig.setDockerFlags("{\"network\": \"\", \"env\": {\"SHARED\": \"exercise\", \"MODE\": \"exercise\"}, \"memory\": 1024}");
+            var flags = new BuildContainerDockerFlagsDTO("none", Map.of("MODE", "container"), null, 256, null);
+            var container = new BuildContainerDTO("limited", null, null, List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of())), flags);
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(container)).toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            DockerRunConfig runConfig = queuedJobs.poll().buildConfig().dockerRunConfig();
+            assertThat(runConfig.network()).as("set by the container").isEqualTo("none");
+            assertThat(runConfig.memory()).as("set by the container").isEqualTo(256);
+            assertThat(runConfig.env()).as("the exercise's variables, the container's on top").containsExactlyInAnyOrder("SHARED=exercise", "MODE=container");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testContainerTimeoutBoundsItsJob() {
+            assertJobTimeoutOfContainer(90, 90);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testAStoredContainerTimeoutAboveTheExercisesIsCapped() {
+            // stored before the validator rejected it: the job still gets no more than the exercise's timeout
+            assertJobTimeoutOfContainer(300, 200);
+        }
+
+        /**
+         * Triggers a build of a plan whose one container sets the given timeout, with an exercise timeout of 200 seconds,
+         * and asserts the timeout the queued job carries.
+         */
+        private void assertJobTimeoutOfContainer(int containerTimeoutSeconds, int expectedJobTimeoutSeconds) {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+            buildConfig.setTimeoutSeconds(200);
+            var container = new BuildContainerDTO("bounded", null, null, List.of(new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.ALWAYS, false, List.of())),
+                    containerTimeoutSeconds);
+            buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(null, null, List.of(container)).toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            assertThat(queuedJobs.poll().buildConfig().timeoutSeconds()).isEqualTo(expectedJobTimeoutSeconds);
         }
 
         private ProgrammingExerciseBuildConfig createBuildConfig(String networkName) {

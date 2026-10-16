@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.dto.BuildContainerDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -386,8 +387,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         boolean staticCodeAnalysisEnabled = programmingExercise.isStaticCodeAnalysisEnabled();
         boolean sequentialTestRunsEnabled = buildConfig.hasSequentialTestRuns();
 
-        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise);
-
         BuildPlanPhasesDTO buildPlanPhasesDTO;
         try {
             buildPlanPhasesDTO = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildConfig.getBuildPlanConfiguration());
@@ -396,10 +395,16 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             throw new LocalCIException("The build plan configuration is invalid for build config " + buildConfig.getId(), e);
         }
 
-        final List<BuildPhaseDTO> phases = buildPlanPhasesDTO.phases() == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig)
-                : buildPlanPhasesDTO.phases();
-        final String dockerImage = buildPlanPhasesDTO.dockerImage() == null ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise)
-                : buildPlanPhasesDTO.dockerImage();
+        final List<BuildContainerDTO> containers = buildPlanPhasesDTO.effectiveContainers();
+        // a build plan without any phase falls back to the default phases and image of the exercise
+        final BuildContainerDTO container = containers.isEmpty() ? null : containers.getFirst();
+
+        final List<BuildPhaseDTO> phases = container == null ? buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise, buildConfig) : container.phases();
+        final String configuredDockerImage = container == null ? buildPlanPhasesDTO.dockerImage() : container.dockerImage();
+        final String dockerImage = configuredDockerImage == null ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise) : configuredDockerImage;
+        // the container's Docker flags override the exercise's for its job, see BuildContainerDockerFlagsDTO
+        final DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise,
+                container == null ? null : container.dockerFlags());
 
         final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
 
@@ -409,8 +414,28 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         final String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(buildConfig, activePhases);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
-                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
-                buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, timeoutSecondsOf(container, buildConfig.getTimeoutSeconds()),
+                buildConfig.getAssignmentCheckoutPath(), buildConfig.getTestCheckoutPath(), buildConfig.getSolutionCheckoutPath(), dockerRunConfig);
+    }
+
+    /**
+     * The timeout of a container's build job: the container's own if it sets one, otherwise the exercise's. A container
+     * timeout tightens the exercise timeout, which has to cover the slowest container, so it is capped at it. The
+     * validator rejects a larger container timeout on save; the cap covers a plan stored before that rule. An exercise
+     * timeout of 0 means the instance default, which the agent applies as the bound of every job anyway.
+     *
+     * @param container              the container to build, or null for the exercise default
+     * @param exerciseTimeoutSeconds the timeout configured on the exercise, 0 for the instance default
+     * @return the timeout of the job in seconds
+     */
+    private static int timeoutSecondsOf(@Nullable BuildContainerDTO container, int exerciseTimeoutSeconds) {
+        if (container == null || container.timeoutSeconds() == null) {
+            return exerciseTimeoutSeconds;
+        }
+        if (exerciseTimeoutSeconds <= 0) {
+            return container.timeoutSeconds();
+        }
+        return Math.min(container.timeoutSeconds(), exerciseTimeoutSeconds);
     }
 
     private List<String> finalizeResultPaths(final ProgrammingExerciseBuildConfig buildConfig, final Stream<String> resultPaths) {
