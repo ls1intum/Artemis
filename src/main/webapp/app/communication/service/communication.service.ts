@@ -236,7 +236,14 @@ export class CommunicationService implements OnDestroy {
                     requestCallbacks?.beforeApply();
                     if (!forceUpdate && (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType)) {
                         // if infinite scroll enabled, add fetched posts to the end of cachedPosts
-                        this.cachedPosts.push(...res.body!);
+                        const cachedIds = new Set(this.cachedPosts.map((post) => post.id));
+                        for (const post of res.body!) {
+                            // Live inserts can shift offset-based page boundaries; keep overlapping rows only once.
+                            if (!cachedIds.has(post.id)) {
+                                this.cachedPosts.push(post);
+                                cachedIds.add(post.id);
+                            }
+                        }
                     } else {
                         // if the context changed, we need to fetch posts and dismiss cached posts
                         this.cachedPosts = res.body!;
@@ -251,10 +258,15 @@ export class CommunicationService implements OnDestroy {
             requestCallbacks?.beforeApply();
             // if we do not require force update, e.g. because only the post title or content changed,
             // we can emit the previously cached posts
-            this.posts$.next(this.cachedPosts);
-            this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+            this.publishCachedPosts();
             requestCallbacks?.complete(true);
         }
+    }
+
+    /** Publishes live cache changes without issuing a request or consuming a pending failed-page retry. */
+    private publishCachedPosts(): void {
+        this.posts$.next(this.cachedPosts);
+        this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
     }
 
     /**
@@ -853,20 +865,7 @@ export class CommunicationService implements OnDestroy {
             default:
                 break;
         }
-        // emit updated version of cachedPosts to subscribing components...
-        if (PageType.OVERVIEW === this.pageType) {
-            const oldPage = this.currentPostContextFilter.page;
-            const oldPageSize = this.currentPostContextFilter.pageSize;
-            this.currentPostContextFilter.pageSize = oldPageSize! * (oldPage! + 1);
-            this.currentPostContextFilter.page = 0;
-            // ...by invoking the getFilteredPosts method with forceUpdate set to true iff receiving a new Q&A post, i.e. fetching posts from server only in this case
-            this.getFilteredPosts(this.currentPostContextFilter, !postConvId, this.currentConversation);
-            this.currentPostContextFilter.pageSize = oldPageSize;
-            this.currentPostContextFilter.page = oldPage;
-        } else {
-            // ...by invoking the getFilteredPosts method with forceUpdate set to false, i.e. without fetching posts from server
-            this.getFilteredPosts(this.currentPostContextFilter, false);
-        }
+        this.publishCachedPosts();
     };
 
     /**

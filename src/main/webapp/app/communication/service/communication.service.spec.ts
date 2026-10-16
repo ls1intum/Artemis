@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -43,7 +44,7 @@ import {
 } from 'test/helpers/sample/communication-sample-data';
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
-import { Conversation, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { SavedPostService } from 'app/communication/service/saved-post.service';
@@ -194,6 +195,45 @@ describe('CommunicationService', () => {
         communicationService.getFilteredPosts(filter, false);
 
         expect(request).toHaveBeenCalledTimes(2);
+    });
+
+    it.each([PageType.OVERVIEW, PageType.PAGE_SECTION])('keeps live updates independent of failed-page retries on %s', (pageType) => {
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        communicationService.setPageType(pageType);
+        const conversation = { id: 99 } as ConversationDTO;
+        const page = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, index) => ({ id: first + index }) as Post);
+        const response = (posts: Post[]) => of(new HttpResponse({ body: posts, headers: new HttpHeaders({ 'X-Total-Count': '151' }) }));
+        const failed = new Subject<HttpResponse<Post[]>>();
+        const request = vi
+            .spyOn(postService, 'getPosts')
+            .mockReturnValueOnce(response(page(1, 50)))
+            .mockReturnValueOnce(failed)
+            .mockReturnValueOnce(response(page(50, 99)))
+            .mockReturnValueOnce(response(page(100, 149)))
+            .mockReturnValueOnce(response(page(150, 150)));
+        const firstFilter = { courseId: course.id, conversationIds: [99], page: 0, pageSize: 50 };
+        const failedFilter = { ...firstFilter, page: 1 };
+        let visible: Post[] = [];
+        const subscription = communicationService.posts.subscribe((posts) => (visible = [...posts]));
+        communicationService.getFilteredPosts(firstFilter, true, conversation);
+        communicationService.getFilteredPosts(failedFilter, false, conversation);
+        failed.complete();
+
+        communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: { id: 151, conversation, creationDate: dayjs() } as Post });
+
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(visible).toHaveLength(51);
+        expect(failedFilter).toEqual({ ...firstFilter, page: 1 });
+        communicationService.getFilteredPosts(failedFilter, false, conversation);
+        expect(request).toHaveBeenCalledTimes(3);
+        expect(visible).toHaveLength(100);
+        expect(new Set(visible.map((post) => post.id)).size).toBe(100);
+        communicationService.getFilteredPosts({ ...firstFilter, page: 2 }, false, conversation);
+        expect(visible).toHaveLength(150);
+        communicationService.getFilteredPosts({ ...firstFilter, page: 3 }, false, conversation);
+        expect(visible).toHaveLength(151);
+        expect(new Set(visible.map((post) => post.id))).toEqual(new Set(Array.from({ length: 151 }, (_, index) => index + 1)));
+        subscription.unsubscribe();
     });
 
     describe('Invoke post service methods', () => {
