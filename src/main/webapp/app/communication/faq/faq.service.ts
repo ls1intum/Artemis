@@ -2,7 +2,7 @@ import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { CreateFaqDTO, Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
+import { CreateFaqDTO, Faq, FaqImportSearchResult, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { parseJson } from 'app/foundation/util/json.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -38,6 +38,21 @@ export class FaqService {
         return this.http
             .get<Faq>(`${this.resourceUrl}/${courseId}/faqs/${faqId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => FaqService.convertFaqCategoriesFromServer(res)));
+    }
+
+    /** Searches visible FAQs outside the target course without loading every source course. */
+    searchForImport(courseId: number, searchTerm: string, page: number): Observable<FaqImportSearchResult> {
+        const params = new HttpParams().set('searchTerm', searchTerm).set('page', page);
+        return this.http
+            .get<Partial<FaqImportSearchResult>>(`${this.resourceUrl}/${courseId}/faqs/for-import`, { params })
+            .pipe(map((result) => ({ resultsOnPage: result.resultsOnPage ?? [], numberOfPages: result.numberOfPages ?? 0, totalElements: result.totalElements ?? 0 })));
+    }
+
+    /** Copies selected FAQs into the target course. Source access is rechecked by the server. */
+    importFaqs(courseId: number, faqIds: number[]): Observable<EntityArrayResponseType> {
+        return this.http
+            .post<Faq[]>(`${this.resourceUrl}/${courseId}/faqs/import`, { faqIds }, { observe: 'response' })
+            .pipe(map((res) => FaqService.convertFaqCategoryArrayFromServer(res)));
     }
 
     findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {

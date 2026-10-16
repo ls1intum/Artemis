@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
-import { faCancel, faCheck, faEdit, faFilter, faPencilAlt, faPlus, faQuestion, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCancel, faCheck, faEdit, faFileImport, faFilter, faPencilAlt, faPlus, faQuestion, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -25,7 +25,8 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
+import { FaqImportDialogComponent } from './import/faq-import-dialog.component';
+import { TumAetUiButtonComponent, TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
@@ -45,6 +46,8 @@ import { TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
         CourseTitleBarActionsDirective,
         ArtemisTranslatePipe,
         TumAetUiEmptyStateComponent,
+        TumAetUiButtonComponent,
+        FaqImportDialogComponent,
     ],
 })
 export class FaqComponent implements OnInit, OnDestroy {
@@ -53,6 +56,9 @@ export class FaqComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
     private accountService = inject(AccountService);
+
+    readonly importDialogOpen = signal(false);
+    protected readonly faFileImport = faFileImport;
 
     protected readonly FaqState = FaqState;
     faqs?: Faq[]; // undefined until loaded; code distinguishes "not loaded / load failed" from an empty result
@@ -141,6 +147,12 @@ export class FaqComponent implements OnInit, OnDestroy {
         // sortByProperty sorts in place and returns the same array reference; spread into a new
         // array so the signal emits a fresh reference and the template re-renders (zoneless).
         this.filteredFaqs.set([...this.sortService.sortByProperty(this.filteredFaqs(), this.predicate, this.ascending)]);
+    }
+
+    onFaqsImported(count: number): void {
+        this.loadAll();
+        this.loadCourseFaqCategories(this.courseId());
+        this.alertService.success('artemisApp.faq.import.success', { count });
     }
 
     private loadAll() {

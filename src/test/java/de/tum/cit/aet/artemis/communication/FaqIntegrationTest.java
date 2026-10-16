@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -12,14 +13,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.dto.CreateFaqDTO;
 import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
+import de.tum.cit.aet.artemis.communication.dto.FaqImportCandidateDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdateFaqDTO;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
+import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -261,6 +265,146 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(createdFaqs.get(0).questionTitle()).isEqualTo("SortTest3"); // Newest
         assertThat(createdFaqs.get(1).questionTitle()).isEqualTo("SortTest2");
         assertThat(createdFaqs.get(2).questionTitle()).isEqualTo("SortTest1"); // Oldest
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchFaqsForImport_matchesContentAndExcludesTargetAndInaccessibleCourses() throws Exception {
+        Faq matching = faqRepository.save(FaqFactory.generateFaq(course1, FaqState.PROPOSED, "Office hours", "Registration details"));
+        faqRepository.save(FaqFactory.generateFaq(course2, FaqState.ACCEPTED, "Target FAQ", "Registration details"));
+        Course inaccessible = courseUtilService.createCourse();
+        faqRepository.save(FaqFactory.generateFaq(inaccessible, FaqState.ACCEPTED, "Private FAQ", "Registration details"));
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("searchTerm", "registration");
+        var result = request.getSearchResult("/api/communication/courses/" + course2.getId() + "/faqs/for-import", HttpStatus.OK, FaqDTO.class, params);
+        assertThat(result.getResultsOnPage()).extracting(FaqDTO::id).containsExactly(matching.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importSelectedFaqs_copiesOnlySelectedFaqsAndPreservesSource() throws Exception {
+        faq.setQuestionTitle("Original question");
+        faq.setQuestionAnswer("Original answer");
+        faq.setCategories(Set.of("Category"));
+        faqRepository.save(faq);
+        Faq second = faqRepository.save(FaqFactory.generateFaq(course1, FaqState.REJECTED, "Second question", "Second answer"));
+        faqRepository.save(FaqFactory.generateFaq(course1, FaqState.PROPOSED, "Unselected question", "Unselected answer"));
+        request.postWithoutResponseBody("/api/communication/courses/" + course2.getId() + "/faqs/import", Map.of("faqIds", List.of(faq.getId(), second.getId())),
+                HttpStatus.CREATED);
+
+        var imported = faqRepository.findAllByCourseIdOrderByCreatedDateDesc(course2.getId());
+        assertThat(imported).extracting(Faq::getQuestionTitle).containsExactlyInAnyOrder("Original question", "Second question");
+        assertThat(imported).extracting(Faq::getId).doesNotContain(faq.getId(), second.getId());
+        var first = imported.stream().filter(item -> item.getQuestionTitle().equals("Original question")).findFirst().orElseThrow();
+        assertThat(first.getQuestionAnswer()).isEqualTo("Original answer");
+        assertThat(first.getFaqState()).isEqualTo(FaqState.PROPOSED);
+        assertThat(first.getCategories()).containsExactly("Category");
+        assertThat(faqRepository.findByIdElseThrow(faq.getId()).getCourse().getId()).isEqualTo(course1.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importSelectedFaqs_rejectsInaccessibleSelectionBeforeSavingAnything() throws Exception {
+        Course inaccessible = courseUtilService.createCourse();
+        Faq hidden = faqRepository.save(FaqFactory.generateFaq(inaccessible, FaqState.ACCEPTED, "Secret", "Secret"));
+        request.postWithoutResponseBody("/api/communication/courses/" + course2.getId() + "/faqs/import", Map.of("faqIds", List.of(faq.getId(), hidden.getId())),
+                HttpStatus.FORBIDDEN);
+        assertThat(faqRepository.countByCourseId(course2.getId())).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importSelectedFaqs_rejectsEmptyAndSameCourseSelections() throws Exception {
+        request.postWithoutResponseBody("/api/communication/courses/" + course2.getId() + "/faqs/import", Map.of("faqIds", List.of()), HttpStatus.BAD_REQUEST);
+        request.postWithoutResponseBody("/api/communication/courses/" + course1.getId() + "/faqs/import", Map.of("faqIds", List.of(faq.getId())), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void importSelectedFaqs_requiresInstructorInTargetCourse() throws Exception {
+        request.get("/api/communication/courses/" + course2.getId() + "/faqs/for-import", HttpStatus.FORBIDDEN, Object.class);
+        request.postWithoutResponseBody("/api/communication/courses/" + course2.getId() + "/faqs/import", Map.of("faqIds", List.of(faq.getId())), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchAndImportFaqs_studentAccessOnlyAllowsAcceptedFaqs() throws Exception {
+        Course studentCourse = courseUtilService.createCourse();
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        userUtilService.enrollUserInCourse(user, studentCourse, CourseRole.STUDENT);
+        Faq accepted = faqRepository.save(FaqFactory.generateFaq(studentCourse, FaqState.ACCEPTED, "Student source question", "Shared answer"));
+        Faq proposed = faqRepository.save(FaqFactory.generateFaq(studentCourse, FaqState.PROPOSED, "Student source proposal", "Hidden answer"));
+        faqRepository.save(FaqFactory.generateFaq(studentCourse, FaqState.REJECTED, "Student source rejected", "Hidden answer"));
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("searchTerm", "Student source");
+        var result = request.getSearchResult("/api/communication/courses/" + course2.getId() + "/faqs/for-import", HttpStatus.OK, FaqImportCandidateDTO.class, params);
+        assertThat(result.getResultsOnPage()).extracting(FaqImportCandidateDTO::id).containsExactly(accepted.getId());
+        var candidate = result.getResultsOnPage().getFirst();
+        assertThat(candidate.courseId()).isEqualTo(studentCourse.getId());
+        assertThat(candidate.courseTitle()).isEqualTo(studentCourse.getTitle());
+        assertThat(candidate.questionAnswer()).isEqualTo("Shared answer");
+
+        request.postWithoutResponseBody("/api/communication/courses/" + course2.getId() + "/faqs/import", Map.of("faqIds", List.of(accepted.getId(), proposed.getId())),
+                HttpStatus.FORBIDDEN);
+        assertThat(faqRepository.countByCourseId(course2.getId())).isZero();
+        // A FAQ selected while accepted must become inaccessible if its status changes before importing.
+        accepted.setFaqState(FaqState.REJECTED);
+        faqRepository.save(accepted);
+        request.postWithoutResponseBody("/api/communication/courses/" + course2.getId() + "/faqs/import", Map.of("faqIds", List.of(accepted.getId())), HttpStatus.FORBIDDEN);
+        assertThat(faqRepository.countByCourseId(course2.getId())).isZero();
+        accepted.setFaqState(FaqState.ACCEPTED);
+        faqRepository.save(accepted);
+        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
+        var imported = request.postListWithResponseBody("/api/communication/courses/" + course2.getId() + "/faqs/import",
+                Map.of("faqIds", List.of(accepted.getId(), accepted.getId())), FaqDTO.class, HttpStatus.CREATED, null, null);
+        assertThat(imported).hasSize(1);
+        assertThat(imported.getFirst().id()).isNotEqualTo(accepted.getId());
+        assertThat(imported.getFirst().faqState()).isEqualTo(FaqState.ACCEPTED);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void searchFaqsForImport_matchesCourseNameAndPaginatesStably() throws Exception {
+        course1.setTitle("FAQ source pagination");
+        courseRepository.save(course1);
+        for (int i = 0; i < 11; i++) {
+            faqRepository.save(FaqFactory.generateFaq(course1, FaqState.PROPOSED, "Same question", "Answer"));
+        }
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("searchTerm", "faq SOURCE pagination");
+        var first = request.getSearchResult("/api/communication/courses/" + course2.getId() + "/faqs/for-import", HttpStatus.OK, FaqImportCandidateDTO.class, params);
+        assertThat(first.getResultsOnPage()).hasSize(10);
+        assertThat(first.getNumberOfPages()).isEqualTo(2);
+        params.add("page", "1");
+        var second = request.getSearchResult("/api/communication/courses/" + course2.getId() + "/faqs/for-import", HttpStatus.OK, FaqImportCandidateDTO.class, params);
+        assertThat(second.getResultsOnPage()).hasSize(2);
+        assertThat(second.getResultsOnPage()).extracting(FaqImportCandidateDTO::id)
+                .doesNotContainAnyElementsOf(first.getResultsOnPage().stream().map(FaqImportCandidateDTO::id).toList());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importSelectedFaqs_rejectsDeletedAndInvalidIdsBeforeSaving() throws Exception {
+        request.postWithoutResponseBody("/api/communication/courses/" + course2.getId() + "/faqs/import", Map.of("faqIds", List.of(faq.getId(), Long.MAX_VALUE)),
+                HttpStatus.BAD_REQUEST);
+        request.postWithoutResponseBody("/api/communication/courses/" + course2.getId() + "/faqs/import", Map.of("faqIds", List.of(-1)), HttpStatus.BAD_REQUEST);
+        assertThat(faqRepository.countByCourseId(course2.getId())).isZero();
+        request.get("/api/communication/courses/" + course2.getId() + "/faqs/for-import?page=-1", HttpStatus.BAD_REQUEST, Object.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importSelectedFaqs_irisFailureDoesNotTurnPersistedCopiesIntoFailedImport() throws Exception {
+        faq.setFaqState(FaqState.ACCEPTED);
+        faqRepository.save(faq);
+        irisRequestMockProvider.mockFaqIngestionWebhookError(HttpStatus.SERVICE_UNAVAILABLE);
+        var imported = request.postListWithResponseBody("/api/communication/courses/" + course2.getId() + "/faqs/import", Map.of("faqIds", List.of(faq.getId())), FaqDTO.class,
+                HttpStatus.CREATED, null, null);
+        assertThat(imported).hasSize(1);
+        assertThat(imported.getFirst().id()).isNotEqualTo(faq.getId());
+        assertThat(faqRepository.countByCourseId(course2.getId())).isEqualTo(1);
     }
 
 }

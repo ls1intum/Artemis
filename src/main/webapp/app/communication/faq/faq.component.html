@@ -37,6 +37,11 @@
                     }
                 </div>
                 <div class="d-flex justify-content-end align-items-center gap-2">
+                    @if (isAtLeastInstructor()) {
+                        <tumaet-ui-button size="small" variant="outlined" [icon]="faFileImport" (clicked)="importDialogOpen.set(true)" data-testid="import-faqs">
+                            <span jhiTranslate="artemisApp.faq.import.title"></span>
+                        </tumaet-ui-button>
+                    }
                     <a id="{{ isAtLeastInstructor() ? 'create-faq' : 'propose-faq' }}" class="btn btn-sm btn-primary" [routerLink]="['new']">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="{{ isAtLeastInstructor() ? 'artemisApp.faq.home.createLabel' : 'artemisApp.faq.home.proposeLabel' }}"></span>
@@ -166,3 +171,7 @@
         </tumaet-ui-empty-state>
     }
 </div>
+
+@if (importDialogOpen() && isAtLeastInstructor()) {
+    <jhi-faq-import-dialog [courseId]="courseId()" [(visible)]="importDialogOpen" (imported)="onFaqsImported($event)" />
+}
