@@ -163,7 +163,9 @@ class GenerationPersistenceServiceTest {
         when(resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(anyLong())).thenReturn(Optional.empty(), Optional.of(resultWithId(1L)));
         when(programmingSubmissionService.existsNewerSuccessfulTestResultForParticipationAndCommitHash(anyLong(), anyString(), any())).thenReturn(true);
         when(programmingExerciseRepository.updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any())).thenReturn(1);
-        liveSaves = new GenerationLiveSaveService(new LocalDataProviderService(), true);
+        liveSaves = Mockito.spy(new GenerationLiveSaveService(new LocalDataProviderService(), true));
+        Mockito.doReturn(true).when(liveSaves).testCaseSynchronizationCompleted(anyLong(), any(), any());
+        Mockito.doNothing().when(liveSaves).expectTestCaseSynchronization(anyLong(), any(), any());
         service = newService(Duration.ofSeconds(2));
 
         exercise = mock(ProgrammingExercise.class);
@@ -521,11 +523,14 @@ class GenerationPersistenceServiceTest {
 
     @Test
     void completedSaveWithUnconfirmedReservationReleaseReportsPartialInsteadOfUnchanged() throws Exception {
-        liveSaves = Mockito.spy(liveSaves);
         service = newService(Duration.ofSeconds(1));
         stubSuccessfulCheckoutAndCommits();
         long exerciseId = exercise.getId();
-        Mockito.doThrow(new IllegalStateException("coordination unavailable")).when(liveSaves).recoverSlot(eq(exerciseId), anyString());
+        @SuppressWarnings("unchecked")
+        var coordination = (de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap<String, GenerationLiveSaveService.LiveSaveSlot>) Mockito
+                .spy(ReflectionTestUtils.getField(liveSaves, "reservations"));
+        ReflectionTestUtils.setField(liveSaves, "reservations", coordination);
+        Mockito.doThrow(new IllegalStateException("coordination unavailable")).when(coordination).remove(anyString(), any());
         var outcome = outcomeWith(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "# Saved Exercise");
 
         assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOfSatisfying(GenerationIncompleteException.class, failure -> {
@@ -1633,13 +1638,15 @@ class GenerationPersistenceServiceTest {
 
     @Test
     void extractTitleFromH1_returnsFirstLevelOneHeading_ignoringDeeperHeadingsAndLeadingBlankLines() {
-        assertThat(GenerationPersistenceService.extractTitleFromH1("# Roman Numerals\n\nConvert integers 1..3999.")).isEqualTo("Roman Numerals");
-        assertThat(GenerationPersistenceService.extractTitleFromH1("\n\n#   Balanced BST   \n## Tasks")).isEqualTo("Balanced BST");
-        assertThat(GenerationPersistenceService.extractTitleFromH1("## Subsection only\nbody")).isNull();
-        assertThat(GenerationPersistenceService.extractTitleFromH1("No heading at all")).isNull();
-        assertThat(GenerationPersistenceService.extractTitleFromH1("#NotAHeading")).isNull();
+        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("# Roman Numerals\n\nConvert integers 1..3999."))
+                .isEqualTo("Roman Numerals");
+        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("\n\n#   Balanced BST   \n## Tasks"))
+                .isEqualTo("Balanced BST");
+        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("## Subsection only\nbody")).isNull();
+        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("No heading at all")).isNull();
+        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading("#NotAHeading")).isNull();
         String longHeading = "# " + "x".repeat(400);
-        assertThat(GenerationPersistenceService.extractTitleFromH1(longHeading)).hasSize(255);
+        assertThat(de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading(longHeading)).hasSize(255);
     }
 
     @ParameterizedTest

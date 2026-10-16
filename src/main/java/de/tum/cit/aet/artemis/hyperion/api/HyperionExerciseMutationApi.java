@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.api;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
+import java.util.function.BooleanSupplier;
+
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -41,6 +43,10 @@ public class HyperionExerciseMutationApi implements AbstractApi {
     public ParticipationReservation reserveParticipation(long exerciseId) {
         String token = mutationService.claimReader(exerciseId);
         return new ParticipationReservation(() -> mutationService.releaseReader(exerciseId, token));
+    }
+
+    public boolean synchronizeTestCases(long exerciseId, String solutionCommit, String testsCommit, BooleanSupplier callback) {
+        return mutationService.synchronizeTestCases(exerciseId, solutionCommit, testsCommit, callback);
     }
 
 }

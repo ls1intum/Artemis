@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionExerciseTitleSanitizer.fromProblemStatementHeading;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -161,8 +161,6 @@ public class GenerationPersistenceService {
 
     private static final RepositoryType[] PERSIST_ORDER = { RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS };
 
-    private static final int MAX_TITLE_LENGTH = 255;
-
     public record PersistResult(Map<RepositoryType, String> prePersistHeads, Map<RepositoryType, String> postPersistHeads, String persistedProblemStatement, String persistedTitle,
             String repositoryBranch, boolean metadataChanged, Long savedExerciseVersionId, GenerationGrading.Snapshot previousGrading, GenerationGrading.Snapshot savedGrading) {
     }
@@ -251,7 +249,7 @@ public class GenerationPersistenceService {
         boolean shouldSaveProblemStatement = !producedProblemStatement.isBlank() && !producedProblemStatement.equals(exercise.getProblemStatement());
         // Only from scratch: the brief-derived draft title yields to a valid generated H1. An adapt run keeps the instructor's title.
         if (mode == GenerationMode.GENERATE && shouldSaveProblemStatement && (exercise.getProblemStatement() == null || exercise.getProblemStatement().isBlank())) {
-            String generatedTitle = extractTitleFromH1(producedProblemStatement);
+            String generatedTitle = fromProblemStatementHeading(producedProblemStatement);
             if (generatedTitle != null) {
                 targetTitle = generatedTitle;
             }
@@ -465,7 +463,7 @@ public class GenerationPersistenceService {
             Runnable finalizationGuard, Map<RepositoryType, String> repositoryCommitIds, Runnable updateGrading) {
         finalizationGuard.run();
         if (testsBuildSignal != null) {
-            triggerTestsBuild(exercise, testsBuildSignal);
+            testsBuildSignal = triggerTestsBuild(exercise, testsBuildSignal);
             awaitTestCaseSynchronization(exercise.getId(), testsBuildSignal, failOnFinalizationFailure);
         }
         // Grading-only changes still need the finalization guard, even without a new tests commit.
@@ -916,7 +914,11 @@ public class GenerationPersistenceService {
         };
     }
 
-    record TestsBuildSignal(long solutionParticipationId, String testsCommitHash, Long baselineLatestResultId) {
+    record TestsBuildSignal(long solutionParticipationId, String testsCommitHash, Long baselineLatestResultId, String solutionCommitHash) {
+
+        TestsBuildSignal(long solutionParticipationId, String testsCommitHash, Long baselineLatestResultId) {
+            this(solutionParticipationId, testsCommitHash, baselineLatestResultId, null);
+        }
 
         TestsBuildSignal withTestsCommitHash(String testsCommitHash) {
             return new TestsBuildSignal(solutionParticipationId, testsCommitHash, baselineLatestResultId);
@@ -933,6 +935,9 @@ public class GenerationPersistenceService {
     TestsBuildSignal triggerTestsBuild(ProgrammingExercise exercise, TestsBuildSignal signal) {
         try {
             ProgrammingExerciseParticipation solutionParticipation = participationService.retrieveSolutionParticipation(exercise);
+            String solutionCommit = gitService.getLastCommitHash(exercise.getRepositoryURI(RepositoryType.SOLUTION), repositoryBranch(exercise));
+            liveSaves.expectTestCaseSynchronization(exercise.getId(), solutionCommit, signal.testsCommitHash());
+            signal = new TestsBuildSignal(signal.solutionParticipationId(), signal.testsCommitHash(), signal.baselineLatestResultId(), solutionCommit);
             programmingSubmissionService.createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), signal.testsCommitHash());
             continuousIntegrationTriggerService.triggerRestrictedBuild(solutionParticipation, signal.testsCommitHash(), RepositoryType.TESTS);
             return signal;
@@ -966,8 +971,8 @@ public class GenerationPersistenceService {
     private Set<ProgrammingExerciseTestCase> awaitBuildProcessedTestCaseSet(long exerciseId, TestsBuildSignal signal, boolean failOnTimeout) throws InterruptedException {
         long deadline = System.nanoTime() + testCaseSyncTimeout.toNanos();
         while (System.nanoTime() < deadline) {
-            if (programmingSubmissionService.existsNewerSuccessfulTestResultForParticipationAndCommitHash(signal.solutionParticipationId(), signal.testsCommitHash(),
-                    signal.baselineLatestResultId())) {
+            if (liveSaves.testCaseSynchronizationCompleted(exerciseId, signal.solutionCommitHash(), signal.testsCommitHash()) && programmingSubmissionService
+                    .existsNewerSuccessfulTestResultForParticipationAndCommitHash(signal.solutionParticipationId(), signal.testsCommitHash(), signal.baselineLatestResultId())) {
                 return testCaseRepository.findByExerciseId(exerciseId);
             }
             Thread.sleep(testCaseSyncPoll.toMillis());
@@ -979,19 +984,4 @@ public class GenerationPersistenceService {
         return testCaseRepository.findByExerciseId(exerciseId);
     }
 
-    /** The first level-1 ATX heading only, so a {@code ## } heading never matches; trimmed and capped at {@link #MAX_TITLE_LENGTH}. */
-    static String extractTitleFromH1(String problemStatement) {
-        for (String line : problemStatement.split("\n", -1)) {
-            String trimmed = line.strip();
-            if (trimmed.startsWith("# ")) {
-                String title = trimmed.substring(2).strip();
-                if (title.isEmpty()) {
-                    return null;
-                }
-                String cappedTitle = title.length() > MAX_TITLE_LENGTH ? title.substring(0, MAX_TITLE_LENGTH).strip() : title;
-                return cappedTitle.length() >= 3 && TITLE_NAME_PATTERN.matcher(cappedTitle).matches() ? cappedTitle : null;
-            }
-        }
-        return null;
-    }
 }

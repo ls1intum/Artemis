@@ -6,8 +6,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BooleanSupplier;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
@@ -187,8 +189,12 @@ public class GenerationLiveSaveService {
      * @throws ConflictException when this operation no longer owns the reservation
      */
     public void verify(long exerciseId, String token) {
-        if (enabled && getSlotInfo(exerciseId).filter(slot -> slot.token().equals(token)).isEmpty()) {
-            throw new ConflictException("The exercise save reservation was lost. Stop writing and reconcile the exercise.", "hyperionExerciseGeneration",
+        if (!enabled) {
+            return;
+        }
+        var slot = getSlotInfo(exerciseId).orElse(null);
+        if (slot == null || !slot.token().equals(token) || slot.synchronization() != null && slot.synchronization().running()) {
+            throw new ConflictException("The exercise save is not available for another durable mutation; reconcile any active test synchronization.", "hyperionExerciseGeneration",
                     "exerciseSaveOwnershipLost");
         }
     }
@@ -212,10 +218,101 @@ public class GenerationLiveSaveService {
             if (held.get().isEmpty()) {
                 held.remove();
             }
-            if (!recoverSlot(exerciseId, token)) {
-                throw new IllegalStateException("The completed exercise operation lost its reservation; manual reconciliation is required");
+            String key = String.valueOf(exerciseId);
+            while (true) {
+                var current = reservations.get(key);
+                if (current == null || !current.token().equals(token)) {
+                    throw new IllegalStateException("The completed exercise operation lost its reservation; manual reconciliation is required");
+                }
+                if (current.synchronization() != null && current.synchronization().running()) {
+                    throw new IllegalStateException("A test synchronization is still running; the save reservation is retained for reconciliation");
+                }
+                if (reservations.remove(key, current)) {
+                    break;
+                }
             }
         }
+    }
+
+    /** Publishes the exact build pair whose asynchronous test discovery may join the current save. */
+    public void expectTestCaseSynchronization(long exerciseId, String solutionCommit, String testsCommit) {
+        if (!enabled) {
+            return;
+        }
+        var owner = held.get().get(exerciseId);
+        if (owner == null) {
+            throw new IllegalStateException("Test synchronization requires an owned save reservation");
+        }
+        String key = String.valueOf(exerciseId);
+        while (true) {
+            var current = reservations.get(key);
+            if (current == null || !current.token().equals(owner.token) || current.synchronization() != null && current.synchronization().running()) {
+                throw new IllegalStateException("Cannot replace an active test synchronization; retain the save for reconciliation");
+            }
+            var next = new LiveSaveSlot(current.token(), current.ownerNodeId(), current.startedAt(), current.readers(),
+                    new TestCaseSynchronization(solutionCommit, testsCommit, false, false));
+            if (reservations.replace(key, current, next)) {
+                log.info("Expected test synchronization for exercise {}: solution {}, tests {}", exerciseId, solutionCommit, testsCommit);
+                return;
+            }
+        }
+    }
+
+    /** Runs canonical test discovery under a reader, or the exact save synchronization permit. */
+    public boolean synchronizeTestCases(long exerciseId, String solutionCommit, String testsCommit, BooleanSupplier callback) {
+        if (!enabled) {
+            return callback.getAsBoolean();
+        }
+        String key = String.valueOf(exerciseId);
+        while (true) {
+            var current = reservations.get(key);
+            if (current == null || !current.readers().isEmpty()) {
+                String token;
+                try {
+                    token = claimReader(exerciseId);
+                }
+                catch (ConflictException busy) {
+                    continue;
+                }
+                try {
+                    return callback.getAsBoolean();
+                }
+                finally {
+                    releaseReader(exerciseId, token);
+                }
+            }
+            var sync = current.synchronization();
+            if (sync == null || sync.running() || sync.completed() || !sync.matches(solutionCommit, testsCommit)) {
+                return false;
+            }
+            var claimed = new LiveSaveSlot(current.token(), current.ownerNodeId(), current.startedAt(), current.readers(),
+                    new TestCaseSynchronization(solutionCommit, testsCommit, true, false));
+            if (!reservations.replace(key, current, claimed)) {
+                continue;
+            }
+            boolean completed = false;
+            try {
+                completed = callback.getAsBoolean();
+                return completed;
+            }
+            finally {
+                var finished = new LiveSaveSlot(claimed.token(), claimed.ownerNodeId(), claimed.startedAt(), claimed.readers(),
+                        new TestCaseSynchronization(solutionCommit, testsCommit, false, completed));
+                if (!reservations.replace(key, claimed, finished)) {
+                    throw new IllegalStateException("Test synchronization lost its save reservation");
+                }
+                log.info("Canonical test synchronization for exercise {} finished: solution {}, tests {}, accepted {}", exerciseId, solutionCommit, testsCommit, completed);
+            }
+        }
+    }
+
+    /** Reports completion only after canonical test discovery has returned successfully. */
+    public boolean testCaseSynchronizationCompleted(long exerciseId, String solutionCommit, String testsCommit) {
+        if (!enabled) {
+            return true;
+        }
+        var current = reservations.get(String.valueOf(exerciseId));
+        return current != null && current.synchronization() != null && current.synchronization().completed() && current.synchronization().matches(solutionCommit, testsCommit);
     }
 
     /**
@@ -261,7 +358,19 @@ public class GenerationLiveSaveService {
         return current != null && current.token().equals(exactToken) && reservations.remove(String.valueOf(exerciseId), current);
     }
 
-    public record LiveSaveSlot(String token, String ownerNodeId, Instant startedAt, Map<String, String> readers) implements java.io.Serializable {
+    public record TestCaseSynchronization(String solutionCommit, String testsCommit, boolean running, boolean completed) implements java.io.Serializable {
+
+        boolean matches(String solution, String tests) {
+            return Objects.equals(solutionCommit, solution) && Objects.equals(testsCommit, tests);
+        }
+    }
+
+    public record LiveSaveSlot(String token, String ownerNodeId, Instant startedAt, Map<String, String> readers, TestCaseSynchronization synchronization)
+            implements java.io.Serializable {
+
+        public LiveSaveSlot(String token, String ownerNodeId, Instant startedAt, Map<String, String> readers) {
+            this(token, ownerNodeId, startedAt, readers, null);
+        }
 
         public LiveSaveSlot(String token, String ownerNodeId, Instant startedAt) {
             this(token, ownerNodeId, startedAt, Map.of());

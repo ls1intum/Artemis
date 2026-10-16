@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
+
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
@@ -10,9 +12,10 @@ import org.jspecify.annotations.Nullable;
  * Artemis validates a programming exercise title twice with the same two rules: at least three characters, and every character inside
  * {@link de.tum.cit.aet.artemis.core.config.Constants#TITLE_NAME_PATTERN}. A model answers in prose — it quotes, it adds a colon, it explains itself on a second line — so a
  * suggestion is filtered into that shape here rather than offered to the instructor and rejected on save. Anything that cannot be filtered into a valid title becomes the empty
- * string, which is the caller's signal to use its own fallback.
+ * string, which is the caller's signal to use its own fallback. Statement headings are instead validated without rewriting through
+ * {@link #fromProblemStatementHeading(String)}.
  */
-final class HyperionExerciseTitleSanitizer {
+public final class HyperionExerciseTitleSanitizer {
 
     /** The minimum {@link de.tum.cit.aet.artemis.exercise.domain.Exercise#validateTitle()} accepts. */
     static final int MIN_TITLE_LENGTH = 3;
@@ -22,6 +25,8 @@ final class HyperionExerciseTitleSanitizer {
 
     /** How much of a brief's opening {@link #fromBriefOpening(String)} keeps. Matches the "at most six words" the prompt asks a model for. */
     private static final int FALLBACK_TITLE_WORDS = 6;
+
+    private static final int MAX_PERSISTED_TITLE_LENGTH = 255;
 
     /**
      * The complement of the character class in {@link de.tum.cit.aet.artemis.core.config.Constants#TITLE_NAME_PATTERN}. Kept as its own literal rather than derived from that
@@ -94,6 +99,27 @@ final class HyperionExerciseTitleSanitizer {
         String base = title.length() <= room ? title : title.substring(0, Math.max(room, 0)).strip();
         // A suffix long enough to leave no room at all still has to produce something valid, so the number alone is the title of last resort.
         return base.isEmpty() ? String.valueOf(suffix) : base + appendix;
+    }
+
+    /**
+     * Reads the first level-one ATX heading without rewriting its characters.
+     *
+     * @param problemStatement generated problem statement
+     * @return a valid title capped at the database limit, or null when the first heading is invalid or absent
+     */
+    public static @Nullable String fromProblemStatementHeading(String problemStatement) {
+        for (String line : problemStatement.split("\n", -1)) {
+            String trimmed = line.strip();
+            if (trimmed.startsWith("# ")) {
+                String title = trimmed.substring(2).strip();
+                if (title.isEmpty()) {
+                    return null;
+                }
+                String cappedTitle = title.length() > MAX_PERSISTED_TITLE_LENGTH ? title.substring(0, MAX_PERSISTED_TITLE_LENGTH).strip() : title;
+                return cappedTitle.length() >= MIN_TITLE_LENGTH && TITLE_NAME_PATTERN.matcher(cappedTitle).matches() ? cappedTitle : null;
+            }
+        }
+        return null;
     }
 
     /** Cuts at a word boundary when that leaves a usable title, so a capped suggestion does not end mid-word. */
