@@ -20,6 +20,7 @@
     </ng-template>
 
     <div class="d-flex flex-column h-100">
+        <jhi-participation-access-notice [exercise]="exercise()!" />
         <div style="flex: 1; min-height: 0">
             <jhi-table-view
                 [cols]="columns()"

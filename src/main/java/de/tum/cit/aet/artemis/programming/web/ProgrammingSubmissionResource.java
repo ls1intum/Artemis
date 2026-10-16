@@ -312,7 +312,7 @@ public class ProgrammingSubmissionResource {
         }
         // The nested exercise is not part of this list payload (the dashboard already holds the exercise), matching
         // the service, which detaches it from the participations before returning them.
-        boolean hideParticipant = !authCheckService.isAtLeastInstructorForExercise(exercise);
+        boolean hideParticipant = !participationAuthCheckService.canSeeParticipantInformation(exercise);
         var submissionDTOs = programmingSubmissions.stream().map(submission -> {
             var response = ProgrammingSubmissionForAssessmentDTO.ofWithLoadedResults(submission);
             return hideParticipant ? response.withoutParticipantInformation() : response;

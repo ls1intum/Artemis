@@ -270,6 +270,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 pe.startDate,
                 pe.releaseDate,
                 pe.dueDate,
+                pe.assessmentType,
                 e.id,
                 e.startDate,
                 e.testExam)
