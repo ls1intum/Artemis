@@ -388,6 +388,22 @@ describe('Message editor editing transactions', () => {
         expect(changed).toHaveBeenLastCalledWith('Read [**guide**](https://example.org/new) next');
     });
 
+    it('updates and unlinks an existing code-formatted link label without losing its formatting', () => {
+        editor.load('Read [`List`](https://example.org/old) next');
+        const link = root.querySelector('a')!;
+        select(link.querySelector('code')!.firstChild!, 2);
+        expect(editor.linkAtSelection()).toBe(link);
+        expect(editor.canLinkSelection()).toBe(true);
+        editor.setLink('List', 'https://example.org/new');
+        expect(root.querySelectorAll('a')).toHaveLength(1);
+        expect(root.querySelector('a code')!.textContent).toBe('List');
+        expect(changed).toHaveBeenLastCalledWith('Read [`List`](https://example.org/new) next');
+        editor.unlink(link);
+        expect(root.querySelector('a')).toBeNull();
+        expect(root.querySelector('code')!.textContent).toBe('List');
+        expect(changed).toHaveBeenLastCalledWith('Read `List` next');
+    });
+
     it.each(['`literal`', '```\nliteral\n```'])('rejects link creation in code: %s', (message) => {
         editor.load(message);
         const text = root.querySelector('code')!.firstChild!;

@@ -421,8 +421,10 @@ export class MessageEditorDom {
         return link instanceof HTMLAnchorElement && this.element.contains(link) ? link : undefined;
     }
 
-    /** Links cannot be represented inside literal code; reject both caret and spanning selections there. */
-    canLinkSelection(): boolean {
+    /** Existing links may have code-formatted labels; creating a link inside literal code is unsupported. */
+    canLinkSelection(existing?: HTMLAnchorElement): boolean {
+        const link = existing ?? this.linkAtSelection();
+        if (link) return this.element.contains(link) && !link.closest('code, pre');
         const range = this.range();
         if (this.parentElement(range.startContainer)?.closest('code, pre') || this.parentElement(range.endContainer)?.closest('code, pre')) return false;
         if (range.collapsed) return true;
@@ -451,10 +453,10 @@ export class MessageEditorDom {
     }
 
     setLink(label: string, url: string, existing?: HTMLAnchorElement): void {
-        if (!isMessageLinkSafe(url) || !this.canLinkSelection() || (existing && !this.element.contains(existing))) {
+        existing ??= this.linkAtSelection();
+        if (!isMessageLinkSafe(url) || !this.canLinkSelection(existing)) {
             return;
         }
-        existing ??= this.linkAtSelection();
         this.transact(() => {
             if (existing && this.element.contains(existing)) {
                 if (existing.textContent !== (label || url)) {

@@ -481,6 +481,73 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         });
     }
 
+    for (const trigger of ['toolbar', 'shortcut']) {
+        test(`${trigger} updates and unlinks a code-formatted link label across saves and reopening`, async ({ page, composer, communicationAPIRequests }) => {
+            const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', 'Read [`List`](https://example.com/old) today');
+            const { posting, editor } = await reopen(page, original);
+            await selectText(editor, 7, 7);
+            await expect(posting.getByTestId('message-link-button')).toBeEnabled();
+            if (trigger === 'toolbar') {
+                await posting.getByTestId('message-link-button').click();
+            } else {
+                await page.keyboard.press('ControlOrMeta+k');
+            }
+            await expect(posting.getByTestId('message-link-text')).toHaveValue('List');
+            await expect(posting.getByTestId('message-link-url')).toHaveValue('https://example.com/old');
+            await posting.getByTestId('message-link-url').fill('https://example.com/new');
+            await posting.getByTestId('apply-message-link').click();
+            await expect(editor.locator('a')).toHaveCount(1);
+            await expect(editor.locator('a code')).toHaveText('List');
+            await expect(editor.locator('a')).toHaveAttribute('href', 'https://example.com/new');
+            const updated = await saveEdited(page, composer, posting, original);
+            expect(updated.content).toBe('Read [`List`](https://example.com/new) today');
+            const second = await reopen(page, updated);
+            await expect(second.editor.locator('a code')).toHaveText('List');
+            await expect(second.editor.locator('a')).toHaveAttribute('href', 'https://example.com/new');
+            await second.editor.getByRole('link', { name: 'List', exact: true }).click();
+            await expect(second.posting.getByTestId('message-link-url')).toHaveValue('https://example.com/new');
+            await second.posting.getByTestId('remove-message-link').click();
+            await expect(second.editor.locator('a')).toHaveCount(0);
+            await expect(second.editor.locator('code')).toHaveText('List');
+            const unlinked = await saveEdited(page, composer, second.posting, updated);
+            expect(unlinked.content).toBe('Read `List` today');
+            const third = await reopen(page, unlinked);
+            await expect(third.editor.locator('a')).toHaveCount(0);
+            await expect(third.editor.locator('code')).toHaveText('List');
+            await expectText(third.editor, 'Read List today');
+        });
+    }
+
+    test('link form retains input focus but dismisses on a second toolbar click or a moved mouse and keyboard caret', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('Read guide today');
+        await selectText(editor, 5, 10, 'guide');
+        await page.getByTestId('message-link-button').click();
+        await expect(page.getByTestId('message-link-text')).toHaveValue('guide');
+        await page.getByTestId('message-link-url').fill('https://example.com/unsaved');
+        await expect(page.getByTestId('message-link-url')).toBeFocused();
+        await expect(page.getByTestId('message-link-url')).toBeVisible();
+        await page.getByTestId('message-link-button').click();
+        await expect(page.getByTestId('message-link-url')).toBeHidden();
+        await expect(editor).toBeFocused();
+        await page.getByTestId('message-link-button').click();
+        await expect(page.getByTestId('message-link-url')).toBeVisible();
+        await editor.click({ position: { x: 10, y: 12 } });
+        await expect(page.getByTestId('message-link-url')).toBeHidden();
+        await expect(editor).toBeFocused();
+        await selectText(editor, 5, 10, 'guide');
+        await page.keyboard.press('ControlOrMeta+k');
+        await expect(page.getByTestId('message-link-url')).toBeVisible();
+        await page.keyboard.press('ArrowLeft');
+        await expect(page.getByTestId('message-link-url')).toBeHidden();
+        await expectCaret(editor, 5);
+        await page.keyboard.type('new ');
+        await expectText(editor, 'Read new guide today');
+        await expect(editor.locator('a')).toHaveCount(0);
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('Read new guide today');
+    });
+
     for (const code of [
         { name: 'inline code', markdown: 'Before `literal` after', selector: 'p > code', content: 'Before `lite!ral` after' },
         { name: 'code block', markdown: '```\nliteral\n```', selector: 'pre code', content: '```\nlite!ral\n```' },
