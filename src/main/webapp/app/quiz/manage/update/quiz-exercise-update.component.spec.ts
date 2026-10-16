@@ -362,7 +362,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.cacheValidation();
 
                 if (quizMode !== QuizMode.SYNCHRONIZED) {
-                    comp.addQuizBatch();
+                    comp.quizExercise().quizBatches = [...(comp.quizExercise().quizBatches ?? []), new QuizBatch()];
                 }
 
                 const now = dayjs();
@@ -390,7 +390,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.cacheValidation();
 
                 if (quizMode !== QuizMode.SYNCHRONIZED) {
-                    comp.addQuizBatch();
+                    comp.quizExercise().quizBatches = [...(comp.quizExercise().quizBatches ?? []), new QuizBatch()];
                 }
 
                 const now = dayjs();
@@ -1846,13 +1846,6 @@ describe('QuizExerciseUpdateComponent', () => {
         });
 
         describe('quiz mode', () => {
-            const b1 = new QuizBatch();
-            const b2 = new QuizBatch();
-            const b3 = new QuizBatch();
-            b1.id = 1;
-            b2.id = 2;
-            b3.id = 3;
-
             beforeEach(() => {
                 resetQuizExercise();
                 comp.quizExercise.set(quizExercise);
@@ -1867,30 +1860,6 @@ describe('QuizExerciseUpdateComponent', () => {
                 comp.scheduleQuizStart = false;
                 comp.cacheValidation();
                 expect(quizExercise.quizBatches).toHaveLength(0);
-            });
-
-            it('should add batches', () => {
-                expect(quizExercise.quizBatches).toHaveLength(0);
-                comp.addQuizBatch();
-                expect(quizExercise.quizBatches).toHaveLength(1);
-            });
-
-            it('should add batches when none exist', () => {
-                quizExercise.quizBatches = undefined;
-                comp.addQuizBatch();
-                expect(quizExercise.quizBatches).toHaveLength(1);
-            });
-
-            it('should remove batches', () => {
-                quizExercise.quizBatches = [b1, b2, b3];
-                comp.removeQuizBatch(b2);
-                expect(quizExercise.quizBatches).toEqual([b1, b3]);
-            });
-
-            it('should not remove batches when they dont exist', () => {
-                quizExercise.quizBatches = [b1, b3];
-                comp.removeQuizBatch(b2);
-                expect(quizExercise.quizBatches).toEqual([b1, b3]);
             });
         });
 

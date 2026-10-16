@@ -63,6 +63,7 @@
 @source './app/atlas/manage/import-standardized-competencies';
 @source './app/exercise/feedback';
 @source './app/exercise/result';
+@source './app/exercise/import';
 @source './app/iris/manage/settings';
 @source './app/editor/markdown-editor';
 
@@ -98,6 +99,7 @@
 @source './app/course/overview/setup-passkey-modal';
 @source './app/course/sidebar';
 @source './app/notification';
+@source './app/communication/faq';
 @source './app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component.html';
 @source './app/calendar';
 @source './app/shared-ui/profile-picture';
