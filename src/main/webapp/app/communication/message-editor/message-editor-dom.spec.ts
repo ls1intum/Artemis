@@ -116,6 +116,22 @@ describe('Message editor editing transactions', () => {
         expect(changed).toHaveBeenLastCalledWith('First\nSecond');
     });
 
+    it('keeps a visible insertion point after a trailing paragraph line break without serializing its placeholder', () => {
+        editor.load('First');
+        const paragraph = root.querySelector('p')!;
+        select(paragraph.firstChild!, 5);
+        editor.insertText('\n');
+        expect(paragraph.querySelector('br[data-message-placeholder]')).not.toBeNull();
+        expect(changed).toHaveBeenLastCalledWith('First');
+        editor.insertText('Second');
+        expect(changed).toHaveBeenLastCalledWith('First\nSecond');
+        expect(paragraph.querySelector('[data-message-placeholder]')).toBeNull();
+        editor.undo();
+        expect(changed).toHaveBeenLastCalledWith('First');
+        editor.redo();
+        expect(changed).toHaveBeenLastCalledWith('First\nSecond');
+    });
+
     it('formats a paragraph as a list, quote, or code block', () => {
         editor.load('First');
         select(root.querySelector('p')!.firstChild!, 2);

@@ -53,7 +53,7 @@ serializer.addRule('message-strikethrough', {
 });
 serializer.addRule('message-line-break', {
     filter: 'br',
-    replacement: () => '\n',
+    replacement: (_content, node) => (node.hasAttribute('data-message-placeholder') ? '' : '\n'),
 });
 serializer.addRule('message-code-block', {
     filter: 'pre',
