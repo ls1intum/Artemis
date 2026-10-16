@@ -284,12 +284,13 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
 
-        // Only the competency links still need writing. Saving the exercise again would merge and re-fetch its
-        // entire graph even when no links were selected; the link API persists them independently.
+        // Only the competency links still need writing. Keep their cascade save, but avoid merging and re-fetching
+        // the entire exercise graph when no links were selected (or none survived resolution).
         competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
-        competencyExerciseLinkService.saveAll(savedProgrammingExercise.getCompetencyLinks());
-
         ProgrammingExercise createdProgrammingExercise = savedProgrammingExercise;
+        if (!savedProgrammingExercise.getCompetencyLinks().isEmpty()) {
+            createdProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        }
         createdProgrammingExercise.setTeamAssignmentConfig(storedTeamAssignmentConfig);
         createdProgrammingExercise.setPlagiarismDetectionConfig(storedPlagiarismDetectionConfig);
 
