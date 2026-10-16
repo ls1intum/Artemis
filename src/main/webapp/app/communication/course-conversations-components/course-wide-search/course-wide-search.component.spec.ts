@@ -146,17 +146,26 @@ describe('CourseWideSearchComponent', () => {
         container.scrollTop = 20;
         component.totalNumberOfPosts.set(100);
         const fetchPosts = vi.spyOn(component, 'fetchPosts');
+        const request = vi.spyOn(communicationService, 'getFilteredPosts');
 
         component.fetchNextPage();
+        const callbacks = request.mock.calls.at(-1)?.[3];
+        expect(callbacks).toBeDefined();
+        // A cache/WebSocket emission must neither finish the request nor consume its anchor.
+        component.setPosts([examplePost]);
+        component.handleScrollOnNewMessage();
+        vi.runAllTimers();
+        expect(component.isFetchingPosts()).toBe(true);
+        expect(container.scrollTop).toBe(20);
         component.fetchNextPage();
         expect(fetchPosts).toHaveBeenCalledOnce();
         expect(container.scrollTop).toBe(20);
 
         container.scrollTop = 220; // The reader moves while the response is pending.
+        callbacks!.beforeApply();
         component.setPosts([{ id: 2 } as Post, examplePost]);
         Object.defineProperty(container, 'scrollHeight', { value: 1600, configurable: true });
-        component.isFetchingPosts.set(false);
-        component.handleScrollOnNewMessage();
+        callbacks!.complete(true);
         vi.runAllTimers();
         expect(container.scrollTop).toBe(820);
 
@@ -164,6 +173,13 @@ describe('CourseWideSearchComponent', () => {
         component.handleScrollOnNewMessage();
         vi.runAllTimers();
         expect(container.scrollTop).toBe(0);
+    });
+
+    it('should cancel an old positioning frame before starting a new search', () => {
+        component.handleScrollOnNewMessage();
+        component.onSearch();
+        vi.runAllTimers();
+        expect(component['initialScrollPositioned']).toBe(false);
     });
 
     it('should reset pagination when changing the search or its filters', () => {

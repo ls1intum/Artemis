@@ -66,6 +66,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     private allConversationIds: number[] = [];
     private pendingPageScrollDistance: number | undefined;
     private preserveScrollOnNextPage = false;
+    private postRequestId = 0;
     private initialScrollPositioned = false;
     private scrollFrame: number | undefined;
     page = 1;
@@ -86,6 +87,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     ngOnDestroy() {
+        this.postRequestId++;
         if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
@@ -98,7 +100,6 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     private subscribeToPosts() {
         this.communicationService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.setPosts(posts);
-            this.isFetchingPosts.set(false);
         });
         this.communicationService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts.set(totalNumberOfPosts);
@@ -109,17 +110,11 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     setPosts(posts: Post[]): void {
-        if (this.preserveScrollOnNextPage) {
-            // The list remains scrollable during the request; anchor the reader's position immediately before rendering the response.
-            const element = this.content()?.nativeElement;
-            this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
-            this.preserveScrollOnNextPage = false;
-        }
         this.posts.set(posts.slice().reverse());
     }
 
     handleScrollOnNewMessage = () => {
-        if (this.posts().length === 0 || !this.content()) return;
+        if (this.isFetchingPosts() || this.posts().length === 0 || !this.content()) return;
         if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
         this.scrollFrame = requestAnimationFrame(() => {
             this.scrollFrame = undefined;
@@ -150,8 +145,25 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     public fetchPosts(forceUpdate = false) {
         this.refreshConversationPostContextFilter();
         if (this.currentPostContextFilter) {
-            this.isFetchingPosts.set(true); // will be set to false in subscription
-            this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate);
+            this.isFetchingPosts.set(true);
+            const requestId = ++this.postRequestId;
+            this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, undefined, {
+                beforeApply: () => {
+                    if (requestId !== this.postRequestId || !this.preserveScrollOnNextPage) return;
+                    // Capture only for the requested response, after any reader movement and intervening live updates.
+                    const element = this.content()?.nativeElement;
+                    this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
+                    this.preserveScrollOnNextPage = false;
+                },
+                complete: (applied) => {
+                    if (requestId !== this.postRequestId) return;
+                    this.isFetchingPosts.set(false);
+                    this.preserveScrollOnNextPage = false;
+                    if (applied) {
+                        this.handleScrollOnNewMessage();
+                    }
+                },
+            });
         }
     }
 
@@ -189,6 +201,8 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     onSearch() {
+        if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
+        this.scrollFrame = undefined;
         this.page = 1;
         this.initialScrollPositioned = false;
         this.pendingPageScrollDistance = undefined;

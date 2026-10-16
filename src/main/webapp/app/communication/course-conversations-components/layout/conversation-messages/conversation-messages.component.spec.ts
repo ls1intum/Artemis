@@ -341,11 +341,14 @@ examples.forEach((activeConversation) => {
                     setScrollGeometry(600);
                     const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
 
+                    const request = vi.spyOn(communicationService, 'getFilteredPosts');
                     component.fetchPosts();
+                    const callbacks = request.mock.calls.at(-1)![3]!;
                     hideContainer();
+                    callbacks.beforeApply();
                     component.setPosts();
-                    component.handleScrollOnNewMessage();
-
+                    expect(scrollToBottomSpy).not.toHaveBeenCalled();
+                    callbacks.complete(true);
                     expect(scrollToBottomSpy).toHaveBeenCalledOnce();
                 });
             });
@@ -413,11 +416,15 @@ examples.forEach((activeConversation) => {
                     container.scrollTop = 600;
                     component.focusOnPostId = unloadedPostId;
                     component.totalNumberOfPosts.set(100);
+                    const request = vi.spyOn(communicationService, 'getFilteredPosts');
                     component.fetchNextPage();
+                    const callbacks = request.mock.calls.at(-1)![3]!;
+                    callbacks.beforeApply();
                     component.setPosts();
 
                     // the next page arrives and contains the post
                     messagesSignal.set([createPostingThread(unloadedPostId, 500), ...messagesSignal()]);
+                    callbacks.complete(true);
                     fixture.detectChanges();
                     vi.runAllTimers();
 
@@ -466,16 +473,23 @@ examples.forEach((activeConversation) => {
             component.canStartSaving = true;
             component.totalNumberOfPosts.set(100);
             const fetchPosts = vi.spyOn(component, 'fetchPosts');
+            const request = vi.spyOn(communicationService, 'getFilteredPosts');
             component.fetchNextPage();
+            const callbacks = request.mock.calls.at(-1)?.[3];
+            expect(callbacks).toBeDefined();
+            component.setPosts(); // Intermediate WebSocket/cache update, not the requested page.
+            component.handleScrollOnNewMessage();
+            vi.runAllTimers();
+            expect(component.isFetchingPosts()).toBe(true);
             component.fetchNextPage();
             expect(fetchPosts).toHaveBeenCalledOnce();
             expect(container.scrollTop).toBe(30);
 
             container.scrollTop = 230; // The reader moves while the response is pending.
+            callbacks!.beforeApply();
             component.setPosts();
-            component.isFetchingPosts.set(false);
             Object.defineProperty(container, 'scrollHeight', { value: 1500, configurable: true });
-            component.handleScrollOnNewMessage();
+            callbacks!.complete(true);
             vi.runAllTimers();
             expect(container.scrollTop).toBe(730);
         });

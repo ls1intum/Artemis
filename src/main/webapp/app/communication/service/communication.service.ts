@@ -36,7 +36,7 @@ import { User } from 'app/account/user/user.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
 import dayjs from 'dayjs/esm';
-import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, take, tap, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, finalize, forkJoin, map, of, switchMap, take, tap, throwError } from 'rxjs';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { onError } from 'app/foundation/util/global.utils';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -198,8 +198,14 @@ export class CommunicationService implements OnDestroy {
      * @param postContextFilter criteria to filter course posts with (lecture, exercise, course-wide context)
      * @param forceUpdate if true, forces a re-fetch even if filter property did not change
      * @param conversation active conversation if available
+     * @param requestCallbacks hooks for this request only; shared WebSocket emissions do not invoke them
      */
-    getFilteredPosts(postContextFilter: PostContextFilter, forceUpdate = true, conversation: ConversationDTO | undefined = undefined): void {
+    getFilteredPosts(
+        postContextFilter: PostContextFilter,
+        forceUpdate = true,
+        conversation: ConversationDTO | undefined = undefined,
+        requestCallbacks?: { beforeApply: () => void; complete: (applied: boolean) => void },
+    ): void {
         // check if the post context did change
         if (
             forceUpdate ||
@@ -211,24 +217,32 @@ export class CommunicationService implements OnDestroy {
         ) {
             this.currentPostContextFilter = postContextFilter;
             this.currentConversation = conversation;
-            this.postService.getPosts(this.courseId, postContextFilter).subscribe((res) => {
-                if (!forceUpdate && (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType)) {
-                    // if infinite scroll enabled, add fetched posts to the end of cachedPosts
-                    this.cachedPosts.push(...res.body!);
-                } else {
-                    // if the context changed, we need to fetch posts and dismiss cached posts
-                    this.cachedPosts = res.body!;
-                }
-                this.cachedTotalNumberOfPosts = Number(res.headers.get('X-Total-Count') ?? '0');
-                this.posts$.next(this.cachedPosts);
-                this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
-                this.createSubscriptionFromPostContextFilter();
-            });
+            let applied = false;
+            this.postService
+                .getPosts(this.courseId, postContextFilter)
+                .pipe(finalize(() => requestCallbacks?.complete(applied)))
+                .subscribe((res) => {
+                    requestCallbacks?.beforeApply();
+                    if (!forceUpdate && (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType)) {
+                        // if infinite scroll enabled, add fetched posts to the end of cachedPosts
+                        this.cachedPosts.push(...res.body!);
+                    } else {
+                        // if the context changed, we need to fetch posts and dismiss cached posts
+                        this.cachedPosts = res.body!;
+                    }
+                    this.cachedTotalNumberOfPosts = Number(res.headers.get('X-Total-Count') ?? '0');
+                    this.posts$.next(this.cachedPosts);
+                    this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+                    this.createSubscriptionFromPostContextFilter();
+                    applied = true;
+                });
         } else {
+            requestCallbacks?.beforeApply();
             // if we do not require force update, e.g. because only the post title or content changed,
             // we can emit the previously cached posts
             this.posts$.next(this.cachedPosts);
             this.totalNumberOfPosts$.next(this.cachedTotalNumberOfPosts);
+            requestCallbacks?.complete(true);
         }
     }
 

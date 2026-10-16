@@ -136,6 +136,42 @@ describe('CommunicationService', () => {
         vi.restoreAllMocks();
     });
 
+    it('finishes only the requested page and calls its anchor hook before publishing the response', () => {
+        const response = new Subject<HttpResponse<Post[]>>();
+        vi.spyOn(postService, 'getPosts').mockReturnValue(response);
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        const events: string[] = [];
+        const subscription = communicationService.posts.subscribe(() => events.push('posts'));
+        const callbacks = { beforeApply: vi.fn(() => events.push('anchor')), complete: vi.fn((applied: boolean) => events.push('complete:' + applied)) };
+        communicationService.getFilteredPosts({ courseId: course.id, page: 1 }, true, undefined, callbacks);
+        communicationService['posts$'].next([post]); // A live update is independent of the outstanding request.
+        expect(callbacks.beforeApply).not.toHaveBeenCalled();
+        expect(callbacks.complete).not.toHaveBeenCalled();
+        events.length = 0;
+        response.next(new HttpResponse({ body: [post] }));
+        expect(events).toEqual(['anchor', 'posts']);
+        response.complete();
+        expect(events).toEqual(['anchor', 'posts', 'complete:true']);
+        subscription.unsubscribe();
+    });
+
+    it('finishes cached requests immediately and finalizes a request without a response', () => {
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        const response = new Subject<HttpResponse<Post[]>>();
+        const request = vi.spyOn(postService, 'getPosts').mockReturnValue(response);
+        const callbacks = { beforeApply: vi.fn(), complete: vi.fn() };
+        const filter = { courseId: course.id, page: 0 };
+        communicationService.getFilteredPosts(filter, true, undefined, callbacks);
+        response.complete();
+        expect(callbacks.beforeApply).not.toHaveBeenCalled();
+        expect(callbacks.complete).toHaveBeenCalledExactlyOnceWith(false);
+        callbacks.complete.mockClear();
+        communicationService.getFilteredPosts(filter, false, undefined, callbacks);
+        expect(request).toHaveBeenCalledOnce();
+        expect(callbacks.beforeApply).toHaveBeenCalledOnce();
+        expect(callbacks.complete).toHaveBeenCalledExactlyOnceWith(true);
+    });
+
     describe('Invoke post service methods', () => {
         it('should create a post', () => {
             const postServiceSpy = vi.spyOn(postService, 'create');

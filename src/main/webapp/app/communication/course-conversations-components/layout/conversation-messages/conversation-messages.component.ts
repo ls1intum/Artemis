@@ -112,6 +112,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private bottomScrollFrame: number | undefined;
     private pendingPageScrollDistance: number | undefined;
     private preserveScrollOnNextPage = false;
+    private postRequestId = 0;
     private restoringPageScroll = false;
     private pageScrollFrame: number | undefined;
 
@@ -203,7 +204,14 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 const hasPendingNavigation = this.focusOnPostId !== undefined;
                 const keepsFollowingNewMessages = this.canStartSaving && this.wasScrolledToBottom && !hasPendingNavigation;
                 const keepsSearchPosition = !!this.searchText && this.canStartSaving && !hasPendingNavigation;
-                if (!this.createdNewMessage && this.posts().length > 0 && !keepsFollowingNewMessages && !keepsSearchPosition && !this.restoringPageScroll) {
+                if (
+                    !this.isFetchingPosts() &&
+                    !this.createdNewMessage &&
+                    this.posts().length > 0 &&
+                    !keepsFollowingNewMessages &&
+                    !keepsSearchPosition &&
+                    !this.restoringPageScroll
+                ) {
                     this.scrollToStoredId();
                 }
             });
@@ -326,6 +334,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     ngOnDestroy(): void {
+        this.postRequestId++;
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         this.scrollSubject.complete();
@@ -386,7 +395,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.communicationService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.allPosts.set(posts);
             this.setPosts();
-            this.isFetchingPosts.set(false);
             this.computeLastReadState();
         });
         this.communicationService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
@@ -486,12 +494,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * Applies pinned message filters, loads forwarded messages and their sources, and groups posts for rendering.
      */
     setPosts(): void {
-        if (this.preserveScrollOnNextPage) {
-            // Capture after any reader movement during loading, while the DOM still contains the previous page.
-            const element = this.content()?.nativeElement;
-            this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
-            this.preserveScrollOnNextPage = false;
-        }
         // Preserve the scroll state captured before the request until the new messages have been rendered.
         if (!this.isFetchingPosts()) {
             this.captureScrolledToBottom();
@@ -687,8 +689,25 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 // Capture the position before the response changes the message list.
                 this.captureScrolledToBottom();
             }
-            this.isFetchingPosts.set(true); // will be set to false in subscription
-            this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this._activeConversation());
+            this.isFetchingPosts.set(true);
+            const requestId = ++this.postRequestId;
+            this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, this._activeConversation(), {
+                beforeApply: () => {
+                    if (requestId !== this.postRequestId || !this.preserveScrollOnNextPage) return;
+                    // Capture only for the requested response, after any reader movement and intervening live updates.
+                    const element = this.content()?.nativeElement;
+                    this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
+                    this.preserveScrollOnNextPage = false;
+                },
+                complete: (applied) => {
+                    if (requestId !== this.postRequestId) return;
+                    this.isFetchingPosts.set(false);
+                    this.preserveScrollOnNextPage = false;
+                    if (applied) {
+                        this.handleScrollOnNewMessage();
+                    }
+                },
+            });
         }
     }
 
@@ -738,6 +757,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     handleScrollOnNewMessage = () => {
+        if (this.isFetchingPosts()) return;
         const el = this.content()?.nativeElement;
         if (!el) {
             return;
