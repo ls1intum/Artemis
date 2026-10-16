@@ -1079,6 +1079,23 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     }
 
     /**
+     * Attaches the newly inserted base participations and test repository to a new exercise without merging and
+     * reloading its entire graph. The project key and auxiliary URLs are already stored by the initial insert.
+     *
+     * @param exercise the newly stored exercise with its initialized repository metadata
+     */
+    @Modifying
+    @Transactional // ok because the update attaches the base repositories atomically
+    @Query(value = """
+            UPDATE exercise
+            SET test_repository_url = :#{#exercise.testRepositoryUri},
+                template_participation_id = :#{#exercise.templateParticipation.id},
+                solution_participation_id = :#{#exercise.solutionParticipation.id}
+            WHERE id = :#{#exercise.id} AND discriminator = 'P'
+            """, nativeQuery = true)
+    void updateRepositoryMetadataForCreation(@Param("exercise") ProgrammingExercise exercise);
+
+    /**
      * Saves the given programming exercise to the database.
      * <p>
      * When saving a programming exercise Hibernates returns an exercise with references to proxy objects.
