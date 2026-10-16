@@ -155,6 +155,16 @@ describe('Message editor editing transactions', () => {
         expect(editor.resolveEntitySelection(document.createRange())).toBeUndefined();
     });
 
+    it('maps an upload caret across text undone before it without splitting the following word', () => {
+        editor.load('Before after');
+        select(root.querySelector('p')!.firstChild!, 7);
+        editor.insertText('🎉');
+        const bookmark = editor.captureEntitySelection()!;
+        editor.undo();
+        editor.insertMarkdown('[faq]Question(/courses/1/faq?faqId=1)[/faq] ', editor.resolveEntitySelection(bookmark));
+        expect(changed).toHaveBeenLastCalledWith('Before [faq]Question(/courses/1/faq?faqId=1)[/faq] after');
+    });
+
     it('edits a link target without exposing Markdown, and can unlink while preserving its label', () => {
         editor.load('Read the guide');
         select(root.querySelector('p')!.firstChild!, 9, 14);

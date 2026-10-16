@@ -1,5 +1,6 @@
 import { editorCodeText, editorToMessage, isMessageLinkSafe, messageToEditorHtml } from './message-editor-conversion';
 import { formatMessageSelection, messageSelectionOffset, restoreMessageSelection } from './message-editor-formatting';
+import { DiffMatchPatch } from 'diff-match-patch-typescript';
 
 interface SelectionPoint {
     path: number[];
@@ -24,7 +25,8 @@ export class MessageEditorDom {
     private historyIndex = -1;
     private savedRange?: Range;
     private revision = 0;
-    private readonly entitySelections = new WeakMap<Range, { revision: number; start: number; end: number }>();
+    private readonly entitySelections = new WeakMap<Range, { revision: number; start: number; end: number; text: string }>();
+    private readonly diff = new DiffMatchPatch();
 
     constructor(
         readonly element: HTMLElement,
@@ -58,6 +60,7 @@ export class MessageEditorDom {
             revision: this.revision,
             start: messageSelectionOffset(this.element, range.startContainer, range.startOffset),
             end: messageSelectionOffset(this.element, range.endContainer, range.endOffset),
+            text: this.element.textContent ?? '',
         });
         return captured;
     }
@@ -69,8 +72,8 @@ export class MessageEditorDom {
             return undefined;
         }
         if (bookmark.revision !== this.revision) {
-            const length = this.element.textContent?.length ?? 0;
-            range = restoreMessageSelection(this.element, Math.min(bookmark.start, length), Math.min(bookmark.end, length));
+            const changes = this.diff.diff_main(bookmark.text, this.element.textContent ?? '');
+            range = restoreMessageSelection(this.element, this.diff.diff_xIndex(changes, bookmark.start), this.diff.diff_xIndex(changes, bookmark.end));
             const collapsed = range.collapsed;
             const startItem = this.parentElement(range.startContainer)?.closest('[data-message-reference]');
             const endItem = this.parentElement(range.endContainer)?.closest('[data-message-reference]');
