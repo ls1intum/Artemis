@@ -39,6 +39,9 @@ Generated-code containers use network `none`, a read-only root filesystem, dropp
 capabilities, `no-new-privileges`, and bounded CPU, memory, processes and writable
 scratch mounts. They never receive the Docker socket or provider credentials.
 Restrict supervisor egress to approved provider, model, registry and telemetry endpoints.
+The worker does not load the core Langfuse exporter or custom Sentry configuration.
+Configure approved worker telemetry explicitly. The existing Sentry logging appender
+can still send errors when `sentry.dsn` is set; approve that destination as worker egress.
 Block database, repository/NFS, management and cloud-metadata access.
 
 ## Distributed-data access

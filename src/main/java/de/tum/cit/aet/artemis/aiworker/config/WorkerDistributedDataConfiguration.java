@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistri
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
 
-/** Loads only the shared distributed-data client and its required support on a worker-only node. */
+/** Binds shared client properties on worker-only nodes and reuses the existing provider configuration. */
 @Configuration(proxyBeanMethods = false)
 @Lazy
 @Profile(PROFILE_AIWORKER + " & !" + PROFILE_CORE)

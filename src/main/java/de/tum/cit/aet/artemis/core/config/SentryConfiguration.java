@@ -30,7 +30,7 @@ import io.sentry.protocol.SentryTransaction;
 
 @Configuration
 @Lazy
-@Profile({ ArtemisConstants.SPRING_PROFILE_PRODUCTION })
+@Profile(ArtemisConstants.SPRING_PROFILE_PRODUCTION + " & !" + Constants.PROFILE_AIWORKER)
 public class SentryConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);

@@ -5,6 +5,7 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -50,8 +51,11 @@ import de.tum.cit.aet.artemis.aiworker.service.WorkerSupervisorService;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerCommandListener;
 import de.tum.cit.aet.artemis.aiworker.service.messaging.WorkerEventPublisher;
 import de.tum.cit.aet.artemis.aiworker.service.sandbox.DockerSandboxService;
+import de.tum.cit.aet.artemis.core.config.LlmOnlyExporterConfig;
+import de.tum.cit.aet.artemis.core.config.SentryConfiguration;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.hyperion.service.worker.HyperionWorkloadService;
+import io.opentelemetry.sdk.trace.export.SpanExporter;
 
 /** Checks the worker profile boundary with external services replaced by test beans. */
 class WorkerContextTest {
@@ -80,12 +84,43 @@ class WorkerContextTest {
     @ContextConfiguration(classes = { ArtemisApp.class, ExternalServices.class }, initializers = ConfigDataApplicationContextInitializer.class)
     @TestPropertySource(properties = { "artemis.aiworker.id=context-test", "artemis.aiworker.image=sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             "artemis.distributed-data.provider=local", "management.tracing.export.otlp.enabled=false", "management.logging.export.otlp.enabled=false",
-            "management.otlp.metrics.export.enabled=false" })
+            "management.otlp.metrics.export.enabled=false", "management.langfuse.enabled=true",
+            "management.opentelemetry.tracing.export.otlp.endpoint=https://example.invalid/v1/traces",
+            "management.opentelemetry.tracing.export.otlp.headers.Authorization=Basic worker-isolation-test", "info.sentry.dsn=https://test@example.invalid/1" })
     @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
     abstract static class WorkerChecks {
 
         @Autowired
         ConfigurableApplicationContext applicationContext;
+
+        void assertWorkerBoundary() {
+            var context = AssertableApplicationContext.get(() -> applicationContext);
+            assertThat(context).doesNotHaveBean(LlmOnlyExporterConfig.class).doesNotHaveBean(SentryConfiguration.class).doesNotHaveBean(SpanExporter.class)
+                    .doesNotHaveBean("otlpLlmTraceExporter").doesNotHaveBean(DispatcherServlet.class).doesNotHaveBean(AiWorkerApi.class).doesNotHaveBean(WorkerClientService.class)
+                    .doesNotHaveBean(WorkerRegistryService.class).doesNotHaveBean(ServletWebServerFactory.class).doesNotHaveBean(javax.sql.DataSource.class)
+                    .doesNotHaveBean(EntityManagerFactory.class);
+            assertThat(context.getBeanNamesForAnnotation(Controller.class)).isEmpty();
+            assertThat(context.getBeanNamesForAnnotation(RestController.class)).isEmpty();
+            List<String> allowedInfrastructure = List.of("de.tum.cit.aet.artemis.aiworker.", "de.tum.cit.aet.artemis.config.", "de.tum.cit.aet.artemis.core.config.",
+                    "de.tum.cit.aet.artemis.core.exception.", "de.tum.cit.aet.artemis.core.service.distributed.", "de.tum.cit.aet.artemis.core.service.connectors.",
+                    "de.tum.cit.aet.artemis.core.security.filter.", "de.tum.cit.aet.artemis.core.util.", "de.tum.cit.aet.artemis.shared.config.");
+            List<String> unexpectedBeans = new ArrayList<>();
+            for (String name : context.getBeanDefinitionNames()) {
+                Class<?> type = context.getType(name);
+                if (type == null) {
+                    continue;
+                }
+                String typeName = type.getName();
+                assertThat(typeName).doesNotStartWith("org.hibernate.");
+                boolean selectedWorkload = "hyperion-generation".equals(context.getEnvironment().getProperty("artemis.aiworker.workload"))
+                        && typeName.startsWith("de.tum.cit.aet.artemis.hyperion.service.worker.");
+                if (typeName.startsWith("de.tum.cit.aet.artemis.") && !ArtemisApp.class.isAssignableFrom(type) && !selectedWorkload
+                        && !typeName.startsWith(WorkerContextTest.class.getName() + "$") && allowedInfrastructure.stream().noneMatch(typeName::startsWith)) {
+                    unexpectedBeans.add(name + "=" + typeName);
+                }
+            }
+            assertThat(unexpectedBeans).isEmpty();
+        }
     }
 
     @Import(HyperionModel.class)
@@ -108,16 +143,7 @@ class WorkerContextTest {
             assertThat(context.getBeanNamesForAnnotation(RestController.class)).isEmpty();
             assertThat(context).doesNotHaveBean(DispatcherServlet.class).doesNotHaveBean(AiWorkerApi.class).doesNotHaveBean(WorkerClientService.class)
                     .doesNotHaveBean(WorkerRegistryService.class).doesNotHaveBean(ServletWebServerFactory.class);
-            for (String name : context.getBeanDefinitionNames()) {
-                Class<?> type = context.getType(name);
-                if (type != null) {
-                    for (String forbidden : List.of("de.tum.cit.aet.artemis.buildagent.", "de.tum.cit.aet.artemis.localci.", "de.tum.cit.aet.artemis.localvc.",
-                            "de.tum.cit.aet.artemis.core.web.", "de.tum.cit.aet.artemis.hyperion.web.", "de.tum.cit.aet.artemis.programming.", "de.tum.cit.aet.artemis.exercise.",
-                            "de.tum.cit.aet.artemis.exam.", "org.hibernate.")) {
-                        assertThat(type.getName()).doesNotStartWith(forbidden);
-                    }
-                }
-            }
+            assertWorkerBoundary();
             assertThat(context).doesNotHaveBean(javax.sql.DataSource.class).doesNotHaveBean(EntityManagerFactory.class);
         }
     }
@@ -135,6 +161,7 @@ class WorkerContextTest {
         @Test
         void genericWorkerDoesNotLoadHyperionOrModelsWithInheritedServerModelSettings() {
             var context = AssertableApplicationContext.get(() -> applicationContext);
+            assertWorkerBoundary();
             assertThat(context).hasNotFailed().hasSingleBean(WorkerSupervisorService.class).hasSingleBean(WorkloadApi.class);
             assertThat(context.getEnvironment().getProperty("spring.ai.model.chat")).isEqualTo("openai");
             assertThat(context.getBean(WorkloadApi.class).capability()).isEqualTo(new WorkloadCapabilityDTO("document-check", 1, "plain-text"));
