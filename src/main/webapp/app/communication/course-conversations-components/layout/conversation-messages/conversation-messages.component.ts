@@ -107,6 +107,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     // and the effects created in the constructor run before view queries resolve (see the note above them).
     // A required query throws NG0951 in both cases, so this must stay optional and every read guarded.
     readonly content = viewChild<ElementRef>('container');
+    readonly messageListContent = viewChild<ElementRef>('messageListContent');
+    private resizeObserver?: ResizeObserver;
+    private bottomScrollFrame: number | undefined;
+    private pendingPageScrollDistance: number | undefined;
+    private restoringPageScroll = false;
+    private pageScrollFrame: number | undefined;
 
     readonly course = input<Course>();
     showOnlyPinned = input<boolean>(false);
@@ -134,7 +140,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     readonly allPosts = signal<Post[]>([]);
     unreadPosts: Post[] = [];
     readonly groupedPosts = signal<PostGroup[]>([]);
-    totalNumberOfPosts = 0;
+    readonly totalNumberOfPosts = signal(0);
     page = 1;
     readonly isFetchingPosts = signal(true);
     currentUser!: User; // set in ngOnInit() from the resolved account identity
@@ -195,7 +201,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 // next page that arrives to reach its target, so it is not held back by the bottom-following guard.
                 const hasPendingNavigation = this.focusOnPostId !== undefined;
                 const keepsFollowingNewMessages = this.canStartSaving && this.wasScrolledToBottom && !hasPendingNavigation;
-                if (!this.createdNewMessage && this.posts().length > 0 && !keepsFollowingNewMessages) {
+                const keepsSearchPosition = !!this.searchText && this.canStartSaving && !hasPendingNavigation;
+                if (!this.createdNewMessage && this.posts().length > 0 && !keepsFollowingNewMessages && !keepsSearchPosition && !this.restoringPageScroll) {
                     this.scrollToStoredId();
                 }
             });
@@ -279,7 +286,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             });
     }
 
-    private scrollListener = () => this.findElementsAtScrollPosition();
+    private scrollListener = () => {
+        if (!this.isFetchingPosts() && !this.restoringPageScroll) this.captureScrolledToBottom();
+        this.findElementsAtScrollPosition();
+    };
     private mutationObserver: MutationObserver | undefined;
 
     ngAfterViewInit() {
@@ -289,6 +299,21 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
         el.addEventListener('scroll', this.scrollListener);
+        this.resizeObserver = new ResizeObserver(() => {
+            if (
+                this.wasScrolledToBottom &&
+                this.canStartSaving &&
+                !this.isFetchingPosts() &&
+                this.pendingPageScrollDistance === undefined &&
+                !this.restoringPageScroll &&
+                !this.focusOnPostId
+            ) {
+                this.scrollToBottomOfMessages();
+            }
+        });
+        this.resizeObserver.observe(el);
+        const messageList = this.messageListContent()?.nativeElement;
+        if (messageList) this.resizeObserver.observe(messageList);
 
         this.mutationObserver = new MutationObserver(() => {
             this.findElementsAtScrollPosition();
@@ -305,6 +330,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.scrollSubject.complete();
         this.content()?.nativeElement.removeEventListener('scroll', this.scrollListener);
         this.mutationObserver?.disconnect();
+        this.resizeObserver?.disconnect();
+        if (this.bottomScrollFrame !== undefined) window.cancelAnimationFrame(this.bottomScrollFrame);
+        if (this.pageScrollFrame !== undefined) window.cancelAnimationFrame(this.pageScrollFrame);
     }
 
     private scrollToStoredId() {
@@ -315,8 +343,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             const activeConversationId = this._activeConversation()?.id;
             savedScrollId = activeConversationId ? this.sessionStorageService.retrieve<number>(this.sessionStorageKey + activeConversationId) : undefined;
         }
-        if (savedScrollId) {
+        if (savedScrollId && (!this.searchText || this.focusOnPostId !== undefined)) {
             requestAnimationFrame(() => this.goToLastSelectedElement(savedScrollId, this.isOpenThreadOnFocus));
+        } else {
+            void this.goToLastSelectedElement(0, false);
         }
     }
 
@@ -331,6 +361,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
 
         if (this.course() && activeConversation) {
+            if (this.bottomScrollFrame !== undefined) window.cancelAnimationFrame(this.bottomScrollFrame);
+            this.bottomScrollFrame = undefined;
+            this.allPosts.set([]);
+            this.posts.set([]);
+            this.groupedPosts.set([]);
+            this.computeLastReadState();
             this.canStartSaving = false;
             this.onSearch();
             // the scroll state of the previously opened conversation does not apply to the new one
@@ -353,7 +389,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.computeLastReadState();
         });
         this.communicationService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
-            this.totalNumberOfPosts = totalNumberOfPosts;
+            this.totalNumberOfPosts.set(totalNumberOfPosts);
         });
     }
 
@@ -449,8 +485,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * Applies pinned message filters, loads forwarded messages and their sources, and groups posts for rendering.
      */
     setPosts(): void {
-        // While posts are being fetched, the list is hidden and reports no scroll dimensions, so the state captured
-        // by fetchPosts() before hiding it is kept.
+        // Preserve the scroll state captured before the request until the new messages have been rendered.
         if (!this.isFetchingPosts()) {
             this.captureScrolledToBottom();
         }
@@ -627,26 +662,23 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     fetchNextPage() {
-        const morePostsAvailable = this.posts().length < this.totalNumberOfPosts;
-        let addBuffer = 0;
-        if (morePostsAvailable) {
-            this.page += 1;
-            this.fetchPosts();
-            addBuffer = 50;
-        } else if (!this.canStartSaving) {
+        if (this.isFetchingPosts()) return;
+        if (this.posts().length >= this.totalNumberOfPosts()) {
             this.canStartSaving = true;
+            return;
         }
-        const el = this.content()?.nativeElement;
-        if (el) {
-            el.scrollTop = el.scrollTop + addBuffer;
-        }
+        const element = this.content()?.nativeElement;
+        // Navigation/restoration must keep looking for its target as pages arrive; only reader-driven pagination keeps a viewport anchor.
+        this.pendingPageScrollDistance = this.canStartSaving && this.focusOnPostId === undefined && element ? element.scrollHeight - element.scrollTop : undefined;
+        this.page += 1;
+        this.fetchPosts();
     }
 
     public fetchPosts(forceUpdate = false) {
         this.refreshConversationPostContextFilter();
         if (this.currentPostContextFilter) {
             if (!this.isFetchingPosts()) {
-                // the list is hidden while fetching, so its scroll state has to be captured while it is still visible
+                // Capture the position before the response changes the message list.
                 this.captureScrolledToBottom();
             }
             this.isFetchingPosts.set(true); // will be set to false in subscription
@@ -655,7 +687,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     onSearch(): void {
+        if (this.pageScrollFrame !== undefined) window.cancelAnimationFrame(this.pageScrollFrame);
+        this.pageScrollFrame = undefined;
+        this.restoringPageScroll = false;
         this.page = 1;
+        this.canStartSaving = false;
+        this.pendingPageScrollDistance = undefined;
         this.fetchPosts(true);
     }
 
@@ -698,6 +735,18 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (!el) {
             return;
         }
+        if (this.pendingPageScrollDistance !== undefined) {
+            const distance = this.pendingPageScrollDistance;
+            this.pendingPageScrollDistance = undefined;
+            this.restoringPageScroll = true;
+            this.pageScrollFrame = requestAnimationFrame(() => {
+                this.pageScrollFrame = undefined;
+                const element = this.content()?.nativeElement;
+                if (element) element.scrollTop = element.scrollHeight - distance;
+                this.restoringPageScroll = false;
+            });
+            return;
+        }
         // Before the initial position is restored, a list at the very top of the first page is positioned at the bottom.
         // Afterwards, a user who scrolled up to the oldest messages must stay in place.
         const isInitialPositioning = !this.canStartSaving && this.posts().length > 0 && el.scrollTop === 0 && this.page === 1;
@@ -707,11 +756,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     };
 
     scrollToBottomOfMessages() {
-        // Use setTimeout to ensure the scroll happens after the new message is rendered
-        requestAnimationFrame(() => {
+        if (this.bottomScrollFrame !== undefined) window.cancelAnimationFrame(this.bottomScrollFrame);
+        this.bottomScrollFrame = requestAnimationFrame(() => {
+            this.bottomScrollFrame = undefined;
             const el = this.content()?.nativeElement;
             if (el) {
                 el.scrollTop = el.scrollHeight;
+                this.wasScrolledToBottom = true;
             }
         });
     }
@@ -785,8 +836,14 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             }
         }
         this.elementsAtScrollPosition = visibleMessages;
-        if (this.elementsAtScrollPosition && this.elementsAtScrollPosition.length > 0 && this.canStartSaving) {
-            this.saveScrollPosition(this.elementsAtScrollPosition[0].post().id!);
+        if (this.canStartSaving) {
+            const { scrollHeight, scrollTop, clientHeight } = containerEl;
+            if (scrollHeight - scrollTop - clientHeight <= SCROLLED_TO_BOTTOM_TOLERANCE_PX) {
+                // Zero means "follow the newest messages" when reopening, independently of the composer/viewport height.
+                this.saveScrollPosition(0);
+            } else if (visibleMessages.length > 0) {
+                this.saveScrollPosition(visibleMessages[0].post().id!);
+            }
         }
         this.setFirstUnreadPostId();
         this.atNewPostPosition.set(this.isAnyUnreadPostVisible());

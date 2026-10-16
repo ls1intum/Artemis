@@ -45,8 +45,6 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     course?: Course;
     currentPostContextFilter?: PostContextFilter;
     readonly isAtLeastTutor = signal(false);
-    // as set for the css class '.posting-infinite-scroll-container'
-    messagesContainerHeight = 700;
 
     readonly faPlus = faPlus;
     readonly faFilter = faFilter;
@@ -63,10 +61,12 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     private ngUnsubscribe = new Subject<void>();
     readonly isFetchingPosts = signal(true);
-    totalNumberOfPosts = 0;
+    readonly totalNumberOfPosts = signal(0);
     readonly posts = signal<Post[]>([]);
     private allConversationIds: number[] = [];
-    previousScrollDistanceFromTop = 0;
+    private pendingPageScrollDistance: number | undefined;
+    private initialScrollPositioned = false;
+    private scrollFrame: number | undefined;
     page = 1;
 
     formGroup!: FormGroup; // set in resetFormGroup() from ngOnInit()
@@ -85,6 +85,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     ngOnDestroy() {
+        if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
@@ -99,7 +100,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             this.isFetchingPosts.set(false);
         });
         this.communicationService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
-            this.totalNumberOfPosts = totalNumberOfPosts;
+            this.totalNumberOfPosts.set(totalNumberOfPosts);
         });
         this.courseConversationsService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
             this.allConversationIds = conversations.map((conversation) => conversation.id!);
@@ -107,19 +108,24 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     setPosts(posts: Post[]): void {
-        if (this.content()) {
-            this.previousScrollDistanceFromTop = this.content()!.nativeElement.scrollHeight - this.content()!.nativeElement.scrollTop;
-        }
         this.posts.set(posts.slice().reverse());
     }
 
     handleScrollOnNewMessage = () => {
-        if (
-            (this.posts().length > 0 && this.content() && this.content()!.nativeElement.scrollTop === 0 && this.page === 1) ||
-            this.previousScrollDistanceFromTop === this.messagesContainerHeight
-        ) {
-            this.scrollToBottomOfMessages();
-        }
+        if (this.posts().length === 0 || !this.content()) return;
+        if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
+        this.scrollFrame = requestAnimationFrame(() => {
+            this.scrollFrame = undefined;
+            const element = this.content()?.nativeElement;
+            if (!element) return;
+            if (this.pendingPageScrollDistance !== undefined) {
+                element.scrollTop = element.scrollHeight - this.pendingPageScrollDistance;
+                this.pendingPageScrollDistance = undefined;
+            } else if (!this.initialScrollPositioned) {
+                this.scrollToBottomOfMessages();
+            }
+            this.initialScrollPositioned = true;
+        });
     };
 
     scrollToBottomOfMessages() {
@@ -128,13 +134,11 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     fetchNextPage() {
-        const morePostsAvailable = this.posts().length < this.totalNumberOfPosts;
-        if (morePostsAvailable) {
-            this.page += 1;
-            this.fetchPosts();
-        }
-        if (!this.content()) return;
-        this.content()!.nativeElement.scrollTop = this.content()!.nativeElement.scrollTop + 50;
+        if (this.isFetchingPosts() || this.posts().length >= this.totalNumberOfPosts()) return;
+        const element = this.content()?.nativeElement;
+        this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
+        this.page += 1;
+        this.fetchPosts();
     }
 
     public fetchPosts(forceUpdate = false) {
@@ -179,6 +183,9 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     onSearch() {
+        this.page = 1;
+        this.initialScrollPositioned = false;
+        this.pendingPageScrollDistance = undefined;
         this.fetchPosts(true);
     }
 
@@ -227,7 +234,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
         searchConfig.filterToUnverifiedIris = this.isAtLeastTutor() && this.formGroup.get('filterToUnverifiedIris')?.value;
         searchConfig.sortingOrder = this.sortingOrder();
-        this.fetchPosts(true);
+        this.onSearch();
     }
 
     protected onTriggerNavigateToPost(post: Posting) {

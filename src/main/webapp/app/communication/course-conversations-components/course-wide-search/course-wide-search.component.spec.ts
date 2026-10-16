@@ -119,11 +119,61 @@ describe('CourseWideSearchComponent', () => {
         component.course = course;
         fixture.componentRef.setInput('courseWideSearchConfig', courseWideSearchConfig);
         fixture.changeDetectorRef.detectChanges();
+        component.isFetchingPosts.set(false);
     });
 
     afterEach(() => {
         vi.useRealTimers();
         vi.clearAllMocks();
+    });
+
+    it('should leave the oldest search result reachable when all pages are loaded', () => {
+        const container = component.content()!.nativeElement;
+        container.scrollTop = 0;
+        const fetchPosts = vi.spyOn(component, 'fetchPosts');
+        component.totalNumberOfPosts.set(component.posts().length);
+
+        component.fetchNextPage();
+
+        expect(container.scrollTop).toBe(0);
+        expect(fetchPosts).not.toHaveBeenCalled();
+    });
+
+    it('should preserve the visible results when an older page arrives and ignore duplicate loads', () => {
+        vi.runAllTimers();
+        const container = component.content()!.nativeElement;
+        Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+        container.scrollTop = 20;
+        component.totalNumberOfPosts.set(100);
+        const fetchPosts = vi.spyOn(component, 'fetchPosts');
+
+        component.fetchNextPage();
+        component.fetchNextPage();
+        expect(fetchPosts).toHaveBeenCalledOnce();
+        expect(container.scrollTop).toBe(20);
+
+        Object.defineProperty(container, 'scrollHeight', { value: 1600, configurable: true });
+        component.setPosts([{ id: 2 } as Post, examplePost]);
+        component.isFetchingPosts.set(false);
+        component.handleScrollOnNewMessage();
+        vi.runAllTimers();
+        expect(container.scrollTop).toBe(620);
+
+        container.scrollTop = 0;
+        component.handleScrollOnNewMessage();
+        vi.runAllTimers();
+        expect(container.scrollTop).toBe(0);
+    });
+
+    it('should reset pagination when changing the search or its filters', () => {
+        fixture.componentRef.setInput('courseWideSearchConfig', new CourseWideSearchConfig());
+        fixture.detectChanges();
+        component.page = 3;
+        component.onSearch();
+        expect(component.currentPostContextFilter?.page).toBe(0);
+        component.page = 4;
+        component.onChangeSortDir();
+        expect(component.currentPostContextFilter?.page).toBe(0);
     });
 
     it('should create', () => {
@@ -194,7 +244,7 @@ describe('CourseWideSearchComponent', () => {
     it('should fetch posts on next page fetch', () => {
         const getFilteredPostSpy = vi.spyOn(communicationService, 'getFilteredPosts');
         fixture.componentRef.setInput('courseWideSearchConfig', courseWideSearchConfig);
-        component.totalNumberOfPosts = 10;
+        component.totalNumberOfPosts.set(10);
         component.fetchNextPage();
         expect(getFilteredPostSpy).toHaveBeenCalledOnce();
     });

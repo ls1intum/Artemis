@@ -140,6 +140,10 @@ examples.forEach((activeConversation) => {
             });
             component.canStartSaving = true;
             fixture.detectChanges();
+            // Model the response for the newly opened conversation, not cached posts from the previous context.
+            component.allPosts.set([examplePost]);
+            component.setPosts();
+            component.isFetchingPosts.set(false);
         });
 
         afterEach(() => {
@@ -160,7 +164,7 @@ examples.forEach((activeConversation) => {
         it('should fetch posts on next page fetch', () => {
             const getFilteredPostSpy = vi.spyOn(communicationService, 'getFilteredPosts');
             component.searchText = 'loremIpsum';
-            component.totalNumberOfPosts = 10;
+            component.totalNumberOfPosts.set(10);
             component.fetchNextPage();
             expect(getFilteredPostSpy).toHaveBeenCalledOnce();
         });
@@ -380,7 +384,11 @@ examples.forEach((activeConversation) => {
                     scrollToStoredIdSpy = vi.spyOn(component as any, 'scrollToStoredId');
                     fixture.detectChanges();
                     // the posts are loaded and the list is visible
+                    component.allPosts.set([examplePost]);
+                    component.setPosts();
                     component.isFetchingPosts.set(false);
+                    messagesSignal.set([...messagesSignal()]);
+                    fixture.detectChanges();
                     vi.runAllTimers();
                     scrollToStoredIdSpy.mockClear();
                 });
@@ -404,6 +412,8 @@ examples.forEach((activeConversation) => {
                     // the user is at the bottom of an already restored conversation and follows the View action of a forwarded message
                     container.scrollTop = 600;
                     component.focusOnPostId = unloadedPostId;
+                    component.totalNumberOfPosts.set(100);
+                    component.fetchNextPage();
                     component.setPosts();
 
                     // the next page arrives and contains the post
@@ -428,6 +438,104 @@ examples.forEach((activeConversation) => {
                     expect(container.scrollTop).toBe(290);
                 });
             });
+        });
+
+        it('should remember the bottom rather than a top-visible message when reopening a channel', () => {
+            const container = component.content()!.nativeElement;
+            Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+            Object.defineProperty(container, 'clientHeight', { value: 400, configurable: true });
+            container.scrollTop = 600;
+            component.canStartSaving = true;
+            const next = vi.spyOn(component.scrollSubject, 'next');
+
+            component.findElementsAtScrollPosition();
+            expect(next).toHaveBeenCalledWith(0);
+            const storage = TestBed.inject(SessionStorageService);
+            vi.spyOn(storage, 'retrieve').mockReturnValue(0);
+            container.scrollTop = 0;
+            component['scrollToStoredId']();
+            vi.runAllTimers();
+            expect(container.scrollTop).toBe(1000);
+        });
+
+        it('should keep the viewport anchored while loading older messages', () => {
+            vi.runAllTimers();
+            const container = component.content()!.nativeElement;
+            Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+            container.scrollTop = 30;
+            component.canStartSaving = true;
+            component.totalNumberOfPosts.set(100);
+            const fetchPosts = vi.spyOn(component, 'fetchPosts');
+            component.fetchNextPage();
+            component.fetchNextPage();
+            expect(fetchPosts).toHaveBeenCalledOnce();
+            expect(container.scrollTop).toBe(30);
+
+            Object.defineProperty(container, 'scrollHeight', { value: 1500, configurable: true });
+            component.handleScrollOnNewMessage();
+            vi.runAllTimers();
+            expect(container.scrollTop).toBe(530);
+        });
+
+        it('should follow layout changes at the bottom but preserve the position after the reader scrolls up', () => {
+            let resize: (() => void) | undefined;
+            const observe = vi.fn();
+            const disconnect = vi.fn();
+            vi.stubGlobal(
+                'ResizeObserver',
+                class {
+                    constructor(callback: () => void) {
+                        resize = callback;
+                    }
+                    observe = observe;
+                    disconnect = disconnect;
+                },
+            );
+            try {
+                component.ngAfterViewInit();
+                const container = component.content()!.nativeElement;
+                let height = 1200;
+                let viewport = 400;
+                let top = 0;
+                Object.defineProperties(container, {
+                    scrollHeight: { get: () => height, configurable: true },
+                    clientHeight: { get: () => viewport, configurable: true },
+                    scrollTop: {
+                        get: () => top,
+                        set: (value: number) => {
+                            top = Math.max(0, Math.min(value, height - viewport));
+                        },
+                        configurable: true,
+                    },
+                });
+                void component.goToLastSelectedElement(0, false);
+                vi.runAllTimers();
+                expect(top).toBe(800);
+                expect(component.canStartSaving).toBe(true);
+
+                // The composer becomes taller after its draft is restored, then an image in a message loads.
+                viewport = 300;
+                component.findElementsAtScrollPosition();
+                resize!();
+                vi.runAllTimers();
+                expect(top).toBe(900);
+                height = 1400;
+                resize!();
+                vi.runAllTimers();
+                expect(top).toBe(1100);
+
+                container.scrollTop = 200;
+                container.dispatchEvent(new Event('scroll'));
+                height = 1500;
+                resize!();
+                vi.runAllTimers();
+                expect(top).toBe(200);
+                expect(observe).toHaveBeenCalledWith(container);
+                component.ngOnDestroy();
+                expect(disconnect).toHaveBeenCalledOnce();
+            } finally {
+                vi.unstubAllGlobals();
+            }
         });
 
         it('should create empty post with the correct conversation type', () => {
