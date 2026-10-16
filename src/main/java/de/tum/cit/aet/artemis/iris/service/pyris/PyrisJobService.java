@@ -441,7 +441,10 @@ public class PyrisJobService {
      */
     public GlobalSearchAnswerJob addGlobalSearchAnswerJob(String userLogin, String runId) {
         var job = new GlobalSearchAnswerJob(runId, userLogin, UUID.randomUUID().toString());
-        if (getPyrisJobMap().putIfAbsent(runId, job, Duration.ofSeconds(jobTimeout)) != null) {
+        // Under the job lock, like every update, removal and finish of an invocation-bound job: their check of the stored invocation and their write
+        // then cannot interleave with a registration, also with a provider whose putIfAbsent does not respect the lock on its own.
+        boolean registered = runWithJobLock(runId, () -> getPyrisJobMap().putIfAbsent(runId, job, Duration.ofSeconds(jobTimeout)) == null);
+        if (!registered) {
             throw new ConflictException("The run id is already in use", "Job", "runIdInUse");
         }
         return job;
