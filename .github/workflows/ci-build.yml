@@ -7,6 +7,11 @@ on:
         description: 'SHA the build is for. PR builds use the PR head SHA, not the merge commit.'
         required: true
         type: string
+      build_pr_image:
+        description: 'When false, the PR image (docker-pr) is not built. ci.yml passes false for a pull request that only changes tests, which neither E2E nor a test server deploy needs.'
+        required: false
+        type: boolean
+        default: true
       is_pr:
         description: 'True when the umbrella was triggered by pull_request.'
         required: true
@@ -257,7 +262,7 @@ jobs:
   docker-pr:
     name: Build and Push Docker Image (PR, amd64)
     needs: build-war
-    if: ${{ inputs.is_pr && inputs.is_internal_pr }}
+    if: ${{ inputs.is_pr && inputs.is_internal_pr && inputs.build_pr_image }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:

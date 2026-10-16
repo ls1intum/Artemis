@@ -411,6 +411,104 @@ describe('IrisChatService', () => {
             // Re-opening the same page context short-circuits before re-resolving the session.
             expect(httpStub).toHaveBeenCalledTimes(1);
         });
+
+        describe('with a session to open', () => {
+            const handedOffSession = { ...mockConversationWithNoMessages, id: 777, mode: ChatServiceMode.LECTURE, entityId: lectureId } as IrisSession;
+
+            beforeEach(() => {
+                service.setCourseId(courseId);
+                vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+                vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+            });
+
+            it('should load that session instead of resolving the current one', async () => {
+                const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
+                const currentStub = vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists');
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                await waitForSessionIdValue(777);
+
+                expect(byIdStub).toHaveBeenCalledExactlyOnceWith(courseId, 777);
+                expect(currentStub).not.toHaveBeenCalled();
+                // The session's own topic becomes the committed context, so the chip shows the lecture the chat was opened on.
+                expect(service['contextService'].committed()).toEqual({ mode: ChatServiceMode.LECTURE, entityId: lectureId });
+            });
+
+            it('should load that session even when the course page is already open', async () => {
+                vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithId(999)));
+                const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
+
+                service.openChat(ChatServiceMode.COURSE, courseId);
+                await waitForSessionIdValue(999);
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                await waitForSessionIdValue(777);
+
+                expect(byIdStub).toHaveBeenCalledOnce();
+            });
+
+            it('should reload the open session when it is asked for by id, since the page opened it on its own', async () => {
+                // The course page opens an empty chat; a global search handoff reuses that chat, fills it and asks for it by id.
+                vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValue(of(mockServerSessionHttpResponseWithId(777)));
+                const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
+
+                service.openChat(ChatServiceMode.COURSE, courseId);
+                await waitForSessionIdValue(777);
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+
+                expect(byIdStub).toHaveBeenCalledExactlyOnceWith(courseId, 777);
+            });
+
+            it('should load a linked session again after switching away from it through the history', async () => {
+                const byIdStub = vi
+                    .spyOn(httpService, 'getChatSessionById')
+                    .mockImplementation((_courseId: number, sessionId: number) => of({ ...handedOffSession, id: sessionId }));
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                await waitForSessionIdValue(777);
+                service.switchToSession({ id: 778 } as IrisSessionDTO);
+                await waitForSessionIdValue(778);
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                await waitForSessionIdValue(777);
+
+                expect(byIdStub).toHaveBeenCalledTimes(3);
+                expect(byIdStub).toHaveBeenLastCalledWith(courseId, 777);
+            });
+
+            it('should not let a linked session that arrives late replace the session chosen from the history meanwhile', async () => {
+                const linkedLoad = new Subject<IrisSession>();
+                vi.spyOn(httpService, 'getChatSessionById').mockImplementation((_courseId: number, sessionId: number) =>
+                    sessionId === 777 ? linkedLoad.asObservable() : of({ ...handedOffSession, id: sessionId }),
+                );
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                service.switchToSession({ id: 778 } as IrisSessionDTO);
+                await waitForSessionIdValue(778);
+                // The linked session's response arrives after the student already picked another chat.
+                linkedLoad.next(handedOffSession);
+                linkedLoad.complete();
+
+                expect(service.sessionId).toBe(778);
+            });
+
+            it('should not reload the session when it is already open', async () => {
+                const byIdStub = vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(handedOffSession));
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+                await waitForSessionIdValue(777);
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+
+                expect(byIdStub).toHaveBeenCalledOnce();
+            });
+
+            it('should report a session that cannot be loaded', async () => {
+                vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+
+                service.openChat(ChatServiceMode.COURSE, courseId, 777);
+
+                expect(await firstValueFrom(service.currentError())).toBeDefined();
+                expect(service.sessionId).toBeUndefined();
+            });
+        });
     });
 
     describe('close', () => {

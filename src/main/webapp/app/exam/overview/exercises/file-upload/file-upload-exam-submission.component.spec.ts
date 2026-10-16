@@ -25,6 +25,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ArtemisMarkdownService } from 'app/foundation/service/markdown.service';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 describe('FileUploadExamSubmissionComponent', () => {
     let fixture: ComponentFixture<FileUploadExamSubmissionComponent>;
@@ -262,6 +263,39 @@ describe('FileUploadExamSubmissionComponent', () => {
             expect(comp.submittedFileName()).toBe('file1.png');
             expect(comp.submittedFileExtension()).toBe('png');
             expect(comp.submissionFile).toBeUndefined();
+        });
+    });
+
+    describe('exam timeline', () => {
+        beforeEach(() => {
+            resetComponent();
+            fixture.componentRef.setInput('examTimeline', true);
+        });
+
+        it('should show the submitted file with a download link although the submission has no filePathUrl', () => {
+            const downloadSpy = vi.spyOn(comp, 'downloadFile').mockImplementation(() => {});
+            expect(comp.studentSubmission().filePathUrl).toBeUndefined();
+
+            fixture.detectChanges();
+
+            const expectedUrl = addPublicFilePrefix('path/to/the/file/file1.png');
+            expect(comp.submittedFileName()).toBe('file1.png');
+            expect(comp.submittedFileUrl()).toBe(expectedUrl);
+            // the input submission is not modified, the url is derived state of the component
+            expect(comp.studentSubmission().filePathUrl).toBeUndefined();
+            const downloadLink = fixture.nativeElement.querySelector('a[jhiTranslate="artemisApp.fileUploadSubmission.download"]') as HTMLElement;
+            expect(downloadLink).not.toBeNull();
+            downloadLink.click();
+            expect(downloadSpy).toHaveBeenCalledWith(expectedUrl);
+        });
+
+        it('should show the not submitted hint instead of a file if the submission has no file', () => {
+            fixture.componentRef.setInput('studentSubmission', {} as FileUploadSubmission);
+
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('a[jhiTranslate="artemisApp.fileUploadSubmission.download"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('h6[jhiTranslate="artemisApp.timeline.fileUploadNotSubmitted"]')).not.toBeNull();
         });
     });
 

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.communication.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -35,7 +36,7 @@ class PostingServiceMentionRecipientsTest {
 
     private static ConversationNotificationRecipientSummary summary(long userId, boolean muted, boolean hidden) {
         return new ConversationNotificationRecipientSummary(userId, "login" + userId, "First" + userId, "Last" + userId, userId % 2 == 0 ? "de" : "en",
-                "User" + userId + "@Example.org", muted, hidden, false);
+                "User" + userId + "@Example.org", false, muted, hidden, false);
     }
 
     private static List<ConversationNotificationRecipientSummary> conversationMembers() {
@@ -133,8 +134,22 @@ class PostingServiceMentionRecipientsTest {
     }
 
     @Test
+    void testResolveMentionRecipientsAndSummaryUsersKeepTheTestUserFlag() {
+        var testUserSummary = new ConversationNotificationRecipientSummary(MEMBER_ID, "login4", "First", "Last", "en", "user4@example.org", true, false, false, false);
+        var regularSummary = summary(OTHER_MEMBER_ID, false, false);
+
+        var recipients = PostingService.resolveMentionRecipients(List.of(), true, List.of(testUserSummary, regularSummary), AUTHOR_ID);
+
+        // The notifications decide from this flag whether a member that never configured e-mail gets one, so a rebuilt user must not lose it.
+        assertThat(recipients).extracting(User::getId, User::isTestUser).containsExactly(tuple(MEMBER_ID, true), tuple(OTHER_MEMBER_ID, false));
+        assertThat(testUserSummary.toUser().isTestUser()).isTrue();
+        assertThat(testUserSummary.toUser().getEmail()).isEqualTo("user4@example.org");
+        assertThat(regularSummary.toUser().isTestUser()).isFalse();
+    }
+
+    @Test
     void testResolveMentionRecipientsToleratesMembersWithoutNameOrEmail() {
-        var memberWithoutDetails = new ConversationNotificationRecipientSummary(MEMBER_ID, "login4", null, null, null, null, false, false, false);
+        var memberWithoutDetails = new ConversationNotificationRecipientSummary(MEMBER_ID, "login4", null, null, null, null, false, false, false, false);
 
         var recipients = PostingService.resolveMentionRecipients(List.of(), true, List.of(memberWithoutDetails), AUTHOR_ID);
 
