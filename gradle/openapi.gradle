@@ -38,6 +38,9 @@
                 "-Dspringdoc.paths-to-exclude=/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
                 "-Dartemis.hyperion.enabled=true",
                 "-Dartemis.hyperion.exercise-generation.enabled=true",
+                // Exercise generation needs the AI worker API to start, and that needs a worker ID.
+                "-Dartemis.aiworker.enabled=true",
+                "-Dartemis.aiworker.ids=openapi-docs",
                 "-Dartemis.weaviate.enabled=true",
                 "-Dartemis.openapi-docs-generation=true",
                 "-Dartemis.iris.enabled=true",
