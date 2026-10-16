@@ -447,7 +447,7 @@ jobs:
     name: Report PR Coverage
     needs: [detect-changes, test]
     if: >-
-      always() &&
+      !cancelled() &&
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       needs.detect-changes.outputs.build_relevant == 'true' &&
@@ -457,7 +457,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    # Own group (not the umbrella's) so a superseded push doesn't tear a mid-flight PR-body update.
+    # Serialize coverage writers for this PR; superseded workflow runs remain cancellable.
     concurrency:
       group: coverage-inrun-${{ github.event.pull_request.number }}
       cancel-in-progress: false
@@ -922,7 +922,7 @@ jobs:
   # producer here too, or a cascading skip could pass the gate green over broken code.
   all-required-ci-passed:
     name: All required CI Passed
-    if: always()
+    if: ${{ !cancelled() }}
     needs:
       - detect-changes
       - build
@@ -992,7 +992,7 @@ jobs:
   # another job's `needs:`, so it cannot block merging.
   ci-summary:
     name: CI Summary
-    if: always()
+    if: ${{ !cancelled() }}
     needs:
       - detect-changes
       - build
