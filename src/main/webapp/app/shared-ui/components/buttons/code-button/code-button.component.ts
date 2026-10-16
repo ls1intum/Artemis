@@ -114,7 +114,6 @@ export class CodeButtonComponent implements OnInit {
     private vcsAccessTokenReportedMissing = false;
     sshKeys?: UserSshPublicKey[];
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
-    programmingLanguageToPreferredIde = new Map<ProgrammingLanguage, Ide>();
     theiaPortalURL!: string; // set in initTheia() from ngOnInit()
 
     // Input
@@ -174,7 +173,8 @@ export class CodeButtonComponent implements OnInit {
     // params change), so a token cached for the previous repository must not be reused for the next one: repository tokens are scoped to one exact repository URI and would fail
     // authentication. We therefore remember which repository the cached token belongs to and reload when it no longer matches the current repository.
     theiaEnabled = signal(false);
-    ideName = signal('');
+    private programmingLanguageToPreferredIde = new Map<ProgrammingLanguage, Ide>();
+    preferredIdeName = signal('');
     readonly programmingExercisesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.ProgrammingExercises), { initialValue: true });
 
     constructor() {
@@ -241,7 +241,7 @@ export class CodeButtonComponent implements OnInit {
             if (programmingLanguageToPreferredIde.size) {
                 this.programmingLanguageToPreferredIde = programmingLanguageToPreferredIde;
             }
-            this.ideName.set(this.getPreferredIde().name);
+            this.preferredIdeName.set(this.getPreferredIde().name);
         });
     }
 

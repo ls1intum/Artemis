@@ -161,7 +161,7 @@
                     target="hidden-iframe"
                     [href]="buildIdeUrl() | safeUrl"
                     jhiTranslate="artemisApp.exerciseActions.ideButton.openIn"
-                    [translateValues]="{ ideName: ideName() }"
+                    [translateValues]="{ ideName: preferredIdeName() }"
                 >
                 </a>
                 <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.ideButton.helpIcon" />
