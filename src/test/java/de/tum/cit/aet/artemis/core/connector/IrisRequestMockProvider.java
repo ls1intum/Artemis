@@ -179,8 +179,29 @@ public class IrisRequestMockProvider {
         mockPostRequest("/competency-extraction/run", PyrisCompetencyExtractionPipelineExecutionDTO.class, responseConsumer);
     }
 
+    public void mockFaqIngestionWebhookError(HttpStatus status) {
+        mockPostError(webhooksApiURL.toString(), "/faqs/ingest", status.value());
+    }
+
     public void mockFaqIngestionWebhookRunResponse(Consumer<PyrisWebhookFaqIngestionExecutionDTO> responseConsumer) {
         mockWebhookPost("/faqs/ingest", PyrisWebhookFaqIngestionExecutionDTO.class, responseConsumer);
+    }
+
+    /** Verifies that disabled FAQ synchronization sends no ingestion request. */
+    public void expectNoFaqIngestionWebhook() {
+        mockServer.expect(ExpectedCount.never(), requestTo(webhooksApiURL + "/faqs/ingest")).andExpect(method(HttpMethod.POST)).andRespond(withStatus(HttpStatus.NO_CONTENT));
+    }
+
+    /** FAQ ingestion fails before Iris accepts a job, as during an outage. */
+    public void mockFaqIngestionWebhookFailure() {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/faqs/ingest")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+    }
+
+    /** FAQ deletion fails before Iris accepts a job, as during an outage. */
+    public void mockFaqDeletionWebhookFailure() {
+        mockServer.expect(ExpectedCount.once(), requestTo(webhooksApiURL + "/faqs/delete")).andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
     }
 
     public void mockDeletionWebhookRunResponse(Consumer<PyrisWebhookLectureIngestionExecutionDTO> responseConsumer) {

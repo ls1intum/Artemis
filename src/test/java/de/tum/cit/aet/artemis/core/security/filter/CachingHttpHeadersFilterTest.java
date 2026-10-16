@@ -10,6 +10,8 @@ import java.util.concurrent.TimeUnit;
 import jakarta.servlet.FilterChain;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -60,11 +62,40 @@ class CachingHttpHeadersFilterTest {
         assertThat(chain.getRequest()).as("the filter must not swallow the request").isNotNull();
     }
 
+    /**
+     * {@code theme-dark.css} has no content hash in its name, and the production reverse proxy caches by path and
+     * ignores the hourly query the client appends. With a 30 day lifetime it kept serving the stylesheet of an older
+     * release after an update, so users saw old dark mode colours (a light message hover, an empty primary button).
+     */
+    @ParameterizedTest
+    @ValueSource(strings = { "/theme-dark.css", "/artemis/theme-dark.css", "/theme-light.css" })
+    void unversionedThemeStylesheetsAreRevalidatedInsteadOfCached(String path) throws Exception {
+        MockFilterChain chain = new MockFilterChain();
+
+        MockHttpServletResponse response = doFilterWithLifetimeOf(30, chain, path);
+
+        assertThat(response.getHeader("Cache-Control")).isEqualTo("no-cache");
+        assertThat(response.getHeader("Expires")).isNull();
+        assertThat(chain.getRequest()).as("the filter must not swallow the request").isNotNull();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "/styles-7WCKMG4K.css", "/main-KLCX6SYX.js", "/i18n/en.json", "/some/theme-dark.css.map" })
+    void contentVersionedFilesKeepTheLongLifetime(String path) throws Exception {
+        MockHttpServletResponse response = doFilterWithLifetimeOf(30, new MockFilterChain(), path);
+
+        assertThat(response.getHeader("Cache-Control")).isEqualTo("max-age=2592000, public");
+    }
+
     private static MockHttpServletResponse doFilterWithLifetimeOf(int days) throws Exception {
         return doFilterWithLifetimeOf(days, new MockFilterChain());
     }
 
     private static MockHttpServletResponse doFilterWithLifetimeOf(int days, FilterChain chain) throws Exception {
+        return doFilterWithLifetimeOf(days, chain, "/main-Z6DX4AB6.js");
+    }
+
+    private static MockHttpServletResponse doFilterWithLifetimeOf(int days, FilterChain chain, String path) throws Exception {
         ArtemisProperties properties = new ArtemisProperties();
         properties.getHttp().getCache().setVersionedAssetsTimeToLiveInDays(days);
 
@@ -72,7 +103,7 @@ class CachingHttpHeadersFilterTest {
         filter.init(null);
 
         MockHttpServletResponse response = new MockHttpServletResponse();
-        filter.doFilter(new MockHttpServletRequest("GET", "/main-Z6DX4AB6.js"), response, chain);
+        filter.doFilter(new MockHttpServletRequest("GET", path), response, chain);
         return response;
     }
 }

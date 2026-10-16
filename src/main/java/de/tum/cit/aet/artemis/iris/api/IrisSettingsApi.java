@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.api;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,6 +42,16 @@ public class IrisSettingsApi extends AbstractIrisApi {
 
     public IrisCourseSettingsWithRateLimitDTO getSettingsForCourse(long courseId) {
         return irisSettingsService.getCourseSettingsWithRateLimit(courseId);
+    }
+
+    /**
+     * Keeps only the course IDs whose Iris course settings are enabled; a course without a settings row counts as enabled.
+     *
+     * @param courseIds the course IDs to filter
+     * @return the subset whose Iris settings are enabled
+     */
+    public List<Long> filterCourseIdsWithIrisEnabled(Collection<Long> courseIds) {
+        return irisSettingsService.filterCourseIdsWithIrisEnabled(courseIds);
     }
 
     public boolean isIrisEnabledForCourse(long courseId) {
