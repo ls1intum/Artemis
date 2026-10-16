@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
+import de.tum.cit.aet.artemis.communication.dto.FaqFingerprintInputDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -56,4 +57,17 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
     long countByCourseId(Long courseId);
 
     long countByCourseIdAndFaqState(Long courseId, FaqState faqState);
+
+    /**
+     * The fields of every FAQ in the given state that decide what Iris must hold for it, without loading the entities and their categories.
+     *
+     * @param faqState the state, ACCEPTED for the FAQs Iris may answer with
+     * @return one entry per FAQ in that state
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.communication.dto.FaqFingerprintInputDTO(faq.id, faq.course.id, faq.questionTitle, faq.questionAnswer)
+            FROM Faq faq
+            WHERE faq.faqState = :faqState
+            """)
+    List<FaqFingerprintInputDTO> findFingerprintInputsByFaqState(@Param("faqState") FaqState faqState);
 }

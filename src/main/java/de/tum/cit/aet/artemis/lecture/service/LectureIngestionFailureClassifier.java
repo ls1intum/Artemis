@@ -3,6 +3,9 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_PROCESSING_RETRIES;
 
 import java.time.ZonedDateTime;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -19,6 +22,30 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitProcessingState;
 final class LectureIngestionFailureClassifier {
 
     private static final Logger log = LoggerFactory.getLogger(LectureIngestionFailureClassifier.class);
+
+    /**
+     * Error code of a preparation that failed because the unit's only content is a supported video whose source cannot be resolved right now (a TUM Live
+     * stream that is not public, has no recording yet, or a TUM Live that is down). Retryable: the recording can appear later.
+     */
+    static final String VIDEO_SOURCE_UNAVAILABLE = "VIDEO_SOURCE_UNAVAILABLE";
+
+    static final String VIDEO_SOURCE_UNAVAILABLE_KEY = "artemisApp.attachmentVideoUnit.processing.error.videoSourceUnavailable";
+
+    /**
+     * Error keys that are permanent by nature: the content or configuration is the problem, and no amount of waiting fixes it (a private/too-long video,
+     * an unreadable attachment, a wrong unit type). Includes the keys the preparation writes directly, without classification.
+     */
+    static final Set<String> PERMANENT_ERROR_KEYS = Set.of("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate",
+            "artemisApp.attachmentVideoUnit.processing.error.youtubeLive", "artemisApp.attachmentVideoUnit.processing.error.youtubeTooLong",
+            "artemisApp.attachmentVideoUnit.processing.error.youtubeUnavailable", "artemisApp.attachmentVideoUnit.processing.error.invalidUnitType",
+            "artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable", "artemisApp.attachmentVideoUnit.processing.error.noIngestibleContent");
+
+    /**
+     * Error keys whose failures say nothing about whether Iris works: permanent content failures, and video sources that cannot be resolved. The outage
+     * pause ignores them, so units that fail for their own reasons never stop the intake of healthy work.
+     */
+    static final Set<String> UNIT_SPECIFIC_ERROR_KEYS = Stream.concat(PERMANENT_ERROR_KEYS.stream(), Stream.of(VIDEO_SOURCE_UNAVAILABLE_KEY))
+            .collect(Collectors.toUnmodifiableSet());
 
     private LectureIngestionFailureClassifier() {
     }
@@ -83,6 +110,8 @@ final class LectureIngestionFailureClassifier {
             case "YOUTUBE_DOWNLOAD_FAILED" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.youtubeDownloadFailed", true);
             // Any non-YouTube transcription failure (download, audio extraction, Whisper); may be transient
             case "TRANSCRIPTION_FAILED" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.transcriptionFailed", true);
+            // Artemis-side: the only content is a video whose source cannot be resolved right now; the recording can appear later
+            case VIDEO_SOURCE_UNAVAILABLE -> new ProcessingErrorClassification(VIDEO_SOURCE_UNAVAILABLE_KEY, true);
             // Neither readable PDF pages nor a transcript: re-running the same content yields the same empty result
             case "NO_INGESTIBLE_CONTENT" -> new ProcessingErrorClassification("artemisApp.attachmentVideoUnit.processing.error.noIngestibleContent", false);
             // Artemis-side: the unit lost its runs repeatedly without any outcome (restarts, lapsed leases, abandoned claims); retried with backoff like any failure

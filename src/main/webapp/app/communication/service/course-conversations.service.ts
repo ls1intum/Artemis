@@ -53,6 +53,8 @@ export class CourseConversationsService implements OnDestroy {
      * empty view that nothing ever fills, since it is the only request that will be made.
      */
     private requestedConversationId: number | undefined = undefined;
+    // Incremented by every selection so that the answer to an older refresh cannot replace a newer selection
+    private selectionVersion = 0;
     _conversationsOfUser$: ReplaySubject<ConversationDTO[]> = new ReplaySubject<ConversationDTO[]>(1);
     // Stores the currently selected conversation
     private activeConversation: ConversationDTO | undefined = undefined;
@@ -139,6 +141,7 @@ export class CourseConversationsService implements OnDestroy {
     }
 
     public setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {
+        const selectionVersion = ++this.selectionVersion;
         let cachedConversation: ConversationDTO | undefined = undefined;
         let conversationId: number | undefined = undefined;
         if (conversationIdentifier) {
@@ -154,9 +157,26 @@ export class CourseConversationsService implements OnDestroy {
                 this.requestedConversationId = conversationId;
                 return;
             }
-            this.alertService.addAlert({
-                type: AlertType.WARNING,
-                message: 'artemisApp.communication.channel.notAMember',
+            // The conversation can be missing because it was created after the conversations were loaded: nobody is told about a new
+            // course-wide channel, although every user of the course may open it. Ask the server again before concluding that the user
+            // is not a member. Otherwise following the notification about such a channel only shows the warning.
+            this.forceRefresh().subscribe({
+                complete: () => {
+                    if (selectionVersion !== this.selectionVersion) {
+                        // the user selected something else while the conversations were loading, which is the more recent intent
+                        return;
+                    }
+                    if (this.conversationsOfUser.some((conversationInCache) => conversationInCache.id === conversationId)) {
+                        this.setActiveConversation(conversationId);
+                    } else {
+                        this.alertService.addAlert({
+                            type: AlertType.WARNING,
+                            message: 'artemisApp.communication.channel.notAMember',
+                        });
+                    }
+                },
+                // the failed request has already been reported by forceRefresh
+                error: () => {},
             });
             // Keep whatever is currently open instead of closing it. Replacing it with nothing empties the view, and the
             // active conversation subscriber reacts to that by removing the conversationId from the URL, so a reload can
@@ -199,6 +219,7 @@ export class CourseConversationsService implements OnDestroy {
      * Set the course conversation component to the contents of the code of conduct.
      */
     public setCodeOfConduct() {
+        this.selectionVersion++;
         this.activeConversation = undefined;
         this._activeConversation$.next(this.activeConversation);
         this.isCodeOfConductPresented = true;
@@ -309,6 +330,7 @@ export class CourseConversationsService implements OnDestroy {
     private onConversationCreation = (creation$: Observable<HttpResponse<ConversationDTO>>): Observable<never> => {
         return creation$.pipe(
             tap((conversation: HttpResponse<ConversationDTO>) => {
+                this.selectionVersion++;
                 this.activeConversation = conversation.body!;
             }),
             catchError((res: HttpErrorResponse) => {

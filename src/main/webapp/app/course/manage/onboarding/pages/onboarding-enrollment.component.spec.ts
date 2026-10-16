@@ -62,12 +62,10 @@ describe('OnboardingEnrollmentComponent', () => {
         const pickers = () => fixture.debugElement.queryAll(By.directive(TumAetUiDatePickerComponent));
         const pickerById = (id: string) => pickers().find((picker) => picker.componentInstance.inputId() === id)!;
 
-        const expectFormLabel = (inputId: string, key: string) => {
-            const label = fixture.nativeElement.querySelector(`label[for="${inputId}"]`) as HTMLLabelElement | null;
-            expect(label).not.toBeNull();
-            expect(label!.classList).toContain('form-label');
-            expect(label!.getAttribute('jhiTranslate') ?? label!.getAttribute('ng-reflect-jhi-translate')).toBe(key);
-            expect(pickerById(inputId).componentInstance.hideLabelName()).toBe(true);
+        const expectPickerLabel = (inputId: string, key: string) => {
+            const picker = pickerById(inputId).componentInstance;
+            expect(picker.labelName()).toBe(key);
+            expect(picker.hideLabelName()).toBeFalsy();
         };
 
         it('should only render the enrollment dates when enrollment is enabled', () => {
@@ -80,15 +78,15 @@ describe('OnboardingEnrollmentComponent', () => {
             expect(pickers().map((picker) => picker.componentInstance.inputId())).toEqual(['onboarding-enrollmentStartDate', 'onboarding-enrollmentEndDate']);
         });
 
-        it('should label each picker with a form label bound to its input, like the fields around it', () => {
+        it('should label each picker with its own visible label', () => {
             course.enrollmentEnabled = true;
             course.unenrollmentEnabled = true;
             fixture.componentRef.setInput('course', Course.from(course));
             fixture.detectChanges();
 
-            expectFormLabel('onboarding-enrollmentStartDate', 'artemisApp.course.enrollmentStartDate');
-            expectFormLabel('onboarding-enrollmentEndDate', 'artemisApp.course.enrollmentEndDate');
-            expectFormLabel('onboarding-unenrollmentEndDate', 'artemisApp.course.unenrollmentEndDate');
+            expectPickerLabel('onboarding-enrollmentStartDate', 'artemisApp.course.enrollmentStartDate');
+            expectPickerLabel('onboarding-enrollmentEndDate', 'artemisApp.course.enrollmentEndDate');
+            expectPickerLabel('onboarding-unenrollmentEndDate', 'artemisApp.course.unenrollmentEndDate');
         });
 
         it('should render the unenrollment end date once unenrollment is enabled', () => {
@@ -100,6 +98,20 @@ describe('OnboardingEnrollmentComponent', () => {
 
             const picker = pickerById('onboarding-unenrollmentEndDate');
             expect(picker.componentInstance.value().isSame(course.unenrollmentEndDate)).toBe(true);
+        });
+
+        // jsdom does not apply the stylesheet, so this asserts the structure: a fixed `ms-4` indent on every viewport would push
+        // the 15rem date picker past the clipping edge of the wizard card on a phone. `step-indent` drops the indent there.
+        it('should indent the settings below the toggles with the responsive step-indent instead of a fixed ms-4', () => {
+            course.enrollmentEnabled = true;
+            course.unenrollmentEnabled = true;
+            fixture.componentRef.setInput('course', Course.from(course));
+            fixture.detectChanges();
+
+            const nested = pickerById('onboarding-unenrollmentEndDate').nativeElement.closest('.step-indent');
+            expect(nested).not.toBeNull();
+            expect(nested.parentElement.closest('.step-indent')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('.ms-4')).toBeNull();
         });
 
         describe('text validity reported to the wizard', () => {
