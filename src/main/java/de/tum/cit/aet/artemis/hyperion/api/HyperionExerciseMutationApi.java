@@ -48,14 +48,15 @@ public class HyperionExerciseMutationApi implements AbstractApi {
     /**
      * Coordinates canonical test discovery without discarding historical build results.
      *
-     * @param exerciseId     protected exercise
-     * @param solutionCommit result solution revision
-     * @param testsCommit    result tests revision
-     * @param callback       revision-checked canonical discovery
+     * @param exerciseId      protected exercise
+     * @param solutionCommit  result solution revision
+     * @param testsCommit     result tests revision
+     * @param buildSuccessful whether the build succeeded; unsuccessful builds cannot complete save synchronization
+     * @param callback        revision-checked canonical discovery
      * @return whether canonical discovery accepted the result
      */
-    public boolean synchronizeTestCases(long exerciseId, String solutionCommit, String testsCommit, BooleanSupplier callback) {
-        return mutationService.synchronizeTestCases(exerciseId, solutionCommit, testsCommit, callback);
+    public boolean synchronizeTestCases(long exerciseId, String solutionCommit, String testsCommit, boolean buildSuccessful, BooleanSupplier callback) {
+        return mutationService.synchronizeTestCases(exerciseId, solutionCommit, testsCommit, buildSuccessful, callback);
     }
 
 }

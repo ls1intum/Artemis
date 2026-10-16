@@ -164,6 +164,43 @@ class ProgrammingExerciseResultRevisionTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
+    void failedExpectedBuildDoesNotConsumeSaveOrUndoPermit(boolean undo) {
+        if (undo) {
+            solutionHead.set("restored-solution");
+            testsHead.set("restored-tests");
+        }
+        try (var writer = saves.reserveWrite(1L)) {
+            saves.expectTestCaseSynchronization(1L, solutionHead.get(), testsHead.get());
+            var failed = new BuildResult("main", solutionHead.get(), testsHead.get(), false, null, List.of(), List.of(), List.of(), false, 1);
+            service.extractTestCasesFromResultAndBroadcastUpdates(failed, stale);
+            assertThat(saves.testCaseSynchronizationCompleted(1L, solutionHead.get(), testsHead.get())).isFalse();
+            assertThat(generated.isActive()).isTrue();
+            assertThat(old.isActive()).isFalse();
+            verify(cases, never()).saveAll(any());
+            verify(exercises, never()).save(any());
+            verifyNoInteractions(tasks);
+            writer.verify();
+            service.extractTestCasesFromResultAndBroadcastUpdates(result(solutionHead.get(), testsHead.get(), "oldTest"), stale);
+            assertThat(saves.testCaseSynchronizationCompleted(1L, solutionHead.get(), testsHead.get())).isTrue();
+            assertThat(old.isActive()).isTrue();
+            assertThat(generated.isActive()).isFalse();
+            verify(exercises).save(same(current));
+            writer.verify();
+        }
+    }
+
+    @org.junit.jupiter.api.Test
+    void failedOrdinaryDraftBuildStillDiscoversReportedTests() {
+        var reported = result(solutionHead.get(), testsHead.get(), "oldTest");
+        var failed = new BuildResult("main", solutionHead.get(), testsHead.get(), false, null, reported.jobs(), List.of(), List.of(), false, 1);
+        service.extractTestCasesFromResultAndBroadcastUpdates(failed, stale);
+        assertThat(old.isActive()).isTrue();
+        assertThat(generated.isActive()).isFalse();
+        verify(exercises).save(same(current));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
     void expectedSaveAndUndoResultsCanDiscoverCurrentTestsUsingFreshMetadata(boolean undo) {
         if (undo) {
             solutionHead.set("restored-solution");

@@ -358,17 +358,18 @@ public class ProgrammingExerciseFeedbackCreationService {
             if (StringUtils.isBlank(buildResult.assignmentRepoCommitHash()) || StringUtils.isBlank(buildResult.testsRepoCommitHash())) {
                 return;
             }
-            boolean synchronizedCases = mutationApi.get().synchronizeTestCases(exercise.getId(), buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash(), () -> {
-                ProgrammingExercise current = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                String configuredBranch = buildConfigs.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
-                String branch = StringUtils.isBlank(configuredBranch) ? defaultBranch : configuredBranch;
-                if (!buildResult.assignmentRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.SOLUTION), branch))
-                        || !buildResult.testsRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.TESTS), branch))) {
-                    return false;
-                }
-                extractCurrentTestCases(buildResult, current);
-                return true;
-            });
+            boolean synchronizedCases = mutationApi.get().synchronizeTestCases(exercise.getId(), buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash(),
+                    buildResult.isBuildSuccessful(), () -> {
+                        ProgrammingExercise current = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                        String configuredBranch = buildConfigs.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
+                        String branch = StringUtils.isBlank(configuredBranch) ? defaultBranch : configuredBranch;
+                        if (!buildResult.assignmentRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.SOLUTION), branch))
+                                || !buildResult.testsRepoCommitHash().equals(gitService.getLastCommitHash(current.getRepositoryURI(RepositoryType.TESTS), branch))) {
+                            return false;
+                        }
+                        extractCurrentTestCases(buildResult, current);
+                        return true;
+                    });
             if (!synchronizedCases) {
                 log.info("Skipped canonical test discovery for exercise {}: the draft is being saved or the build revisions are superseded; the result is still graded",
                         exercise.getId());

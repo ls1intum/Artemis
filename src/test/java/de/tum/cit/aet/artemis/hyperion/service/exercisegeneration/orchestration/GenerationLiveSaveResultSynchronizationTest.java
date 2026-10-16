@@ -37,23 +37,23 @@ class GenerationLiveSaveResultSynchronizationTest {
         String token = writer.claim(EXERCISE_ID);
         try {
             var calls = new AtomicInteger();
-            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, () -> {
+            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
                 calls.incrementAndGet();
                 return true;
             })).isFalse();
             writer.expectTestCaseSynchronization(EXERCISE_ID, SOLUTION, TESTS);
-            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, "old-solution", TESTS, () -> {
+            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, "old-solution", TESTS, true, () -> {
                 calls.incrementAndGet();
                 return true;
             })).isFalse();
-            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, "old-tests", () -> {
+            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, "old-tests", true, () -> {
                 calls.incrementAndGet();
                 return true;
             })).isFalse();
             assertThat(calls).hasValue(0);
             assertThat(writer.testCaseSynchronizationCompleted(EXERCISE_ID, SOLUTION, TESTS)).isFalse();
 
-            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, () -> {
+            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
                 calls.incrementAndGet();
                 assertThat(writer.testCaseSynchronizationCompleted(EXERCISE_ID, SOLUTION, TESTS)).isFalse();
                 return true;
@@ -61,7 +61,7 @@ class GenerationLiveSaveResultSynchronizationTest {
             assertThat(writer.testCaseSynchronizationCompleted(EXERCISE_ID, SOLUTION, TESTS)).isTrue();
             assertThat(writer.testCaseSynchronizationCompleted(EXERCISE_ID, "old-solution", TESTS)).isFalse();
             assertThat(writer.testCaseSynchronizationCompleted(EXERCISE_ID, SOLUTION, "old-tests")).isFalse();
-            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, () -> {
+            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
                 calls.incrementAndGet();
                 return true;
             })).isFalse();
@@ -97,14 +97,14 @@ class GenerationLiveSaveResultSynchronizationTest {
         String token = writer.claim(EXERCISE_ID);
         try {
             writer.expectTestCaseSynchronization(EXERCISE_ID, SOLUTION, TESTS);
-            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, () -> false)).isFalse();
+            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> false)).isFalse();
             assertThat(writer.testCaseSynchronizationCompleted(EXERCISE_ID, SOLUTION, TESTS)).isFalse();
-            assertThatThrownBy(() -> resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, () -> {
+            assertThatThrownBy(() -> resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
                 throw new IllegalArgumentException("discovery failed");
             })).isInstanceOf(IllegalArgumentException.class).hasMessage("discovery failed");
             assertThat(writer.testCaseSynchronizationCompleted(EXERCISE_ID, SOLUTION, TESTS)).isFalse();
             writer.verify(EXERCISE_ID, token);
-            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, () -> true)).isTrue();
+            assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> true)).isTrue();
             assertThat(writer.testCaseSynchronizationCompleted(EXERCISE_ID, SOLUTION, TESTS)).isTrue();
         }
         finally {
@@ -123,7 +123,7 @@ class GenerationLiveSaveResultSynchronizationTest {
         var finish = new CountDownLatch(1);
         var duplicateCalls = new AtomicInteger();
         try (var executor = Executors.newSingleThreadExecutor()) {
-            var result = executor.submit(() -> resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, () -> {
+            var result = executor.submit(() -> resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
                 entered.countDown();
                 await(finish);
                 return true;
@@ -133,7 +133,7 @@ class GenerationLiveSaveResultSynchronizationTest {
                 assertThat(writer.testCaseSynchronizationCompleted(EXERCISE_ID, SOLUTION, TESTS)).isFalse();
                 assertThatThrownBy(() -> writer.verify(EXERCISE_ID, token)).isInstanceOf(ConflictException.class);
                 assertThatThrownBy(() -> writer.expectTestCaseSynchronization(EXERCISE_ID, "replacement-solution", "replacement-tests")).isInstanceOf(IllegalStateException.class);
-                assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, () -> {
+                assertThat(resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
                     duplicateCalls.incrementAndGet();
                     return true;
                 })).isFalse();
@@ -162,7 +162,7 @@ class GenerationLiveSaveResultSynchronizationTest {
         var entered = new CountDownLatch(1);
         var finish = new CountDownLatch(1);
         try (var executor = Executors.newSingleThreadExecutor()) {
-            var result = executor.submit(() -> resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, () -> {
+            var result = executor.submit(() -> resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
                 entered.countDown();
                 await(finish);
                 return true;
@@ -199,7 +199,7 @@ class GenerationLiveSaveResultSynchronizationTest {
         var entered = new CountDownLatch(1);
         var finish = new CountDownLatch(1);
         try (var executor = Executors.newSingleThreadExecutor()) {
-            var result = executor.submit(() -> resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, () -> {
+            var result = executor.submit(() -> resultProcessor.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
                 entered.countDown();
                 await(finish);
                 return true;
@@ -227,11 +227,11 @@ class GenerationLiveSaveResultSynchronizationTest {
         var service = new GenerationLiveSaveService(provider, false);
         var calls = new AtomicInteger();
         service.expectTestCaseSynchronization(EXERCISE_ID, SOLUTION, TESTS);
-        assertThat(service.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, () -> {
+        assertThat(service.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> {
             calls.incrementAndGet();
             return true;
         })).isTrue();
-        assertThat(service.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, () -> false)).isFalse();
+        assertThat(service.synchronizeTestCases(EXERCISE_ID, SOLUTION, TESTS, true, () -> false)).isFalse();
         assertThat(service.testCaseSynchronizationCompleted(EXERCISE_ID, SOLUTION, TESTS)).isTrue();
         assertThat(calls).hasValue(1);
         verifyNoInteractions(map);

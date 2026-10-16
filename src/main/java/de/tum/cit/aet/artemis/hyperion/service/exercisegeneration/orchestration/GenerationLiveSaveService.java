@@ -267,13 +267,14 @@ public class GenerationLiveSaveService {
     /**
      * Runs canonical test discovery under a reader, or the exact save synchronization permit.
      *
-     * @param exerciseId     protected exercise
-     * @param solutionCommit result solution revision
-     * @param testsCommit    result tests revision
-     * @param callback       guarded canonical discovery, returning whether both current revisions match
+     * @param exerciseId      protected exercise
+     * @param solutionCommit  result solution revision
+     * @param testsCommit     result tests revision
+     * @param buildSuccessful whether the build succeeded; only successful builds may use a save synchronization permit
+     * @param callback        guarded canonical discovery, returning whether both current revisions match
      * @return whether canonical discovery accepted this result
      */
-    public boolean synchronizeTestCases(long exerciseId, String solutionCommit, String testsCommit, BooleanSupplier callback) {
+    public boolean synchronizeTestCases(long exerciseId, String solutionCommit, String testsCommit, boolean buildSuccessful, BooleanSupplier callback) {
         if (!enabled) {
             return callback.getAsBoolean();
         }
@@ -296,7 +297,7 @@ public class GenerationLiveSaveService {
                 }
             }
             var sync = current.synchronization();
-            if (sync == null || sync.running() || sync.completed() || !sync.matches(solutionCommit, testsCommit)) {
+            if (!buildSuccessful || sync == null || sync.running() || sync.completed() || !sync.matches(solutionCommit, testsCommit)) {
                 return false;
             }
             var claimed = new LiveSaveSlot(current.token(), current.ownerNodeId(), current.startedAt(), current.readers(),
