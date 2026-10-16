@@ -137,12 +137,6 @@ jobs:
             echo "::error::${wars[0]} does not contain a WEB-INF/classes/static/main-*.js bundle. The Angular client build is incomplete."
             exit 1
           fi
-      - name: Build AI Worker image from the same WAR
-        run: |
-          shopt -s nullglob
-          wars=(build/libs/Artemis-*.war)
-          test "${#wars[@]}" -eq 1
-          docker build -f deployment/docker/aiworker/worker.Dockerfile --build-arg "ARTEMIS_WAR=${wars[0]}" -t artemis-aiworker:ci .
       - name: Upload Artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

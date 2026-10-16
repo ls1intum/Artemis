@@ -12,7 +12,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.redisson.api.RedissonClient;
+import org.redisson.spring.starter.RedissonAutoConfigurationV4;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionEvaluationReport;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration;
 import org.springframework.boot.data.redis.autoconfigure.DataRedisReactiveAutoConfiguration;
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer;
@@ -34,6 +37,7 @@ import com.hazelcast.core.Hazelcast;
 
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.hazelcast.HazelcastDistributedDataProviderService;
+import de.tum.cit.aet.artemis.core.service.distributed.redisson.BackwardCompatibleSerializationCodec;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedDataProviderService;
 import de.tum.cit.aet.artemis.shared.ValkeyTestContainerFactory;
 
@@ -103,7 +107,10 @@ class WorkerDistributedDataConfigurationTest {
             store.start();
             workerContextRunner().withPropertyValues("artemis.distributed-data.provider=redis", "spring.data.redis.host=" + store.getHost(),
                     "spring.data.redis.port=" + store.getMappedPort(6379)).run(context -> {
-                        assertThat(context).hasNotFailed().hasSingleBean(DistributedDataProvider.class).hasSingleBean(RedissonDistributedDataProviderService.class);
+                        assertThat(context).hasNotFailed().hasSingleBean(DistributedDataProvider.class).hasSingleBean(RedissonDistributedDataProviderService.class)
+                                .hasSingleBean(RedissonAutoConfigurationV4.class).hasSingleBean(RedissonClient.class);
+                        assertThat(ConditionEvaluationReport.get(context.getBeanFactory()).getExclusions()).doesNotContain(RedissonAutoConfigurationV4.class.getName());
+                        assertThat(context.getBean(RedissonClient.class).getConfig().getCodec()).isInstanceOf(BackwardCompatibleSerializationCodec.class);
                         context.getBean(DistributedDataProvider.class).<String, String>getMap("worker-bootstrap-redis").put("ready", "yes");
                         assertThat(context.getBean(DistributedDataProvider.class).<String, String>getMap("worker-bootstrap-redis").get("ready")).isEqualTo("yes");
                     });

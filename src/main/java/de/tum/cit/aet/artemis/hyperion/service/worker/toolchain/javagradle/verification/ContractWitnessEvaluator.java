@@ -12,7 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
-import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.DifferentialVerifier.VerificationInfrastructureException;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
@@ -58,8 +57,8 @@ final class ContractWitnessEvaluator {
             for (ContractWitness candidate : runnable) {
                 restoreCandidate.run();
                 String probeSource = ContractWitnessProbe.buildProbeSource(host.get().getValue(), List.of(candidate));
-                String workspacePath = GenerationWorkspace.directoryFor(RepositoryRole.TESTS) + "/" + probePath;
-                sandbox.copyIn(sessionId, GenerationWorkspace.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(Map.of(workspacePath, probeSource), Map.of()));
+                Map<String, String> overlay = ContractWitnessProbe.workspaceOverlay(producedTestsFiles, probePath, probeSource);
+                sandbox.copyIn(sessionId, GenerationWorkspace.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(overlay, Map.of()));
                 seedVerifyScript.run();
                 BuildSummary solution = solutionBuild.get();
                 if (ContractWitnessProbe.executed(candidate, solution.testNames()) && ContractWitnessProbe.failed(candidate, solution.testFailedNames()) && !solution.timedOut()) {
@@ -77,7 +76,7 @@ final class ContractWitnessEvaluator {
                 // Source-isolated execution removes every live Java source before Surefire starts. Rebuild the exact probe workspace before the starter run rather than letting
                 // the second half observe the source-deleted residue of the reference run.
                 restoreCandidate.run();
-                sandbox.copyIn(sessionId, GenerationWorkspace.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(Map.of(workspacePath, probeSource), Map.of()));
+                sandbox.copyIn(sessionId, GenerationWorkspace.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(overlay, Map.of()));
                 seedVerifyScript.run();
                 BuildSummary template = templateBuild.get();
                 if (ContractWitnessProbe.executed(candidate, template.testNames()) && ContractWitnessProbe.failed(candidate, template.testFailedNames()) && !template.timedOut()) {
