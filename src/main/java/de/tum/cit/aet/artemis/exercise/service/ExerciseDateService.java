@@ -65,6 +65,15 @@ public class ExerciseDateService {
         return isAssessmentAnonymizationActive(exercise.isExamExercise(), exercise.assessmentType(), exercise.dueDate());
     }
 
+    /**
+     * Applies the same cutoff to loaded exercises and repository access projections. Exam assessment always hides
+     * identities; course assessment does so from the due date onward only for manual or semi-automatic assessment.
+     *
+     * @param examExercise   whether the exercise belongs to an exam
+     * @param assessmentType the configured assessment mode
+     * @param dueDate        the course exercise deadline, or {@code null} when none is configured
+     * @return whether anonymous assessment is active now
+     */
     private boolean isAssessmentAnonymizationActive(boolean examExercise, AssessmentType assessmentType, ZonedDateTime dueDate) {
         return examExercise
                 || ((assessmentType == AssessmentType.MANUAL || assessmentType == AssessmentType.SEMI_AUTOMATIC) && dueDate != null && !ZonedDateTime.now().isBefore(dueDate));
