@@ -156,6 +156,20 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
                 .isEqualTo(expectedVisibilityHash(unitId)));
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void splitJobRegeneratesTheStudentVersionFromTheNewSlides() {
+        long unitId = testAttachmentVideoUnit.getId();
+        AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId).orElseThrow();
+        // A student version built while the split was pending, from the previous slides
+        attachmentRepository.updateStudentVersionIfFileUnchanged(unit.getAttachment().getId(), "built-from-previous-slides.pdf", unit.getAttachment().getVersion());
+
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(unit, null, null)).join();
+
+        // The new slides hide nothing, so the regeneration after the split removes it
+        await().untilAsserted(() -> assertThat(attachmentRepository.findById(unit.getAttachment().getId()).orElseThrow().getStudentVersion()).isNull());
+    }
+
     private String expectedVisibilityHash(long unitId) {
         AttachmentVideoUnit unit = attachmentVideoUnitRepository.findWithLectureAndCourseAndAttachmentById(unitId).orElseThrow();
         var snapshot = new LectureContentUpdateSnapshot(unitId, null, null, null, null, null, null, null, unit.resolveReleaseDate(),

@@ -97,23 +97,25 @@ class AttachmentServiceFileReplacementTest {
 
     @Test
     void uploadedStudentVersionStoresReferenceBeforeDeletingOldFile() throws IOException {
+        when(attachmentRepository.updateStudentVersionIfFileUnchanged(eq(ATTACHMENT_ID), anyString(), eq(1))).thenReturn(1);
+
         attachmentService.replaceUploadedStudentVersionFile(new byte[] { 1, 2, 3 }, attachment, ATTACHMENT_VIDEO_UNIT_ID, "student.pdf");
 
         var installedPath = ArgumentCaptor.forClass(Path.class);
         var order = inOrder(tempFileUtilService, attachmentRepository, fileService);
         order.verify(tempFileUtilService).replaceFileAtomically(any(Path.class), installedPath.capture(), any(byte[].class));
-        order.verify(attachmentRepository).updateStudentVersion(eq(ATTACHMENT_ID), anyString());
+        order.verify(attachmentRepository).updateStudentVersionIfFileUnchanged(eq(ATTACHMENT_ID), anyString(), eq(1));
         order.verify(fileService).schedulePathForDeletion(oldStudentVersionPath(), 0);
 
         String newFilename = installedPath.getValue().getFileName().toString();
         assertThat(newFilename).isNotEqualTo(OLD_STUDENT_VERSION).endsWith(".pdf");
-        verify(attachmentRepository).updateStudentVersion(ATTACHMENT_ID, newFilename);
+        verify(attachmentRepository).updateStudentVersionIfFileUnchanged(ATTACHMENT_ID, newFilename, 1);
         assertThat(FileSystemLocation.storedFilename(attachment.getStudentVersion())).isEqualTo(newFilename);
     }
 
     @Test
     void failureToStoreReferenceDeletesNewFileAndKeepsOldOne() throws IOException {
-        doThrow(new IllegalStateException("database unavailable")).when(attachmentRepository).updateStudentVersion(eq(ATTACHMENT_ID), anyString());
+        doThrow(new IllegalStateException("database unavailable")).when(attachmentRepository).updateStudentVersionIfFileUnchanged(eq(ATTACHMENT_ID), anyString(), eq(1));
 
         assertThatThrownBy(() -> attachmentService.replaceUploadedStudentVersionFile(new byte[] { 1, 2, 3 }, attachment, ATTACHMENT_VIDEO_UNIT_ID, "student.pdf"))
                 .isInstanceOf(IllegalStateException.class);
@@ -172,6 +174,7 @@ class AttachmentServiceFileReplacementTest {
     @Test
     void failedRegenerationWithoutStudentVersionClearsNothing() {
         attachment.setStudentVersion(null);
+        when(attachmentRepository.findStudentVersionStateById(ATTACHMENT_ID)).thenReturn(Optional.of(new AttachmentStudentVersionStateDTO(null, 1)));
         when(slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(ATTACHMENT_VIDEO_UNIT_ID)).thenReturn(List.of(hiddenSlide()));
 
         assertThat(attachmentService.regenerateStudentVersionOrRemoveOutdated(attachment)).isFalse();
@@ -203,6 +206,34 @@ class AttachmentServiceFileReplacementTest {
         attachmentService.regenerateStudentVersion(attachment);
 
         verify(fileService, never()).schedulePathForDeletion(any(Path.class), anyLong());
+    }
+
+    @Test
+    void uploadedStudentVersionIsDiscardedWhenANewerFileReplacedItsFile() throws IOException {
+        // Another save stored a newer file and its own student version before this upload's student version was published.
+        when(attachmentRepository.updateStudentVersionIfFileUnchanged(eq(ATTACHMENT_ID), anyString(), eq(1))).thenReturn(0);
+
+        attachmentService.replaceUploadedStudentVersionFile(new byte[] { 1, 2, 3 }, attachment, ATTACHMENT_VIDEO_UNIT_ID, "student.pdf");
+
+        var installedPath = ArgumentCaptor.forClass(Path.class);
+        verify(tempFileUtilService).replaceFileAtomically(any(Path.class), installedPath.capture(), any(byte[].class));
+        verify(fileService).schedulePathForDeletion(installedPath.getValue(), 0);
+        verify(fileService, never()).schedulePathForDeletion(oldStudentVersionPath(), 0);
+        assertThat(FileSystemLocation.storedFilename(attachment.getStudentVersion())).isEqualTo(OLD_STUDENT_VERSION);
+    }
+
+    @Test
+    void failedRegenerationRemovesTheReferenceItReadNotTheCallersOlderOne() {
+        // The caller loaded the attachment while it pointed at old.pdf; a regeneration in between published fresh.pdf. This regeneration reads fresh.pdf and then fails
+        // (the stored file does not exist), so fresh.pdf no longer matches the slides and must stop being served.
+        when(attachmentRepository.findStudentVersionStateById(ATTACHMENT_ID)).thenReturn(Optional.of(new AttachmentStudentVersionStateDTO("fresh.pdf", 1)));
+        when(slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(ATTACHMENT_VIDEO_UNIT_ID)).thenReturn(List.of(hiddenSlide()));
+        when(attachmentRepository.clearStudentVersionIfUnchanged(ATTACHMENT_ID, "fresh.pdf")).thenReturn(1);
+
+        assertThat(attachmentService.regenerateStudentVersionOrRemoveOutdated(attachment)).isFalse();
+
+        verify(attachmentRepository).clearStudentVersionIfUnchanged(ATTACHMENT_ID, "fresh.pdf");
+        verify(attachmentRepository, never()).clearStudentVersionIfUnchanged(ATTACHMENT_ID, OLD_STUDENT_VERSION);
     }
 
     @Test

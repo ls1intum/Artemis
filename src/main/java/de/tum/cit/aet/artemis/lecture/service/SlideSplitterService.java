@@ -66,13 +66,16 @@ public class SlideSplitterService {
 
     private final LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService;
 
+    private final AttachmentService attachmentService;
+
     public SlideSplitterService(SlideRepository slideRepository, AttachmentVideoUnitRepository attachmentVideoUnitRepository, SlideUnhideService slideUnhideService,
-            ExerciseRepository exerciseRepository, LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService) {
+            ExerciseRepository exerciseRepository, LectureUnitVisibilitySyncService lectureUnitVisibilitySyncService, AttachmentService attachmentService) {
         this.slideRepository = slideRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.slideUnhideService = slideUnhideService;
         this.exerciseRepository = exerciseRepository;
         this.lectureUnitVisibilitySyncService = lectureUnitVisibilitySyncService;
+        this.attachmentService = attachmentService;
     }
 
     /**
@@ -88,29 +91,38 @@ public class SlideSplitterService {
             log.debug("Skipping slide split job for deleted AttachmentVideoUnit {}", job.attachmentVideoUnitId());
             return CompletableFuture.completedFuture(null);
         }
+        boolean split = false;
         try {
-            splitIfStillCurrent(job, attachmentVideoUnit);
+            split = splitIfStillCurrent(job, attachmentVideoUnit);
         }
         finally {
             // The update request that scheduled this job left telling Iris about the new visibility to it. Whether the split succeeded, was undone after a failure, or was
             // skipped, tell Iris the visibility of the slides that are saved now.
             lectureUnitVisibilitySyncService.markVisibilityDirty(attachmentVideoUnit.getId());
         }
+        if (split) {
+            // Now the saved slides belong to the stored file. A student version regenerated while the split ran used the page numbers of the previous slides, so build it
+            // again from the new ones.
+            attachmentService.regenerateStudentVersionOrRemoveOutdated(attachmentVideoUnit.getAttachment());
+        }
         return CompletableFuture.completedFuture(null);
     }
 
-    private void splitIfStillCurrent(AttachmentVideoUnitSlideSplitJob job, AttachmentVideoUnit attachmentVideoUnit) {
+    /**
+     * @return whether the file was split into slides
+     */
+    private boolean splitIfStillCurrent(AttachmentVideoUnitSlideSplitJob job, AttachmentVideoUnit attachmentVideoUnit) {
         if (!job.matches(attachmentVideoUnit.getAttachment())) {
             log.debug("Skipping obsolete slide split job for AttachmentVideoUnit {} and attachment revision {}/{}/{}", job.attachmentVideoUnitId(), job.attachmentId(),
                     job.attachmentVersion(), job.attachmentSha256Hash());
-            return;
+            return false;
         }
 
         Optional<FileSystemLocation> fileLocation = attachmentVideoUnit.getAttachment().fileLocation();
         if (fileLocation.isEmpty()) {
             // An attachment that links to a document hosted elsewhere has no PDF here to split, and the filename its link ends in may belong to an unrelated attachment.
             log.debug("Skipping slide split job for AttachmentVideoUnit {}, whose attachment links to a document this application does not store", job.attachmentVideoUnitId());
-            return;
+            return false;
         }
 
         File file = fileLocation.get().path().toFile();
@@ -122,6 +134,7 @@ public class SlideSplitterService {
             else {
                 splitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, job.hiddenPages(), job.pageOrder());
             }
+            return true;
         }
         catch (IOException e) {
             log.error("Error while splitting AttachmentVideoUnit {} into single slides", attachmentVideoUnit.getId(), e);

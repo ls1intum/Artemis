@@ -89,11 +89,13 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
     List<AttachmentFileLocationDTO> findAttachmentFileLocationsAfter(@Param("minimumAttachmentId") long minimumAttachmentId, Pageable pageable);
 
     /**
-     * Stores the filename of a newly written student version. Only this column is written, so a concurrent change to other attachment fields is not overwritten.
+     * Stores the filename of a newly written student version, but only while the attachment still has the file version the student version belongs to. Only this column is
+     * written, so a concurrent change to other attachment fields is not overwritten.
      *
      * @param attachmentId           the id of the attachment
      * @param studentVersionFilename the stored filename of the new student version
-     * @return the number of updated attachments
+     * @param expectedVersion        the version of the file the student version was made for
+     * @return 1 when stored, 0 when a newer file has replaced that one in the meantime
      */
     @Transactional // ok because of modifying query
     @Modifying
@@ -101,8 +103,10 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
             UPDATE Attachment a
             SET a.studentVersion = :studentVersionFilename
             WHERE a.id = :attachmentId
+                AND (a.version = :expectedVersion OR (:expectedVersion IS NULL AND a.version IS NULL))
             """)
-    int updateStudentVersion(@Param("attachmentId") long attachmentId, @Param("studentVersionFilename") String studentVersionFilename);
+    int updateStudentVersionIfFileUnchanged(@Param("attachmentId") long attachmentId, @Param("studentVersionFilename") String studentVersionFilename,
+            @Param("expectedVersion") Integer expectedVersion);
 
     /**
      * Reads the stored student version reference and the file version of an attachment.

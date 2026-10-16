@@ -82,7 +82,7 @@ public class AttachmentService {
      * @param attachment The attachment whose student version needs to be regenerated
      */
     public void regenerateStudentVersion(Attachment attachment) {
-        regenerate(attachment, false);
+        regenerate(attachment, false, false);
     }
 
     /**
@@ -92,10 +92,14 @@ public class AttachmentService {
      * @param attachment the attachment whose missing student version should be generated
      */
     public void generateMissingStudentVersion(Attachment attachment) {
-        regenerate(attachment, true);
+        regenerate(attachment, true, false);
     }
 
-    private void regenerate(Attachment attachment, boolean onlyIfMissing) {
+    /**
+     * @param onlyIfMissing           whether to generate only while the attachment has no student version
+     * @param removeOutdatedOnFailure whether a failed attempt removes the student version it started from, so downloads fail closed; only while no newer one replaced it
+     */
+    private void regenerate(Attachment attachment, boolean onlyIfMissing, boolean removeOutdatedOnFailure) {
         AttachmentVideoUnit attachmentVideoUnit = attachment.getAttachmentVideoUnit();
         if (attachmentVideoUnit == null || attachment.getId() == null) {
             return;
@@ -136,6 +140,7 @@ public class AttachmentService {
                 writeStudentVersionFile(generateStudentVersionPdf(fileLocation.get().path().toFile(), hiddenSlides), attachmentVideoUnit.getId(), filename);
             }
             catch (Exception e) {
+                removeOutdatedAfterFailure(attachment, startedFromStudentVersion, removeOutdatedOnFailure);
                 throw new InternalServerErrorException("Failed to regenerate student version: " + e.getMessage(), e);
             }
 
@@ -147,6 +152,7 @@ public class AttachmentService {
             }
             catch (RuntimeException exception) {
                 deleteStudentVersionFile(attachmentVideoUnit.getId(), filename);
+                removeOutdatedAfterFailure(attachment, startedFromStudentVersion, removeOutdatedOnFailure);
                 throw exception;
             }
             if (published == 1) {
@@ -160,6 +166,7 @@ public class AttachmentService {
 
             deleteStudentVersionFile(attachmentVideoUnit.getId(), filename);
             if (attempt >= MAX_REGENERATION_ATTEMPTS) {
+                removeOutdatedAfterFailure(attachment, startedFromStudentVersion, removeOutdatedOnFailure);
                 throw new InternalServerErrorException("Failed to regenerate student version: attachment " + attachment.getId() + " kept changing while it was generated");
             }
             log.debug("Attachment {} changed while its student version was generated; generating it again", attachment.getId());
@@ -167,24 +174,32 @@ public class AttachmentService {
     }
 
     /**
+     * After a failed attempt, removes the student version reference that attempt read from the database, since it no longer matches the slides. A reference published after
+     * that read is newer and stays.
+     */
+    private void removeOutdatedAfterFailure(Attachment attachment, String startedFromStudentVersion, boolean removeOutdatedOnFailure) {
+        if (removeOutdatedOnFailure) {
+            removeStudentVersionIfUnchanged(attachment, FileSystemLocation.storedFilename(startedFromStudentVersion));
+        }
+    }
+
+    /**
      * Regenerates the student version without letting a failure abort the caller.
      * <p>
      * Callers use this after slide visibility has already been saved, so a failure must not undo or interrupt the rest of their work. If regeneration fails, the student version
-     * this attempt started from no longer matches the slides, so its reference is removed. With hidden slides left, downloads then fail closed instead of serving an outdated
-     * student version. The reference is only removed if no concurrent writer has replaced it in the meantime.
+     * the failed attempt read from the database no longer matches the slides, so its reference is removed. With hidden slides left, downloads then fail closed instead of serving
+     * an outdated student version. The reference is only removed if no concurrent writer has replaced it in the meantime.
      *
      * @param attachment the attachment whose student version should be regenerated
      * @return whether the student version was regenerated
      */
     public boolean regenerateStudentVersionOrRemoveOutdated(Attachment attachment) {
-        String startedFromStudentVersion = FileSystemLocation.storedFilename(attachment.getStudentVersion());
         try {
-            regenerateStudentVersion(attachment);
+            regenerate(attachment, false, true);
             return true;
         }
         catch (RuntimeException exception) {
             log.error("Failed to regenerate the student version of attachment {}: {}", attachment.getId(), exception.getMessage(), exception);
-            removeStudentVersionIfUnchanged(attachment, startedFromStudentVersion);
             return false;
         }
     }
@@ -325,21 +340,28 @@ public class AttachmentService {
     }
 
     /**
-     * Stores the reference to a written student version, and only then deletes the previous file. If storing the reference fails, the new file is deleted and the previous
-     * one stays referenced. Once the reference is stored, nothing here deletes or clears it again.
+     * Stores the reference to a written student version, and only then deletes the previous file. The reference is stored only while the attachment still has the file
+     * version the student version was made for; if a newer file replaced it in the meantime, the written file is deleted and the newer state stays. If storing the reference
+     * fails, the new file is deleted and the previous one stays referenced. Once the reference is stored, nothing here deletes or clears it again.
      *
-     * @param attachment            the attachment the student version belongs to
+     * @param attachment            the attachment the student version belongs to, with the file version it was made for
      * @param attachmentVideoUnitId the id of the attachment video unit
      * @param filename              the stored filename of the written student version
      */
     public void publishStudentVersionFile(Attachment attachment, long attachmentVideoUnitId, String filename) {
         String oldStudentVersion = FileSystemLocation.storedFilename(attachment.getStudentVersion());
+        int updated;
         try {
-            attachmentRepository.updateStudentVersion(attachment.getId(), filename);
+            updated = attachmentRepository.updateStudentVersionIfFileUnchanged(attachment.getId(), filename, attachment.getVersion());
         }
         catch (RuntimeException exception) {
             deleteStudentVersionFile(attachmentVideoUnitId, filename);
             throw exception;
+        }
+        if (updated == 0) {
+            log.info("A newer file replaced the file of attachment {} before its student version was stored, so that student version is discarded", attachment.getId());
+            deleteStudentVersionFile(attachmentVideoUnitId, filename);
+            return;
         }
         attachment.setStudentVersion(filename);
 
