@@ -1,10 +1,10 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class QuizStatisticUtil {
     private router = inject(Router);
 

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -79,7 +80,7 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
         irisChatWebsocketService.sendMessage(irisSession, message, null, null);
 
         var expectedRateLimitInfo = irisRateLimitService.getRateLimitInformation(irisSession, user);
-        verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()),
+        verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), userTopic("/topic/iris/" + irisSession.getId()),
                 eq(new IrisChatWebsocketDTO(IrisMessageResponseDTO.of(message), expectedRateLimitInfo, null, null, null, null, null, null)));
     }
 
@@ -94,7 +95,7 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
         irisChatWebsocketService.sendStatusUpdate(irisSession, "run-42", PyrisRunState.FAILED, error, "Updated title", List.of("suggestion"), null, List.of(activity), 7);
 
         var payloadCaptor = ArgumentCaptor.forClass(IrisChatWebsocketDTO.class);
-        verify(websocketMessagingService).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()), payloadCaptor.capture());
+        verify(websocketMessagingService).sendMessageToUser(eq(TEST_PREFIX + "student1"), userTopic("/topic/iris/" + irisSession.getId()), payloadCaptor.capture());
         var payload = payloadCaptor.getValue();
         assertThat(payload.type()).isEqualTo(IrisWebsocketMessageType.STATUS);
         assertThat(payload.runId()).isEqualTo("run-42");
@@ -113,7 +114,7 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
         irisChatWebsocketService.sendPartialUpdate(irisSession, "draft", 2, "run-43");
 
         var payloadCaptor = ArgumentCaptor.forClass(IrisChatWebsocketDTO.class);
-        verify(websocketMessagingService).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()), payloadCaptor.capture());
+        verify(websocketMessagingService).sendMessageToUser(eq(TEST_PREFIX + "student1"), userTopic("/topic/iris/" + irisSession.getId()), payloadCaptor.capture());
         var payload = payloadCaptor.getValue();
         assertThat(payload.type()).isEqualTo(IrisWebsocketMessageType.PARTIAL);
         assertThat(payload.runId()).isEqualTo("run-43");

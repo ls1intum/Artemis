@@ -87,6 +87,14 @@ describe('IrisBaseChatbotComponent', () => {
         onboardingEvent$: new Subject<any>(),
     } as any;
 
+    /** Gives the chat service a loaded session, which sending a message requires. */
+    function loadChatSession(): void {
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+        chatService.openChat(ChatServiceMode.COURSE, 123);
+    }
+
     beforeEach(async () => {
         statusMock.currentRatelimitInfo.mockReturnValue(of({}));
         statusMock.getActiveStatus.mockReturnValue(of(true));
@@ -142,6 +150,9 @@ describe('IrisBaseChatbotComponent', () => {
                 Object.defineProperty(chatService, 'initialLoadComplete$', { value: of(true), configurable: true });
                 httpService = TestBed.inject(IrisChatHttpService);
                 wsMock = TestBed.inject(IrisWebsocketService);
+                // The chat service subscribes to the per-session command channel alongside the message channel;
+                // give it a default subscribeable stream so session loads do not throw in tests that don't care.
+                vi.spyOn(wsMock, 'subscribeToSessionCommands').mockReturnValue(of());
                 accountService = TestBed.inject(AccountService);
                 mockOnboardingService.showOnboardingIfNeeded.mockResolvedValue(undefined);
 
@@ -164,6 +175,16 @@ describe('IrisBaseChatbotComponent', () => {
 
     it('should create', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should hide the context selector when context selection is not available', () => {
+        expect(fixture.nativeElement.querySelector('jhi-context-selection')).toBeTruthy();
+
+        fixture.componentRef.setInput('isContextSelectionAvailable', false);
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('jhi-context-selection')).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('.textarea-controls--send-only')).toBeTruthy();
     });
 
     it('should set userAccepted to CLOUD_AI if user has accepted the external LLM usage policy', () => {
@@ -411,6 +432,29 @@ describe('IrisBaseChatbotComponent', () => {
 
         expect(httpService.createMessage).not.toHaveBeenCalled();
         expect(component.newMessageTextContent()).toBe('');
+    });
+
+    it('should keep the message and not send it while the chat session has not loaded yet', () => {
+        vi.spyOn(httpService, 'createMessage');
+
+        // no chatService.openChat(): there is no session to send the message to
+        component.newMessageTextContent.set('Hello Iris');
+
+        expect(component.isSendDisabled()).toBe(true);
+
+        component.onSend();
+
+        expect(httpService.createMessage).not.toHaveBeenCalled();
+        expect(component.newMessageTextContent()).toBe('Hello Iris');
+    });
+
+    it('should enable sending once the chat session has loaded', () => {
+        component.newMessageTextContent.set('Hello Iris');
+        expect(component.isSendDisabled()).toBe(true);
+
+        loadChatSession();
+
+        expect(component.isSendDisabled()).toBe(false);
     });
 
     it('should anchor the sent user message at the top of the chat body without using ancestor scrolling', async () => {
@@ -1029,6 +1073,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should not disable submit button if isLoading is false and no error exists', () => {
+        loadChatSession();
         component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
         component.isLoading.set(false);
         component.newMessageTextContent.set('test message');
@@ -1040,6 +1085,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should not disable submit button if isLoading is false and error is not fatal', () => {
+        loadChatSession();
         component.userAccepted.set(LLMSelectionDecision.CLOUD_AI);
         component.isLoading.set(false);
         component.newMessageTextContent.set('test message');
@@ -1051,6 +1097,7 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     it('should handle suggestion click correctly', () => {
+        loadChatSession();
         const suggestion = 'test suggestion';
         vi.spyOn(component, 'onSend');
         vi.spyOn(chatService, 'sendMessage').mockReturnValue(of(undefined));

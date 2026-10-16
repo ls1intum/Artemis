@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -58,7 +59,7 @@ class HyperionCodeGenerationTaskServiceTest {
         service.runJobAsync("job-1", user, exercise, 1L, RepositoryType.SOLUTION, true, null, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventDTO> payloadCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventDTO.class);
-        verify(websocket).send(eq("student1"), eq("code-generation/jobs/job-1"), payloadCaptor.capture());
+        verify(websocket).send(eq("student1"), userTopic("/topic/hyperion/code-generation/jobs/job-1"), payloadCaptor.capture());
         HyperionCodeGenerationEventDTO payload = payloadCaptor.getValue();
         assertThat(payload.type()).isEqualTo(HyperionCodeGenerationEventDTO.Type.STARTED);
         assertThat(payload.jobId()).isEqualTo("job-1");
@@ -79,7 +80,7 @@ class HyperionCodeGenerationTaskServiceTest {
         service.runJobAsync("job-2", user, exercise, 1L, RepositoryType.TEMPLATE, false, null, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventDTO> payloadCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventDTO.class);
-        verify(websocket, times(2)).send(eq("student1"), eq("code-generation/jobs/job-2"), payloadCaptor.capture());
+        verify(websocket, times(2)).send(eq("student1"), userTopic("/topic/hyperion/code-generation/jobs/job-2"), payloadCaptor.capture());
 
         List<HyperionCodeGenerationEventDTO> payloads = payloadCaptor.getAllValues();
         assertThat(payloads).extracting(HyperionCodeGenerationEventDTO::type).containsExactly(HyperionCodeGenerationEventDTO.Type.STARTED,
@@ -102,7 +103,7 @@ class HyperionCodeGenerationTaskServiceTest {
                 "Tests were committed, but the build failed.");
 
         ArgumentCaptor<HyperionCodeGenerationEventDTO> payloadCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventDTO.class);
-        verify(websocket).send(eq("student1"), eq("code-generation/jobs/job-3"), payloadCaptor.capture());
+        verify(websocket).send(eq("student1"), userTopic("/topic/hyperion/code-generation/jobs/job-3"), payloadCaptor.capture());
 
         HyperionCodeGenerationEventDTO payload = payloadCaptor.getValue();
         assertThat(payload.type()).isEqualTo(HyperionCodeGenerationEventDTO.Type.DONE);
@@ -129,7 +130,7 @@ class HyperionCodeGenerationTaskServiceTest {
         publisherCaptor.getValue().fileUpdated("src/main/java/App.java", RepositoryType.TEMPLATE, 2);
 
         ArgumentCaptor<HyperionCodeGenerationEventDTO> payloadCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventDTO.class);
-        verify(websocket).send(eq("student1"), eq("code-generation/jobs/job-4"), payloadCaptor.capture());
+        verify(websocket).send(eq("student1"), userTopic("/topic/hyperion/code-generation/jobs/job-4"), payloadCaptor.capture());
 
         HyperionCodeGenerationEventDTO payload = payloadCaptor.getValue();
         assertThat(payload.type()).isEqualTo(HyperionCodeGenerationEventDTO.Type.FILE_UPDATED);
@@ -152,7 +153,7 @@ class HyperionCodeGenerationTaskServiceTest {
         publisherCaptor.getValue().fileDeleted("src/main/java/Obsolete.java", RepositoryType.TEMPLATE, 3);
 
         ArgumentCaptor<HyperionCodeGenerationEventDTO> payloadCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventDTO.class);
-        verify(websocket).send(eq("student1"), eq("code-generation/jobs/job-5"), payloadCaptor.capture());
+        verify(websocket).send(eq("student1"), userTopic("/topic/hyperion/code-generation/jobs/job-5"), payloadCaptor.capture());
 
         HyperionCodeGenerationEventDTO payload = payloadCaptor.getValue();
         assertThat(payload.type()).isEqualTo(HyperionCodeGenerationEventDTO.Type.FILE_DELETED);

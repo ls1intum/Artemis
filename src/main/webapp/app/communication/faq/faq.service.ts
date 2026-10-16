@@ -1,8 +1,8 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { CreateFaqDTO, Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
+import { CreateFaqDTO, Faq, FaqImportSearchResult, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { parseJson } from 'app/foundation/util/json.util';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
@@ -10,11 +10,11 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 type EntityResponseType = HttpResponse<Faq>;
 type EntityArrayResponseType = HttpResponse<Faq[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FaqService {
-    public resourceUrl = 'api/communication/courses';
-
     private http = inject(HttpClient);
+
+    public resourceUrl = 'api/communication/courses';
 
     create(courseId: number, createFaqDTO: CreateFaqDTO): Observable<EntityResponseType> {
         const copy = FaqService.convertCreateFaqFromClient(createFaqDTO);
@@ -38,6 +38,33 @@ export class FaqService {
         return this.http
             .get<Faq>(`${this.resourceUrl}/${courseId}/faqs/${faqId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => FaqService.convertFaqCategoriesFromServer(res)));
+    }
+
+    /**
+     * Searches visible FAQs outside the target course without loading every source course.
+     * @param courseId target course, excluded from the results
+     * @param searchTerm literal substring of the question, answer, or course name
+     * @param page zero-based result page
+     * @returns source FAQ details and exact pagination totals, normalizing omitted empty fields
+     */
+    searchForImport(courseId: number, searchTerm: string, page: number): Observable<FaqImportSearchResult> {
+        const params = new HttpParams().set('searchTerm', searchTerm).set('page', page);
+        return this.http
+            .get<Partial<FaqImportSearchResult>>(`${this.resourceUrl}/${courseId}/faqs/for-import`, { params })
+            .pipe(map((result) => ({ resultsOnPage: result.resultsOnPage ?? [], numberOfPages: result.numberOfPages ?? 0, totalElements: result.totalElements ?? 0 })));
+    }
+
+    /**
+     * Copies selected FAQs into the target course and decodes their categories for the course list.
+     * The server rechecks source access and accepts at most 500 distinct source IDs.
+     * @param courseId target course where the caller is an instructor
+     * @param faqIds source FAQ IDs selected across searches and pages
+     * @returns the created FAQ copies with their new IDs
+     */
+    importFaqs(courseId: number, faqIds: number[]): Observable<EntityArrayResponseType> {
+        return this.http
+            .post<Faq[]>(`${this.resourceUrl}/${courseId}/faqs/import`, { faqIds }, { observe: 'response' })
+            .pipe(map((res) => FaqService.convertFaqCategoryArrayFromServer(res)));
     }
 
     findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
@@ -171,17 +198,6 @@ export class FaqService {
 
     findAllCategoriesByCourseIdAndCategory(courseId: number, faqState: FaqState) {
         return this.http.get<string[]>(`${this.resourceUrl}/${courseId}/faq-categories/${faqState}`, {
-            observe: 'response',
-        });
-    }
-
-    /**
-     * Trigger the Ingestion of all Faqs in the course.
-     */
-    ingestFaqsInPyris(courseId: number): Observable<HttpResponse<void>> {
-        const params = new HttpParams();
-        return this.http.post<void>(`api/communication/courses/${courseId}/faqs/ingest`, null, {
-            params: params,
             observe: 'response',
         });
     }

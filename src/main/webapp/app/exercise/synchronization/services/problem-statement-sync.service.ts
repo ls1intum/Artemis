@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable, Subject, Subscription } from 'rxjs';
 import * as Y from 'yjs';
 import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
@@ -51,7 +51,7 @@ enum ProblemStatementSyncOrigin {
  * (`ProgrammingExerciseEditableInstructionComponent`) is always destroyed and recreated on
  * navigation, ensuring a clean lifecycle.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProblemStatementSyncService {
     private syncService = inject(ExerciseEditorSyncService);
     private accountService = inject(AccountService);
@@ -363,7 +363,7 @@ export class ProblemStatementSyncService {
                 }
                 // Tie-breaker: lexicographically smaller sessionId wins for determinism
                 return (next.sessionId ?? '') < (best.sessionId ?? '') ? next : best;
-            });
+            }, responses[0]);
             const update = decodeBase64ToUint8Array(selected.yjsUpdate);
             if (this.yDoc) {
                 Y.applyUpdate(this.yDoc, update, ProblemStatementSyncOrigin.Remote);

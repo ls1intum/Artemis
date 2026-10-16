@@ -22,7 +22,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
@@ -44,10 +43,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
-import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.domain.UserCourseRole;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
@@ -65,6 +64,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 @Entity
 @Table(name = "jhi_user")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Account root.")
 public class User extends AbstractAuditingEntity implements Participant {
 
     /**
@@ -87,7 +87,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public static final String IRIS_BOT_LOGIN = "iris_bot";
 
-    @NonNull
     @Pattern(regexp = Constants.LOGIN_REGEX)
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     @Column(length = USERNAME_MAX_LENGTH, unique = true, nullable = false)
@@ -106,7 +105,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     private String lastName;
 
     @Size(max = 20)
-    @Column(name = "registration_number", length = 20)
+    @Column(name = "registration_number", length = 20, unique = true)
     @JsonIgnore
     private String registrationNumber;
 
@@ -117,7 +116,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Email
     @Size(max = 100)
-    @Column(length = 100)
+    @Column(length = 100, unique = true)
     private String email;
 
     /**
@@ -234,11 +233,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @OneToMany(mappedBy = "owner", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnore
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
-
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonIgnoreProperties(value = "user", allowSetters = true)
-    @JoinColumn(name = "learner_profile_id")
-    private LearnerProfile learnerProfile;
 
     public User() {
     }
@@ -418,7 +412,7 @@ public class User extends AbstractAuditingEntity implements Participant {
      * <p>
      * Note for callers that need to know whether the collection was loaded: do NOT test the returned value with
      * {@code Hibernate.isInitialized(...)} — the wrapper is never a {@code PersistentSet}, so it always reports
-     * initialised. Use {@code Persistence.getPersistenceUtil().isLoaded(user, "courseRoles")}, which inspects the
+     * initialised. Use the persistence util's {@code isLoaded} check with {@code User_.COURSE_ROLES}, which inspects the
      * attribute itself.
      *
      * @return an unmodifiable view of this user's course roles
@@ -586,14 +580,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setPushNotificationDeviceConfigurations(Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations) {
         this.pushNotificationDeviceConfigurations = pushNotificationDeviceConfigurations;
-    }
-
-    public LearnerProfile getLearnerProfile() {
-        return learnerProfile;
-    }
-
-    public void setLearnerProfile(LearnerProfile learnerProfile) {
-        this.learnerProfile = learnerProfile;
     }
 
     /**

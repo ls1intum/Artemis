@@ -37,6 +37,7 @@ describe('TeamStudentsOnlineListComponent', () => {
     const now = dayjs('2025-01-01T12:00:00.000Z');
     const participationId = 123;
     const websocketTopic = `/topic/participations/${participationId}/team`;
+    const sendDestination = `/app/participations/${participationId}/team`;
 
     const flushIdentity = async () => {
         await Promise.resolve();
@@ -122,7 +123,7 @@ describe('TeamStudentsOnlineListComponent', () => {
 
         vi.advanceTimersByTime(1);
         expect(sendSpy).toHaveBeenCalledOnce();
-        expect(sendSpy).toHaveBeenCalledWith(`${websocketTopic}/trigger`, {});
+        expect(sendSpy).toHaveBeenCalledWith(`${sendDestination}/trigger`, {});
     });
 
     it('receives online students, converts server timestamps, computes typing students, and removes expired typing indicators', async () => {
@@ -186,13 +187,13 @@ describe('TeamStudentsOnlineListComponent', () => {
         typingSubject.next();
 
         expect(sendSpy).toHaveBeenCalledOnce();
-        expect(sendSpy).toHaveBeenCalledWith(`${websocketTopic}/typing`, {});
+        expect(sendSpy).toHaveBeenCalledWith(`${sendDestination}/typing`, {});
 
         vi.advanceTimersByTime(Math.ceil(component.SEND_TYPING_INTERVAL) + 1);
         typingSubject.next();
 
         expect(sendSpy).toHaveBeenCalledTimes(2);
-        expect(sendSpy).toHaveBeenLastCalledWith(`${websocketTopic}/typing`, {});
+        expect(sendSpy).toHaveBeenLastCalledWith(`${sendDestination}/typing`, {});
     });
 
     it('reports websocket receiver and typing stream errors to Sentry', async () => {

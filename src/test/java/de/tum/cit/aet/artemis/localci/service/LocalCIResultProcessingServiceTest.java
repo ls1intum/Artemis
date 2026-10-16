@@ -167,7 +167,7 @@ class LocalCIResultProcessingServiceTest {
     }
 
     private void withParticipation() {
-        when(participationRepository.findWithProgrammingExerciseWithBuildConfigById(PARTICIPATION_ID)).thenReturn(Optional.of(participation));
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.of(participation));
     }
 
     private void withSavedBuildJob() {
@@ -262,8 +262,8 @@ class LocalCIResultProcessingServiceTest {
         var withoutExercise = new ProgrammingExerciseStudentParticipation();
         withoutExercise.setId(PARTICIPATION_ID);
         withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
-        when(participationRepository.findWithProgrammingExerciseWithBuildConfigById(PARTICIPATION_ID)).thenReturn(Optional.of(withoutExercise));
-        when(programmingExerciseRepository.getProgrammingExerciseWithBuildConfigFromParticipation(withoutExercise)).thenReturn(exercise);
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.of(withoutExercise));
+        when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(withoutExercise)).thenReturn(exercise);
         withSavedBuildJob();
 
         resultProcessingService.processResultAsync();
@@ -472,7 +472,7 @@ class LocalCIResultProcessingServiceTest {
     void aBuildWhoseParticipationWasDeletedWhileItRanIsStillRecorded() {
         // The build still happened, and dropping it would leave a job in the history that never finished.
         withQueuedResult(new ResultQueueItem(buildResult, buildJob(RepositoryType.USER, RepositoryType.USER), List.of(), null));
-        when(participationRepository.findWithProgrammingExerciseWithBuildConfigById(PARTICIPATION_ID)).thenReturn(Optional.empty());
+        when(participationRepository.findWithProgrammingExerciseById(PARTICIPATION_ID)).thenReturn(Optional.empty());
         withSavedBuildJob();
 
         resultProcessingService.processResultAsync();

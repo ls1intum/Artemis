@@ -9,22 +9,22 @@
 >
     <!-- The scroll container sits inside the drop list so cdkDropList/cdkDrag containment is unaffected. -->
     <div class="table-scroll">
-        <table tumUiTable size="small" [sortField]="sortColumn()" [sortOrder]="sortAsc() ? 1 : -1" (sortChange)="onSortChange($event)">
+        <table tumAetUiTable size="small" [sortField]="sortColumn()" [sortOrder]="sortAsc() ? 1 : -1" (sortChange)="onSortChange($event)">
             <thead>
                 <tr>
                     @if (showCheckbox()) {
                         <th class="col-icon">
-                            <tum-ui-checkbox [ngModel]="allSelected()" [indeterminate]="someSelected()" (ngModelChange)="selectionAllChange.emit($event)" />
+                            <tumaet-ui-checkbox [ngModel]="allSelected()" [indeterminate]="someSelected()" (ngModelChange)="selectionAllChange.emit($event)" />
                         </th>
                     }
                     @if (showDragHandle()) {
                         <th class="col-icon"></th>
                     }
-                    <th tumUiSortableColumn="title"><span jhiTranslate="artemisApp.exercise.title"></span></th>
-                    <th tumUiSortableColumn="dueDate" class="col-dates"><span jhiTranslate="artemisApp.exerciseManagement.table.dates"></span></th>
-                    <th tumUiSortableColumn="points"><span jhiTranslate="artemisApp.exercise.points"></span></th>
+                    <th tumAetUiSortableColumn="title"><span jhiTranslate="artemisApp.exercise.title"></span></th>
+                    <th tumAetUiSortableColumn="dueDate" class="col-dates"><span jhiTranslate="artemisApp.exerciseManagement.table.dates"></span></th>
+                    <th tumAetUiSortableColumn="points"><span jhiTranslate="artemisApp.exercise.points"></span></th>
                     @if (!showGroupSelector()) {
-                        <th tumUiSortableColumn="difficulty"><span jhiTranslate="artemisApp.exercise.difficulty"></span></th>
+                        <th tumAetUiSortableColumn="difficulty"><span jhiTranslate="artemisApp.exercise.difficulty"></span></th>
                     }
                     @if (showGroupSelector()) {
                         <th jhiTranslate="artemisApp.exerciseManagement.table.group"></th>
@@ -44,7 +44,7 @@
                         </div>
                         @if (showCheckbox()) {
                             <td>
-                                <tum-ui-checkbox
+                                <tumaet-ui-checkbox
                                     [ngModel]="row.exercise.id !== undefined && selectedIds().has(row.exercise.id)"
                                     (ngModelChange)="row.exercise.id !== undefined && selectionToggle.emit(row.exercise.id)"
                                 />
@@ -108,13 +108,14 @@
                                     @case (IncludedInOverallScore.NOT_INCLUDED) {
                                         <span class="small text-secondary fw-semibold" jhiTranslate="artemisApp.exercise.notIncluded"></span>
                                     }
+                                    @default {}
                                 }
                             </div>
                         </td>
                         @if (!showGroupSelector()) {
                             <td>
                                 @if (row.exercise.difficulty) {
-                                    <tum-ui-tag [severity]="row.difficultySeverity" [value]="row.exercise.difficulty" />
+                                    <tumaet-ui-tag [severity]="row.difficultySeverity" [value]="row.exercise.difficulty" />
                                 } @else {
                                     <span class="text-muted fst-italic small" jhiTranslate="artemisApp.exerciseManagement.table.none"></span>
                                 }
@@ -122,8 +123,8 @@
                         }
                         @if (showGroupSelector()) {
                             <td>
-                                <span [tumUiTooltip]="row.nonIndividualQuizTooltip ?? ''" tumUiTooltipPlacement="top">
-                                    <tum-ui-select
+                                <span [tumAetUiTooltip]="row.nonIndividualQuizTooltip ?? ''" tumAetUiTooltipPlacement="top">
+                                    <tumaet-ui-select
                                         [options]="groupOptions()"
                                         [ngModel]="row.owningGroupId ?? NO_GROUP_OPTION_VALUE"
                                         (ngModelChange)="onGroupSelect(row.exercise, $event)"
@@ -138,10 +139,10 @@
                         }
                         <td>
                             @if (row.quizStatusLabel) {
-                                <tum-ui-tag class="me-1" [severity]="row.quizStatusSeverity" [value]="row.quizStatusLabel | artemisTranslate" />
+                                <tumaet-ui-tag class="me-1" [severity]="row.quizStatusSeverity" [value]="row.quizStatusLabel | artemisTranslate" />
                             }
                             @if (row.quizModeKey) {
-                                <tum-ui-tag class="me-1" severity="secondary" [value]="row.quizModeKey | artemisTranslate" />
+                                <tumaet-ui-tag class="me-1" severity="secondary" [value]="row.quizModeKey | artemisTranslate" />
                             }
                             @if (row.hasCategories) {
                                 <jhi-exercise-categories [exercise]="row.exercise" />

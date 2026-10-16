@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.account.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,16 +17,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.Organization;
+import de.tum.cit.aet.artemis.account.dto.OrganizationDTO;
 import de.tum.cit.aet.artemis.account.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for managing the Organization entities
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("organizations/organizations")
+@FeatureUsage(UserFeature.ORGANIZATIONS)
 @RestController
 @RequestMapping("api/account/")
 public class OrganizationResource {
@@ -46,9 +49,9 @@ public class OrganizationResource {
      */
     @GetMapping("organizations/courses/{courseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<Set<Organization>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<OrganizationDTO>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all organizations of course : {}", courseId);
         Set<Organization> organizations = organizationRepository.findAllOrganizationsByCourseId(courseId);
-        return new ResponseEntity<>(organizations, HttpStatus.OK);
+        return new ResponseEntity<>(organizations.stream().map(OrganizationDTO::of).collect(Collectors.toSet()), HttpStatus.OK);
     }
 }

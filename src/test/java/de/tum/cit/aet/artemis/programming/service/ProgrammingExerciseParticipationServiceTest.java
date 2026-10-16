@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
@@ -23,6 +24,7 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
@@ -68,6 +70,9 @@ class ProgrammingExerciseParticipationServiceTest {
     private GitService gitService;
 
     @Mock
+    private BareGitRepositoryService bareGitRepositoryService;
+
+    @Mock
     private VersionControlService versionControlService;
 
     @Mock
@@ -86,7 +91,7 @@ class ProgrammingExerciseParticipationServiceTest {
     @BeforeEach
     void setUp() {
         participationService = new ProgrammingExerciseParticipationService(solutionParticipationRepository, templateParticipationRepository, studentParticipationRepository,
-                participationRepository, gitService, Optional.of(versionControlService), resultRepository, submissionRepository, userRepository);
+                participationRepository, gitService, bareGitRepositoryService, Optional.of(versionControlService), resultRepository, submissionRepository, userRepository);
         exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
     }
@@ -149,7 +154,7 @@ class ProgrammingExerciseParticipationServiceTest {
     void getCommitInfos_whenTheRepositoryCannotBeRead_reportsNoCommitsRatherThanFailing() throws Exception {
         // The commit list is shown next to a participation; failing to read it must not take down the page around it.
         var uri = new LocalVCRepositoryUri(java.net.URI.create("https://artemis.example.com"), "ABC", "abc-student");
-        when(gitService.getCommitInfos(uri)).thenThrow(new CanceledException("the repository is locked"));
+        when(bareGitRepositoryService.getCommitInfos(uri)).thenThrow(new CanceledException("the repository is locked"));
 
         assertThat(participationService.getCommitInfos(uri)).isEmpty();
     }
@@ -332,7 +337,7 @@ class ProgrammingExerciseParticipationServiceTest {
     void getCommitInfos_returnsWhatTheRepositoryHolds() throws Exception {
         var uri = new LocalVCRepositoryUri(java.net.URI.create("https://artemis.example.com"), "ABC", "abc-student");
         var commit = new de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO("hash", "message", ZonedDateTime.now(), "Anna", "anna@example.com");
-        when(gitService.getCommitInfos(uri)).thenReturn(List.of(commit));
+        when(bareGitRepositoryService.getCommitInfos(uri)).thenReturn(List.of(commit));
 
         assertThat(participationService.getCommitInfos(uri)).containsExactly(commit);
     }
@@ -463,4 +468,11 @@ class ProgrammingExerciseParticipationServiceTest {
         context.setAuthentication(new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(login, null, java.util.List.of()));
         org.springframework.security.core.context.SecurityContextHolder.setContext(context);
     }
+
+    @Test
+    void missingBuildPlanKey_doesNotQueryParticipations() {
+        assertThat(participationService.getParticipationWithResults(null)).isNull();
+        verifyNoInteractions(templateParticipationRepository, solutionParticipationRepository, studentParticipationRepository);
+    }
+
 }

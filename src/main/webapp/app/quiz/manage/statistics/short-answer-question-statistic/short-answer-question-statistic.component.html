@@ -21,7 +21,11 @@
                                             }
                                             @if (shortAnswerQuestionUtil.isInputField(element) && !showSolution) {
                                                 <div class="short-answer-question-container">
-                                                    <input class="short-answer-question-container__input" disabled />
+                                                    <input
+                                                        [attr.aria-label]="'accessibility.shortAnswer' | artemisTranslate: { number: shortAnswerQuestionUtil.getSpotNr(element) }"
+                                                        class="short-answer-question-container__input"
+                                                        disabled
+                                                    />
                                                     <div class="short-answer-question-container__statistic-letter">
                                                         <span>{{ getLetter(shortAnswerQuestionUtil.getSpotNr(element) - 1) + '.' }}</span>
                                                     </div>
@@ -30,6 +34,7 @@
                                             @if (shortAnswerQuestionUtil.isInputField(element) && showSolution) {
                                                 <div class="short-answer-question-container">
                                                     <input
+                                                        [attr.aria-label]="'accessibility.shortAnswerSolution' | artemisTranslate"
                                                         class="short-answer-question-container__input"
                                                         disabled
                                                         [style.background]="'lightgreen'"
@@ -68,7 +73,7 @@
                                 </div>
                             </div>
                             <div class="quiz-statistic-chart" style="height: 525px">
-                                <tum-ui-bar-chart
+                                <tumaet-ui-bar-chart
                                     [labels]="chartData().labels"
                                     [series]="chartData().series"
                                     [config]="chartConfig()"

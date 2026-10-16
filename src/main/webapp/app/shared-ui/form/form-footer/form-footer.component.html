@@ -33,7 +33,7 @@
         @if (isSaving()) {
             <span jhiTranslate="entity.action.saving" class="badge bg-secondary align-content-center"></span>
         }
-        <button tumUiButton type="button" id="cancel-save" severity="secondary" size="small" (click)="onCancel.emit()">
+        <button tumAetUiButton type="button" id="cancel-save" severity="secondary" size="small" (click)="onCancel.emit()">
             <fa-icon [fixedWidth]="true" [icon]="faBan" class="sm" />
             <span class="hidden sm:inline" jhiTranslate="entity.action.cancel"></span>
         </button>
@@ -41,13 +41,13 @@
             <!-- aria-disabled rather than disabled, so the button stays focusable and can explain itself. Pointer
                  events stay on for the same reason: a blocked button still has to be able to show its tooltip. -->
             <button
-                tumUiButton
+                tumAetUiButton
                 type="button"
                 id="generate-with-ai"
                 class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
                 size="small"
-                [tumUiTooltip]="invalidReasonTexts()"
-                [tumUiTooltipDescribesHost]="false"
+                [tumAetUiTooltip]="invalidReasonTexts()"
+                [tumAetUiTooltipDescribesHost]="false"
                 [attr.aria-disabled]="isSubmitDisabled()"
                 [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
                 (click)="onGenerateWithAi()"
@@ -61,13 +61,13 @@
             </button>
         }
         <button
-            tumUiButton
+            tumAetUiButton
             type="button"
             id="save-entity"
             class="aria-disabled:opacity-60 aria-disabled:cursor-not-allowed"
             size="small"
-            [tumUiTooltip]="invalidReasonTexts()"
-            [tumUiTooltipDescribesHost]="false"
+            [tumAetUiTooltip]="invalidReasonTexts()"
+            [tumAetUiTooltipDescribesHost]="false"
             [attr.aria-disabled]="isSubmitDisabled()"
             [attr.aria-describedby]="invalidReasons().length ? invalidReasonsId : null"
             (click)="onSave()"

@@ -11,7 +11,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipFile;
 
 import org.apache.commons.io.FileUtils;
@@ -49,7 +49,7 @@ class GitRepositoryExportServiceExportTest {
     Path baseDir;
 
     @Mock
-    private GitService gitService;
+    private BareGitRepositoryService bareGitRepositoryService;
 
     private GitRepositoryExportService exportService;
 
@@ -59,7 +59,7 @@ class GitRepositoryExportServiceExportTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        exportService = new GitRepositoryExportService(gitService);
+        exportService = new GitRepositoryExportService(bareGitRepositoryService);
         Course course = new Course();
         course.setShortName("course1");
         exercise = new ProgrammingExercise();
@@ -95,7 +95,7 @@ class GitRepositoryExportServiceExportTest {
 
     private void withBareRepository() throws Exception {
         Repository bare = bareRepositoryWithACommit();
-        when(gitService.getBareRepository(any(LocalVCRepositoryUri.class), anyBoolean())).thenAnswer(invocation -> bare);
+        when(bareGitRepositoryService.getBareRepository(any(LocalVCRepositoryUri.class), anyBoolean())).thenAnswer(invocation -> bare);
     }
 
     private LocalVCRepositoryUri repositoryUri() {
@@ -165,7 +165,7 @@ class GitRepositoryExportServiceExportTest {
         Files.createDirectories(bareRepositoryPath);
         Git.init().setDirectory(bareRepositoryPath.toFile()).setBare(true).setInitialBranch("main").call().close();
         Repository empty = openBare();
-        when(gitService.getBareRepository(any(LocalVCRepositoryUri.class), anyBoolean())).thenReturn(empty);
+        when(bareGitRepositoryService.getBareRepository(any(LocalVCRepositoryUri.class), anyBoolean())).thenReturn(empty);
 
         assertThatExceptionOfType(IOException.class)
                 .isThrownBy(() -> exportService.exportRepositoryToZipFile(repositoryUri(), baseDir.resolve("out"), "export", RepositoryExportContent.WORKING_TREE_ONLY));
@@ -178,7 +178,7 @@ class GitRepositoryExportServiceExportTest {
         bareRepositoryPath = baseDir.resolve("empty.git");
         Files.createDirectories(bareRepositoryPath);
         Git.init().setDirectory(bareRepositoryPath.toFile()).setBare(true).setInitialBranch("main").call().close();
-        when(gitService.getBareRepository(any(LocalVCRepositoryUri.class), anyBoolean())).thenReturn(openBare());
+        when(bareGitRepositoryService.getBareRepository(any(LocalVCRepositoryUri.class), anyBoolean())).thenReturn(openBare());
         Path target = baseDir.resolve("out");
 
         assertThatExceptionOfType(IOException.class)
@@ -351,7 +351,7 @@ class GitRepositoryExportServiceExportTest {
         auxiliaryRepository.setName("helpers");
         auxiliaryRepository.setRepositoryUri("https://artemis.example.com/git/ABC/abc-helpers.git");
         auxiliaryRepository.setExercise(exercise);
-        exercise.setAuxiliaryRepositories(List.of(auxiliaryRepository));
+        exercise.setAuxiliaryRepositories(Set.of(auxiliaryRepository));
 
         var resource = exportService.exportInstructorAuxiliaryRepositoryForExerciseInMemory(exercise, auxiliaryRepository);
 

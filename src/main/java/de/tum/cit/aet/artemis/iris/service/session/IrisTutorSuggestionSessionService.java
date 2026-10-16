@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -15,12 +16,14 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.admin.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -115,7 +118,15 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     @Override
     protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisTutorSuggestionSession session) {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
-        builder.withCourse(post.getCoursePostingBelongsTo().getId());
+        builder.withCourse(courseOfPostElseThrow(post, session.getId()).getId());
+    }
+
+    private static Course courseOfPostElseThrow(Post post, Long sessionId) {
+        var course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new IllegalStateException("Course not found for session " + sessionId);
+        }
+        return course;
     }
 
     @Override
@@ -139,10 +150,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
         var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
 
-        var course = post.getCoursePostingBelongsTo();
-        if (course == null) {
-            throw new IllegalStateException("Course not found for session " + chatSession.getId());
-        }
+        var course = courseOfPostElseThrow(post, chatSession.getId());
 
         var settings = irisSettingsService.getSettingsForCourse(course);
         if (!settings.enabled()) {
@@ -200,8 +208,11 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     @Override
     public void checkHasAccessTo(User user, IrisTutorSuggestionSession irisSession) {
+        if (user == null) {
+            throw new AccessForbiddenException("Iris Session", irisSession.getId());
+        }
         var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, post.getCoursePostingBelongsTo(), user);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseOfPostElseThrow(post, irisSession.getId()), user);
         if (irisSession.getUserId() != user.getId()) {
             throw new AccessForbiddenException("Iris Session", irisSession.getId());
         }
@@ -221,10 +232,16 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
      *
      * @param job          The job to handle
      * @param statusUpdate The status update to handle
-     * @return The updated job
+     * @return The updated job, or {@code null} if the session no longer exists
      */
+    @Nullable
     public TrackedSessionBasedPyrisJob handleStatusUpdate(TrackedSessionBasedPyrisJob job, TutorSuggestionStatusUpdateDTO statusUpdate) {
         var session = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
+        if (session == null) {
+            // The session was deleted while its job was still running, so there is nothing left to update.
+            log.info("Dropping status update for Iris tutor suggestion job {} because its session {} no longer exists", job.jobId(), job.sessionId());
+            return null;
+        }
         IrisMessage savedMessage;
         IrisMessage savedArtifact;
         if (statusUpdate.artifact() != null || statusUpdate.result() != null) {

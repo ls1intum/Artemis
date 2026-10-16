@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
+import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.localci.service.LocalCITriggerService;
 import de.tum.cit.aet.artemis.localci.service.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localci.service.TestBuildAgentConfiguration;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCService;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
@@ -80,6 +82,10 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
     @MockitoSpyBean
     protected GitService gitServiceSpy;
+
+    // Spy is only used for simulating non-feasible failure scenarios. Please use the real bean otherwise.
+    @MockitoSpyBean
+    protected BareGitRepositoryService bareGitRepositoryServiceSpy;
 
     @Autowired
     protected LocalVCLocalCITestService localVCLocalCITestService;
@@ -143,6 +149,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
 
     @MockitoSpyBean
     protected IrisCitationService irisCitationService;
+
+    @MockitoSpyBean
+    protected IrisSessionPresenceService irisSessionPresenceService;
 
     @MockitoSpyBean
     protected PyrisPipelineService pyrisPipelineService;
@@ -235,9 +244,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTestBase extends Ab
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(gitServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService, programmingMessagingService,
-                competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, pyrisPipelineService, pyrisEventService, ldapUserService,
-                ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel);
+        Mockito.reset(gitServiceSpy, bareGitRepositoryServiceSpy, continuousIntegrationService, localCITriggerService, buildAgentConfiguration, resourceLoaderService,
+                programmingMessagingService, competencyProgressService, competencyProgressApi, irisCitationService, irisChatSessionService, irisSessionPresenceService,
+                pyrisPipelineService, pyrisEventService, ldapUserService, ldapTemplate, examLiveEventsService, pyrisFaqApi, azureOpenAiChatModel);
         super.resetSpyBeans();
     }
 

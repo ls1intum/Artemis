@@ -38,6 +38,13 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
     private static readonly SHRINK_TO_FIT_CLASS = 'monaco-shrink-to-fit';
     private static readonly CUSTOM_BACKSPACE_ACTION_ID = 'artemis-grapheme-backspace';
+    /*
+     * Injected services and elements.
+     */
+    private readonly renderer = inject(Renderer2);
+    private readonly translateService = inject(TranslateService);
+    private readonly elementRef = inject(ElementRef);
+    private readonly monacoEditorService = inject(MonacoEditorService);
 
     /** The primary code editor instance — created once in the constructor. Reassigned only during diff-mode transitions. */
     private _editor!: monaco.editor.IStandaloneCodeEditor; // assigned in initializeMonacoEditor(), called from the constructor
@@ -115,15 +122,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     private diffUpdateListener?: Disposable;
     private diffLayoutListener?: Disposable;
-
-    /*
-     * Injected services and elements.
-     */
-    private readonly renderer = inject(Renderer2);
-    private readonly translateService = inject(TranslateService);
-
-    private readonly elementRef = inject(ElementRef);
-    private readonly monacoEditorService = inject(MonacoEditorService);
 
     constructor() {
         /*
@@ -526,6 +524,23 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             this.textChangedEmitTimeouts.delete(modelKey);
         }, delay);
         this.textChangedEmitTimeouts.set(modelKey, timeoutId);
+    }
+
+    /**
+     * Emits a text change that is still waiting in the {@link textChangedEmitDelay} debounce right away, so that consumers
+     * that act on the content immediately (e.g. submitting a message on Enter) do not read a stale value.
+     * Does nothing if no change is pending.
+     */
+    flushPendingTextChange(): void {
+        const model = this.getModel();
+        const modelKey = model?.uri?.toString() ?? '';
+        const pending = this.textChangedEmitTimeouts.get(modelKey);
+        if (!pending) {
+            return;
+        }
+        clearTimeout(pending);
+        this.textChangedEmitTimeouts.delete(modelKey);
+        this.textChanged.emit({ text: this.getText(), fileName: this.extractFilePathFromModel(model) });
     }
 
     private extractFilePathFromModel(model: monaco.editor.ITextModel | null): string {

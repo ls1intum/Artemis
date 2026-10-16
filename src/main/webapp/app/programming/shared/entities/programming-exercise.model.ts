@@ -49,7 +49,6 @@ export class ProgrammingExercise extends Exercise {
     public templateParticipation?: TemplateProgrammingExerciseParticipation;
     public solutionParticipation?: SolutionProgrammingExerciseParticipation;
     public testRepositoryUri?: string;
-    public customizeBuildPlan?: boolean;
     public allowOnlineEditor?: boolean;
     public staticCodeAnalysisEnabled?: boolean;
     /**

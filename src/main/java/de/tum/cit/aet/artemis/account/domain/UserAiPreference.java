@@ -12,6 +12,7 @@ import jakarta.persistence.Table;
 import org.jspecify.annotations.Nullable;
 
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * An account's choices about AI features: which kind of LLM usage it consented to, and whether Memiris may remember
@@ -27,6 +28,7 @@ public class UserAiPreference {
 
     @Id
     @Column(name = "user_id")
+    @Parent
     private long userId;
 
     /**

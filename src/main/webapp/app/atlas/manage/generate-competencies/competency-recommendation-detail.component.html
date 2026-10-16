@@ -1,7 +1,17 @@
 @if (form()) {
     <div class="card form-group" [formGroup]="form()!">
         <div class="card-header">
-            <div class="d-flex align-items-center mw-100 clickable" (click)="toggle()">
+            <div
+                class="d-flex align-items-center mw-100 clickable"
+                (click)="toggle()"
+                [attr.aria-expanded]="!isCollapsed()"
+                #keyboardAction4
+                role="button"
+                tabindex="0"
+                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction4.click() : undefined"
+            >
                 <div class="me-3">
                     <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!isCollapsed()" />
                 </div>

@@ -189,6 +189,6 @@ public class IrisDashboardEmailService {
     }
 
     private MailRecipientDTO createRecipient(String email) {
-        return new MailRecipientDTO(email, "en", "iris-dashboard-recipient", "Administrator", null, null, null);
+        return MailRecipientDTO.forAdministrator(email, "iris-dashboard-recipient");
     }
 }

@@ -29,6 +29,7 @@
                 >
                     <jhi-information-box data-testid="exercise-status" [informationBoxData]="informationBoxItem" [layout]="boxLayout()">
                         <span contentComponent class="d-flex align-items-center gap-1">
+                            <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -- This span only isolates the nested controls from the parent header action. -->
                             <span (click)="$event.stopPropagation()" (keydown.enter)="$event.stopPropagation()" (keydown.space)="$event.stopPropagation()">
                                 <!--
                                     The build progress bar is two rows tall and needs ~230px of width. That fits the
@@ -39,6 +40,8 @@
                                     class="text-truncate result"
                                     [exercise]="informationBoxItem.content.value"
                                     [studentParticipation]="studentParticipation()"
+                                    [result]="displayedResult()"
+                                    [quizPracticeInProgress]="quizPracticeInProgress()"
                                     [quizLiveStatusOverride]="quizLiveStatus()"
                                     [isPractice]="isPractice()"
                                     [triggerLastGraded]="!isPractice()"
@@ -55,6 +58,7 @@
                                 [studentParticipation]="studentParticipation()"
                                 [showUngradedResults]="isPractice()"
                                 (viewingSubmissionChange)="viewingSubmissionChange.emit($event)"
+                                (displayedResultChange)="displayedResult.set($event)"
                             />
                         </span>
                     </jhi-information-box>
@@ -80,6 +84,7 @@
                         @case ('dateTime') {
                             <span contentComponent>{{ informationBoxItem.content.value | artemisDate }}</span>
                         }
+                        @default {}
                     }
                 </jhi-information-box>
             }

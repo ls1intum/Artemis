@@ -1,4 +1,4 @@
-<tum-ui-dialog
+<tumaet-ui-dialog
     [(visible)]="visible"
     [header]="'artemisApp.assessmentUpload.title' | artemisTranslate"
     size="large"
@@ -10,9 +10,9 @@
     <div class="assessment-upload">
         <p class="text-muted-color" jhiTranslate="artemisApp.assessmentUpload.description"></p>
 
-        <tum-ui-message severity="warn" [icon]="faTriangleExclamation" class="mb-2" data-testid="overwrite-warning">
+        <tumaet-ui-message severity="warn" [icon]="faTriangleExclamation" class="mb-2" data-testid="overwrite-warning">
             <span jhiTranslate="artemisApp.assessmentUpload.overwriteWarning"></span>
-        </tum-ui-message>
+        </tumaet-ui-message>
 
         <input #fileInput type="file" accept=".zip,application/zip" class="file-input" (change)="onFileInputChange($event)" data-testid="file-input" />
         <div
@@ -46,7 +46,12 @@
         }
 
         <div class="mt-3 flex items-center gap-2">
-            <tum-ui-checkbox inputId="assessment-upload-overwrite-confirmation" [(checked)]="overwriteConfirmed" [disabled]="isUploading()" data-testid="overwrite-confirmation" />
+            <tumaet-ui-checkbox
+                inputId="assessment-upload-overwrite-confirmation"
+                [(checked)]="overwriteConfirmed"
+                [disabled]="isUploading()"
+                data-testid="overwrite-confirmation"
+            />
             <label class="cursor-pointer mb-0" for="assessment-upload-overwrite-confirmation" jhiTranslate="artemisApp.assessmentUpload.overwriteConfirmation"></label>
         </div>
 
@@ -80,7 +85,7 @@
 
     <ng-template #footer>
         <div class="flex w-full items-center justify-between gap-2">
-            <tum-ui-button
+            <tumaet-ui-button
                 data-testid="download-template"
                 severity="secondary"
                 size="small"
@@ -90,12 +95,12 @@
             >
                 <fa-icon [icon]="faDownload" />
                 <span class="ml-1" jhiTranslate="artemisApp.assessmentUpload.downloadTemplateButton"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
             <div class="flex items-center gap-2">
-                <tum-ui-button severity="secondary" size="small" [disabled]="isUploading()" (clicked)="close()">
+                <tumaet-ui-button severity="secondary" size="small" [disabled]="isUploading()" (clicked)="close()">
                     <span jhiTranslate="entity.action.cancel"></span>
-                </tum-ui-button>
-                <tum-ui-button
+                </tumaet-ui-button>
+                <tumaet-ui-button
                     data-testid="upload-button"
                     severity="primary"
                     size="small"
@@ -105,8 +110,8 @@
                 >
                     <fa-icon [icon]="faCloudUploadAlt" />
                     <span class="ml-1" jhiTranslate="artemisApp.assessmentUpload.uploadButton"></span>
-                </tum-ui-button>
+                </tumaet-ui-button>
             </div>
         </div>
     </ng-template>
-</tum-ui-dialog>
+</tumaet-ui-dialog>

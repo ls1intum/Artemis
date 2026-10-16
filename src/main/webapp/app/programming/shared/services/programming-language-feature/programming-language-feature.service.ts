@@ -1,9 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingLanguageFeatureService {
     private profileService = inject(ProfileService);
 

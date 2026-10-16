@@ -255,7 +255,7 @@ public class ExerciseService {
         int numberOfCorrectionRounds = 1;
         if (examMode) {
             // set number of corrections specific to each correction round
-            numberOfCorrectionRounds = exercise.getExerciseGroup().getExam().getNumberOfCorrectionRoundsInExam();
+            numberOfCorrectionRounds = exercise.getExamElseThrow().getNumberOfCorrectionRoundsInExam();
             numberOfAssessmentsOfCorrectionRounds = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRounds);
         }
         else {
@@ -304,7 +304,7 @@ public class ExerciseService {
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByExerciseId(exerciseId);
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
 
-        stats.setFeedbackRequestEnabled(course.getComplaintsEnabled());
+        stats.setComplaintsEnabled(course.getComplaintsEnabled());
         stats.setFeedbackRequestEnabled(course.getRequestMoreFeedbackEnabled());
 
         return stats;
@@ -413,16 +413,19 @@ public class ExerciseService {
         }
 
         List<ParticipantScore> participantScoreList = participantScoreRepository.findAllByExercise(updatedExercise);
+        if (participantScoreList.isEmpty()) {
+            return;
+        }
+
+        Course course = updatedExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
         for (ParticipantScore participantScore : participantScoreList) {
             Double lastPoints = null;
             Double lastRatedPoints = null;
             if (participantScore.getLastScore() != null) {
-                lastPoints = roundScoreSpecifiedByCourseSettings(participantScore.getLastScore() * 0.01 * updatedExercise.getMaxPoints(),
-                        updatedExercise.getCourseViaExerciseGroupOrCourseMember());
+                lastPoints = roundScoreSpecifiedByCourseSettings(participantScore.getLastScore() * 0.01 * updatedExercise.getMaxPoints(), course);
             }
             if (participantScore.getLastRatedScore() != null) {
-                lastRatedPoints = roundScoreSpecifiedByCourseSettings(participantScore.getLastRatedScore() * 0.01 * updatedExercise.getMaxPoints(),
-                        updatedExercise.getCourseViaExerciseGroupOrCourseMember());
+                lastRatedPoints = roundScoreSpecifiedByCourseSettings(participantScore.getLastRatedScore() * 0.01 * updatedExercise.getMaxPoints(), course);
             }
             participantScore.setLastPoints(lastPoints);
             participantScore.setLastRatedPoints(lastRatedPoints);

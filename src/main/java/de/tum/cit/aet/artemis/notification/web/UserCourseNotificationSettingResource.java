@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
-import de.tum.cit.aet.artemis.notification.config.NotificationLegacyRestPaths;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSettingInfoDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationSettingSpecificationRequestDTO;
 import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingPresetRegistryService;
@@ -27,12 +27,9 @@ import de.tum.cit.aet.artemis.notification.service.CourseNotificationSettingServ
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("settings/course-settings")
+@FeatureUsage(UserFeature.NOTIFICATION_SETTINGS)
 @RestController
-// The legacy "api/communication/notification/" prefix is kept because artemis-android still calls it; it will be removed once
-// artemis-android#694 has shipped. New clients should use the "api/notification/courses/" prefix.
-@SuppressWarnings("deprecation")
-@RequestMapping({ "api/notification/courses/", NotificationLegacyRestPaths.COMMUNICATION_NOTIFICATION_PREFIX })
+@RequestMapping("api/notification/courses/")
 public class UserCourseNotificationSettingResource {
 
     private static final Logger log = LoggerFactory.getLogger(UserCourseNotificationSettingResource.class);
@@ -63,7 +60,7 @@ public class UserCourseNotificationSettingResource {
 
         var user = userRepository.getUser();
 
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(courseNotificationSettingService.getSettingInfo(user.getId(), courseId));
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(courseNotificationSettingService.getSettingInfo(user.getId(), user.isTestUser(), courseId));
     }
 
     /**
@@ -84,7 +81,7 @@ public class UserCourseNotificationSettingResource {
 
         var user = userRepository.getUser();
 
-        courseNotificationSettingService.applyPreset(presetId, user.getId(), courseId);
+        courseNotificationSettingService.applyPreset(presetId, user.getId(), user.isTestUser(), courseId);
 
         return ResponseEntity.ok().build();
     }
@@ -103,7 +100,7 @@ public class UserCourseNotificationSettingResource {
 
         var user = userRepository.getUser();
 
-        courseNotificationSettingService.applySpecification(notificationSpecifications.notificationTypeChannels(), user.getId(), courseId);
+        courseNotificationSettingService.applySpecification(notificationSpecifications.notificationTypeChannels(), user.getId(), user.isTestUser(), courseId);
 
         return ResponseEntity.ok().build();
     }

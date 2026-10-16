@@ -9,13 +9,13 @@ import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import {
-    TumUiButtonDirective,
-    TumUiListComponent,
-    TumUiListItemDirective,
-    TumUiMenuComponent,
-    TumUiMenuItemDirective,
-    TumUiMenuTriggerDirective,
-    TumUiTableDirective,
+    TumAetUiButtonDirective,
+    TumAetUiListComponent,
+    TumAetUiListItemDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiTableDirective,
 } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -37,13 +37,13 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         FaIconComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
-        TumUiButtonDirective,
-        TumUiListComponent,
-        TumUiListItemDirective,
-        TumUiMenuComponent,
-        TumUiMenuItemDirective,
-        TumUiMenuTriggerDirective,
-        TumUiTableDirective,
+        TumAetUiButtonDirective,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuItemDirective,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiTableDirective,
     ],
 })
 export class SshUserSettingsComponent implements OnInit, OnDestroy {

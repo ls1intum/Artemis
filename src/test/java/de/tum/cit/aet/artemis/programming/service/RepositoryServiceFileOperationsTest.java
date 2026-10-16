@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import de.tum.cit.aet.artemis.localvc.service.BareGitRepositoryService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
@@ -51,7 +52,9 @@ class RepositoryServiceFileOperationsTest {
         Git.init().setDirectory(workingTree.toFile()).setInitialBranch("main").call().close();
         GitService gitService = new GitService();
         ReflectionTestUtils.setField(gitService, "localVCBasePath", baseDir);
-        repositoryService = new RepositoryService(gitService, Optional.empty());
+        BareGitRepositoryService bareGitRepositoryService = new BareGitRepositoryService();
+        ReflectionTestUtils.setField(bareGitRepositoryService, "localVCBasePath", baseDir);
+        repositoryService = new RepositoryService(gitService, bareGitRepositoryService, Optional.empty());
 
         repository = new Repository(workingTree.resolve(".git").toString(), new LocalVCRepositoryUri(URI.create("https://artemis.example.com"), "ABC", "abc-exercise"));
         ReflectionTestUtils.setField(repository, "localPath", workingTree);
@@ -181,5 +184,23 @@ class RepositoryServiceFileOperationsTest {
     @Test
     void getFile_forAFileThatDoesNotExist_isReported() {
         assertThatExceptionOfType(FileNotFoundException.class).isThrownBy(() -> repositoryService.getFile(repository, "Missing.java"));
+    }
+
+    @Test
+    void createFile_forARepositoryWithoutLocalPath_isRejected() {
+        ReflectionTestUtils.setField(repository, "localPath", null);
+
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> repositoryService.createFile(repository, "src/Main.java", content("x")))
+                .withMessageContaining("no local path");
+    }
+
+    @Test
+    void getFilesContentFromBareRepository_forACommitThatCannotBeResolved_returnsNoFiles() throws Exception {
+        assertThat(repositoryService.getFilesContentFromBareRepository(repository, "no-such-commit")).isEmpty();
+    }
+
+    @Test
+    void getFileContentFromBareRepository_forACommitThatCannotBeResolved_returnsEmpty() throws Exception {
+        assertThat(repositoryService.getFileContentFromBareRepository(repository, "no-such-commit", "src/Main.java")).isEmpty();
     }
 }

@@ -7,7 +7,9 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicLong;
 
 import jakarta.annotation.PostConstruct;
 
@@ -15,6 +17,7 @@ import org.apache.sshd.common.util.buffer.Buffer;
 import org.apache.sshd.server.session.AbstractServerSession;
 import org.apache.sshd.server.session.ServerProxyAcceptor;
 import org.apache.sshd.server.session.ServerSession;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -39,7 +42,10 @@ import inet.ipaddr.IPAddressString;
  * Whether a header is required is decided by the connection's source address, never by whether a header happens to be
  * present. Trusting a header from any sender would let anyone who can reach the SSH port claim an arbitrary client
  * address, which is precisely what an origin check must not permit. So a connection from a configured proxy must begin
- * with a valid header and is closed otherwise, and a connection from anywhere else is passed through untouched.
+ * with a valid header and is closed otherwise. A header from anywhere else is removed and ignored, and the connection
+ * keeps its socket peer: left in the stream, the ssh server would read it as the client's identification line and
+ * answer every connection with "Unsupported protocol version", which is what a proxy with {@code proxy_protocol on} in
+ * front of a node that does not list it would otherwise cause.
  * <p>
  * Both PROXY protocol versions are handled: the human-readable v1 line and the binary v2 header. {@code LOCAL}
  * commands and unsupported address families are accepted but leave the client address alone, as the specification
@@ -85,7 +91,16 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
 
     private static final int V2_FAMILY_INET6 = 0x20;
 
+    /**
+     * Every git operation through a misconfigured proxy discards a header, so the warning about it is repeated at most
+     * this often rather than once per connection.
+     */
+    private static final Duration DISCARDED_HEADER_WARNING_INTERVAL = Duration.ofMinutes(10);
+
     private final IpRangeSet trustedSources;
+
+    /** The {@link System#nanoTime()} from which the next discarded header is reported as a warning again. */
+    private final AtomicLong nextDiscardedHeaderWarning = new AtomicLong(System.nanoTime());
 
     public ProxyProtocolAcceptor(SshProxyProtocolConfiguration configuration) {
         this.trustedSources = IpRangeSet.parse(configuration.getTrustedSources(), TRUSTED_SOURCES_PROPERTY);
@@ -98,8 +113,8 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
     @PostConstruct
     public void logConfiguredSources() {
         if (trustedSources.isEmpty()) {
-            log.info("PROXY protocol is disabled for the git ssh server ({} is empty). If ssh reaches this node through a load balancer, every connection will be attributed to "
-                    + "the balancer rather than to the client.", TRUSTED_SOURCES_PROPERTY);
+            log.info("The git ssh server believes no PROXY protocol header ({} is empty) and removes one a proxy sends anyway. If ssh reaches this node through a load balancer, "
+                    + "every connection will be attributed to the balancer rather than to the client.", TRUSTED_SOURCES_PROPERTY);
         }
         else {
             log.info("The git ssh server expects a PROXY protocol header from {}. Those sources must have proxy_protocol enabled.", trustedSources);
@@ -107,7 +122,7 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
     }
 
     /**
-     * @return whether any trusted source is configured, i.e. whether this acceptor does anything
+     * @return whether any trusted source is configured, i.e. whether a header can set the client address at all
      */
     public boolean isEnabled() {
         return !trustedSources.isEmpty();
@@ -115,37 +130,37 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
 
     @Override
     public boolean acceptServerProxyMetadata(ServerSession session, Buffer buffer) throws Exception {
-        if (trustedSources.isEmpty()) {
-            return true;
-        }
-
         // The raw socket peer, deliberately not getClientAddress(): this method is called again for the same session
         // when the ssh identification line that follows the header arrives incomplete, and by then getClientAddress()
         // would already return the address we parsed out of the header.
         String peer = hostOf(session.getIoSession().getRemoteAddress());
-        if (!trustedSources.contains(peer)) {
-            // Not a load balancer we operate, so no header is expected and none may be believed. Leave the read
-            // position untouched so the ssh identification line is read from the start of the data.
-            return true;
-        }
+        // Only a load balancer we operate may name the client. A header from anyone else is still parsed, but only to
+        // remove it from the stream; the address it names is never applied.
+        boolean trusted = trustedSources.contains(peer);
 
         byte[] data = buffer.array();
         int start = buffer.rpos();
         int length = buffer.wpos() - start;
 
         if (startsWith(data, start, length, V2_SIGNATURE)) {
-            return parseVersion2(session, buffer, data, start, length);
+            return parseVersion2(session, buffer, data, start, length, peer, trusted);
         }
         if (startsWith(data, start, length, V1_PREFIX)) {
-            return parseVersion1(session, buffer, data, start, length);
+            return parseVersion1(session, buffer, data, start, length, peer, trusted);
         }
 
         // Not (yet) recognisable. While the received bytes are still a prefix of either marker, more data may complete
-        // it; once they diverge, this is not a PROXY header at all and the connection must not be served, because it
-        // came from an address whose traffic we would otherwise attribute to a client it never named.
+        // it. An ssh identification line diverges from both at its first byte, so this never delays ordinary ssh.
         if (isPrefixOf(data, start, length, V2_SIGNATURE) || isPrefixOf(data, start, length, V1_PREFIX)) {
             return false;
         }
+        if (!trusted) {
+            // Ordinary ssh from a peer that is not a proxy: leave the read position untouched so the identification
+            // line is read from the start of the data.
+            return true;
+        }
+        // From a configured proxy, this is not a PROXY header at all and the connection must not be served, because it
+        // came from an address whose traffic we would otherwise attribute to a client it never named.
         throw new IllegalStateException("Expected a PROXY protocol header from " + peer + ", which is configured in " + TRUSTED_SOURCES_PROPERTY
                 + ", but the connection did not start with one. Enable proxy_protocol for this listener on that proxy, or remove the address from that property.");
     }
@@ -153,7 +168,7 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
     /**
      * Parses the human-readable v1 line, {@code PROXY TCP4 <src> <dst> <srcPort> <dstPort>\r\n}.
      */
-    private boolean parseVersion1(ServerSession session, Buffer buffer, byte[] data, int start, int length) throws UnknownHostException {
+    private boolean parseVersion1(ServerSession session, Buffer buffer, byte[] data, int start, int length, @Nullable String peer, boolean trusted) throws UnknownHostException {
         // Bounded to the maximum permitted line length: without this, a malformed line with no terminator of its own
         // would find the CRLF of the ssh identification line that follows and parse the two as one header.
         int lineEnd = indexOfCrLf(data, start, Math.min(length, V1_MAX_LENGTH));
@@ -167,6 +182,11 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
         String line = new String(data, start, lineEnd - start, StandardCharsets.US_ASCII);
         // +2 for the CRLF: the ssh identification line begins immediately after it
         buffer.rpos(lineEnd + 2);
+
+        if (!trusted) {
+            reportDiscardedHeader(peer);
+            return true;
+        }
 
         String[] parts = line.split(" ");
         // "PROXY UNKNOWN" carries no usable address, which the specification allows; keep the socket peer.
@@ -182,7 +202,7 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
     /**
      * Parses the binary v2 header.
      */
-    private boolean parseVersion2(ServerSession session, Buffer buffer, byte[] data, int start, int length) throws UnknownHostException {
+    private boolean parseVersion2(ServerSession session, Buffer buffer, byte[] data, int start, int length, @Nullable String peer, boolean trusted) throws UnknownHostException {
         if (length < V2_HEADER_LENGTH) {
             return false;
         }
@@ -208,6 +228,11 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
 
         buffer.rpos(start + totalLength);
 
+        if (!trusted) {
+            reportDiscardedHeader(peer);
+            return true;
+        }
+
         // LOCAL means the proxy is speaking for itself, typically a health check, and carries no client address.
         if ((versionAndCommand & 0x0F) != V2_COMMAND_PROXY) {
             log.debug("PROXY protocol v2 LOCAL command, keeping the socket peer as the client address");
@@ -227,6 +252,26 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
             log.debug("PROXY protocol v2 header with address family 0x{}, keeping the socket peer as the client address", Integer.toHexString(family));
         }
         return true;
+    }
+
+    /**
+     * A proxy that sends headers without being listed keeps ssh working, but every connection through it is attributed
+     * to the proxy, which is the one thing the operator enabling {@code proxy_protocol} wanted to avoid. Nothing but the
+     * log can tell them, so it is a warning, repeated every {@link #DISCARDED_HEADER_WARNING_INTERVAL} rather than once
+     * per git operation.
+     */
+    private void reportDiscardedHeader(@Nullable String peer) {
+        long now = System.nanoTime();
+        long next = nextDiscardedHeaderWarning.get();
+        if (now - next >= 0 && nextDiscardedHeaderWarning.compareAndSet(next, now + DISCARDED_HEADER_WARNING_INTERVAL.toNanos())) {
+            log.warn(
+                    "Discarded a PROXY protocol header from {}, which is not listed in {}, so ssh connections from there are attributed to {} rather than to the client "
+                            + "the header names. If this is your load balancer, add its address to that property. Repeated at most every {} minutes.",
+                    peer, TRUSTED_SOURCES_PROPERTY, peer, DISCARDED_HEADER_WARNING_INTERVAL.toMinutes());
+        }
+        else {
+            log.debug("Discarded a PROXY protocol header from {}, which is not listed in {}", peer, TRUSTED_SOURCES_PROPERTY);
+        }
     }
 
     private static int readPort(byte[] data, int offset) {
@@ -275,6 +320,7 @@ public class ProxyProtocolAcceptor implements ServerProxyAcceptor {
         }
     }
 
+    @Nullable
     private static String hostOf(SocketAddress address) {
         if (address instanceof InetSocketAddress inetSocketAddress && inetSocketAddress.getAddress() != null) {
             return inetSocketAddress.getAddress().getHostAddress();

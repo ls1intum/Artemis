@@ -11,8 +11,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.StringUtils;
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.text.LineBreakRendering;
+import org.commonmark.renderer.text.TextContentRenderer;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.MessageSource;
@@ -25,6 +33,7 @@ import org.springframework.stereotype.Service;
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -32,7 +41,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -40,13 +49,16 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisContextSwitchMarker;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
+import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
+import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchHandoffDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisMessageContextDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -54,13 +66,17 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.IrisSessionPresenceService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisSuggestedContextDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.notification.domain.course_notifications.IrisResponseNotification;
+import de.tum.cit.aet.artemis.notification.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -90,6 +106,14 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private static final Logger log = LoggerFactory.getLogger(IrisChatSessionService.class);
 
+    private static final int MESSAGE_PREVIEW_MAX_LENGTH = 200;
+
+    private static final Parser MESSAGE_PREVIEW_PARSER = Parser.builder().build();
+
+    private static final TextContentRenderer MESSAGE_PREVIEW_RENDERER = TextContentRenderer.builder().lineBreakRendering(LineBreakRendering.STRIP).build();
+
+    private static final Pattern WHITESPACE_PATTERN = Pattern.compile("\\s+");
+
     private final IrisSettingsService irisSettingsService;
 
     private final UserAiPreferenceService userAiPreferenceService;
@@ -114,13 +138,30 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final IrisChatPipelineExecutionService chatPipelineExecutionService;
 
+    private final IrisCitationService irisCitationService;
+
+    /**
+     * Instance-wide kill switch for Artemis' own build-triggered proactive events. Deliberately kept alongside the
+     * per-course setting: this one is checked before any result, course or DB access, so it can stop the whole
+     * mechanism without a settings lookup. Both must be on for a trigger to fire.
+     */
+    private final boolean globalLegacyBuildTriggersEnabled;
+
+    private final UserRepository userRepository;
+
+    private final CourseNotificationService courseNotificationService;
+
+    private final IrisSessionPresenceService irisSessionPresenceService;
+
     public IrisChatSessionService(IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, LLMTokenUsageService llmTokenUsageService,
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, IrisChatSessionRepository irisChatSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, JsonMapper objectMapper, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
             CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, IrisCitationService irisCitationService, MessageSource messageSource,
-            IrisChatPipelineExecutionService chatPipelineExecutionService, PyrisJobService pyrisJobService, UserAiPreferenceService userAiPreferenceService) {
+            IrisChatPipelineExecutionService chatPipelineExecutionService, PyrisJobService pyrisJobService, UserAiPreferenceService userAiPreferenceService,
+            IrisProactiveProperties proactiveProperties, UserRepository userRepository, CourseNotificationService courseNotificationService,
+            IrisSessionPresenceService irisSessionPresenceService) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService), pyrisJobService);
         this.irisSettingsService = irisSettingsService;
@@ -135,6 +176,13 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.messageSource = messageSource;
         this.chatPipelineExecutionService = chatPipelineExecutionService;
+        this.irisCitationService = irisCitationService;
+        // Snapshot at construction, as before: the guard at the trigger path reads a field, not a live bean, so a
+        // rebind cannot flip the switch under a run that already passed it.
+        this.globalLegacyBuildTriggersEnabled = proactiveProperties.isLegacyBuildTriggers();
+        this.userRepository = userRepository;
+        this.courseNotificationService = courseNotificationService;
+        this.irisSessionPresenceService = irisSessionPresenceService;
     }
     // -------------------------------------------------------------------------
     // IrisChatBasedFeatureInterface implementation
@@ -151,14 +199,84 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     /**
+     * After an Iris answer is persisted and pushed over the websocket, notify the user if the chat is
+     * not open live anywhere (app backgrounded/closed, or the chat closed in the web client).
+     * <p>
+     * The push notification is only sent when the triggering user message originated from the iOS app
+     * ({@link ArtemisApp#IOS}). Messages sent from other clients (e.g. the web client or the Android app) or
+     * event-triggered Iris responses (which have no client origin) never produce a push notification.
+     */
+    @Override
+    protected void notifyUserOfIrisResponse(IrisChatSession session, IrisMessage message, @Nullable ArtemisApp clientOrigin) {
+        if (clientOrigin != ArtemisApp.IOS) {
+            // The triggering message did not come from the iOS app — do not send a push notification.
+            return;
+        }
+        try {
+            var user = userRepository.findByIdElseThrow(session.getUserId());
+            if (irisSessionPresenceService.isSessionOpenAnywhere(user.getLogin(), session.getId())) {
+                // The chat is open live somewhere — the websocket already delivered the answer.
+                return;
+            }
+            var course = courseRepository.findByIdElseThrow(session.getCourseId());
+            String preview = buildPreview(message, localizedMessagePreviewFallback(user.getLangKey()));
+            var notification = new IrisResponseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), session.getId(), preview, session.getTitle());
+            courseNotificationService.sendCourseNotification(notification, List.of(user));
+        }
+        catch (Exception e) {
+            // A notification failure must never interfere with the chat response flow.
+            log.error("Failed to send Iris response notification for session {}", session.getId(), e);
+        }
+    }
+
+    /**
+     * Builds a short single-line plain-text preview of an assistant message for use in notifications.
+     * <p>
+     * Iris answers are Markdown, but neither the push notification banner nor the in-app notification list can
+     * render Markdown. The formatting is therefore flattened to plain text: all text contents are concatenated,
+     * parsed and re-rendered with commonmark's {@link TextContentRenderer} (which drops emphasis, heading, link
+     * and list markup while keeping the readable text), collapsed to a single line and truncated to
+     * {@link #MESSAGE_PREVIEW_MAX_LENGTH} characters. Non-text contents (e.g. JSON tool calls) are skipped.
+     *
+     * @param message  the assistant message to preview
+     * @param fallback the localized text returned if the message has no renderable text content
+     * @return a single-line, length-bounded plain-text preview, or the given fallback if the message has no text
+     */
+    private static String buildPreview(IrisMessage message, String fallback) {
+        String markdown = message.getContent().stream().filter(IrisTextMessageContent.class::isInstance).map(IrisMessageContent::getContentAsString).filter(Objects::nonNull)
+                .collect(Collectors.joining(" ")).strip();
+        if (markdown.isBlank()) {
+            return fallback;
+        }
+        Node document = MESSAGE_PREVIEW_PARSER.parse(markdown);
+        String plainText = WHITESPACE_PATTERN.matcher(MESSAGE_PREVIEW_RENDERER.render(document)).replaceAll(" ").strip();
+        if (plainText.isBlank()) {
+            return fallback;
+        }
+        return StringUtils.abbreviate(plainText, "…", MESSAGE_PREVIEW_MAX_LENGTH);
+    }
+
+    /**
+     * Resolves the localized fallback preview text shown when an assistant message has no renderable text content.
+     *
+     * @param langKey the user's language key (falls back to English if null or blank)
+     * @return the localized fallback preview text
+     */
+    private String localizedMessagePreviewFallback(String langKey) {
+        Locale locale = langKey == null || langKey.isBlank() ? Locale.ENGLISH : Locale.forLanguageTag(langKey);
+        return messageSource.getMessage("iris.chat.notification.messagePreviewFallback", null, "Iris has answered your message", locale);
+    }
+
+    /**
      * Sends all messages of the session to the LLM with optional uncommitted file changes and optional context information.
      *
      * @param session          The chat session
      * @param uncommittedFiles The uncommitted files from the client
      * @param context          Optional list of context objects providing information about what the user is viewing (not persisted)
+     * @param clientId         Identifies the browser tab the message was sent from, so a command Iris issues mid-pipeline is addressed back to it; null if the client sent none
      */
-    public void requestAndHandleResponseWithAdditionalData(IrisChatSession session, Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context) {
-        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles, context);
+    public void requestAndHandleResponseWithAdditionalData(IrisChatSession session, Map<String, String> uncommittedFiles, List<IrisMessageContextDTO> context, String clientId) {
+        chatPipelineExecutionService.execute(session, Optional.empty(), Optional.empty(), Optional.empty(), uncommittedFiles, context, clientId);
     }
 
     // -------------------------------------------------------------------------
@@ -183,7 +301,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      */
     @Override
     public void checkHasAccessTo(User user, IrisChatSession session) {
-        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
+        // No LLM opt-in check here. IrisSessionService#checkHasAccessToIrisSession owns that gate for every session
+        // type and is the only caller. A second, unconditional copy would stop a caller from recording an
+        // already-delivered hint's outcome without a live opt-in.
 
         // Session ownership check (uniform across all contexts)
         if (!Objects.equals(session.getUserId(), user.getId())) {
@@ -247,10 +367,17 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      */
     @EventListener
     public void handleNewResultEvent(NewResultEvent resultEvent) {
+        if (!globalLegacyBuildTriggersEnabled) {
+            return;
+        }
         var result = resultEvent.getEventObject();
         var participation = result.getSubmission().getParticipation();
 
-        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) || participation.getExercise().isExamExercise()) {
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
+            return;
+        }
+        var exercise = studentParticipation.getProgrammingExercise();
+        if (exercise == null || exercise.isExamExercise()) {
             return;
         }
 
@@ -259,24 +386,27 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         }
 
         var programmingSubmission = (ProgrammingSubmission) result.getSubmission();
+        // Loaded once and handed down, so both branches share this lookup instead of repeating it for their own
+        // `enabled()` check. The per-course legacy switch belongs to the same lookup, so it is decided here too.
+        var course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+        var settings = irisSettingsService.getSettingsForCourse(course);
+        if (!settings.enabled() || !settings.legacyBuildTriggersEffective()) {
+            return;
+        }
         if (programmingSubmission.isBuildFailed()) {
-            onBuildFailure(studentParticipation, programmingSubmission);
+            onBuildFailure(exercise, studentParticipation, programmingSubmission, settings);
         }
         else {
-            onNewResult(studentParticipation, programmingSubmission);
+            onNewResult(exercise, studentParticipation, programmingSubmission, settings);
         }
     }
 
-    private void onBuildFailure(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission submission) {
-        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
-        if (!settings.enabled()) {
-            return;
-        }
-
+    private void onBuildFailure(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission submission,
+            IrisCourseSettings settings) {
         var user = studentParticipation.getStudent().orElseThrow();
-        var session = findExerciseSessionOrCourseFallback(studentParticipation.getProgrammingExercise(), user, PROGRAMMING_EXERCISE_CHAT);
+        var session = findExerciseSessionOrCourseFallback(exercise, user, PROGRAMMING_EXERCISE_CHAT);
         if (session.getMode() == COURSE_CHAT) {
-            applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, studentParticipation.getProgrammingExercise().getId(), user);
+            applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
         }
         rateLimitService.checkRateLimitElseThrow(session, user);
         log.info("Build failed for user {}", user.getName());
@@ -287,12 +417,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 });
     }
 
-    private void onNewResult(ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission) {
-        var settings = irisSettingsService.getSettingsForCourse(studentParticipation.getProgrammingExercise().getCourseViaExerciseGroupOrCourseMember());
-        if (!settings.enabled()) {
-            return;
-        }
-
+    private void onNewResult(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation studentParticipation, ProgrammingSubmission latestSubmission,
+            IrisCourseSettings settings) {
         // TODO: Reduce this call to the last 5 submissions or sth
         var recentSubmissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(studentParticipation.getId());
 
@@ -309,9 +435,9 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             if (needsIntervention) {
                 log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
                 var user = studentParticipation.getStudent().orElseThrow();
-                var session = findExerciseSessionOrCourseFallback(studentParticipation.getProgrammingExercise(), user, PROGRAMMING_EXERCISE_CHAT);
+                var session = findExerciseSessionOrCourseFallback(exercise, user, PROGRAMMING_EXERCISE_CHAT);
                 if (session.getMode() == COURSE_CHAT) {
-                    applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, studentParticipation.getProgrammingExercise().getId(), user);
+                    applyContextChange(session, PROGRAMMING_EXERCISE_CHAT, exercise.getId(), user);
                 }
                 rateLimitService.checkRateLimitElseThrow(session, user);
                 CompletableFuture.runAsync(() -> chatPipelineExecutionService.execute(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase(Locale.ROOT)),
@@ -431,32 +557,53 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      * @param user        the requesting user
      */
     public void applyContextChange(IrisChatSession session, IrisChatMode newMode, long newEntityId, User user) {
-        if (session.getMode() == newMode && session.getEntityId() == newEntityId) {
+        // No pre-check on the caller's copy: it can be stale in both directions, so a switch to A while another
+        // request has moved the session to B would return early and leave it on B. Only the check under the lock
+        // decides. This one depends on the target and the user alone, so it stays outside that lock.
+        var resolved = resolveAndAuthorize(newMode, newEntityId, user);
+
+        // Marker append and context update under one session write lock, in the repository. If the append were the
+        // only holder it would release the lock on its own commit, and the context update would cascade-merge a
+        // stale message list that orphanRemoval then prunes.
+        IrisMessage savedMarker = irisSessionRepository.switchContextAndAppendMarker(session.getId(), newMode, newEntityId, resolved.course().getId(), resolved.entityName());
+
+        if (savedMarker == null) {
+            // Lost the race to an identical switch, so mirror the context and stay quiet.
+            session.setMode(newMode);
+            session.setEntityId(newEntityId);
             return;
         }
 
-        long courseId = session.getCourseId();
-
-        var resolved = resolveAndAuthorize(newMode, newEntityId, user);
-
-        if (resolved.course().getId() != courseId) {
-            throw new ConflictException("New context must belong to the same course as the session", "Iris", "irisCourseMismatch");
-        }
-
-        String newEntityName = resolved.entityName();
-
-        IrisChatMode previousMode = session.getMode();
-        var marker = IrisContextSwitchMarker.forSwitch(previousMode, newMode, newEntityId, newEntityName);
-
-        IrisMessage markerMessage = new IrisMessage();
-        markerMessage.addContent(new IrisJsonMessageContent(JsonObjectMapper.get().valueToTree(marker)));
-        IrisMessage savedMarker = irisMessageService.saveMessage(markerMessage, session, IrisMessageSender.CTXSWAP);
-
+        // Callers read the mode straight after this call, and the locked instance they never see is the updated one.
         session.setMode(newMode);
         session.setEntityId(newEntityId);
-        irisChatSessionRepository.save(session);
-
         sendOverWebsocket(session, savedMarker);
+    }
+
+    /**
+     * Applies a context change suggested by the Pyris pipeline (automatic context switching).
+     * Delegates to {@link #applyContextChange} with the session owner as acting user, so the same
+     * validation chain runs as for a manual switch (entity exists, mode matches the entity type,
+     * student role, Iris enabled, same course). A rejected or invalid suggestion is logged and
+     * dropped instead of failing the status update: the answer still reaches the student, only
+     * the session context stays unchanged.
+     *
+     * @param session          the session the status update belongs to
+     * @param suggestedContext the context suggested by the pipeline
+     */
+    @Override
+    protected void handleSuggestedContextChange(IrisChatSession session, PyrisSuggestedContextDTO suggestedContext) {
+        if (suggestedContext.mode() == null || suggestedContext.entityId() == null) {
+            log.warn("Ignoring automatic context switch with incomplete target for session {}: {}", session.getId(), suggestedContext);
+            return;
+        }
+        try {
+            var user = userRepository.findByIdWithCourseRolesAndAuthoritiesElseThrow(session.getUserId());
+            applyContextChange(session, suggestedContext.mode(), suggestedContext.entityId(), user);
+        }
+        catch (Exception e) {
+            log.warn("Ignoring automatic context switch for session {} to mode {} and entity {}", session.getId(), suggestedContext.mode(), suggestedContext.entityId(), e);
+        }
     }
 
     private void validateExerciseMode(Exercise exercise, IrisChatMode mode) {
@@ -495,8 +642,44 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     /**
+     * Continues a global search answer in the course chat. The session is always a new one: reusing an empty chat like "New Chat" does would let two concurrent handoffs
+     * both claim it. It is authorized like {@link #findOrCreateEmptySession}, moved to the requested lecture or exercise exactly like choosing a chat topic
+     * ({@link #applyContextChange}), and then holds the question and the answer the student saw, so the chat opens with both already in it. The answer's citations are
+     * pinned to the material versions captured for the search run that produced it.
+     *
+     * @param handoff the course, the optional lecture or exercise, the question and answer to carry over, and the search run they came from
+     * @param user    the requesting user
+     * @return the new session, already on the requested context
+     */
+    public IrisChatSession createSessionFromGlobalSearch(IrisGlobalSearchHandoffDTO handoff, User user) {
+        userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
+        var course = resolveAndAuthorize(IrisChatMode.COURSE_CHAT, handoff.courseId(), user).course();
+        var context = handoff.context();
+        if (context != null) {
+            // Validated before the session exists, so a rejected handoff leaves no empty chat behind. The same course is checked like the context switch below checks it
+            // under the session lock.
+            var target = resolveAndAuthorize(context.mode(), context.entityId(), user);
+            if (!course.getId().equals(target.course().getId())) {
+                throw new ConflictException("New context must belong to the same course as the session", "Iris", "irisCourseMismatch");
+            }
+        }
+        var session = createCourseSession(course, user);
+        if (context != null) {
+            applyContextChange(session, context.mode(), context.entityId(), user);
+        }
+        var question = new IrisMessage();
+        question.addContent(new IrisTextMessageContent(handoff.question()));
+        var answer = new IrisMessage();
+        answer.addContent(new IrisTextMessageContent(irisCitationService.stampCitationVersionsForGlobalSearch(handoff.answer(), handoff.runId(), user.getLogin())));
+        irisSessionRepository.appendQuestionAndAnswer(session.getId(), question, answer);
+        // Named after the question, so the chat history lists it by its topic before Iris names it on the first follow-up.
+        setSessionTitle(session, handoff.question(), irisSessionRepository);
+        return session;
+    }
+
+    /**
      * Non-authorizing core that finds the user's reusable empty course chat session for today, or creates a
-     * fresh one. The single place a chat session is created.
+     * fresh one through {@link #createCourseSession}.
      * <p>
      * Assumes the caller has already authorized {@code course} for {@code user} (LLM opt-in + student role +
      * Iris enabled). No access check is repeated here: the lookup is scoped to {@code user.getId()}, so the
@@ -514,6 +697,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
                 return session;
             }
         }
+        return createCourseSession(course, user);
+    }
+
+    /** The single place a course chat session is created. */
+    private IrisChatSession createCourseSession(Course course, User user) {
         var session = new IrisChatSession(course, user);
         session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
         return irisChatSessionRepository.save(session);
@@ -521,7 +709,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private IrisChatSession findExerciseSessionOrCourseFallback(Exercise exercise, User user, IrisChatMode mode) {
         return irisChatSessionRepository.findLatestByEntityIdAndChatModeAndUserIdWithMessages(exercise.getId(), mode, user.getId(), Pageable.ofSize(1)).stream().findFirst()
-                .orElseGet(() -> findOrCreateEmptyCourseSession(exercise.getCourseViaExerciseGroupOrCourseMember(), user));
+                .orElseGet(() -> findOrCreateEmptyCourseSession(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user));
     }
 
     private IrisChatSession findLectureSessionOrCourseFallback(Lecture lecture, User user) {

@@ -14,7 +14,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 
-import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.AssessmentDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.CommunicationDataCleanupRepository;
 import de.tum.cit.aet.artemis.account.repository.cleanup.CourseContextDataCleanupRepository;
@@ -52,10 +51,9 @@ class UserOwnedContentSearchIndexTest {
         communicationDataCleanupRepository = mock(CommunicationDataCleanupRepository.class);
         platformDataCleanupRepository = mock(PlatformDataCleanupRepository.class);
         searchableEntityWeaviateService = mock(SearchableEntityWeaviateService.class);
-        userOwnedContentDeletionService = new UserOwnedContentDeletionService(mock(UserRepository.class), mock(ParticipationDeletionService.class),
-                communicationDataCleanupRepository, mock(AssessmentDataCleanupRepository.class), mock(ExerciseDataCleanupRepository.class),
-                mock(CourseContextDataCleanupRepository.class), platformDataCleanupRepository, mock(LearningDataCleanupRepository.class),
-                Optional.of(searchableEntityWeaviateService));
+        userOwnedContentDeletionService = new UserOwnedContentDeletionService(mock(ParticipationDeletionService.class), communicationDataCleanupRepository,
+                mock(AssessmentDataCleanupRepository.class), mock(ExerciseDataCleanupRepository.class), mock(CourseContextDataCleanupRepository.class),
+                platformDataCleanupRepository, mock(LearningDataCleanupRepository.class), Optional.of(searchableEntityWeaviateService));
     }
 
     @Test
@@ -110,9 +108,9 @@ class UserOwnedContentSearchIndexTest {
 
     @Test
     void aDeploymentWithoutGlobalSearchStillDeletes() {
-        UserOwnedContentDeletionService withoutSearch = new UserOwnedContentDeletionService(mock(UserRepository.class), mock(ParticipationDeletionService.class),
-                communicationDataCleanupRepository, mock(AssessmentDataCleanupRepository.class), mock(ExerciseDataCleanupRepository.class),
-                mock(CourseContextDataCleanupRepository.class), platformDataCleanupRepository, mock(LearningDataCleanupRepository.class), Optional.empty());
+        UserOwnedContentDeletionService withoutSearch = new UserOwnedContentDeletionService(mock(ParticipationDeletionService.class), communicationDataCleanupRepository,
+                mock(AssessmentDataCleanupRepository.class), mock(ExerciseDataCleanupRepository.class), mock(CourseContextDataCleanupRepository.class),
+                platformDataCleanupRepository, mock(LearningDataCleanupRepository.class), Optional.empty());
         when(communicationDataCleanupRepository.findPostIdsAuthoredBy(USER_ID)).thenReturn(List.of(11L));
 
         withoutSearch.deleteCommunicationContent(USER_ID);

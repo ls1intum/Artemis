@@ -1,0 +1,17 @@
+<div class="tumaet-ui-empty-state-icon tumaet:flex tumaet:shrink-0 tumaet:items-center tumaet:justify-center" aria-hidden="true">
+    <fa-icon [icon]="icon()" />
+</div>
+
+<h2 class="tumaet-ui-empty-state-title">{{ title() }}</h2>
+
+@if (description(); as descriptionText) {
+    <p class="tumaet-ui-empty-state-description">{{ descriptionText }}</p>
+}
+
+<div class="tumaet-ui-empty-state-actions tumaet:flex tumaet:flex-wrap tumaet:items-center tumaet:justify-center">
+    <ng-content select="[tumAetUiEmptyStateActions]" />
+</div>
+
+<div class="tumaet-ui-empty-state-documentation">
+    <ng-content select="[tumAetUiEmptyStateDocumentation]" />
+</div>

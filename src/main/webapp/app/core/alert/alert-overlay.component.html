@@ -23,7 +23,7 @@
                     <jhi-close-circle (click)="alert.close()" />
                 }
                 @if ((alert?.timeout || 0) > 0) {
-                    <div class="time-bar" [ngStyle]="{ animationDuration: alert.timeout + 'ms' }"></div>
+                    <div class="time-bar" [style.animation-duration]="alert.timeout + 'ms'"></div>
                 }
             </div>
         </div>

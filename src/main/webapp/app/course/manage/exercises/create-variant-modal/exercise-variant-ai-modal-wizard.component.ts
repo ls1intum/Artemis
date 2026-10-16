@@ -1,13 +1,14 @@
 import {
-    TumUiButtonComponent,
-    TumUiConfirmDialogComponent,
-    TumUiConfirmationService,
-    TumUiDialogComponent,
-    TumUiInputDirective,
-    TumUiMessageComponent,
-    TumUiRadioButtonComponent,
-    TumUiTagComponent,
-    TumUiTooltipDirective,
+    TumAetUiButtonComponent,
+    TumAetUiConfirmDialogComponent,
+    TumAetUiConfirmationService,
+    TumAetUiDatePickerComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiMessageComponent,
+    TumAetUiRadioButtonComponent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { Component, OnDestroy, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
@@ -89,16 +90,17 @@ const GENERATION_PHASES: readonly VariantJobPhase[] = ['ANALYZING', 'PLANNING', 
     selector: 'jhi-exercise-variant-ai-modal-wizard',
     templateUrl: './exercise-variant-ai-modal-wizard.component.html',
     styleUrl: './exercise-variant-ai-modal-wizard.component.scss',
-    providers: [TumUiConfirmationService],
+    providers: [TumAetUiConfirmationService],
     imports: [
-        TumUiDialogComponent,
-        TumUiButtonComponent,
-        TumUiRadioButtonComponent,
-        TumUiInputDirective,
-        TumUiTooltipDirective,
-        TumUiTagComponent,
-        TumUiMessageComponent,
-        TumUiConfirmDialogComponent,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiRadioButtonComponent,
+        TumAetUiInputDirective,
+        TumAetUiDatePickerComponent,
+        TumAetUiTooltipDirective,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
+        TumAetUiConfirmDialogComponent,
         FormsModule,
         FaIconComponent,
         ArtemisTranslatePipe,
@@ -109,9 +111,10 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     private readonly variantGenerationService = inject(ExerciseVariantGenerationService);
     private readonly variantGroupService = inject(ExerciseVariantGroupService);
     private readonly exerciseService = inject(ExerciseService);
-    private readonly confirmationService = inject(TumUiConfirmationService);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
     private readonly translateService = inject(TranslateService);
     private readonly router = inject(Router);
+    private readonly alertService = inject(AlertService);
 
     readonly visible = input<boolean>(false);
     /** Required for the wizard flow (steps 1–3); may be absent in monitor mode (tray host has no exercise). */
@@ -140,10 +143,10 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
 
     readonly newGroupTitle = signal('');
     readonly newGroupMaxPoints = signal<number | undefined>(undefined);
-    readonly newGroupReleaseDate = signal('');
-    readonly newGroupStartDate = signal('');
-    readonly newGroupDueDate = signal('');
-    readonly newGroupAssessmentDueDate = signal('');
+    readonly newGroupReleaseDate = signal<dayjs.Dayjs | undefined>(undefined);
+    readonly newGroupStartDate = signal<dayjs.Dayjs | undefined>(undefined);
+    readonly newGroupDueDate = signal<dayjs.Dayjs | undefined>(undefined);
+    readonly newGroupAssessmentDueDate = signal<dayjs.Dayjs | undefined>(undefined);
 
     readonly changeDifficulty = signal(false);
     readonly targetDifficulty = signal<DifficultyLevel>(DifficultyLevel.MEDIUM);
@@ -233,7 +236,10 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         return this.anyCardSelected() && (!this.changeDomain() || this.domainText().trim().length > 0) && (!this.changeCustom() || this.additionalInstructions().trim().length > 0);
     });
 
-    readonly canGenerate = computed(() => this.placementChoice() !== 'new-group' || this.newGroupTitle().trim().length > 0);
+    /** Ids of the new-group date pickers whose text is not a date; a picker keeps its last valid date while that is the case. */
+    private readonly invalidDateTexts = signal<ReadonlySet<string>>(new Set());
+
+    readonly canGenerate = computed(() => this.placementChoice() !== 'new-group' || (this.newGroupTitle().trim().length > 0 && this.invalidDateTexts().size === 0));
 
     /** Index of the active timeline step; REPAIRING maps back onto the VERIFYING step (repeat visit). */
     readonly currentPhaseIndex = computed(() => {
@@ -319,8 +325,6 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     protected readonly difficultySeverity = difficultySeverity;
     protected readonly difficultyTranslationKey = difficultyTranslationKey;
 
-    private readonly alertService = inject(AlertService);
-
     private eventsSubscription?: Subscription;
 
     /**
@@ -395,6 +399,25 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.wizardStep.set(2);
     }
 
+    /**
+     * Records whether the text of one new-group date picker is a date. While it is not, the picker still holds its
+     * last valid date, so generating would submit a schedule that differs from what the field shows.
+     *
+     * @param pickerId the picker the report is about
+     * @param valid    whether the text of that picker is a date, or empty
+     */
+    protected setDateTextValid(pickerId: string, valid: boolean): void {
+        this.invalidDateTexts.update((current) => {
+            const next = new Set(current);
+            if (valid) {
+                next.delete(pickerId);
+            } else {
+                next.add(pickerId);
+            }
+            return next;
+        });
+    }
+
     goToStep1(): void {
         this.wizardStep.set(1);
     }
@@ -411,10 +434,10 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         const src = this.sourceExercise()!;
         this.newGroupTitle.set((src.title ?? 'Exercise').split(':')[0].trim());
         this.newGroupMaxPoints.set(src.maxPoints);
-        this.newGroupReleaseDate.set(this.fmtDate(src.releaseDate));
-        this.newGroupStartDate.set(this.fmtDate(src.startDate));
-        this.newGroupDueDate.set(this.fmtDate(src.dueDate));
-        this.newGroupAssessmentDueDate.set(this.fmtDate(src.assessmentDueDate));
+        this.newGroupReleaseDate.set(src.releaseDate);
+        this.newGroupStartDate.set(src.startDate);
+        this.newGroupDueDate.set(src.dueDate);
+        this.newGroupAssessmentDueDate.set(src.assessmentDueDate);
         // Never preselect a hidden option: a source that cannot join a new group falls back to standalone.
         this.placementChoice.set(this.sourceGroup() ? 'existing-group' : this.canGroupSourceWithVariant() ? 'new-group' : 'standalone');
         this.wizardStep.set(3);
@@ -441,10 +464,11 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.placementChoice.set('existing-group');
         this.newGroupTitle.set('');
         this.newGroupMaxPoints.set(undefined);
-        this.newGroupReleaseDate.set('');
-        this.newGroupStartDate.set('');
-        this.newGroupDueDate.set('');
-        this.newGroupAssessmentDueDate.set('');
+        this.newGroupReleaseDate.set(undefined);
+        this.newGroupStartDate.set(undefined);
+        this.newGroupDueDate.set(undefined);
+        this.newGroupAssessmentDueDate.set(undefined);
+        this.invalidDateTexts.set(new Set());
         this.changeDifficulty.set(false);
         this.changeDomain.set(false);
         this.domainText.set('');
@@ -457,7 +481,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     /** Starts the real server job — intents by field presence, no title input. */
     startGeneration(): void {
         const sourceExercise = this.sourceExercise();
-        if (!sourceExercise?.id) return;
+        if (!sourceExercise?.id || !this.canGenerate()) return;
         const request: VariantGenerationRequest = {
             targetDifficulty: this.changeDifficulty() ? this.targetDifficulty() : undefined,
             domainText: this.changeDomain() && this.domainText().trim() ? this.domainText().trim() : undefined,
@@ -586,10 +610,10 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
                     newGroup: {
                         title: this.newGroupTitle().trim(),
                         maxPoints: this.newGroupMaxPoints(),
-                        releaseDate: this.toIso(this.newGroupReleaseDate()),
-                        startDate: this.toIso(this.newGroupStartDate()),
-                        dueDate: this.toIso(this.newGroupDueDate()),
-                        assessmentDueDate: this.toIso(this.newGroupAssessmentDueDate()),
+                        releaseDate: this.newGroupReleaseDate()?.toISOString(),
+                        startDate: this.newGroupStartDate()?.toISOString(),
+                        dueDate: this.newGroupDueDate()?.toISOString(),
+                        assessmentDueDate: this.newGroupAssessmentDueDate()?.toISOString(),
                     },
                 };
             default:
@@ -785,13 +809,5 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.monitorRequest.set(undefined);
         this.totalTokensUsed.set(undefined);
         this.generatedVariant.set(undefined);
-    }
-
-    private fmtDate(d: dayjs.Dayjs | undefined): string {
-        return d?.format('YYYY-MM-DDTHH:mm') ?? '';
-    }
-
-    private toIso(value: string): string | undefined {
-        return value ? dayjs(value).toISOString() : undefined;
     }
 }

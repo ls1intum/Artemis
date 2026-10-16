@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
@@ -7,7 +7,7 @@ import { StudentExamDTO, StudentExamOrDTO } from 'app/exam/shared/entities/stude
 
 type EntityResponseType = HttpResponse<StudentExamDTO>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class StudentExamService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);

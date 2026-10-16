@@ -18,7 +18,10 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.localvc.service.RepositoryVcsAccessTokenService;
@@ -50,7 +53,8 @@ class ProgrammingExerciseCreationUpdateServiceTest {
                 mock(ProgrammingExerciseCreationScheduleService.class), mock(ProgrammingExerciseAtlasIrisService.class), moduleFeatureService,
                 mock(TemplateProgrammingExerciseParticipationRepository.class), mock(SolutionProgrammingExerciseParticipationRepository.class),
                 mock(AuxiliaryRepositoryRepository.class), Optional.empty(), mock(GitService.class), mock(CompetencyExerciseLinkService.class), Optional.empty(),
-                mock(RepositoryVcsAccessTokenService.class));
+                mock(RepositoryVcsAccessTokenService.class), mock(TeamAssignmentConfigRepository.class), mock(PlagiarismDetectionConfigRepository.class),
+                mock(ExerciseConfigurationService.class));
     }
 
     @Test
@@ -58,10 +62,11 @@ class ProgrammingExerciseCreationUpdateServiceTest {
         var exercise = createExercise(ProgrammingLanguage.JAVA);
         when(moduleFeatureService.isHyperionEnabled()).thenReturn(false);
 
-        assertThatThrownBy(() -> programmingExerciseCreationUpdateService.createProgrammingExercise(exercise, true)).isInstanceOfSatisfying(BadRequestAlertException.class, ex -> {
-            assertThat(ex.getMessage()).isEqualTo("Hyperion is disabled on this server");
-            assertThat(ex.getErrorKey()).isEqualTo("hyperionDisabled");
-        });
+        assertThatThrownBy(() -> programmingExerciseCreationUpdateService.createProgrammingExercise(exercise, new ProgrammingExerciseBuildConfig(), true))
+                .isInstanceOfSatisfying(BadRequestAlertException.class, ex -> {
+                    assertThat(ex.getMessage()).isEqualTo("Hyperion is disabled on this server");
+                    assertThat(ex.getErrorKey()).isEqualTo("hyperionDisabled");
+                });
         verifyNoInteractions(userRepository);
     }
 
@@ -69,19 +74,21 @@ class ProgrammingExerciseCreationUpdateServiceTest {
     void createProgrammingExercise_emptyRepositoriesAndUnsupportedLanguage_throwsBadRequest() {
         var exercise = createExercise(ProgrammingLanguage.PYTHON);
         when(moduleFeatureService.isHyperionEnabled()).thenReturn(true);
-        assertThatThrownBy(() -> programmingExerciseCreationUpdateService.createProgrammingExercise(exercise, true)).isInstanceOfSatisfying(BadRequestAlertException.class, ex -> {
-            assertThat(ex.getMessage()).isEqualTo("AI generation is only supported for Java");
-            assertThat(ex.getErrorKey()).isEqualTo("aiGenerationUnsupportedLanguage");
-        });
+        assertThatThrownBy(() -> programmingExerciseCreationUpdateService.createProgrammingExercise(exercise, new ProgrammingExerciseBuildConfig(), true))
+                .isInstanceOfSatisfying(BadRequestAlertException.class, ex -> {
+                    assertThat(ex.getMessage()).isEqualTo("AI generation is only supported for Java");
+                    assertThat(ex.getErrorKey()).isEqualTo("aiGenerationUnsupportedLanguage");
+                });
         verifyNoInteractions(userRepository);
     }
 
     @Test
     void createProgrammingExercise_nullExercise_throwsBadRequest() {
-        assertThatThrownBy(() -> programmingExerciseCreationUpdateService.createProgrammingExercise(null, false)).isInstanceOfSatisfying(BadRequestAlertException.class, ex -> {
-            assertThat(ex.getMessage()).isEqualTo("ProgrammingExercise must not be null");
-            assertThat(ex.getErrorKey()).isEqualTo("programmingExerciseNull");
-        });
+        assertThatThrownBy(() -> programmingExerciseCreationUpdateService.createProgrammingExercise(null, new ProgrammingExerciseBuildConfig(), false))
+                .isInstanceOfSatisfying(BadRequestAlertException.class, ex -> {
+                    assertThat(ex.getMessage()).isEqualTo("ProgrammingExercise must not be null");
+                    assertThat(ex.getErrorKey()).isEqualTo("programmingExerciseNull");
+                });
         verifyNoInteractions(userRepository);
     }
 
@@ -90,16 +97,16 @@ class ProgrammingExerciseCreationUpdateServiceTest {
         var exercise = new ProgrammingExercise();
         exercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
 
-        assertThatThrownBy(() -> programmingExerciseCreationUpdateService.createProgrammingExercise(exercise, false)).isInstanceOfSatisfying(BadRequestAlertException.class, ex -> {
-            assertThat(ex.getMessage()).isEqualTo("ProgrammingExercise build config must not be null");
-            assertThat(ex.getErrorKey()).isEqualTo("buildConfigMissing");
-        });
+        assertThatThrownBy(() -> programmingExerciseCreationUpdateService.createProgrammingExercise(exercise, null, false)).isInstanceOfSatisfying(BadRequestAlertException.class,
+                ex -> {
+                    assertThat(ex.getMessage()).isEqualTo("ProgrammingExercise build config must not be null");
+                    assertThat(ex.getErrorKey()).isEqualTo("buildConfigMissing");
+                });
         verifyNoInteractions(userRepository);
     }
 
     private static ProgrammingExercise createExercise(ProgrammingLanguage language) {
         var exercise = new ProgrammingExercise();
-        exercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
         exercise.setProgrammingLanguage(language);
         return exercise;
     }

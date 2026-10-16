@@ -72,11 +72,14 @@ public interface ParticipationVCSAccessTokenRepository extends ArtemisJpaReposit
         return getValueElseThrow(findByUserIdAndParticipationId(userId, participationId));
     }
 
-    default void findByUserIdAndParticipationIdAndThrowIfExists(long userId, long participationId) {
-        findByUserIdAndParticipationId(userId, participationId).ifPresent(token -> {
-            throw new IllegalStateException();
-        });
-    }
+    /**
+     * Checks whether the given user already owns a token for the given participation. Used to reject a second creation request without loading the token itself.
+     *
+     * @param userId          the id of the owning user
+     * @param participationId the id of the participation the token belongs to
+     * @return true if such a token exists
+     */
+    boolean existsByUserIdAndParticipationId(long userId, long participationId);
 
     /**
      * Deletes the participation token with the given id, but only if it belongs to the given user. Used by the user-settings revoke endpoint so a user can never revoke another

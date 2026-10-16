@@ -37,6 +37,7 @@
             "errors": {
                 "preconditionsNotMet": "The pre conditions to request AI Feedback are not met."
             },
+            "participationId": "Participation ID",
             "repository": "Repository",
             "buildPlanId": "Build Plan Id",
             "initializationState": "Status",
@@ -67,6 +68,13 @@
                 "submissionsForParticipation": "Submissions by {{ participant }} for exercise {{ exercise }}",
                 "action": "Action",
                 "delete": "Are you sure you want to delete this submission?"
+            },
+            "tutorAccess": {
+                "untilDueDate": "You can see student names and use Code to view or clone repositories to help students. Tutor access is read-only. After the exercise due date ({{ dueDate }}), names and direct repository access will be hidden because manual assessment is enabled.",
+                "available": "You can see student names and use Code to view or clone repositories to help students. Tutor access is read-only. This exercise is automatically assessed, so this access remains available after the due date.",
+                "anonymousAssessment": "The exercise due date has passed and manual assessment is enabled. Student names and direct repository access are hidden to keep assessment anonymous. You can still view and download anonymized submissions in the assessment dashboard.",
+                "assessmentDashboard": "Open assessment dashboard",
+                "noDueDate": "You can see student names and use Code to view or clone repositories to help students. Tutor access is read-only. Manual assessment is enabled, but no exercise due date is set. Names and direct repository access will be hidden once a due date is set and has passed."
             }
         }
     }

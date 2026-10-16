@@ -5,10 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRE
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_BUILD_PLAN_CONFIGURATION_LENGTH;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertExerciseNotInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertProgrammingExerciseExistsInWeaviate;
+import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExerciseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -16,9 +16,9 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -45,6 +45,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import tools.jackson.databind.node.ObjectNode;
+
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
@@ -54,12 +56,16 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseMaterialImportOptionsDTO;
+import de.tum.cit.aet.artemis.course.dto.CourseMaterialImportResultDTO;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseVariantGroupRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchableEntityDTO;
@@ -80,11 +86,16 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
+import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
+import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.programming.dto.ImportProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.TemplateSolutionParticipationDTO;
+import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseImportTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseImportTestService.ImportFileResult;
@@ -156,6 +167,12 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Autowired
     private ChannelRepository channelRepository;
 
+    @Autowired
+    private SubmissionPolicyRepository submissionPolicyRepository;
+
+    @Autowired
+    private ExerciseVariantGroupRepository exerciseVariantGroupRepository;
+
     @BeforeAll
     void setupAll() {
         CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
@@ -171,7 +188,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         programmingExercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
         programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).orElseThrow();
 
         // Set the correct repository URIs for the template and the solution participation.
         String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
@@ -274,8 +291,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         ZonedDateTime due = release.plusDays(6);
         ZonedDateTime assessmentDue = due.plusMinutes(10);
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+        var storedBuildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        storedBuildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(storedBuildConfig);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         programmingExerciseRepository.save(programmingExercise);
 
@@ -297,9 +315,11 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
-        newExercise.getBuildConfig().setAssignmentCheckoutPath("/invalid/assignment");
+        var newBuildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
+        newBuildConfig.setAssignmentCheckoutPath("/invalid/assignment");
 
-        request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, newBuildConfig), ProgrammingExercise.class,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -312,7 +332,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         if (searchableEntityWeaviateService != null && weaviateService != null) {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(programmingExercise));
             // Wait for initial insert to complete before proceeding with update
-            await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var properties = queryExerciseProperties(weaviateService, programmingExercise.getId());
                 assertThat(properties).as("Exercise should be initially present in Weaviate before update").isNotNull();
                 Object releaseDateObj = properties.get(SearchableEntitySchema.Properties.RELEASE_DATE);
@@ -328,7 +348,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // the response is the programming-exercise response DTO; its competency links carry the light competency
         // projection, which the polymorphic entity deserializer cannot read back
         var updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises",
-                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
+                ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
 
         // Compare as instants because PostgreSQL stores timestamps as UTC and the
         // original timezone offset is not preserved through the database round-trip.
@@ -336,7 +357,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of()), any());
 
         if (!WeaviateTestUtil.shouldSkipWeaviateAssertions(weaviateService)) {
-            await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
+            awaitIndexing(() -> {
                 var weaviateProperties = queryExerciseProperties(weaviateService, updatedExercise.id());
                 assertThat(weaviateProperties).as("Exercise properties should exist in Weaviate after update").isNotNull();
                 assertThat(weaviateProperties.get(SearchableEntitySchema.Properties.TITLE)).isEqualTo(updatedExercise.title());
@@ -375,7 +396,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(replacementCompetency, programmingExercise, 1)));
 
-        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+        request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
                 ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
 
         assertThat(originalCompetencyIds.get()).containsExactly(competency.getId());
@@ -391,7 +413,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(foreignCompetency, programmingExercise, 1)));
 
-        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+        request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise)),
                 ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -402,7 +425,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateProgrammingExercise_invalidBuildPhaseName() throws Exception {
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
+        var updatedBuildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        updatedBuildConfig.setBuildPlanConfiguration("""
                 {
                   "phases": [
                     {
@@ -416,13 +440,14 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 }
                 """);
 
-        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, updatedBuildConfig), HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateProgrammingExercise_duplicateBuildPhaseNames_caseInsensitive() throws Exception {
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
+        var updatedBuildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        updatedBuildConfig.setBuildPlanConfiguration("""
                 {
                   "phases": [
                     {
@@ -443,13 +468,14 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 }
                 """);
 
-        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, updatedBuildConfig), HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateProgrammingExercise_reservedBuildPhaseName_caseInsensitive() throws Exception {
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
+        var updatedBuildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        updatedBuildConfig.setBuildPlanConfiguration("""
                 {
                   "phases": [
                     {
@@ -463,7 +489,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 }
                 """);
 
-        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
+        request.put("/api/programming/programming-exercises", UpdateProgrammingExerciseDTO.of(programmingExercise, updatedBuildConfig), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -515,7 +541,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         programmingExercise.setGradingCriteria(ProgrammingExerciseFactory.generateGradingCriteria(programmingExercise));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise,
                 courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
 
@@ -530,7 +556,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Assert that the repositories were correctly created for the imported exercise.
-        ProgrammingExercise importedExerciseWithParticipations = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(importedExercise.getId()).orElseThrow();
+        ProgrammingExercise importedExerciseWithParticipations = programmingExerciseRepository.findWithAllParticipationsById(importedExercise.getId()).orElseThrow();
         localVCLocalCITestService.verifyRepositoryFoldersExist(importedExerciseWithParticipations, localVCBasePath);
         assertThat(importedExercise.getGradingCriteria()).hasSize(1);
 
@@ -562,10 +588,10 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY,
                 templateBuildTestResults, solutionBuildTestResults);
 
-        final long sourceBuildConfigId = programmingExercise.getBuildConfig().getId();
+        final long sourceBuildConfigId = programmingExerciseUtilService.buildConfigOf(programmingExercise).getId();
         programmingExercise.setGradingCriteria(ProgrammingExerciseFactory.generateGradingCriteria(programmingExercise));
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("InitTitle", "initimp", programmingExercise,
                 courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
@@ -587,18 +613,86 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         // The grading criteria and build config are deep-copied from the source: the grading criteria are preserved and
         // the build config is a fresh entity (different id).
-        ProgrammingExercise importedWithReferences = programmingExerciseRepository
-                .findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(importedExercise.getId()).orElseThrow();
+        ProgrammingExercise importedWithReferences = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(importedExercise.getId()).orElseThrow();
         assertThat(importedWithReferences.getGradingCriteria()).hasSize(1);
-        assertThat(importedWithReferences.getBuildConfig().getId()).isNotEqualTo(sourceBuildConfigId);
+        assertThat(programmingExerciseUtilService.buildConfigOf(importedWithReferences).getId()).isNotEqualTo(sourceBuildConfigId);
 
         // The channel is created with the name the client supplied. The channel name is transient, so it does not survive
         // the re-fetch of the imported exercise and has to be captured before it (regression guard).
         assertThat(channelRepository.findChannelByExerciseId(importedExercise.getId())).isNotNull().extracting(Channel::getName).isEqualTo("testchannel-pe-init");
 
         // The repositories were really created on the local VCS (not mocked).
-        localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(importedExercise.getId()).orElseThrow(),
+        localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExerciseRepository.findWithAllParticipationsById(importedExercise.getId()).orElseThrow(),
                 localVCBasePath);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportCourseMaterial_programmingExercise_copiesProgrammingSettings() throws Exception {
+        stubBuildContainerForImport();
+        var sourcePolicy = new LockRepositoryPolicy();
+        sourcePolicy.setSubmissionLimit(3);
+        sourcePolicy.setActive(true);
+        programmingExerciseUtilService.addSubmissionPolicyToExercise(sourcePolicy, programmingExercise);
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        var options = new CourseMaterialImportOptionsDTO(course.getId(), true, false, false, false, false, false);
+
+        var result = request.postWithResponseBody("/api/course/courses/" + targetCourse.getId() + "/import-material", options, CourseMaterialImportResultDTO.class, HttpStatus.OK);
+
+        // The course-material import has no form that submits the programming settings, so they have to come from the source exercise.
+        assertThat(result.errors()).isNullOrEmpty();
+        assertThat(result.exercisesImported()).isEqualTo(1);
+        var importedExercises = programmingExerciseRepository.findAllByCourseId(targetCourse.getId());
+        assertThat(importedExercises).hasSize(1);
+        ProgrammingExercise imported = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(importedExercises.getFirst().getId()).orElseThrow();
+        assertThat(imported.getShortName()).isEqualTo(programmingExercise.getShortName());
+        assertThat(imported.getProgrammingLanguage()).isEqualTo(programmingExercise.getProgrammingLanguage());
+        assertThat(imported.getProjectType()).isEqualTo(programmingExercise.getProjectType());
+        assertThat(imported.getPackageName()).isEqualTo(programmingExercise.getPackageName());
+        assertThat(imported.isStaticCodeAnalysisEnabled()).isEqualTo(programmingExercise.isStaticCodeAnalysisEnabled());
+        assertThat(imported.isAllowOnlineEditor()).isEqualTo(programmingExercise.isAllowOnlineEditor());
+        assertThat(imported.getAssessmentType()).isEqualTo(programmingExercise.getAssessmentType());
+        assertThat(imported.getDifficulty()).isNotNull().isEqualTo(programmingExercise.getDifficulty());
+        assertThat(imported.getGradingInstructions()).isEqualTo(programmingExercise.getGradingInstructions());
+        var sourceCategories = programmingExerciseRepository.findWithTemplateAndSolutionParticipationCategoriesById(programmingExercise.getId()).orElseThrow().getCategories();
+        assertThat(imported.getCategories()).isNotEmpty().containsExactlyInAnyOrderElementsOf(sourceCategories);
+        // The policy is a copy owned by the imported exercise: the source keeps its own row.
+        var importedPolicy = submissionPolicyRepository.findByProgrammingExerciseId(imported.getId());
+        assertThat(importedPolicy).isInstanceOf(LockRepositoryPolicy.class);
+        assertThat(importedPolicy.getId()).isNotEqualTo(sourcePolicy.getId());
+        assertThat(importedPolicy.getSubmissionLimit()).isEqualTo(3);
+        assertThat(importedPolicy.isActive()).isTrue();
+        assertThat(submissionPolicyRepository.findByProgrammingExerciseId(programmingExercise.getId()).getId()).isEqualTo(sourcePolicy.getId());
+        localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExerciseRepository.findWithAllParticipationsById(imported.getId()).orElseThrow(), localVCBasePath);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportCourseMaterial_programmingExercise_reportsFailedImport() throws Exception {
+        stubBuildContainerForImport();
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        var options = new CourseMaterialImportOptionsDTO(course.getId(), true, false, false, false, false, false);
+        var url = "/api/course/courses/" + targetCourse.getId() + "/import-material";
+        assertThat(request.postWithResponseBody(url, options, CourseMaterialImportResultDTO.class, HttpStatus.OK).exercisesImported()).isEqualTo(1);
+
+        // The second import derives the same project key, so it is refused before anything is saved.
+        var result = request.postWithResponseBody(url, options, CourseMaterialImportResultDTO.class, HttpStatus.OK);
+
+        assertThat(result.exercisesImported()).isZero();
+        assertThat(result.errors()).hasSize(1).first().asString().contains(programmingExercise.getTitle());
+        assertThat(programmingExerciseRepository.findAllByCourseId(targetCourse.getId())).hasSize(1);
+    }
+
+    private void stubBuildContainerForImport() throws Exception {
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+                Map.of("assignmentComitHash", DUMMY_COMMIT_HASH), Map.of("assignmentComitHash", DUMMY_COMMIT_HASH));
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
+                Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
+        dockerClientTestService.mockInspectImage(dockerClient);
+        Map<String, String> templateBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
+        Map<String, String> solutionBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY,
+                templateBuildTestResults, solutionBuildTestResults);
     }
 
     @Test
@@ -623,20 +717,17 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise.setGradingCriteria(ProgrammingExerciseFactory.generateGradingCriteria(programmingExercise));
 
         var phase = new BuildPhaseDTO("test", "echo test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/*.xml"));
-        var buildConfig = programmingExercise.getBuildConfig();
-        if (buildConfig == null) {
-            buildConfig = new ProgrammingExerciseBuildConfig();
-            buildConfig.setProgrammingExercise(programmingExercise);
-            programmingExercise.setBuildConfig(buildConfig);
-        }
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
         buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(buildConfig);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportADDTitle", "addimport", programmingExercise,
                 courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
-        exerciseToBeImported.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
+        var importBuildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
+        importBuildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(phase), "ghcr.io/example-image").toBuildPlanConfiguration());
         // Explicitly set the field to null to trigger computation on the server
         exerciseToBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(null);
 
@@ -646,11 +737,11 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, exerciseToBeImported, 1)));
         exerciseToBeImported.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), exerciseToBeImported,
-                ProgrammingExercise.class, params, HttpStatus.OK);
+        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(),
+                ImportProgrammingExerciseRequestDTO.of(exerciseToBeImported, importBuildConfig), ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Verify that the Build And Test Date was correctly computed and persisted
-        ProgrammingExercise importedExerciseWithParticipations = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(importedExercise.getId()).orElseThrow();
+        ProgrammingExercise importedExerciseWithParticipations = programmingExerciseRepository.findWithAllParticipationsById(importedExercise.getId()).orElseThrow();
 
         assertThat(importedExerciseWithParticipations.getBuildAndTestStudentSubmissionsAfterDueDate())
                 .as("buildAndTestStudentSubmissionsAfterDueDate should be auto-computed and persisted").isNotNull().isAfter(exerciseToBeImported.getDueDate());
@@ -662,23 +753,23 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     void testImportProgrammingExercise_withOversizedInheritedBuildPlanConfiguration_shouldReturnBadRequest() throws Exception {
         // The source exercise carries an oversized build plan configuration, as could exist for data created before the size limit
         // was introduced. It is written directly to the entity to bypass the create/update validation.
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
         var oversizedPhase = new BuildPhaseDTO("Test", "a".repeat(MAX_BUILD_PLAN_CONFIGURATION_LENGTH + 1), BuildPhaseCondition.ALWAYS, false, List.of());
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(oversizedPhase), "ubuntu:latest").toBuildPlanConfiguration());
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        var oversizedBuildConfig = programmingExerciseUtilService.buildConfigOf(programmingExercise);
+        oversizedBuildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(List.of(oversizedPhase), "ubuntu:latest").toBuildPlanConfiguration());
+        programmingExerciseBuildConfigRepository.save(oversizedBuildConfig);
+        programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportOversizedTitle", "importoversized",
                 programmingExercise, courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX));
         // The import request omits the build plan configuration, so it is inherited from the oversized source exercise and must be
         // rejected by the size validation after inheritance, not silently persisted again.
-        exerciseToBeImported.getBuildConfig().setBuildPlanConfiguration(null);
         exerciseToBeImported.setChannelName("testchannel-pe-importoversized");
         exerciseToBeImported.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, exerciseToBeImported, 1)));
         exerciseToBeImported.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
         request.postAndExpectError("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId() + "&recreateBuildPlans=false",
-                exerciseToBeImported, HttpStatus.BAD_REQUEST, "buildPlanConfigurationTooLong");
+                ImportProgrammingExerciseRequestDTO.of(exerciseToBeImported, null), HttpStatus.BAD_REQUEST, "buildPlanConfigurationTooLong");
     }
 
     @Test
@@ -826,6 +917,25 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(storedLinks).hasSize(1);
         assertThat(storedLinks.getFirst().getCompetency().getId()).isEqualTo(competency.getId());
         assertThat(storedLinks.getFirst().getWeight()).isEqualTo(1);
+        assertThat(storedLinks.getFirst().isGeneratedByAi()).isFalse();
+    }
+
+    /**
+     * The import form shows Hyperion's checklist too, so links it inferred must keep their AI origin when the exercise is
+     * created from a file, just like on setup and update.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_withHyperionCompetencyLink_persistsAiProvenance() throws Exception {
+
+        ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", exercise -> {
+            exercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, exercise, 1)));
+            exercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
+            return null;
+        }, course, Set.of(competency.getId()));
+
+        List<CompetencyExerciseLink> storedLinks = competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importResult.importedExercise().id());
+        assertThat(storedLinks).singleElement().satisfies(link -> assertThat(link.isGeneratedByAi()).isTrue());
     }
 
     /**
@@ -843,7 +953,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         dockerClientTestService.mockInspectImage(dockerClient);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findWithPlagiarismDetectionConfigTeamConfigBuildConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
 
         // the competency belongs to the target course, so nothing but the deliberate drop can keep it out of the database
         Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
@@ -860,6 +970,112 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 ProgrammingExerciseResponseDTO.class, params, HttpStatus.OK);
 
         assertThat(competencyExerciseLinkTestRepository.findByExerciseIdWithCompetency(importedExercise.id())).isEmpty();
+    }
+
+    /**
+     * The import dialog loads the source exercise, whose response carries its variant group, and posts it back. The copy must not join that group: an exercise
+     * joins a group only through the checked group assignment, and a group of the source course must not hold an exercise of another course at all.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportGroupedProgrammingExercise_copyStaysOutOfTheSourceGroup() throws Exception {
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+                Map.of("assignmentComitHash", DUMMY_COMMIT_HASH), Map.of("assignmentComitHash", DUMMY_COMMIT_HASH));
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
+                Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
+        dockerClientTestService.mockInspectImage(dockerClient);
+        ExerciseVariantGroupDTO group = addToNewVariantGroup(programmingExercise);
+        var loaded = request.get("/api/programming/programming-exercises/" + programmingExercise.getId(), HttpStatus.OK, ProgrammingExerciseResponseDTO.class);
+        assertThat(loaded.exerciseVariantGroup()).as("precondition: the import dialog receives the group of the source").isNotNull();
+
+        programmingExercise = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(programmingExercise.getId()).orElseThrow();
+        Course targetCourse = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
+        ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("GroupedTitle", "groupedimport", programmingExercise,
+                targetCourse);
+        exerciseToBeImported.setChannelName("testchannel-pe-groupedimport");
+        ObjectNode body = objectMapper.valueToTree(ImportProgrammingExerciseRequestDTO.of(exerciseToBeImported, null));
+        body.set("exerciseVariantGroup", objectMapper.valueToTree(loaded.exerciseVariantGroup()));
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("recreateBuildPlans", "false");
+        var importedExercise = request.postWithResponseBody("/api/programming/programming-exercises/import?sourceExerciseId=" + programmingExercise.getId(), body,
+                ProgrammingExerciseResponseDTO.class, params, HttpStatus.OK);
+
+        assertThat(importedExercise.exerciseVariantGroup()).isNull();
+        assertNotInAnyVariantGroup(importedExercise.id());
+        assertVariantGroupMembers(group, programmingExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSetupProgrammingExercise_ignoresVariantGroupInBody() throws Exception {
+        ExerciseVariantGroupDTO group = addToNewVariantGroup(programmingExercise);
+        mockDockerForTheBuildsCreatingAnExerciseTriggers();
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.setChannelName("testchannel-pe-groupedsetup");
+        ObjectNode body = objectMapper.valueToTree(CreateProgrammingExerciseDTO.of(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig()));
+        body.putObject("exerciseVariantGroup").put("id", group.id()).put("title", group.title());
+
+        var response = request.postWithResponseBody("/api/programming/programming-exercises/setup", body, ProgrammingExerciseResponseDTO.class, HttpStatus.CREATED);
+        createdExercisesToCleanUp.add(programmingExerciseRepository.findByIdElseThrow(response.id()));
+
+        assertNotInAnyVariantGroup(response.id());
+        assertVariantGroupMembers(group, programmingExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportProgrammingExerciseFromFile_ignoresVariantGroupInBody() throws Exception {
+        ExerciseVariantGroupDTO group = addToNewVariantGroup(programmingExercise);
+
+        ImportFileResult importResult = programmingExerciseImportTestService.prepareExerciseImport("test-data/import-from-file/valid-import.zip", course, body -> {
+            body.putObject("exerciseVariantGroup").put("id", group.id()).put("title", group.title());
+            return body;
+        });
+
+        assertNotInAnyVariantGroup(importResult.importedExercise().id());
+        assertVariantGroupMembers(group, programmingExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise_keepsVariantGroupMembership() throws Exception {
+        ExerciseVariantGroupDTO group = addToNewVariantGroup(programmingExercise);
+        ExerciseVariantGroupDTO anotherGroup = request.postWithResponseBody("/api/exercise/courses/" + course.getId() + "/exercise-variant-groups",
+                new CreateExerciseVariantGroupDTO("Other variants", null, null, null, null, null, null), ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+        ProgrammingExercise loaded = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
+        loaded.setTitle("Renamed grouped exercise");
+        ObjectNode moveToAnotherGroup = objectMapper.valueToTree(UpdateProgrammingExerciseDTO.of(loaded, programmingExerciseUtilService.buildConfigOf(loaded)));
+        moveToAnotherGroup.putObject("exerciseVariantGroup").put("id", anotherGroup.id()).put("title", anotherGroup.title());
+        ObjectNode dropGroup = moveToAnotherGroup.deepCopy();
+        dropGroup.putNull("exerciseVariantGroup");
+
+        request.putWithResponseBody("/api/programming/programming-exercises", moveToAnotherGroup, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+        var updated = request.putWithResponseBody("/api/programming/programming-exercises", dropGroup, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
+
+        assertThat(updated.title()).as("the rest of the update applies").isEqualTo("Renamed grouped exercise");
+        assertVariantGroupMembers(group, programmingExercise.getId());
+        assertVariantGroupMembers(anotherGroup);
+    }
+
+    /** Creates a variant group in the course and adds the exercise to it through the guarded endpoint, the way an instructor groups an exercise. */
+    private ExerciseVariantGroupDTO addToNewVariantGroup(ProgrammingExercise exercise) throws Exception {
+        ExerciseVariantGroupDTO group = request.postWithResponseBody("/api/exercise/courses/" + course.getId() + "/exercise-variant-groups",
+                new CreateExerciseVariantGroupDTO("Programming variants", null, null, null, null, null, null), ExerciseVariantGroupDTO.class, HttpStatus.CREATED);
+        request.put("/api/exercise/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/variant-group", new ExerciseVariantGroupAssignmentDTO(group.id()),
+                HttpStatus.OK);
+        assertVariantGroupMembers(group, exercise.getId());
+        return group;
+    }
+
+    private void assertNotInAnyVariantGroup(long exerciseId) {
+        assertThat(exerciseVariantGroupRepository.findByExerciseId(exerciseId)).as("exercise %d must not be a member of a variant group", exerciseId).isEmpty();
+    }
+
+    private void assertVariantGroupMembers(ExerciseVariantGroupDTO group, Long... memberIds) {
+        assertThat(exerciseVariantGroupRepository.findByIdAndCourseIdElseThrow(group.id(), course.getId()).getExercises()).as("members of group %s", group.title())
+                .extracting(Exercise::getId).containsExactlyInAnyOrder(memberIds);
     }
 
     /**
@@ -905,23 +1121,24 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     /**
      * Creates a programming exercise through the setup endpoint, the way an instructor does, and returns it with the repositories the server filled in place.
      */
-    private ProgrammingExercise createExerciseThroughTheSetupEndpoint(ProgrammingExercise newExercise, String channelName) throws Exception {
-        return createExerciseThroughTheSetupEndpoint(newExercise, channelName, false);
+    private ProgrammingExercise createExerciseThroughTheSetupEndpoint(ProgrammingExercise newExercise, ProgrammingExerciseBuildConfig buildConfig, String channelName)
+            throws Exception {
+        return createExerciseThroughTheSetupEndpoint(newExercise, buildConfig, channelName, false);
     }
 
-    private ProgrammingExercise createExerciseThroughTheSetupEndpoint(ProgrammingExercise newExercise, String channelName, boolean emptyRepositories) throws Exception {
+    private ProgrammingExercise createExerciseThroughTheSetupEndpoint(ProgrammingExercise newExercise, ProgrammingExerciseBuildConfig buildConfig, String channelName,
+            boolean emptyRepositories) throws Exception {
         mockDockerForTheBuildsCreatingAnExerciseTriggers();
         newExercise.setChannelName(channelName);
         var params = new LinkedMultiValueMap<String, String>();
         params.add("emptyRepositories", String.valueOf(emptyRepositories));
         // Create the exercise and verify status code 201. The query cap guards against the response mapping pulling
         // additional sub-graphs into the creation flow. It leaves room for the creations that do the most work inside
-        // the request: an SCA-enabled exercise also inserts its default category rows (Python: 189 queries).
-        var response = assertThatDb(
-                () -> request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExerciseResponseDTO.class, params, HttpStatus.CREATED))
-                .hasBeenCalledAtMostTimes(250);
+        // the request: an SCA-enabled exercise also inserts its default category rows (Python: 174 queries, 60 of them one insert per category).
+        var response = assertThatDb(() -> request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
+                ProgrammingExerciseResponseDTO.class, params, HttpStatus.CREATED)).hasBeenCalledAtMostTimes(174);
         assertCreationResponseReadContract(response, newExercise);
-        ProgrammingExercise createdExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(response.id()).orElseThrow();
+        ProgrammingExercise createdExercise = programmingExerciseRepository.findWithAllParticipationsById(response.id()).orElseThrow();
         createdExercisesToCleanUp.add(createdExercise);
         return createdExercise;
     }
@@ -978,11 +1195,13 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         // Enable sequential test runs
-        newExercise.getBuildConfig().setSequentialTestRuns(true);
+        var newBuildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
+        newBuildConfig.setSequentialTestRuns(true);
 
-        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannelname-pe-sequential");
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, newBuildConfig, "testchannelname-pe-sequential");
 
-        assertThat(createdExercise.getBuildConfig().hasSequentialTestRuns()).as("the exercise keeps the sequential test runs it was created with").isTrue();
+        assertThat(programmingExerciseUtilService.buildConfigOf(createdExercise).hasSequentialTestRuns()).as("the exercise keeps the sequential test runs it was created with")
+                .isTrue();
         List<String> testFiles = filesOf(createdExercise, RepositoryType.TESTS);
         // Sequential test runs split the test repository into two build stages that are run one after the other.
         assertThat(testFiles).as("the structural build stage is set up").anyMatch(path -> path.startsWith("structural/"));
@@ -997,9 +1216,10 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Only Maven exercises need a project file per build stage, because each stage is a Maven module of its own. Gradle drives both stages from the root project.
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_MAVEN);
-        newExercise.getBuildConfig().setSequentialTestRuns(true);
+        var newBuildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
+        newBuildConfig.setSequentialTestRuns(true);
 
-        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-seq-maven");
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, newBuildConfig, "testchannel-pe-seq-maven");
 
         List<String> testFiles = filesOf(createdExercise, RepositoryType.TESTS);
         assertThat(testFiles).as("each build stage gets its own pom.xml").contains("structural/" + POM_XML, "behavior/" + POM_XML);
@@ -1021,7 +1241,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
 
-        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-empty", true);
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig(), "testchannel-pe-empty",
+                true);
 
         for (RepositoryType repositoryType : List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION)) {
             List<String> files = filesOf(createdExercise, repositoryType);
@@ -1042,7 +1263,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         newExercise.setStaticCodeAnalysisEnabled(true);
 
-        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-sca-java");
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig(), "testchannel-pe-sca-java");
 
         assertThat(createdExercise.isStaticCodeAnalysisEnabled()).as("the exercise keeps the static code analysis it was created with").isTrue();
         // Without the configuration files the analyzers the build script invokes have nothing to run against, so the exercise would build but report no issues at all.
@@ -1059,7 +1280,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         newExercise.setProjectType(null);
         newExercise.setStaticCodeAnalysisEnabled(true);
 
-        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-sca-python");
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig(),
+                "testchannel-pe-sca-python");
 
         assertThat(filesOf(createdExercise, RepositoryType.TESTS)).as("the separate analyzer configuration is copied into the test repository").contains("ruff-student.toml");
     }
@@ -1073,9 +1295,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         auxiliaryRepository.setName("solutionhints");
         auxiliaryRepository.setCheckoutDirectory("hints");
         auxiliaryRepository.setDescription("hints for the students");
-        newExercise.setAuxiliaryRepositories(new ArrayList<>(List.of(auxiliaryRepository)));
+        newExercise.setAuxiliaryRepositories(new LinkedHashSet<>(List.of(auxiliaryRepository)));
 
-        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannel-pe-aux");
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig(), "testchannel-pe-aux");
 
         Path auxiliaryRepositoryPath = localVCRepositoryTestService.repositoryUri(createdExercise.getProjectKey(), createdExercise.generateRepositoryName("solutionhints"))
                 .getLocalRepositoryPath(localVCBasePath);
@@ -1101,7 +1323,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 ProgrammingLanguage.SWIFT);
         newExercise.setProjectType(ProjectType.PLAIN);
 
-        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, "testchannelname-pe-swift");
+        ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, ProgrammingExerciseFactory.generateGradleBuildConfig(),
+                "testchannelname-pe-swift");
 
         assertThat(createdExercise.getPackageName()).as("the exercise keeps the package name it was created with").isEqualTo("testPackage");
         for (RepositoryType repositoryType : List.of(RepositoryType.TEMPLATE, RepositoryType.SOLUTION)) {

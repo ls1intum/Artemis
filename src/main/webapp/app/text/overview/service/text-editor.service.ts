@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { Language } from 'app/course/shared/entities/course.model';
@@ -186,7 +186,7 @@ const GERMAN_STOP_WORDS = new Set([
     'seine',
 ]);
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TextEditorService {
     private http = inject(HttpClient);
 

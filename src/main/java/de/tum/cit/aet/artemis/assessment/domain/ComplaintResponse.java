@@ -14,12 +14,15 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * A ComplaintResponse.
@@ -45,6 +48,7 @@ public class ComplaintResponse extends AbstractAuditingEntity {
     @OneToOne
     @JoinColumn(unique = true, nullable = false)
     @JsonIgnoreProperties(value = "complaintResponse", allowSetters = true)
+    @Parent
     private Complaint complaint;
 
     @ManyToOne
@@ -72,6 +76,7 @@ public class ComplaintResponse extends AbstractAuditingEntity {
      *
      * @return date of lock end in UTC
      */
+    @Nullable
     @JsonProperty("lockEndDate")
     public ZonedDateTime lockEndDate() {
         if (getCreatedDate() == null) {

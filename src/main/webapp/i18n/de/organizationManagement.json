@@ -44,6 +44,11 @@
             "deleted": "Organisation gelöscht!",
             "created": "Organisation angelegt!"
         },
+        "organizationRequest": {
+            "name": "Name",
+            "shortName": "Kurzname",
+            "emailPattern": "E-Mail-Muster"
+        },
         "organizationUser": {
             "deleted": "Nutzer:in aus Organisation entfernt!"
         }

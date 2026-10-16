@@ -13,8 +13,11 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.notification.dto.SystemNotificationDTO;
 import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
 
@@ -23,7 +26,7 @@ import de.tum.cit.aet.artemis.notification.service.SystemNotificationService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("system-notifications/system-notifications")
+@FeatureUsage(UserFeature.SYSTEM_NOTIFICATIONS)
 @RestController
 @RequestMapping("api/notification/public/")
 public class PublicSystemNotificationResource {
@@ -42,6 +45,7 @@ public class PublicSystemNotificationResource {
      *
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("system-notifications/active")
     @EnforceNothing
     public ResponseEntity<List<SystemNotificationDTO>> getActiveAndFutureSystemNotifications() {

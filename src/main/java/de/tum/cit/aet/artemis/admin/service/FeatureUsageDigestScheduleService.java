@@ -135,8 +135,8 @@ public class FeatureUsageDigestScheduleService {
                 // Reporting success when a send did not reach the transport answers the opposite of that question.
                 return false;
             }
-            log.info("Feature usage digest for {} to {} sent to {} recipients: {} calls across {} active modules, {} features offered but unused", digest.from(), digest.to(),
-                    recipients.size(), digest.totalCalls(), digest.activeModules().size(), digest.unusedFeatures());
+            log.info("Feature usage digest for {} to {} sent to {} recipients: {} uses across {} active areas, {} features offered but unused", digest.from(), digest.to(),
+                    recipients.size(), digest.useCount(), digest.activeAreas().size(), digest.unusedFeatures());
             return true;
         }
         catch (Exception e) {

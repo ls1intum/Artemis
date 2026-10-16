@@ -83,7 +83,7 @@
                                     ) | artemisTranslate
                                 }}"
                             />
-                            <button ngbAccordionToggle class="btn ms-1" (click)="onToggleClick(diffInformation.title, fileDiffPanel.collapsed)">
+                            <button type="button" ngbAccordionToggle class="btn ms-1" (click)="onToggleClick(diffInformation.title, fileDiffPanel.collapsed)">
                                 <fa-icon [icon]="!fileDiffPanel.collapsed ? faAngleUp : faAngleDown" />
                             </button>
                         </div>

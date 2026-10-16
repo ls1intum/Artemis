@@ -5,7 +5,6 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
 
 /**
@@ -26,7 +25,12 @@ import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
  *                                          re-deriving it (which would miss plagiarism deductions).
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseForDashboardDTO(Course course, CourseScoresDTO totalScores, CourseScoresDTO textScores, CourseScoresDTO programmingScores, CourseScoresDTO modelingScores,
-        CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, Set<ParticipationResultDTO> participationResults, Long courseNotificationCount,
-        Map<Long, Double> achievedPointsPerVariantGroup) {
+public record CourseForDashboardDTO(CourseDashboardDTO course, CourseScoresDTO totalScores, CourseScoresDTO textScores, CourseScoresDTO programmingScores,
+        CourseScoresDTO modelingScores, CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, Set<ParticipationResultDTO> participationResults,
+        Long courseNotificationCount, Map<Long, Double> achievedPointsPerVariantGroup) {
+
+    public CourseForDashboardDTO(CourseDashboardDTO course, CourseScoresDTO totalScores, CourseScoresDTO textScores, CourseScoresDTO programmingScores,
+            CourseScoresDTO modelingScores, CourseScoresDTO fileUploadScores, CourseScoresDTO quizScores, Set<ParticipationResultDTO> participationResults) {
+        this(course, totalScores, textScores, programmingScores, modelingScores, fileUploadScores, quizScores, participationResults, 0L, Map.of());
+    }
 }

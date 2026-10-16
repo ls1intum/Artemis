@@ -10,7 +10,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 
 import { CleanupOperationModalComponent } from 'app/admin/cleanup-service/cleanup-operation-modal.component';
-import { CleanupOperation, OperationName } from 'app/admin/cleanup-service/cleanup-operation.model';
+import { CleanupAction, CleanupOperation, OperationName } from 'app/admin/cleanup-service/cleanup-operation.model';
+import { CLEANUP_ACTION_PRESENTATION } from 'app/admin/cleanup-service/cleanup-action.util';
 import {
     CleanupCount,
     CleanupServiceExecutionRecordDTO,
@@ -22,9 +23,10 @@ import {
 /**
  * Helper to create a CleanupOperation with required properties
  */
-function createOperation(name: OperationName): CleanupOperation {
+function createOperation(name: OperationName, action: CleanupAction = 'delete'): CleanupOperation {
     const operation = new CleanupOperation();
     operation.name = name;
+    operation.action = action;
     operation.deleteFrom = dayjs().subtract(1, 'year');
     operation.deleteTo = dayjs();
     operation.lastExecuted = undefined;
@@ -39,10 +41,6 @@ describe('CleanupOperationModalComponent', () => {
     let dataCleanupService: DataCleanupService;
 
     const mockOrphanCounts: OrphanCleanupCountDTO = {
-        totalCount: 100,
-        orphanFeedback: 10,
-        orphanLongFeedbackText: 5,
-        orphanTextBlock: 15,
         orphanStudentScore: 20,
         orphanTeamScore: 10,
         orphanFeedbackForOrphanResults: 5,
@@ -54,16 +52,15 @@ describe('CleanupOperationModalComponent', () => {
     };
 
     const mockPlagiarismCounts: PlagiarismComparisonCleanupCountDTO = {
-        totalCount: 50,
         plagiarismComparison: 10,
         plagiarismElements: 20,
         plagiarismSubmissions: 10,
         plagiarismMatches: 10,
     };
 
-    const mockNonRatedCounts: CleanupCount = { totalCount: 25 };
-    const mockOldRatedCounts: CleanupCount = { totalCount: 30 };
-    const mockSubmissionVersionCounts: CleanupCount = { totalCount: 40 };
+    const mockNonRatedCounts: CleanupCount = { longFeedbackText: 10, textBlock: 5, feedback: 10 };
+    const mockOldRatedCounts: CleanupCount = { longFeedbackText: 12, textBlock: 8, feedback: 10 };
+    const mockSubmissionVersionCounts: CleanupCount = { submissionVersions: 40 };
 
     const deleteOrphansOperation = createOperation('deleteOrphans');
     const deletePlagiarismOperation = createOperation('deletePlagiarismComparisons');
@@ -71,9 +68,10 @@ describe('CleanupOperationModalComponent', () => {
     const deleteOldRatedOperation = createOperation('deleteOldRatedResults');
     const deleteSubmissionVersionsOperation = createOperation('deleteOldSubmissionVersions');
 
-    function createAgeBasedOperation(name: OperationName): CleanupOperation {
+    function createAgeBasedOperation(name: OperationName, action: CleanupAction = 'delete'): CleanupOperation {
         const operation = new CleanupOperation();
         operation.name = name;
+        operation.action = action;
         operation.deleteFrom = undefined;
         operation.deleteTo = undefined;
         operation.lastExecuted = undefined;
@@ -98,7 +96,9 @@ describe('CleanupOperationModalComponent', () => {
                         countOldCoursesReset: vi.fn().mockReturnValue(of(new HttpResponse({ body: { courses: 2 } }))),
                         countOldFeedback: vi.fn().mockReturnValue(of(new HttpResponse({ body: { longFeedbackText: 1, textBlock: 2, feedback: 3 } }))),
                         countOldCourseSubmissionVersions: vi.fn().mockReturnValue(of(new HttpResponse({ body: mockSubmissionVersionCounts }))),
+                        countNotEnrolledUsersWarning: vi.fn().mockReturnValue(of(new HttpResponse({ body: { users: 9, blockedUsers: 0 } }))),
                         countNotEnrolledUsers: vi.fn().mockReturnValue(of(new HttpResponse({ body: { users: 4 } }))),
+                        warnNotEnrolledUsers: vi.fn().mockReturnValue(of(new HttpResponse({}))),
                         countPlagiarismCases: vi.fn().mockReturnValue(of(new HttpResponse({ body: { plagiarismCases: 3 } }))),
                         deleteOrphans: vi.fn().mockReturnValue(of(new HttpResponse({}))),
                         deletePlagiarismComparisons: vi.fn().mockReturnValue(of(new HttpResponse({}))),
@@ -134,9 +134,10 @@ describe('CleanupOperationModalComponent', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should have counts initialized with zero totalCount', () => {
+    it('should have counts initialized empty', () => {
         componentRef.setInput('operation', deleteOrphansOperation);
-        expect(component.counts().totalCount).toBe(0);
+        // No server count DTO reports a total, so nothing may be listed before the real counts arrive.
+        expect(component.counts()).toEqual({});
     });
 
     it('should have operationExecuted initialized to false', () => {
@@ -255,13 +256,13 @@ describe('CleanupOperationModalComponent', () => {
             fixture.detectChanges();
 
             // Reopening must clear the previous run's result state. Fail the reopen count-fetch so the reset
-            // value (totalCount 0) stays observable instead of being immediately overwritten by fresh counts.
+            // value (an empty count map) stays observable instead of being immediately overwritten by fresh counts.
             vi.spyOn(dataCleanupService, 'countOrphans').mockReturnValue(throwError(() => new Error('Network error')));
             component.visible.set(true);
             fixture.detectChanges();
 
             expect(component.operationExecuted()).toBe(false);
-            expect(component.counts()).toEqual({ totalCount: 0 });
+            expect(component.counts()).toEqual({});
         });
 
         it('should clear the previous error when reopened', () => {
@@ -407,6 +408,46 @@ describe('CleanupOperationModalComponent', () => {
             expect(component.operationExecuted()).toBe(true);
         });
 
+        // Every age-based operation dispatches to its own pair of service calls; a wrong branch would silently run a
+        // different cleanup than the dialog announced.
+        const ageBasedDispatch = [
+            { name: 'warnOldCoursesReset', action: 'warn', count: 'countOldCoursesResetWarning', execute: 'warnOldCoursesReset' },
+            { name: 'resetOldCourses', action: 'reset', count: 'countOldCoursesReset', execute: 'resetOldCourses' },
+            { name: 'deleteOldFeedback', action: 'delete', count: 'countOldFeedback', execute: 'deleteOldFeedback' },
+            { name: 'deleteOldCourseSubmissionVersions', action: 'delete', count: 'countOldCourseSubmissionVersions', execute: 'deleteOldCourseSubmissionVersions' },
+            { name: 'warnNotEnrolledUsers', action: 'warn', count: 'countNotEnrolledUsersWarning', execute: 'warnNotEnrolledUsers' },
+            { name: 'deleteNotEnrolledUsers', action: 'delete', count: 'countNotEnrolledUsers', execute: 'deleteNotEnrolledUsers' },
+            { name: 'deletePlagiarismCases', action: 'delete', count: 'countPlagiarismCases', execute: 'deletePlagiarismCases' },
+        ] as const;
+
+        it.each(ageBasedDispatch)('should count and execute $name via its own endpoints', ({ name, action, count, execute }) => {
+            componentRef.setInput('operation', createAgeBasedOperation(name, action));
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(dataCleanupService[count]).toHaveBeenCalledOnce();
+
+            component.executeCleanupOperation();
+
+            expect(dataCleanupService[execute]).toHaveBeenCalledOnce();
+            expect(component.operationExecuted()).toBe(true);
+        });
+
+        it('should refuse to execute or count an unknown operation instead of silently doing nothing', () => {
+            const unknown = createAgeBasedOperation('notAnOperation' as OperationName);
+            componentRef.setInput('operation', unknown);
+
+            // updateCounts() runs inside the open effect, so opening is what surfaces the unsupported operation.
+            expect(() => {
+                component.visible.set(true);
+                fixture.detectChanges();
+            }).toThrow('Unsupported operation: notAnOperation');
+
+            expect(() => component.executeCleanupOperation()).toThrow('Unsupported operation: notAnOperation');
+            // The in-flight guard must be released, otherwise the dialog stays permanently disabled.
+            expect(component.operationExecuting()).toBe(false);
+        });
+
         it('should execute deleteNonRatedResults operation', () => {
             componentRef.setInput('operation', deleteNonRatedOperation);
             component.visible.set(true);
@@ -526,24 +567,20 @@ describe('CleanupOperationModalComponent', () => {
             fixture.detectChanges();
 
             const keys = component.cleanupKeys();
-            expect(keys).toContain('totalCount');
-            expect(keys).toContain('orphanFeedback');
+            expect(keys).toContain('orphanRating');
+            expect(keys).toContain('orphanStudentScore');
         });
 
-        it('should return hasEntriesToDelete true when there are entries to delete', () => {
+        it('should return hasAffectedEntities true when there are entries to delete', () => {
             componentRef.setInput('operation', deleteOrphansOperation);
             component.visible.set(true);
             fixture.detectChanges();
 
-            expect(component.hasEntriesToDelete()).toBe(true);
+            expect(component.hasAffectedEntities()).toBe(true);
         });
 
-        it('should return hasEntriesToDelete false when all counts are zero', () => {
+        it('should return hasAffectedEntities false when all counts are zero', () => {
             const zeroCounts: OrphanCleanupCountDTO = {
-                totalCount: 0,
-                orphanFeedback: 0,
-                orphanLongFeedbackText: 0,
-                orphanTextBlock: 0,
                 orphanStudentScore: 0,
                 orphanTeamScore: 0,
                 orphanFeedbackForOrphanResults: 0,
@@ -558,7 +595,58 @@ describe('CleanupOperationModalComponent', () => {
             component.visible.set(true);
             fixture.detectChanges();
 
-            expect(component.hasEntriesToDelete()).toBe(false);
+            expect(component.hasAffectedEntities()).toBe(false);
+        });
+
+        it('should show the affected entity counts before anything is executed', () => {
+            // The confirmation dialog must state how many entities the operation would touch, per entity type.
+            vi.spyOn(dataCleanupService, 'countNotEnrolledUsers').mockReturnValue(of(new HttpResponse({ body: { users: 7, blockedUsers: 2 } })));
+            componentRef.setInput('operation', createAgeBasedOperation('deleteNotEnrolledUsers'));
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(component.counts()).toEqual({ users: 7, blockedUsers: 2 });
+            expect(component.operationExecuted()).toBe(false);
+            expect(component.hasAffectedEntities()).toBe(true);
+        });
+
+        it('should keep a zero count visible rather than hiding the entity', () => {
+            // A count of 0 must still be listed, otherwise the admin cannot tell "nothing affected" from "not reported".
+            vi.spyOn(dataCleanupService, 'countNotEnrolledUsers').mockReturnValue(of(new HttpResponse({ body: { users: 5, blockedUsers: 0 } })));
+            componentRef.setInput('operation', createAgeBasedOperation('deleteNotEnrolledUsers'));
+            component.visible.set(true);
+            fixture.detectChanges();
+
+            expect(component.cleanupKeys()).toEqual(['users', 'blockedUsers']);
+            expect(component.hasAffectedEntities()).toBe(true);
+        });
+    });
+
+    describe('action wording', () => {
+        it('should label a warning operation "Warn" rather than "Delete"', () => {
+            const { action } = createAgeBasedOperation('warnOldCoursesReset', 'warn');
+
+            expect(CLEANUP_ACTION_PRESENTATION[action].labelKey).toBe('entity.action.warn');
+            // A warning destroys nothing on its own, so it must not carry the red of an irreversible deletion.
+            expect(CLEANUP_ACTION_PRESENTATION[action].severity).toBe('warn');
+            expect(CLEANUP_ACTION_PRESENTATION[action].icon.iconName).toBe('triangle-exclamation');
+        });
+
+        it('should label a reset operation "Reset" rather than "Delete"', () => {
+            const { action } = createAgeBasedOperation('resetOldCourses', 'reset');
+
+            expect(CLEANUP_ACTION_PRESENTATION[action].labelKey).toBe('entity.action.reset');
+            // A reset is irreversible, so it keeps the destructive styling even though it is not a deletion.
+            expect(CLEANUP_ACTION_PRESENTATION[action].severity).toBe('danger');
+            expect(CLEANUP_ACTION_PRESENTATION[action].icon.iconName).toBe('rotate-left');
+        });
+
+        it('should keep "Delete" for the deleting operations', () => {
+            const { action } = deleteOrphansOperation;
+
+            expect(CLEANUP_ACTION_PRESENTATION[action].labelKey).toBe('entity.action.delete');
+            expect(CLEANUP_ACTION_PRESENTATION[action].severity).toBe('danger');
+            expect(CLEANUP_ACTION_PRESENTATION[action].icon.iconName).toBe('trash');
         });
     });
 });

@@ -67,7 +67,7 @@ describe('LearnerProfileComponent', () => {
         const setActiveModules = (features: string[]) => vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature) => features.includes(feature));
 
         const render = async () => {
-            await component.ngOnInit();
+            await component['initializeLearnerProfileComponent']();
             fixture.detectChanges();
         };
 

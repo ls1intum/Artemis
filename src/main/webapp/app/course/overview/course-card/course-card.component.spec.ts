@@ -16,7 +16,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 describe('CourseCardComponent', () => {
     let fixture: ComponentFixture<CourseCardComponent>;
@@ -84,7 +84,7 @@ describe('CourseCardComponent', () => {
     });
 
     it('should show the translated chart label as tooltip title and the value as body', () => {
-        const tooltip = component.chartConfig().tooltip as TumUiChartTooltipConfig;
+        const tooltip = component.chartConfig().tooltip as TumAetUiChartTooltipConfig;
         const datum = { seriesIndex: 0, index: 0, label: 'missingPointsLabel', value: 400 };
 
         expect(tooltip.title!([datum])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');

@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -25,7 +26,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.OrderColumn;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.SecondaryTable;
 
 import org.hibernate.Hibernate;
@@ -78,10 +79,22 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "test_repository_url")
     private String testRepositoryUri;
 
+    /**
+     * The auxiliary repositories of this exercise, oldest first.
+     * <p>
+     * Ordered by id rather than by an index column: on an indexed collection Hibernate takes the row's foreign key for
+     * its own, so removing one repository first writes {@code exercise_id = NULL} and only then deletes the row -
+     * which a repository that must always name its exercise cannot allow. Nothing reorders auxiliary repositories,
+     * they are identified by name and checkout directory, so creation order is the order.
+     * <p>
+     * A Set rather than a List, for the reason {@code Lecture.lectureUnits} gives: a List without an index column is a
+     * Hibernate bag, {@link #tasks} is already one, and a single query cannot fetch two bags - which a query that
+     * loads the whole exercise has to.
+     */
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "exercise", allowSetters = true)
-    @OrderColumn(name = "programming_exercise_auxiliary_repositories_order")
-    private List<AuxiliaryRepository> auxiliaryRepositories = new ArrayList<>();
+    @OrderBy("id ASC")
+    private Set<AuxiliaryRepository> auxiliaryRepositories = new LinkedHashSet<>();
 
     @Column(name = "allow_online_editor", table = "programming_exercise_details")
     private Boolean allowOnlineEditor;
@@ -160,11 +173,6 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details", nullable = false)
     private boolean releaseTestsWithExampleSolution = false;
 
-    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JoinColumn(unique = true, name = "programming_exercise_build_config_id", table = "programming_exercise_details")
-    @JsonIgnoreProperties("programmingExercise")
-    private ProgrammingExerciseBuildConfig buildConfig;
-
     /**
      * Convenience getter. The actual URI is stored in the {@link TemplateProgrammingExerciseParticipation}
      *
@@ -212,11 +220,12 @@ public class ProgrammingExercise extends Exercise {
     }
 
     @NonNull
-    public List<AuxiliaryRepository> getAuxiliaryRepositories() {
+    public Set<AuxiliaryRepository> getAuxiliaryRepositories() {
         return this.auxiliaryRepositories;
     }
 
-    public void setAuxiliaryRepositories(List<AuxiliaryRepository> auxiliaryRepositories) {
+    public void setAuxiliaryRepositories(Set<AuxiliaryRepository> auxiliaryRepositories) {
+        // Assigned rather than copied, so that a lazy collection stays the uninitialized one the caller passed in.
         this.auxiliaryRepositories = auxiliaryRepositories;
     }
 
@@ -363,9 +372,56 @@ public class ProgrammingExercise extends Exercise {
         forceNewProjectKey();
     }
 
+    /**
+     * Generates a project key from the course and exercise short names and sets it, replacing any key already there.
+     * <p>
+     * {@link #generateAndSetProjectKey()} is the entry point that keeps an existing key; this one is for the callers that deliberately want a new one.
+     *
+     * @throws IllegalStateException if no course is reachable from this exercise, which leaves no short name to build a key from
+     */
     public void forceNewProjectKey() {
         Course course = getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            // Reachable only on a masked exam graph: student-facing exam payloads clear exerciseGroup.exam before serialization, which leaves no course to take a short
+            // name from. There is nothing to fall back on, so name the exercise that cannot be keyed instead of dereferencing null for a NullPointerException that says
+            // nothing about which one it was.
+            throw new IllegalStateException("Cannot generate a project key for exercise " + getId() + ": no course is reachable from it.");
+        }
         this.projectKey = WHITESPACE_RUN.matcher((course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT)).replaceAll("");
+    }
+
+    /**
+     * Copies the settings that an import caller has to carry itself from the exercise being imported onto this skeleton.
+     * <p>
+     * The import form of the client submits these with its request, but a server-side caller (the import of course material, of an exam or of a variant) builds
+     * its skeleton from nothing, and the programming import service only copies the build configuration and the entities that hang off the exercise. A setting that is
+     * missing here fails the import, or silently falls back to a default.
+     * <p>
+     * Everything the callers decide differently stays with them: title, short name, points, dates, mode, the problem statement and the competency links. The
+     * {@code ProgrammingExerciseImportSettingsTest} lists every field this method does not copy, so a new field has to be copied here or excluded there with a reason.
+     *
+     * @param source the exercise being imported
+     */
+    public void copyImportSettingsFrom(ProgrammingExercise source) {
+        setProgrammingLanguage(source.getProgrammingLanguage());
+        setProjectType(source.getProjectType());
+        setPackageName(source.getPackageName());
+        setAllowOnlineEditor(source.isAllowOnlineEditor());
+        setAllowOfflineIde(source.isAllowOfflineIde());
+        setAllowOnlineIde(source.isAllowOnlineIde());
+        setStaticCodeAnalysisEnabled(source.isStaticCodeAnalysisEnabled());
+        setMaxStaticCodeAnalysisPenalty(source.getMaxStaticCodeAnalysisPenalty());
+        setShowTestNamesToStudents(source.getShowTestNamesToStudents());
+        setReleaseTestsWithExampleSolution(source.isReleaseTestsWithExampleSolution());
+        // The fields below belong to Exercise. They stay here because the programming import service copies none of them either.
+        setAssessmentType(source.getAssessmentType());
+        setDifficulty(source.getDifficulty());
+        setGradingInstructions(source.getGradingInstructions());
+        setCategories(new HashSet<>(source.getCategories()));
+        setIncludedInOverallScore(source.getIncludedInOverallScore());
+        setPresentationScoreEnabled(source.getPresentationScoreEnabled());
+        setSecondCorrectionEnabled(source.getSecondCorrectionEnabled());
+        setAllowComplaintsForAutomaticAssessments(source.getAllowComplaintsForAutomaticAssessments());
     }
 
     @Override
@@ -422,14 +478,6 @@ public class ProgrammingExercise extends Exercise {
 
     public void setSubmissionPolicy(SubmissionPolicy submissionPolicy) {
         this.submissionPolicy = submissionPolicy;
-    }
-
-    public ProgrammingExerciseBuildConfig getBuildConfig() {
-        return buildConfig;
-    }
-
-    public void setBuildConfig(ProgrammingExerciseBuildConfig buildConfig) {
-        this.buildConfig = buildConfig;
     }
 
     /**
@@ -518,7 +566,11 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnore
     public String getProjectName() {
         // this is the name used for VC service and CI service
-        return getCourseViaExerciseGroupOrCourseMember().getShortName() + " " + this.getTitle();
+        var course = getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("Cannot determine the project name of programming exercise " + getId() + " because its course cannot be resolved");
+        }
+        return course.getShortName() + " " + this.getTitle();
     }
 
     @JsonIgnore
@@ -606,9 +658,6 @@ public class ProgrammingExercise extends Exercise {
         setTestRepositoryUri(null);
         setTemplateBuildPlanId(null);
         setSolutionBuildPlanId(null);
-        if (buildConfig != null && Hibernate.isInitialized(buildConfig)) {
-            buildConfig.filterSensitiveInformation();
-        }
         super.filterSensitiveInformation();
     }
 
@@ -682,8 +731,10 @@ public class ProgrammingExercise extends Exercise {
     /**
      * Validates general programming exercise settings
      * 1. Validates the programming language
+     *
+     * @param buildConfig the build configuration of this exercise, which is stored separately and read by the caller
      */
-    public void validateProgrammingSettings() {
+    public void validateProgrammingSettings(ProgrammingExerciseBuildConfig buildConfig) {
 
         // Check if a participation mode was selected
         if (!Boolean.TRUE.equals(isAllowOnlineEditor()) && !Boolean.TRUE.equals(isAllowOfflineIde()) && !isAllowOnlineIde()) {
@@ -716,15 +767,16 @@ public class ProgrammingExercise extends Exercise {
      * 5. Static code analysis max penalty must be positive
      *
      * @param programmingLanguageFeature describes the features available for the programming language of the programming exercise
+     * @param buildConfig                the build configuration of this exercise, which is stored separately and read by the caller
      */
-    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature) {
+    public void validateStaticCodeAnalysisSettings(ProgrammingLanguageFeature programmingLanguageFeature, ProgrammingExerciseBuildConfig buildConfig) {
         // Check if the static code analysis flag was set
         if (isStaticCodeAnalysisEnabled() == null) {
             throw new BadRequestAlertException("The static code analysis flag must be set to true or false", "Exercise", "staticCodeAnalysisFlagNotSet");
         }
 
         // Check that programming exercise doesn't have sequential test runs and static code analysis enabled
-        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && getBuildConfig().hasSequentialTestRuns()) {
+        if (Boolean.TRUE.equals(isStaticCodeAnalysisEnabled()) && buildConfig.hasSequentialTestRuns()) {
             throw new BadRequestAlertException("The static code analysis with sequential test runs is not supported at the moment", "Exercise", "staticCodeAnalysisAndSequential");
         }
 

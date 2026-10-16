@@ -2,16 +2,18 @@
     <h5 *adminTitleBarTitle id="metrics-page-heading" class="mb-0" jhiTranslate="metrics.title" data-cy="metricsPageHeading"></h5>
     <div *adminTitleBarActions class="flex flex-wrap gap-2 items-center">
         <span class="font-medium text-muted-color text-sm" jhiTranslate="metrics.jumpTo"></span>
-        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('jvm-metrics')" data-testid="nav-jvm">JVM</tum-ui-button>
-        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('gc-metrics')" data-testid="nav-gc">GC</tum-ui-button>
-        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('http-metrics')" data-testid="nav-http">HTTP</tum-ui-button>
-        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('endpoints-metrics')" data-testid="nav-endpoints">Endpoints</tum-ui-button>
-        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('cache-metrics')" data-testid="nav-cache">Cache</tum-ui-button>
-        <tum-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('datasource-metrics')" data-testid="nav-datasource"
-            >Datasource</tum-ui-button
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('jvm-metrics')" data-testid="nav-jvm">JVM</tumaet-ui-button>
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('gc-metrics')" data-testid="nav-gc">GC</tumaet-ui-button>
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('http-metrics')" data-testid="nav-http">HTTP</tumaet-ui-button>
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('endpoints-metrics')" data-testid="nav-endpoints"
+            >Endpoints</tumaet-ui-button
+        >
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('cache-metrics')" data-testid="nav-cache">Cache</tumaet-ui-button>
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" (clicked)="scrollToSection('datasource-metrics')" data-testid="nav-datasource"
+            >Datasource</tumaet-ui-button
         >
         @if (nodeOptions().length > 1) {
-            <tum-ui-select
+            <tumaet-ui-select
                 [ariaLabel]="'metrics.filter' | artemisTranslate"
                 [(ngModel)]="selectedNodeId"
                 [options]="nodeOptions()"
@@ -22,9 +24,9 @@
                 class="w-auto"
             />
         }
-        <tum-ui-button severity="secondary" size="small" variant="outlined" [icon]="faSync" [loading]="isRefreshing()" (clicked)="refresh()" data-testid="refresh-button">
+        <tumaet-ui-button severity="secondary" size="small" variant="outlined" [icon]="faSync" [loading]="isRefreshing()" (clicked)="refresh()" data-testid="refresh-button">
             <span jhiTranslate="metrics.refresh.button"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </div>
 
     @if (!metrics() && updatingMetrics()) {

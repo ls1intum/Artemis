@@ -1,9 +1,12 @@
+import { signal } from '@angular/core';
+import { ParticipationPrivacyService } from './participation-privacy.service';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { FilterProp, ParticipationComponent } from 'app/exercise/participation/participation.component';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -23,7 +26,12 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { EventManager } from 'app/foundation/service/event-manager.service';
+import { By } from '@angular/platform-browser';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { PageableResult } from 'app/foundation/pagination/pageable-table';
+import { DeleteDialogService } from 'app/shared-ui/delete-dialog/service/delete-dialog.service';
 
 describe('ParticipationComponent', () => {
     let component: ParticipationComponent;
@@ -64,8 +72,10 @@ describe('ParticipationComponent', () => {
                 SessionStorageService,
                 MockProvider(ExerciseService),
                 MockProvider(ParticipationService),
+                MockProvider(DeleteDialogService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(EventManager),
+                { provide: WebsocketService, useClass: MockWebsocketService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -93,6 +103,249 @@ describe('ParticipationComponent', () => {
 
             expect(exerciseFindStub).toHaveBeenCalledExactlyOnceWith(1);
             expect(component.exercise()).toEqual(exercise);
+        });
+    });
+
+    describe('Tutor support access', () => {
+        it.each([AssessmentType.AUTOMATIC, AssessmentType.SEMI_AUTOMATIC])('shows names, code and an explanation before the deadline (%s)', async (assessmentType) => {
+            const supportExercise = {
+                ...exercise,
+                type: ExerciseType.PROGRAMMING,
+                assessmentType,
+                isAtLeastTutor: true,
+                isAtLeastInstructor: false,
+                dueDate: dayjs().add(1, 'day'),
+            };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(
+                of({ content: [{ ...sampleDto, repositoryUri: 'https://localhost/git/EX/alice.git' }], totalElements: 1 }),
+            );
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+
+            expect(component.tableOptions().showSearch).toBe(true);
+            expect(component.columns()[0].field).toBe('participantName');
+            expect(component.columns().some((column) => column.headerKey === 'artemisApp.participation.repository')).toBe(true);
+            expect(componentFixture.nativeElement.querySelector('jhi-code-button')).not.toBeNull();
+            const notice = componentFixture.nativeElement.querySelector('[data-testid="tutor-participation-access-notice"]');
+            expect(notice).not.toBeNull();
+            expect(notice.textContent).toContain(assessmentType === AssessmentType.AUTOMATIC ? 'tutorAccess.available' : 'tutorAccess.untilDueDate');
+        });
+
+        it('removes named data and reloads anonymously when an open page switches to anonymous assessment', async () => {
+            const anonymous = signal(false);
+            vi.spyOn(TestBed.inject(ParticipationPrivacyService), 'isParticipantInformationHidden').mockImplementation(() => anonymous());
+            const dueDate = dayjs().add(2, 'seconds');
+            const supportExercise = {
+                ...exercise,
+                type: ExerciseType.PROGRAMMING,
+                assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                isAtLeastTutor: true,
+                isAtLeastInstructor: false,
+                dueDate,
+            };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: supportExercise })));
+            const search = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
+            componentFixture.detectChanges();
+            component.onLazyLoad({ globalFilter: 'alice', sortField: 'participantName' });
+            componentFixture.detectChanges();
+            expect(component.hideParticipantInformation()).toBe(false);
+            search.mockReturnValue(of({ content: [{ participationId: 3, submissionCount: 1, testRun: false }], totalElements: 1 }));
+            anonymous.set(true);
+            componentFixture.detectChanges();
+
+            expect(component.hideParticipantInformation()).toBe(true);
+            expect(component.tableOptions().showSearch).toBe(false);
+            expect(component.participations()[0].participantName).toBeUndefined();
+            expect(search).toHaveBeenLastCalledWith(1, expect.objectContaining({ searchTerm: '', sortedColumn: 'id' }));
+            expect(componentFixture.nativeElement.querySelector('jhi-code-button')).toBeNull();
+            expect(componentFixture.nativeElement.querySelector('[data-testid="tutor-participation-access-notice"]').textContent).toContain('tutorAccess.anonymousAssessment');
+            expect(componentFixture.nativeElement.querySelector('a[href*="assessment-dashboard"]')).not.toBeNull();
+        });
+    });
+
+    describe('Anonymous participation list', () => {
+        it.each([false, true])('should show participation IDs without identity search or team links for tutors (team mode: %s)', async (teamMode) => {
+            const tutorExercise = {
+                ...exercise,
+                course: undefined,
+                type: ExerciseType.PROGRAMMING,
+                isAtLeastTutor: true,
+                isAtLeastInstructor: false,
+                teamMode,
+                assessmentType: AssessmentType.SEMI_AUTOMATIC,
+                dueDate: dayjs().subtract(1, 'day'),
+            };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: tutorExercise })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [sampleDto], totalElements: 1 }));
+
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+
+            expect(component.columns()[0]).toMatchObject({ headerKey: 'artemisApp.participation.participationId', field: 'participationId', sort: true });
+            expect(
+                component.columns().some((column) => column.headerKey === 'artemisApp.participation.students' || column.headerKey === 'artemisApp.participation.repository'),
+            ).toBe(false);
+            const table: HTMLElement = componentFixture.nativeElement.querySelector('jhi-table-view');
+            expect(table.querySelector('tbody td')?.textContent?.trim()).toBe(String(sampleDto.participationId));
+            expect(table.textContent).not.toContain(sampleDto.participantName);
+            expect(table.querySelector('a[href*="/teams/"]')).toBeNull();
+            expect(table.querySelector('jhi-search-filter')).toBeNull();
+        });
+
+        it.each([false, true])('should retain identity columns and search for instructors (team mode: %s)', (teamMode) => {
+            component.exercise.set({ ...exercise, teamMode, isAtLeastInstructor: true });
+
+            expect(component.tableOptions().showSearch).not.toBe(false);
+            expect(component.columns()[0]).toMatchObject({
+                headerKey: teamMode ? 'artemisApp.participation.team' : 'artemisApp.participation.student',
+                field: 'participantName',
+                sort: true,
+            });
+            expect(component.columns().some((column) => column.headerKey === 'artemisApp.participation.students')).toBe(teamMode);
+        });
+
+        it.each(['participantName', 'participantIdentifier', 'buildPlanId'])(
+            'should discard stale identity search and sorting for tutors while retaining filters and paging (%s)',
+            (sortField) => {
+                component.exercise.set({ ...exercise, isAtLeastInstructor: false });
+                component.activeFilter.set(FilterProp.NO_SUBMISSIONS);
+                const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+                component.onLazyLoad({ first: 50, rows: 25, globalFilter: 'alice', sortField });
+
+                expect(searchSpy).toHaveBeenCalledWith(
+                    exercise.id,
+                    expect.objectContaining({ page: 2, pageSize: 25, searchTerm: '', sortedColumn: 'id', filterProp: FilterProp.NO_SUBMISSIONS }),
+                );
+            },
+        );
+
+        it('should retain instructor identity search and sorting', () => {
+            component.exercise.set({ ...exercise, isAtLeastInstructor: true });
+            const searchSpy = vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [], totalElements: 0 }));
+
+            component.onLazyLoad({ globalFilter: 'alice', sortField: 'participantName' });
+
+            expect(searchSpy).toHaveBeenCalledWith(exercise.id, expect.objectContaining({ searchTerm: 'alice', sortedColumn: 'participantName' }));
+        });
+
+        it('should identify an anonymous participation in the due-date success message', () => {
+            const dto: ParticipationManagementDTO = { participationId: 42, submissionCount: 1, testRun: false };
+            vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const successSpy = vi.spyOn(alertService, 'success');
+            component.startEditDueDate(dto);
+
+            component.saveIndividualDueDate(dto);
+
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.participation.updateDueDates.success', { name: '42' });
+        });
+    });
+
+    describe('Practice participations of a team exercise', () => {
+        const teamDto: ParticipationManagementDTO = {
+            participationId: 11,
+            submissionCount: 2,
+            testRun: false,
+            participantName: 'Team Alpha',
+            participantIdentifier: 'alpha',
+            teamId: 7,
+            teamStudents: [
+                { name: 'Alice Anderson', login: 'alice' },
+                { name: 'Bob Brown', login: 'bob' },
+            ],
+        };
+
+        const practiceDto: ParticipationManagementDTO = {
+            participationId: 12,
+            submissionCount: 0,
+            testRun: true,
+            participantName: 'Carol Clark',
+            participantIdentifier: 'carol',
+            studentId: 5,
+            studentLogin: 'carol',
+        };
+
+        async function renderRows(teamMode: boolean, rows: ParticipationManagementDTO[]): Promise<HTMLElement> {
+            const instructorExercise = { ...exercise, teamMode, isAtLeastTutor: true, isAtLeastInstructor: true };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: instructorExercise })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: rows, totalElements: rows.length }));
+
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+
+            return componentFixture.nativeElement.querySelector('jhi-table-view');
+        }
+
+        function bodyRows(table: HTMLElement): HTMLTableRowElement[] {
+            return Array.from(table.querySelectorAll<HTMLTableRowElement>('tbody tr'));
+        }
+
+        it('should list a team row and a practice row of a team exercise', async () => {
+            const table = await renderRows(true, [teamDto, practiceDto]);
+
+            expect(bodyRows(table)).toHaveLength(2);
+            expect(table.querySelectorAll('[data-testid="participation-practice-tag"]')).toHaveLength(1);
+        });
+
+        it('should render a team row with its team link and members and without a practice marker', async () => {
+            const table = await renderRows(true, [teamDto, practiceDto]);
+            const teamRow = bodyRows(table)[0];
+
+            const teamLink = teamRow.querySelector('a[href*="/teams/"]');
+            expect(teamLink?.getAttribute('href')).toContain('/course-management/10/exercises/1/teams/7');
+            expect(teamLink?.textContent?.trim()).toBe('Team Alpha');
+            expect(teamRow.querySelector('jhi-team-students-list')).not.toBeNull();
+            expect(teamRow.textContent).toContain('Alice Anderson');
+            expect(teamRow.textContent).toContain('Bob Brown');
+            expect(teamRow.querySelector('[data-testid="participation-practice-tag"]')).toBeNull();
+            expect(teamRow.querySelector('[data-testid="participation-practice-student"]')).toBeNull();
+        });
+
+        it('should render a practice row with the student, the practice marker and no team link', async () => {
+            const table = await renderRows(true, [teamDto, practiceDto]);
+            const practiceRow = bodyRows(table)[1];
+
+            expect(practiceRow.textContent).toContain('Carol Clark');
+            expect(practiceRow.querySelector('a[href*="/teams/"]')).toBeNull();
+            expect(practiceRow.querySelector('jhi-team-students-list')).toBeNull();
+            expect(practiceRow.querySelector('[data-testid="participation-practice-tag"]')?.textContent).toContain('artemisApp.participation.practice');
+            expect(practiceRow.querySelector('[data-testid="participation-practice-student"]')?.textContent?.trim()).toBe('Carol Clark (carol)');
+        });
+
+        it('should link the student of a practice row to the user management for administrators', async () => {
+            const table = await renderRows(true, [teamDto, practiceDto]);
+            component.isAdmin.set(true);
+            componentFixture.detectChanges();
+            const [teamRow, practiceRow] = bodyRows(table);
+
+            const studentLink = practiceRow.querySelector('a[href*="/admin/user-management/"]');
+            expect(studentLink?.getAttribute('href')).toContain('/admin/user-management/carol');
+            expect(studentLink?.textContent?.trim()).toBe('Carol Clark');
+            expect(practiceRow.querySelector('a[href*="/teams/"]')).toBeNull();
+            expect(teamRow.querySelector('a[href*="/admin/user-management/"]')).toBeNull();
+            expect(teamRow.querySelector('a[href*="/teams/7"]')).not.toBeNull();
+        });
+
+        it('should not mark rows of an individual exercise as practice in the name column', async () => {
+            const table = await renderRows(false, [{ ...practiceDto, testRun: true }, sampleDto]);
+
+            expect(bodyRows(table)).toHaveLength(2);
+            expect(table.querySelector('[data-testid="participation-practice-tag"]')).toBeNull();
+            expect(table.querySelector('[data-testid="participation-practice-student"]')).toBeNull();
+            expect(table.querySelector('a[href*="/teams/"]')).toBeNull();
+            expect(bodyRows(table)[0].textContent).toContain('Carol Clark');
+            expect(bodyRows(table)[1].textContent).toContain('Alice');
+        });
+
+        it('should keep the identity columns of a team exercise for practice rows', async () => {
+            await renderRows(true, [practiceDto]);
+
+            expect(component.columns().map((column) => column.headerKey)).toEqual(expect.arrayContaining(['artemisApp.participation.team', 'artemisApp.participation.students']));
+            expect(component.participations()).toEqual([practiceDto]);
         });
     });
 
@@ -197,6 +450,121 @@ describe('ParticipationComponent', () => {
 
             component.gradeStepsDTO.set({ presentationsNumber: 0, gradeSteps: [], gradeType: undefined as any, title: '', plagiarismGrade: '', noParticipationGrade: '' });
             expect(component.gradedPresentationEnabled()).toBe(false);
+        });
+    });
+
+    describe('Individual due date input validation', () => {
+        let picker: TumAetUiDatePickerComponent;
+        let saveButton: HTMLButtonElement;
+        let dto: ParticipationManagementDTO;
+        const dueDate = dayjs('2030-06-01T12:00:00');
+        const individualDueDate = dayjs('2030-06-03T12:00:00');
+
+        /** Types into the picker's text input like a user does. */
+        const type = async (text: string) => {
+            const input: HTMLInputElement = componentFixture.nativeElement.querySelector(`#individual-due-date-${dto.participationId}`);
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+        };
+
+        beforeEach(async () => {
+            dto = { ...sampleDto, individualDueDate };
+            const exerciseWithDueDate = { ...exercise, course: undefined, dueDate };
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exerciseWithDueDate })));
+            vi.spyOn(participationService, 'searchParticipations').mockReturnValue(of({ content: [dto], totalElements: 1 }));
+            component.startEditDueDate(dto);
+            componentFixture.detectChanges();
+            await componentFixture.whenStable();
+            componentFixture.detectChanges();
+            picker = componentFixture.debugElement.query(By.directive(TumAetUiDatePickerComponent)).componentInstance;
+            saveButton = componentFixture.nativeElement.querySelector('button[title="Save"]');
+        });
+
+        it('should show the existing individual due date and open the calendar on it', () => {
+            expect(picker.value()!.isSame(individualDueDate)).toBe(true);
+            expect(picker.startAt()!.isSame(individualDueDate)).toBe(true);
+            expect(picker.invalid()).toBe(false);
+            expect(saveButton.disabled).toBe(false);
+        });
+
+        it('should grey out the days before the due date of the exercise in the calendar', () => {
+            expect(picker.min()!.isSame(component.exercise()!.dueDate!)).toBe(true);
+        });
+
+        it('should prevent saving text that is not a date', async () => {
+            const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            await type('invalid date');
+
+            expect(saveButton.disabled).toBe(true);
+            saveButton.click();
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(successSpy).not.toHaveBeenCalled();
+            expect(dto.individualDueDate).toEqual(individualDueDate);
+        });
+
+        it('should prevent saving a date before the due date of the exercise and explain why', async () => {
+            const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
+
+            await type('01.01.2020 12:00');
+
+            expect(component.getPendingDueDate(dto.participationId)!.isSame(dayjs('2020-01-01T12:00:00'))).toBe(true);
+            expect(picker.invalid()).toBe(true);
+            expect(componentFixture.nativeElement.querySelector('[data-testid="individual-due-date-error"]')).not.toBeNull();
+            expect(picker.ariaDescribedBy()).toBe(`individual-due-date-error-${dto.participationId}`);
+            expect(saveButton.disabled).toBe(true);
+            saveButton.click();
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(dto.individualDueDate).toEqual(individualDueDate);
+        });
+
+        it('should accept a date equal to the due date of the exercise', async () => {
+            await type(dueDate.format('DD.MM.YYYY HH:mm'));
+
+            expect(picker.invalid()).toBe(false);
+            expect(componentFixture.nativeElement.querySelector('[data-testid="individual-due-date-error"]')).toBeNull();
+            expect(saveButton.disabled).toBe(false);
+        });
+
+        it('should save when invalid input is corrected', async () => {
+            const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [] })));
+            const successSpy = vi.spyOn(alertService, 'success');
+            await type('invalid date');
+            expect(saveButton.disabled).toBe(true);
+
+            await type(individualDueDate.format('DD.MM.YYYY HH:mm'));
+
+            expect(saveButton.disabled).toBe(false);
+            expect(component.getPendingDueDate(dto.participationId)).toEqual(individualDueDate);
+            saveButton.click();
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(component.exercise(), [expect.objectContaining({ id: dto.participationId, individualDueDate })]);
+            expect(successSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should allow clearing an existing individual due date after invalid input', async () => {
+            const updateSpy = vi.spyOn(participationService, 'updateIndividualDueDates').mockReturnValue(of(new HttpResponse({ body: [{ id: dto.participationId }] })));
+            await type('invalid date');
+            expect(saveButton.disabled).toBe(true);
+
+            await type('');
+
+            expect(saveButton.disabled).toBe(false);
+            saveButton.click();
+            expect(updateSpy).toHaveBeenCalledExactlyOnceWith(component.exercise(), [expect.objectContaining({ id: dto.participationId, individualDueDate: undefined })]);
+            expect(dto.individualDueDate).toBeUndefined();
+        });
+
+        it('should forget the invalid text when the edit is cancelled', async () => {
+            await type('invalid date');
+            expect(component.isPendingDueDateInvalid(dto.participationId)).toBe(true);
+
+            component.cancelEditDueDate(dto);
+
+            expect(component.isPendingDueDateInvalid(dto.participationId)).toBe(false);
         });
     });
 

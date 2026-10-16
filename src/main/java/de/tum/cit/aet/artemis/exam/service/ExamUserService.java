@@ -295,7 +295,7 @@ public class ExamUserService {
     /**
      * Returns a page of {@link ExamStudentDTO} for the given exam.
      * Pagination and sorting are applied on a lightweight ID query first, then the current page's
-     * {@link ExamUser} entities and their {@link ExamStudentDTO.StudentExamSummary} data are fetched in two
+     * {@link ExamUser} entities and their {@link ExamStudentDTO.StudentExamSummaryDTO} data are fetched in two
      * targeted queries — one per entity type, both scoped to the current page only.
      *
      * @param examId the exam to query
@@ -313,8 +313,8 @@ public class ExamUserService {
         Map<Long, ExamUser> examUserById = examUsers.stream().collect(Collectors.toMap(ExamUser::getId, Function.identity()));
 
         List<Long> userIds = examUsers.stream().map(eu -> eu.getUser() != null ? eu.getUser().getId() : null).filter(Objects::nonNull).toList();
-        Map<Long, ExamStudentDTO.StudentExamSummary> summaryByUserId = studentExamRepository.findSummaryByExamIdAndUserIds(examId, userIds).stream()
-                .collect(Collectors.toMap(ExamStudentDTO.StudentExamSummary::userId, Function.identity(), (a, b) -> a));
+        Map<Long, ExamStudentDTO.StudentExamSummaryDTO> summaryByUserId = studentExamRepository.findSummaryByExamIdAndUserIds(examId, userIds).stream()
+                .collect(Collectors.toMap(ExamStudentDTO.StudentExamSummaryDTO::userId, Function.identity(), (a, b) -> a));
 
         List<ExamStudentDTO> dtos = ids.stream().map(examUserById::get).filter(Objects::nonNull).map(eu -> mapToExamStudentDTO(eu, summaryByUserId)).toList();
 
@@ -348,7 +348,7 @@ public class ExamUserService {
         return new PageImpl<>(dtos, pageable, users.getTotalElements());
     }
 
-    private ExamStudentDTO mapToExamStudentDTO(ExamUser eu, Map<Long, ExamStudentDTO.StudentExamSummary> summaryByUserId) {
+    private ExamStudentDTO mapToExamStudentDTO(ExamUser eu, Map<Long, ExamStudentDTO.StudentExamSummaryDTO> summaryByUserId) {
         User user = eu.getUser();
         Long userId = user != null ? user.getId() : null;
         String login = user != null ? user.getLogin() : null;
@@ -358,7 +358,7 @@ public class ExamUserService {
         String lastName = user != null && user.getLastName() != null ? user.getLastName() : "";
         String name = (firstName + " " + lastName).trim();
 
-        ExamStudentDTO.StudentExamSummary se = userId != null ? summaryByUserId.get(userId) : null;
+        ExamStudentDTO.StudentExamSummaryDTO se = userId != null ? summaryByUserId.get(userId) : null;
 
         Long studentExamId = se != null ? se.studentExamId() : null;
         Integer workingTime = se != null ? se.workingTime() : null;

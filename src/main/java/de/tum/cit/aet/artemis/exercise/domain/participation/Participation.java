@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -84,6 +85,7 @@ public abstract class Participation extends DomainObject implements Participatio
     // and the gain from fetching lazy here is minimal
     @ManyToOne
     @JsonIgnoreProperties("studentParticipations")
+    @Parent
     protected Exercise exercise;
 
     /**

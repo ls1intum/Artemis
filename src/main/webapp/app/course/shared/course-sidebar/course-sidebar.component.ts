@@ -5,6 +5,7 @@ import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.serv
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -29,7 +30,7 @@ export interface CourseActionItem {
  *
  * This is a guard rail, not a guarantee: glyph widths differ, so a short label with wide letters can still be wider
  * than a longer one — "Benachrichtigung" (16) needs more room than "LTI Konfiguration" (17). The width therefore
- * carries headroom over the measured minimum, and `rules/sidebar-item-label-length.spec.mjs` keeps every label,
+ * carries headroom over the measured minimum, and `config/eslint/rules/sidebar-item-label-length.spec.mjs` keeps every label,
  * English and German, within this cap. If a new label needs more, widen the sidebar deliberately and raise both.
  */
 export const MAX_SIDEBAR_ITEM_LABEL_LENGTH = 17;
@@ -59,6 +60,7 @@ export interface SidebarItem {
         NgbDropdownMenu,
         FaIconComponent,
         TranslateDirective,
+        ArtemisTranslatePipe,
         NgbTooltip,
         RouterLink,
         RouterLinkActive,
@@ -66,6 +68,10 @@ export interface SidebarItem {
     ],
 })
 export class CourseSidebarComponent {
+    layoutService = inject(LayoutService);
+    private readonly scienceService = inject(ScienceService);
+    private readonly courseTabRefreshService = inject(CourseTabRefreshService);
+
     protected readonly faChevronRight = faChevronRight;
     protected readonly faEllipsis = faEllipsis;
     protected readonly faCog = faCog;
@@ -81,9 +87,6 @@ export class CourseSidebarComponent {
     isTestServer = input<boolean>(false);
     hasUnreadMessages = input<boolean>(false);
     communicationRouteLoaded = input<boolean>(false);
-    layoutService = inject(LayoutService);
-    private readonly scienceService = inject(ScienceService);
-    private readonly courseTabRefreshService = inject(CourseTabRefreshService);
 
     hiddenItems = signal<SidebarItem[]>([]);
     anyItemHidden = signal<boolean>(false);

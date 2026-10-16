@@ -49,7 +49,7 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
      * Life cycle hook to indicate component creation is done
      */
     ngOnInit(): void {
-        this.websocketTopic = this.buildWebsocketTopic('');
+        this.websocketTopic = this.buildWebsocketTopic();
         this.setupReceiver();
         this.setupSender();
         this.setupReconnectSync();
@@ -89,7 +89,7 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
                         submission.participation.exercise = undefined;
                         submission.participation.submissions = [];
                     }
-                    this.teamSubmissionWebsocketService.send<Submission>(this.buildWebsocketTopic('/update'), submission);
+                    this.teamSubmissionWebsocketService.send<Submission>(this.buildSendDestination('/update'), submission);
                 },
                 error: (error: unknown) => this.onError(error),
             });
@@ -97,7 +97,7 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
 
         this.submissionPatchObservable()?.subscribe({
             next: (submissionPatch: SubmissionPatch) => {
-                this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildWebsocketTopic('/patch'), submissionPatch);
+                this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), submissionPatch);
             },
             error: (error: unknown) => this.onError(error),
         });
@@ -114,11 +114,11 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: () => {
                     const initialSync = new SubmissionPatch(ApollonEditor.generateInitialSyncMessage());
-                    this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildWebsocketTopic('/patch'), initialSync);
+                    this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialSync);
 
                     if (this.exerciseType() === ExerciseType.MODELING) {
                         const initialAwarenessSync = new SubmissionPatch(ApollonEditor.generateInitialAwarenessSyncMessage());
-                        this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildWebsocketTopic('/patch'), initialAwarenessSync);
+                        this.teamSubmissionWebsocketService.send<SubmissionPatch>(this.buildSendDestination('/patch'), initialAwarenessSync);
                     }
                     this.reconnected.emit();
                 },
@@ -130,8 +130,18 @@ export class TeamSubmissionSyncComponent implements OnInit, OnDestroy {
         return this.currentUser?.login === user.login;
     }
 
-    private buildWebsocketTopic(path = ''): string {
-        return `/topic/participations/${this.participation().id}/team/${this.exerciseType()}-submissions${path}`;
+    /**
+     * Topic on which the server distributes the team's submission changes (needs to match ExerciseWebsocketTopics.TEAM_TEXT_SUBMISSIONS and TEAM_MODELING_SUBMISSIONS)
+     */
+    private buildWebsocketTopic(): string {
+        return `/topic/participations/${this.participation().id}/team/${this.exerciseType()}-submissions`;
+    }
+
+    /**
+     * Destination for the own submission changes (needs to match the routes in ParticipationTeamWebsocketService.java)
+     */
+    private buildSendDestination(path: string): string {
+        return `/app/participations/${this.participation().id}/team/${this.exerciseType()}-submissions${path}`;
     }
 
     private onError(error: unknown) {

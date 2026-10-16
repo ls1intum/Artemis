@@ -12,7 +12,7 @@ describe('LectureChatbotComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [LectureChatbotComponent],
-            providers: [MockProvider(IrisChatService, { openChat: vi.fn() })],
+            providers: [MockProvider(IrisChatService, { openChat: vi.fn(), stagePendingContext: vi.fn() })],
         })
             .overrideComponent(LectureChatbotComponent, {
                 set: {
@@ -32,6 +32,23 @@ describe('LectureChatbotComponent', () => {
         await fixture.whenStable();
 
         expect(irisChatService.openChat).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 42);
+    });
+
+    it('does not stage the lecture context while the context selector is available', async () => {
+        fixture.componentRef.setInput('lectureId', 42);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(irisChatService.stagePendingContext).not.toHaveBeenCalled();
+    });
+
+    it('stages the lecture as context when the context selector is hidden', async () => {
+        fixture.componentRef.setInput('lectureId', 42);
+        fixture.componentRef.setInput('isContextSelectionAvailable', false);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(irisChatService.stagePendingContext).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 42);
     });
 
     it('toggleChatHistory does nothing when base chatbot is not available', () => {

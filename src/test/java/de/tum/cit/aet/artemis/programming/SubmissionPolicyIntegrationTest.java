@@ -377,14 +377,46 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void test_updateSubmissionPolicy_typeChangeWithPreviousId_conflict() throws Exception {
+    void test_updateSubmissionPolicy_ok_typeChangeWithPreviousId_replacesPolicyRow() throws Exception {
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.lockRepo().active(true).limit(10).policy());
         Long oldPolicyId = updatedExercise().getSubmissionPolicy().getId();
 
-        // Pre-existing behaviour, unchanged by the DTO migration: the update form keeps the id of the previously
-        // loaded policy when the type changes. The old row is deleted first, so re-saving the same id fails with an
-        // optimistic-locking conflict. The DTO carries the id through exactly as the entity binding did before.
-        request.patch(requestUrl(), new SubmissionPolicyDTO(oldPolicyId, "submission_penalty", 10, 5.0, true), HttpStatus.CONFLICT);
+        String response = request.patchWithResponseBody(requestUrl(), new SubmissionPolicyDTO(oldPolicyId, "submission_penalty", 4, 2.0, true), String.class, HttpStatus.OK);
+        Map<String, Object> body = asJsonMap(response);
+
+        assertThat(body).containsEntry("type", "submission_penalty").containsEntry("submissionLimit", 4).containsEntry("exceedingPenalty", 2.0).containsEntry("active", true);
+        assertThat(((Number) body.get("id")).longValue()).isNotEqualTo(oldPolicyId);
+
+        var storedPolicies = submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(programmingExerciseId));
+        assertThat(storedPolicies).hasSize(1);
+        SubmissionPolicy storedPolicy = storedPolicies.iterator().next();
+        assertThat(storedPolicy).isInstanceOf(SubmissionPenaltyPolicy.class);
+        assertThat(storedPolicy.getSubmissionLimit()).isEqualTo(4);
+        assertThat(((SubmissionPenaltyPolicy) storedPolicy).getExceedingPenalty()).isEqualTo(2.0);
+        assertThat(submissionPolicyRepository.findById(oldPolicyId)).isEmpty();
+        assertThat(updatedExercise().getSubmissionPolicy().getId()).isEqualTo(storedPolicy.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void test_updateSubmissionPolicy_ok_typeChangeWithPreviousId_penaltyToLockRepository() throws Exception {
+        addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().active(true).limit(10).penalty(5.0).policy());
+        Long oldPolicyId = updatedExercise().getSubmissionPolicy().getId();
+
+        String response = request.patchWithResponseBody(requestUrl(), new SubmissionPolicyDTO(oldPolicyId, "lock_repository", 3, null, true), String.class, HttpStatus.OK);
+        Map<String, Object> body = asJsonMap(response);
+
+        assertThat(body).containsOnlyKeys("id", "type", "submissionLimit", "active");
+        assertThat(body).containsEntry("type", "lock_repository").containsEntry("submissionLimit", 3).containsEntry("active", true);
+        assertThat(((Number) body.get("id")).longValue()).isNotEqualTo(oldPolicyId);
+
+        var storedPolicies = submissionPolicyRepository.findAllByProgrammingExerciseIds(Set.of(programmingExerciseId));
+        assertThat(storedPolicies).hasSize(1);
+        SubmissionPolicy storedPolicy = storedPolicies.iterator().next();
+        assertThat(storedPolicy).isInstanceOf(LockRepositoryPolicy.class);
+        assertThat(storedPolicy.getSubmissionLimit()).isEqualTo(3);
+        assertThat(submissionPolicyRepository.findById(oldPolicyId)).isEmpty();
+        assertThat(updatedExercise().getSubmissionPolicy().getId()).isEqualTo(storedPolicy.getId());
     }
 
     // Beginning of toggleSubmissionPolicy tests

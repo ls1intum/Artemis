@@ -1,4 +1,4 @@
-import { EventEmitter, Injectable, inject } from '@angular/core';
+import { EventEmitter, Service, inject } from '@angular/core';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { CredentialRevocationChoice } from 'app/account/password/password.service';
@@ -18,7 +18,7 @@ import { ButtonType } from 'app/shared-ui/components/buttons/button/button.compo
  * question can name the selected categories instead of saying "the selected credentials" - on the reset path the
  * default is all of them, which the user should see spelled out before they agree to it.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CredentialRevocationConfirmationService {
     private readonly deleteDialogService = inject(DeleteDialogService);
     private readonly translateService = inject(TranslateService);

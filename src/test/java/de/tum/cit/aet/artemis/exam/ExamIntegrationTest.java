@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exam;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -23,6 +24,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -661,6 +663,116 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(updatedExam.getExamSummaryPublicationDate()).isCloseTo(savedExam.getExamSummaryPublicationDate(), within(1, ChronoUnit.SECONDS));
     }
 
+    private static Stream<Arguments> invalidWorkingTimeChanges() {
+        return Stream.of(false, true)
+                .flatMap(testExam -> Stream.of(-3000, -3001, 2_589_001, 5_000_000, Integer.MAX_VALUE, Integer.MIN_VALUE).map(delta -> Arguments.of(testExam, delta)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("invalidWorkingTimeChanges")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_rejectsInvalidWorkingTime(boolean testExam, int delta) throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam.setTestExam(testExam);
+        exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
+        exam.setWorkingTime(3000);
+        exam.setEndDate(exam.getStartDate().plusSeconds(testExam ? 6600 : 3000));
+        exam = examRepository.save(exam);
+        StudentExam studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, student1, 3600);
+        ZonedDateTime originalEndDate = exam.getEndDate();
+        String examUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+
+        request.patch(examUrl + "/working-time", delta, HttpStatus.BAD_REQUEST);
+
+        ExamDTO unchangedExam = request.get(examUrl, HttpStatus.OK, ExamDTO.class);
+        assertThat(unchangedExam.workingTime()).isEqualTo(3000);
+        assertThat(unchangedExam.endDate().toInstant()).isEqualTo(originalEndDate.toInstant());
+        List<StudentExamDTO> studentExams = request.getList(examUrl + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
+        assertThat(studentExams).filteredOn(candidate -> candidate.id() == studentExam.getId()).singleElement()
+                .satisfies(unchangedStudentExam -> assertThat(unchangedStudentExam.workingTime()).isEqualTo(3600));
+    }
+
+    private static Stream<Arguments> validWorkingTimeBounds() {
+        return Stream.of(false, true).flatMap(testExam -> Stream.of(Arguments.of(testExam, 1, 1), Arguments.of(testExam, 2_592_000, 3_110_400)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("validWorkingTimeBounds")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_acceptsWorkingTimeBounds(boolean testExam, int workingTime, int extendedWorkingTime) throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam.setTestExam(testExam);
+        exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
+        exam.setWorkingTime(3000);
+        exam.setEndDate(exam.getStartDate().plusSeconds(testExam ? 6600 : 3000));
+        exam = examRepository.save(exam);
+        StudentExam studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, student1, 3600);
+        String examUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+
+        ExamDTO updatedExam = request.patchWithResponseBody(examUrl + "/working-time", workingTime - 3000, ExamDTO.class, HttpStatus.OK);
+
+        assertThat(updatedExam.workingTime()).isEqualTo(workingTime);
+        ExamDTO savedExam = request.get(examUrl, HttpStatus.OK, ExamDTO.class);
+        assertThat(savedExam.workingTime()).isEqualTo(workingTime);
+        assertThat(savedExam.endDate().toInstant()).isEqualTo(savedExam.startDate().plusSeconds(workingTime + (testExam ? 3600 : 0)).toInstant());
+        List<StudentExamDTO> studentExams = request.getList(examUrl + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
+        assertThat(studentExams).filteredOn(candidate -> candidate.id() == studentExam.getId()).singleElement()
+                .satisfies(updatedStudentExam -> assertThat(updatedStudentExam.workingTime()).isEqualTo(extendedWorkingTime));
+    }
+
+    private static Stream<Arguments> projectedStudentWorkingTimeBounds() {
+        return Stream.of(false, true)
+                .flatMap(testExam -> Stream.of(Arguments.of(testExam, 2_592_000, false), Arguments.of(testExam, 2_486_000, false), Arguments.of(testExam, 2_485_513, true)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("projectedStudentWorkingTimeBounds")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_validatesProjectedStudentWorkingTime(boolean testExam, int studentWorkingTime, boolean representable) throws Exception {
+        Exam exam = examUtilService.addExam(course1);
+        exam.setTestExam(testExam);
+        exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
+        exam.setWorkingTime(3000);
+        exam.setEndDate(exam.getStartDate().plusSeconds(testExam ? 6600 : 3000));
+        exam = examRepository.save(exam);
+        StudentExam studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, student1, 3000);
+        String examUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+        // These individual allowances are accepted by the public endpoint before scaling the regular working time.
+        request.patch(examUrl + "/student-exams/" + studentExam.getId() + "/working-time", studentWorkingTime, HttpStatus.OK);
+
+        request.patch(examUrl + "/working-time", 2_589_000, representable ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+
+        ExamDTO savedExam = request.get(examUrl, HttpStatus.OK, ExamDTO.class);
+        assertThat(savedExam.workingTime()).isEqualTo(representable ? 2_592_000 : 3000);
+        assertThat(savedExam.endDate().toInstant()).isEqualTo(exam.getEndDate().plusSeconds(representable ? 2_589_000 : 0).toInstant());
+        List<StudentExamDTO> studentExams = request.getList(examUrl + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
+        assertThat(studentExams).filteredOn(candidate -> candidate.id() == studentExam.getId()).singleElement()
+                .satisfies(savedStudentExam -> assertThat(savedStudentExam.workingTime()).isEqualTo(representable ? 2_147_483_232 : studentWorkingTime));
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { -1, 0 })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExamWorkingTime_testExamDurationIntegerBoundary(int offset) throws Exception {
+        Exam exam = examUtilService.addTestExam(course1);
+        exam.setStartDate(exam.getStartDate().truncatedTo(ChronoUnit.SECONDS));
+        exam.setWorkingTime(1);
+        exam.setEndDate(exam.getStartDate().plusSeconds((long) Integer.MAX_VALUE + offset));
+        exam = examRepository.save(exam);
+        StudentExam studentExam = examUtilService.addStudentExamWithUserAndWorkingTime(exam, student1, 1);
+        String examUrl = "/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId();
+        boolean exceedsDurationLimit = offset == 0;
+
+        request.patch(examUrl + "/working-time", 1, exceedsDurationLimit ? HttpStatus.BAD_REQUEST : HttpStatus.OK);
+
+        ExamDTO savedExam = request.get(examUrl, HttpStatus.OK, ExamDTO.class);
+        assertThat(savedExam.workingTime()).isEqualTo(exceedsDurationLimit ? 1 : 2);
+        assertThat(savedExam.endDate().toInstant()).isEqualTo(exam.getStartDate().plusSeconds(Integer.MAX_VALUE).toInstant());
+        List<StudentExamDTO> studentExams = request.getList(examUrl + "/student-exams", HttpStatus.OK, StudentExamDTO.class);
+        assertThat(studentExams).filteredOn(candidate -> candidate.id() == studentExam.getId()).singleElement()
+                .satisfies(updatedStudentExam -> assertThat(updatedStudentExam.workingTime()).isEqualTo(exceedsDurationLimit ? 1 : 2));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExamWorkingTime_failsIfExtendedPastSummaryPublicationDate() throws Exception {
@@ -735,13 +847,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @ParameterizedTest(name = "title=\"{0}\"")
-    @NullSource
     @ValueSource(strings = { "", "   " })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExam_failsWithMissingOrBlankTitle(String title) throws Exception {
+    void testImportExam_failsWithBlankTitle(String title) throws Exception {
         ObjectNode examJson = examBodyWithTitle(ExamImportDTO.of(exam1, course1.getId()), title);
 
         request.postAndExpectError("/api/exam/courses/" + course1.getId() + "/exam-import", examJson, HttpStatus.BAD_REQUEST, "examTitleEmpty");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExam_failsWithMissingTitle() throws Exception {
+        // a missing title is already refused by the bean validation of the import body, before the explicit title check runs
+        ObjectNode examJson = examBodyWithTitle(ExamImportDTO.of(exam1, course1.getId()), null);
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examJson, HttpStatus.BAD_REQUEST, null);
     }
 
     /**
@@ -1052,7 +1172,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         if (searchableEntityWeaviateService != null) {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(modelingExercise));
 
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam));
+            WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam);
         }
         WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam);
 
@@ -1253,8 +1373,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         jenkinsRequestMockProvider.reset();
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         var examWithExercises = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(exam.getId());
+        // A test run names its build plan after the practice-prefixed participant, so that it cannot collide with the
+        // plan of a graded participation of the same instructor and exercise.
         mockConnectorRequestsForStartParticipation(ExerciseUtilService.getFirstExerciseWithType(examWithExercises, ProgrammingExercise.class),
-                instructor.getParticipantIdentifier(), Set.of(instructor), true);
+                "practice-" + instructor.getParticipantIdentifier(), Set.of(instructor), true);
 
         StudentExamDTO createdTestRun = request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/test-runs",
                 new CreateTestRunDTO(exam.getId(), exerciseIds, 6000), StudentExamDTO.class, HttpStatus.OK);
@@ -1471,7 +1593,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         if (searchableEntityWeaviateService != null) {
             searchableEntityWeaviateService.upsertExerciseAsync(ExerciseSearchableEntityDTO.fromExercise(textExercise));
 
-            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise));
+            WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise);
         }
         WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise);
 
@@ -1878,6 +2000,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(returnedStatistics.numberOfTotalParticipationsForAssessment()).isEqualTo(actualStatistics.numberOfTotalParticipationsForAssessment());
         assertThat(returnedStatistics.existsUnassessedQuizzes()).isEqualTo(actualStatistics.existsUnassessedQuizzes());
         assertThat(returnedStatistics.existsUnsubmittedExercises()).isEqualTo(actualStatistics.existsUnsubmittedExercises());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExamStatistics_tutorReceivesComplaintCounts() throws Exception {
+        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, false);
+        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
+                ExamChecklistDTO.class);
+        // without the complaint counts the exam status of a tutor would claim that 100% of the complaints are done
+        assertThat(returnedStatistics.numberOfAllComplaints()).isNotNull().isEqualTo(actualStatistics.numberOfAllComplaints());
+        assertThat(returnedStatistics.numberOfAllComplaintsDone()).isNotNull().isEqualTo(actualStatistics.numberOfAllComplaintsDone());
+        // the remaining instructor-only values stay hidden from tutors
+        assertThat(returnedStatistics.numberOfGeneratedStudentExams()).isNull();
+        assertThat(returnedStatistics.numberOfExamsStarted()).isNull();
     }
 
     @Test
@@ -2667,6 +2803,73 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExerciseGroup_rejectsExerciseWithoutSourceIdAndPersistsNothing() throws Exception {
+        Exam targetExam = examUtilService.addExam(course1);
+        int exerciseGroupsBefore = examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups().size();
+
+        // an exercise that names no source exercise cannot be imported, so the whole request has to be refused
+        List<ExerciseGroupImportDTO> body = List.of(new ExerciseGroupImportDTO("g", true, List.of(new ExerciseImportDTO(null, ExerciseType.TEXT, "x", null, null, null))));
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", body, HttpStatus.BAD_REQUEST, null);
+
+        assertThat(examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups()).hasSize(exerciseGroupsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExerciseGroup_rejectsNullElementsAndPersistsNothing() throws Exception {
+        Exam targetExam = examUtilService.addExam(course1);
+        int exerciseGroupsBefore = examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups().size();
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group";
+
+        // a null group or a null exercise is a malformed request, not a server error
+        request.postWithoutLocation(path, Arrays.asList((ExerciseGroupImportDTO) null), HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation(path, List.of(new ExerciseGroupImportDTO("g", true, Arrays.asList((ExerciseImportDTO) null))), HttpStatus.BAD_REQUEST, null);
+
+        assertThat(examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups()).hasSize(exerciseGroupsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExam_rejectsNullElementsAndPersistsNothing() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        int examsBefore = examRepository.findByCourseId(course1.getId()).size();
+
+        for (List<ExerciseGroupImportDTO> malformedGroups : List.of(Arrays.asList((ExerciseGroupImportDTO) null),
+                List.of(new ExerciseGroupImportDTO("g", true, Arrays.asList((ExerciseImportDTO) null))))) {
+            ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.testExam(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
+                    importDTO.endDate(), importDTO.publishResultsDate(), importDTO.examStudentReviewStart(), importDTO.examStudentReviewEnd(), importDTO.gracePeriod(),
+                    importDTO.workingTime(), importDTO.startText(), importDTO.endText(), importDTO.confirmationStartText(), importDTO.confirmationEndText(),
+                    importDTO.examMaxPoints(), importDTO.randomizeExerciseOrder(), importDTO.numberOfExercisesInExam(), importDTO.numberOfCorrectionRoundsInExam(),
+                    importDTO.examiner(), importDTO.moduleNumber(), importDTO.courseName(), importDTO.exampleSolutionPublicationDate(), importDTO.examSummaryPublicationDate(),
+                    importDTO.channelName(), importDTO.courseId(), malformedGroups);
+            request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", body, HttpStatus.BAD_REQUEST, null);
+        }
+
+        assertThat(examRepository.findByCourseId(course1.getId())).hasSize(examsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExam_rejectsExerciseWithoutSourceIdAndPersistsNothing() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        ExerciseGroupImportDTO malformedGroup = new ExerciseGroupImportDTO("g", true, List.of(new ExerciseImportDTO(null, ExerciseType.TEXT, "x", null, null, null)));
+        ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.testExam(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
+                importDTO.endDate(), importDTO.publishResultsDate(), importDTO.examStudentReviewStart(), importDTO.examStudentReviewEnd(), importDTO.gracePeriod(),
+                importDTO.workingTime(), importDTO.startText(), importDTO.endText(), importDTO.confirmationStartText(), importDTO.confirmationEndText(), importDTO.examMaxPoints(),
+                importDTO.randomizeExerciseOrder(), importDTO.numberOfExercisesInExam(), importDTO.numberOfCorrectionRoundsInExam(), importDTO.examiner(), importDTO.moduleNumber(),
+                importDTO.courseName(), importDTO.exampleSolutionPublicationDate(), importDTO.examSummaryPublicationDate(), importDTO.channelName(), importDTO.courseId(),
+                List.of(malformedGroup));
+        int examsBefore = examRepository.findByCourseId(course1.getId()).size();
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", body, HttpStatus.BAD_REQUEST, null);
+
+        assertThat(examRepository.findByCourseId(course1.getId())).hasSize(examsBefore);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor10", roles = "INSTRUCTOR")
     void testGetExamForImportWithExercises_noInstructorAccess() throws Exception {
         request.get("/api/exam/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
@@ -3094,7 +3297,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         // When a client supplies an importId, the importing user receives live progress on an import-specific websocket channel.
         request.postWithResponseBody("/api/exam/courses/" + course1.getId() + "/exam-import?importId=" + importId, importDTO, ExamImportResultDTO.class, CREATED);
 
-        verify(websocketMessagingService, atLeastOnce()).sendMessageToUser(eq(TEST_PREFIX + "instructor1"), eq("/topic/exam-import/" + importId), any());
+        verify(websocketMessagingService, atLeastOnce()).sendMessageToUser(eq(TEST_PREFIX + "instructor1"), userTopic("/topic/exam-import/" + importId), any());
     }
 
     @Test
@@ -3147,8 +3350,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         }
         Exercise importedProgrammingExercise = received.getExerciseGroups().get(4).getExercises().iterator().next();
         ProgrammingExercise importedExerciseWithAllData = programmingExerciseRepository
-                .findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigAndGradingCriteria(
-                        importedProgrammingExercise.getId())
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesAndTemplateAndSolutionParticipationsAndAuxReposAndGradingCriteria(importedProgrammingExercise.getId())
                 .orElseThrow();
         assertThat(importedExerciseWithAllData.getGradingCriteria()).hasSize(2);
     }

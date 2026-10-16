@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 import { Observable } from 'rxjs';
 
@@ -10,7 +10,7 @@ import { generateUuid } from 'app/foundation/util/crypto.utils';
 /** Prefix of the link of a file stored under the lecture attachment path, as in attachments/lecture/{lectureId}/{filename}. */
 const LECTURE_ATTACHMENT_LINK_PREFIX = 'attachments/lecture/';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FileService {
     private http = inject(HttpClient);
     private resourceUrl = 'api/core/files';

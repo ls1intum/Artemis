@@ -196,6 +196,10 @@ public class ExamDeletionService {
      * <li>All student participations, submissions, and results for exam exercises</li>
      * <li>All plagiarism results for exam exercises</li>
      * <li>All exam live events</li>
+     * <li>All ExamUsers, i.e. the registrations of the students with their seating and identity-check flags, so no student is registered
+     * for the exam afterwards. The students themselves stay in the course. The signature and photo image files of the exam users are only
+     * scheduled for deletion, on a best-effort basis, like in every other path that removes an exam user (unregistering one or all students
+     * and deleting the exam).</li>
      * </ul>
      * <p>
      * The preserved elements are:

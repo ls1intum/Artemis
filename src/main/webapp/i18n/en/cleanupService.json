@@ -21,37 +21,67 @@
             "deleteNotEnrolledUsers": "Delete warned users not enrolled in any course",
             "deletePlagiarismCases": "Delete plagiarism cases of old courses"
         },
+        "description": {
+            "deleteOrphans": "Orphaned rows of any age. No date range applies.",
+            "deletePlagiarismComparisons": "Undecided comparisons of courses that ran in the selected range.",
+            "deleteNonRatedResults": "Feedback of non-latest non-rated results, for courses that ran in the selected range.",
+            "deleteOldRatedResults": "Feedback of non-latest rated results, for courses that ran in the selected range.",
+            "deleteOldSubmissionVersions": "Submission versions created in the selected range, across all courses.",
+            "deleteOldFeedback": "Feedback of non-latest results of courses that ended before {{cutoff}} ({{period}} after the course end).",
+            "warnOldCoursesReset": "Grade-relevant courses that ended before {{cutoff}} ({{period}} retention), other courses before {{secondaryCutoff}} ({{secondaryPeriod}} retention).",
+            "resetOldCourses": "Courses whose instructors were warned before {{cutoff}} ({{period}} grace period).",
+            "deleteOldCourseSubmissionVersions": "Courses that ended before {{cutoff}} ({{period}} after the course end).",
+            "warnNotEnrolledUsers": "Users last active before {{cutoff}} ({{period}} of inactivity).",
+            "deleteNotEnrolledUsers": "Users warned before {{cutoff}} ({{period}} grace period) who have not logged in since their warning.",
+            "deletePlagiarismCases": "Plagiarism cases of courses that ended before {{cutoff}} ({{period}} retention)."
+        },
+        "descriptionUnavailable": "The affected data cannot be shown: the cleanup configuration could not be loaded.",
+        "duration": {
+            "day": "1 day",
+            "days": "{{count}} days",
+            "week": "1 week",
+            "weeks": "{{count}} weeks",
+            "month": "1 month",
+            "months": "{{count}} months",
+            "year": "1 year",
+            "years": "{{count}} years"
+        },
         "tooltip": {
             "deleteOrphans": "Deletes orphaned entities that are no longer associated with valid results or participations. This includes feedback, text blocks, and scores that reference null results, participations, or submissions.",
             "deletePlagiarismComparisons": "Deletes plagiarism comparisons with a status of \"None\" that belong to courses within the specified date range. A status of \"None\" indicates that the plagiarism incident has not yet been reviewed.",
             "deleteNonRatedResults": "Deletes non-rated results, excluding the latest non-rated result for each participation (to be able to compute Competencies Scores), within the specified date range, along with associated long feedback texts, text blocks, feedback items, and participant scores.",
             "deleteOldRatedResults": "Deletes rated results, excluding the latest rated result for each participation, for courses conducted within the specified date range. Also deletes associated long feedback texts, text blocks, feedback items, and participant scores.",
             "deleteOldSubmissionVersions": "Deletes old submission versions. The last submission will not be deleted, as it is always stored in the corresponding Submission subclass.",
-            "deleteOldFeedback": "Deletes the feedback (feedback, long feedback texts, text blocks) of non-latest results for courses that ended before the configured cutoff. The results themselves and the feedback of the latest rated and latest non-rated result per participation are kept.",
-            "warnOldCoursesReset": "Archives every old course whose configured data-retention period has elapsed (by default 1 year for non-grade-relevant and 5 years for grade-relevant courses) and emails its instructors a download link plus a notice that the student data will be deleted after the configured grace period. Course material is kept.",
+            "deleteOldFeedback": "Deletes the feedback (feedback, long feedback texts, text blocks) of non-latest results for courses that ended before the cutoff shown below. The results themselves and the feedback of the latest rated and latest non-rated result per participation are kept.",
+            "warnOldCoursesReset": "Archives every old course whose data-retention period has elapsed and emails its instructors a download link plus a notice that the student data will be deleted after the grace period. Course material is kept. The retention periods are configured per institution; the cutoffs currently in effect are shown below.",
             "resetOldCourses": "Deletes all student data of old courses that are past the reset grace period (and were already archived), while keeping the course material. This action cannot be undone.",
-            "deleteOldCourseSubmissionVersions": "Deletes the submission versions (editor keystroke history) of courses that ended before the configured cutoff.",
-            "warnNotEnrolledUsers": "Emails users who are enrolled in no course and have been inactive beyond the configured guard period, warning that their account will be deleted after the grace period. Logging in cancels the deletion. Administrators are not affected.",
+            "deleteOldCourseSubmissionVersions": "Deletes the submission versions (editor keystroke history) of courses that ended before the cutoff shown below.",
+            "warnNotEnrolledUsers": "Emails users who are enrolled in no course and have been inactive beyond the guard period shown below, warning that their account will be deleted after the grace period. Logging in cancels the deletion. Administrators are not affected.",
             "deleteNotEnrolledUsers": "Permanently deletes warned users who are still enrolled in no course, whose grace period has elapsed, who have not logged in since the warning, and who have no remaining domain references. Blocked users remain unchanged. Administrators are not affected.",
-            "deletePlagiarismCases": "Deletes the plagiarism cases (with their notification posts) of courses that ended before the grade-relevant retention cutoff (5 years by default). Plagiarism cases are grade-relevant records and share the same retention period as other exam data. This action cannot be undone."
+            "deletePlagiarismCases": "Deletes the plagiarism cases (with their notification posts) of courses that ended before the grade-relevant retention cutoff shown below. Plagiarism cases are grade-relevant records and share the same retention period as other exam data. This action cannot be undone."
         },
         "execute": {
             "question": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong> for the period from {{deleteFrom}} to {{deleteTo}}? This action cannot be undone!",
-            "questionWithoutDates": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong>? This action cannot be undone!",
+            "questionWithoutDates": {
+                "delete": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong>? This action cannot be undone!",
+                "warn": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong>? The emails cannot be taken back, and the warning starts the grace period after which the affected data is deleted.",
+                "reset": "Are you sure you want to execute the operation <strong>{{ operationName }}</strong>? The student data of the affected courses is deleted permanently, the course material is kept."
+            },
             "typeOperationNameToConfirm": "Please type in the name of the operation to confirm."
         },
         "modal": {
-            "affectedEntities": "This operation will delete the following entities:",
-            "noEntriesToDelete": "No entries to delete"
+            "affectedEntities": {
+                "delete": "This operation will delete the following entities:",
+                "warn": "This operation will send a warning for the following entities:",
+                "reset": "This operation will reset the following entities:"
+            },
+            "noAffectedEntities": "No affected entities"
         },
         "notRunYet": "This operation has not been run yet",
         "error": {
             "datesInvalid": "'Delete to' must be after 'Delete from'"
         },
         "entities": {
-            "orphanFeedback": "Orphan feedback",
-            "orphanLongFeedbackText": "Orphan long feedback text",
-            "orphanTextBlock": "Orphan text block",
             "orphanStudentScore": "Orphan student score",
             "orphanTeamScore": "Orphan team score",
             "orphanFeedbackForOrphanResults": "Orphan feedback for orphan results",
@@ -74,7 +104,6 @@
             "blockedUsers": "Users blocked by remaining references"
         },
         "button": {
-            "execute": "Execute",
             "close": "Close"
         }
     }

@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
@@ -42,6 +41,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -54,7 +54,7 @@ import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateServi
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("content/faq")
+@FeatureUsage(UserFeature.FAQ)
 @RestController
 @RequestMapping("api/communication/")
 public class FaqResource {
@@ -109,7 +109,7 @@ public class FaqResource {
         faqToSave.setCourse(course);
         Faq savedFaq = faqRepository.save(faqToSave);
         FaqDTO dto = new FaqDTO(savedFaq);
-        faqService.autoIngestFaqIntoPyris(savedFaq);
+        faqService.autoIngestFaqIntoPyris(savedFaq.getId());
         searchableEntityWeaviateService.ifPresent(service -> service.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(savedFaq)));
         return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
@@ -141,7 +141,7 @@ public class FaqResource {
         existingFaq.setFaqState(updateFaqDTO.faqState());
         existingFaq.setCategories(updateFaqDTO.categories());
         Faq updatedFaq = faqRepository.save(existingFaq);
-        faqService.autoIngestFaqIntoPyris(updatedFaq);
+        faqService.autoIngestFaqIntoPyris(updatedFaq.getId());
         searchableEntityWeaviateService.ifPresent(service -> service.upsertFaqAsync(FaqSearchableEntityDTO.fromFaq(updatedFaq)));
         FaqDTO dto = new FaqDTO(updatedFaq);
         return ResponseEntity.ok().body(dto);
@@ -183,8 +183,8 @@ public class FaqResource {
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
-        faqService.deleteFaqInPyris(existingFaq);
         faqRepository.deleteById(faqId);
+        faqService.deleteFaqInPyris(faqId, courseId);
         searchableEntityWeaviateService.ifPresent(service -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, faqId));
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
     }
@@ -245,21 +245,6 @@ public class FaqResource {
         checkShouldAccessNotAccepted(faqState, courseId);
         Set<String> faqs = faqRepository.findAllCategoriesByCourseIdAndState(courseId, faqState);
         return ResponseEntity.ok().body(faqs);
-    }
-
-    /**
-     * POST /courses/{courseId}/ingest
-     * This endpoint is for starting the ingestion of all faqs or only one faq when triggered in Artemis.
-     *
-     * @param courseId the ID of the course for which all faqs should be ingested in pyris
-     * @param faqId    If this id is present then only ingest this one faq of the respective course
-     * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
-     */
-    @PostMapping("courses/{courseId}/faqs/ingest")
-    @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Void> ingestFaqInIris(@PathVariable long courseId, @RequestParam(required = false) Optional<Long> faqId) {
-        faqService.ingestFaqsIntoPyris(courseId, faqId);
-        return ResponseEntity.ok().build();
     }
 
     /**

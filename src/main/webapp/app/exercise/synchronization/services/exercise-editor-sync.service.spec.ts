@@ -205,7 +205,7 @@ describe('ExerciseEditorSyncService', () => {
         service.sendSynchronizationUpdate(5, message);
 
         expect(websocketService.send).toHaveBeenCalledWith(
-            '/topic/exercises/5/synchronization',
+            '/app/exercises/5/synchronization',
             expect.objectContaining({
                 eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_UPDATE,
                 target: ExerciseEditorSyncTarget.PROBLEM_STATEMENT,
@@ -228,7 +228,7 @@ describe('ExerciseEditorSyncService', () => {
         service.sendSynchronizationUpdate(5, message);
 
         expect(websocketService.send).toHaveBeenCalledWith(
-            '/topic/exercises/5/synchronization',
+            '/app/exercises/5/synchronization',
             expect.objectContaining({
                 eventType: ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT,
                 target: ExerciseEditorSyncTarget.EXERCISE_METADATA,
@@ -388,7 +388,7 @@ describe('ExerciseEditorSyncService', () => {
             connectionState$.next(new ConnectionState(true, true));
 
             expect(websocketService.send).toHaveBeenCalledWith(
-                '/topic/exercises/5/synchronization',
+                '/app/exercises/5/synchronization',
                 expect.objectContaining({
                     eventType: ExerciseEditorSyncEventType.PROBLEM_STATEMENT_SYNC_FULL_CONTENT_REQUEST,
                     requestId: 'req-1',

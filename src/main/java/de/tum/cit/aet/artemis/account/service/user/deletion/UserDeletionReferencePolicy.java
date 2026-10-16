@@ -30,7 +30,10 @@ public enum UserDeletionReferencePolicy {
     EXERCISE_VERSION_AUTHOR("exercise_version", "author_id", UserDeletionDataCategory.ASSESSMENT, UserDeletionAction.DELETE, true),
     GLOBAL_NOTIFICATION_SETTING("global_notification_setting", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     IRIS_SESSION("iris_session", "user_id", UserDeletionDataCategory.COMMUNICATION, UserDeletionAction.DELETE, true),
+    IRIS_PROACTIVE_EPISODE("iris_proactive_episode", "user_id", UserDeletionDataCategory.COMMUNICATION, UserDeletionAction.DELETE, true),
     AUTHORITY("jhi_user_authority", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.REMOVE_MEMBERSHIP, false),
+    LEARNER_PROFILE("learner_profile", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
+    LEARNING_PATH("learning_path", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DELETE, true),
     LECTURE_PROGRESS("lecture_unit_user", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DELETE, true),
     LLM_USAGE_ACTOR("llm_token_usage_trace", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DETACH_ACTOR, true),
     LTI_LAUNCH("lti_resource_launch", "user_id", UserDeletionDataCategory.LTI, UserDeletionAction.DELETE, true),
@@ -41,6 +44,7 @@ public enum UserDeletionReferencePolicy {
     PLAGIARISM_CASE_STUDENT("plagiarism_case", "student_id", UserDeletionDataCategory.PLAGIARISM, UserDeletionAction.DELETE, true),
     PLAGIARISM_VERDICT_AUTHOR("plagiarism_case", "verdict_by_id", UserDeletionDataCategory.PLAGIARISM, UserDeletionAction.DETACH_ACTOR, true),
     POST_AUTHOR("post", "author_id", UserDeletionDataCategory.COMMUNICATION, UserDeletionAction.DELETE, true),
+    PRESENTATION_ASSESSMENT_INSTANCE("presentation_assessment_instance", "student_id", UserDeletionDataCategory.ASSESSMENT, UserDeletionAction.DELETE, true),
     PUSH_NOTIFICATION_DEVICE("push_notification_device_configuration", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     QUIZ_QUESTION_PROGRESS("quiz_question_progress", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DELETE, true),
     QUIZ_TRAINING_LEADERBOARD("quiz_training_leaderboard", "user_id", UserDeletionDataCategory.LEARNING_ANALYTICS, UserDeletionAction.DELETE, true),
@@ -67,7 +71,8 @@ public enum UserDeletionReferencePolicy {
     ORGANIZATION_MEMBERSHIP("user_organization", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.REMOVE_MEMBERSHIP, false),
     SSH_PUBLIC_KEY("user_public_ssh_key", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
     RECOVERY_KEY("user_recovery_key", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
-    PERSONAL_VCS_TOKEN("user_vcs_access_token", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false);
+    PERSONAL_VCS_TOKEN("user_vcs_access_token", "user_id", UserDeletionDataCategory.ACCOUNT, UserDeletionAction.DELETE, false),
+    VCS_ACCESS_LOG("vcs_access_log", "user_id", UserDeletionDataCategory.PARTICIPATION, UserDeletionAction.DETACH_ACTOR, true);
 
     private final String tableName;
 

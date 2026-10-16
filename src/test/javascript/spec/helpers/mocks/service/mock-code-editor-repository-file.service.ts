@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { EMPTY, of } from 'rxjs';
 import { ICodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class MockCodeEditorRepositoryFileService implements ICodeEditorRepositoryFileService {
     getRepositoryContent = () => EMPTY;
 

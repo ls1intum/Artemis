@@ -86,7 +86,7 @@ class IrisChatWebsocketDTOTest {
     }
 
     private static IrisMessageResponseDTO message() {
-        return new IrisMessageResponseDTO(1L, ZonedDateTime.parse("2026-07-05T12:00:00Z"), null, IrisMessageSender.LLM, List.of(), null, null, null, null);
+        return new IrisMessageResponseDTO(1L, ZonedDateTime.parse("2026-07-05T12:00:00Z"), null, IrisMessageSender.LLM, null, null, null, List.of(), null, null, null, null, null);
     }
 
     private static PyrisActivityDTO activity() {

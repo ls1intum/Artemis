@@ -1,64 +1,70 @@
-<div class="d-flex justify-content-between align-items-center">
-    <h3 class="text-align-left fw-normal mb-0">
-        <span>
-            {{ quizConfiguration().exerciseGroup?.title }}
-        </span>
-        <span jhiTranslate="artemisApp.examParticipation.points" [translateValues]="{ points: quizConfiguration().maxPoints }"></span>
-        @if (quizConfiguration().includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            <jhi-included-in-score-badge [includedInOverallScore]="quizConfiguration().includedInOverallScore" />
-        }
-    </h3>
+<jhi-exam-exercise-header [exercise]="quizConfiguration()">
     <jhi-exercise-save-button [submission]="studentSubmission()" (save)="notifyTriggerSave()" />
-</div>
-<hr />
+</jhi-exam-exercise-header>
 
 <!-- TODO this is duplicated with quiz-participation.component.html, we should add a shared component merging bought approaches instead of copy pasting things -->
-<div class="row m-0">
+<div class="flex flex-col md:flex-row">
     @if (quizConfiguration().quizQuestions) {
         @if (!examTimeline()) {
-            <div class="col-md-auto ps-0">
-                <div class="p-0 col-md-auto quiz-navigation stepwizardquiz sticky-top-stepwizard sticky-top-quiz hide-scrollbar-unless-scrolling">
+            <div class="pe-4! md:shrink-0">
+                <div class="stepwizardquiz hide-scrollbar-unless-scrolling">
                     @for (question of quizConfiguration().quizQuestions; track question; let i = $index) {
-                        <div class="stepwizardquiz__step mb-3" [class.mb-3]="!$last">
+                        <div class="mb-6!">
                             @if (question.type === DRAG_AND_DROP) {
-                                <span
-                                    class="btn btn-light btn-circle draganddropcolor-question"
+                                <button
+                                    type="button"
+                                    class="quiz-nav-step draganddropcolor-question"
                                     (click)="navigateToQuestion(question.id!)"
-                                    [ngbTooltip]="!!dragAndDropMappings().get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                                    [ngClass]="!!dragAndDropMappings().get(question.id!)?.length ? 'changed-question' : ''"
+                                    [tumAetUiTooltip]="
+                                        (!!dragAndDropMappings().get(question.id!)?.length
+                                            ? 'artemisApp.quizExercise.explanationAnswered'
+                                            : 'artemisApp.quizExercise.explanationNotAnswered'
+                                        ) | artemisTranslate
+                                    "
+                                    [class.changed-question]="!!dragAndDropMappings().get(question.id!)?.length"
                                 >
-                                    <b class="fa">DD</b>
-                                </span>
+                                    <b>DD</b>
+                                </button>
                             }
                             @if (question.type === MULTIPLE_CHOICE) {
-                                <span
-                                    class="btn btn-light btn-circle multiplechoicecolor-question"
+                                <button
+                                    type="button"
+                                    class="quiz-nav-step multiplechoicecolor-question"
                                     (click)="navigateToQuestion(question.id!)"
-                                    [ngbTooltip]="!!selectedAnswerOptions().get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                                    [ngClass]="!!selectedAnswerOptions().get(question.id!)?.length ? 'changed-question' : ''"
+                                    [tumAetUiTooltip]="
+                                        (!!selectedAnswerOptions().get(question.id!)?.length
+                                            ? 'artemisApp.quizExercise.explanationAnswered'
+                                            : 'artemisApp.quizExercise.explanationNotAnswered'
+                                        ) | artemisTranslate
+                                    "
+                                    [class.changed-question]="!!selectedAnswerOptions().get(question.id!)?.length"
                                 >
-                                    <b class="fa">MC</b>
-                                </span>
+                                    <b>MC</b>
+                                </button>
                             }
                             @if (question.type === SHORT_ANSWER) {
-                                <span
-                                    class="btn btn-light btn-circle shortanswercolor-question"
+                                <button
+                                    type="button"
+                                    class="quiz-nav-step shortanswercolor-question"
                                     (click)="navigateToQuestion(question.id!)"
-                                    [ngbTooltip]="!!shortAnswerSubmittedTexts().get(question.id!)?.length ? tooltipExplanationTranslate : tooltipNotExplanationTranslate"
-                                    [ngClass]="!!shortAnswerSubmittedTexts().get(question.id!)?.length ? 'changed-question' : ''"
+                                    [tumAetUiTooltip]="
+                                        (!!shortAnswerSubmittedTexts().get(question.id!)?.length
+                                            ? 'artemisApp.quizExercise.explanationAnswered'
+                                            : 'artemisApp.quizExercise.explanationNotAnswered'
+                                        ) | artemisTranslate
+                                    "
+                                    [class.changed-question]="!!shortAnswerSubmittedTexts().get(question.id!)?.length"
                                 >
-                                    <b class="fa">SA</b>
-                                </span>
+                                    <b>SA</b>
+                                </button>
                             }
-                            <ng-template #tooltipExplanationTranslate>{{ 'artemisApp.quizExercise.explanationAnswered' | artemisTranslate }} </ng-template>
-                            <ng-template #tooltipNotExplanationTranslate>{{ 'artemisApp.quizExercise.explanationNotAnswered' | artemisTranslate }} </ng-template>
                         </div>
                     }
                 </div>
             </div>
         }
 
-        <div class="col p-0 quiz-content mb-3">
+        <div class="quiz-content min-w-0 flex-1">
             @for (question of quizConfiguration().quizQuestions; track question; let i = $index) {
                 <div>
                     <!-- TODO: Map vs Array consistency -->

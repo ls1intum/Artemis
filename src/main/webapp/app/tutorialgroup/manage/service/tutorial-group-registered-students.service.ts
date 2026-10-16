@@ -1,11 +1,9 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Service, inject, signal } from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
 import { TutorialGroupStudent } from 'app/openapi/model/tutorial-group-student';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class TutorialGroupRegisteredStudentsService {
     private tutorialGroupApiService = inject(TutorialGroupApi);
     private alertService = inject(AlertService);

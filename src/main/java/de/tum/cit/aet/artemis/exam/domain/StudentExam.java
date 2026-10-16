@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
@@ -65,6 +66,7 @@ public class StudentExam extends AbstractAuditingEntity {
 
     @ManyToOne
     @JoinColumn(name = "exam_id", nullable = false)
+    @Parent
     private Exam exam;
 
     @ManyToOne
@@ -341,9 +343,9 @@ public class StudentExam extends AbstractAuditingEntity {
             if (startedDate == null) {
                 return null;
             }
-            return startedDate.plusSeconds(workingTime + gracePeriodInSeconds);
+            return startedDate.plusSeconds((long) workingTime + gracePeriodInSeconds);
         }
-        return examStartDate.plusSeconds(workingTime + gracePeriodInSeconds);
+        return examStartDate.plusSeconds((long) workingTime + gracePeriodInSeconds);
     }
 
     /**

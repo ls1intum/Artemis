@@ -20,6 +20,13 @@
                 "group": "Group"
             },
             "noExercisesMatch": "No exercises match \"{{ search }}\".",
+            "empty": {
+                "title": "No exercises yet",
+                "description": "Exercises you create for this course will be listed here. You can also import exercises from an existing course.",
+                "create": "Create exercise",
+                "import": "Import from course",
+                "documentation": "Learn about exercises"
+            },
             "selection": {
                 "count": "{{ count }} selected",
                 "deselectAll": "Deselect all",

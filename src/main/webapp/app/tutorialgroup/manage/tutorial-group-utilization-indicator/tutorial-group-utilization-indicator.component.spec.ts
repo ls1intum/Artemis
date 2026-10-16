@@ -6,7 +6,7 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/tutorialgroup/manage/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TumUiProgressBarComponent } from '@tumaet/ui-angular';
+import { TumAetUiProgressBarComponent } from '@tumaet/ui-angular';
 
 describe('TutorialGroupUtilizationIndicatorComponent', () => {
     let component: TutorialGroupUtilizationIndicatorComponent;
@@ -33,8 +33,8 @@ describe('TutorialGroupUtilizationIndicatorComponent', () => {
         fixture.detectChanges();
     }
 
-    function progressBar(): TumUiProgressBarComponent | undefined {
-        return fixture.debugElement.query(By.directive(TumUiProgressBarComponent))?.componentInstance;
+    function progressBar(): TumAetUiProgressBarComponent | undefined {
+        return fixture.debugElement.query(By.directive(TumAetUiProgressBarComponent))?.componentInstance;
     }
 
     it('should express the average attendance as a percentage of the capacity', () => {

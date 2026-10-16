@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject, signal } from '@angular/core';
+import { OnDestroy, Service, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, Subscription, of, tap } from 'rxjs';
 import { CourseAvailableTabs } from 'app/course/shared/entities/course-available-tabs.model';
@@ -17,7 +17,7 @@ import { currentNavigationId } from 'app/course/overview/services/navigation-sco
  * response while the next selection asks again. A course whose content changed — a lecture published, an exam made
  * visible — therefore shows the new tab on the next click rather than only after a page reload.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseAvailableTabsService implements OnDestroy {
     private readonly courseManagementService = inject(CourseManagementService);
     private readonly accountService = inject(AccountService);

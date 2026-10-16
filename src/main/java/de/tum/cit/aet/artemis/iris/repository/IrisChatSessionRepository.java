@@ -58,7 +58,8 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
                     LEFT JOIN s.messages m
                 WHERE s.userId = :userId
                     AND s.courseId = :courseId
-                    AND m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.USER
+                    AND (m.sender = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender.USER
+                         OR m.origin = de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin.PROACTIVE_STRUGGLE)
                 GROUP BY s, s.entityId, s.chatMode, e.shortName, l.title
                 HAVING COUNT(m) > 0
                 ORDER BY MAX(m.sentAt) DESC

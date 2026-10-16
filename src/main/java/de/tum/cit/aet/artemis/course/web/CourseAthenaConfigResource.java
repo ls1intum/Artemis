@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseAthenaConfigUpdateDTO;
 import de.tum.cit.aet.artemis.course.service.CourseAthenaConfigService;
@@ -25,7 +26,7 @@ import de.tum.cit.aet.artemis.course.service.CourseAthenaConfigService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/course-management")
+@FeatureUsage(UserFeature.COURSE_SETTINGS)
 @RestController
 @RequestMapping("api/course/")
 public class CourseAthenaConfigResource {

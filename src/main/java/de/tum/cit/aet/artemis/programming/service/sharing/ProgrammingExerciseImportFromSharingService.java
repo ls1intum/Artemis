@@ -14,6 +14,8 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseRequestDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
 
 /**
@@ -81,6 +83,8 @@ public class ProgrammingExerciseImportFromSharingService {
         // Map the request body to the transient exercise the import pipeline works on. Null collections become empty
         // ones, exactly as the previous entity binding produced them.
         ProgrammingExercise exercise = sharingSetupInfo.exercise().toEntity();
+        // The build configuration is a row of its own that names the exercise, so it is bound next to it.
+        ProgrammingExerciseBuildConfig buildConfig = ProgrammingExerciseRequestDTO.buildConfigOf(sharingSetupInfo.exercise());
         try (SharingMultipartZipFile zip = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo())) {
 
             User user = userRepository.getUserWithAuthorities();
@@ -98,7 +102,7 @@ public class ProgrammingExerciseImportFromSharingService {
             // exercise, exactly as the entity request body used to leave them there.
             competencyExerciseLinkService.updateCompetencyLinks(sharingSetupInfo.exercise(), exercise);
 
-            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(exercise, zip, course, user, true);
+            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(exercise, buildConfig, zip, course, user, true);
         }
     }
 }

@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -39,7 +40,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("grading/participant-scores")
+@FeatureUsage(UserFeature.COURSE_SCORES)
 @RestController
 @RequestMapping("api/assessment/")
 public class ParticipantScoreResource {
@@ -108,6 +109,7 @@ public class ParticipantScoreResource {
      * @param examId the id of the exam for which to calculate the exam scores
      * @return list of scores for every registered user in the exam or 404 not found if scores are empty
      */
+    @FeatureUsage(UserFeature.EXAM_SCORES)
     @GetMapping("exams/{examId}/exam-scores")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<ScoreDTO>> getScoresOfExam(@PathVariable Long examId) {
@@ -124,6 +126,9 @@ public class ParticipantScoreResource {
 
     /**
      * GET /courses/:courseId/grade-scores : get all grade information (scores) for a course
+     * <p>
+     * Users who currently hold a teaching role (tutor, editor or instructor) in the course are excluded, so that the course scores view, its statistics (average,
+     * median, standard deviation) and its export only contain students. Users without any role in the course (e.g. students who left it later) are kept.
      *
      * @param courseId The id of the course
      * @return a {@link CourseGradeInformationDTO}
@@ -133,7 +138,9 @@ public class ParticipantScoreResource {
     public ResponseEntity<CourseGradeInformationDTO> getGradeScoresForCourse(@PathVariable long courseId) {
         log.info("REST request to get grade scores for Course {}", courseId);
         long start = System.nanoTime();
-        Set<CourseGradeScoreDTO> gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId);
+        Set<Long> teachingStaffIds = userRepository.findIdsOfTeachingStaffByCourseId(courseId);
+        Set<CourseGradeScoreDTO> gradeScores = studentParticipationRepository.findGradeScoresForAllExercisesForCourse(courseId).stream()
+                .filter(gradeScore -> !teachingStaffIds.contains(gradeScore.userId())).collect(Collectors.toSet());
         Set<Long> userIds = gradeScores.stream().map(CourseGradeScoreDTO::userId).collect(Collectors.toSet());
         List<StudentDTO> students = userIds.isEmpty() ? List.of() : userRepository.findAllStudentsByIdIn(userIds);
         log.info("Found {} grade scores, {} students, in {}", gradeScores.size(), students.size(), TimeLogUtil.formatDurationFrom(start));

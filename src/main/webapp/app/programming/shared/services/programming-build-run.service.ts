@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -22,7 +22,7 @@ export interface IProgrammingBuildRunService {
 /**
  * Provides methods to retrieve information about running exercise builds.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingBuildRunService implements OnDestroy {
     private websocketService = inject(WebsocketService);
 

@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 /**
@@ -48,7 +48,7 @@ export interface AssessmentUploadResult {
     errors?: AssessmentUploadError[];
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AssessmentUploadService {
     private readonly http = inject(HttpClient);
 

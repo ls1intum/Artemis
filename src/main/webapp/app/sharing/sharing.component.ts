@@ -15,7 +15,6 @@ import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgStyle } from '@angular/common';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { combineLatest, take } from 'rxjs';
 import { finalize } from 'rxjs/operators';
@@ -27,9 +26,17 @@ import { finalize } from 'rxjs/operators';
     selector: 'jhi-sharing',
     templateUrl: './sharing.component.html',
     styleUrls: ['./sharing.scss'],
-    imports: [RouterLink, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent, NgStyle],
+    imports: [RouterLink, FormsModule, TranslateDirective, SortDirective, SortByDirective, FaIconComponent],
 })
 export class SharingComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private userRouteAccessService = inject(UserRouteAccessService);
+    private courseService = inject(CourseManagementService);
+    private sortService = inject(SortService);
+    private programmingExerciseSharingService = inject(ProgrammingExerciseSharingService);
+    private alertService = inject(AlertService);
+
     // Icons
     protected readonly faPlus = faPlus;
     protected readonly faSort = faSort;
@@ -50,14 +57,6 @@ export class SharingComponent implements OnInit {
     readonly selectedCourse = signal<Course | undefined>(undefined);
 
     readonly isInstructorOrEditor = signal(false);
-
-    private route = inject(ActivatedRoute);
-    private router = inject(Router);
-    private userRouteAccessService = inject(UserRouteAccessService);
-    private courseService = inject(CourseManagementService);
-    private sortService = inject(SortService);
-    private programmingExerciseSharingService = inject(ProgrammingExerciseSharingService);
-    private alertService = inject(AlertService);
 
     getBasketTokenExpiryDate(): Date {
         const tokenValidUntil = this.shoppingBasket()?.tokenValidUntil;

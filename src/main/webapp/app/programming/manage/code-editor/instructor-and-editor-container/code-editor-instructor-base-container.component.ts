@@ -41,8 +41,6 @@ export enum LOADING_STATE {
     template: '',
 })
 export abstract class CodeEditorInstructorBaseContainerComponent implements OnInit, OnDestroy {
-    readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
-
     private router = inject(Router);
     private exerciseService = inject(ProgrammingExerciseService);
     private courseExerciseService = inject(CourseExerciseService);
@@ -50,12 +48,15 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
     private location = inject(Location);
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
-    /** Raw markdown changes from the center editor for debounce logic */
-    private problemStatementChanges$ = new Subject<string>();
     protected alertService = inject(AlertService);
     protected translateService = inject(TranslateService);
     private exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     protected fileSyncService = inject(CodeEditorFileSyncService);
+
+    readonly codeEditorContainer = viewChild(CodeEditorContainerComponent);
+
+    /** Raw markdown changes from the center editor for debounce logic */
+    private problemStatementChanges$ = new Subject<string>();
 
     private currentFileBinding?: MonacoBinding;
     private previousSyncedFile?: string;
@@ -387,14 +388,11 @@ export abstract class CodeEditorInstructorBaseContainerComponent implements OnIn
         return this.courseExerciseService
             .startExercise(this.exercise.id!, this.exercise)
             .pipe(
+                catchError(() => throwError(() => new Error('participationCouldNotBeCreated'))),
                 tap((participation) => {
-                    if (!participation) {
-                        throw new Error('participationCouldNotBeCreated');
-                    }
                     this.exercise.studentParticipations = [participation];
                     this.loadingState.set(LOADING_STATE.CLEAR);
                 }),
-                catchError(() => throwError(() => new Error('participationCouldNotBeCreated'))),
             )
             .subscribe({
                 error: (err: Error) => this.onError(err.message),

@@ -82,11 +82,15 @@ public record ExerciseOverviewDTO(ExerciseType type, Long id, String title, Doub
     public static ExerciseOverviewDTO of(Exercise exercise) {
         ProgrammingExercise programmingExercise = exercise instanceof ProgrammingExercise programming ? programming : null;
         QuizExercise quizExercise = exercise instanceof QuizExercise quiz ? quiz : null;
+        Set<String> categories = Hibernate.isInitialized(exercise.getCategories()) ? exercise.getCategories() : Set.of();
+        Set<ParticipationOverviewDTO> studentParticipations = Hibernate.isInitialized(exercise.getStudentParticipations())
+                ? ParticipationOverviewDTO.of(exercise.getStudentParticipations())
+                : Set.of();
         Set<QuizBatchOverviewDTO> quizBatches = quizExercise != null && Hibernate.isInitialized(quizExercise.getQuizBatches()) && quizExercise.getQuizBatches() != null
                 && quizExercise.getQuizBatches().stream().anyMatch(batch -> batch.isStarted()) ? Set.of(QuizBatchOverviewDTO.STARTED) : Set.of();
         return new ExerciseOverviewDTO(exercise.getExerciseType(), exercise.getId(), exercise.getTitle(), exercise.getMaxPoints(), exercise.getBonusPoints(),
                 exercise.getReleaseDate(), exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getAssessmentType(), exercise.getDifficulty(),
-                exercise.getMode(), exercise.isTeamMode(), exercise.getIncludedInOverallScore(), exercise.getCategories(), exercise.getPresentationScoreEnabled(),
+                exercise.getMode(), exercise.isTeamMode(), exercise.getIncludedInOverallScore(), categories, exercise.getPresentationScoreEnabled(),
                 exercise.getAllowFeedbackRequests(), programmingExercise == null ? null : programmingExercise.isAllowOnlineEditor(),
                 programmingExercise == null ? null : programmingExercise.isAllowOfflineIde(),
                 programmingExercise == null ? null : programmingExercise.isStaticCodeAnalysisEnabled(), programmingExercise == null ? null : programmingExercise.isAllowOnlineIde(),
@@ -95,7 +99,7 @@ public record ExerciseOverviewDTO(ExerciseType type, Long id, String title, Doub
                 programmingExercise == null ? null : programmingExercise.getShowTestNamesToStudents(),
                 programmingExercise == null ? null : programmingExercise.getMaxStaticCodeAnalysisPenalty(), quizExercise == null ? null : quizExercise.isQuizEnded(), quizBatches,
                 exercise.getStudentAssignedTeamId(), exercise.isStudentAssignedTeamIdComputed(), ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()),
-                ParticipationOverviewDTO.of(exercise.getStudentParticipations()));
+                studentParticipations);
     }
 
     /**

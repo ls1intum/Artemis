@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.notification.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.notification.web.NotificationWebsocketTopics.ALL_COURSE_NOTIFICATIONS;
+import static de.tum.cit.aet.artemis.notification.web.NotificationWebsocketTopics.COURSE_NOTIFICATIONS;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,10 +32,6 @@ import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 @Service
 public class CourseNotificationWebappService extends CourseNotificationBroadcastService {
 
-    private static final String WEBSOCKET_TOPIC_PREFIX = "/topic/notification/";
-
-    private static final String WEBSOCKET_BROADCAST_TOPIC_PREFIX = "/topic/notification/all";
-
     private final WebsocketMessagingService websocketMessagingService;
 
     public CourseNotificationWebappService(WebsocketMessagingService websocketMessagingService) {
@@ -60,8 +58,8 @@ public class CourseNotificationWebappService extends CourseNotificationBroadcast
         // broker failure afterwards was recorded as a successful delivery with dispatch-only latency.
         var sends = new ArrayList<CompletableFuture<Void>>();
         recipients.forEach(recipient -> {
-            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification));
-            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification));
+            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), COURSE_NOTIFICATIONS.at(courseNotification.courseId()), courseNotification));
+            sends.add(websocketMessagingService.sendMessageToUser(recipient.login(), ALL_COURSE_NOTIFICATIONS.at(), courseNotification));
         });
         return CompletableFuture.allOf(sends.toArray(CompletableFuture[]::new));
     }

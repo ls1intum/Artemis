@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.iris.api.IrisLectureUnitSyncApi;
+import de.tum.cit.aet.artemis.iris.api.dtos.LectureUnitSyncOutcome;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureContentUpdateKind;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
@@ -40,8 +41,8 @@ class IrisLectureUnitSyncDispatchServiceTest {
     void setUp() {
         slideRepository = mock(SlideTestRepository.class);
         irisLectureUnitSyncApi = mock(IrisLectureUnitSyncApi.class);
-        when(irisLectureUnitSyncApi.updateLectureUnitMetadataInPyris(any())).thenReturn("metadata-token");
-        when(irisLectureUnitSyncApi.updateLectureUnitVisibilityInPyris(any(), any())).thenReturn("visibility-token");
+        when(irisLectureUnitSyncApi.updateLectureUnitMetadataInPyris(any())).thenReturn(LectureUnitSyncOutcome.DISPATCHED);
+        when(irisLectureUnitSyncApi.updateLectureUnitVisibilityInPyris(any(), any())).thenReturn(LectureUnitSyncOutcome.DISPATCHED);
 
         service = new IrisLectureUnitSyncDispatchService(slideRepository, Optional.of(irisLectureUnitSyncApi));
     }
@@ -100,11 +101,13 @@ class IrisLectureUnitSyncDispatchServiceTest {
 
     @Test
     void triggerSyncForUpdateKindReportsSkippedPyrisDispatches() {
-        when(irisLectureUnitSyncApi.updateLectureUnitMetadataInPyris(any())).thenReturn(null);
-        when(irisLectureUnitSyncApi.updateLectureUnitVisibilityInPyris(any(), any())).thenReturn(null);
+        when(irisLectureUnitSyncApi.updateLectureUnitMetadataInPyris(any())).thenReturn(LectureUnitSyncOutcome.SKIPPED);
+        when(irisLectureUnitSyncApi.updateLectureUnitVisibilityInPyris(any(), any())).thenReturn(LectureUnitSyncOutcome.SKIPPED);
 
-        assertThat(service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.METADATA)).isNull();
-        assertThat(service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.VISIBILITY)).isNull();
+        assertThat(service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.METADATA).outcome()).isEqualTo(LectureUnitSyncOutcome.SKIPPED);
+        var visibility = service.triggerSyncForUpdateKind(attachmentVideoUnit(), LectureContentUpdateKind.VISIBILITY);
+        assertThat(visibility.outcome()).isEqualTo(LectureUnitSyncOutcome.SKIPPED);
+        assertThat(visibility.visibilityHash()).isNull();
     }
 
     @Test

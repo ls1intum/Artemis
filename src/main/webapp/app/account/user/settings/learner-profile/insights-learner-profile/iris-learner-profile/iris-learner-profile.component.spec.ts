@@ -237,7 +237,7 @@ describe('IrisLearnerProfileComponent', () => {
             fixture.detectChanges();
             const compiled = fixture.nativeElement;
             expect(compiled.querySelector('h4')).toBeTruthy();
-            expect(compiled.querySelector('tum-ui-toggle-switch')).toBeTruthy();
+            expect(compiled.querySelector('tumaet-ui-toggle-switch')).toBeTruthy();
             expect(compiled.querySelector('label[for="memirisEnabled"]')).toBeTruthy();
         });
 

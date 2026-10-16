@@ -321,6 +321,22 @@ public class ParticipationUtilService {
     }
 
     /**
+     * Creates and saves a practice StudentParticipation for the given Exercise given the Participant's login, in addition to any graded participation.
+     *
+     * @param exercise The Exercise the StudentParticipation belongs to
+     * @param login    The login of the Participant the StudentParticipation belongs to
+     * @return The created practice StudentParticipation
+     */
+    public StudentParticipation createAndSavePracticeParticipationForExercise(Exercise exercise, String login) {
+        StudentParticipation participation = new StudentParticipation();
+        participation.setInitializationDate(ZonedDateTime.now());
+        participation.setParticipant(userUtilService.getUserByLogin(login));
+        participation.setExercise(exercise);
+        participation.setPracticeMode(true);
+        return studentParticipationRepo.save(participation);
+    }
+
+    /**
      * Creates and saves a StudentParticipation for the given Exercise given the Participant's login. The StudentParticipation's initializationDate is set to now + 2 days.
      *
      * @param exercise The Exercise the StudentParticipation belongs to
@@ -513,12 +529,11 @@ public class ParticipationUtilService {
      * @return The updated Result
      */
     public Result addSampleFeedbackToResults(Result result) {
-        Feedback feedback1 = feedbackRepo.save(new Feedback().detailText("detail1"));
-        Feedback feedback2 = feedbackRepo.save(new Feedback().detailText("detail2"));
         List<Feedback> feedbacks = new ArrayList<>();
-        feedbacks.add(feedback1);
-        feedbacks.add(feedback2);
+        feedbacks.add(new Feedback().detailText("detail1"));
+        feedbacks.add(new Feedback().detailText("detail2"));
         result.addFeedbacks(feedbacks);
+        feedbackRepo.saveAll(feedbacks);
         return resultRepo.save(withCorrectionRound(result));
     }
 
@@ -532,14 +547,15 @@ public class ParticipationUtilService {
     // @formatter:off
     public Result addVariousFeedbackTypeFeedbacksToResult(Result result) {
         // The order of declaration here should be the same order as in FeedbackType for each enum type
-        List<Feedback> feedbacks = feedbackRepo.saveAll(Arrays.asList(
+        List<Feedback> feedbacks = Arrays.asList(
             new Feedback().detailText("manual").type(FeedbackType.MANUAL),
             new Feedback().detailText("manual_unreferenced").type(FeedbackType.MANUAL_UNREFERENCED),
             new Feedback().detailText("automatic_adapted").type(FeedbackType.AUTOMATIC_ADAPTED),
             new Feedback().detailText("automatic").type(FeedbackType.AUTOMATIC)
-        ));
+        );
 
         result.addFeedbacks(feedbacks);
+        feedbackRepo.saveAll(feedbacks);
         return resultRepo.save(withCorrectionRound(result));
     }
 
@@ -551,13 +567,14 @@ public class ParticipationUtilService {
      * @return The updated Result
      */
     public Result addVariousVisibilityFeedbackToResult(Result result) {
-        List<Feedback> feedbacks = feedbackRepo.saveAll(Arrays.asList(
+        List<Feedback> feedbacks = Arrays.asList(
             new Feedback().detailText("afterDueDate1").visibility(Visibility.AFTER_DUE_DATE),
             new Feedback().detailText("never1").visibility(Visibility.NEVER),
             new Feedback().detailText("always1").visibility(Visibility.ALWAYS)
-        ));
+        );
 
         result.addFeedbacks(feedbacks);
+        feedbackRepo.saveAll(feedbacks);
         return resultRepo.save(withCorrectionRound(result));
     }
     // @formatter:on
@@ -570,8 +587,8 @@ public class ParticipationUtilService {
      * @return The updated Result
      */
     public Result addFeedbackToResult(Feedback feedback, Result result) {
-        feedbackRepo.save(feedback);
         result.addFeedback(feedback);
+        feedbackRepo.save(feedback);
         return resultRepo.save(withCorrectionRound(result));
     }
 
@@ -627,8 +644,8 @@ public class ParticipationUtilService {
     public Result addFeedbackToResults(Result result) {
         List<Feedback> feedback = ParticipationFactory.generateStaticCodeAnalysisFeedbackList(5);
         feedback.addAll(ParticipationFactory.generateFeedback());
-        feedback = feedbackRepo.saveAll(feedback);
         result.addFeedbacks(feedback);
+        feedbackRepo.saveAll(feedback);
         return resultRepo.save(withCorrectionRound(result));
     }
 

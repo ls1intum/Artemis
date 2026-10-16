@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "knowledge_area")
@@ -42,6 +43,7 @@ public class KnowledgeArea extends DomainObject {
     @ManyToOne
     @JoinColumn(name = "parent_id")
     @JsonIgnoreProperties({ "parent", "children" })
+    @Parent
     private KnowledgeArea parent;
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)

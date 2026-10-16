@@ -27,7 +27,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -39,11 +38,15 @@ import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTar
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewVersionChangeService;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
 import de.tum.cit.aet.artemis.modeling.api.ModelingRepositoryApi;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
@@ -90,9 +93,15 @@ public class ExerciseVersionService {
 
     private final ExerciseVersionRepository exerciseVersionRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    private final PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
     private final GitService gitService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private final QuizExerciseRepository quizExerciseRepository;
 
@@ -119,13 +128,18 @@ public class ExerciseVersionService {
     private final Executor exerciseVersionExecutor;
 
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
-            QuizExerciseRepository quizExerciseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<ModelingRepositoryApi> modelingRepositoryApi,
-            Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, QuizExerciseRepository quizExerciseRepository,
+            Optional<TextRepositoryApi> textRepositoryApi, Optional<ModelingRepositoryApi> modelingRepositoryApi, Optional<FileUploadApi> fileUploadApi,
+            UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
             ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher, JsonMapper objectMapper,
-            @Qualifier("exerciseVersionTaskExecutor") Executor exerciseVersionExecutor) {
+            @Qualifier("exerciseVersionTaskExecutor") Executor exerciseVersionExecutor, TeamAssignmentConfigRepository teamAssignmentConfigRepository,
+            PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
+        this.plagiarismDetectionConfigRepository = plagiarismDetectionConfigRepository;
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.modelingRepositoryApi = modelingRepositoryApi;
@@ -253,7 +267,10 @@ public class ExerciseVersionService {
             exerciseVersion.setExerciseId(targetExercise.getId());
             exerciseVersion.setAuthorId(author.getId());
             var programmingCommitHashes = ExerciseVersionCommitHashResolver.resolveForExercise(exercise, gitService);
-            ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, programmingCommitHashes);
+            // The build configuration is a row of its own that names the exercise, so the snapshot reads it here.
+            var buildConfig = exercise instanceof ProgrammingExercise ? programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId())
+                    : null;
+            ExerciseSnapshotDTO rawSnapshot = ExerciseSnapshotDTO.of(exercise, buildConfig, programmingCommitHashes);
             // Normalize through JSON round-trip to ensure consistent null/empty list handling
             // (@JsonInclude(NON_EMPTY) causes empty lists to become null after deserialization)
             ExerciseSnapshotDTO exerciseSnapshot = objectMapper.readValue(objectMapper.writeValueAsString(rawSnapshot), ExerciseSnapshotDTO.class);
@@ -327,9 +344,13 @@ public class ExerciseVersionService {
             case FILE_UPLOAD -> fileUploadApi.flatMap(api -> api.findForVersioningById(exercise.getId())).orElse(null);
         };
         if (fetched != null) {
-            Channel channel = channelRepository.findChannelByExerciseId(fetched.getId());
-            if (channel != null) {
-                fetched.setChannelName(channel.getName());
+            // The snapshot records the team assignment and the plagiarism detection configuration, which an exercise does not
+            // carry by itself; a missing one would be recorded as a change.
+            teamAssignmentConfigRepository.attachTo(fetched);
+            plagiarismDetectionConfigRepository.attachTo(fetched);
+            String channelName = channelRepository.findChannelNameByExerciseId(fetched.getId());
+            if (channelName != null) {
+                fetched.setChannelName(channelName);
             }
         }
         return fetched;

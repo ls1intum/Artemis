@@ -4,12 +4,12 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Course } from 'app/course/shared/entities/course.model';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { filter, map, of } from 'rxjs';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FileUploadExerciseManagementResolve implements Resolve<FileUploadExercise> {
     private fileUploadExerciseService = inject(FileUploadExerciseService);
     private courseService = inject(CourseManagementService);

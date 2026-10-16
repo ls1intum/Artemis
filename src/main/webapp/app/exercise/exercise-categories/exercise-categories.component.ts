@@ -3,7 +3,6 @@ import { NgClass } from '@angular/common';
 import { Exercise, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IncludedInScoreBadgeComponent } from '../exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { DifficultyBadgeComponent } from '../exercise-headers/difficulty-badge/difficulty-badge.component';
@@ -23,7 +22,7 @@ interface ShowTagsConfig {
     selector: 'jhi-exercise-categories',
     templateUrl: './exercise-categories.component.html',
     styleUrls: ['./exercise-categories.component.scss'],
-    imports: [NgClass, RouterLink, NotReleasedTagComponent, TranslateDirective, IncludedInScoreBadgeComponent, NgStyle, DifficultyBadgeComponent, TruncatePipe],
+    imports: [NgClass, RouterLink, NotReleasedTagComponent, TranslateDirective, IncludedInScoreBadgeComponent, DifficultyBadgeComponent, TruncatePipe],
 })
 export class ExerciseCategoriesComponent {
     readonly IncludedInOverallScore = IncludedInOverallScore;

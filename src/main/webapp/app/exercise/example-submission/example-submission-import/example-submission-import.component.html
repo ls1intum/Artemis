@@ -24,7 +24,7 @@
                     <table class="table table-striped">
                         <thead class="thead-dark">
                             <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()">
-                                <th jhiSortBy="ID">
+                                <th>
                                     <span>#</span>
                                 </th>
                                 <th jhiSortBy="STUDENT_NAME">
@@ -64,7 +64,12 @@
                                     <td>{{ submission.participation?.participantName }}</td>
                                     <td>{{ submission.submissionDate | artemisDate }}</td>
                                     <td>
-                                        <jhi-result [exercise]="exercise" [participation]="submission.participation!" [result]="getLatestResult(submission)" />
+                                        <jhi-result
+                                            [exercise]="exercise"
+                                            [participation]="submission.participation!"
+                                            [result]="getLatestResult(submission)"
+                                            [isOwnParticipation]="false"
+                                        />
                                     </td>
                                     <td>
                                         {{ submission.submissionSize }}

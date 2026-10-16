@@ -102,9 +102,10 @@ public class TextSubmissionService extends SubmissionService {
             textSubmission.setSubmitted(true);
         }
 
-        // if athena results are present than create new submission on submit
-        if (!textSubmission.getResults().isEmpty()) {
-            log.debug("Creating a new submission due to Athena results for user: {}", user.getLogin());
+        // Once a result exists, the assessed submission must stay unchanged. Clients do not necessarily receive unreleased
+        // results, so this decision must use persisted state rather than the submitted entity.
+        if (textSubmission.getId() != null && resultRepository.existsBySubmissionId(textSubmission.getId())) {
+            log.debug("Creating a new submission because the existing submission has a result for user: {}", user.getLogin());
             textSubmission.setId(null);
         }
 
@@ -112,7 +113,7 @@ public class TextSubmissionService extends SubmissionService {
         // Mapped here rather than read back off the submission: its participation is only a foreign key, and reading it
         // would load the entity this whole path exists to avoid.
         return new SavedSubmission<>(textSubmission,
-                StudentParticipationDTO.of(target.afterSubmission(), exercise, participationService.findSubmitParticipant(exercise, user), true));
+                StudentParticipationDTO.of(target.afterSubmission(), exercise, participationService.findSubmitParticipant(exercise, user, target), true));
     }
 
     /**
@@ -154,7 +155,8 @@ public class TextSubmissionService extends SubmissionService {
 
         // versioning of submission
         try {
-            if (textExercise.isTeamMode()) {
+            // a practice participation of a team exercise is individual, so it has no team to version for
+            if (textExercise.isTeamMode() && !target.testRun()) {
                 submissionVersionService.saveVersionForTeam(textSubmission, user);
             }
             else if (textExercise.isExamExercise()) {

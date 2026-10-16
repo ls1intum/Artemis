@@ -21,8 +21,10 @@ export interface GlobalSearchResult {
     title?: string;
     /** Short description or body text excerpt */
     description?: string;
-    /** Human-readable badge label, e.g. \'Programming\', \'Quiz\', \'Lecture\' */
+    /** Human-readable badge label in English, e.g. \'Programming\', \'Quiz\', \'Lecture\' */
     badge?: string;
+    /** Stable badge key the web client resolves to a localised label, e.g. \'programming\', \'quiz\', \'lecture\' */
+    badgeKey?: string;
     /** Additional type-specific metadata such as courseId, dueDate, or points */
     metadata?: { [key: string]: any; };
 }

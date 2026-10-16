@@ -71,9 +71,9 @@ public class LocalCIService implements ContinuousIntegrationService {
             return;
         }
         log.debug("Recreating build plans for exercise {}", exercise.getTitle());
-        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise);
+        ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId());
+        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise, buildConfig);
         String image = buildPhasesTemplateService.getDefaultDockerImageFor(exercise);
-        ProgrammingExerciseBuildConfig buildConfig = exercise.getBuildConfig();
         buildConfig.setBuildScript(null);
         buildConfig.setBuildPlanConfiguration(new BuildPlanPhasesDTO(phases, image).toBuildPlanConfiguration());
         // recreating the build plans for the exercise means we need to store the updated build config in the database

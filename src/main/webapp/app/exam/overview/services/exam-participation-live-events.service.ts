@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
@@ -78,7 +78,7 @@ export type ProblemStatementUpdateEvent = ExamLiveEvent & {
  * Acknowledgement state is persisted to localStorage so the UI can distinguish between
  * events the system has already auto-processed and events the user has explicitly dismissed.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExamParticipationLiveEventsService {
     private websocketService = inject(WebsocketService);
     private examParticipationService = inject(ExamParticipationService);
@@ -209,6 +209,26 @@ export class ExamParticipationLiveEventsService {
                 this.allEventsSubject.next([]);
             }
         });
+    }
+
+    /**
+     * Stops handling live events of the current student exam, e.g. when the student leaves the exam. Without this, the reconnection
+     * handler above would keep fetching the events of an exam that is no longer displayed on every websocket reconnect.
+     * Loading a student exam again initializes the service anew.
+     */
+    public reset() {
+        this.lastAcknowledgedEventStatus = undefined;
+        this.unsubscribeFromExamLiveEvents();
+        if (this.fetchEventsTimeoutHandle) {
+            clearTimeout(this.fetchEventsTimeoutHandle);
+            this.fetchEventsTimeoutHandle = undefined;
+        }
+        this.events = [];
+        this.studentExamId = undefined;
+        this.examId = undefined;
+        this.courseId = undefined;
+        this.studentExam = undefined;
+        this.allEventsSubject.next([]);
     }
 
     /**

@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingE
 
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -236,7 +237,7 @@ public class ProgrammingExerciseService {
         List<AuxiliaryRepository> auxiliaryRepositories = auxiliaryRepositoryRepository.findByProgrammingExerciseId(programmingExerciseId);
 
         programmingExerciseWithTemplate.setSolutionParticipation(solutionParticipationWithLatestSubmission);
-        programmingExerciseWithTemplate.setAuxiliaryRepositories(auxiliaryRepositories);
+        programmingExerciseWithTemplate.setAuxiliaryRepositories(new LinkedHashSet<>(auxiliaryRepositories));
 
         return programmingExerciseWithTemplate;
     }

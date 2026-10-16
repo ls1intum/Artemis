@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+                   logicalFilePath="config/liquibase/changelog/20260916150000_changelog.xml">
+
+    <!--
+    Requires a parent for seventeen entities that could previously belong to nothing, and adds two check constraints
+    where an entity has two possible parents and the database accepted neither.
+
+    A row whose owning foreign key is null is an orphan: unreachable from the application, so it reads as deleted, and
+    unreachable from the deletion routines, so it never is. Account deletion and the data privacy cleanup both walk the
+    object graph downwards, and a row nobody points at is not on that walk. See
+    documentation/docs/developer/guidelines/entity-ownership.mdx for the full survey this is the first instalment of.
+
+    Every column here was checked for orphans against a populated database before being constrained, and every one came
+    back clean. The precondition below re-runs those counts on the database being upgraded, because another
+    installation is not obliged to look the same. It halts rather than repairing: an orphan carries no evidence of
+    which parent it belonged to, and these entities own submissions, feedback, slides and messages, so guessing or
+    deleting would lose work to save a migration. The query in the failure message names the rows to fix.
+
+    ExerciseVariantGroup is here only because the code stopped writing the null itself: the group now carries its own
+    course key instead of being attached afterwards by a second statement, so it can be written in one save.
+
+    Not included, because each needs a decision or a wider change rather than a constraint: AuxiliaryRepository, Slide,
+    Submission, Participation, PlagiarismSubmission, PlagiarismSubmissionElement, Post, Feedback, QuizQuestion,
+    VcsAccessLog, and the nine one-to-ones where the parent holds the pointer. EntityOwnershipArchitectureTest lists
+    them all, and that list may only shrink.
+    -->
+
+    <property name="lbSchema" value="DATABASE()" dbms="mysql"/>
+    <property name="lbSchema" value="current_schema()" dbms="postgresql"/>
+
+    <changeSet id="20260916150000-01-precondition-no-orphans" author="krusche">
+        <preConditions onFail="HALT" onFailMessage="At least one of the tables about to be constrained still contains a row with no parent. Run the query in documentation/docs/developer/guidelines/entity-ownership.mdx to list them, attach each row to its parent or remove it deliberately, and start again. The columns checked are attachment.attachment_unit_id, data_export.user_id, example_submission.exercise_id, exercise_variant_group.course_id, grading_criterion.exercise_id, grading_instruction.grading_criterion_id, iris_message.session_id, iris_session.user_id, lecture.course_id, llm_token_usage_request.trace_id, plagiarism_comparison.plagiarism_result_id, programming_exercise_task.exercise_id, programming_exercise_test_case.exercise_id, static_code_analysis_category.exercise_id, text_block.submission_id, tutor_participation.assessed_exercise_id and tutorial_group.course_id, plus the two alternative-parent pairs on grading_scale and reaction.">
+            <and>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM attachment WHERE attachment_unit_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM data_export WHERE user_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM example_submission WHERE exercise_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM exercise_variant_group WHERE course_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM grading_criterion WHERE exercise_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM grading_instruction WHERE grading_criterion_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM iris_message WHERE session_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM iris_session WHERE user_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM lecture WHERE course_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM llm_token_usage_request WHERE trace_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM plagiarism_comparison WHERE plagiarism_result_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM programming_exercise_task WHERE exercise_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM programming_exercise_test_case WHERE exercise_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM static_code_analysis_category WHERE exercise_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM text_block WHERE submission_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM tutor_participation WHERE assessed_exercise_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM tutorial_group WHERE course_id IS NULL</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM grading_scale WHERE (course_id IS NULL) = (exam_id IS NULL)</sqlCheck>
+                <sqlCheck expectedResult="0">SELECT COUNT(*) FROM reaction WHERE (post_id IS NULL) = (answer_post_id IS NULL)</sqlCheck>
+            </and>
+        </preConditions>
+        <!-- No-op body; the precondition is the entire purpose of this changeset. -->
+        <sql>SELECT 1</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260916150000-02-require-a-parent" author="krusche">
+        <comment>Require the owning foreign key on seventeen entities that could previously belong to nothing.</comment>
+        <addNotNullConstraint tableName="attachment" columnName="attachment_unit_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="data_export" columnName="user_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="example_submission" columnName="exercise_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="exercise_variant_group" columnName="course_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="grading_criterion" columnName="exercise_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="grading_instruction" columnName="grading_criterion_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="iris_message" columnName="session_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="iris_session" columnName="user_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="lecture" columnName="course_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="llm_token_usage_request" columnName="trace_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="plagiarism_comparison" columnName="plagiarism_result_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="programming_exercise_task" columnName="exercise_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="programming_exercise_test_case" columnName="exercise_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="static_code_analysis_category" columnName="exercise_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="text_block" columnName="submission_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="tutor_participation" columnName="assessed_exercise_id" columnDataType="BIGINT"/>
+        <addNotNullConstraint tableName="tutorial_group" columnName="course_id" columnDataType="BIGINT"/>
+        <rollback>
+            <dropNotNullConstraint tableName="attachment" columnName="attachment_unit_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="data_export" columnName="user_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="example_submission" columnName="exercise_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="exercise_variant_group" columnName="course_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="grading_criterion" columnName="exercise_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="grading_instruction" columnName="grading_criterion_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="iris_message" columnName="session_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="iris_session" columnName="user_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="lecture" columnName="course_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="llm_token_usage_request" columnName="trace_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="plagiarism_comparison" columnName="plagiarism_result_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="programming_exercise_task" columnName="exercise_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="programming_exercise_test_case" columnName="exercise_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="static_code_analysis_category" columnName="exercise_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="text_block" columnName="submission_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="tutor_participation" columnName="assessed_exercise_id" columnDataType="BIGINT"/>
+            <dropNotNullConstraint tableName="tutorial_group" columnName="course_id" columnDataType="BIGINT"/>
+        </rollback>
+    </changeSet>
+
+    <!--
+    information_schema is portable but the "current schema" function is not, following 20260910212533_changelog.xml, so
+    the changesets that read it carry dbms="mysql,postgresql". H2 gets the same constraints in its own changesets: it
+    is the no-Docker way of running the test suite, and a second engine that accepts what the other two reject is worse
+    than no second engine. UPPER() on the name because PostgreSQL folds an unquoted identifier to lower case while
+    MySQL keeps it as written.
+
+    One constraint per changeset, and each precondition names its own table and constraint. Two in one changeset would
+    share a single precondition and a single applied/not-applied record, so a run interrupted between them - MySQL
+    commits each DDL statement on its own - would leave the second constraint missing and mark the changeset as run,
+    which no later run would ever correct.
+    -->
+    <changeSet id="20260916150000-03-a-reaction-has-exactly-one-parent" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.table_constraints
+                WHERE table_schema = ${lbSchema} AND LOWER(table_name) = 'reaction' AND UPPER(constraint_name) = 'CHECK_REACTION_POST_OR_ANSWER'
+            </sqlCheck>
+        </preConditions>
+        <comment>A reaction belongs to a post or to an answer post, never to both and never to neither.</comment>
+        <sql>ALTER TABLE reaction ADD CONSTRAINT CHECK_REACTION_POST_OR_ANSWER
+            CHECK ((post_id IS NOT NULL AND answer_post_id IS NULL) OR (post_id IS NULL AND answer_post_id IS NOT NULL));</sql>
+        <rollback>
+            <sql>ALTER TABLE reaction DROP CONSTRAINT CHECK_REACTION_POST_OR_ANSWER;</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916150000-03-b-grading-scale-has-exactly-one-parent" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.table_constraints
+                WHERE table_schema = ${lbSchema} AND LOWER(table_name) = 'grading_scale' AND UPPER(constraint_name) = 'CHECK_GRADING_SCALE_COURSE_OR_EXAM'
+            </sqlCheck>
+        </preConditions>
+        <comment>A grading scale belongs to a course or to an exam, never to both and never to neither.</comment>
+        <sql>ALTER TABLE grading_scale ADD CONSTRAINT CHECK_GRADING_SCALE_COURSE_OR_EXAM
+            CHECK ((course_id IS NOT NULL AND exam_id IS NULL) OR (course_id IS NULL AND exam_id IS NOT NULL));</sql>
+        <rollback>
+            <sql>ALTER TABLE grading_scale DROP CONSTRAINT CHECK_GRADING_SCALE_COURSE_OR_EXAM;</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916150000-04-a-reaction-has-exactly-one-parent-h2" author="krusche" dbms="h2">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.table_constraints
+                WHERE LOWER(table_name) = 'reaction' AND UPPER(constraint_name) = 'CHECK_REACTION_POST_OR_ANSWER'
+            </sqlCheck>
+        </preConditions>
+        <comment>The same constraint on the in-process database the test suite can be pointed at.</comment>
+        <sql>ALTER TABLE reaction ADD CONSTRAINT CHECK_REACTION_POST_OR_ANSWER
+            CHECK ((post_id IS NOT NULL AND answer_post_id IS NULL) OR (post_id IS NULL AND answer_post_id IS NOT NULL));</sql>
+        <rollback>
+            <sql>ALTER TABLE reaction DROP CONSTRAINT CHECK_REACTION_POST_OR_ANSWER;</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="20260916150000-04-b-grading-scale-has-exactly-one-parent-h2" author="krusche" dbms="h2">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.table_constraints
+                WHERE LOWER(table_name) = 'grading_scale' AND UPPER(constraint_name) = 'CHECK_GRADING_SCALE_COURSE_OR_EXAM'
+            </sqlCheck>
+        </preConditions>
+        <comment>The same constraint on the in-process database the test suite can be pointed at.</comment>
+        <sql>ALTER TABLE grading_scale ADD CONSTRAINT CHECK_GRADING_SCALE_COURSE_OR_EXAM
+            CHECK ((course_id IS NOT NULL AND exam_id IS NULL) OR (course_id IS NULL AND exam_id IS NOT NULL));</sql>
+        <rollback>
+            <sql>ALTER TABLE grading_scale DROP CONSTRAINT CHECK_GRADING_SCALE_COURSE_OR_EXAM;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

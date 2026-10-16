@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Component, inject, input, model, output, signal } from '@angular/core';
 import { faBan, faCheck, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiButtonDirective, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
@@ -12,37 +12,40 @@ import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-contro
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ConfirmEntityNameComponent } from 'app/shared-ui/confirm-entity-name/confirm-entity-name.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-edit-working-time-dialog',
     templateUrl: './exam-edit-working-time-dialog.component.html',
-    imports: [FormsModule, TranslateDirective, WorkingTimeControlComponent, WorkingTimeChangeComponent, ConfirmEntityNameComponent, FaIconComponent],
+    imports: [
+        FormsModule,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        WorkingTimeControlComponent,
+        WorkingTimeChangeComponent,
+        ConfirmEntityNameComponent,
+        FaIconComponent,
+        TumAetUiButtonDirective,
+        TumAetUiDialogComponent,
+    ],
 })
-export class ExamEditWorkingTimeDialogComponent implements OnInit {
-    protected readonly faBan = faBan;
-    protected readonly faSpinner = faSpinner;
-    protected readonly faCheck = faCheck;
-
-    private dialogRef = inject(DynamicDialogRef);
-    private dialogConfig = inject(DynamicDialogConfig);
+export class ExamEditWorkingTimeDialogComponent {
     private examManagementService = inject(ExamManagementService);
 
-    exam = signal<Exam | undefined>(undefined);
+    protected readonly faBan = faBan;
+    protected readonly faCheck = faCheck;
+    protected readonly faSpinner = faSpinner;
+
+    readonly visible = model(true);
+    readonly exam = input.required<Exam>();
+    readonly workingTimeUpdated = output<Exam>();
 
     readonly isLoading = signal(false);
 
     workingTimeSeconds = 0;
 
-    ngOnInit(): void {
-        const data = this.dialogConfig?.data;
-        if (data?.exam) {
-            this.exam.set(data.exam);
-        }
-    }
-
     get oldWorkingTime() {
-        const currentExam = this.exam();
-        return currentExam ? examWorkingTime(currentExam) : undefined;
+        return examWorkingTime(this.exam());
     }
 
     get newWorkingTime() {
@@ -50,18 +53,20 @@ export class ExamEditWorkingTimeDialogComponent implements OnInit {
     }
 
     clear(): void {
-        this.dialogRef.close();
+        this.visible.set(false);
     }
 
     confirmUpdateWorkingTime(): void {
         if (!this.isWorkingTimeChangeValid) return;
         const currentExam = this.exam();
-        if (!currentExam) return;
         this.isLoading.set(true);
         this.examManagementService.updateWorkingTime(currentExam.course!.id!, currentExam.id!, this.workingTimeSeconds).subscribe({
             next: (res: HttpResponse<Exam>) => {
                 this.isLoading.set(false);
-                this.dialogRef.close(res.body ?? undefined);
+                if (res.body) {
+                    this.workingTimeUpdated.emit(res.body);
+                }
+                this.visible.set(false);
             },
             error: () => {
                 // If an error happens, the alert service takes care of displaying an error message

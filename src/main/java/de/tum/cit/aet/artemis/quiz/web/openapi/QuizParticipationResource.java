@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
@@ -48,7 +49,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("conduction/participation")
+@FeatureUsage(UserFeature.QUIZ_LIVE)
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizParticipationResource {

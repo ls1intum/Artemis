@@ -80,7 +80,7 @@
                                 </span>
                                 <span>
                                     @if (!submission.latestResult!.completionDate) {
-                                        <button (click)="cancelAssessment(submission)" class="btn btn-outline-secondary btn-sm mb-1">
+                                        <button type="button" (click)="cancelAssessment(submission)" class="btn btn-outline-secondary btn-sm mb-1">
                                             <fa-icon [icon]="faBan" [fixedWidth]="true" />&nbsp;{{ 'artemisApp.assessment.dashboard.actions.cancel' | artemisTranslate }}
                                         </button>
                                     }

@@ -21,6 +21,7 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialType;
 
 import de.tum.cit.aet.artemis.account.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.core.domain.converter.AuthenticatorTransportConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.PublicKeyCoseConverter;
@@ -31,6 +32,7 @@ public class PasskeyCredential extends AbstractAuditingEntity {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
+    @Parent
     private User user;
 
     @Column(name = "label")

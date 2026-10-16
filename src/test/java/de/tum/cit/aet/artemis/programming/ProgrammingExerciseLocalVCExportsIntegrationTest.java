@@ -94,12 +94,11 @@ class ProgrammingExerciseLocalVCExportsIntegrationTest extends AbstractProgrammi
         var baseRepositories = RepositoryExportTestUtil.createAndWireBaseRepositoriesWithHandles(localVCLocalCITestService, exercise);
         exercise = programmingExerciseRepository.save(exercise);
         // Reload with buildConfig eagerly to avoid LazyInitializationException
-        exercise = programmingExerciseRepository.getProgrammingExerciseWithBuildConfigElseThrow(exercise);
 
         // Create tests path in tests repo so generator can write test.json
         var testsRepo = baseRepositories.testsRepository();
         String testsPath = java.nio.file.Path.of("test", exercise.getPackageFolderName()).toString();
-        if (exercise.getBuildConfig().hasSequentialTestRuns()) {
+        if (programmingExerciseUtilService.buildConfigOf(exercise).hasSequentialTestRuns()) {
             testsPath = java.nio.file.Path.of("structural", testsPath).toString();
         }
         Path testsDir = testsRepo.workingCopyPath().resolve(testsPath);

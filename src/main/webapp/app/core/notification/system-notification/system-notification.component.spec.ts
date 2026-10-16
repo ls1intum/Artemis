@@ -7,7 +7,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { SystemNotification, SystemNotificationType } from 'app/admin/system-notification-management/system-notification.model';
-import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { ConnectionState, WebsocketService } from 'app/foundation/service/websocket.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -66,6 +66,8 @@ describe('System Notification Component', () => {
         systemNotificationComponent = systemNotificationComponentFixture.componentInstance;
         systemNotificationService = TestBed.inject(SystemNotificationService);
         websocketService = TestBed.inject(WebsocketService);
+        // connected for the first time after the login
+        (websocketService as unknown as MockWebsocketService).setConnectionState(new ConnectionState(true, false));
         localStorageService = TestBed.inject(LocalStorageService);
     });
 
@@ -116,6 +118,97 @@ describe('System Notification Component', () => {
         expect(subscribeSpy).toHaveBeenCalledOnce();
         expect(subscribeSpy).toHaveBeenCalledWith(WEBSOCKET_CHANNEL);
         expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
+        vi.useRealTimers();
+    });
+
+    it('should keep the websocket subscription on reconnect and reload the notifications instead', () => {
+        vi.useFakeTimers();
+        const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1)];
+        const subscribeSpy = vi.spyOn(websocketService, 'subscribe');
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+
+        systemNotificationComponent.ngOnInit();
+        vi.advanceTimersByTime(500);
+        expect(subscribeSpy).toHaveBeenCalledOnce();
+        expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
+
+        const mockWebsocketService = websocketService as unknown as MockWebsocketService;
+        mockWebsocketService.setConnectionState(new ConnectionState(false, true));
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+
+        expect(subscribeSpy).toHaveBeenCalledOnce();
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
+    it('should reload the notifications if the connection was re-established before subscribing', () => {
+        vi.useFakeTimers();
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
+        systemNotificationComponent.ngOnInit();
+        expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
+
+        (websocketService as unknown as MockWebsocketService).setConnectionState(new ConnectionState(true, true));
+        vi.advanceTimersByTime(500);
+
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
+        vi.useRealTimers();
+    });
+
+    it('should ignore a reloaded notification list that is older than one received over the websocket', () => {
+        vi.useFakeTimers();
+        const restResponse = new Subject<SystemNotification[]>();
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValueOnce(of([])).mockReturnValue(restResponse);
+        systemNotificationComponent.ngOnInit();
+        vi.advanceTimersByTime(500);
+
+        const mockWebsocketService = websocketService as unknown as MockWebsocketService;
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
+        const newerNotifications = [createActiveNotification(SystemNotificationType.WARNING, 5)];
+        mockWebsocketService.emit(WEBSOCKET_CHANNEL, newerNotifications);
+        restResponse.next([]);
+
+        expect(systemNotificationComponent.notifications).toEqual(newerNotifications);
+        vi.useRealTimers();
+    });
+
+    it('should ignore the response of a reload that a newer reload superseded', () => {
+        vi.useFakeTimers();
+        const olderResponse = new Subject<SystemNotification[]>();
+        const newerResponse = new Subject<SystemNotification[]>();
+        const getActiveNotificationSpy = vi
+            .spyOn(systemNotificationService, 'getActiveNotifications')
+            .mockReturnValueOnce(of([]))
+            .mockReturnValueOnce(olderResponse)
+            .mockReturnValueOnce(newerResponse);
+        systemNotificationComponent.ngOnInit();
+        vi.advanceTimersByTime(500);
+
+        const mockWebsocketService = websocketService as unknown as MockWebsocketService;
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+        mockWebsocketService.setConnectionState(new ConnectionState(true, true));
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(3);
+
+        const newerNotifications = [createActiveNotification(SystemNotificationType.WARNING, 7)];
+        newerResponse.next(newerNotifications);
+        olderResponse.next([]);
+
+        expect(olderResponse.observed).toBe(false);
+        expect(systemNotificationComponent.notifications).toEqual(newerNotifications);
+        vi.useRealTimers();
+    });
+
+    it('should reload the notifications after a short interruption that emits no disconnected state', () => {
+        vi.useFakeTimers();
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
+
+        systemNotificationComponent.ngOnInit();
+        vi.advanceTimersByTime(500);
+        expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
+
+        (websocketService as unknown as MockWebsocketService).setConnectionState(new ConnectionState(true, true));
+
+        expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
         vi.useRealTimers();
     });
 

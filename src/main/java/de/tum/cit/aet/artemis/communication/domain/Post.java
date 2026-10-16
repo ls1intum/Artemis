@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 
@@ -51,6 +52,7 @@ public class Post extends Posting {
     private Set<AnswerPost> answers = new HashSet<>();
 
     @ManyToOne
+    @Parent(enforcedBy = "CK_POST_HAS_A_PARENT")
     private Conversation conversation;
 
     // TODO: convert to real database enum

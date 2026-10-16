@@ -16,20 +16,17 @@ import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.core.util.ArtemisVersionUtil;
 import de.tum.cit.aet.helios.HeliosClient;
-import liquibase.sqlgenerator.core.MarkChangeSetRanGenerator;
 
 /**
- * Represents a migration path that defines the necessary steps for database migration before
- * updating to a new major version. This class is pivotal in ensuring that administrators install
- * the last minor version before a major update to guarantee that all database changes are
- * incorporated. Alternatively, administrators have the option to start from scratch.
+ * One version boundary an upgrade has to pass through, expressed as the release an administrator must
+ * have deployed before a given major version will start.
  * <p>
- * The rationale behind this approach is to merge all Liquibase migrations and remove Java migrations
- * with every major version release. This strategy is aimed at accelerating the application startup,
- * particularly enhancing the performance for server and e2e tests.
+ * A path exists where the chain of changelogs leading to the current schema is no longer complete for
+ * databases older than {@link #requiredVersion}, so those cannot be migrated forward at all. Starting
+ * from an empty database is always an alternative and never needs a path.
  * <p>
- * This class simplifies the addition of future migrations by abstracting the migration logic into
- * a structured form.
+ * See {@link DatabaseMigration} for what breaks a chain, and the Upgrade Guide under
+ * {@code documentation/docs/admin/upgrade-guide.mdx} for the operator-facing table of these paths.
  */
 class MigrationPath {
 
@@ -65,26 +62,29 @@ class MigrationPath {
 }
 
 /**
- * Handles the database migration process by checking against defined migration paths to ensure
- * that the database schema is up-to-date before application startup. This class plays a critical
- * role in optimizing application startup time by merging Liquibase migrations and eliminating Java
- * migrations for each major version release.
+ * Refuses to start when the database is too old for this release to migrate it.
  * <p>
- * This mechanism is essential for maintainers, aiming to streamline the startup, especially
- * beneficial for server and e2e tests. It mandates administrators to upgrade to the latest minor
- * version before a major update, facilitating a smooth transition and incorporation of all
- * database changes.
+ * Every upgrade path Artemis supports is a chain of changelogs that ends at the current schema. A
+ * database that has not run some link in that chain cannot be brought forward, and the only safe
+ * response is to stop before Liquibase touches it and to name the release the operator has to deploy
+ * first.
  * <p>
- * Steps for new database migration paths:
- * <ol>
- * <li>Re-create the new initial scheme from the database after applying all existing liquibase migrations.</li>
- * <li>Delete all existing liquibase migrations except the new initial scheme and *_cleanup.xml (adapt *_cleanup.xml with the latest date).</li>
- * <li>Delete all Java migrations that have been executed before.</li>
- * <li>Check that the new initial scheme is compatible with MySQL and Postgres and can be started from scratch in both environments.</li>
- * <li>Add the new migration path in the constructor of DatabaseMigration.</li>
- * <li>Verify that the migration works with the designated path (ideally with a local database and with a dump from a test / production system).</li>
- * <li>Document the migration carefully in the release notes and the online documentation.</li>
- * </ol>
+ * Two things can break the chain, and only the first of them still can:
+ * <ul>
+ * <li><b>Reused changeset identities.</b> Before the 10.0 baseline, each consolidation rewrote the
+ * contents of {@code 00000000000000_initial_schema.xml} while keeping its changeset ids, so a database
+ * that had recorded the previous major's initial schema saw a checksum that no longer matched. The
+ * consolidation papered over that by nulling the checksum on the way past, which only worked from the
+ * one version it was written for. Every baseline from 10.0 on gets its own file and its own ids
+ * ({@code v10-01}, {@code v11-01}, ...), so nothing collides and nothing has to be papered over.</li>
+ * <li><b>Deleting a folded generation.</b> Removing a directory under {@code config/liquibase/history}
+ * drops the changelogs it holds, so a database that had not yet run them can no longer be brought
+ * forward. That is a deliberate retention decision and the only reason a new path is needed from now
+ * on; the required version is the last release of the oldest generation still present.</li>
+ * </ul>
+ * <p>
+ * The layout and the reasoning behind it are documented in
+ * {@code documentation/docs/developer/guidelines/database-migration-consolidation.mdx}.
  */
 public class DatabaseMigration {
 
@@ -110,8 +110,12 @@ public class DatabaseMigration {
         migrationPaths.add(new MigrationPath("6.9.6"));  // required for migration to 7.0.0 until 8.0.0
         migrationPaths.add(new MigrationPath("7.10.5"));  // required for migration to 8.0.0 until 9.0.0
         migrationPaths.add(new MigrationPath("8.8.6"));  // required for migration to 9.0.0 until 10.0.0
-
-        // Add more migrations here as needed
+        // Required for migration to 10.0.0 until 11.0.0. This is the last path the reused-changeset-id
+        // problem forces: a 9.x database recorded the 9.0 initial schema under the ids 00000000000001 to
+        // 00000000000003, and an 8.x database recorded the 8.0 one under the same ids, so only a database
+        // that has been through 9.x carries checksums that still match the file. From the v10 baseline on
+        // each generation owns its ids, and a new path is needed only when a history generation is deleted.
+        migrationPaths.add(new MigrationPath("9.9.3"));
     }
 
     public String getPreviousVersionString() {
@@ -119,9 +123,10 @@ public class DatabaseMigration {
     }
 
     /**
-     * Checks against the defined migration paths to determine if the current version of the database
-     * is compatible or requires migration. This method ensures that the database schema is prepared
-     * and up-to-date before proceeding with the application startup.
+     * Stops the startup when the recorded version is older than this release can migrate from.
+     * <p>
+     * A database with no recorded version is a fresh installation, which needs no path: the baseline
+     * creates the schema outright.
      */
     public void checkMigrationPath() {
         var currentVersion = ArtemisVersionUtil.parseForComparison(currentVersionString);
@@ -136,17 +141,11 @@ public class DatabaseMigration {
         var previousVersion = ArtemisVersionUtil.parseForComparison(previousVersionString);
 
         for (MigrationPath path : migrationPaths) {
-            if (currentVersion.isGreaterThanOrEqualTo(path.upgradeVersion) && currentVersion.isLowerThan(path.nextUpgradeVersion)) {
-                if (previousVersion.isLowerThan(path.requiredVersion)) {
-                    log.error(path.errorMessage);
-                    optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationFailed);
-                    System.exit(15);
-                }
-                else if (previousVersion.isGreaterThanOrEqualTo(path.requiredVersion) && !isSchemaConsolidationCompleted()) {
-                    updateInitialChecksum(currentVersionString);
-                    log.info("Successfully cleaned up initial schema during migration");
-                    break; // Exit after handling the required migration step
-                }
+            boolean pathApplies = currentVersion.isGreaterThanOrEqualTo(path.upgradeVersion) && currentVersion.isLowerThan(path.nextUpgradeVersion);
+            if (pathApplies && previousVersion.isLowerThan(path.requiredVersion)) {
+                log.error(path.errorMessage);
+                optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationFailed);
+                System.exit(15);
             }
         }
 
@@ -201,82 +200,6 @@ public class DatabaseMigration {
         }
         // this path cannot happen
         return null;
-    }
-
-    /**
-     * Updates the checksum of the initial schema in the 'DATABASECHANGELOG' table to {@code null}.
-     * This operation is crucial for allowing Liquibase to recalculate the checksum during the
-     * migration process, ensuring that the database schema is up-to-date with the specified new version
-     * of the application. This method specifically targets the initial schema entry, preparing it for
-     * a fresh checksum calculation by Liquibase.
-     * <p>
-     * The update is performed with the intention of aligning the database schema with the new version,
-     * thereby facilitating a smooth transition and avoiding potential migration conflicts.
-     * <p>
-     * If an SQLException occurs during the update process, a RuntimeException is thrown, indicating
-     * that the checksum update operation has failed. This failure needs to be addressed to ensure
-     * the integrity and consistency of the database schema migration process.
-     *
-     * @param currentVersion The current application version string (as configured in {@code build.gradle},
-     *                           e.g. {@code "9.2"}) that will be persisted in the DATABASECHANGELOG description.
-     * @throws RuntimeException If updating the checksum fails due to an SQLException, encapsulating the original exception.
-     */
-    private void updateInitialChecksum(String currentVersion) {
-        String description = "Initial schema generation for version " + currentVersion;
-
-        // Nullify checksums for all existing initial schema changesets (ID pattern 0000000000000%)
-        // so that Liquibase recalculates them instead of reporting a checksum mismatch.
-        // On upgrade from 8.8.6, only 00000000000001 exists in DATABASECHANGELOG — the new
-        // DB-specific changesets (00000000000002, 00000000000003) use preConditions to handle
-        // the case where their columns already exist.
-        // Written the way Liquibase writes it itself, rather than as a literal that has to be bumped by hand on every
-        // Liquibase upgrade. MarkChangeSetRanGenerator is what fills this column for a normally executed changeset,
-        // and its helper also applies the truncation the 20-character column requires.
-        String liquibaseVersion = MarkChangeSetRanGenerator.getLiquibaseBuildVersion();
-
-        String updateSqlStatement = """
-                UPDATE DATABASECHANGELOG
-                SET MD5SUM = null,
-                    DATEEXECUTED = now(),
-                    DESCRIPTION = ?,
-                    LIQUIBASE = ?,
-                    FILENAME = 'config/liquibase/changelog/00000000000000_initial_schema.xml'
-                WHERE ID LIKE '0000000000000%';
-                """;
-
-        try (var connection = dataSource.getConnection(); var preparedStatement = connection.prepareStatement(updateSqlStatement)) {
-            preparedStatement.setString(1, description);
-            preparedStatement.setString(2, liquibaseVersion);
-            preparedStatement.executeUpdate();
-            connection.commit();
-            log.info("Set checksum of initial schema to null so that liquibase will recalculate it");
-        }
-        catch (SQLException e) {
-            log.error("Cannot update checksum for initial schema migration: {}", e.getMessage());
-            optionalHeliosClient.ifPresent(HeliosClient::pushDbMigrationFailed);
-            System.exit(11);
-        }
-    }
-
-    /**
-     * Checks whether the schema consolidation for this major version has already been completed
-     * by looking for the cleanup changeset in DATABASECHANGELOG. Once the cleanup has run,
-     * the consolidation is done and we don't need to nullify checksums again.
-     * This prevents unnecessary work on every subsequent startup.
-     *
-     * @return true if the cleanup changeset (20260406120000) is already in DATABASECHANGELOG
-     */
-    private boolean isSchemaConsolidationCompleted() {
-        try (var connection = openConnection(); var statement = connection.createStatement()) {
-            var result = statement.executeQuery("SELECT COUNT(*) FROM DATABASECHANGELOG WHERE ID = '20260406120000';");
-            if (result.next()) {
-                return result.getInt(1) > 0;
-            }
-        }
-        catch (SQLException e) {
-            log.warn("Could not check if schema consolidation is completed: {}", e.getMessage());
-        }
-        return false;
     }
 
     /**

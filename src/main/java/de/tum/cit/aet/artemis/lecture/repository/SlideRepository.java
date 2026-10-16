@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -25,7 +26,7 @@ import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
 @Repository
 public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
 
-    Slide findSlideByAttachmentVideoUnitIdAndSlideNumber(long attachmentVideoUnitId, int slideNumber);
+    Slide findSlideByAttachmentVideoUnitIdAndSlideNumberAndSupersededIsFalse(long attachmentVideoUnitId, int slideNumber);
 
     /**
      * The slides of an attachment video unit, in slide order.
@@ -43,6 +44,7 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
             SELECT slide
             FROM Slide slide
             WHERE slide.attachmentVideoUnit.id = :attachmentUnitId
+                AND slide.superseded = FALSE
             ORDER BY slide.slideNumber ASC
             """)
     List<Slide> findAllByAttachmentVideoUnitId(@Param("attachmentUnitId") Long attachmentUnitId);
@@ -56,6 +58,7 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
             SELECT new de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO(s.id, s.hidden)
             FROM Slide s
             WHERE s.hidden IS NOT NULL
+                AND s.superseded = FALSE
             """)
     List<SlideUnhideDTO> findHiddenSlidesProjection();
 
@@ -66,7 +69,7 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
      * @param attachmentUnitId The ID of the attachment video unit
      * @return List of hidden slides for the attachment video unit
      */
-    List<Slide> findByAttachmentVideoUnitIdAndHiddenNotNull(Long attachmentUnitId);
+    List<Slide> findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(Long attachmentUnitId);
 
     /**
      * Find all slides associated with a specific exercise
@@ -82,9 +85,12 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
     List<Slide> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Unhides a slide by setting its hidden property to null.
+     * Unhides a slide by setting its hidden property to null, but only if its hidden date has passed.
+     * A scheduled unhide task that is already running when the hidden date is moved to a later point therefore does not unhide the slide early.
      *
      * @param slideId The ID of the slide to unhide
+     * @param now     the current time, the hidden date must not be after it
+     * @return the number of updated slides, 0 if the slide is not hidden or its hidden date has not passed yet
      */
     @Transactional // ok because of modifying query
     @Modifying
@@ -92,13 +98,16 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
             UPDATE Slide s
             SET s.hidden = NULL
             WHERE s.id = :slideId
+                AND s.hidden IS NOT NULL
+                AND s.hidden <= :now
             """)
-    void unhideSlide(@Param("slideId") Long slideId);
+    int unhideSlideIfDue(@Param("slideId") Long slideId, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.lecture.dto.SlideDTO(s.id, s.slideNumber, s.hidden, s.attachmentVideoUnit.id)
             FROM Slide s
             WHERE s.attachmentVideoUnit.id IN :attachmentVideoUnitIds
+                AND s.superseded = FALSE
                 AND (s.hidden IS NULL OR s.hidden < CURRENT_TIMESTAMP())
             """)
     Set<SlideDTO> findVisibleSlidesByAttachmentVideoUnits(@Param("attachmentVideoUnitIds") Set<Long> attachmentVideoUnitIds);

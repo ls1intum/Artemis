@@ -99,34 +99,8 @@ public class ExerciseVariantGroupService {
      */
     public ExerciseVariantGroup createGroup(Long courseId, ExerciseVariantGroup group) {
         group.validateDates();
-        // The course_id FK lives on this table but the Course side owns the mapping, so the group has to exist before
-        // it can be attached. Not wrapped in a transaction (this codebase avoids service-level @Transactional), so the
-        // two writes are made safe by hand: the course is resolved BEFORE the first save, which leaves an unknown id
-        // persisting nothing, and a failed attachment takes the row with it — a course-less group is invisible to
-        // every course query and would linger forever. The attachment writes the new row's FK directly instead of
-        // saving the course: that collection is orphanRemoval, so merging a snapshot taken before a concurrent
-        // creation would delete the group that creation had just attached.
-        courseRepository.findByIdElseThrow(courseId);
-        ExerciseVariantGroup savedGroup = exerciseVariantGroupRepository.save(group);
-        try {
-            if (exerciseVariantGroupRepository.attachToCourse(savedGroup.getId(), courseId) != 1) {
-                // The row is gone (a concurrent deletion between the save and this update), so nothing was attached.
-                throw new IllegalStateException("Could not attach variant group " + savedGroup.getId() + " to course " + courseId);
-            }
-        }
-        catch (RuntimeException attachmentFailed) {
-            try {
-                exerciseVariantGroupRepository.delete(savedGroup);
-            }
-            catch (RuntimeException cleanupFailed) {
-                // Never let the cleanup hide why the attachment failed; log the row that has to go manually and
-                // carry the cleanup error along as a suppressed exception.
-                log.error("Could not delete variant group {} after it could not be attached to course {}", savedGroup.getId(), courseId, cleanupFailed);
-                attachmentFailed.addSuppressed(cleanupFailed);
-            }
-            throw attachmentFailed;
-        }
-        return savedGroup;
+        group.setCourse(courseRepository.findByIdElseThrow(courseId));
+        return exerciseVariantGroupRepository.save(group);
     }
 
     /**

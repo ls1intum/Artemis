@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -40,6 +39,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -81,6 +81,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     private Boolean exampleSubmission;
 
     @ManyToOne
+    @Parent
     private Participation participation;
 
     @JsonIgnore
@@ -140,7 +141,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(Set.of()).stream().filter(Objects::nonNull).max(BY_ID).orElse(null);
+        Result latestResult = results.stream().filter(Objects::nonNull).max(BY_ID).orElse(null);
 
         if (latestResult != null) {
             latestResult.setSubmission(this);
@@ -159,7 +160,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getLatestCompletedResult() {
-        Result latestResult = Optional.ofNullable(results).orElse(Set.of()).stream().filter(result -> result != null && result.getCompletionDate() != null)
+        Result latestResult = results.stream().filter(result -> result != null && result.getCompletionDate() != null)
                 .max(Comparator.comparing(Result::getCompletionDate).thenComparing(BY_ID)).orElse(null);
 
         if (latestResult != null) {
@@ -271,7 +272,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Nullable
     @JsonIgnore
     public Result getFirstResult() {
-        if (results == null || results.isEmpty()) {
+        if (results.isEmpty()) {
             return null;
         }
         return results.stream().filter(Objects::nonNull).min(BY_ID).orElse(null);
@@ -287,9 +288,6 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     public Result getFirstManualResult() {
         // The earliest manual result, which is the one of the first correction round. Guard on the manual results, not
         // on all results: a submission can carry only automatic or Athena results and then there is none.
-        if (results == null) {
-            return null;
-        }
         return getManualResults().stream().min(BY_ID).orElse(null);
     }
 
@@ -306,9 +304,6 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @JsonIgnore
     public Result getLatestManualResult() {
         // The most recent manual result, which is the one of the highest correction round.
-        if (results == null) {
-            return null;
-        }
         return getManualResults().stream().max(BY_ID).orElse(null);
     }
 

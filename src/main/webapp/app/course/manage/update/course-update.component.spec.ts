@@ -26,12 +26,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { By } from '@angular/platform-browser';
 import { EventManager } from 'app/foundation/service/event-manager.service';
-import { FeatureToggleHideDirective } from 'app/foundation/feature-toggle/feature-toggle-hide.directive';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_LTI } from 'app/app.constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
@@ -43,7 +42,7 @@ import { FileService } from 'app/foundation/service/file.service';
 import { CompetencyOrchestrationApiService } from 'app/atlas/shared/services/competency-orchestration-api.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 
 // Stub the orchestrator-defaults fetch globally so the course-update form's ngOnInit never issues a
 // real HTTP request when Atlas is active — otherwise the HttpTestingController.verify() blocks would
@@ -96,6 +95,7 @@ describe('Course Management Update Component', () => {
         course.courseIconPath = 'api/core/files/testCourseIcon';
         course.timeZone = 'Europe/London';
         course.learningPathsEnabled = true;
+        course.presentationAssessmentsEnabled = true;
 
         const route = {
             data: of({ course }),
@@ -284,6 +284,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
             expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
+            expect(comp.courseForm.get(['presentationAssessmentsEnabled'])?.value).toBe(course.presentationAssessmentsEnabled);
         });
     });
 
@@ -309,6 +310,84 @@ describe('Course Management Update Component', () => {
         });
     });
 
+    describe('description validation', () => {
+        beforeEach(async () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            await Promise.resolve();
+        });
+
+        it('should accept a 2000-character description (boundary)', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(2000));
+            comp.courseForm.get('description')!.updateValueAndValidity();
+            expect(comp.courseForm.get('description')!.errors?.maxlength).toBeUndefined();
+        });
+
+        it('should reject a 2001-character description', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(2001));
+            comp.courseForm.get('description')!.updateValueAndValidity();
+            expect(comp.courseForm.get('description')!.errors?.maxlength).toBeDefined();
+        });
+
+        const counterElement = () => fixture.nativeElement.querySelector('[data-testid="course-description-counter"]') as HTMLElement;
+        const descriptionTextarea = () => fixture.nativeElement.querySelector('#field_description') as HTMLTextAreaElement;
+        const saveButton = () => fixture.nativeElement.querySelector('#save-entity') as HTMLButtonElement;
+
+        it('should expose the live description length via the descriptionLength signal', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(1234));
+            fixture.detectChanges();
+            expect(comp.descriptionLength()).toBe(1234);
+        });
+
+        it('should render the character counter with the current length and the limit', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(1500));
+            fixture.detectChanges();
+            expect(counterElement().textContent).toContain('1500 / 2000');
+        });
+
+        it('should apply the danger token when over the limit and clear it when back within the limit', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(2001));
+            fixture.detectChanges();
+            expect(counterElement().classList).toContain('text-state-danger');
+            expect(counterElement().classList).not.toContain('text-muted-color');
+
+            comp.courseForm.get('description')!.setValue('a'.repeat(2000));
+            fixture.detectChanges();
+            expect(counterElement().classList).toContain('text-muted-color');
+            expect(counterElement().classList).not.toContain('text-state-danger');
+        });
+
+        it('should show 0 / 2000 without the danger token for an empty description', () => {
+            comp.courseForm.get('description')!.setValue('');
+            fixture.detectChanges();
+            expect(comp.descriptionLength()).toBe(0);
+            expect(counterElement().textContent).toContain('0 / 2000');
+            expect(counterElement().classList).not.toContain('text-state-danger');
+        });
+
+        it('should no longer hard-cap the textarea with a maxlength attribute', () => {
+            expect(descriptionTextarea().getAttribute('maxlength')).toBeNull();
+        });
+
+        it('should update the counter through a real textarea input event (soft cap allows over-limit input)', () => {
+            const textarea = descriptionTextarea();
+            textarea.value = 'a'.repeat(2001);
+            textarea.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            expect(comp.descriptionLength()).toBe(2001);
+            expect(counterElement().textContent).toContain('2001 / 2000');
+            expect(counterElement().classList).toContain('text-state-danger');
+        });
+
+        it('should list the description as an issue and keep the save button aria-disabled (never hard disabled) when over the limit', () => {
+            comp.courseForm.get('description')!.setValue('a'.repeat(2001));
+            fixture.detectChanges();
+            expect(comp.issues().some((issue) => issue.control === 'description')).toBe(true);
+            expect(saveButton().getAttribute('aria-disabled')).toBe('true');
+            expect(saveButton().hasAttribute('disabled')).toBe(false);
+        });
+    });
+
     describe('save', () => {
         it('should call update service on save for existing entity', async () => {
             // GIVEN
@@ -328,6 +407,7 @@ describe('Course Management Update Component', () => {
                 id: new FormControl(entity.id),
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
+                presentationAssessmentsEnabled: new FormControl(entity.presentationAssessmentsEnabled),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
@@ -364,11 +444,13 @@ describe('Course Management Update Component', () => {
             // CourseAthenaConfigResource - so the saved course does not carry them either.
             delete entity.athenaGradingFeedbackEnabled;
             delete entity.athenaFormativeFeedbackEnabled;
-            const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+            const createStub = vi.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: { id: 42 } })));
+            const navigateStub = vi.spyOn(TestBed.inject(Router), 'navigate');
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
                 enrollmentEnabled: new FormControl(entity.enrollmentEnabled),
+                presentationAssessmentsEnabled: new FormControl(entity.presentationAssessmentsEnabled),
                 presentationScore: new FormControl(entity.presentationScore),
                 maxComplaints: new FormControl(entity.maxComplaints),
                 accuracyOfScores: new FormControl(entity.accuracyOfScores),
@@ -391,6 +473,7 @@ describe('Course Management Update Component', () => {
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
             expect(createStub).toHaveBeenCalledWith(entity, undefined);
+            expect(navigateStub).toHaveBeenCalledExactlyOnceWith(['course-management', '42']);
             expect(comp.isSaving()).toBe(false);
         });
 
@@ -1322,8 +1405,8 @@ describe('Course Management Update Component', () => {
             expect(comp.imageToCrop()).toBe(comp.courseImageUploadFile);
             fixture.detectChanges();
             const dialog = fixture.debugElement
-                .queryAll(By.directive(TumUiDialogComponent))
-                .map((debugElement) => debugElement.componentInstance as TumUiDialogComponent)
+                .queryAll(By.directive(TumAetUiDialogComponent))
+                .map((debugElement) => debugElement.componentInstance as TumAetUiDialogComponent)
                 .find((dialogComponent) => dialogComponent.header() === 'artemisApp.course.courseIcon')!;
             expect(dialog.size()).toBe('small');
 
@@ -1521,9 +1604,339 @@ describe('Course Management Update Component', () => {
             expect(comp.isValidDate).toBe(false);
         });
     });
+
+    describe('form issues and submission', () => {
+        const scrollIntoView = Element.prototype.scrollIntoView;
+
+        beforeEach(() => {
+            // A course that can be saved as it is; each test breaks the part it is about.
+            course.startDate = dayjs('2026-10-01T00:00:00');
+            course.endDate = dayjs('2027-03-31T23:59:00');
+            course.semester = 'WS26/27';
+            course.timeZone = validTimeZone;
+            course.onlineCourse = false;
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            // jsdom does not lay out the page, so it has no scrollIntoView.
+            Element.prototype.scrollIntoView = vi.fn();
+        });
+
+        afterEach(() => {
+            Element.prototype.scrollIntoView = scrollIntoView;
+        });
+
+        it('reports nothing for a course that can be saved', () => {
+            comp.ngOnInit();
+
+            expect(comp.issues()).toEqual([]);
+        });
+
+        it('lists the fields that keep the course from being saved in page order', () => {
+            course.title = undefined;
+            course.semester = undefined;
+            course.endDate = undefined;
+            comp.ngOnInit();
+
+            expect(comp.issues().map((issue) => issue.targetId)).toEqual(['field_title', 'semester', 'field_endDate_input']);
+        });
+
+        it('reports a start date after the end date at the start date', () => {
+            course.startDate = dayjs('2027-04-01T00:00:00');
+            comp.ngOnInit();
+
+            expect(comp.issues()).toEqual([{ control: 'startDate', labelKey: 'artemisApp.course.startDate', targetId: 'field_startDate_input' }]);
+        });
+
+        it('follows the form as it changes', () => {
+            comp.ngOnInit();
+            expect(comp.issues()).toEqual([]);
+
+            comp.courseForm.get('title')!.setValue('');
+
+            expect(comp.issues().map((issue) => issue.targetId)).toEqual(['field_title']);
+        });
+
+        it('reveals every problem and focuses the first one instead of saving', () => {
+            course.title = undefined;
+            fixture.detectChanges();
+            const saveSpy = vi.spyOn(comp, 'save');
+
+            comp.onSubmit();
+            fixture.detectChanges();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+            expect(comp.submitAttempted()).toBe(true);
+            expect(comp.courseForm.get('title')!.touched).toBe(true);
+            expect(document.activeElement?.id).toBe('field_title');
+            expect(fixture.nativeElement.querySelector('#field_title').closest('tumaet-ui-form-field').textContent).toContain('artemisApp.course.form.title.required');
+        });
+
+        it('commits a title that is still being typed before checking what is missing', () => {
+            // Pressing Enter submits while the field still has the focus; the title only commits its value on blur.
+            course.title = undefined;
+            fixture.detectChanges();
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {});
+            const titleInput: HTMLInputElement = fixture.nativeElement.querySelector('#field_title');
+            titleInput.focus();
+            titleInput.value = 'Software Engineering';
+            titleInput.dispatchEvent(new Event('input'));
+            expect(comp.courseForm.get('title')!.value).toBeFalsy();
+
+            comp.onSubmit();
+
+            expect(comp.courseForm.get('title')!.value).toBe('Software Engineering');
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it('leaves text the date picker cannot parse to the picker instead of calling the date missing', () => {
+            comp.ngOnInit();
+            const startDate = comp.courseForm.get('startDate')!;
+            startDate.markAsTouched();
+            startDate.setErrors({ required: true, invalidDate: true });
+
+            expect(comp.showError('startDate')).toBe(true);
+            expect(comp.showDateMissing('startDate')).toBe(false);
+
+            startDate.setErrors({ required: true });
+
+            expect(comp.showDateMissing('startDate')).toBe(true);
+        });
+
+        it('saves when nothing keeps the course from being saved', () => {
+            comp.ngOnInit();
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {});
+
+            comp.onSubmit();
+
+            expect(saveSpy).toHaveBeenCalledOnce();
+        });
+
+        it('does not save twice while a save is running', () => {
+            comp.ngOnInit();
+            comp.isSaving.set(true);
+            const saveSpy = vi.spyOn(comp, 'save').mockImplementation(() => {});
+
+            comp.onSubmit();
+
+            expect(saveSpy).not.toHaveBeenCalled();
+        });
+
+        it('keeps the save button focusable but marked as blocked, and names the fields in the footer', () => {
+            course.title = undefined;
+            fixture.detectChanges();
+
+            const saveButton: HTMLButtonElement = fixture.nativeElement.querySelector('#save-entity');
+            expect(saveButton.disabled).toBe(false);
+            expect(saveButton.getAttribute('aria-disabled')).toBe('true');
+            expect(saveButton.getAttribute('aria-describedby')).toBe('course-form-status');
+            expect(fixture.nativeElement.querySelector('[data-testid="course-form-issues"]').textContent).toContain('artemisApp.course.title');
+        });
+
+        it('shows the required legend instead of issues when the course can be saved', () => {
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('[data-testid="course-form-issues"]')).toBeNull();
+            expect(fixture.nativeElement.querySelector('#save-entity').getAttribute('aria-disabled')).toBe('false');
+            expect(fixture.nativeElement.querySelector('#course-form-status').textContent).toContain('artemisApp.course.form.requiredLegend');
+        });
+
+        it('focuses the field of an issue selected in the footer and reveals its message', () => {
+            fixture.detectChanges();
+            const description = comp.courseForm.get('description')!;
+            expect(description.touched).toBe(false);
+
+            comp.focusIssue({ control: 'description', labelKey: 'artemisApp.course.description', targetId: 'field_description' });
+
+            expect(document.activeElement?.id).toBe('field_description');
+            expect(description.touched).toBe(true);
+        });
+
+        it('focuses the footer instead of doing nothing when the field of an issue is not shown', () => {
+            fixture.detectChanges();
+
+            comp.focusIssue({ labelKey: 'artemisApp.course.form.invalidForm', targetId: 'field_that_is_not_rendered' });
+
+            expect(document.activeElement?.id).toBe('course-form-footer');
+        });
+
+        it('keeps the focus on the save button when pressing it does not save', () => {
+            course.title = undefined;
+            fixture.detectChanges();
+            comp.courseForm.get('title')!.setValue('');
+            const saveButton: HTMLButtonElement = fixture.nativeElement.querySelector('#save-entity');
+            saveButton.focus();
+            vi.spyOn(comp, 'focusIssue').mockImplementation(() => {});
+
+            comp.onSubmit();
+
+            expect(document.activeElement).toBe(saveButton);
+        });
+
+        it('does not keep an enrollment date that could not be parsed once enrollment is switched off', () => {
+            // An unparseable entry leaves the course date empty but the control invalid; hiding the picker must not
+            // leave that error behind, or the hidden field would keep blocking the save.
+            course.enrollmentEnabled = true;
+            course.enrollmentStartDate = undefined;
+            course.enrollmentEndDate = undefined;
+            course.unenrollmentEnabled = false;
+            comp.ngOnInit();
+            comp.courseForm.get('enrollmentStartDate')!.setErrors({ invalidDate: true });
+            expect(comp.issues().map((issue) => issue.targetId)).toEqual(['field_enrollmentStartDate_input']);
+
+            comp.changeEnrollmentEnabled();
+
+            expect(comp.course.enrollmentEnabled).toBe(false);
+            expect(comp.courseForm.get('enrollmentStartDate')!.valid).toBe(true);
+            expect(comp.issues()).toEqual([]);
+        });
+    });
+
+    describe('time zone of an existing course', () => {
+        beforeEach(() => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            // Stored as Europe/London, which the browser list of this test does not contain.
+            course.timeZone = 'Europe/London';
+        });
+
+        it('keeps a stored time zone valid while it is unchanged, but checks a new one', () => {
+            comp.ngOnInit();
+            const timeZone = comp.courseForm.get('timeZone')!;
+            expect(timeZone.valid).toBe(true);
+
+            timeZone.setValue('Mars/Olympus_Mons');
+            expect(timeZone.hasError('invalidTimeZone')).toBe(true);
+
+            timeZone.setValue('Europe/London');
+            expect(timeZone.valid).toBe(true);
+        });
+
+        it('requires the time zone once the course has one, because the server keeps it', () => {
+            fixture.detectChanges();
+            const timeZone = comp.courseForm.get('timeZone')!;
+
+            timeZone.setValue('');
+
+            expect(timeZone.hasError('timeZoneRequired')).toBe(true);
+            expect(comp.issues().map((issue) => issue.targetId)).toContain('timeZone');
+            expect(fixture.nativeElement.querySelector('#timeZone').getAttribute('aria-required')).toBe('true');
+        });
+
+        it('sends no time zone rather than an empty one', () => {
+            const updateStub = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+            comp.course = course;
+            comp.courseForm = new FormGroup({ id: new FormControl(course.id), timeZone: new FormControl('') });
+
+            comp.save();
+
+            expect(updateStub.mock.calls[0][1].timeZone).toBeUndefined();
+        });
+    });
+
+    describe('test course retention settings', () => {
+        beforeEach(() => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+        });
+
+        it('hides grade relevance and data-retention hold for a test course, whose data is never deleted automatically', () => {
+            course.testCourse = true;
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#field_gradeRelevant')).toBeNull();
+            expect(fixture.nativeElement.querySelector('#field_dataRetentionHold')).toBeNull();
+        });
+
+        it('shows them again, with their values, once the course is no longer a test course', () => {
+            course.testCourse = true;
+            course.courseConfiguration = { gradeRelevant: false, dataRetentionHold: true };
+            fixture.detectChanges();
+
+            comp.courseForm.get('testCourse')!.setValue(false);
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#field_gradeRelevant')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('#field_dataRetentionHold')).not.toBeNull();
+            expect(comp.courseForm.get('gradeRelevant')!.value).toBe(false);
+            expect(comp.courseForm.get('dataRetentionHold')!.value).toBe(true);
+        });
+    });
+
+    describe('organization assignment', () => {
+        const orgWithId = (id: number): Organization => {
+            const organization = new Organization();
+            organization.id = id;
+            return organization;
+        };
+
+        beforeEach(() => {
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(true);
+        });
+
+        it('starts switched off and without the organization controls when the course has no organizations', () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            fixture.detectChanges();
+
+            expect(comp.organizationsEnabled()).toBe(false);
+            expect(fixture.nativeElement.querySelector('#field_organizationsEnabled')).not.toBeNull();
+            expect(fixture.nativeElement.querySelector('#addOrganizationButton')).toBeNull();
+
+            comp.setOrganizationsEnabled(true);
+            fixture.detectChanges();
+
+            expect(fixture.nativeElement.querySelector('#addOrganizationButton')).not.toBeNull();
+        });
+
+        it('starts switched on when the course already has organizations', () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1)]));
+            fixture.detectChanges();
+
+            expect(comp.organizationsEnabled()).toBe(true);
+        });
+
+        it('saves the course without organizations while the assignment is switched off', async () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1), orgWithId(2)]));
+            comp.ngOnInit();
+            comp.setOrganizationsEnabled(false);
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization');
+            const removeStub = vi.spyOn(organizationService, 'removeCourseFromOrganization').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+
+            comp.save();
+            await Promise.resolve();
+
+            expect(addStub).not.toHaveBeenCalled();
+            expect(removeStub).toHaveBeenCalledTimes(2);
+            expect(removeStub).toHaveBeenCalledWith(1, course.id);
+            expect(removeStub).toHaveBeenCalledWith(2, course.id);
+        });
+
+        it('keeps the selection when the assignment is switched off and on again', async () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([orgWithId(1)]));
+            comp.ngOnInit();
+            comp.setOrganizationsEnabled(false);
+            comp.setOrganizationsEnabled(true);
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: course })));
+            const addStub = vi.spyOn(organizationService, 'addCourseToOrganization');
+            const removeStub = vi.spyOn(organizationService, 'removeCourseFromOrganization');
+
+            comp.save();
+            await Promise.resolve();
+
+            expect(comp.courseOrganizations()).toEqual([orgWithId(1)]);
+            expect(addStub).not.toHaveBeenCalled();
+            expect(removeStub).not.toHaveBeenCalled();
+        });
+
+        it('switches the assignment on when an organization is selected', () => {
+            vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
+            comp.ngOnInit();
+
+            comp.onOrgSelected(orgWithId(3));
+
+            expect(comp.organizationsEnabled()).toBe(true);
+        });
+    });
 });
 
-describe('Course Management Learning Paths Feature Toggle Update', () => {
+describe('Course Management Feature Toggle Update', () => {
     const validTimeZone = 'Europe/Berlin';
     let fixture: ComponentFixture<CourseUpdateComponent>;
     let featureToggleService: FeatureToggleService;
@@ -1574,12 +1987,10 @@ describe('Course Management Learning Paths Feature Toggle Update', () => {
         // Run change detection to update the view
         fixture.changeDetectorRef.detectChanges();
 
-        // Try to find the form field in the DOM
-        const formGroups = fixture.debugElement.queryAll(By.directive(FeatureToggleHideDirective));
-        const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
+        const formGroup = fixture.debugElement.query(By.css('#learning-paths-setting'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(filteredFormGroups).toHaveLength(0);
+        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(true);
     });
     it('should show the learning paths form field when the feature is toggled', () => {
         const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_LTI] } as unknown as ProfileInfo;
@@ -1595,12 +2006,32 @@ describe('Course Management Learning Paths Feature Toggle Update', () => {
         // Run change detection to update the view
         fixture.changeDetectorRef.detectChanges();
 
-        // Try to find the form field in the DOM
-        const formGroups = fixture.debugElement.queryAll(By.directive(FeatureToggleHideDirective));
-        const filteredFormGroups = formGroups.filter((element) => !element.nativeElement.classList.contains('d-none'));
+        const formGroup = fixture.debugElement.query(By.css('#learning-paths-setting'));
 
         expect(featureToggleStub).toHaveBeenCalled();
-        expect(filteredFormGroups).toHaveLength(1);
+        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(false);
+    });
+
+    it('should hide the presentation assessments form field when the feature is not toggled', () => {
+        featureToggleSpy.mockImplementation((feature: string) => of(feature !== FeatureToggle.PresentationAssessments));
+
+        fixture.changeDetectorRef.detectChanges();
+
+        const formGroup = fixture.debugElement.query(By.css('#presentation-assessments-setting'));
+
+        expect(featureToggleSpy).toHaveBeenCalledWith(FeatureToggle.PresentationAssessments);
+        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(true);
+    });
+
+    it('should show the presentation assessments form field when the feature is toggled', () => {
+        featureToggleSpy.mockImplementation((feature: string) => of(feature === FeatureToggle.PresentationAssessments));
+
+        fixture.changeDetectorRef.detectChanges();
+
+        const formGroup = fixture.debugElement.query(By.css('#presentation-assessments-setting'));
+
+        expect(featureToggleSpy).toHaveBeenCalledWith(FeatureToggle.PresentationAssessments);
+        expect(formGroup.nativeElement.classList.contains('d-none')).toBe(false);
     });
 });
 
@@ -1643,10 +2074,191 @@ describe('Course Management Update Component Create', () => {
 
     it('should get code of conduct template if a new course is created', () => {
         fixture.detectChanges();
-        const req = httpMock.expectOne({ method: 'GET' });
+        const req = httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct'));
         const codeOfConduct = 'Code of Conduct';
         req.flush(codeOfConduct);
         expect(component.course.courseInformationSharingMessagingCodeOfConduct).toEqual(codeOfConduct);
+    });
+
+    it('renders its own title bar and names the required fields of an empty course', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+
+        expect(fixture.nativeElement.querySelector('#course-create-title-bar #jhi-course-heading-create')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('#course-create-body #course-form-footer')).not.toBeNull();
+        expect(component.issues().map((issue) => issue.targetId)).toEqual(['field_title', 'field_shortName', 'semester', 'field_startDate_input', 'field_endDate_input']);
+    });
+
+    it('offers and accepts the time zones of the server, including ones the browser lacks', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+        const timeZone = component.courseForm.get('timeZone')!;
+        // The browser list of this test only knows Europe/Berlin.
+        timeZone.setValue('UTC');
+        expect(timeZone.hasError('invalidTimeZone')).toBe(true);
+
+        httpMock.expectOne('api/course/time-zones').flush(['Europe/Berlin', 'Europe/Kiev', 'Europe/Kyiv', 'UTC']);
+
+        expect(timeZone.valid).toBe(true);
+        component.onTimeZoneSearch({ query: 'kyi' });
+        expect(component.filteredTimeZones()).toEqual(['Europe/Kyiv']);
+        timeZone.setValue('europe/berlin');
+        expect(timeZone.hasError('invalidTimeZone')).toBe(true);
+    });
+
+    it('refreshes the suggestions of a search made before the server list arrived', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+        component.onTimeZoneSearch({ query: 'kyi' });
+        expect(component.filteredTimeZones()).toEqual([]);
+
+        httpMock.expectOne('api/course/time-zones').flush(['Europe/Berlin', 'Europe/Kyiv']);
+
+        expect(component.filteredTimeZones()).toEqual(['Europe/Kyiv']);
+    });
+
+    it('keeps the browser time zones when the server list cannot be loaded', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+
+        httpMock.expectOne('api/course/time-zones').flush('Server error', { status: 500, statusText: 'Internal Server Error' });
+
+        const timeZone = component.courseForm.get('timeZone')!;
+        timeZone.setValue(validTimeZone);
+        expect(timeZone.valid).toBe(true);
+    });
+
+    it('lets a new course leave the time zone empty', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+
+        component.courseForm.get('timeZone')!.setValue('');
+
+        expect(component.courseForm.get('timeZone')!.valid).toBe(true);
+        expect(fixture.nativeElement.querySelector('#timeZone').getAttribute('aria-required')).toBeNull();
+    });
+
+    it('does not show errors before the user touched a field or tried to save', () => {
+        fixture.detectChanges();
+        httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+
+        expect(component.showError('title')).toBe(false);
+        expect(component.showDateMissing('startDate')).toBe(false);
+        expect(fixture.nativeElement.querySelector('#field_startDate_input-error')).toBeNull();
+    });
+
+    describe('date pickers', () => {
+        const pickerInput = (name: string) => fixture.nativeElement.querySelector(`tumaet-ui-date-picker#field_${name} input#field_${name}_input`) as HTMLInputElement;
+        const type = (name: string, text: string) => {
+            const input = pickerInput(name);
+            input.value = text;
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        };
+        const render = () => {
+            fixture.detectChanges();
+            httpMock.expectOne((request) => request.url.endsWith('templates/code-of-conduct')).flush('');
+            fixture.detectChanges();
+        };
+
+        it('keeps the ids of the course date fields and labels the inputs by their form field', () => {
+            render();
+
+            for (const name of ['startDate', 'endDate']) {
+                const input = pickerInput(name);
+                expect(input).not.toBeNull();
+                expect(input.getAttribute('aria-required')).toBe('true');
+                const label = fixture.nativeElement.querySelector(`label[for="field_${name}_input"]`) as HTMLElement;
+                expect(label).not.toBeNull();
+                expect(input.getAttribute('aria-labelledby')).toBe(label.id);
+            }
+        });
+
+        it('writes a typed start and end date to the form and the course', () => {
+            render();
+
+            type('startDate', '01.04.2030 08:00');
+            type('endDate', '30.09.2030 18:30');
+
+            expect(component.courseForm.get('startDate')!.value?.format('YYYY-MM-DD HH:mm')).toBe('2030-04-01 08:00');
+            expect(component.course.startDate?.format('YYYY-MM-DD HH:mm')).toBe('2030-04-01 08:00');
+            expect(component.course.endDate?.format('YYYY-MM-DD HH:mm')).toBe('2030-09-30 18:30');
+            expect(component.isValidDate).toBe(true);
+        });
+
+        it('shows a date set on the form control', () => {
+            render();
+
+            component.courseForm.get('startDate')!.setValue(dayjs('2030-04-01T08:00'));
+            fixture.detectChanges();
+
+            expect(pickerInput('startDate').value).toBe('01.04.2030 08:00');
+        });
+
+        it('reports a missing required date after the field was left and describes the input with the message', () => {
+            render();
+            const input = pickerInput('startDate');
+            expect(input.getAttribute('aria-invalid')).toBe('false');
+
+            input.dispatchEvent(new Event('blur'));
+            fixture.detectChanges();
+
+            expect(component.showDateMissing('startDate')).toBe(true);
+            expect(input.getAttribute('aria-invalid')).toBe('true');
+            const error = fixture.nativeElement.querySelector('tumaet-ui-form-field [role="alert"]:not([hidden])') as HTMLElement;
+            expect(error.textContent).toContain('artemisApp.course.form.startDate.required');
+            expect(input.getAttribute('aria-describedby')).toBe(error.id);
+        });
+
+        it('leaves text that is not a date to the picker, keeps the control invalid and blocks saving', () => {
+            render();
+
+            type('startDate', '13.06.');
+
+            expect(component.courseForm.get('startDate')!.hasError('invalidDate')).toBe(true);
+            expect(component.courseForm.invalid).toBe(true);
+            expect(fixture.nativeElement.querySelector('#field_startDate_input-error')).not.toBeNull();
+            expect(pickerInput('startDate').getAttribute('aria-invalid')).toBe('true');
+        });
+
+        it('marks both pickers invalid when the end date is not after the start date', () => {
+            render();
+
+            type('startDate', '30.09.2030 18:00');
+            type('endDate', '01.04.2030 08:00');
+
+            expect(component.isDateOrderInvalid).toBe(true);
+            expect(pickerInput('startDate').getAttribute('aria-invalid')).toBe('true');
+            expect(pickerInput('endDate').getAttribute('aria-invalid')).toBe('true');
+
+            type('endDate', '30.10.2030 18:00');
+
+            expect(component.isDateOrderInvalid).toBe(false);
+            expect(pickerInput('startDate').getAttribute('aria-invalid')).toBe('false');
+            expect(pickerInput('endDate').getAttribute('aria-invalid')).toBe('false');
+        });
+
+        it('renders the enrollment and unenrollment pickers and marks them invalid outside the course period', () => {
+            render();
+            type('startDate', '01.04.2030 08:00');
+            type('endDate', '30.09.2030 18:00');
+
+            component.changeEnrollmentEnabled();
+            component.changeUnenrollmentEnabled();
+            fixture.detectChanges();
+
+            expect(pickerInput('enrollmentStartDate').value).toBe('01.04.2030 08:00');
+            expect(pickerInput('enrollmentEndDate').value).toBe('30.09.2030 17:59');
+            expect(pickerInput('unenrollmentEndDate').value).toBe('30.09.2030 18:00');
+            expect(pickerInput('enrollmentStartDate').getAttribute('aria-invalid')).toBe('false');
+
+            type('enrollmentEndDate', '01.10.2030 08:00');
+
+            expect(component.isValidEnrollmentPeriod).toBe(false);
+            expect(pickerInput('enrollmentStartDate').getAttribute('aria-invalid')).toBe('true');
+            expect(pickerInput('enrollmentEndDate').getAttribute('aria-invalid')).toBe('true');
+            expect(pickerInput('unenrollmentEndDate').getAttribute('aria-invalid')).toBe('true');
+        });
     });
 });
 
@@ -1672,7 +2284,7 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         return course;
     }
 
-    async function setupWithCourse(course: Course): Promise<void> {
+    async function setupWithCourse(course: Course, activeModuleFeatures: string[] = [MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM]): Promise<void> {
         const route = { data: of({ course }) } as any as ActivatedRoute;
         (Intl as any).supportedValuesOf = () => [validTimeZone];
 
@@ -1700,7 +2312,7 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         profileService = TestBed.inject(ProfileService);
         organizationService = TestBed.inject(OrganizationManagementService);
 
-        const profileInfo = { activeProfiles: [], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
+        const profileInfo = { activeProfiles: [], activeModuleFeatures } as unknown as ProfileInfo;
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
         vi.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([]));
 
@@ -1822,12 +2434,32 @@ describe('Course Management Update Component Atlas Auto-Orchestration', () => {
         expect(dto.maxDailyOrchestrationOverride).toBeUndefined();
     });
 
-    it('should load the global orchestration defaults to back the override placeholders when Atlas is active', async () => {
+    it('should load the global orchestration defaults to back the override placeholders when auto orchestration is available', async () => {
         vi.spyOn(CompetencyOrchestrationApiService.prototype, 'getDefaults').mockResolvedValue({ debounceWindowSeconds: 1800, maxDailyOrchestrations: 10 });
         await setupWithCourse(buildCourse(false));
         await Promise.resolve();
 
         expect(comp.debounceWindowSecondsDefault()).toBe(1800);
         expect(comp.maxDailyOrchestrationDefault()).toBe(10);
+    });
+
+    it('should not ask for the orchestration defaults when Atlas is active but AtlasLLM is not', async () => {
+        // CompetencyOrchestrationResource is not registered without AtlasLLM, so the request would fail on every
+        // course-edit load and be swallowed by the best-effort catch, leaving no trace of why the page is slow.
+        const getDefaultsSpy = vi.spyOn(CompetencyOrchestrationApiService.prototype, 'getDefaults');
+        await setupWithCourse(buildCourse(false), [MODULE_FEATURE_ATLAS]);
+        await Promise.resolve();
+
+        expect(getDefaultsSpy).not.toHaveBeenCalled();
+        expect(comp.debounceWindowSecondsDefault()).toBeUndefined();
+    });
+
+    it('should hide the auto orchestration settings when Atlas is active but AtlasLLM is not', async () => {
+        await setupWithCourse(buildCourse(false), [MODULE_FEATURE_ATLAS]);
+        await Promise.resolve();
+
+        // Administrators must not be offered settings for a pipeline this instance cannot run.
+        expect(comp.atlasLLMEnabled()).toBe(false);
+        expect(fixture.nativeElement.querySelector('#field_autoOrchestratorEnabled')).toBeNull();
     });
 });

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -11,7 +11,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 export type EntityResponseType = HttpResponse<Result>;
 type ModelingAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string };
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ModelingAssessmentService {
     private http = inject(HttpClient);
 

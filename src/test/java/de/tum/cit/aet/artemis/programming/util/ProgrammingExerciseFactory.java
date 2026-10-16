@@ -165,26 +165,9 @@ public class ProgrammingExerciseFactory {
     private static void populateUnreleasedProgrammingExercise(ProgrammingExercise programmingExercise, ProgrammingLanguage programmingLanguage) {
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setAllowOfflineIde(true);
-        if (programmingExercise.getBuildConfig() == null) {
-            programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
-        }
         programmingExercise.setStaticCodeAnalysisEnabled(false);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setProgrammingLanguage(programmingLanguage);
-        programmingExercise.getBuildConfig().setBuildScript(null);
-        programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
-                {
-                    "phases": [
-                        {
-                            "name": "gradle",
-                            "script": "chmod +x ./gradlew\\n./gradlew clean test",
-                            "condition": "ALWAYS",
-                            "forceRun": false,
-                            "resultPaths": ["**/test-results/test/*.xml"]
-                        }
-                    ]
-                }
-                """);
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         }
@@ -199,7 +182,62 @@ public class ProgrammingExerciseFactory {
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri(), programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUri(localVcRepoUri.toString());
-        programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
+    }
+
+    /**
+     * Builds the build configuration a generated exercise is stored with. The exercise does not carry it: the
+     * configuration is a row of its own that names the exercise, so it is written once that exercise exists.
+     *
+     * @return the build configuration, running the tests through Gradle
+     */
+    public static ProgrammingExerciseBuildConfig generateGradleBuildConfig() {
+        return generateBuildConfig("""
+                {
+                    "phases": [
+                        {
+                            "name": "gradle",
+                            "script": "chmod +x ./gradlew\\n./gradlew clean test",
+                            "condition": "ALWAYS",
+                            "forceRun": false,
+                            "resultPaths": ["**/test-results/test/*.xml"]
+                        }
+                    ]
+                }
+                """);
+    }
+
+    /**
+     * Builds the build configuration a generated exercise is stored with, running one trivial phase.
+     *
+     * @return the build configuration
+     */
+    public static ProgrammingExerciseBuildConfig generateDefaultBuildConfig() {
+        return generateBuildConfig("""
+                {
+                    "phases": [
+                        {
+                            "name": "test",
+                            "script": "echo hi",
+                            "forceRun": false,
+                            "resultPaths": []
+                        }
+                    ]
+                }
+                """);
+    }
+
+    /**
+     * Builds a build configuration on the default branch with the given build plan.
+     *
+     * @param buildPlanConfiguration the build plan the configuration runs
+     * @return the build configuration
+     */
+    public static ProgrammingExerciseBuildConfig generateBuildConfig(String buildPlanConfiguration) {
+        var buildConfig = new ProgrammingExerciseBuildConfig();
+        buildConfig.setBuildScript(null);
+        buildConfig.setBuildPlanConfiguration(buildPlanConfiguration);
+        buildConfig.setBranch(DEFAULT_BRANCH);
+        return buildConfig;
     }
 
     /**
@@ -229,19 +267,6 @@ public class ProgrammingExerciseFactory {
      */
     public static ProgrammingExercise generateToBeImportedProgrammingExercise(String title, String shortName, ProgrammingExercise template, Course targetCourse) {
         ProgrammingExercise toBeImported = new ProgrammingExercise();
-        var buildConfig = new ProgrammingExerciseBuildConfig();
-        buildConfig.setBuildPlanConfiguration("""
-                {
-                    "phases": [
-                        {
-                            "name": "import_exercise",
-                            "script": "echo hello",
-                            "forceRun": false,
-                            "resultPaths": ["somepath"]
-                        }
-                    ]
-                }
-                """);
         toBeImported.setCourse(targetCourse);
         toBeImported.setTitle(title);
         toBeImported.setShortName(shortName);
@@ -253,7 +278,6 @@ public class ProgrammingExerciseFactory {
         toBeImported.setNumberOfMoreFeedbackRequests(template.getNumberOfMoreFeedbackRequests());
         toBeImported.setSolutionParticipation(null);
         toBeImported.setTemplateParticipation(null);
-        buildConfig.setSequentialTestRuns(template.getBuildConfig().hasSequentialTestRuns());
         toBeImported.setProblemStatement(template.getProblemStatement());
         toBeImported.setMaxPoints(template.getMaxPoints());
         toBeImported.setBonusPoints(template.getBonusPoints());
@@ -277,12 +301,10 @@ public class ProgrammingExerciseFactory {
         toBeImported.setDueDate(template.getDueDate());
         toBeImported.setReleaseDate(template.getReleaseDate());
         toBeImported.setExampleSolutionPublicationDate(null);
-        buildConfig.setSequentialTestRuns(template.getBuildConfig().hasSequentialTestRuns());
         toBeImported.setBuildAndTestStudentSubmissionsAfterDueDate(template.getBuildAndTestStudentSubmissionsAfterDueDate());
         toBeImported.generateAndSetProjectKey();
         toBeImported.setPlagiarismDetectionConfig(template.getPlagiarismDetectionConfig());
         toBeImported.setGradingCriteria(template.getGradingCriteria());
-        toBeImported.setBuildConfig(buildConfig);
         return toBeImported;
     }
 
@@ -522,21 +544,6 @@ public class ProgrammingExerciseFactory {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExercise.setGradingInstructions("Lorem Ipsum");
         programmingExercise.setTitle(title);
-        if (programmingExercise.getBuildConfig() == null) {
-            programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
-            programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
-                    {
-                        "phases": [
-                            {
-                                "name": "test",
-                                "script": "echo hi",
-                                "forceRun": false,
-                                "resultPaths": []
-                            }
-                        ]
-                    }
-                    """);
-        }
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
             programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
         }
@@ -566,6 +573,5 @@ public class ProgrammingExerciseFactory {
         var localVcRepoUri = new LocalVCRepositoryUri(localVCBaseUri(), programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(RepositoryType.TESTS));
         programmingExercise.setTestRepositoryUri(localVcRepoUri.toString());
         programmingExercise.setShowTestNamesToStudents(false);
-        programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
     }
 }

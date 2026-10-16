@@ -4,15 +4,20 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TumUiButtonComponent, TumUiButtonDirective, TumUiListComponent, TumUiListItemDirective, TumUiTableDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiButtonDirective,
+    TumAetUiDatePickerComponent,
+    TumAetUiListComponent,
+    TumAetUiListItemDirective,
+    TumAetUiTableDirective,
+} from '@tumaet/ui-angular';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons/copy-to-clipboard-button/copy-to-clipboard-button.component';
 
 @Component({
@@ -23,33 +28,37 @@ import { CopyToClipboardButtonComponent } from 'app/shared-ui/components/buttons
         TranslateDirective,
         FaIconComponent,
         DeleteButtonDirective,
-        TumUiButtonComponent,
-        TumUiButtonDirective,
-        TumUiListComponent,
-        TumUiListItemDirective,
-        TumUiTableDirective,
-        FormDateTimePickerComponent,
-        FormsModule,
+        TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiListComponent,
+        TumAetUiListItemDirective,
+        TumAetUiTableDirective,
+        TumAetUiDatePickerComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         CopyToClipboardButtonComponent,
     ],
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+
     protected readonly faPlus = faPlus;
     protected readonly faSave = faSave;
     protected readonly faTrash = faTrash;
     protected readonly faBan = faBan;
 
-    private accountService = inject(AccountService);
-    private alertService = inject(AlertService);
-
     // `equal: () => false` so re-setting the same reference emits after the token fields are assigned in place.
     readonly currentUser = signal<User | undefined>(undefined, { equal: () => false });
 
     private authStateSubscription!: Subscription; // assigned in ngOnInit(), before ngOnDestroy() unsubscribes
-    expiryDate?: dayjs.Dayjs;
+    readonly expiryDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly validExpiryDate = signal(false);
+    /** The calendar offers the days from today up to one year ahead; the exact instant is checked in {@link validateDate}. */
+    protected readonly earliestExpiryDay = dayjs();
+    protected readonly latestExpiryDay = dayjs().add(1, 'year');
+    /** The picker keeps its last valid date while the typed text is not a date, so the text validity is tracked separately. */
+    private expiryTextValid = true;
     readonly edit = signal(false);
 
     private dialogErrorSource = new Subject<string>();
@@ -95,11 +104,12 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     }
 
     sendTokenCreationRequest() {
-        if (!this.expiryDate || this.expiryDate.isBefore(dayjs()) || this.expiryDate.isAfter(dayjs().add(1, 'year'))) {
+        const expiryDate = this.expiryDate();
+        if (!expiryDate || expiryDate.isBefore(dayjs()) || expiryDate.isAfter(dayjs().add(1, 'year'))) {
             this.alertService.error('artemisApp.userSettings.vcsAccessTokensSettingsPage.addFailure');
             return;
         }
-        this.accountService.addNewVcsAccessToken(this.expiryDate.toISOString()).subscribe({
+        this.accountService.addNewVcsAccessToken(expiryDate.toISOString()).subscribe({
             next: (res) => {
                 const current = this.currentUser();
                 if (current) {
@@ -117,11 +127,22 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
         });
     }
 
+    onExpiryDateChange(date: dayjs.Dayjs | undefined) {
+        this.expiryDate.set(date);
+        this.validateDate();
+    }
+
+    onExpiryTextValidityChange(isValid: boolean) {
+        this.expiryTextValid = isValid;
+        this.validateDate();
+    }
+
     /**
-     * Validates if the expiry date is after current time
+     * Validates that the entered text is a date and that the expiry date is after the current time and within one year
      */
     validateDate() {
-        this.validExpiryDate.set(!!this.expiryDate?.isAfter(dayjs()) && !!this.expiryDate?.isBefore(dayjs().add(1, 'year')));
+        const expiryDate = this.expiryDate();
+        this.validExpiryDate.set(this.expiryTextValid && !!expiryDate?.isAfter(dayjs()) && !!expiryDate?.isBefore(dayjs().add(1, 'year')));
     }
 
     /**
@@ -129,7 +150,8 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
      */
     cancelTokenCreation() {
         this.edit.set(false);
-        this.expiryDate = undefined;
+        this.expiryDate.set(undefined);
+        this.expiryTextValid = true;
         this.validExpiryDate.set(false);
     }
 }

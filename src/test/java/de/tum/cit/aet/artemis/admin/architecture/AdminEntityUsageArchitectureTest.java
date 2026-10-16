@@ -15,10 +15,9 @@ class AdminEntityUsageArchitectureTest extends AbstractModuleEntityUsageArchitec
         return ARTEMIS_PACKAGE + ".admin";
     }
 
-    // TODO: Reduce this to 0 by returning DTOs instead of entities
     @Override
     protected int getExpectedEntityReturnViolations() {
-        return 5;
+        return 0;
     }
 
     @Override

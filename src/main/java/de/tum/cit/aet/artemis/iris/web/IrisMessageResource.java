@@ -3,10 +3,13 @@ package de.tum.cit.aet.artemis.iris.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.BadRequestException;
 
 import org.springframework.context.annotation.Conditional;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import tools.jackson.databind.JsonNode;
@@ -32,11 +36,15 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisJsonMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageOrigin;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisProactiveOutcome;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisMcqResponseDTO;
@@ -49,13 +57,14 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisProactiveEpisodeService;
 
 /**
  * REST controller for managing {@link IrisMessage}.
  */
 @Conditional(IrisEnabled.class)
 @Lazy
-@FeatureUsage("chat/messages")
+@FeatureUsage(UserFeature.IRIS_CHAT)
 @RestController
 @RequestMapping("api/iris/")
 public class IrisMessageResource {
@@ -76,8 +85,11 @@ public class IrisMessageResource {
 
     private final JsonMapper objectMapper;
 
+    private final IrisProactiveEpisodeService irisProactiveEpisodeService;
+
     public IrisMessageResource(IrisSessionRepository irisSessionRepository, IrisSessionService irisSessionService, IrisChatSessionService irisChatSessionService,
-            IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository, JsonMapper objectMapper) {
+            IrisMessageService irisMessageService, IrisMessageRepository irisMessageRepository, UserRepository userRepository, JsonMapper objectMapper,
+            IrisProactiveEpisodeService irisProactiveEpisodeService) {
         this.irisSessionRepository = irisSessionRepository;
         this.irisSessionService = irisSessionService;
         this.irisChatSessionService = irisChatSessionService;
@@ -85,6 +97,7 @@ public class IrisMessageResource {
         this.irisMessageRepository = irisMessageRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.irisProactiveEpisodeService = irisProactiveEpisodeService;
     }
 
     /**
@@ -102,7 +115,7 @@ public class IrisMessageResource {
         irisSessionService.checkIsIrisActivated(session);
         irisSessionService.checkHasAccessToIrisSession(session, null);
         var messages = irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(sessionId);
-        return ResponseEntity.ok(messages.stream().map(IrisMessageResponseDTO::of).toList());
+        return ResponseEntity.ok(IrisMessageResponseDTO.ofDisplayed(messages));
     }
 
     /**
@@ -110,13 +123,15 @@ public class IrisMessageResource {
      *
      * @param sessionId  of the session
      * @param requestDTO containing message content, optional uncommitted files and optional pending context
+     * @param request    the HTTP request; its {@code User-Agent} is used to identify the originating Artemis app
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the created message, or with status
      *         {@code 404 (Not Found)} if the session could not be found.
      */
     @PostMapping("sessions/{sessionId}/messages")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @Valid @RequestBody IrisMessageRequestDTO requestDTO) throws URISyntaxException {
+    public ResponseEntity<IrisMessageResponseDTO> createMessage(@PathVariable Long sessionId, @Valid @RequestBody IrisMessageRequestDTO requestDTO, HttpServletRequest request)
+            throws URISyntaxException {
         var session = irisSessionRepository.findByIdElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
@@ -132,18 +147,19 @@ public class IrisMessageResource {
         }
 
         IrisMessage message = new IrisMessage();
-        var contentList = requestDTO.content() != null ? requestDTO.content() : List.<IrisMessageContentDTO>of();
-        List<IrisMessageContent> contentEntities = contentList.stream().map(IrisMessageContentDTO::toEntity).toList();
+        List<IrisMessageContent> contentEntities = requestDTO.content().stream().map(IrisMessageContentDTO::toEntity).toList();
         message.setContent(contentEntities);
         message.setMessageDifferentiator(requestDTO.messageDifferentiator());
+        var clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
+        message.setSenderOrigin(clientEnvironment != null ? clientEnvironment.artemisApp() : null);
 
         IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.USER);
         savedMessage.setMessageDifferentiator(message.getMessageDifferentiator());
         irisSessionService.sendOverWebsocket(savedMessage, session);
-        var uncommittedFiles = requestDTO.uncommittedFiles() != null ? requestDTO.uncommittedFiles() : java.util.Map.<String, String>of();
+        var uncommittedFiles = requestDTO.uncommittedFiles();
         // Extract context information from request (not persisted, only passed to Pyris)
         List<IrisMessageContextDTO> context = requestDTO.context() != null ? requestDTO.context() : List.of();
-        irisSessionService.requestMessageFromIris(session, uncommittedFiles, context);
+        irisSessionService.requestMessageFromIris(session, uncommittedFiles, context, requestDTO.clientId());
 
         String uriString = "/api/iris/sessions/" + session.getId() + "/messages/" + savedMessage.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisMessageResponseDTO.of(savedMessage));
@@ -156,6 +172,7 @@ public class IrisMessageResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body true, or with status
      * @throws URISyntaxException if the URI syntax is incorrect
      */
+    @FeatureUsage(UserFeature.IRIS_TUTOR_SUGGESTIONS)
     @PostMapping("sessions/{sessionId}/tutor-suggestion")
     @EnforceAtLeastTutor
     public ResponseEntity<Void> sendTutorSuggestionMessage(@PathVariable Long sessionId) throws URISyntaxException {
@@ -174,13 +191,16 @@ public class IrisMessageResource {
      *
      * @param sessionId of the session
      * @param messageId of the message
+     * @param clientId  optional id of the browser tab initiating the resend
+     * @param request   the HTTP request; its {@code User-Agent} is used to identify the originating Artemis app
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the existing message, or with
      *         status {@code 404 (Not Found)} if the session or message could not be found.
      */
     @PostMapping("sessions/{sessionId}/messages/{messageId}/resend")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<IrisMessageResponseDTO> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId) {
+    public ResponseEntity<IrisMessageResponseDTO> resendMessage(@PathVariable Long sessionId, @PathVariable Long messageId,
+            @RequestParam(required = false) @Size(max = 64) String clientId, HttpServletRequest request) {
         var session = irisSessionRepository.findByIdWithMessagesElseThrow(sessionId);
         irisSessionService.checkIsIrisActivated(session);
         var user = userRepository.getUser();
@@ -188,13 +208,19 @@ public class IrisMessageResource {
         irisSessionService.checkRateLimit(session, user);
 
         var message = irisMessageRepository.findByIdElseThrow(messageId);
-        if (session.getMessages().lastIndexOf(message) != session.getMessages().size() - 1) {
+        // A stored conversation summary can follow the user message whose run failed. Clients do not show it, so it does not count as the last message.
+        var displayedMessages = session.getMessages().stream().filter(sessionMessage -> sessionMessage.getSender() != IrisMessageSender.SUMMARY).toList();
+        if (displayedMessages.isEmpty() || !displayedMessages.getLast().equals(message)) {
             throw new BadRequestException("Only the last message can be resent");
         }
         if (message.getSender() != IrisMessageSender.USER) {
             throw new BadRequestException("Only user messages can be resent");
         }
-        irisSessionService.requestMessageFromIris(session);
+        // Update the originating Artemis app of the resent message (from the User-Agent) so the Iris response reflects the client that triggered it.
+        var clientEnvironment = HttpRequestUtils.getClientEnvironment(request);
+        message.setSenderOrigin(clientEnvironment != null ? clientEnvironment.artemisApp() : null);
+        irisMessageRepository.save(message);
+        irisSessionService.requestMessageFromIris(session, Map.of(), List.of(), clientId);
 
         return ResponseEntity.ok(IrisMessageResponseDTO.of(message));
     }
@@ -228,6 +254,67 @@ public class IrisMessageResource {
         message.setHelpful(helpful);
         var savedMessage = irisMessageRepository.save(message);
         return ResponseEntity.ok(IrisMessageResponseDTO.of(savedMessage));
+    }
+
+    /**
+     * PUT sessions/{sessionId}/messages/{messageId}/proactive-outcome : record how the student reacted to a
+     * proactive struggle hint. Mirrors {@link #rateMessage}, but only proactive Iris messages
+     * (LLM sender AND origin PROACTIVE_STRUGGLE) accept an outcome.
+     *
+     * @param sessionId of the session
+     * @param messageId of the message
+     * @param outcome   Request body: the durable outcome (DISMISSED, RECOVERED, ABANDONED, or INTERRUPTED).
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and the updated message.
+     */
+    @PutMapping(value = "sessions/{sessionId}/messages/{messageId}/proactive-outcome")
+    @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
+    public ResponseEntity<IrisMessageResponseDTO> setProactiveOutcome(@PathVariable Long sessionId, @PathVariable Long messageId, @RequestBody IrisProactiveOutcome outcome) {
+        var message = irisMessageRepository.findByIdElseThrow(messageId);
+        var session = message.getSession();
+        if (!Objects.equals(session.getId(), sessionId)) {
+            throw new ConflictException("The message does not belong to the session", "IrisMessage", "irisMessageSessionConflict");
+        }
+        irisSessionService.checkIsIrisActivated(session);
+        // Recording how a student reacted to an already-delivered hint is never gated on a live LLM opt-in, the
+        // same way the episode-scoped endpoint is not: the two record the same act and must not disagree.
+        irisSessionService.checkHasAccessToIrisSessionWithoutLlmOptIn(session, null);
+        if (outcome == null) {
+            // The body is the durable outcome; a null must never clear a prior outcome.
+            throw new BadRequestException("A proactive outcome is required");
+        }
+        if (message.getSender() != IrisMessageSender.LLM || message.getOrigin() != IrisMessageOrigin.PROACTIVE_STRUGGLE) {
+            throw new BadRequestException("You can only set a proactive outcome on a proactive Iris message");
+        }
+        // First-terminal-wins, exactly as the episode-scoped endpoint enforces it: a delayed or retried request must
+        // not replace an outcome that already stands, or DISMISSED could silently become RECOVERED and the history
+        // sent to Pyris would misreport what the student did. The episode-wide guard runs first where the row carries
+        // an episode, so a second row cannot establish a competing outcome for the same episode.
+        var episodeId = message.getProactiveEpisodeId();
+        // The episode's exercise comes from the row, not from its session: a session's mode and entityId move with
+        // every context switch, so the session cannot say which exercise a historical proactive row belongs to.
+        var proactiveExerciseId = message.getProactiveExerciseId();
+        boolean carriesEpisode = episodeId != null && !episodeId.isBlank();
+        if (carriesEpisode && proactiveExerciseId == null) {
+            // An episode row without its exercise binding cannot be resolved to an episode: the episode-wide queries
+            // filter on the binding, so they see neither this row nor its siblings. Falling through to the row-scoped
+            // write would let two rows of the SAME episode end up with different outcomes, and the history replayed to
+            // Pyris would then contradict itself. Such rows exist only on databases that ran this feature branch
+            // before the binding was added, so refusing outright is honest; guessing the exercise from the session
+            // would bind the row to wherever the chat happens to point now.
+            throw new BadRequestException("This proactive message predates the episode's exercise binding and cannot record an outcome");
+        }
+        if (carriesEpisode) {
+            long userId = session.getUserId();
+            irisProactiveEpisodeService.writeEpisodeOutcome(episodeId, outcome, userId, proactiveExerciseId);
+            // The episode writes to its stable smallest-id row, which is not necessarily the row addressed here.
+            // Reloading messageId would then answer with a null proactiveOutcome even though one was recorded, so
+            // return the row that actually carries the episode's outcome.
+            var canonical = irisMessageRepository.findEpisodeRowsForUserOrderByIdAsc(episodeId, userId, proactiveExerciseId).stream().findFirst();
+            return ResponseEntity.ok(IrisMessageResponseDTO.of(canonical.orElse(message)));
+        }
+        irisMessageRepository.setProactiveOutcomeIfNull(message.getId(), outcome);
+        return ResponseEntity.ok(IrisMessageResponseDTO.of(irisMessageRepository.findByIdElseThrow(messageId)));
     }
 
     /**

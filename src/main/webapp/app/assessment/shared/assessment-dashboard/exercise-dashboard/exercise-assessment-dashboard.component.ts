@@ -49,10 +49,21 @@ import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
-import { TumUiButtonComponent, TumUiDoughnutChartComponent, TumUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiButtonComponent, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFileImport, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import {
+    faCheckCircle,
+    faCircleInfo,
+    faExclamationTriangle,
+    faFileImport,
+    faFlag,
+    faFolderOpen,
+    faListAlt,
+    faQuestionCircle,
+    faSort,
+    faSpinner,
+} from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
@@ -68,7 +79,6 @@ import { Message } from 'primeng/message';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { LanguageTableCellComponent } from './language-table-cell/language-table-cell.component';
-import { NgStyle } from '@angular/common';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { TutorLeaderboardComponent } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.component';
@@ -100,9 +110,9 @@ export interface ExampleSubmissionQueryParams {
         HeaderExercisePageWithDetailsComponent,
         TutorParticipationGraphComponent,
         SecondCorrectionEnableButtonComponent,
-        TumUiButtonComponent,
+        TumAetUiDoughnutChartComponent,
+        TumAetUiButtonComponent,
         AssessmentUploadDialogComponent,
-        TumUiDoughnutChartComponent,
         SidePanelComponent,
         TranslateDirective,
         RouterLink,
@@ -118,7 +128,6 @@ export interface ExampleSubmissionQueryParams {
         SortDirective,
         SortByDirective,
         LanguageTableCellComponent,
-        NgStyle,
         ResultComponent,
         AssessmentWarningComponent,
         CollapsableAssessmentInstructionsComponent,
@@ -170,6 +179,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly totalNumberOfAssessments = signal(0);
     readonly numberOfAutomaticAssistedAssessments = signal(new DueDateStat());
     readonly numberOfAssessmentsOfCorrectionRounds = signal<DueDateStat[]>([new DueDateStat()]);
+    readonly correctionRoundIndices = computed(() => {
+        const numberOfConfiguredRounds = this.isTestRun() ? 0 : (this.exam()?.numberOfCorrectionRoundsInExam ?? 0);
+        const numberOfRounds = Math.max(this.numberOfAssessmentsOfCorrectionRounds().length, numberOfConfiguredRounds);
+        return Array.from({ length: numberOfRounds }, (_, index) => index);
+    });
     readonly numberOfLockedAssessmentByOtherTutorsOfCorrectionRound = signal<DueDateStat[]>([new DueDateStat()]);
     readonly complaintsEnabled = signal(false);
     readonly feedbackRequestEnabled = signal(false);
@@ -242,7 +256,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     private readonly rawChartColors = signal<string[]>([]);
 
     readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.rawChartColors()));
-    readonly chartConfig = computed<TumUiDoughnutChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiDoughnutChartConfig>(() => ({
         arcWidth: 1,
         legend: { position: 'bottom' },
         tooltip: { label: (item) => `${((item.value * 100) / this.numberOfSubmissions().total).toFixed(2)}%` },
@@ -297,6 +311,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faListAlt = faListAlt;
+    faFlag = faFlag;
     faCircleInfo = faCircleInfo;
 
     /**

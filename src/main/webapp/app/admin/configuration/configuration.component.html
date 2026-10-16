@@ -6,7 +6,7 @@
             <input
                 id="configuration-filter"
                 type="text"
-                tumUiInput
+                tumAetUiInput
                 [ngModel]="beansFilter()"
                 (ngModelChange)="updateBeansFilter($event)"
                 data-testid="configuration-filter-input"
@@ -14,7 +14,7 @@
         </div>
         <h3 id="spring-configuration">Spring configuration</h3>
         <table
-            tumUiTable
+            tumAetUiTable
             size="small"
             [striped]="true"
             [sortField]="'prefix'"
@@ -25,7 +25,7 @@
         >
             <thead>
                 <tr>
-                    <th [tumUiSortableColumn]="'prefix'" scope="col" class="w-2/5"><span jhiTranslate="configuration.table.prefix"></span></th>
+                    <th [tumAetUiSortableColumn]="'prefix'" scope="col" class="w-2/5"><span jhiTranslate="configuration.table.prefix"></span></th>
                     <th scope="col" class="w-3/5"><span jhiTranslate="configuration.table.properties"></span></th>
                 </tr>
             </thead>
@@ -40,7 +40,7 @@
                                 <div class="flex items-start gap-2 py-1">
                                     <div class="w-2/5">{{ property.key }}</div>
                                     <div class="w-3/5 flex justify-end">
-                                        <tum-ui-tag severity="secondary" [value]="property.value | json" class="break" data-testid="bean-property-value" />
+                                        <tumaet-ui-tag severity="secondary" [value]="property.value | json" class="break" data-testid="bean-property-value" />
                                     </div>
                                 </div>
                             }
@@ -54,7 +54,7 @@
                 <h4 [id]="'property-source-' + i">
                     <span>{{ propertySource.name }}</span>
                 </h4>
-                <table tumUiTable size="small" [striped]="true" [attr.aria-describedby]="'property-source-' + i">
+                <table tumAetUiTable size="small" [striped]="true" [attr.aria-describedby]="'property-source-' + i">
                     <thead>
                         <tr>
                             <th scope="col" class="w-2/5">Property</th>
@@ -67,7 +67,7 @@
                                 <td class="break">{{ property.key }}</td>
                                 <td class="break">
                                     <div class="flex justify-end">
-                                        <tum-ui-tag severity="secondary" [value]="property.value.value" data-testid="property-source-value" />
+                                        <tumaet-ui-tag severity="secondary" [value]="property.value.value" data-testid="property-source-value" />
                                     </div>
                                 </td>
                             </tr>

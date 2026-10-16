@@ -51,9 +51,11 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -127,6 +129,9 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
     private PlagiarismSubmissionRepository plagiarismSubmissionRepository;
 
     @Autowired
+    private PlagiarismComparisonRepository plagiarismComparisonRepository;
+
+    @Autowired
     private ExamUtilService examUtilService;
 
     @Autowired
@@ -178,7 +183,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
                 TEST_PREFIX + "student1");
         attachConfig(heldCourse, now.minusDays(40), null);
         heldCourse.getCourseConfiguration().setDataRetentionHold(true);
-        courseRepository.save(heldCourse);
+        courseUtilService.saveWithConfigurations(heldCourse);
 
         // The count preview and the actual selection must agree (both derive from findCoursesDueForReset).
         List<Course> dueForReset = courseDataRetentionService.findCoursesDueForReset();
@@ -338,7 +343,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         configuration.setCourse(course);
         configuration.setGradeRelevant(false);
         course.setCourseConfiguration(configuration);
-        course = courseRepository.save(course);
+        course = courseUtilService.saveWithConfigurations(course);
         long courseId = course.getId();
         // so getInstructors() finds an eligible instructor: enrollment is a course role, not a group name
         userUtilService.enrollUserInCourse(userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), course, CourseRole.INSTRUCTOR);
@@ -420,9 +425,14 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         // Attach a plagiarism submission whose plagiarism_case_id FK is RESTRICT. The delete must null this FK (via the
         // per-submission modifying query) BEFORE removing the case; without that null-out the case delete would throw an
         // FK violation. This makes the test fail if that null-out loop is ever removed.
+        PlagiarismComparison oldComparison = new PlagiarismComparison();
+        oldComparison.setPlagiarismResult(textExerciseUtilService.createPlagiarismResultForExercise(oldExercise));
+        oldComparison = plagiarismComparisonRepository.save(oldComparison);
         PlagiarismSubmission oldSubmission = new PlagiarismSubmission();
         oldSubmission.setStudentLogin(student.getLogin());
         oldSubmission.setSubmissionId(123L);
+        // A plagiarism submission belongs to the comparison it came out of; the case is the secondary link this test is about.
+        oldComparison.setSubmissionA(oldSubmission);
         oldSubmission.setPlagiarismCase(oldCasesBefore.getFirst());
         long oldSubmissionId = plagiarismSubmissionRepository.save(oldSubmission).getId();
 
@@ -505,7 +515,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
             configuration.setResetWarningSentDate(warnedDate);
             course.setCourseConfiguration(configuration);
         }
-        return courseRepository.save(course);
+        return courseUtilService.saveWithConfigurations(course);
     }
 
     /**
@@ -525,7 +535,7 @@ class DataPrivacyCleanupTest extends AbstractSpringIntegrationIndependentTest {
         configuration.setStudentDataResetDate(resetDate);
         course.setCourseConfiguration(configuration);
         course.setEndDate(endDate);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
     }
 
     private User notEnrolledUser(String login, Instant lastLoginDate) {

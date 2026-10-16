@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localci.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.programming.web.ProgrammingWebsocketTopics.TEST_CASES;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,8 +70,8 @@ public class ProgrammingExerciseFeedbackCreationService {
 
     private static final String PYTHON_EXCEPTION_LINE_PREFIX = "E       ";
 
-    private static final Pattern JVM_RESULT_MESSAGE_MATCHER = prepareJVMResultMessageMatcher(
-            List.of("java.lang.AssertionError", "org.opentest4j.AssertionFailedError", "de.tum.in.test.api.util.UnexpectedExceptionError"));
+    private static final Pattern JVM_RESULT_MESSAGE_MATCHER = prepareJVMResultMessageMatcher(List.of("java.lang.AssertionError", "org.opentest4j.AssertionFailedError",
+            "de.tum.in.test.api.util.UnexpectedExceptionError", "de.tum.cit.ase.ares.api.util.UnexpectedExceptionError"));
 
     private static final Predicate<String> IS_NOT_STACK_TRACE_LINE = line -> !line.startsWith("\tat ");
 
@@ -335,7 +336,7 @@ public class ProgrammingExerciseFeedbackCreationService {
             // Notify the client about the updated testCases
             Set<ProgrammingExerciseTestCase> testCases = testCaseRepository.findByExerciseId(exercise.getId());
             Set<ProgrammingExerciseTestCaseResponseDTO> testCaseDTOs = testCases.stream().map(ProgrammingExerciseTestCaseResponseDTO::of).collect(Collectors.toSet());
-            websocketMessagingService.sendMessage("/topic/programming-exercises/" + exercise.getId() + "/test-cases", testCaseDTOs);
+            websocketMessagingService.sendMessage(TEST_CASES.at(exercise.getId()), testCaseDTOs);
         }
     }
 

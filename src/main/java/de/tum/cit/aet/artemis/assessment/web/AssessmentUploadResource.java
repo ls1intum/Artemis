@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -37,7 +38,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Lazy
 @RestController
 @RequestMapping("api/assessment/")
-@FeatureUsage("grading/assessment-upload")
+@FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
 public class AssessmentUploadResource {
 
     private static final Logger log = LoggerFactory.getLogger(AssessmentUploadResource.class);

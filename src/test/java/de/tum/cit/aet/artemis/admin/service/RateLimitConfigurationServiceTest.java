@@ -105,6 +105,33 @@ class RateLimitConfigurationServiceTest {
     }
 
     @Test
+    void testGetEffectiveRpm_ContentSearch_UsesTheCustomValueOrTheDefault() {
+        when(properties.getContentSearchRequestsPerMinute()).thenReturn(40);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.CONTENT_SEARCH)).isEqualTo(40);
+
+        when(properties.getContentSearchRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.CONTENT_SEARCH)).isEqualTo(RateLimitType.CONTENT_SEARCH.getDefaultRpm());
+    }
+
+    @Test
+    void testGetEffectiveRpm_StruggleIntervention_WithCustomValue_ShouldReturnCustomValue() {
+        when(properties.getStruggleInterventionRequestsPerMinute()).thenReturn(50);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.STRUGGLE_INTERVENTION);
+
+        assertThat(rpm).isEqualTo(50);
+    }
+
+    @Test
+    void testGetEffectiveRpm_StruggleIntervention_WithNullValue_ShouldReturnDefault() {
+        when(properties.getStruggleInterventionRequestsPerMinute()).thenReturn(null);
+
+        int rpm = configurationService.getEffectiveRpm(RateLimitType.STRUGGLE_INTERVENTION);
+
+        assertThat(rpm).isEqualTo(RateLimitType.STRUGGLE_INTERVENTION.getDefaultRpm()); // 300
+    }
+
+    @Test
     void testGetEffectiveRpm_ProblemStatementRendering_WithCustomValue_ShouldReturnCustomValue() {
         when(properties.getProblemStatementRenderingRequestsPerMinute()).thenReturn(42);
 

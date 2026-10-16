@@ -21,6 +21,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -44,8 +45,10 @@ import de.tum.cit.aet.artemis.assessment.dto.ResultDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -94,6 +97,9 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
     @Autowired
     private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private ResultService resultService;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -437,7 +443,11 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 // The build and test date has not passed, due date has not passed, normal student submission => rated result.
                 Arguments.of(true, dateInFuture, SubmissionType.MANUAL, dateInFuture, now),
                 // The build and test date has not passed, due date has passed, normal student submission => unrated result.
-                Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast, now));
+                Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast, now),
+                // The submission has no submission date (empty participation), the due date has passed => rated result, a missing submission cannot be late.
+                Arguments.of(true, null, SubmissionType.MANUAL, dateInPast, null),
+                // The submission has no submission date (empty participation) and no due date is set => rated result.
+                Arguments.of(true, null, SubmissionType.MANUAL, null, null));
     }
 
     @Test
@@ -578,32 +588,26 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 if (result.getScore() == 10.0) {
                     final Feedback feedback1 = new Feedback().credits(2.0);
                     feedback1.setGradingInstruction(instruction1a);
-                    feedbackRepository.save(feedback1);
                     participationUtilService.addFeedbackToResult(feedback1, result);
 
                     final Feedback feedback2 = new Feedback().credits(3.0);
                     feedback2.setGradingInstruction(instruction1b);
-                    feedbackRepository.save(feedback2);
                     participationUtilService.addFeedbackToResult(feedback2, result);
 
                     // one feedback without grading instruction should be included in total score calculation
                     final Feedback feedback3 = new Feedback().credits(1.111);
-                    feedbackRepository.save(feedback3);
                     participationUtilService.addFeedbackToResult(feedback3, result);
                 }
                 else {
                     final Feedback feedback1 = new Feedback().credits(1.0);
                     feedback1.setGradingInstruction(instruction1a);
-                    feedbackRepository.save(feedback1);
                     participationUtilService.addFeedbackToResult(feedback1, result);
 
                     final Feedback feedback2 = new Feedback().credits(3.0);
                     feedback2.setGradingInstruction(instruction2);
-                    feedbackRepository.save(feedback2);
                     participationUtilService.addFeedbackToResult(feedback2, result);
 
                     final Feedback feedback3 = new Feedback().credits(10.0);
-                    feedbackRepository.save(feedback3);
                     participationUtilService.addFeedbackToResult(feedback3, result);
                 }
             }
@@ -775,8 +779,111 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 ResultDTO.class, HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createResultForExternalSubmissionExam_endedExamWithStudentExam() throws Exception {
+        endExamOfExamModelingExercise();
+        var exam = examRepository.findByIdElseThrow(examModelingExercise.getExerciseGroup().getExam().getId());
+        var studentExam = examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
+        examUtilService.addExerciseToStudentExam(studentExam, examModelingExercise);
+
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(examModelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.CREATED);
+
+        assertThat(studentParticipationRepository.findByExerciseId(examModelingExercise.getId())).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createResultForExternalSubmissionExam_studentWithoutStudentExam() throws Exception {
+        endExamOfExamModelingExercise();
+
+        // the student is part of the course but has no student exam, so there is no working period to attach the result to
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(examModelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(studentParticipationRepository.findByExerciseId(examModelingExercise.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createResultForExternalSubmissionExam_exerciseNotInStudentExam() throws Exception {
+        endExamOfExamModelingExercise();
+        var exam = examRepository.findByIdElseThrow(examModelingExercise.getExerciseGroup().getExam().getId());
+        // the student exam exists, but it was assigned other exercises, so a result for this one would be left out of the exam result
+        examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
+
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(examModelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(studentParticipationRepository.findByExerciseId(examModelingExercise.getId())).isEmpty();
+    }
+
+    private void endExamOfExamModelingExercise() {
+        var exam = examRepository.findByIdElseThrow(examModelingExercise.getExerciseGroup().getExam().getId());
+        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        examRepository.save(exam);
+    }
+
     private String externalResultPath(long exerciseId, String studentLogin) {
         return "/api/assessment/exercises/" + exerciseId + "/external-submission-results?studentLogin=" + studentLogin;
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "own", "foreign", "missing" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void externalResultValidatesGradingInstructionOwnership(String instructionSource) throws Exception {
+        var originalResultIds = resultRepository.findWithEagerSubmissionAndFeedbackByExerciseId(modelingExercise.getId()).stream().map(Result::getId).toList();
+        var participation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
+        var originalState = participation.getInitializationState();
+        var draft = new ModelingSubmission();
+        draft.setSubmitted(false);
+        var submission = participationUtilService.addSubmission(participation, draft);
+        var originalSubmissionDate = submission.getSubmissionDate();
+        var exercise = instructionSource.equals("own") ? modelingExercise : programmingExercise;
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(exercise));
+        long instructionId = instructionSource.equals("missing") ? Long.MAX_VALUE : criteria.getFirst().getStructuredGradingInstructions().iterator().next().getId();
+        var body = Map.of("rated", true, "score", 20, "exerciseId", exercise.getId(), "feedbacks",
+                List.of(Map.of("text", "structured feedback", "type", "MANUAL", "credits", 1, "gradingInstruction", Map.of("id", instructionId))));
+
+        var response = request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), body, ResultDTO.class,
+                instructionSource.equals("own") ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST);
+
+        if (instructionSource.equals("own")) {
+            assertThat(feedbackRepository.findByResult(resultRepository.findByIdElseThrow(response.id()))).singleElement()
+                    .satisfies(feedback -> assertThat(feedback.getGradingInstruction().getId()).isEqualTo(instructionId));
+        }
+        else {
+            assertThat(resultRepository.findWithEagerSubmissionAndFeedbackByExerciseId(modelingExercise.getId())).extracting(Result::getId)
+                    .containsExactlyInAnyOrderElementsOf(originalResultIds);
+            var unchangedSubmission = submissionRepository.findByIdElseThrow(submission.getId());
+            assertThat(unchangedSubmission.isSubmitted()).isFalse();
+            assertThat(unchangedSubmission.getSubmissionDate()).isEqualTo(originalSubmissionDate);
+            assertThat(studentParticipationRepository.findByIdElseThrow(participation.getId()).getInitializationState()).isEqualTo(originalState);
+        }
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void storingFeedbackRejectsForeignGradingInstructions(boolean append) {
+        var criteria = gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(modelingExercise));
+        var instruction = criteria.getFirst().getStructuredGradingInstructions().iterator().next();
+        var submission = participationUtilService.addSubmission(programmingExerciseStudentParticipation, new ProgrammingSubmission());
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, null, submission);
+        Feedback feedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL).text("foreign instruction");
+        feedback.setGradingInstruction(instruction);
+
+        assertThatExceptionOfType(BadRequestAlertException.class).isThrownBy(() -> {
+            if (append) {
+                resultService.addFeedbackToResult(result, List.of(feedback), false);
+            }
+            else {
+                resultService.storeFeedbackInResult(result, List.of(feedback), false);
+            }
+        }).withMessageContaining("grading instruction");
+        assertThat(feedback.getId()).isNull();
     }
 
     @Test

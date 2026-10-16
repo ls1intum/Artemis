@@ -122,7 +122,7 @@ public class ProgrammingTriggerService {
         SecurityUtils.setAuthorizationObject();
         // Loaded with the associations the trigger reads off the exercise, so the batch below does not have to load it
         // a second time and no participation has to load either of them for itself.
-        var programmingExercise = programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(exerciseId)
+        var programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", exerciseId));
 
         // Let the instructor know that a build run was triggered.
@@ -340,7 +340,7 @@ public class ProgrammingTriggerService {
         }
         long exerciseId = participationsOfExercise.getFirst().getExercise().getId();
         Optional<ProgrammingExercise> exercise = loadedExercise != null && exerciseId == loadedExercise.getId() ? Optional.of(loadedExercise)
-                : programmingExerciseRepository.findWithBuildConfigAndAuxiliaryRepositoriesById(exerciseId);
+                : programmingExerciseRepository.findWithAuxiliaryRepositoriesById(exerciseId);
         if (exercise.isEmpty()) {
             return SharedBuildTriggerData.NONE;
         }

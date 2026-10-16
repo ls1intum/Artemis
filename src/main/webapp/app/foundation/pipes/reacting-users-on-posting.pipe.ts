@@ -36,28 +36,28 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
         if (reactingUsers.includes(PLACEHOLDER_USER_REACTED)) {
             if (reactingUsers.length === 1) {
                 // set "you" as ready-to-use reacting users string
-                return this.translateService.instant('artemisApp.metis.you');
+                return this.translateService.instant('artemisApp.communication.you');
             }
             // if more than the currently logged-in user reacted,
             // remove placeholder and replace it with directly addressing currently logged-in user
             reactingUsers = reactingUsers.filter((user) => user !== PLACEHOLDER_USER_REACTED);
-            reactingUsers = [this.translateService.instant('artemisApp.metis.you')].concat(reactingUsers);
+            reactingUsers = [this.translateService.instant('artemisApp.communication.you')].concat(reactingUsers);
         }
         // determine if list has to be trimmed
         const numberOfReactingUsers = reactingUsers.length;
         if (numberOfReactingUsers > USER_COUNT_LIMIT) {
             // prepare trimmed list
             reactingUsers = reactingUsers.slice(0, USER_COUNT_LIMIT);
-            return reactingUsers.join(', ') + this.translateService.instant('artemisApp.metis.reactedTooltipTrimmed', { number: numberOfReactingUsers - USER_COUNT_LIMIT });
+            return reactingUsers.join(', ') + this.translateService.instant('artemisApp.communication.reactedTooltipTrimmed', { number: numberOfReactingUsers - USER_COUNT_LIMIT });
         } else {
             // prepare list
-            let listOfReactingUsers = reactingUsers.join(', ') + this.translateService.instant('artemisApp.metis.reactedTooltip');
+            let listOfReactingUsers = reactingUsers.join(', ') + this.translateService.instant('artemisApp.communication.reactedTooltip');
             // replace last comma by "and"
             const lastCommaIndex = listOfReactingUsers.lastIndexOf(',');
             if (lastCommaIndex > -1) {
                 const beforeLastComma = listOfReactingUsers.substring(0, lastCommaIndex);
                 const afterLastComma = listOfReactingUsers.substring(lastCommaIndex + 2, listOfReactingUsers.length);
-                listOfReactingUsers = beforeLastComma + this.translateService.instant('artemisApp.metis.and') + afterLastComma;
+                listOfReactingUsers = beforeLastComma + this.translateService.instant('artemisApp.communication.and') + afterLastComma;
             }
             return listOfReactingUsers;
         }

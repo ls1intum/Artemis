@@ -15,6 +15,16 @@ on:
         description: 'When true, run every test. When false, only run tests in modules affected by changes vs base_branch.'
         required: true
         type: boolean
+      run_server_tests:
+        description: 'When false, the server suite (planning, shards and report) is skipped. ci.yml passes false for a pull request that cannot affect it.'
+        required: false
+        type: boolean
+        default: true
+      run_client_tests:
+        description: 'When false, the client suite is skipped. ci.yml passes false for a pull request that cannot affect it.'
+        required: false
+        type: boolean
+        default: true
       is_internal_pr:
         description: 'True only for PRs from branches inside ls1intum/Artemis (external services like Codacy skip on fork PRs).'
         required: true
@@ -41,6 +51,7 @@ jobs:
   # module-affected run stays a single shard, because its selection cuts across buckets.
   server-test-shards:
     name: Plan Server Test Shards
+    if: ${{ inputs.run_server_tests }}
     runs-on: ubuntu-latest
     permissions: {}
     outputs:
@@ -78,6 +89,7 @@ jobs:
   server-tests:
     name: Server Tests (${{ matrix.shard.name }})
     needs: server-test-shards
+    if: ${{ inputs.run_server_tests }}
     runs-on: aet-large-ubuntu
     strategy:
       # One shard failing must not cancel the others: the reporting job needs every shard's results to
@@ -93,7 +105,7 @@ jobs:
       contents: read
       checks: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
           # Module-affected diff (`git diff "origin/$DEFAULT_BRANCH"`) needs the full
@@ -101,16 +113,13 @@ jobs:
           # every test, defeating the optimisation.
           fetch-depth: 0
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: 'temurin'
-          # Java 17 is required to run programming templates.
-          java-version: |
-            17
-            ${{ env.java }}
+          java-version: ${{ env.java }}
           # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
       - name: Java Tests
         # Wrapped in run_with_hang_dump.sh so a hung test is thread-dumped before the Gradle task
         # timeout (gradle/test.gradle) fires - the only forensic data a silent hang leaves.
@@ -146,14 +155,14 @@ jobs:
         # own 80-min cap, the run is `cancelled` — and that is exactly when the watchdog's dump is the
         # only forensic data. `if-no-files-found: ignore` keeps the normal (no-hang) path quiet.
         if: ${{ always() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Server Test Thread Dumps
           path: build/hang-thread-dumps/*.txt
           if-no-files-found: ignore
       - name: Upload JUnit Test Results
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           # Disambiguated from `JUnit Test Results` (E2E) because both jobs upload in the
           # same parent run; `actions/upload-artifact@v4+` rejects duplicate artifact names — which is
@@ -164,7 +173,7 @@ jobs:
         # Each shard covers only part of the suite. The reporting job below collects every shard's
         # execution data and builds one report from all of it.
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Server Coverage Execution Data (${{ matrix.shard.name }})
           path: build/jacoco/test.exec
@@ -179,7 +188,7 @@ jobs:
           grep -c ":: Powered by Spring Boot[^:]* ::" tests.log > "server-starts/${{ matrix.shard.name }}.txt" || echo 0 > "server-starts/${{ matrix.shard.name }}.txt"
       - name: Upload Server Start Count
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Server Start Count (${{ matrix.shard.name }})
           path: server-starts/*.txt
@@ -203,25 +212,27 @@ jobs:
   server-tests-report:
     name: Server Tests Report
     needs: server-tests
-    if: ${{ !cancelled() }}
+    # Without `run_server_tests` there are no shards to report, and `!cancelled()` alone would run this
+    # job anyway (it is true for a skipped dependency) and fail on the missing coverage data.
+    if: ${{ !cancelled() && inputs.run_server_tests }}
     runs-on: aet-large-ubuntu
     timeout-minutes: 20
     permissions:
       contents: read
       checks: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: 'temurin'
           java-version: ${{ env.java }}
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
       - name: Download Coverage Execution Data
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: Server Coverage Execution Data (*)
           # Every shard's file is called test.exec, so they are kept apart by their artifact directory and
@@ -238,7 +249,7 @@ jobs:
           done
           ls -la build/jacoco
       - name: Download JUnit Test Results
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: Server JUnit Test Results (*)
           merge-multiple: true
@@ -283,7 +294,7 @@ jobs:
         if: ${{ !cancelled() && inputs.is_internal_pr && inputs.pr_author != 'dependabot[bot]' }}
       - name: Test Report
         # Renders JUnit results as a check-run with diff annotations.
-        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
+        uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a  # v3.2.0
         if: ${{ !cancelled() && inputs.pr_author != 'dependabot[bot]' }}
         with:
           name: Server Tests (PostgreSQL)
@@ -293,7 +304,7 @@ jobs:
         # Without this the step is skipped as soon as an earlier one fails, and the server-start check right below it
         # then fails for want of files rather than on what it actually measures.
         if: ${{ !cancelled() }}
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           pattern: Server Start Count (*)
           merge-multiple: true
@@ -306,14 +317,14 @@ jobs:
           bash supporting_scripts/extract_number_of_server_starts.sh "$TOTAL"
       - name: Upload Server Test Coverage Report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Coverage Report Server Tests
           path: build/reports/jacoco/aggregated/html
       - name: Upload JaCoCo XML Reports
         # Consumed by pullrequest-coverage-reporter.yml; the name is part of that contract.
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Server JaCoCo XML
           path: build/reports/jacoco/**/jacocoTestReport.xml
@@ -328,6 +339,7 @@ jobs:
 
   client-tests:
     name: Client Tests
+    if: ${{ inputs.run_client_tests }}
     runs-on: aet-large-ubuntu
     # 45 minutes proved too tight on slower runners: the suite finished green but the job was
     # cancelled during the final coverage aggregation (develop already peaks at ~40 minutes).
@@ -335,7 +347,7 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
       # Some client tests OOM under the project-wide --max-old-space-size in .npmrc; drop only that line.
@@ -345,18 +357,14 @@ jobs:
       # The self-hosted runners have no usable npm on PATH; install Node first so
       # pnpm/action-setup's npm-based self-installer (v6) finds a working npm.
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '${{ env.node }}'
+          node-version-file: .nvmrc
       - name: Setup pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413  # v6.1.0
         with:
           run_install: false
-      - name: Enable pnpm store cache
-        uses: actions/setup-node@v6
-        with:
-          node-version: '${{ env.node }}'
-          cache: 'pnpm'
+          cache: true
       - name: Install Dependencies
         run: pnpm install --frozen-lockfile
       - name: Compile TypeScript Test Files With Typechecking
@@ -364,8 +372,8 @@ jobs:
       - name: TypeScript Test Without Typechecking
         run: pnpm run test:ci
       - name: Custom ESLint Rule Tests
-        # Runs the RuleTester specs (rules/*.spec.mjs) for our guardrail ESLint rules. Uses a
-        # separate Vitest config (rules/vitest.config.mjs, plain-Node env) so these .spec.mjs do
+        # Runs the RuleTester specs (config/eslint/rules/*.spec.mjs) for our guardrail ESLint rules. Uses a
+        # separate Vitest config (config/eslint/rules/vitest.config.mjs, plain-Node env) so these .spec.mjs do
         # not run under the Angular jsdom/Vite environment of the client suite above.
         run: pnpm run test:rules
       - name: Per-Module Coverage Gate
@@ -377,13 +385,13 @@ jobs:
         run: pnpm run coverage:check-module
       - name: Upload Vitest Coverage Report
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Vitest Coverage Report
           path: build/test-results/vitest/coverage/
       - name: Upload Client Coverage Summaries
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Client Coverage Summaries
           path: |
@@ -391,7 +399,7 @@ jobs:
           if-no-files-found: ignore
       - name: Upload Vitest JUnit Test Results
         if: ${{ !cancelled() }}
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Vitest JUnit Test Results
           path: build/test-results/vitest/junit.xml

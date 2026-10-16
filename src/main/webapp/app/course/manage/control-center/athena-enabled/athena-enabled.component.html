@@ -4,7 +4,7 @@
         <div>
             <div class="athena-setting-label">
                 <span [jhiTranslate]="labelKey"></span>
-                <fa-icon [icon]="faQuestionCircle" [tumUiTooltip]="'artemisApp.course.athenaConfig.' + feature.key + '.tooltip' | artemisTranslate" />
+                <fa-icon [icon]="faQuestionCircle" [tumAetUiTooltip]="'artemisApp.course.athenaConfig.' + feature.key + '.tooltip' | artemisTranslate" />
             </div>
             <jhi-enabled-toggle
                 [enabled]="feature.enabled()"

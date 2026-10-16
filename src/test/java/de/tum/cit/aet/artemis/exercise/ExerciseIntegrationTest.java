@@ -13,10 +13,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,6 +57,8 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.DetailedParticipationDTO;
+import de.tum.cit.aet.artemis.exercise.dto.DetailedResultDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseResponseDTO;
@@ -72,7 +77,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -338,11 +342,10 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exercise.setCategories(new HashSet<>(Set.of("homework", "bonus")));
         exercise.setMode(ExerciseMode.TEAM);
         var teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exercise);
         teamAssignmentConfig.setMinTeamSize(2);
         teamAssignmentConfig.setMaxTeamSize(4);
-        exercise.setTeamAssignmentConfig(teamAssignmentConfig);
         exerciseRepository.save(exercise);
+        exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig);
         gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(exercise));
 
         ExerciseResponseDTO response = request.get("/api/exercise/exercises/" + exercise.getId(), HttpStatus.OK, ExerciseResponseDTO.class);
@@ -476,10 +479,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exercise.setMode(ExerciseMode.TEAM);
         TeamAssignmentConfig teamAssignmentConfig = new TeamAssignmentConfig();
-        teamAssignmentConfig.setExercise(exercise);
         teamAssignmentConfig.setMinTeamSize(2);
         teamAssignmentConfig.setMaxTeamSize(4);
-        exercise.setTeamAssignmentConfig(teamAssignmentConfig);
         exercise.setSecondCorrectionEnabled(true);
         exercise.setPresentationScoreEnabled(true);
         exercise.setAllowComplaintsForAutomaticAssessments(true);
@@ -497,17 +498,24 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setPackageName("de.tum.cit.ase");
         exerciseRepository.save(exercise);
+        exerciseUtilService.saveTeamAssignmentConfig(exercise, teamAssignmentConfig);
         gradingCriterionRepository.saveAll(exerciseUtilService.addGradingInstructionsToExercise(exercise));
 
         Map<String, Object> response = getJsonMap("/api/exercise/exercises/" + exercise.getId());
         // The entity side has to be loaded and filtered exactly as the endpoint did, otherwise a collection the query
         // never fetched shows up as a difference that says nothing about the migration.
-        Exercise reloaded = exerciseRepository.findByIdWithCategoriesAndTeamAssignmentConfigElseThrow(exercise.getId());
+        Exercise reloaded = exerciseRepository.findByIdWithCategoriesElseThrow(exercise.getId());
         reloaded.setGradingCriteria(gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId()));
         Map<String, Object> entityJson = objectMapper.convertValue(reloaded, new TypeReference<>() {
         });
 
-        assertThat(normalized(response)).as("Complete response against the entity the route used to serialize").isEqualTo(normalized(entityJson));
+        // The team assignment configuration is not part of the entity's JSON: the exercise carries it in a transient slot that
+        // only an explicit read fills. The response reports it, so it is pinned by hand and left out of the comparison.
+        Map<String, Object> responseWithoutTeamConfig = new LinkedHashMap<>(response);
+        Object teamConfigOnTheWire = responseWithoutTeamConfig.remove("teamAssignmentConfig");
+        assertThat(teamConfigOnTheWire).asInstanceOf(InstanceOfAssertFactories.MAP).containsEntry("minTeamSize", 2).containsEntry("maxTeamSize", 4);
+
+        assertThat(normalized(responseWithoutTeamConfig)).as("Complete response against the entity the route used to serialize").isEqualTo(normalized(entityJson));
 
         assertThat(response).as("Values the external client reads, pinned by hand")
                 .containsAllEntriesOf(Map.ofEntries(Map.entry("type", "programming"), Map.entry("exerciseType", "programming"), Map.entry("title", TITLE),
@@ -610,47 +618,6 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         return (Map<String, Object>) parent.get(key);
     }
 
-    private <T> void assertEqualOrNull(T actual, T expected, String entityName) {
-        if (expected != null) {
-            assertThat(actual).as(entityName + " was set correctly").isEqualTo(expected);
-        }
-        else {
-            assertThat(actual).as(entityName + " not present").isNull();
-        }
-    }
-
-    private void assertFileUploadExercise(FileUploadExercise exercise, String filePattern, String exampleSolution) {
-        assertEqualOrNull(exercise.getFilePattern(), filePattern, "File pattern");
-        assertEqualOrNull(exercise.getExampleSolution(), exampleSolution, "Sample solution");
-    }
-
-    private void assertModelingExercise(ModelingExercise exercise, DiagramType diagramType, String exampleSolutionModel, String exampleSolutionExplanation) {
-        assertThat(exercise.getDiagramType()).as("Diagram type was set correctly").isEqualTo(diagramType);
-        assertEqualOrNull(exercise.getExampleSolutionModel(), exampleSolutionModel, "Sample solution model");
-        assertEqualOrNull(exercise.getExampleSolutionExplanation(), exampleSolutionExplanation, "Sample solution explanation");
-    }
-
-    private void assertProgrammingExercise(ProgrammingExercise exercise, boolean projectKey, String templateRepositoryUri, String solutionRepositoryUri, String testRepositoryUri,
-            String templateBuildPlanId, String solutionBuildPlanId) {
-        if (projectKey) {
-            assertThat(exercise.getProjectKey()).as("Project key was set").isNotNull();
-        }
-        else {
-            assertThat(exercise.getProjectKey()).as("Project key not present").isNull();
-        }
-        assertEqualOrNull(exercise.getTemplateRepositoryUri(), templateRepositoryUri, "Template repository uri");
-        assertEqualOrNull(exercise.getSolutionRepositoryUri(), solutionRepositoryUri, "Solution repository uri");
-        assertEqualOrNull(exercise.getTestRepositoryUri(), testRepositoryUri, "Test repository uri");
-        assertEqualOrNull(exercise.getTemplateBuildPlanId(), templateBuildPlanId, "Template build plan id");
-        assertEqualOrNull(exercise.getSolutionBuildPlanId(), solutionBuildPlanId, "Solution build plan id");
-    }
-
-    private void assertQuizExercise(QuizExercise exercise, int duration, int allowedNumberOfAttempts, List<QuizQuestion> quizQuestions) {
-        assertThat(exercise.getDuration()).as("Duration was set correctly").isEqualTo(duration);
-        assertThat(exercise.getAllowedNumberOfAttempts()).as("Allowed number of attempts was set correctly").isEqualTo(allowedNumberOfAttempts);
-        assertEqualOrNull(exercise.getQuizQuestions(), quizQuestions, "Quiz questions");
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "student11", roles = "USER")
     void testGetExamExercise_asStudent_forbidden() throws Exception {
@@ -714,28 +681,37 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
         List<Course> courses = courseUtilService.createEnrolledCoursesWithExercisesAndLectures(TEST_PREFIX, true, NUMBER_OF_TUTORS);
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
-                ExerciseDetailsDTO exerciseWithDetailsWrapper = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
-                Exercise exerciseWithDetails = exerciseWithDetailsWrapper.exercise();
+                ExerciseDetailsDTO details = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
+                ExerciseResponseDTO exerciseWithDetails = details.exercise().exercise();
+                List<DetailedParticipationDTO> participations = Objects.requireNonNullElse(details.exercise().studentParticipations(), List.of());
 
-                if (exerciseWithDetails instanceof FileUploadExercise fileUploadExercise) {
-                    assertFileUploadExercise(fileUploadExercise, "png", null);
-                    assertThat(fileUploadExercise.getStudentParticipations()).as("Number of participations is correct").isEmpty();
-                }
-                else if (exerciseWithDetails instanceof ModelingExercise modelingExercise) {
-                    assertModelingExercise(modelingExercise, DiagramType.ClassDiagram, null, null);
-                    assertThat(modelingExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(1);
-                }
-                else if (exerciseWithDetails instanceof ProgrammingExercise programmingExerciseExercise) {
-                    assertProgrammingExercise(programmingExerciseExercise, true, null, null, null, null, null);
-                    assertThat(programmingExerciseExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(2);
-                }
-                else if (exerciseWithDetails instanceof QuizExercise quizExercise) {
-                    assertQuizExercise(quizExercise, 120, 1, List.of());
-                    assertThat(quizExercise.getStudentParticipations()).as("Number of participations is correct").isEmpty();
-                }
-                else if (exerciseWithDetails instanceof TextExercise textExercise) {
-                    assertThat(textExercise.getExampleSolution()).as("Sample solution was filtered out").isNull();
-                    assertThat(textExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(1);
+                switch (exercise) {
+                    case FileUploadExercise ignored -> {
+                        assertThat(exerciseWithDetails.filePattern()).isEqualTo("png");
+                        assertThat(exerciseWithDetails.exampleSolution()).as("Sample solution not present").isNull();
+                        assertThat(participations).as("Number of participations is correct").isEmpty();
+                    }
+                    case ModelingExercise ignored -> {
+                        assertThat(exerciseWithDetails.diagramType()).isEqualTo(DiagramType.ClassDiagram);
+                        assertThat(exerciseWithDetails.exampleSolutionModel()).as("Sample solution model not present").isNull();
+                        assertThat(exerciseWithDetails.exampleSolutionExplanation()).as("Sample solution explanation not present").isNull();
+                        assertThat(participations).as("Number of participations is correct").hasSize(1);
+                    }
+                    case ProgrammingExercise ignored -> {
+                        assertThat(exerciseWithDetails.projectKey()).as("Project key was set").isNotNull();
+                        assertThat(exerciseWithDetails.testRepositoryUri()).as("Test repository uri not present").isNull();
+                        assertThat(participations).as("Number of participations is correct").hasSize(2);
+                    }
+                    case QuizExercise ignored -> {
+                        assertThat(exerciseWithDetails.duration()).isEqualTo(120);
+                        assertThat(exerciseWithDetails.allowedNumberOfAttempts()).isEqualTo(1);
+                        assertThat(participations).as("Number of participations is correct").isEmpty();
+                    }
+                    case TextExercise ignored -> {
+                        assertThat(exerciseWithDetails.exampleSolution()).as("Sample solution was filtered out").isNull();
+                        assertThat(participations).as("Number of participations is correct").hasSize(1);
+                    }
+                    default -> throw new IllegalStateException("Unexpected exercise type " + exercise.getType());
                 }
             }
         }
@@ -810,12 +786,12 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
                 addResultToSubmissionAndParticipation(exercise);
             }
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
-            for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
-                Set<Result> results = participationUtilService.getResultsForParticipation(participation);
+            for (DetailedParticipationDTO participation : exerciseWithDetails.exercise().studentParticipations()) {
+                List<DetailedResultDTO> results = resultsOf(participation);
                 // Programming exercises should only have one automatic result
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(results).hasSize(1);
-                    assertThat(results.iterator().next().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+                    assertThat(results.getFirst().assessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
                 }
                 else {
                     // All other exercises should not display a result at all
@@ -838,12 +814,12 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
             }
 
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
-            for (var studentParticipation : exerciseWithDetails.exercise().getStudentParticipations()) {
-                Set<Result> results = participationUtilService.getResultsForParticipation(studentParticipation);
+            for (DetailedParticipationDTO studentParticipation : exerciseWithDetails.exercise().studentParticipations()) {
+                List<DetailedResultDTO> results = resultsOf(studentParticipation);
                 // Programming exercises should now how two results and the latest one is the manual result.
                 if (exercise instanceof ProgrammingExercise) {
                     assertThat(results).hasSize(resultSize);
-                    assertThat(results.stream().sorted(Comparator.comparing(Result::getId).reversed()).iterator().next().getAssessmentType())
+                    assertThat(results.stream().sorted(Comparator.comparing(DetailedResultDTO::id).reversed()).iterator().next().assessmentType())
                             .isEqualTo(AssessmentType.SEMI_AUTOMATIC);
                 }
                 else {
@@ -852,6 +828,10 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
                 }
             }
         }
+    }
+
+    private static List<DetailedResultDTO> resultsOf(DetailedParticipationDTO participation) {
+        return Stream.ofNullable(participation.submissions()).flatMap(List::stream).flatMap(submission -> Stream.ofNullable(submission.results()).flatMap(List::stream)).toList();
     }
 
     private void addResultToSubmissionAndParticipation(Exercise exercise) {
@@ -1117,6 +1097,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentBatchT
                 assertThat(stats.getTutorLeaderboardEntries()).as("Number of tutor leaderboard entries is correct").hasSameSizeAs(tutors);
                 assertThat(stats.getNumberOfOpenComplaints()).as("Number of open complaints should be available to tutor").isNotNull();
                 assertThat(stats.getNumberOfOpenMoreFeedbackRequests()).as("Number of open more feedback requests should be available to tutor").isNotNull();
+                assertThat(stats.getComplaintsEnabled()).as("Complaints enabled flag mirrors the course setting").isEqualTo(course.getComplaintsEnabled());
+                assertThat(stats.getFeedbackRequestEnabled()).as("Feedback request enabled flag mirrors the course setting").isEqualTo(course.getRequestMoreFeedbackEnabled());
                 assertThat(stats.getNumberOfAssessmentLocks()).as("Number of assessment locks are not available for exercises").isNull();
 
                 if (exercise instanceof FileUploadExercise) {

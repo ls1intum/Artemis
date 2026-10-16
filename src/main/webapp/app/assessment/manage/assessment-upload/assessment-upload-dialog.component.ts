@@ -8,14 +8,14 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { AlertService } from 'app/foundation/service/alert.service';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
-import { TumUiButtonComponent, TumUiCheckboxComponent, TumUiDialogComponent, TumUiMessageComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { AssessmentUploadError, AssessmentUploadResult, AssessmentUploadService } from 'app/assessment/manage/services/assessment-upload.service';
 
 /**
  * Dialog that lets an instructor upload a zip file with manual assessments for the participants of a programming exercise. The file can be selected via the file system or dropped
  * onto the drop zone. The server validates the whole file (all-or-nothing) and either reports per-row validation errors or the number of created assessments.
  * <p>
- * Rendered with the tum-ui kit: a declarative {@link TumUiDialogComponent} whose visibility the parent controls via {@code [(visible)]}.
+ * Rendered with the tum-ui kit: a declarative {@link TumAetUiDialogComponent} whose visibility the parent controls via {@code [(visible)]}.
  * <p>
  * Uploading overwrites the manual assessment a participant may already have, so the dialog states this up front and only enables the upload button once the instructor has
  * confirmed it explicitly.
@@ -27,7 +27,16 @@ import { AssessmentUploadError, AssessmentUploadResult, AssessmentUploadService 
     selector: 'jhi-assessment-upload-dialog',
     templateUrl: './assessment-upload-dialog.component.html',
     styleUrls: ['./assessment-upload-dialog.component.scss'],
-    imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe, TumUiDialogComponent, TumUiButtonComponent, TumUiCheckboxComponent, TumUiMessageComponent],
+    imports: [
+        NgClass,
+        FaIconComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        TumAetUiDialogComponent,
+        TumAetUiButtonComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiMessageComponent,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AssessmentUploadDialogComponent {

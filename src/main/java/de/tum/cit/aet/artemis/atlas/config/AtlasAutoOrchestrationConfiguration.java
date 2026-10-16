@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Lazy;
  * dedicated configuration so the orchestrator's main service surface and the chat agent stay
  * untouched — the auto-trigger feature ships independently.
  */
-@Conditional(AtlasEnabled.class)
+@Conditional(AtlasLLMEnabled.class)
 @Lazy
 @Configuration
 public class AtlasAutoOrchestrationConfiguration {

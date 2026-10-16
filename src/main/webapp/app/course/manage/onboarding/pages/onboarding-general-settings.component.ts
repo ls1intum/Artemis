@@ -2,7 +2,7 @@ import { Component, OnInit, computed, inject, input, output, signal, viewChild }
 import { FormsModule } from '@angular/forms';
 import { Course, Language } from 'app/course/shared/entities/course.model';
 import { ColorSelectorComponent } from 'app/shared-ui/color-selector/color-selector.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { applySemesterToDates, getSemesters } from 'app/foundation/util/semester-utils';
@@ -11,7 +11,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/foundation/util/global.utils';
-import { KeyValuePipe, NgStyle } from '@angular/common';
+import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCog } from '@fortawesome/free-solid-svg-icons';
@@ -33,9 +33,8 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
     imports: [
         FormsModule,
         ColorSelectorComponent,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
         TranslateDirective,
-        NgStyle,
         KeyValuePipe,
         ArtemisTranslatePipe,
         FaIconComponent,
@@ -46,15 +45,18 @@ import { AthenaLogoComponent } from 'app/shared-ui/athena-logo/athena-logo.compo
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {
-    protected readonly IrisLogoSize = IrisLogoSize;
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
     private alertService = inject(AlertService);
     private dialogService = inject(DialogService);
+
+    protected readonly IrisLogoSize = IrisLogoSize;
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
 
     readonly course = input.required<Course>();
     readonly courseUpdated = output<Course>();
+    /** Emits whether the text in both date pickers is a date, so the wizard does not advance with dates the fields no longer show. */
+    readonly dateTextValidityChange = output<boolean>();
 
     readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
     readonly irisSettings = signal<IrisCourseSettingsDTO | undefined>(undefined);
@@ -81,7 +83,24 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly semesters = computed(() => getSemesters(this.course().semester));
     readonly semesterMissing = computed(() => !this.course().semester?.trim());
 
+    /** Start and end date are required: the field is marked while no date is set, like the missing semester above. */
+    readonly startDateMissing = computed(() => !this.course().startDate);
+    readonly endDateMissing = computed(() => !this.course().endDate);
+    /** The picker keeps its last valid value while the typed text is not a date, so the text validity is tracked separately. */
+    protected readonly startTextValid = signal(true);
+    protected readonly endTextValid = signal(true);
+
     private previousSemester?: string;
+
+    protected setStartTextValid(valid: boolean) {
+        this.startTextValid.set(valid);
+        this.dateTextValidityChange.emit(valid && this.endTextValid());
+    }
+
+    protected setEndTextValid(valid: boolean) {
+        this.endTextValid.set(valid);
+        this.dateTextValidityChange.emit(this.startTextValid() && valid);
+    }
 
     readonly languageOptions: { key: string; value: string }[] = [
         { key: Language.ENGLISH, value: 'English' },

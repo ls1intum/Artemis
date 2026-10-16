@@ -206,6 +206,9 @@ export enum CourseManagementSection {
     imports: [UserManagementDropdownComponent, TranslateDirective, RouterLink, NgTemplateOutlet, AddExercisePopoverComponent, CourseMaterialImportDialogComponent, FaIconComponent],
 })
 export class QuickActionsComponent {
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+
     protected readonly faCode = faCode;
     protected readonly faFileAlt = faFileAlt;
     protected readonly faChalkboardTeacher = faChalkboardTeacher;
@@ -215,8 +218,6 @@ export class QuickActionsComponent {
     protected readonly faFileImport = faFileImport;
     protected readonly CourseManagementSection = CourseManagementSection;
     course = input.required<Course>();
-    private router = inject(Router);
-    private profileService = inject(ProfileService);
 
     lectureEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE);
     atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);

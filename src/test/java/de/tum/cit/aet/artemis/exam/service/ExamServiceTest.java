@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
@@ -63,6 +64,12 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private ExerciseGroup exerciseGroup1;
 
+    /**
+     * An exercise a test placed into {@link #exerciseGroup1}, so that {@link #tearDown()} can remove it before the
+     * group it points at.
+     */
+    private Exercise exerciseInExerciseGroup1;
+
     private int countExamsBeforeTests;
 
     @BeforeEach
@@ -78,6 +85,12 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @AfterEach
     void tearDown() {
+        if (exerciseInExerciseGroup1 != null) {
+            // The exercise names the group through a RESTRICT foreign key, so it has to go first. Its participations
+            // go with it, because Exercise#studentParticipations cascades the removal.
+            exerciseRepository.delete(exerciseInExerciseGroup1);
+            exerciseInExerciseGroup1 = null;
+        }
         exam1.removeExerciseGroup(exerciseGroup1);
         examRepository.save(exam1);
     }
@@ -91,7 +104,7 @@ class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
         exercise.setStudentParticipations(Set.of(studentParticipation));
         studentParticipation.setExercise(exercise);
         exerciseGroup1.addExercise(exercise);
-        exerciseRepository.save(exercise);
+        exerciseInExerciseGroup1 = exerciseRepository.save(exercise);
         studentParticipationRepository.save(studentParticipation);
 
         examService.setExamProperties(exam1);

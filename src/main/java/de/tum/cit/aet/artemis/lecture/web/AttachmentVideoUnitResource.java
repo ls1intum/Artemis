@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -73,7 +74,7 @@ import de.tum.cit.aet.artemis.videosource.service.YouTubeUrlService;
 
 @Conditional(LectureEnabled.class)
 @Lazy
-@FeatureUsage("units/attachment-video-units")
+@FeatureUsage(UserFeature.LECTURE_AUTHORING)
 @RestController
 @RequestMapping("api/lecture/")
 public class AttachmentVideoUnitResource {
@@ -165,7 +166,8 @@ public class AttachmentVideoUnitResource {
      * @param hiddenPages            the pages to be hidden in the attachment video unit
      * @param pageOrder              the new order of the edited attachment video unit
      * @param keepFilename           specifies if the original filename should be kept or not
-     * @param notificationText       the text to be used for the notification. No notification will be sent if the parameter is not set
+     * @param notificationText       the message students are notified with. No notification will be sent if the parameter is not set; an empty one notifies
+     *                                   students without a message
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentVideoUnit
      */
     @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -191,6 +193,9 @@ public class AttachmentVideoUnitResource {
         Set<Long> originalCompetencyIds = existingAttachmentVideoUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(c -> c.getId())
                 .collect(Collectors.toSet());
 
+        // The update service mutates the managed unit in place, so snapshot the content-bearing field first.
+        String previousDescription = existingAttachmentVideoUnit.getDescription();
+
         // Update competency links using the proper mechanism
         lectureUnitService.updateCompetencyLinks(attachmentVideoUnitDTO, existingAttachmentVideoUnit);
 
@@ -199,9 +204,13 @@ public class AttachmentVideoUnitResource {
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnitDTO, attachmentUpdate,
                 file, keepFilename, hiddenPages, pageOrder, originalCompetencyIds);
 
+        if (!Objects.equals(previousDescription, savedAttachmentVideoUnit.getDescription())) {
+            lectureUnitService.publishContentChangedEvent(savedAttachmentVideoUnit);
+        }
+
         if (notificationText != null && attachment != null) {
             // The unit lecture is already loaded with its course, which is what the notification resolves the recipients from.
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment(), savedAttachmentVideoUnit.getLecture());
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment(), savedAttachmentVideoUnit.getLecture(), notificationText);
         }
 
         searchableEntityWeaviateService.ifPresent(service -> {
@@ -277,6 +286,11 @@ public class AttachmentVideoUnitResource {
 
         validateVideoSource(attachmentVideoUnitDTO.videoSource());
 
+        // The file is split into slides after the unit is saved, so reject one that cannot be read before a unit without slides is created.
+        if (file != null && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(file.getOriginalFilename()))) {
+            lectureUnitProcessingService.validatePdfElseThrow(file);
+        }
+
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {
             throw new BadRequestAlertException("Specified lecture is not part of a course", ENTITY_NAME, "courseMissing");
@@ -303,6 +317,11 @@ public class AttachmentVideoUnitResource {
         attachmentVideoUnitService.prepareAttachmentVideoUnitForClient(persistedUnit);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(persistedUnit));
 
+        // A newly created attachment/video unit with a non-blank description carries learning-relevant text; notify the pipeline.
+        if (persistedUnit.getDescription() != null && !persistedUnit.getDescription().isBlank()) {
+            lectureUnitService.publishContentChangedEvent(persistedUnit);
+        }
+
         searchableEntityWeaviateService.ifPresent(service -> {
             if (LectureUnitSearchableEntityDTO.isIndexable(persistedUnit)) {
                 service.upsertLectureUnitAsync(LectureUnitSearchableEntityDTO.fromLectureUnit(persistedUnit));
@@ -322,6 +341,7 @@ public class AttachmentVideoUnitResource {
      * @param lectureId the id of the lecture to which the attachment video units will be added
      * @return the ResponseEntity with status 200 (ok) and with body filename of the uploaded file
      */
+    @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
     @PostMapping("lectures/{lectureId}/attachment-video-units/upload")
     @EnforceAtLeastEditor
     public ResponseEntity<String> uploadSlidesForProcessing(@PathVariable Long lectureId, @RequestPart("file") MultipartFile file) {
@@ -334,6 +354,7 @@ public class AttachmentVideoUnitResource {
             throw new BadRequestAlertException("The file must be a pdf", ENTITY_NAME, "wrongFileType");
         }
         try {
+            lectureUnitProcessingService.validatePdfElseThrow(file);
             String filename = lectureUnitProcessingService.saveTempFileForProcessing(lectureId, file, minutesUntilDeletion);
             // Explicitly set JSON content type to prevent XSS — the filename derives from user input
             return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(JsonObjectMapper.get().writeValueAsString(filename));
@@ -352,6 +373,7 @@ public class AttachmentVideoUnitResource {
      * @param filename                       the name of the lecture file, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment video units
      */
+    @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
     @PostMapping("lectures/{lectureId}/attachment-video-units/split/{filename}")
     @EnforceAtLeastEditorInLecture
     public ResponseEntity<List<AttachmentVideoUnitDTO>> createAttachmentVideoUnits(@PathVariable Long lectureId,
@@ -391,6 +413,7 @@ public class AttachmentVideoUnitResource {
      * @param filename  the name of the lecture file to be split, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body attachmentVideoUnitsData
      */
+    @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
     @GetMapping("lectures/{lectureId}/attachment-video-units/data/{filename}")
     @EnforceAtLeastEditor
     public ResponseEntity<LectureUnitSplitInformationDTO> getAttachmentVideoUnitsData(@PathVariable Long lectureId, @PathVariable String filename) {
@@ -419,6 +442,7 @@ public class AttachmentVideoUnitResource {
      * @param commaSeparatedKeyPhrases the comma seperated keyphrases to be removed
      * @return the ResponseEntity with status 200 (OK) and with body the list of slides to be removed
      */
+    @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
     @GetMapping("lectures/{lectureId}/attachment-video-units/slides-to-remove/{filename}")
     @EnforceAtLeastEditor
     public ResponseEntity<List<Integer>> getSlidesToRemove(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam String commaSeparatedKeyPhrases) {
@@ -446,6 +470,7 @@ public class AttachmentVideoUnitResource {
      * @param studentVersionFile    the file containing the student version of the attachment
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
+    @FeatureUsage(UserFeature.LECTURE_SLIDE_PROCESSING)
     @PutMapping("lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}/student-version")
     @EnforceAtLeastEditorInLectureUnit(resourceIdFieldName = "attachmentVideoUnitId")
     public ResponseEntity<AttachmentVideoUnitDTO> updateAttachmentVideoUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,

@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.domain.TrackedFeature;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -38,23 +39,29 @@ public interface TrackedFeatureRepository extends ArtemisJpaRepository<TrackedFe
     Optional<TrackedFeature> findByFeatureKindAndIdentifier(FeatureKind featureKind, String identifier);
 
     /**
-     * Relabels an existing feature.
+     * Reclassifies an existing feature.
      * <p>
-     * Called when the {@code @FeatureUsage} label on an endpoint has changed since the last startup, which happens
-     * whenever someone annotates, renames or unannotates one. Because the label is only a grouping attribute on a row
-     * that is keyed by endpoint, historic counters regroup under the new label immediately.
+     * Called when the feature, the interaction or the resource of an endpoint has changed since the last startup, which
+     * happens whenever someone reassigns an endpoint with {@code @FeatureUsage}, overrides its interaction with
+     * {@code @UsageInteraction} or moves it to another controller. Because all three are only grouping attributes on a
+     * row that is keyed by endpoint, historic counters regroup immediately.
      *
-     * @param featureId    the feature to relabel
-     * @param featureLabel the new label, or {@code null} to drop it
+     * @param featureId    the feature to reclassify
+     * @param featureLabel the new feature label, or {@code null} to drop it
+     * @param interaction  the new interaction
+     * @param resource     the new resource, or {@code null} when there is none
      */
     @Modifying
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE TrackedFeature feature
-            SET feature.featureLabel = :featureLabel
+            SET feature.featureLabel = :featureLabel,
+                feature.interaction = :interaction,
+                feature.resource = :resource
             WHERE feature.id = :featureId
             """)
-    void updateFeatureLabel(@Param("featureId") long featureId, @Param("featureLabel") String featureLabel);
+    void updateClassification(@Param("featureId") long featureId, @Param("featureLabel") String featureLabel, @Param("interaction") FeatureInteraction interaction,
+            @Param("resource") String resource);
 
     /**
      * Records that the given features still exist, as of this node's startup.

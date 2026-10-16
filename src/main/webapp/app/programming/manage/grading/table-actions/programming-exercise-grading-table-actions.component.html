@@ -1,10 +1,11 @@
 @if (activeTab() === 'code-analysis') {
-    <button id="import-configuration-button" class="btn btn-primary ms-3 my-1" (click)="openImportModal()" [disabled]="isSaving()">
+    <button type="button" id="import-configuration-button" class="btn btn-primary ms-3 my-1" (click)="openImportModal()" [disabled]="isSaving()">
         <fa-icon [icon]="faCopy" />
         <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.configureGrading.categories.import"></span>
     </button>
 }
 <button
+    type="button"
     data-testid="save-table-button"
     class="btn btn-primary ms-3 my-3"
     jhiTranslate="artemisApp.programmingExercise.configureGrading.save"
@@ -12,6 +13,7 @@
     [disabled]="isSaving() || !hasUnsavedChanges()"
 ></button>
 <button
+    type="button"
     id="reset-table-button"
     class="btn btn-secondary ms-3 my-1"
     (click)="onReset.emit()"

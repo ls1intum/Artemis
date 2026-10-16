@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "course_request")
@@ -42,6 +43,9 @@ public class CourseRequest extends DomainObject {
     @Column(name = "test_course", nullable = false)
     private boolean testCourse = false;
 
+    @Column(name = "grade_relevant", nullable = false)
+    private boolean gradeRelevant = true;
+
     @Column(name = "reason", nullable = false, columnDefinition = "TEXT")
     private String reason;
 
@@ -63,8 +67,9 @@ public class CourseRequest extends DomainObject {
     private String admin;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "requester_id")
+    @JoinColumn(name = "requester_id", nullable = false)
     @JsonIgnoreProperties(value = "courseRequests", allowSetters = true)
+    @Parent
     private User requester;
 
     @Column(name = "created_course_id")
@@ -116,6 +121,14 @@ public class CourseRequest extends DomainObject {
 
     public void setTestCourse(boolean testCourse) {
         this.testCourse = testCourse;
+    }
+
+    public boolean isGradeRelevant() {
+        return gradeRelevant;
+    }
+
+    public void setGradeRelevant(boolean gradeRelevant) {
+        this.gradeRelevant = gradeRelevant;
     }
 
     public String getReason() {

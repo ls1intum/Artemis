@@ -2,6 +2,8 @@ import { Page } from '@playwright/test';
 import dayjs from 'dayjs';
 
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
+import type { CourseUpdateDTO } from 'app/course/shared/entities/course-update-dto.model';
+import type { CourseManagementDTO } from 'app/course/shared/entities/course-management-response.dto';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { asModelDate, generateUUID, titleLowercase } from '../utils';
 import lectureTemplate from '../../fixtures/lecture/template.json';
@@ -57,6 +59,8 @@ export class CourseManagementAPIRequests {
      *   - allowCommunication: if communication should be enabled for the course
      *   - allowMessaging: if messaging should be enabled for the course
      *   - timeZone: the IANA time zone of the course (default: undefined; required before tutorial groups can be added)
+     *   - presentationAssessmentsEnabled: whether presentation assessments are enabled in the course (default: false)
+     *   - testCourse: whether the course is a test course (default: true); exams of test courses are left out of the admin overview of upcoming exams
      * @returns Promise<Course> representing the course created
      */
     async createCourse(
@@ -71,6 +75,8 @@ export class CourseManagementAPIRequests {
             allowCommunication?: boolean;
             allowMessaging?: boolean;
             timeZone?: string;
+            presentationAssessmentsEnabled?: boolean;
+            testCourse?: boolean;
         } = {},
     ): Promise<Course> {
         const {
@@ -86,16 +92,19 @@ export class CourseManagementAPIRequests {
             allowCommunication = true,
             allowMessaging = true,
             timeZone,
+            presentationAssessmentsEnabled = false,
+            testCourse = true,
         } = options;
 
         const course = new Course();
         course.title = courseName;
         course.shortName = courseShortName;
-        course.testCourse = true;
+        course.testCourse = testCourse;
         course.startDate = asModelDate(start);
         course.endDate = asModelDate(end);
         course.semester = semester;
         course.timeZone = timeZone;
+        course.presentationAssessmentsEnabled = presentationAssessmentsEnabled;
 
         if (allowCommunication && allowMessaging) {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
@@ -129,7 +138,9 @@ export class CourseManagementAPIRequests {
         if (!response.ok()) {
             throw new Error(`Failed to create course: ${response.status()} ${response.statusText()} - ${await response.text()}`);
         }
-        return response.json();
+        const created: { id: number } = await response.json();
+        course.id = created.id;
+        return course;
     }
 
     /**
@@ -176,14 +187,14 @@ export class CourseManagementAPIRequests {
      */
     async updateCourseMaxComplaints(courseId: number, maxComplaints: number) {
         const courseResponse = await this.page.request.get(`api/course/courses/${courseId}`);
-        const courseData = await courseResponse.json();
+        const courseData: CourseManagementDTO = await courseResponse.json();
         courseData.maxComplaints = maxComplaints;
         const response = await this.page.request.put(`api/course/courses/${courseId}`, {
             multipart: {
                 course: {
                     name: 'course',
                     mimeType: 'application/json',
-                    buffer: Buffer.from(JSON.stringify(courseData)),
+                    buffer: Buffer.from(JSON.stringify(courseUpdateDTOFromManagementDTO(courseData))),
                 },
             },
         });
@@ -201,14 +212,14 @@ export class CourseManagementAPIRequests {
      */
     async setCourseEndDate(courseId: number, end: dayjs.Dayjs = dayjs().subtract(1, 'hour')) {
         const courseResponse = await this.page.request.get(`api/course/courses/${courseId}`);
-        const courseData = await courseResponse.json();
+        const courseData: CourseManagementDTO = await courseResponse.json();
         courseData.endDate = end.toISOString();
         const response = await this.page.request.put(`api/course/courses/${courseId}`, {
             multipart: {
                 course: {
                     name: 'course',
                     mimeType: 'application/json',
-                    buffer: Buffer.from(JSON.stringify(courseData)),
+                    buffer: Buffer.from(JSON.stringify(courseUpdateDTOFromManagementDTO(courseData))),
                 },
             },
         });
@@ -391,6 +402,9 @@ export class CourseManagementAPIRequests {
             workingTime: 1080,
         };
         const response = await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/test-run`, { data });
+        if (!response.ok()) {
+            throw new Error(`Failed to create test run for exam ${exam.id}: ${response.status()} ${await response.text()}`);
+        }
         return response.json();
     }
 
@@ -532,4 +546,49 @@ export class CourseManagementAPIRequests {
             throw new Error(`Failed to enable learning paths: ${response.status()} ${response.statusText()} - ${errorBody}`);
         }
     }
+}
+
+// Playwright runs this file under Node, which cannot resolve dayjs/esm; toCourseUpdateDTO pulls it in through date.utils, so the mapping stays local.
+function courseUpdateDTOFromManagementDTO(course: CourseManagementDTO): CourseUpdateDTO {
+    return {
+        id: course.id,
+        title: course.title,
+        shortName: course.shortName,
+        description: course.description,
+        semester: course.semester,
+        startDate: course.startDate,
+        endDate: course.endDate,
+        enrollmentStartDate: course.enrollmentStartDate,
+        enrollmentEndDate: course.enrollmentEndDate,
+        unenrollmentEndDate: course.unenrollmentEndDate,
+        testCourse: course.testCourse,
+        onlineCourse: course.onlineCourse,
+        language: course.language,
+        defaultProgrammingLanguage: course.defaultProgrammingLanguage,
+        maxComplaints: course.maxComplaints,
+        maxTeamComplaints: course.maxTeamComplaints,
+        maxComplaintTimeDays: course.maxComplaintTimeDays,
+        maxRequestMoreFeedbackTimeDays: course.maxRequestMoreFeedbackTimeDays,
+        maxComplaintTextLimit: course.maxComplaintTextLimit,
+        maxComplaintResponseTextLimit: course.maxComplaintResponseTextLimit,
+        color: course.color,
+        courseIcon: course.courseIcon,
+        enrollmentEnabled: course.enrollmentEnabled,
+        enrollmentConfirmationMessage: course.enrollmentConfirmationMessage,
+        unenrollmentEnabled: course.unenrollmentEnabled,
+        courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
+        learningPathsEnabled: course.learningPathsEnabled,
+        presentationAssessmentsEnabled: course.presentationAssessmentsEnabled ?? false,
+        presentationScore: course.presentationScore,
+        maxPoints: course.maxPoints,
+        accuracyOfScores: course.accuracyOfScores,
+        timeZone: course.timeZone,
+        courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
+        onboardingDone: course.onboardingDone,
+        gradeRelevant: course.courseConfiguration?.gradeRelevant ?? true,
+        dataRetentionHold: course.courseConfiguration?.dataRetentionHold ?? false,
+        autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
+        debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride,
+        maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride,
+    };
 }

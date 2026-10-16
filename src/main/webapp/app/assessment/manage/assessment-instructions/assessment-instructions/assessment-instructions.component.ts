@@ -18,7 +18,7 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExpandableSectionComponent } from '../expandable-section/expandable-section.component';
 import { GradingInstructionSelectionService } from 'app/exercise/structured-grading-criterion/grading-instruction-selection.service';
-import { TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -33,7 +33,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
         ButtonComponent,
         TranslateDirective,
         ModelingEditorComponent,
-        TumUiTagComponent,
+        TumAetUiTagComponent,
         ArtemisTranslatePipe,
     ],
 })

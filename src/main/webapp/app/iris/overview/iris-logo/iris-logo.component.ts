@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 
 export enum IrisLogoSize {
     FLUID = 'fluid',
@@ -18,8 +19,10 @@ export enum IrisLogoLookDirection {
     templateUrl: './iris-logo.component.html',
     styleUrls: ['./iris-logo.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [NgOptimizedImage],
 })
 export class IrisLogoComponent {
+    protected readonly IrisLogoSize = IrisLogoSize;
     size = input<IrisLogoSize | number>(IrisLogoSize.BIG);
     look = input<IrisLogoLookDirection>(IrisLogoLookDirection.RIGHT);
     spinning = input<boolean>(false);

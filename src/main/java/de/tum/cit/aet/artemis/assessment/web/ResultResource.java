@@ -53,9 +53,11 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -79,7 +81,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("grading/results")
+@FeatureUsage(UserFeature.RESULTS_AND_FEEDBACK_ANALYSIS)
 @RestController
 @RequestMapping("api/assessment/")
 public class ResultResource {
@@ -101,6 +103,8 @@ public class ResultResource {
 
     private final Optional<ExamDateApi> examDateApi;
 
+    private final Optional<StudentExamApi> studentExamApi;
+
     private final ExerciseRepository exerciseRepository;
 
     private final AuthorizationCheckService authCheckService;
@@ -116,13 +120,15 @@ public class ResultResource {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, Optional<ExamDateApi> examDateApi,
-            ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, ParticipationAuthorizationCheckService participationAuthCheckService,
-            UserRepository userRepository, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
+            Optional<StudentExamApi> studentExamApi, ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService,
+            ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, ParticipationRepository participationRepository,
+            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
         this.examDateApi = examDateApi;
+        this.studentExamApi = studentExamApi;
         this.exerciseRepository = exerciseRepository;
         this.authCheckService = authCheckService;
         this.participationAuthCheckService = participationAuthCheckService;
@@ -141,6 +147,7 @@ public class ResultResource {
      * @param withSubmissions defines if submissions are loaded from the database for the results.
      * @return the ResponseEntity with status 200 (OK) and the list of results with points in body.
      */
+    @FeatureUsage(UserFeature.EXERCISE_SCORES)
     @GetMapping("exercises/{exerciseId}/results-with-points-per-criterion")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<ResultWithPointsPerGradingCriterionDTO>> getResultsForExerciseWithPointsPerCriterion(@PathVariable Long exerciseId,
@@ -168,6 +175,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and with body the feedback of the result, status 404 (Not Found) if the result does not exist or 403 (forbidden) if the
      *         user does not have permissions to access the participation.
      */
+    @FeatureUsage(UserFeature.EXERCISE_FEEDBACK)
     @GetMapping("participations/{participationId}/results/{resultId}/details")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -196,6 +204,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and with body the map of resultId and build job id, status 404 (Not Found) if the participation does not exist or 403
      *         (forbidden) if the user does not have permissions to access the participation.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping("participations/{participationId}/results/build-job-ids")
     @EnforceAtLeastTutor
     public ResponseEntity<Map<Long, String>> getBuildJobIdsForResultsOfParticipation(@PathVariable long participationId) {
@@ -250,6 +259,7 @@ public class ResultResource {
      * @return The newly created result
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
+    @FeatureUsage(UserFeature.EXERCISE_SCORES)
     @PostMapping("exercises/{exerciseId}/external-submission-results")
     @EnforceAtLeastInstructor
     public ResponseEntity<ResultDTO> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin,
@@ -280,9 +290,24 @@ public class ResultResource {
         }
 
         Optional<User> student = userRepository.findOneWithAuthoritiesByLogin(studentLogin);
-        if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), student.get())) {
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+        if (student.isEmpty() || !authCheckService.isAtLeastStudentInCourse(course, student.get())) {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "studentNotFound", "The student could not be found in this course.")).build();
+        }
+
+        // Without a student exam the student has no working period, which the participation and the result of an exam exercise depend on
+        if (exercise.isExamExercise()) {
+            StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+            if (!api.hasWorkingPeriod(exercise.getExerciseGroup().getExam().getId(), student.get().getId())) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "noWorkingPeriod",
+                        "This student has no working period in this exam, because no student exam exists for them. Generate the student exams first.")).build();
+            }
+            // A result for an exercise that the student exam does not contain would be left out of the exam result
+            if (!api.isExerciseOfNewestStudentExam(exercise.getExerciseGroup().getExam().getId(), student.get().getId(), exercise.getId())) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "exerciseNotInStudentExam",
+                        "The student exam of this student does not contain this exercise.")).build();
+            }
         }
 
         // Check if a result exists already for this exercise and student. If so, do nothing and just inform the instructor.
@@ -293,11 +318,15 @@ public class ResultResource {
                     .build();
         }
 
+        Result result = resultDTO.toEntity();
+        resultService.validateGradingInstructions(result.getFeedbacks(), exercise.getId());
+
         // Create a participation and a submitted empty submission if they do not exist yet
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(exercise, student.get(), SubmissionType.EXTERNAL);
         Submission submission = participationRepository.findByIdWithSubmissionsElseThrow(participation.getId()).findLatestSubmission().orElseThrow();
-        Result result = resultDTO.toEntity();
         result.setSubmission(submission);
+        // the check above guarantees that the submission holds no result yet, so this is the result of the first correction round
+        result.setCorrectionRound(0);
         // the exercise id is a non-null column on the result; it is derived from the path, never from the request
         result.setExerciseId(exercise.getId());
 

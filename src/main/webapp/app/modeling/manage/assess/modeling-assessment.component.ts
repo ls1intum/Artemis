@@ -199,7 +199,11 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         });
     }
 
-    async ngAfterViewInit(): Promise<void> {
+    ngAfterViewInit(): void {
+        void this.initializeModelingAssessmentComponentView();
+    }
+
+    private async initializeModelingAssessmentComponentView(): Promise<void> {
         const resultFeedbacks = this.resultFeedbacks();
         if (resultFeedbacks !== undefined) {
             this.referencedFeedbacks = resultFeedbacks.filter((feedbackElement) => feedbackElement.reference != undefined);
@@ -555,6 +559,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 }
                 feedback.credits = assessment.score;
                 if (Feedback.isFeedbackSuggestion(feedback)) {
+                    // Apollon merges the suggestion's title and description into one field; keep the
+                    // suggestion title in `text` (rewriting its prefix to adapted on the first edit) and
+                    // route the assessor's edits into detailText only.
                     const alreadyAdapted = feedback.text?.startsWith(FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER);
                     if (alreadyAdapted) {
                         if (assessment.feedback !== undefined) {
@@ -571,6 +578,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                                 this.shownInApollon.set(assessment.modelElementId, assessment.feedback);
                             }
                         }
+                        // else: auto-emit or unchanged content, keep the original accepted prefix
                     }
                 } else {
                     feedback.text = assessment.feedback;

@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
@@ -44,7 +44,6 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         programmingExercise = (ProgrammingExercise) course.getExercises().iterator().next();
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(ProjectType.PLAIN_MAVEN);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
     }
@@ -105,7 +104,6 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
                     something else""";
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.KOTLIN);
         programmingExercise.setProjectType(null);
-        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         String actualFeedback = createFeedbackFromTestCase("test2", List.of(msgMatchMultiple), false);
         assertThat(actualFeedback).isEqualTo("""
@@ -115,6 +113,17 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
                     5
                 expected:
                     something else""");
+    }
+
+    @Test
+    void createFeedbackFromTestCaseRemovesExceptionNamesOfAres1AndAres2() {
+        String msgAres = """
+                de.tum.in.test.api.util.UnexpectedExceptionError: Unexpected exception in Ares 1
+                de.tum.cit.ase.ares.api.util.UnexpectedExceptionError: Unexpected exception in Ares 2""";
+        String actualFeedback = createFeedbackFromTestCase("test1", List.of(msgAres), false);
+        assertThat(actualFeedback).isEqualTo("""
+                Unexpected exception in Ares 1
+                Unexpected exception in Ares 2""");
     }
 
     @Test
@@ -249,7 +258,7 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
         feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, programmingExercise);
 
         var payloadCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(websocketMessagingService).sendMessage(eq("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases"), payloadCaptor.capture());
+        verify(websocketMessagingService).sendMessage(topic("/topic/programming-exercises/" + programmingExercise.getId() + "/test-cases"), payloadCaptor.capture());
 
         Map<String, Long> testCaseIds = testCaseRepository.findByExerciseId(programmingExercise.getId()).stream()
                 .collect(Collectors.toMap(ProgrammingExerciseTestCase::getTestName, ProgrammingExerciseTestCase::getId));
@@ -311,6 +320,8 @@ class ProgrammingExerciseFeedbackCreationServiceTest extends AbstractProgramming
     @Test
     void shouldGenerateNewTestCasesWithVisibilityAfterDueDate() {
         ExerciseGroup exerciseGroup1 = examUtilService.addExerciseGroupWithExamAndCourse(true);
+        // Moving the exercise into an exam means giving up its own course: an exercise belongs to one or the other.
+        programmingExercise.setCourse(null);
         programmingExercise.setExerciseGroup(exerciseGroup1);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 

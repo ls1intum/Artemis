@@ -359,30 +359,6 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.assessmentResult()).toEqual(newResult);
     });
 
-    it('preserves the live collaborative model when an automatic-submission snapshot arrives', async () => {
-        createComponent();
-
-        submission.submitted = false;
-        submission.model = validMockModel;
-        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const websocketService = TestBed.inject(WebsocketService) as unknown as MockWebsocketService;
-        vi.spyOn(websocketService, 'subscribe');
-        fixture.detectChanges();
-        await fixture.whenStable();
-        const liveModel = comp.umlModel();
-        expect(liveModel).toBeDefined();
-        expect(comp.modelingExercise().teamMode).toBe(true);
-        const modelSubmission = <ModelingSubmission>(<unknown>{
-            id: submission.id,
-            model: JSON.stringify({ ...JSON.parse(validMockModel), title: 'Persisted snapshot' }),
-            submitted: true,
-            participation,
-        });
-        websocketService.emit(`/user/topic/modelingSubmission/${submission.id}`, modelSubmission);
-        expect(comp.submission()).toEqual(modelSubmission);
-        expect(comp.umlModel()).toBe(liveModel);
-    });
-
     it('should set correct properties on modeling exercise update when submitting', () => {
         createComponent();
 

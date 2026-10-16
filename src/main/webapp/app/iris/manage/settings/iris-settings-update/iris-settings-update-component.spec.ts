@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { IrisSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-settings-update.component';
 import { IrisCourseSettingsDTO, IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -15,6 +16,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ActivatedRoute, Params } from '@angular/router';
 
@@ -33,6 +35,7 @@ describe('IrisSettingsUpdateComponent', () => {
         variant: 'default',
         supportLevel: 'moderate',
         rateLimit: { requests: 100, timeframeHours: 24 },
+        proactiveStruggleEnabled: false,
     };
 
     const mockResponse: IrisCourseSettingsWithRateLimitDTO = {
@@ -419,6 +422,102 @@ describe('IrisSettingsUpdateComponent', () => {
             const savedSettings = updateSpy.mock.calls[0][1] as IrisCourseSettingsDTO;
             expect(savedSettings.rateLimit).toEqual({ requests: 100, timeframeHours: 24 });
             expect(savedSettings.enabled).toBe(false);
+        });
+    });
+
+    describe('updateProactiveStruggleEnabled', () => {
+        it('updateProactiveStruggleEnabled sets the flag on the settings signal', () => {
+            component.settings.set(cloneWith(mockSettings, { proactiveStruggleEnabled: false }));
+            component.updateProactiveStruggleEnabled(true);
+            expect(component.settings()?.proactiveStruggleEnabled).toBe(true);
+        });
+
+        it('sends a non-admin change to the server instead of restoring it', async () => {
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            vi.spyOn(accountService, 'isAdmin').mockReturnValue(false);
+            component.isAdmin.set(false);
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+
+            component.settings.set(cloneWith(component.settings()!, { proactiveStruggleEnabled: true, legacyBuildTriggersEnabled: false }));
+            component.saveSettings();
+            await fixture.whenStable();
+
+            expect(updateSpy.mock.calls[0][1].proactiveStruggleEnabled).toBe(true);
+            expect(updateSpy.mock.calls[0][1].legacyBuildTriggersEnabled).toBe(false);
+        });
+    });
+
+    describe('updateLegacyBuildTriggersEnabled', () => {
+        it('writes an explicit decision, which is what ends the undecided state', () => {
+            component.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: undefined }));
+
+            component.updateLegacyBuildTriggersEnabled(false);
+
+            expect(component.settings()?.legacyBuildTriggersEnabled).toBe(false);
+        });
+
+        it('an explicit false survives the enabled-toggle auto-save', async () => {
+            // The path that made the field nullable in the first place: flipping "Iris enabled" auto-saves the whole
+            // payload. If that save dropped or inverted the admin's opt-out, Artemis' own proactive events would come
+            // back on a study course without anyone touching the switch.
+            routeParamsSubject.next({ courseId: '1' });
+            component.ngOnInit();
+            await fixture.whenStable();
+
+            const updateSpy = vi.spyOn(irisSettingsService, 'updateCourseSettings').mockReturnValue(of(new HttpResponse({ body: mockResponse })));
+            component.settings.set(cloneWith(component.settings()!, { legacyBuildTriggersEnabled: false, enabled: true }));
+
+            component.setEnabled(false);
+            await fixture.whenStable();
+
+            expect(updateSpy.mock.calls[0][1].legacyBuildTriggersEnabled).toBe(false);
+        });
+
+        it('treats an undecided course as on, so a stored opt-out is never invented', () => {
+            // `?? true`, never `!!`: absent means "no admin decided", and every course behaved as on before the
+            // field existed. Collapsing it to false here would show the toggle off for the whole installation.
+            component.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: undefined, proactiveStruggleEnabled: true }));
+            expect(component.bothProactiveMechanismsActive()).toBe(true);
+
+            component.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: false, proactiveStruggleEnabled: true }));
+            expect(component.bothProactiveMechanismsActive()).toBe(false);
+
+            component.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: true, proactiveStruggleEnabled: false }));
+            expect(component.bothProactiveMechanismsActive()).toBe(false);
+        });
+
+        it('keeps a course that opted in visible while the switch is locked', async () => {
+            // The course keeps its decision for when the installation turns the mechanism back on, so the switch
+            // has to render checked AND disabled. Asserted on the DOM: the model alone would not catch a
+            // ControlValueAccessor that drops its value once the control is disabled.
+            vi.spyOn(TestBed.inject(FeatureToggleService), 'getFeatureToggleActive').mockReturnValue(of(false));
+            const locked = TestBed.createComponent(IrisSettingsUpdateComponent);
+            locked.detectChanges();
+            await locked.whenStable();
+
+            locked.componentInstance.settings.set(cloneWith(mockSettings, { proactiveStruggleEnabled: true }));
+            locked.detectChanges();
+            await locked.whenStable();
+            locked.detectChanges();
+
+            const toggle = locked.nativeElement.querySelector('#proactiveStruggleEnabled') as HTMLInputElement;
+            expect(toggle.checked).toBe(true);
+            expect(toggle.disabled).toBe(true);
+        });
+
+        it('reports nothing armed while the installation serves no struggle detection', () => {
+            // A course can hold proactiveStruggleEnabled true on an installation whose runtime toggle is off.
+            // Warning about two mechanisms firing at once would be wrong there: only one of them can fire.
+            vi.spyOn(TestBed.inject(FeatureToggleService), 'getFeatureToggleActive').mockReturnValue(of(false));
+            const unavailable = TestBed.createComponent(IrisSettingsUpdateComponent).componentInstance;
+
+            unavailable.settings.set(cloneWith(mockSettings, { legacyBuildTriggersEnabled: true, proactiveStruggleEnabled: true }));
+
+            expect(unavailable.struggleAvailable()).toBe(false);
+            expect(unavailable.bothProactiveMechanismsActive()).toBe(false);
         });
     });
 

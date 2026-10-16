@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
@@ -114,9 +114,12 @@ export interface HolidayCalendarWeek {
         '(window:pointerup)': 'finishDrag()',
         '(window:pointercancel)': 'cancelDrag()',
     },
-    imports: [FaIconComponent, TumUiButtonDirective, TranslateDirective, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TumAetUiButtonDirective, TranslateDirective, ArtemisTranslatePipe],
 })
 export class HolidayMonthGridComponent {
+    private readonly gridElement = inject<ElementRef<HTMLElement>>(ElementRef);
+    private readonly translateService = inject(TranslateService);
+
     /** Any day of the month to display; the grid derives the month from it. */
     readonly displayedMonth = input.required<dayjs.Dayjs>();
     readonly holidays = input.required<readonly Holiday[]>();
@@ -143,9 +146,6 @@ export class HolidayMonthGridComponent {
      */
     readonly rangeSelected = output<{ start: dayjs.Dayjs; end: dayjs.Dayjs; origin: HTMLElement }>();
 
-    private readonly gridElement = inject<ElementRef<HTMLElement>>(ElementRef);
-
-    private readonly translateService = inject(TranslateService);
     private readonly locale = getCurrentLocaleSignal(this.translateService);
 
     /** Reused from the course calendar so both grids label their columns identically. */

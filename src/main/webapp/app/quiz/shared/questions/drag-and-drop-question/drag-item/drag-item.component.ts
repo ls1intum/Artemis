@@ -1,7 +1,7 @@
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Component, ViewEncapsulation, inject, input } from '@angular/core';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
-import { NgClass, NgStyle } from '@angular/common';
+import { NgClass } from '@angular/common';
 import { CdkDrag, CdkDragPlaceholder, CdkDragPreview } from '@angular/cdk/drag-drop';
 import { ImageComponent } from 'app/shared-ui/image/image.component';
 import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
@@ -15,7 +15,7 @@ import { getIsMobileSignal } from 'app/foundation/util/global.utils';
     templateUrl: './drag-item.component.html',
     styleUrls: ['./drag-item.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [NgClass, NgStyle, CdkDrag, ImageComponent, CdkDragPlaceholder, FitTextDirective, CdkDragPreview, TranslateDirective],
+    imports: [NgClass, CdkDrag, ImageComponent, CdkDragPlaceholder, FitTextDirective, CdkDragPreview, TranslateDirective],
 })
 export class DragItemComponent {
     private breakpointObserver = inject(BreakpointObserver);

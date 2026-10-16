@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd"
+                   logicalFilePath="config/liquibase/changelog/20260916083344_changelog.xml">
+
+    <!--
+    Gives the exercise table the check constraint the application has always assumed: an exercise belongs to a course
+    or to an exercise group, never to both and never to neither.
+
+    Exercise#checkCourseAndExerciseGroupExclusivity states the rule, and the create, update and import endpoints of
+    every exercise type call it, so requests have been checked for years. The database has not been, and anything
+    writing through a repository rather than through a resource is therefore unchecked. A row carrying both is not a
+    curiosity: Exercise#isExamExercise tests the exercise group alone, so such a row is an exam exercise whose
+    course_id names a course it does not belong to, and every authorization decision derived from that column answers
+    about the wrong course.
+
+    Both foreign keys are ON DELETE RESTRICT, so no exercise can be orphaned by deleting its course or its exercise
+    group. That bounds what an installation can have accumulated to rows written directly.
+
+    To see what this will change, run before upgrading:
+
+        SELECT id, title,
+               CASE WHEN course_id IS NOT NULL AND exercise_group_id IS NOT NULL THEN 'both'
+                    ELSE 'neither' END AS violation
+        FROM exercise
+        WHERE (course_id IS NULL) = (exercise_group_id IS NULL);
+
+    The two violations are not the same problem. An exercise carrying BOTH is repaired, because the repair is not a
+    guess: getCourseViaExerciseGroupOrCourseMember already reads such a row through its exam and ignores course_id, so
+    clearing course_id writes down what the application believes and changes the answer to no question it asks. An
+    exercise carrying NEITHER is neither repaired nor deleted, because nothing in the row says which course it
+    belonged to and an exercise owns submissions, results and grades. It halts the upgrade with a message naming it,
+    the same choice 20260410144433_changelog.xml makes for a state only a person can resolve.
+
+    Liquibase's addCheckConstraint is a Pro change type, so the DDL is raw SQL; the statement is the same on both
+    engines. Enforcing it costs nothing on read: a check constraint is evaluated on INSERT and UPDATE only, and this
+    one is two null tests on columns already in the row being written.
+    -->
+
+    <!--
+    information_schema is portable but the "current schema" function is not, following 20260910212533_changelog.xml.
+    Every changeset interpolating ${lbSchema} must carry dbms="mysql,postgresql" so the placeholder does not reach
+    another engine verbatim.
+    -->
+    <property name="lbSchema" value="DATABASE()" dbms="mysql"/>
+    <property name="lbSchema" value="current_schema()" dbms="postgresql"/>
+
+    <changeSet id="20260916083344-01-precondition-no-orphaned-exercises" author="krusche">
+        <preConditions onFail="HALT" onFailMessage="The exercise table contains rows with neither a course_id nor an exercise_group_id. Such an exercise belongs to nothing, and this migration cannot decide what it belonged to: the row carries no evidence of it, and an exercise owns submissions, results and grades, so it is not deleted either. Find them with: SELECT id, title, discriminator FROM exercise WHERE course_id IS NULL AND exercise_group_id IS NULL; then attach each one to its course or exercise group, or remove it deliberately, and start again.">
+            <sqlCheck expectedResult="0">SELECT COUNT(*) FROM exercise WHERE course_id IS NULL AND exercise_group_id IS NULL</sqlCheck>
+        </preConditions>
+        <!-- No-op body; the precondition is the entire purpose of this changeset. -->
+        <sql>SELECT 1</sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20260916083344-02-clear-course-on-exam-exercises" author="krusche">
+        <comment>Clear course_id on an exercise that also names an exercise group, which the application already reads as an exam exercise.</comment>
+        <sql>
+            UPDATE exercise SET course_id = NULL WHERE course_id IS NOT NULL AND exercise_group_id IS NOT NULL;
+        </sql>
+        <!--
+        Not recoverable, and not needed. The cleared value named a course the exercise did not belong to, so nothing
+        read it: getCourseViaExerciseGroupOrCourseMember has always resolved such a row through its exam.
+        -->
+        <rollback/>
+    </changeSet>
+
+    <!--
+    MARK_RAN rather than CONTINUE: the condition guarded here is "the constraint already exists", which is a permanent
+    and correct end state rather than a transient one worth retrying, so CONTINUE would log a warning on every startup
+    for good.
+
+    UPPER() on the name because PostgreSQL folds an unquoted identifier to lower case while MySQL keeps it as written,
+    so the same constraint is stored under two spellings.
+    -->
+    <changeSet id="20260916083344-03-exercise-exactly-one-owner" author="krusche" dbms="mysql,postgresql">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM information_schema.table_constraints
+                WHERE table_schema = ${lbSchema} AND table_name = 'exercise'
+                  AND UPPER(constraint_name) = 'CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP'
+            </sqlCheck>
+        </preConditions>
+        <comment>Enforce that an exercise belongs to a course or to an exercise group, never both and never neither.</comment>
+        <sql>
+            ALTER TABLE exercise ADD CONSTRAINT CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP
+            CHECK ((course_id IS NOT NULL AND exercise_group_id IS NULL)
+                OR (course_id IS NULL AND exercise_group_id IS NOT NULL));
+        </sql>
+        <rollback>
+            <sql>ALTER TABLE exercise DROP CONSTRAINT CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP;</sql>
+        </rollback>
+    </changeSet>
+
+
+    <!--
+    H2 is the no-Docker way of running the test suite (gradle/test.gradle, -Dzonky.test.database.type=H2), so it has
+    to carry the constraint too: without it a run there passes on fixtures the other two engines reject, which is the
+    opposite of what a second engine is for. It gets its own changeset rather than joining the dbms list above, because
+    that precondition reads information_schema through a current-schema function that differs per engine and H2 folds
+    an unquoted table name to upper case on top of it. There is nothing here for a precondition to guard: an H2
+    database only ever exists for the length of a test run and is created from scratch.
+    -->
+    <changeSet id="20260916083344-04-exercise-exactly-one-owner-h2" author="krusche" dbms="h2">
+        <comment>The same constraint on the in-process database the test suite can be pointed at.</comment>
+        <sql>
+            ALTER TABLE exercise ADD CONSTRAINT CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP
+            CHECK ((course_id IS NOT NULL AND exercise_group_id IS NULL)
+                OR (course_id IS NULL AND exercise_group_id IS NOT NULL));
+        </sql>
+        <rollback>
+            <sql>ALTER TABLE exercise DROP CONSTRAINT CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP;</sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

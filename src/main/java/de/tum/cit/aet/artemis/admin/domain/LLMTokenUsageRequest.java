@@ -2,12 +2,14 @@ package de.tum.cit.aet.artemis.admin.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 /**
  * Represents the token usage details of a single LLM request, including model, service pipeline, token counts, and costs.
@@ -41,7 +43,27 @@ public class LLMTokenUsageRequest extends DomainObject {
     @Column(name = "cost_per_million_output_tokens")
     private float costPerMillionOutputTokens;
 
+    /**
+     * part of the input tokens the provider read from its prompt cache (included in numInputTokens)
+     */
+    @Column(name = "num_cached_input_tokens")
+    private int numCachedInputTokens;
+
+    @Column(name = "cost_per_million_cached_input_tokens")
+    private float costPerMillionCachedInputTokens;
+
+    /**
+     * part of the input tokens the provider wrote to its prompt cache (included in numInputTokens)
+     */
+    @Column(name = "num_cache_write_input_tokens")
+    private int numCacheWriteInputTokens;
+
+    @Column(name = "cost_per_million_cache_write_input_tokens")
+    private float costPerMillionCacheWriteInputTokens;
+
     @ManyToOne
+    @JoinColumn(nullable = false)
+    @Parent
     private LLMTokenUsageTrace trace;
 
     public String getModel() {
@@ -90,6 +112,38 @@ public class LLMTokenUsageRequest extends DomainObject {
 
     public void setNumOutputTokens(int numOutputTokens) {
         this.numOutputTokens = numOutputTokens;
+    }
+
+    public int getNumCachedInputTokens() {
+        return numCachedInputTokens;
+    }
+
+    public void setNumCachedInputTokens(int numCachedInputTokens) {
+        this.numCachedInputTokens = numCachedInputTokens;
+    }
+
+    public float getCostPerMillionCachedInputTokens() {
+        return costPerMillionCachedInputTokens;
+    }
+
+    public void setCostPerMillionCachedInputTokens(float costPerMillionCachedInputTokens) {
+        this.costPerMillionCachedInputTokens = costPerMillionCachedInputTokens;
+    }
+
+    public int getNumCacheWriteInputTokens() {
+        return numCacheWriteInputTokens;
+    }
+
+    public void setNumCacheWriteInputTokens(int numCacheWriteInputTokens) {
+        this.numCacheWriteInputTokens = numCacheWriteInputTokens;
+    }
+
+    public float getCostPerMillionCacheWriteInputTokens() {
+        return costPerMillionCacheWriteInputTokens;
+    }
+
+    public void setCostPerMillionCacheWriteInputTokens(float costPerMillionCacheWriteInputTokens) {
+        this.costPerMillionCacheWriteInputTokens = costPerMillionCacheWriteInputTokens;
     }
 
     public LLMTokenUsageTrace getTrace() {

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exam.repository;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
@@ -22,7 +21,9 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.domain.User_;
 import de.tum.cit.aet.artemis.core.domain.DomainObject_;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.util.StringUtil;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
+import de.tum.cit.aet.artemis.exam.domain.ExamSession_;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser_;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -41,11 +42,6 @@ public final class ExamUserSpecs {
     @NonNull
     private static Specification<ExamUser> noOp() {
         return (root, query, builder) -> builder.conjunction();
-    }
-
-    /** LIKE-escape for user input. Escapes backslash, percent, and underscore so they are treated literally. */
-    private static String escapeForLike(String term) {
-        return term.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
     }
 
     /**
@@ -191,7 +187,7 @@ public final class ExamUserSpecs {
             Expression<String> fullName = builder
                     .lower(builder.concat(builder.concat(builder.coalesce(userJoin.get(User_.FIRST_NAME), ""), " "), builder.coalesce(userJoin.get(User_.LAST_NAME), "")));
             List<Predicate> tokenPredicates = tokens.stream().map(token -> {
-                String pattern = "%" + escapeForLike(token) + "%";
+                String pattern = "%" + StringUtil.escapeForLikeLowerCase(token) + "%";
                 return builder.or(builder.like(builder.lower(userJoin.get(User_.LOGIN)), pattern, '\\'), builder.like(fullName, pattern, '\\'));
             }).toList();
             return builder.or(tokenPredicates.toArray(new Predicate[0]));
@@ -256,7 +252,7 @@ public final class ExamUserSpecs {
                 case "numberOfExamSessions" -> {
                     Subquery<Long> sub = query.subquery(Long.class);
                     Root<ExamSession> sess = sub.from(ExamSession.class);
-                    Path<StudentExam> se = sess.get("studentExam");
+                    Path<StudentExam> se = sess.get(ExamSession_.STUDENT_EXAM);
                     sub.select(builder.count(sess));
                     sub.where(builder.and(builder.equal(se.get(StudentExam_.USER), user), builder.equal(se.get(StudentExam_.EXAM), root.get(ExamUser_.EXAM)),
                             builder.or(builder.isNull(se.get(StudentExam_.TEST_RUN)), builder.isFalse(se.get(StudentExam_.TEST_RUN)))));

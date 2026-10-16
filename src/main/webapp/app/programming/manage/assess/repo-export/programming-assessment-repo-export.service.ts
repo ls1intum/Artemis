@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -14,7 +14,7 @@ export type RepositoryExportOptions = {
     normalizeCodeStyle: boolean;
 };
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingAssessmentRepoExportService {
     private http = inject(HttpClient);
 

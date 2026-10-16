@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.localci.service.ci;
 
 import org.jspecify.annotations.Nullable;
 
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 
 /**
@@ -22,10 +23,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatist
  * @param testCommitHash  the head commit of the exercise's test repository, null if the repository has none
  * @param buildStatistics the exercise's build statistics, null if the exercise has none yet
  */
-public record SharedBuildTriggerData(boolean resolved, @Nullable String testCommitHash, @Nullable ProgrammingExerciseBuildStatistics buildStatistics) {
+public record SharedBuildTriggerData(boolean resolved, @Nullable String testCommitHash, @Nullable ProgrammingExerciseBuildStatistics buildStatistics,
+        @Nullable ProgrammingExerciseBuildConfig buildConfig) {
 
     /** Nothing was resolved in advance, so each trigger resolves what it needs itself. */
-    public static final SharedBuildTriggerData NONE = new SharedBuildTriggerData(false, null, null);
+    public static final SharedBuildTriggerData NONE = new SharedBuildTriggerData(false, null, null, null);
 
     /**
      * Values the caller resolved for a whole exercise. A null in either of them is an answer, not a missing value: the
@@ -34,9 +36,11 @@ public record SharedBuildTriggerData(boolean resolved, @Nullable String testComm
      *
      * @param testCommitHash  the head commit of the exercise's test repository, null if the repository has none
      * @param buildStatistics the exercise's build statistics, null if the exercise has none yet
+     * @param buildConfig     the exercise's build configuration, which is a row of its own that names the exercise
      * @return the resolved values
      */
-    public static SharedBuildTriggerData of(@Nullable String testCommitHash, @Nullable ProgrammingExerciseBuildStatistics buildStatistics) {
-        return new SharedBuildTriggerData(true, testCommitHash, buildStatistics);
+    public static SharedBuildTriggerData of(@Nullable String testCommitHash, @Nullable ProgrammingExerciseBuildStatistics buildStatistics,
+            ProgrammingExerciseBuildConfig buildConfig) {
+        return new SharedBuildTriggerData(true, testCommitHash, buildStatistics, buildConfig);
     }
 }

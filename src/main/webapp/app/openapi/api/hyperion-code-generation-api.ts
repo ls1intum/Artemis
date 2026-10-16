@@ -34,4 +34,14 @@ export class HyperionCodeGenerationApi {
         return this.http.post<CodeGenerationJobStart>(url, codeGenerationRequest);
     }
 
+    /**
+     * 
+     * 
+     * @param exerciseId 
+     */
+    getActiveCodeGenerationJob(exerciseId: number): Observable<CodeGenerationJobStart> {
+        const url = `${this.basePath}/api/hyperion/programming-exercises/${exerciseId}/code-generation/active-job`;
+        return this.http.get<CodeGenerationJobStart>(url);
+    }
+
 }

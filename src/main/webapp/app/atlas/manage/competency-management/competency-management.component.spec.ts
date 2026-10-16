@@ -19,7 +19,7 @@ import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-mana
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
@@ -283,6 +283,30 @@ describe('CompetencyManagementComponent', () => {
                 data: expect.objectContaining({ courseId: 1 }),
             }),
         );
+    });
+
+    it('should not enable the agent chat when Atlas is active but AtlasLLM is not', async () => {
+        // The profile of an installation with competencies and no chat model: the AtlasAgent toggle may still be on,
+        // and the instructor may still have the authority, but the agent endpoint is not registered on that server.
+        getProfileInfoSpy.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo);
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+        vi.spyOn(TestBed.inject(AccountService), 'hasAnyAuthorityDirect').mockReturnValue(true);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.agentChatEnabled()).toBe(false);
+    });
+
+    it('should enable the agent chat when AtlasLLM is active', async () => {
+        getProfileInfoSpy.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_ATLAS, MODULE_FEATURE_ATLASLLM] } as ProfileInfo);
+        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+        vi.spyOn(TestBed.inject(AccountService), 'hasAnyAuthorityDirect').mockReturnValue(true);
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.agentChatEnabled()).toBe(true);
     });
 
     it('should wire onCompetencyChanged callback to reload competencies', async () => {

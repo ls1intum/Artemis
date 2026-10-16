@@ -145,6 +145,22 @@ public interface PlatformDataCleanupRepository extends ArtemisJpaRepository<Data
             """)
     int deleteIrisSessions(@Param("userId") long userId);
 
+    @Query("""
+            SELECT episode.userId AS userId, COUNT(episode) AS count
+            FROM IrisProactiveEpisode episode
+            WHERE episode.userId IN :userIds
+            GROUP BY episode.userId
+            """)
+    List<UserReferenceCount> countIrisProactiveEpisodes(@Param("userIds") Collection<Long> userIds);
+
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM IrisProactiveEpisode episode
+            WHERE episode.userId = :userId
+            """)
+    int deleteIrisProactiveEpisodes(@Param("userId") long userId);
+
     /**
      * The archives generated for the account's data exports. The rows go with the account, but the files live outside
      * the database and have to be scheduled for deletion separately.

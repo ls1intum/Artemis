@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -18,7 +19,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.user.UserService;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
+import de.tum.cit.aet.artemis.core.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.service.CourseAccessService;
@@ -31,11 +35,17 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessTokenType;
+import de.tum.cit.aet.artemis.programming.dto.GitRepositoryAccessDTO;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessTokenOverviewDTO;
 import de.tum.cit.aet.artemis.programming.repository.RepositoryVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseDeletionService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
+
+    @Autowired
+    private RepositoryAccessService repositoryAccessService;
 
     private static final String TEST_PREFIX = "repovcsat";
 
@@ -183,6 +193,23 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
             assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isEmpty();
             assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getSolutionRepositoryUri())).isEmpty();
             assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getTestRepositoryUri())).isEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void registerUsersForCourse_asynchronouslyProvisionsTokensForStaff() {
+        // A dedicated user, added the same way the course-member registration modal and CSV import add staff (the bulk endpoint), not the single-user add endpoint.
+        User joiningStaff = userUtilService.createAndSaveUser(TEST_PREFIX + "bulkjoiningstaff");
+        assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isEmpty();
+
+        List<StudentDTO> notFound = courseAccessService.registerUsersForCourse(course.getId(), List.of(new StudentDTO(joiningStaff.getLogin(), null, null, null, null)),
+                CourseRole.INSTRUCTOR);
+        assertThat(notFound).isEmpty();
+
+        await().atMost(15, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), templateUri)).isPresent();
+            assertThat(repositoryVCSAccessTokenRepository.findByUserIdAndRepositoryUri(joiningStaff.getId(), exercise.getSolutionRepositoryUri())).isPresent();
         });
     }
 
@@ -450,6 +477,41 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void studentRepositorySupportClosesAtManualDeadlineIncludingPreviouslyIssuedTokens() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        exercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.save(exercise);
+        String url = "/api/programming/repository-vcs-access-token?exerciseId=" + exercise.getId() + "&repositoryType=USER&participationId=" + participation.getId();
+        String token = request.putWithResponseBody(url, null, String.class, HttpStatus.OK);
+        var openProjection = programmingExerciseRepository.findAccessProjectionByProjectKey(exercise.getProjectKey()).getFirst();
+        assertThat(openProjection.assessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThatCode(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, tutor, openProjection, RepositoryActionType.READ)).doesNotThrowAnyException();
+        assertThatThrownBy(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, tutor, openProjection, RepositoryActionType.WRITE))
+                .isInstanceOf(AccessForbiddenException.class);
+
+        exercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.save(exercise);
+        request.get(url, HttpStatus.FORBIDDEN, String.class);
+        request.put(url, null, HttpStatus.FORBIDDEN);
+        var closedProjection = programmingExerciseRepository.findAccessProjectionByProjectKey(exercise.getProjectKey()).getFirst();
+        assertThatThrownBy(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, tutor, closedProjection, RepositoryActionType.READ))
+                .isInstanceOf(AccessForbiddenException.class);
+        // SSH builds the same access projection from the loaded entity.
+        assertThatThrownBy(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, tutor, GitRepositoryAccessDTO.of(exercise), RepositoryActionType.READ))
+                .isInstanceOf(AccessForbiddenException.class);
+
+        exercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExerciseRepository.save(exercise);
+        assertThat(request.get(url, HttpStatus.OK, String.class)).isEqualTo(token);
+        var automaticProjection = programmingExerciseRepository.findAccessProjectionByProjectKey(exercise.getProjectKey()).getFirst();
+        assertThatCode(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, tutor, automaticProjection, RepositoryActionType.READ))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void studentRepositoryVcsAccessTokenEndpoint_forbiddenForStudent() throws Exception {
         // A student must not be able to mint a staff repository token for a student repository (even their own): the endpoint requires at least tutor in the course.
@@ -572,8 +634,8 @@ class RepositoryVcsAccessTokenIntegrationTest extends AbstractProgrammingIntegra
     }
 
     /**
-     * Attaches an auxiliary repository with the given canonical URI to the exercise. Goes through the util helper (which writes the {@code @OrderColumn} index by saving the
-     * exercise) and keeps the in-memory exercise object consistent so the service can resolve the auxiliary repository by id.
+     * Attaches an auxiliary repository with the given canonical URI to the exercise. Goes through the util helper and
+     * keeps the in-memory exercise object consistent so the service can resolve the auxiliary repository by id.
      */
     private AuxiliaryRepository persistAuxiliaryRepository(String repositoryUri) {
         AuxiliaryRepository auxiliaryRepository = programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(exercise);

@@ -1,24 +1,42 @@
 ---
 name: liquibase-migration
-description: Write an Artemis Liquibase changelog that applies cleanly on both PostgreSQL and MySQL. Use when adding, changing, or dropping a database column, table, index, or constraint, or when a changeset fails on startup. Covers the file and id conventions, the guarded pattern for adding NOT NULL, expand and contract for a column that code still reads or writes, the rollback invariant, and the local validation steps.
+description: Add, change, or debug an Artemis Liquibase schema migration.
 ---
 
 # Write a Liquibase migration
 
-A bad changeset does not fail a test, it stops the application from starting, on every node, in
-production. Everything here exists because of that.
+Migrations must work on PostgreSQL and MySQL and preserve the required schema invariants.
 
 ## The mechanics
 
-Changelogs live in `src/main/resources/config/liquibase/changelog/` and are included from
+New changelogs live in `src/main/resources/config/liquibase/changelog/` and are included from
 `src/main/resources/config/liquibase/master.xml`.
 
 1. Get the timestamp: `date '+%Y%m%d%H%M%S'`
 2. Create `src/main/resources/config/liquibase/changelog/<timestamp>_changelog.xml`
 3. Add an `<include>` line for it at the end of `master.xml`, keeping chronological order
 
+That is the whole job. **Adding a changelog never means touching the baseline**, however close a
+release is: a changelog under `changelog/` runs on a fresh installation and on an upgrade alike. Do not
+re-run `cut_baseline.py` to fold it in either — re-cutting a generation any database has already
+recorded, a deployed test server included, changes checksums those databases refuse to start against.
+Cutting is described in
+[database-migration-consolidation](../../documentation/docs/developer/guidelines/database-migration-consolidation.mdx).
+
+`master.xml` also lists three directories you do not write into by hand. `baseline/` holds the
+generated schema as of the last consolidation, `history/` the changelogs that baseline already folded,
+and `data/` the seed data. **Seed data never goes in `changelog/`**: a folded changeset is recorded
+rather than executed on a fresh installation, which is right for a schema change the baseline already
+contains and wrong for data, whose rows would silently be missing. Anything with a `context` belongs in
+`data/`. A changelog **cherry-picked from a release branch** also goes in `changelog/`, even when its
+timestamp predates the baseline: under `history/` a fresh installation would record it without executing
+it, and the change would simply be missing. `supporting_scripts/liquibase/verify_schema.py --check layout`
+enforces the first rule and `--check converge` the second, and
+[database-migration-consolidation](../../documentation/docs/developer/guidelines/database-migration-consolidation.mdx)
+explains the layout.
+
 Changeset ids are `<timestamp>-<sequence>-<slug>`, for example
-`20260827090000-02-result-submission-not-null`. The author is your username. Never edit the *changes* of a changeset
+`20260827090000-02-result-submission-not-null`. The author is your username. Never edit the _changes_ of a changeset
 that has already been merged: Liquibase records a checksum over the forward change elements and any
 `modifySql`, and the application refuses to start when it no longer matches. Write a new changeset
 instead. Comments are not part of that checksum, so an XML comment, a `<comment>` element and a
@@ -34,10 +52,11 @@ decision procedure.
 **Adding a nullable column, a table, or an index.** Straightforward. Write the changeset, add a
 `<rollback>` if Liquibase cannot infer one.
 
-**Adding a NOT NULL constraint to an existing column.** Use the guarded pattern. Adding the
-constraint while a null is still present fails the changeset, and a failing changeset stops the
-application from starting. This is the single most dangerous migration in this codebase and the
-pattern is non-obvious, so read the section in `reference/migration-patterns.md` before writing it.
+**Adding a NOT NULL constraint to an existing column.** Review the data and the application
+invariant first. If the constraint is required, backfill or remove invalid rows, verify that no
+`NULL` values remain, and fail the migration if verification fails. Use the guarded `CONTINUE`
+pattern only when the application remains correct with a nullable column and the changeset
+explains that decision. Read `reference/migration-patterns.md` before writing it.
 
 **Dropping or renaming a column that code still references.** Use expand and contract across two
 releases, so that rolling the application back to the previous version still finds a schema it can
@@ -100,6 +119,17 @@ interesting.
 
 Watch the startup log for the changeset ids. A changeset skipped by a precondition logs a warning
 rather than failing, so a silent skip is easy to miss.
+
+Then run the schema checks, which are what CI runs. They need Docker and take about two minutes:
+
+```bash
+python3 supporting_scripts/liquibase/verify_schema.py
+```
+
+They apply the changelogs to empty MySQL and PostgreSQL databases and compare the fresh-installation
+and upgrade routes. Empty is the operative word: they verify structure, not the backfill your
+changeset performs, which is why the paragraph above about starting against a database that already
+has data is the part that cannot be automated away.
 
 ## Related
 

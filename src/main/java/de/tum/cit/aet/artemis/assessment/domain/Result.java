@@ -44,6 +44,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.ResultListener;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -92,6 +93,7 @@ public class Result extends DomainObject implements Comparable<Result> {
     @ManyToOne
     @JsonIgnoreProperties({ "results" })
     @JoinColumn(nullable = false)
+    @Parent
     private Submission submission;
 
     // Stored as a Set: feedback ordering is not semantically meaningful — every consumer that cares about
@@ -287,9 +289,10 @@ public class Result extends DomainObject implements Comparable<Result> {
         this.rated = rated;
     }
 
-    private void setRatedIfNotAfterDueDate(@NonNull Participation participation, @NonNull ZonedDateTime submissionDate) {
+    private void setRatedIfNotAfterDueDate(@NonNull Participation participation, @Nullable ZonedDateTime submissionDate) {
         var optionalDueDate = ExerciseDateService.getDueDate(participation);
-        if (optionalDueDate.isEmpty()) {
+        // without a due date or without a submission date (nothing was submitted) the submission cannot be late
+        if (optionalDueDate.isEmpty() || submissionDate == null) {
             this.rated = true;
             return;
         }
@@ -304,6 +307,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * A result is rated if:
      * - the submission date is before the due date OR
      * - no due date is set OR
+     * - the submission has no submission date (nothing was submitted, so it cannot be late) OR
      * - the submission type is INSTRUCTOR / TEST
      */
     public void setRatedIfNotAfterDueDate() {
@@ -549,7 +553,7 @@ public class Result extends DomainObject implements Comparable<Result> {
      * Checks for a new feedback if the score or text has changed compared to the already existing feedback for the same element.
      */
     private boolean feedbackHasChanged(Feedback feedback) {
-        if (this.feedbacks == null || this.feedbacks.isEmpty()) {
+        if (this.feedbacks.isEmpty()) {
             return false;
         }
         return this.feedbacks.stream().filter(Objects::nonNull)

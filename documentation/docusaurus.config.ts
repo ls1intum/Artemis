@@ -15,9 +15,9 @@ const config: Config = {
 
     customFields: {
         pageTitle: PAGE_TITLE,
-        tumUiStorybookIncluded: process.env.ARTEMIS_DOCS_TUM_UI === 'true',
+        tumAetUiStorybookIncluded: process.env.ARTEMIS_DOCS_TUM_AET_UI === 'true',
     },
-    staticDirectories: ['static', ...(process.env.ARTEMIS_DOCS_TUM_UI === 'true' ? ['../build/documentation-static'] : [])],
+    staticDirectories: ['static', ...(process.env.ARTEMIS_DOCS_TUM_AET_UI === 'true' ? ['../build/documentation-static'] : [])],
 
     // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
     future: {
@@ -114,6 +114,18 @@ const config: Config = {
                         // The single exam guide became a category of focused pages.
                         from: '/instructor/exams/exam-timeline',
                         to: '/instructor/exams/intro',
+                    },
+                    {
+                        from: '/developer/guidelines/tum-ui-kit',
+                        to: '/developer/guidelines/tum-aet-ui-kit',
+                    },
+                    {
+                        from: '/developer/tum-ui-reference',
+                        to: '/developer/tum-aet-ui-reference',
+                    },
+                    {
+                        from: '/developer/tum-ui/',
+                        to: '../tum-aet-ui/',
                     },
                 ],
             },

@@ -94,7 +94,7 @@ public class TutorLeaderboardService {
      * @return list of tutor leaderboard objects
      */
     public List<TutorLeaderboardDTO> getExerciseLeaderboard(Exercise exercise) {
-        var tutors = userRepository.getTutors(exercise.getCourseViaExerciseGroupOrCourseMember());
+        var tutors = userRepository.getTutors(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
         var tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByExerciseId(exercise.getId());
         var tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByExerciseId(exercise.getId());
         var tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByExerciseId(exercise.getId());

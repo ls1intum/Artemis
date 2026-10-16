@@ -15,7 +15,12 @@
                 (ngModelChange)="select.model = programmingExerciseCreationConfig().onProgrammingLanguageChange($event)"
                 name="programmingLanguage"
                 id="field_programmingLanguage"
-                [disabled]="programmingExerciseCreationConfig().isImportFromExistingExercise || !!programmingExercise().id || programmingExerciseCreationConfig().isImportFromFile"
+                [disabled]="
+                    programmingExerciseCreationConfig().isImportFromExistingExercise ||
+                    !!programmingExercise().id ||
+                    programmingExerciseCreationConfig().isImportFromFile ||
+                    programmingExerciseCreationConfig().isImportFromSharing
+                "
             >
                 @for (supportedLanguage of programmingExerciseCreationConfig().supportedLanguages; track supportedLanguage) {
                     <option [value]="supportedLanguage" [jhiTranslate]="'artemisApp.ProgrammingLanguage.' + supportedLanguage"></option>
@@ -33,7 +38,10 @@
                     [value]="programmingExerciseCreationConfig().selectedProjectType"
                     (valueChange)="programmingExerciseCreationConfig().onProjectTypeChange($event!)"
                     [disabled]="
-                        programmingExerciseCreationConfig().isImportFromExistingExercise || programmingExerciseCreationConfig().isImportFromFile || !!programmingExercise().id
+                        programmingExerciseCreationConfig().isImportFromExistingExercise ||
+                        programmingExerciseCreationConfig().isImportFromFile ||
+                        programmingExerciseCreationConfig().isImportFromSharing ||
+                        !!programmingExercise().id
                     "
                     name="projectType"
                     id="field_projectType"
@@ -43,12 +51,14 @@
                 isEditFieldDisplayedRecord().withExemplaryDependency &&
                 !programmingExerciseCreationConfig().isImportFromExistingExercise &&
                 !programmingExerciseCreationConfig().isImportFromFile &&
+                !programmingExerciseCreationConfig().isImportFromSharing &&
                 !programmingExercise().id &&
                 programmingExercise().programmingLanguage === ProgrammingLanguage.JAVA &&
                 programmingExercise().projectType !== ProjectType.MAVEN_BLACKBOX
             ) {
                 <div class="form-check mt-2">
                     <input
+                        [attr.aria-label]="'artemisApp.programmingExercise.withDependencies' | artemisTranslate"
                         class="form-check-input"
                         type="checkbox"
                         name="withDependencies"
@@ -131,6 +141,7 @@
             <div class="form-group">
                 <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName"></label>
                 <input
+                    [attr.aria-label]="'artemisApp.programmingExercise.appName' | artemisTranslate"
                     required
                     type="text"
                     [pattern]="APP_NAME_PATTERN_FOR_SWIFT"
@@ -194,7 +205,8 @@
         </div>
     }
     <!-- Sequential Test Runs checkbox
-    It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
+    It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.
+    The test repository of an imported exercise already has its final structure, so the imported value is locked on every import path.-->
     @if (isEditFieldDisplayedRecord().sequentialTestRuns && programmingExerciseCreationConfig().sequentialTestRunsAllowed) {
         <div>
             <div class="form-check custom-control custom-checkbox">
@@ -203,7 +215,12 @@
                     type="checkbox"
                     name="sequentialTestRuns"
                     id="field_sequentialTestRuns"
-                    [disabled]="!!programmingExercise().id || !!programmingExercise().staticCodeAnalysisEnabled"
+                    [disabled]="
+                        !!programmingExercise().id ||
+                        programmingExerciseCreationConfig().isImportFromFile ||
+                        programmingExerciseCreationConfig().isImportFromSharing ||
+                        !!programmingExercise().staticCodeAnalysisEnabled
+                    "
                     [(ngModel)]="programmingExercise().buildConfig!.sequentialTestRuns"
                     checked
                 />
@@ -229,12 +246,5 @@
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutSolutionRepository.description" />
             </label>
         </div>
-    }
-    @if (isEditFieldDisplayedRecord().customizeBuildScript && programmingExerciseCreationConfig().customBuildPlansSupported === PROFILE_LOCALCI) {
-        <jhi-programming-exercise-custom-build-plan
-            [(programmingExercise)]="programmingExercise"
-            [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig()"
-            [isExamMode]="programmingExerciseCreationConfig().isExamMode"
-        />
     }
 </section>

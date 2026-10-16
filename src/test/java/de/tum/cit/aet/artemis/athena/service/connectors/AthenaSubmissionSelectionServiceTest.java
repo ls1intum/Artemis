@@ -67,7 +67,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        course = courseRepository.save(course);
+        course = courseUtilService.saveWithConfigurations(course);
 
         textExercise = textExerciseUtilService.createSampleTextExercise(course);
         textExercise.setGradingCriteria(Set.of(new GradingCriterion()));
@@ -75,8 +75,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
         textSubmission1 = new TextSubmission(1L);
         textSubmission2 = new TextSubmission(2L);
 
-        programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setCourse(course);
+        programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise(course);
         programmingExercise.setGradingCriteria(Set.of(new GradingCriterion()));
         // Athena grading feedback is only offered for manually assessed programming exercises; automatically
         // assessed ones rely on unit-test feedback.
@@ -164,7 +163,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTextSubmissionSelectionWithFeedbackSuggestionsDisabled() {
-        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(new CourseAthenaConfig());
         assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(textExercise, List.of(textSubmission1.getId())))
                 .isInstanceOf(IllegalArgumentException.class);
     }
@@ -172,7 +171,7 @@ class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testProgrammingSubmissionSelectionWithFeedbackSuggestionsDisabled() {
-        programmingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
+        programmingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(new CourseAthenaConfig());
         assertThatThrownBy(() -> athenaSubmissionSelectionService.getProposedSubmissionId(programmingExercise, List.of(programmingSubmission1.getId())))
                 .isInstanceOf(IllegalArgumentException.class);
     }

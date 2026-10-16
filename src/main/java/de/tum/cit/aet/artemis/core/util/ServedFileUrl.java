@@ -119,7 +119,7 @@ public final class ServedFileUrl {
      */
     @Nullable
     private static String served(@Nullable String storedValue, @Nullable Long ownerId, @NonNull UrlTemplate template) {
-        if (ownerId == null || !FileSystemLocation.refersToStoredFile(storedValue)) {
+        if (storedValue == null || ownerId == null || !FileSystemLocation.refersToStoredFile(storedValue)) {
             return filenameOrNull(storedValue);
         }
         return template.of(ownerId, FileSystemLocation.filenameOf(storedValue)).clientPath();
@@ -131,7 +131,12 @@ public final class ServedFileUrl {
      */
     @Nullable
     private static String filenameOrNull(@Nullable String storedValue) {
-        return FileSystemLocation.refersToStoredFile(storedValue) ? FileSystemLocation.filenameOf(storedValue) : storedValue;
+        // The null check is spelled out rather than left to refersToStoredFile, which classifies null as "not a stored file". Both read the same, but only this form shows
+        // the compiler — and any static analysis — why the @NonNull parameter of filenameOf is satisfied here.
+        if (storedValue == null || !FileSystemLocation.refersToStoredFile(storedValue)) {
+            return storedValue;
+        }
+        return FileSystemLocation.filenameOf(storedValue);
     }
 
     /**

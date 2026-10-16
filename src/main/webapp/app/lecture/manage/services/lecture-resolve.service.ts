@@ -1,11 +1,11 @@
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, filter, map, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LectureResolve implements Resolve<Lecture> {
     private lectureService = inject(LectureService);
 

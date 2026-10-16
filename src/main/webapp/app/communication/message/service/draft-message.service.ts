@@ -1,9 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 
 const DRAFT_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class DraftService {
     private localStorageService = inject(LocalStorageService);
 

@@ -173,7 +173,6 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     private ProgrammingExercise createProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate) {
         ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(releaseDate, dueDate, course, ProgrammingLanguage.JAVA);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
         programmingExercise = exerciseRepository.save(programmingExercise);
 
         CompetencyExerciseLink link = new CompetencyExerciseLink(courseCompetency, programmingExercise, 1);
@@ -345,6 +344,8 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         TextExercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
         exercise.setMaxPoints(1.0);
         exercise.setIncludedInOverallScore(includedInOverallScore);
+        // Save the exercise itself rather than letting the link write it, so the row carries the course the factory set.
+        exercise = exerciseRepository.save(exercise);
         CompetencyExerciseLink link = new CompetencyExerciseLink(newCompetency, exercise, 1);
         competencyExerciseLinkRepository.save(link);
 
@@ -694,6 +695,15 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
 
     // Test
     void shouldImportCompetenciesExerciseAndLectureWithCompetency() throws Exception {
+        courseCompetency.setGeneratedByAi(true);
+        courseCompetencyRepository.save(courseCompetency);
+        var sourceExerciseLinks = competencyExerciseLinkRepository.findAllByCompetencyId(courseCompetency.getId());
+        sourceExerciseLinks.forEach(link -> link.setGeneratedByAi(true));
+        competencyExerciseLinkRepository.saveAll(sourceExerciseLinks);
+        var sourceLectureUnitLinks = competencyLectureUnitLinkRepository.findAll().stream().filter(link -> link.getCompetency().getId().equals(courseCompetency.getId())).toList();
+        sourceLectureUnitLinks.forEach(link -> link.setGeneratedByAi(true));
+        competencyLectureUnitLinkRepository.saveAll(sourceLectureUnitLinks);
+
         ZonedDateTime releaseDate = ZonedDateTime.of(2022, 2, 21, 23, 45, 0, 0, ZoneId.of("UTC"));
         textExercise.setReleaseDate(releaseDate);
         exerciseRepository.save(textExercise);
@@ -705,6 +715,12 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         assertThat(course2.getExercises()).hasSize(2);
         assertThat(course2.getLectures()).hasSize(1);
         assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(2);
+
+        CourseCompetency importedCompetency = courseCompetencyRepository.findByCourseIdOrderById(course2.getId()).getFirst();
+        assertThat(importedCompetency.isGeneratedByAi()).isTrue();
+        assertThat(competencyExerciseLinkRepository.findAllByCompetencyId(importedCompetency.getId())).isNotEmpty().allMatch(CompetencyExerciseLink::isGeneratedByAi);
+        assertThat(competencyLectureUnitLinkRepository.findAll().stream().filter(link -> link.getCompetency().getId().equals(importedCompetency.getId()))).isNotEmpty()
+                .allMatch(CompetencyLectureUnitLink::isGeneratedByAi);
     }
 
     // Test

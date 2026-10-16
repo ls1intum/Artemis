@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.account.service.user.deletion.UserDeletionPlanServ
 import de.tum.cit.aet.artemis.admin.config.DataCleanupProperties;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobExecution;
 import de.tum.cit.aet.artemis.admin.domain.CleanupJobType;
+import de.tum.cit.aet.artemis.admin.dto.CleanupConfigurationDTO;
 import de.tum.cit.aet.artemis.admin.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestNonRatedResultsCleanupCountDTO;
 import de.tum.cit.aet.artemis.admin.dto.NonLatestRatedResultsCleanupCountDTO;
@@ -155,20 +156,12 @@ public class DataCleanupService {
 
     /**
      * Deletes orphaned entities that are no longer associated with valid results or participations.
-     * This includes feedback, text blocks, and scores that reference null results, participations, or submissions.
+     * This is everything hanging off a result that has lost its submission or participation, plus scores naming
+     * neither a student nor a team, ratings whose result went the same way, and unreferenced feedback messages.
      *
      * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
      */
     public CleanupServiceExecutionRecordDTO deleteOrphans() {
-        int deletedLongFeedbackTexts = longFeedbackTextCleanupRepository.deleteLongFeedbackTextForOrphanedFeedback();
-        log.info("Deleted {} orphaned long feedback texts", deletedLongFeedbackTexts);
-
-        int deletedTextBlocks = textBlockCleanupRepository.deleteTextBlockForEmptyFeedback();
-        log.info("Deleted {} text blocks for empty feedback", deletedTextBlocks);
-
-        int deletedOrphanFeedback = feedbackCleanupRepository.deleteOrphanFeedback();
-        log.info("Deleted {} orphaned feedback entries", deletedOrphanFeedback);
-
         int deletedOrphanStudentScores = studentScoreCleanupRepository.deleteOrphanStudentScore();
         log.info("Deleted {} orphaned student scores", deletedOrphanStudentScores);
 
@@ -221,10 +214,6 @@ public class DataCleanupService {
         // Delete all plagiarism elements that are part of the plagiarism submissions
         int deletedPlagiarismElements = plagiarismComparisonCleanupRepository.deletePlagiarismSubmissionElementsByComparisonIdsIn(pcIds);
         log.info("Deleted {} plagiarism elements that are part of the plagiarism submissions", deletedPlagiarismElements);
-
-        // NOTE: we need to set submissionA and submissionB to null first to avoid foreign key constraints
-        int updatedPlagiarismComparisons = plagiarismComparisonCleanupRepository.setPlagiarismSubmissionsToNullInComparisonsWithIds(pcIds);
-        log.info("Updated {} plagiarism comparisons to set plagiarism submissions to null", updatedPlagiarismComparisons);
 
         // Delete all plagiarism submissions that reference plagiarism comparisons
         int deletedPlagiarismSubmissions = plagiarismComparisonCleanupRepository.deletePlagiarismSubmissionsByComparisonIdsIn(pcIds);
@@ -303,14 +292,12 @@ public class DataCleanupService {
 
     /**
      * Counts orphaned entities that are no longer associated with valid results or participations.
-     * This includes feedback, text blocks, and scores that reference null results, participations, or submissions.
+     * This is everything hanging off a result that has lost its submission or participation, plus scores naming
+     * neither a student nor a team, ratings whose result went the same way, and unreferenced feedback messages.
      *
      * @return an {@link OrphanCleanupCountDTO} representing the counts of orphaned entities that would be deleted
      */
     public OrphanCleanupCountDTO countOrphans() {
-        int orphanFeedbackCount = feedbackCleanupRepository.countOrphanFeedback();
-        int orphanLongFeedbackTextCount = longFeedbackTextCleanupRepository.countLongFeedbackTextForOrphanedFeedback();
-        int orphanTextBlockCount = textBlockCleanupRepository.countTextBlockForEmptyFeedback();
         int orphanStudentScoreCount = studentScoreCleanupRepository.countOrphanStudentScore();
         int orphanTeamScoreCount = teamScoreCleanupRepository.countOrphanTeamScore();
         int orphanLongFeedbackTextForOrphanResultsCount = longFeedbackTextCleanupRepository.countLongFeedbackTextForOrphanResult();
@@ -321,9 +308,8 @@ public class DataCleanupService {
         int orphanResultsWithoutParticipationCount = resultCleanupRepository.countResultWithoutParticipationAndSubmission();
         int orphanFeedbackMessageCount = feedbackMessageCleanupRepository.countUnreferencedFeedbackMessages(ZonedDateTime.now().minusDays(FEEDBACK_MESSAGE_GRACE_PERIOD_DAYS));
 
-        return new OrphanCleanupCountDTO(orphanFeedbackCount, orphanLongFeedbackTextCount, orphanTextBlockCount, orphanStudentScoreCount, orphanTeamScoreCount,
-                orphanFeedbackForOrphanResultsCount, orphanLongFeedbackTextForOrphanResultsCount, orphanTextBlockForOrphanResultsCount, orphanRatingCount,
-                orphanResultsWithoutParticipationCount, orphanFeedbackMessageCount);
+        return new OrphanCleanupCountDTO(orphanStudentScoreCount, orphanTeamScoreCount, orphanFeedbackForOrphanResultsCount, orphanLongFeedbackTextForOrphanResultsCount,
+                orphanTextBlockForOrphanResultsCount, orphanRatingCount, orphanResultsWithoutParticipationCount, orphanFeedbackMessageCount);
     }
 
     /**
@@ -668,6 +654,16 @@ public class DataCleanupService {
 
     private OldCoursesCleanupCountDTO toOldCoursesCleanupCountDTO(List<Course> courses) {
         return new OldCoursesCleanupCountDTO(courses.size());
+    }
+
+    /**
+     * Returns the configured retention periods together with the cutoffs the age-based operations would apply right now,
+     * so the admin UI can name the affected data instead of only referring to "the configured cutoff".
+     *
+     * @return the effective cleanup configuration
+     */
+    public CleanupConfigurationDTO getCleanupConfiguration() {
+        return CleanupConfigurationDTO.of(dataCleanupProperties, ZonedDateTime.now());
     }
 
     /**

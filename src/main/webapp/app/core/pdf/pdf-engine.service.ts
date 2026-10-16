@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 
 /**
  * Type of the EmbedPDF PDFium engine, derived without a static runtime import so that the (large)
@@ -17,7 +17,7 @@ type WorkerPdfEngine = Awaited<ReturnType<(typeof import('@embedpdf/engines/pdfi
  * The engine module is loaded via a dynamic import, so it forms its own lazy chunk and never enters the
  * initial bundle (it is fetched during the idle preload or on first PDF use).
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class PdfEngineService {
     private enginePromise?: Promise<WorkerPdfEngine>;
 

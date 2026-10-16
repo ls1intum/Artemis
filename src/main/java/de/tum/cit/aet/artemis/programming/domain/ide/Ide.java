@@ -7,10 +7,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "ide")
+@AggregateRoot("Reference data.")
 public class Ide extends DomainObject {
 
     @Column(name = "name", nullable = false)

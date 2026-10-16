@@ -1,8 +1,6 @@
 package de.tum.cit.aet.artemis.programming;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
 
@@ -11,7 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -21,15 +18,13 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
- * The git request path authorizes against the course the projection names, so which course that is decides who may read
- * and write a repository.
+ * The git request path authorizes against the course the projection names, and for an exam exercise that is the course
+ * of its exam rather than a course named on the exercise itself.
  * <p>
- * An exam exercise belongs to the course of its exam, and to no other, which is what
- * {@code Exercise#getCourseViaExerciseGroupOrCourseMember()} answers. An exercise that also names a course directly is
- * not something the API can produce - the create and update paths refuse one carrying both - so this persists the row
- * past them. It is worth persisting because it is the only row on which a course resolution that prefers the direct
- * course differs from one that follows the exercise group, and the difference is not a wrong id in a response: it is a
- * role check answered against a course the exercise does not belong to.
+ * The two were only distinguishable on a row carrying both, which the database now refuses:
+ * {@code CHECK_EXERCISE_COURSE_OR_EXERCISE_GROUP} makes an exercise belong to a course or to an exercise group and
+ * never to both, so the case this class was written around is unreachable. What is left to hold is the ordinary path,
+ * that a student of the exam's course reaches the repository through the projection.
  */
 class GitRepositoryAccessCourseResolutionIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
@@ -42,36 +37,11 @@ class GitRepositoryAccessCourseResolutionIntegrationTest extends AbstractProgram
 
     private Course examCourse;
 
-    private Course unrelatedCourse;
-
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         examExercise = programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise();
         examCourse = examExercise.getExerciseGroup().getExam().getCourse();
-        unrelatedCourse = courseUtilService.addEmptyCourse();
-
-        // Past the REST layer on purpose: checkCourseAndExerciseGroupExclusivity rejects an exercise carrying both.
-        examExercise.setCourse(unrelatedCourse);
-        examExercise = programmingExerciseRepository.save(examExercise);
-    }
-
-    /**
-     * The student is enrolled in the course the exercise names directly and in no other. Authorization resolves the
-     * exam's course instead, finds no membership there, and refuses - which is the same answer the entity path gives,
-     * since it never consults the direct course of an exam exercise.
-     */
-    @Test
-    void studentOfTheDirectlyNamedCourseAloneMayNotAccessTheRepository() {
-        String login = TEST_PREFIX + "student1";
-        User student = userUtilService.addStudentToCourse(login, unrelatedCourse);
-        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(examExercise, login);
-
-        GitRepositoryAccessDTO projection = programmingExerciseRepository.findAccessProjectionByProjectKey(examExercise.getProjectKey()).getFirst();
-        assertThat(projection.courseId()).as("authorization is decided against the exam's course").isEqualTo(examCourse.getId());
-
-        assertThatExceptionOfType(AccessForbiddenException.class).as("membership in the directly named course alone does not grant access")
-                .isThrownBy(() -> repositoryAccessService.checkAccessRepositoryElseThrow(participation, student, projection, RepositoryActionType.READ));
     }
 
     /**

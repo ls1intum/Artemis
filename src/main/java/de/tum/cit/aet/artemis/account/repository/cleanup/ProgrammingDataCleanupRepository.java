@@ -41,6 +41,30 @@ public interface ProgrammingDataCleanupRepository extends ArtemisJpaRepository<U
             """)
     int deletePersonalAccessTokens(@Param("userId") long userId);
 
+    /**
+     * The access log records what happened to a repository, which stays true once the person who acted is gone, so
+     * the entries are detached rather than deleted.
+     *
+     * @param userId the account being deleted
+     * @return how many entries were detached
+     */
+    @Modifying
+    @Transactional // ok because of update
+    @Query("""
+            UPDATE VcsAccessLog log
+            SET log.user = NULL
+            WHERE log.user.id = :userId
+            """)
+    int detachVcsAccessLogs(@Param("userId") long userId);
+
+    @Query("""
+            SELECT log.user.id AS userId, COUNT(log) AS count
+            FROM VcsAccessLog log
+            WHERE log.user.id IN :userIds
+            GROUP BY log.user.id
+            """)
+    List<UserReferenceCount> countVcsAccessLogs(@Param("userIds") Collection<Long> userIds);
+
     @Query("""
             SELECT token.user.id AS userId, COUNT(token) AS count
             FROM ParticipationVCSAccessToken token

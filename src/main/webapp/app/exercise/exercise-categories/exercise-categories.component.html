@@ -22,7 +22,7 @@
         @for (category of exercise.categories; track category) {
             @if (category.category) {
                 <span [ngClass]="isSmall() ? 'small' : 'fw-medium h4'">
-                    <span class="badge" [ngStyle]="{ backgroundColor: category.color }">{{ category.category | truncate: 30 }}</span>
+                    <span class="badge" [style.background-color]="category.color">{{ category.category | truncate: 30 }}</span>
                 </span>
             }
         }

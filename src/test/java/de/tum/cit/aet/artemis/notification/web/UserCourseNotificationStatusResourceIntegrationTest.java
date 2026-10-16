@@ -115,6 +115,25 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldMarkOnlyTheDisplayedNotificationsAsSeen() throws Exception {
+        var displayed = new CourseNotification(course, (short) 1, ZonedDateTime.now(), ZonedDateTime.now());
+        var notDisplayed = new CourseNotification(course, (short) 1, ZonedDateTime.now(), ZonedDateTime.now());
+        courseNotificationRepository.save(displayed);
+        courseNotificationRepository.save(notDisplayed);
+        userCourseNotificationStatusRepository.save(new UserCourseNotificationStatus(displayed, user, UserCourseNotificationStatusType.UNSEEN));
+        userCourseNotificationStatusRepository.save(new UserCourseNotificationStatus(notDisplayed, user, UserCourseNotificationStatusType.UNSEEN));
+
+        String requestBody = "{\"notificationIds\":[" + displayed.getId() + "]}";
+
+        request.performMvcRequest(MockMvcRequestBuilders.put("/api/notification/courses/" + course.getId() + "/seen").contentType(MediaType.APPLICATION_JSON).content(requestBody))
+                .andExpect(status().isOk());
+
+        assertThat(userCourseNotificationStatusRepository.findByCourseNotificationId(displayed.getId()).getStatus()).isEqualTo(UserCourseNotificationStatusType.SEEN);
+        assertThat(userCourseNotificationStatusRepository.findByCourseNotificationId(notDisplayed.getId()).getStatus()).isEqualTo(UserCourseNotificationStatusType.UNSEEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldArchiveAllNotificationsWhenArchiveAllIsCalled() throws Exception {
         List<CourseNotification> notifications = new ArrayList<>();
         for (int i = 0; i < 5; i++) {

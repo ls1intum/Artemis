@@ -58,6 +58,25 @@ export interface IrisCourseSettingsDTO {
     // Optional: absent means "use server default" (MODERATE), mirroring the @Nullable server field.
     supportLevel?: IrisSupportLevel;
     rateLimit?: IrisRateLimitConfiguration;
+    /**
+     * When true, Iris proactively detects struggle in this course and offers help. Off by default, and absent
+     * means undecided rather than off: a row predating this field has no key, and a save from a client that does
+     * not edit the field omits it. The server merges an omitted value from what is stored, so neither case flips
+     * a course, and an absent value reads as OFF.
+     *
+     * Normalize it with `!!`, unlike `legacyBuildTriggersEnabled` below, where absent reads as ON.
+     */
+    proactiveStruggleEnabled?: boolean;
+    /**
+     * May Artemis' OWN build-triggered proactive Iris events (build_failed / progress_stalled) fire for this
+     * course? Three states, and the third one matters. `undefined` means nobody ever decided: a settings row
+     * written before this field existed has no key, and a save from a client that does not edit the field omits it.
+     * The server merges an omitted value from what is stored, so neither case silently flips a course, and an absent
+     * value reads as ON, which is what every course did before the field existed.
+     *
+     * Normalize it with `?? true`, never `!!` — unlike `proactiveStruggleEnabled`, absent does NOT mean off here.
+     */
+    legacyBuildTriggersEnabled?: boolean | null;
 }
 
 /**
@@ -86,5 +105,8 @@ export function createDefaultCourseSettings(): IrisCourseSettingsDTO {
         enabled: true,
         variant: 'default',
         supportLevel: 'moderate',
+        proactiveStruggleEnabled: false,
+        // Deliberately absent, not `true`: this resets the general-tab fields, and spelling the admin
+        // field out here would make every such reset send a decision the admin never made.
     };
 }

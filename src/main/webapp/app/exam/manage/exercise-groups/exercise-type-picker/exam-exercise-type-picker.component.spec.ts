@@ -1,4 +1,4 @@
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -26,7 +26,7 @@ describe('ExamExerciseTypePickerComponent', () => {
             ],
         })
             .overrideComponent(ExamExerciseTypePickerComponent, {
-                set: { imports: [TumUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective] },
+                set: { imports: [TumAetUiDialogComponent, FaIconComponent, ArtemisTranslatePipe, TranslateDirective] },
             })
             .compileComponents();
 

@@ -236,7 +236,7 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         doNothing().when(continuousIntegrationService).createProjectForExercise(any());
 
         // Fail the repository copy, which happens after the (transactional) basis import has already persisted the new exercise.
-        doThrow(new RuntimeException("Simulated repository copy failure")).when(gitServiceSpy).copyBareRepositoryWithHistory(any(), any(), any());
+        doThrow(new RuntimeException("Simulated repository copy failure")).when(bareGitRepositoryServiceSpy).copyBareRepositoryWithHistory(any(), any(), any());
 
         String sourceTitle = sourceExercise.getTitle();
         ExamImportDTO importDTO = ExamImportDTO.of(sourceExam, course1.getId());
@@ -260,16 +260,14 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         exam.setId(null);
         ProgrammingExercise programming = ProgrammingExerciseFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
         programmingGroup.addExercise(programming);
-        programming.setBuildConfig(programmingExerciseBuildConfigRepository.save(programming.getBuildConfig()));
         exerciseRepository.save(programming);
 
         versionControlService.createProjectForExercise(programming);
         createdProjectKey = programming.getProjectKey();
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
-        request.performMvcRequest(
-                post("/api/exam/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
-                .andExpect(status().isBadRequest())
+        request.performMvcRequest(post("/api/exam/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ExamImportDTO.of(exam, course1.getId())))).andExpect(status().isBadRequest())
                 .andExpect(result -> assertThat(result.getResolvedException()).hasMessage("Exam contains programming exercise(s) with invalid short name."));
     }
 

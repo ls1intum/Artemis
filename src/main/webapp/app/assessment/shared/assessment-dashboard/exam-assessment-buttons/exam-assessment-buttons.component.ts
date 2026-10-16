@@ -17,12 +17,12 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { faClipboardCheck, faSpinner, faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-assessment-buttons',
     templateUrl: './exam-assessment-buttons.component.html',
-    imports: [FaIconComponent, TranslateDirective, TumUiButtonDirective],
+    imports: [FaIconComponent, TranslateDirective, TumAetUiButtonDirective],
 })
 export class ExamAssessmentButtonsComponent implements OnInit {
     private route = inject(ActivatedRoute);

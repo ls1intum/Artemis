@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<AuxiliaryRepositorySnapshotDTO> auxiliaryRepositories, Boolean allowOnlineEditor,
         Boolean allowOfflineIde, Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, ProgrammingLanguage programmingLanguage,
         String packageName, Boolean showTestNamesToStudents, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, String projectKey,
@@ -44,6 +46,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
      * @param auxiliaryRepositoryCommitHashes commit hash per auxiliary repository, keyed by auxiliary repository id
      */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record CommitHashesDTO(String templateCommitHash, String solutionCommitHash, String testsCommitHash, Map<Long, String> auxiliaryRepositoryCommitHashes) {
     }
 
@@ -54,7 +57,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
      * @param commitHashes the pre-resolved git commit hashes of the exercise's repositories
      * @return {@link ProgrammingExerciseSnapshotDTO}
      */
-    public static ProgrammingExerciseSnapshotDTO of(ProgrammingExercise exercise, CommitHashesDTO commitHashes) {
+    public static ProgrammingExerciseSnapshotDTO of(ProgrammingExercise exercise, ProgrammingExerciseBuildConfig buildConfig, CommitHashesDTO commitHashes) {
         var templateParticipation = exercise.getTemplateParticipation() != null
                 ? new ParticipationSnapshotDTO(exercise.getTemplateParticipation().getId(), exercise.getTemplateRepositoryUri(), exercise.getTemplateBuildPlanId(),
                         commitHashes.templateCommitHash())
@@ -86,21 +89,24 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
                 exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(),
                 exercise.getPackageName(), exercise.getShowTestNamesToStudents(), toUtc(exercise.getBuildAndTestStudentSubmissionsAfterDueDate()), exercise.getProjectKey(),
                 templateParticipation, solutionParticipation, testCases, tasks, analysisCategories, SubmissionPolicySnapshotDTO.of(exercise.getSubmissionPolicy()),
-                exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), ProgrammingExerciseBuildConfigSnapshotDTO.of(exercise.getBuildConfig()), testCommitHash);
+                exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), ProgrammingExerciseBuildConfigSnapshotDTO.of(buildConfig), testCommitHash);
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record AuxiliaryRepositorySnapshotDTO(long id, String name, String checkoutDirectory, String description, String repositoryUri, String commitId)
             implements Serializable {
 
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record ParticipationSnapshotDTO(long id, String repositoryUri, String buildPlanId, String commitId) implements Serializable {
 
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record ProgrammingExerciseTaskSnapshotDTO(long id, String taskName, Set<ProgrammingExerciseTestCaseDTO> testCases) implements Serializable {
 
         private static ProgrammingExerciseTaskSnapshotDTO of(ProgrammingExerciseTask task) {
@@ -110,6 +116,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record StaticCodeAnalysisCategorySnapshotDTO(long id, String name, Double penalty, Double maxPenalty, CategoryState state) implements Serializable {
 
         private static StaticCodeAnalysisCategorySnapshotDTO of(StaticCodeAnalysisCategory category) {
@@ -118,6 +125,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record SubmissionPolicySnapshotDTO(long id, int submissionLimit, boolean active, Double exceedingPenalty, String type) implements Serializable {
 
         private static SubmissionPolicySnapshotDTO of(SubmissionPolicy policy) {
@@ -130,6 +138,7 @@ public record ProgrammingExerciseSnapshotDTO(String testRepositoryUri, List<Auxi
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public record ProgrammingExerciseBuildConfigSnapshotDTO(Boolean sequentialTestRuns, String branch, String buildPlanConfiguration, String buildScript,
             boolean checkoutSolutionRepository, String testCheckoutPath, String assignmentCheckoutPath, String solutionCheckoutPath, int timeoutSeconds, String dockerFlags,
             String theiaImage, boolean allowBranching, String branchRegex) implements Serializable {

@@ -114,3 +114,44 @@ same topology, so a failure that reproduces only in one of them is expected rath
 
 **What to do.** Compare against develop and against other open pull requests before attributing the
 failure to the branch. See `skills/e2e-pr-check/SKILL.md` for how to run a targeted local check.
+
+## Helios is unavailable or rejects the E2E credential
+
+**Symptom.** The log warns that Helios flakiness history is unavailable, for example with HTTP 401.
+Failed tests are classified as `unknown` and the final verdict uses the Playwright result.
+
+**Tell.** Passing tests, including tests recovered by Playwright's existing retries, still pass.
+Failures after retries remain blocking without being labelled confirmed regressions. A known-flaky
+failure in another phase cannot exonerate an unknown failure. Phase 2 does not start after an unknown
+Phase 1 failure.
+
+**What to do.** Inspect the failing tests and the matching base-branch run, as usual. Restore the
+Helios service or correct `HELIOS_REPO_SECRET` to regain history-based classification; the suite
+can run without it. Do not treat missing history as evidence of either flakiness or a regression.
+
+## E2E job red although Playwright reports 0 failed
+
+**Symptom.** The E2E job on develop is red and "Report E2E Overall Status" says "E2E infrastructure
+failure", yet the log's `E2E counts:` line shows `0 failed`.
+
+**Tell.** `gh run view <run-id> --json jobs` shows the failing step is not the test step but
+`E2E Teardown`, and the log has `rm: cannot remove '...': Permission denied`. The Playwright
+container runs as root and creates the suite's `test-reports` folder during the run, so the runner
+user cannot delete files in it. Only the multi-node stack leaves files for the teardown to delete,
+because it runs two Playwright projects and merges their reports.
+
+**What to do.** Fix the file that is left behind, in `run-tests.sh`, not the teardown. Do not add
+`|| true` to the teardown: it would hide the next real teardown failure.
+
+## E2E spec flaky only on develop's multi-node stack
+
+**Symptom.** A spec that touches a file written by one request and read by another (a download, an
+export) times out or returns 500 on develop but passes on a pull request and locally.
+
+**Tell.** The server log of one node has a `NoSuchFileException` for a path that another node
+wrote. Pull requests run one node, and `run-e2e-tests-local-multinode-fast.sh` runs its nodes from
+one working directory, so neither can show it. nginx round-robins, so it is flaky, not constant.
+
+**What to do.** Reproduce it on the container topology with
+`run-e2e-tests-local-multinode.sh --filter "<test name>"`, which uses CI's compose file. The folder
+the file lives in has to be a volume shared by the nodes; compare with the test-server compose files.

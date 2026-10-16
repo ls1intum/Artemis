@@ -13,14 +13,14 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-statistics-footer.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiBarChartComponent, TumUiChartDatumContext } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiChartDatumContext } from '@tumaet/ui-angular';
 import { QuizStatisticsOverviewResponse } from 'app/quiz/manage/statistics/quiz-statistics-response.model';
 
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html',
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss'],
-    imports: [TranslateDirective, TumUiBarChartComponent, FaIconComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumAetUiBarChartComponent, FaIconComponent, QuizStatisticsFooterComponent, ArtemisTranslatePipe],
 })
 export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit {
     private route = inject(ActivatedRoute);
@@ -162,7 +162,7 @@ export class QuizStatisticComponent extends AbstractQuizStatisticComponent imple
         this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
     }
 
-    protected override formatTooltipLabel(item: TumUiChartDatumContext): string {
+    protected override formatTooltipLabel(item: TumAetUiChartDatumContext): string {
         // the last bar aggregates the average across all questions rather than a single question
         const isAverageBar = item.index === this.data.length - 1;
         const key = isAverageBar ? 'artemisApp.showStatistic.tooltip.average' : 'artemisApp.showStatistic.tooltip.correctSolutions';

@@ -45,7 +45,8 @@ public interface IrisLectureUnitSyncStateRepository extends ArtemisJpaRepository
     @Transactional
     default Optional<IrisLectureUnitSyncState> claimRetry(long lectureUnitId, ZonedDateTime now, ZonedDateTime leaseUntil) {
         return findAttachmentVideoUnitForUpdateById(lectureUnitId).flatMap(ignored -> findByLectureUnitId(lectureUnitId))
-                .filter(state -> IrisLectureUnitSyncState.STATUS_DIRTY.equals(state.getStatus()) || IrisLectureUnitSyncState.STATUS_IN_PROGRESS.equals(state.getStatus()))
+                .filter(state -> IrisLectureUnitSyncState.STATUS_DIRTY.equals(state.getStatus()) || IrisLectureUnitSyncState.STATUS_IN_PROGRESS.equals(state.getStatus())
+                        || IrisLectureUnitSyncState.STATUS_FAILED.equals(state.getStatus()))
                 .filter(state -> state.getNextRetryAt() != null && !state.getNextRetryAt().isAfter(now)).map(state -> {
                     state.setStatus(IrisLectureUnitSyncState.STATUS_IN_PROGRESS);
                     state.setNextRetryAt(leaseUntil);

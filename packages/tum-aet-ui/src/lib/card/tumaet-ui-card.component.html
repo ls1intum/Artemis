@@ -1,0 +1,17 @@
+<ng-content select="[tumAetUiCardHeader]" />
+<div class="tumaet-ui-card-body tumaet:flex tumaet:flex-col tumaet:gap-2 tumaet:p-5">
+    @if (header() || subheader()) {
+        <div class="tumaet-ui-card-caption tumaet:flex tumaet:flex-col tumaet:gap-2">
+            @if (header()) {
+                <div class="tumaet-ui-card-title tumaet:text-xl tumaet:font-medium">{{ header() }}</div>
+            }
+            @if (subheader()) {
+                <div class="tumaet-ui-card-subtitle tumaet:text-muted">{{ subheader() }}</div>
+            }
+        </div>
+    }
+    <div class="tumaet-ui-card-content">
+        <ng-content />
+    </div>
+    <ng-content select="[tumAetUiCardFooter]" />
+</div>

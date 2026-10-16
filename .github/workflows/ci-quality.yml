@@ -18,8 +18,8 @@ on:
         description: 'Whether Java sources changed — gates the Java-specific analyses.'
         required: true
         type: boolean
-      has_tum_ui:
-        description: 'Whether TUM UI or its application integration changed.'
+      has_tum_aet_ui:
+        description: 'Whether TUM AET UI or its application integration changed.'
         required: true
         type: boolean
 
@@ -40,17 +40,17 @@ jobs:
       contents: read
       checks: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         with:
           distribution: 'temurin'
           java-version: '${{ env.java }}'
           # `cache: 'gradle'` is the legacy path; `setup-gradle@v6` below owns Gradle caching.
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f131e8634966bd73d06cc69884922b02e6faf92 # v6
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
       - name: Java Code Style
         run: ./gradlew spotlessCheck
       - name: Java Documentation
@@ -64,11 +64,16 @@ jobs:
       - name: Dependency Families
         run: ./gradlew verifyDependencyFamilies -x webapp
         if: ${{ !cancelled() }}
+      # Libraries with a known vulnerability must stay at their patched version on the build-script (plugin) classpath,
+      # which GitHub's dependency graph reports separately from the shipped WAR. Same reason for running it explicitly.
+      - name: Build-Script Classpath Pins
+        run: ./gradlew verifyBuildscriptClasspathPins -x webapp
+        if: ${{ !cancelled() }}
       - name: Java Architecture Tests
         run: ./gradlew test -DincludeTags='ArchitectureTest' -x webapp
         if: ${{ !cancelled() }}
       - name: Test Report
-        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2  # v3.0.0
+        uses: dorny/test-reporter@d1b5dff021aa968b288b02285a8bf47471c5928a  # v3.2.0
         if: ${{ !cancelled() }}
         with:
           name: Java Architecture Tests
@@ -82,15 +87,15 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413  # v6.1.0
         with:
           run_install: false
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '${{ env.node }}'
           cache: 'pnpm'
@@ -103,9 +108,9 @@ jobs:
       - name: TypeScript Code Style
         run: pnpm run lint
         if: ${{ !cancelled() }}
-      - name: TUM UI Styles
-        run: pnpm run tum-ui:stylelint
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: TUM AET UI Styles
+        run: pnpm run tum-aet-ui:stylelint
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
       - name: Install Playwright Dependencies
         run: pnpm install --frozen-lockfile
         working-directory: src/test/playwright
@@ -126,15 +131,15 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup pnpm
-        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093  # v6.0.8
+        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413  # v6.1.0
         with:
           run_install: false
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '${{ env.node }}'
           cache: 'pnpm'
@@ -142,33 +147,47 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Compile TypeScript Files With Typechecking
         run: pnpm run compile
-      - name: Compile Artemis With TUM UI Source
-        run: pnpm run tum-ui:source:check:prepared
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Test TUM UI in Isolation
-        run: pnpm run tum-ui:test:coverage
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Prepare TUM UI Storybook
-        run: pnpm --dir packages/tum-ui run storybook:prepare
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Type Check TUM UI Stories
-        run: pnpm --dir packages/tum-ui run storybook:typecheck:prepared
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Install TUM UI Storybook Browser
-        run: pnpm --dir packages/tum-ui exec playwright install --with-deps --only-shell chromium
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Test TUM UI Stories
-        run: pnpm --dir packages/tum-ui run storybook:test:prepared
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Build TUM UI Storybook
-        run: pnpm --dir packages/tum-ui run storybook:build:prepared
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Test TUM UI AutoDocs
-        run: pnpm --dir packages/tum-ui run storybook:docs:test:built
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
-      - name: Validate TUM UI Package Artifact
-        run: pnpm run tum-ui:pack:check
-        if: ${{ !cancelled() && inputs.has_tum_ui }}
+      - name: Compile Artemis With TUM AET UI Source
+        run: pnpm run tum-aet-ui:source:check:prepared
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Test TUM AET UI in Isolation
+        run: pnpm run tum-aet-ui:test:coverage
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Prepare TUM AET UI Storybook
+        run: pnpm --dir packages/tum-aet-ui run storybook:prepare
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Type Check TUM AET UI Stories
+        run: pnpm --dir packages/tum-aet-ui run storybook:typecheck:prepared
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Install TUM AET UI Storybook Browser
+        run: pnpm --dir packages/tum-aet-ui exec playwright install --with-deps --only-shell chromium
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Test TUM AET UI Stories
+        run: pnpm --dir packages/tum-aet-ui run storybook:test:prepared
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Build TUM AET UI Storybook
+        run: pnpm --dir packages/tum-aet-ui run storybook:build:prepared
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Test TUM AET UI AutoDocs
+        run: pnpm --dir packages/tum-aet-ui run storybook:docs:test:built
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Validate TUM AET UI Package Artifact
+        id: tum-aet-ui-package
+        run: pnpm run tum-aet-ui:pack:check
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui }}
+      - name: Test TUM AET UI With Minimum Peer Versions
+        run: pnpm run tum-aet-ui:test:consumer minimum
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui && steps.tum-aet-ui-package.outcome == 'success' }}
+      - name: Test TUM AET UI With Latest Compatible Peer Versions
+        run: pnpm run tum-aet-ui:test:consumer latest
+        if: ${{ !cancelled() && inputs.has_tum_aet_ui && steps.tum-aet-ui-package.outcome == 'success' }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure() && inputs.has_tum_aet_ui
+        with:
+          name: tum-aet-ui-consumer
+          path: build/test-results/tum-aet-ui-consumer/
+          if-no-files-found: ignore
+          retention-days: 7
 
   code-quality:
     name: Server Code Quality
@@ -182,11 +201,11 @@ jobs:
         # No `ref: commit_sha` (unlike the style jobs): analyze_java_files.py diffs against the
         # base via `git diff origin/<base>...HEAD`, so this job keeps the default checkout +
         # full history rather than a detached PR-head checkout.
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.14'
       - name: Check LOC and number of class dependencies
@@ -201,6 +220,10 @@ jobs:
           # points, which put both over the ten-dependency line. Pushing them back under it means extracting
           # ExerciseService.reEvaluateExercise and the grading service's score calculation into services of their own,
           # which is a refactoring of its own rather than part of the table split.
+          # NOTE on max_large_classes: LearningPathRecommendationService still crosses a thousand lines since #13864.
+          # Getting it back under the line means extracting the recommendation state it threads through most of its
+          # methods, which is a refactoring of its own. The count is back at seventeen because GitService dropped off
+          # the list when the bare-repository handling moved into BareGitRepositoryService.
           max_large_classes=17
           max_complex_beans=20
 
@@ -219,13 +242,13 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # find_slow_queries.py is a pure source scan (no git diff), so pin the PR head to
           # match the style jobs and exercise exactly the tree Build/Test do.
           ref: ${{ inputs.commit_sha }}
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.14'
       - name: Query quality check

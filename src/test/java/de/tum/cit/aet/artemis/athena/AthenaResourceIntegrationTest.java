@@ -176,7 +176,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
         List<Feedback> response = request.getList("/api/athena/text-exercises/" + textExercise.getId() + "/submissions/" + textSubmission.getId() + "/feedback-suggestions",
@@ -193,7 +193,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
         List<Feedback> response = request.getList(
@@ -211,7 +211,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
         List<Feedback> response = request.getList(
@@ -294,7 +294,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         // Mock the async Athena /feedbacks call triggered when the result is submitted
         athenaRequestMockProvider.mockSendFeedbackAndExpect("programming");
@@ -317,7 +317,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         programmingExerciseParticipationUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExerciseParticipationUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -344,7 +344,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         // Create a programming student participation with a submission and result
         var studentLogin = TEST_PREFIX + "student1";
@@ -410,7 +410,7 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         var pastDueDateExercise = textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(3), ZonedDateTime.now().minusDays(2),
                 ZonedDateTime.now().plusDays(1));

@@ -15,6 +15,7 @@ import dayjs from 'dayjs/esm';
 
 import { faCode, faExternalLink, faLaptopCode } from '@fortawesome/free-solid-svg-icons';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
+import { TooltipModule } from 'primeng/tooltip';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
@@ -61,6 +62,7 @@ export enum RepositoryAuthenticationMethod {
         HelpIconComponent,
         ArtemisTranslatePipe,
         SafeUrlPipe,
+        TooltipModule,
     ],
 })
 export class CodeButtonComponent implements OnInit {
@@ -216,7 +218,11 @@ export class CodeButtonComponent implements OnInit {
         });
     }
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeCodeButtonComponent();
+    }
+
+    private async initializeCodeButtonComponent(): Promise<void> {
         // Populate the tooltip strings first. They only depend on window.location.origin and the loaded
         // translations, not on the awaits below. The clone popover renders (and can be opened by the user)
         // before ngOnInit's async work finishes; if the SSH-key-missing alert appears while these strings

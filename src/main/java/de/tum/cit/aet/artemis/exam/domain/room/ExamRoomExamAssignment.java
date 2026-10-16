@@ -13,6 +13,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 
@@ -26,12 +27,14 @@ public class ExamRoomExamAssignment extends DomainObject {
     @JoinColumn(name = "exam_room_id", nullable = false)
     @NonNull
     @JsonBackReference("examRoomExamAssignments_room")
+    @Parent
     private ExamRoom examRoom;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exam_id", nullable = false)
     @NonNull
     @JsonBackReference("examRoomExamAssignments_exam")
+    @Parent
     private Exam exam;
 
     public ExamRoom getExamRoom() {

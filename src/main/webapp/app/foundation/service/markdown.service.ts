@@ -1,9 +1,9 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 import type { MarkdownItPlugin } from 'app/foundation/util/markdown-it.types';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ArtemisMarkdownService {
     private sanitizer = inject(DomSanitizer);
 

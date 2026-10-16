@@ -54,6 +54,12 @@ import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive
     ],
 })
 export class CompetencyManagementTableComponent {
+    private readonly competencyService: CompetencyService = inject(CompetencyService);
+    private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
+    private readonly alertService: AlertService = inject(AlertService);
+    private readonly dialogService = inject(DialogService);
+    private readonly translateService = inject(TranslateService);
+
     courseId = input.required<number>();
     courseCompetencies = input<CourseCompetency[]>([]);
     competencyType = input.required<CourseCompetencyType>();
@@ -65,12 +71,6 @@ export class CompetencyManagementTableComponent {
     service!: CompetencyService | PrerequisiteService; // set by the constructor effect (runs on first CD) before any event handler reads it
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
-
-    private readonly competencyService: CompetencyService = inject(CompetencyService);
-    private readonly prerequisiteService: PrerequisiteService = inject(PrerequisiteService);
-    private readonly alertService: AlertService = inject(AlertService);
-    private readonly dialogService = inject(DialogService);
-    private readonly translateService = inject(TranslateService);
 
     readonly faFileImport = faFileImport;
     readonly faMagnifyingGlass = faMagnifyingGlass;

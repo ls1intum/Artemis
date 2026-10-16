@@ -26,7 +26,9 @@
                 "explanation": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will setup a separate repository for you to clone as usual.",
                 "repositoryChoice": "You already have a graded participation from before the due date. Therefore, you can choose if the code in the separate repository should be the template repository of this exercise or your graded participation.",
                 "practiceWithTemplate": "Practice with template repository",
-                "practiceWithGradedParticipation": "Practice with graded participation"
+                "practiceWithGradedParticipation": "Practice with graded participation",
+                "teamHint": "Practice is individual. It does not change your team's result, and your teammates cannot see it.",
+                "teamNote": "You are practicing on your own. This does not change your team's result, and your teammates cannot see your practice work."
             },
             "resetRepository": {
                 "label": "Reset Repository",
@@ -59,10 +61,14 @@
             "openTextEditor": "Open text editor",
             "copyUrl": "Copy URL",
             "copiedUrl": "Copied URL",
+            "openRepositoryReadOnly": "Open repository in read-only online code view (new tab)",
             "uploadFile": "Upload a file",
             "viewTeam": "Team",
             "sshKeyTip": "To use SSH, you need to add an SSH key to your account {link:here}.",
             "sshKeyExpiredTip": "Some of your SSH keys are expired. You might need to add a new SSH key to your account {link:here}.",
+            "passwordWarningText": "Reusing account passwords for Git is insecure. Consider using a",
+            "switchToToken": "Switch to Token",
+            "passwordWarningHelp": "Personal access tokens are scoped to exercises and keep your primary account password safe from being cached in plaintext Git credentials.",
             "vcsTokenTip": "To access the repository with a VCS access token, you need to add a new one to your account {link:here}.",
             "vcsTokenExpiredTip": "Your VCS access token has expired. Renew it {link:here}.",
             "repositoryAccessTokenForbidden": "You are not allowed to access this repository.",

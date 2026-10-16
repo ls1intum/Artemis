@@ -33,7 +33,7 @@ import { ImageComponent, ImageLoadingStatus } from 'app/shared-ui/image/image.co
 import { generateExerciseHintExplanation } from 'app/foundation/util/markdown.util';
 import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDrag, CdkDragDrop, CdkDragPlaceholder, CdkDragPreview, CdkDropList, CdkDropListGroup } from '@angular/cdk/drag-drop';
-import { MAX_QUIZ_QUESTION_POINTS } from 'app/foundation/constants/input.constants';
+import { MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH, MAX_QUIZ_QUESTION_POINTS } from 'app/foundation/constants/input.constants';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizHintAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { QuizExplanationAction } from 'app/editor/monaco-editor/model/actions/quiz/quiz-explanation.action';
@@ -43,7 +43,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizScoringInfoModalComponent } from '../quiz-scoring-info-modal/quiz-scoring-info-modal.component';
-import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { SelectModule } from 'primeng/select';
 import { CheckboxModule } from 'primeng/checkbox';
@@ -70,6 +70,7 @@ import {
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FileService } from 'app/foundation/service/file.service';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { CustomMaxLengthDirective } from 'app/foundation/validators/custom-max-length-validator/custom-max-length-validator.directive';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-edit',
@@ -80,6 +81,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     imports: [
         FaIconComponent,
         FormsModule,
+        CustomMaxLengthDirective,
         TranslateDirective,
         NgbTooltip,
         NgbCollapse,
@@ -89,7 +91,6 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         ImageComponent,
         NgClass,
         CdkDropList,
-        NgStyle,
         CdkDrag,
         CdkDragPreview,
         NgTemplateOutlet,
@@ -103,6 +104,10 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     ],
 })
 export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, QuizQuestionEdit, OnDestroy {
+    private translateService = inject(TranslateService);
+    private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
+    private fileService = inject(FileService);
+
     protected readonly faBan = faBan;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
@@ -122,9 +127,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
     protected readonly faScissors = faScissors;
 
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
+    readonly MAX_DRAG_ITEM_TEXT_LENGTH = MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH;
 
-    private translateService = inject(TranslateService);
-    private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     readonly scoringTypeOptions = computed(() => {
@@ -135,13 +139,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
             { label: this.translateService.instant('artemisApp.quizExercise.scoringType.proportional_without_penalty'), value: ScoringType.PROPORTIONAL_WITHOUT_PENALTY },
         ];
     });
-    private fileService = inject(FileService);
 
     private readonly clickLayer = viewChild.required<ElementRef>('clickLayer');
     private readonly backgroundImage = viewChild.required<ImageComponent>('backgroundImage');
     private readonly markdownEditor = viewChild.required<MarkdownEditorMonacoComponent>('markdownEditor');
 
     private adjustClickLayerWidthSubscription?: OutputRefSubscription;
+    private readonly onWindowResize = () => this.adjustClickLayerWidth();
 
     readonly question = input.required<DragAndDropQuestion>();
     readonly questionIndex = input.required<number>();
@@ -257,6 +261,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
 
     ngOnDestroy(): void {
         this.adjustClickLayerWidthSubscription?.unsubscribe();
+        window.removeEventListener('resize', this.onWindowResize);
     }
 
     ngAfterViewInit(): void {
@@ -288,8 +293,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
 
         // render import images on UI immediatly
         this.makeFileMapPreview();
-        // Trigger click layer width adjustment upon window resize.
-        window.onresize = () => this.adjustClickLayerWidth();
+        // Trigger click layer width adjustment upon window resize. Every drag and drop question of the quiz needs its own listener, because a
+        // single window.onresize handler would only realign the question that registered last and the drop locations of the others would drift.
+        window.addEventListener('resize', this.onWindowResize);
     }
 
     /**
@@ -794,7 +800,19 @@ export class DragAndDropQuestionEditComponent implements OnInit, AfterViewInit, 
      * Delete this question from the quiz
      */
     deleteQuestion(): void {
-        this.filePreviewPaths().forEach((_, fileName) => this.removeFile.emit(fileName));
+        // Only release the files of this question. The preview paths also hold the files of every other question, because the
+        // shared file pool is previewed on init, and removing those would leave the other questions without their uploads.
+        const question = this.question();
+        const ownFileNames = new Set<string>();
+        if (question.backgroundFilePath) {
+            ownFileNames.add(question.backgroundFilePath);
+        }
+        question.dragItems?.forEach((dragItem) => {
+            if (dragItem.pictureFilePath) {
+                ownFileNames.add(dragItem.pictureFilePath);
+            }
+        });
+        ownFileNames.forEach((fileName) => this.removeFile.emit(fileName));
         this.questionDeleted.emit();
     }
 

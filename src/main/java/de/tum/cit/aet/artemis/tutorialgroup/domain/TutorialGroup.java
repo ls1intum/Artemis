@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
@@ -37,7 +38,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 public class TutorialGroup extends DomainObject {
 
     @ManyToOne
-    @JoinColumn(name = "course_id")
+    @JoinColumn(name = "course_id", nullable = false)
+    @Parent
     private Course course;
 
     @Column(name = "title")
@@ -398,10 +400,10 @@ public class TutorialGroup extends DomainObject {
     public static TutorialGroup preventCircularJsonConversion(TutorialGroup tutorialGroup) {
 
         // prevent circular to json conversion
-        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSchedule") && tutorialGroup.getTutorialGroupSchedule() != null) {
+        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.TUTORIAL_GROUP_SCHEDULE) && tutorialGroup.getTutorialGroupSchedule() != null) {
             tutorialGroup.getTutorialGroupSchedule().setTutorialGroup(null);
         }
-        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
+        if (Persistence.getPersistenceUtil().isLoaded(tutorialGroup, TutorialGroup_.TUTORIAL_GROUP_SESSIONS) && tutorialGroup.getTutorialGroupSessions() != null) {
             tutorialGroup.getTutorialGroupSessions().forEach(tutorialGroupSession -> {
                 tutorialGroupSession.setTutorialGroup(null);
                 if (tutorialGroupSession.getTutorialGroupSchedule() != null) {

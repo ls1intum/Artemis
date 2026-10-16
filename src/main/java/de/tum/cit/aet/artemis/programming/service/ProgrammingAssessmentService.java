@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -17,6 +20,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
@@ -129,8 +133,14 @@ public class ProgrammingAssessmentService extends AssessmentService {
         // The client echoes the automatic test-case and SCA feedback items it received (synthesized from the
         // typed collections, hence without ids). They must not be persisted as manual feedback rows - the
         // typed rows on the result already hold them.
-        newManualResult.getFeedbacks()
-                .removeIf(feedback -> (feedback.getId() == null || feedback.getId() < 0) && (feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback()));
+        // Stored automatic feedback rows (e.g. submission policy penalties, duplicate test warnings) are written by the server and
+        // not editable in the assessment editor, so the echoed copies are dropped as well and the stored rows are kept below.
+        // A new build may have replaced those rows since the assessment was loaded, so the echoed ids can be outdated.
+        newManualResult.getFeedbacks().removeIf(feedback -> (feedback.getType() == FeedbackType.AUTOMATIC && feedback.getId() != null && feedback.getId() > 0)
+                || ((feedback.getId() == null || feedback.getId() < 0) && (feedback.getTestCase() != null || feedback.isStaticCodeAnalysisFeedback())));
+        // what is left carries the ids of the manual feedback the tutor loaded for this result, so the stored result decides which ids may be written
+        checkFeedbackBelongsToResultElseThrow(newManualResult.getFeedbacks(), existingManualResult);
+        keepStoredAutomaticFeedback(newManualResult, existingManualResult);
         // The client-built result has empty typed collections; hydrate them from the database so that
         // saving the result does not orphan-remove the stored typed automatic feedback.
         if (newManualResult.getId() != null) {
@@ -157,6 +167,37 @@ public class ProgrammingAssessmentService extends AssessmentService {
         // same for the draft-save response
         programmingFeedbackSynthesizerService.attachSynthesizedFeedback(newManualResult, exercise, false);
         return newManualResult;
+    }
+
+    /**
+     * Adds the stored automatic feedback rows of the result to the feedback that is saved, since saving replaces the stored feedback. A row the tutor adapted
+     * arrives with its id and another type and is taken from the request instead. The rows are added as new instances carrying their ids, because the stored
+     * instances are detached and their long feedback text is not loaded.
+     *
+     * @param newManualResult      the result built from the request
+     * @param existingManualResult the stored result with its feedback
+     */
+    private static void keepStoredAutomaticFeedback(Result newManualResult, Result existingManualResult) {
+        Set<Long> incomingFeedbackIds = newManualResult.getFeedbacks().stream().map(Feedback::getId).filter(Objects::nonNull).collect(Collectors.toSet());
+        existingManualResult.getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && !incomingFeedbackIds.contains(feedback.getId()))
+                .map(ProgrammingAssessmentService::referenceStoredFeedback).forEach(newManualResult.getFeedbacks()::add);
+    }
+
+    private static Feedback referenceStoredFeedback(Feedback storedFeedback) {
+        Feedback feedback = new Feedback();
+        feedback.setId(storedFeedback.getId());
+        feedback.setText(storedFeedback.getText());
+        // the stored detail text is the preview of a long feedback text, which is re-attached by its id while saving
+        feedback.setDetailText(storedFeedback.getDetailText());
+        feedback.setHasLongFeedbackText(storedFeedback.getHasLongFeedbackText());
+        feedback.setReference(storedFeedback.getReference());
+        feedback.setCredits(storedFeedback.getCredits());
+        feedback.setPositive(storedFeedback.isPositive());
+        feedback.setType(storedFeedback.getType());
+        feedback.setVisibility(storedFeedback.getVisibility());
+        feedback.setGradingInstruction(storedFeedback.getGradingInstruction());
+        feedback.setTestCase(storedFeedback.getTestCase());
+        return feedback;
     }
 
     private Result submitManualAssessment(Result newManualResult, ProgrammingSubmission submission, StudentParticipation participation, ProgrammingExercise exercise) {

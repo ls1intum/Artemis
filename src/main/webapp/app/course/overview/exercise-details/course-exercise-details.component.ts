@@ -25,7 +25,7 @@ function isStudentParticipationChange(participation: Participation | undefined):
 }
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
+import { hasExerciseDueDatePassed, withPracticeParticipations } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
@@ -166,6 +166,19 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     readonly activeParticipation = computed(() => {
         return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();
+    });
+
+    /**
+     * The submit-disabled state for the header. While the page is already in practice mode but the routed quiz
+     * component has not switched to practice yet (not mounted, or still the live component), its submit-disabled
+     * state belongs to the graded attempt and is ignored.
+     */
+    readonly quizSubmitDisabledForMode = computed(() => {
+        const splitPanel = this.splitPanel();
+        if (this.participationMode() === 'practice' && splitPanel?.quizComponentMode() !== 'practice') {
+            return false;
+        }
+        return splitPanel?.quizSubmitDisabled() ?? false;
     });
 
     setSidebarToggle(isCollapsed: boolean, toggleSidebar: () => void): void {
@@ -551,7 +564,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 if (this.exercise && teamAssignment.studentParticipations) {
                     const updatedExercise = deepClone(this.exercise);
                     updatedExercise.studentAssignedTeamId = teamAssignment.teamId;
-                    updatedExercise.studentParticipations = teamAssignment.studentParticipations;
+                    updatedExercise.studentParticipations = withPracticeParticipations(this.exercise.studentParticipations, teamAssignment.studentParticipations);
                     this.exercise = updatedExercise;
                     this.mergeResultsAndSubmissionsForParticipations();
                 }

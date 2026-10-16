@@ -49,10 +49,17 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
 
         const adjustedDescription = description! + 'change to enable save button again';
         await lectureCreation.typeDescription(adjustedDescription);
+        // The footer names what is unsaved, so the saved confirmation below comes from this second save.
+        await expect(lectureCreation.getSaveStatus()).toContainText('Unsaved changes');
         const lectureResponseFromEdit = await lectureCreation.save();
         const lectureFromEdit: Lecture = await readResponseJson(lectureResponseFromEdit);
         expect(lectureResponseFromEdit.status()).toBe(200);
-        await page.waitForURL(`**/${course.id}/lectures/${lectureFromEdit.id}`);
+        // Saving keeps the editor open and confirms the save in its footer; nothing is left to cancel, so the footer offers Close.
+        await expect(page).toHaveURL(`/course-management/${course.id}/lectures/${lectureFromEdit.id}/edit`);
+        await expect(lectureCreation.getSaveStatus()).toContainText('Lecture details saved at');
+        await expect(lectureCreation.getLeaveButton()).toHaveText('Close');
+
+        await Commands.gotoAndEnsureRendered(page, `/course-management/${course.id}/lectures/${lectureFromEdit.id}`);
 
         await expect(lectureManagement.getLectureTitle()).toContainText(lectureData.title);
         await expect(lectureManagement.getLectureDescription()).toContainText(adjustedDescription!);
@@ -96,12 +103,30 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
             const exercise = await exerciseAPIRequests.createModelingExercise({ course });
             await lectureManagement.openUnitsPage(lecture.id!);
             await lectureManagement.addExerciseUnit(exercise.id!);
-            await expect(page.locator('.exercise-title', { hasText: new RegExp(`^${exercise.title!}$`) })).toBeVisible();
+            await expect(page.getByTestId('lecture-unit-name').filter({ hasText: new RegExp(`^${exercise.title!}$`) })).toBeVisible();
         });
 
         test('Can open page to add attachment unit to the lecture', async ({ lectureManagement, page }) => {
             await lectureManagement.openAttachmentUnitCreationPage(lecture.id!);
             await expect(page.getByText('Create File/Video Content')).toBeVisible();
+        });
+
+        test('Shows the current file of a file unit and replaces it', async ({ lectureManagement, page }) => {
+            await lectureManagement.openUnitsPage(lecture.id!);
+            const unit = await lectureManagement.addAttachmentVideoUnit(lecture.id!, 'Slides', Fixtures.getAbsoluteFilePath('pdf-test-file.pdf'));
+            expect(unit.attachment?.version).toBe(1);
+
+            await lectureManagement.openAttachmentVideoUnitEditPage(course.id, lecture.id!, unit.id!);
+            await expect(page.getByTestId('current-file-name')).toHaveText('pdf-test-file.pdf');
+            await expect(page.getByTestId('current-file-version')).toHaveText('(Version 1)');
+            await expect(page.getByTestId('choose-file-button')).toHaveCount(0);
+
+            const response = await lectureManagement.replaceAttachmentVideoUnitFile(Fixtures.getAbsoluteFilePath('course/icon.png'));
+            expect(response.status()).toBe(200);
+
+            await lectureManagement.openAttachmentVideoUnitEditPage(course.id, lecture.id!, unit.id!);
+            await expect(page.getByTestId('current-file-name')).toHaveText('icon.png');
+            await expect(page.getByTestId('current-file-version')).toHaveText('(Version 2)');
         });
     });
 

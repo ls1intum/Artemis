@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
@@ -54,7 +55,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
 @Lazy
-@FeatureUsage("repositories/export")
+@FeatureUsage(UserFeature.PROGRAMMING_IMPORT_EXPORT)
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingExerciseRepositoryExportResource {
@@ -214,13 +215,15 @@ public class ProgrammingExerciseRepositoryExportResource {
         var studentParticipation = programmingExercise.getStudentParticipations().stream().filter(p -> p.getId().equals(participationId))
                 .map(p -> (ProgrammingExerciseStudentParticipation) p).findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("No student participation with id " + participationId + " was found for programming exercise " + exerciseId));
-        if (!authCheckService.isOwnerOfParticipation(studentParticipation)) {
+        boolean isOwner = authCheckService.isOwnerOfParticipation(studentParticipation);
+        if (!isOwner) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         }
         var exportErrors = new ArrayList<String>();
         long start = System.nanoTime();
 
-        InputStreamResource resource = gitRepositoryExportService.exportStudentRepositoryInMemory(programmingExercise, studentParticipation, exportErrors);
+        boolean hideStudentName = !isOwner && !authCheckService.isAtLeastInstructorForExercise(programmingExercise, null);
+        InputStreamResource resource = gitRepositoryExportService.exportStudentRepositoryInMemory(programmingExercise, studentParticipation, hideStudentName, exportErrors);
 
         if (resource == null) {
             throw new de.tum.cit.aet.artemis.core.exception.InternalServerErrorException(

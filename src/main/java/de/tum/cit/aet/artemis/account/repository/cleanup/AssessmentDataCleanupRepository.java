@@ -128,6 +128,28 @@ public interface AssessmentDataCleanupRepository extends ArtemisJpaRepository<Co
             """)
     int deleteTutorParticipations(@Param("userId") long userId);
 
+    @Query("""
+            SELECT instance.student.id AS userId, COUNT(instance) AS count
+            FROM PresentationAssessmentInstance instance
+            WHERE instance.student.id IN :userIds
+            GROUP BY instance.student.id
+            """)
+    List<UserReferenceCount> countPresentationAssessmentInstances(@Param("userIds") Collection<Long> userIds);
+
+    /**
+     * Deletes the individual presentation assessment instances of the account.
+     *
+     * @param userId the account being deleted
+     * @return the number of deleted instances
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("""
+            DELETE FROM PresentationAssessmentInstance instance
+            WHERE instance.student.id = :userId
+            """)
+    int deletePresentationAssessmentInstances(@Param("userId") long userId);
+
     /**
      * Deletes the responses to the complaints the account raised, so that the complaints themselves can be removed.
      * A response written by the account on somebody else's complaint is detached instead, by

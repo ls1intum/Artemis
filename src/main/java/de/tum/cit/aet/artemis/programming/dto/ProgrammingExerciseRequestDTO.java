@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.programming.dto;
 
 import java.time.ZonedDateTime;
 
+import org.jspecify.annotations.Nullable;
+
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseRefDTO;
@@ -11,6 +13,7 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentConfigDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismDetectionConfigDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 
@@ -104,6 +107,18 @@ public interface ProgrammingExerciseRequestDTO {
     ExerciseGroupIdDTO exerciseGroup();
 
     /**
+     * Reads the build configuration out of a request body. It is a row of its own that names the exercise, so it is
+     * bound next to the exercise rather than onto it.
+     *
+     * @param request the parsed request body
+     * @return the build configuration the request carries, or {@code null} when it carries none
+     */
+    @Nullable
+    static ProgrammingExerciseBuildConfig buildConfigOf(ProgrammingExerciseRequestDTO request) {
+        return request.buildConfig() == null ? null : request.buildConfig().toEntity();
+    }
+
+    /**
      * Copies every field both request bodies bind the same way onto the transient exercise, reproducing the binding
      * the entity request body produced before these DTOs existed.
      *
@@ -160,9 +175,6 @@ public interface ProgrammingExerciseRequestDTO {
         exercise.setReleaseTestsWithExampleSolution(Boolean.TRUE.equals(request.releaseTestsWithExampleSolution()));
         exercise.setProgrammingLanguage(request.programmingLanguage());
         exercise.setProjectType(request.projectType());
-        if (request.buildConfig() != null) {
-            exercise.setBuildConfig(request.buildConfig().toEntity());
-        }
         exercise.setSubmissionPolicy(request.submissionPolicy() == null ? null : request.submissionPolicy().toEntity());
         // Both callers build a brand new exercise, so the config must never adopt the id the request carries: an
         // exported archive carries the source exercise's config id, and persisting it would write onto that row.

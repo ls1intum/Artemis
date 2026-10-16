@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { toISO8601DateString } from 'app/foundation/util/date.utils';
 import { TutorialGroupConfigurationDTO } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
@@ -7,7 +7,7 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 type DtoResponseType = HttpResponse<TutorialGroupConfigurationDTO>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class TutorialGroupsConfigurationService {
     private httpClient = inject(HttpClient);
 

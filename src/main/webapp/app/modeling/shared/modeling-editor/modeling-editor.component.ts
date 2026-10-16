@@ -64,6 +64,12 @@ type ApollonEditorE2eHostElement = HTMLElement & { __apollonEditor?: ApollonEdit
     ],
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy {
+    private readonly sanitizer = inject(DomSanitizer);
+    private readonly elementRef = inject(ElementRef);
+    private readonly translateService = inject(TranslateService);
+    private readonly fullscreenPresentation = inject(FullscreenPresentationService);
+    private readonly contentObserver = inject(ContentObserver);
+
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
     protected readonly faCircleNotch = faCircleNotch;
@@ -72,12 +78,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     protected readonly faProblemStatement = faAlignLeft;
     protected readonly farQuestionCircle = faQuestionCircle;
     protected readonly fullscreenSupported = document.fullscreenEnabled;
-
-    private readonly sanitizer = inject(DomSanitizer);
-    private readonly elementRef = inject(ElementRef);
-    private readonly translateService = inject(TranslateService);
-    private readonly fullscreenPresentation = inject(FullscreenPresentationService);
-    private readonly contentObserver = inject(ContentObserver);
 
     protected readonly editorFrame = viewChild<ElementRef<HTMLElement>>('editorFrame');
     private readonly editorActions = viewChild<ElementRef<HTMLElement>>('editorActions');
@@ -90,6 +90,12 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
     protected readonly hasEditorTopLeft = computed(() => !!this.projectedTopLeft());
     private readonly hasEditorTopLeftRegion = computed(() => (!!this.savedStatus() && !this.readOnly()) || this.hasEditorTopLeft());
     protected readonly hasEditorBottomCenter = computed(() => this.withExplanation() || (this.showProjectedBottomCenter() && !!this.projectedBottomCenter()));
+    protected readonly saveState = computed(() => {
+        if (this.savedStatus()?.isSaving) {
+            return 'saving';
+        }
+        return this.savedStatus()?.isChanged ? 'unsaved' : 'saved';
+    });
 
     readonly helpVisible = signal(false);
     readonly fullscreenActive = signal(false);
@@ -225,7 +231,11 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
         });
     }
 
-    async ngAfterViewInit(): Promise<void> {
+    ngAfterViewInit(): void {
+        void this.initializeModelingEditorComponentView();
+    }
+
+    private async initializeModelingEditorComponentView(): Promise<void> {
         this.viewInitialized = true;
         if (this.readOnly()) {
             const model = this.umlModel();

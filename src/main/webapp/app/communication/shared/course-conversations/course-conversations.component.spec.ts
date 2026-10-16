@@ -1,13 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import dayjs from 'dayjs/esm';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { BreakpointObserver, BreakpointState, Breakpoints } from '@angular/cdk/layout';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
 import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
@@ -20,11 +21,11 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -70,12 +71,13 @@ examples.forEach((activeConversation) => {
         let postsSubject: BehaviorSubject<Post[]>;
         let acceptCodeOfConductSpy: ReturnType<typeof vi.spyOn>;
         let setActiveConversationSpy: ReturnType<typeof vi.spyOn>;
-        let metisConversationService: MetisConversationService;
+        let courseConversationsService: CourseConversationsService;
         let courseOverviewService: CourseOverviewService;
         let dialogService: DialogService;
         let courseSidebarService: CourseSidebarService;
         let activatedRoute: ActivatedRoute;
         let breakpoint$: BehaviorSubject<BreakpointState>;
+        let activeConversation$: BehaviorSubject<ConversationDTO | undefined>;
 
         // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
         MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
@@ -148,7 +150,7 @@ examples.forEach((activeConversation) => {
                     },
                     MockProvider(CourseOverviewService),
                     MockProvider(DialogService),
-                    MockProvider(MetisConversationService),
+                    MockProvider(CourseConversationsService),
                     MockProvider(SidebarEventService),
                     MockProvider(ProfileService),
                     MockProvider(AlertService),
@@ -161,11 +163,11 @@ examples.forEach((activeConversation) => {
                 ],
             });
 
-            const metisService = new MockMetisService();
+            const communicationService = new MockCommunicationService();
 
             TestBed.overrideComponent(CourseConversationsComponent, {
                 set: {
-                    providers: [{ provide: MetisService, useValue: metisService }],
+                    providers: [{ provide: CommunicationService, useValue: communicationService }],
                 },
             });
 
@@ -196,36 +198,37 @@ examples.forEach((activeConversation) => {
                 },
             });
 
-            metisConversationService = TestBed.inject(MetisConversationService);
+            courseConversationsService = TestBed.inject(CourseConversationsService);
             courseOverviewService = TestBed.inject(CourseOverviewService);
             courseSidebarService = TestBed.inject(CourseSidebarService);
             activatedRoute = TestBed.inject(ActivatedRoute);
 
-            Object.defineProperty(metisConversationService, 'isServiceSetup$', { get: () => new BehaviorSubject(true).asObservable() });
-            Object.defineProperty(metisConversationService, 'conversationsOfUser$', { get: () => new BehaviorSubject([new GroupChatDTO()]).asObservable() });
-            Object.defineProperty(metisConversationService, 'isLoading$', { get: () => new BehaviorSubject(false).asObservable() });
-            Object.defineProperty(metisConversationService, 'isCodeOfConductAccepted$', { get: () => new BehaviorSubject(true).asObservable() });
-            Object.defineProperty(metisConversationService, 'isCodeOfConductPresented$', { get: () => new BehaviorSubject(false).asObservable() });
-            metisConversationService.checkIsCodeOfConductAccepted = vi.fn();
-            metisConversationService.setActiveConversation = vi.fn();
-            metisConversationService.setUpConversationService = vi.fn().mockReturnValue(EMPTY);
-            metisConversationService.forceRefresh = vi.fn().mockReturnValue(EMPTY);
-            metisConversationService.markAsRead = vi.fn();
-            metisConversationService.acceptCodeOfConduct = vi.fn();
-            metisConversationService.createGroupChat = vi.fn().mockReturnValue(EMPTY);
-            metisConversationService.createOneToOneChat = vi.fn().mockReturnValue(EMPTY);
-            metisConversationService.createChannel = vi.fn().mockReturnValue(EMPTY);
-            metisConversationService.markAllChannelsAsRead = vi.fn().mockReturnValue(of());
+            Object.defineProperty(courseConversationsService, 'isServiceSetup$', { get: () => new BehaviorSubject(true).asObservable() });
+            Object.defineProperty(courseConversationsService, 'conversationsOfUser$', { get: () => new BehaviorSubject([new GroupChatDTO()]).asObservable() });
+            Object.defineProperty(courseConversationsService, 'isLoading$', { get: () => new BehaviorSubject(false).asObservable() });
+            Object.defineProperty(courseConversationsService, 'isCodeOfConductAccepted$', { get: () => new BehaviorSubject(true).asObservable() });
+            Object.defineProperty(courseConversationsService, 'isCodeOfConductPresented$', { get: () => new BehaviorSubject(false).asObservable() });
+            courseConversationsService.checkIsCodeOfConductAccepted = vi.fn();
+            courseConversationsService.setActiveConversation = vi.fn();
+            courseConversationsService.setUpConversationService = vi.fn().mockReturnValue(EMPTY);
+            courseConversationsService.forceRefresh = vi.fn().mockReturnValue(EMPTY);
+            courseConversationsService.markAsRead = vi.fn();
+            courseConversationsService.acceptCodeOfConduct = vi.fn();
+            courseConversationsService.createGroupChat = vi.fn().mockReturnValue(EMPTY);
+            courseConversationsService.createOneToOneChat = vi.fn().mockReturnValue(EMPTY);
+            courseConversationsService.createChannel = vi.fn().mockReturnValue(EMPTY);
+            courseConversationsService.markAllChannelsAsRead = vi.fn().mockReturnValue(of());
 
             fixture = TestBed.createComponent(CourseConversationsComponent);
             component = fixture.componentInstance;
 
             postsSubject = new BehaviorSubject<Post[]>([]);
-            vi.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
-            vi.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(new BehaviorSubject(activeConversation).asObservable());
-            setActiveConversationSpy = vi.spyOn(metisConversationService, 'setActiveConversation');
-            acceptCodeOfConductSpy = vi.spyOn(metisConversationService, 'acceptCodeOfConduct');
-            vi.spyOn(metisService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
+            vi.spyOn(courseConversationsService, 'course', 'get').mockReturnValue(course);
+            activeConversation$ = new BehaviorSubject<ConversationDTO | undefined>(activeConversation);
+            vi.spyOn(courseConversationsService, 'activeConversation$', 'get').mockReturnValue(activeConversation$.asObservable());
+            setActiveConversationSpy = vi.spyOn(courseConversationsService, 'setActiveConversation');
+            acceptCodeOfConductSpy = vi.spyOn(courseConversationsService, 'acceptCodeOfConduct');
+            vi.spyOn(communicationService, 'posts', 'get').mockReturnValue(postsSubject.asObservable());
             dialogService = TestBed.inject(DialogService);
             component.sidebarConversations.set([]);
 
@@ -482,7 +485,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('onConversationSelected should change active conversation', () => {
-            const setActiveConversationSpy = vi.spyOn(metisConversationService, 'setActiveConversation').mockImplementation(() => {});
+            const setActiveConversationSpy = vi.spyOn(courseConversationsService, 'setActiveConversation').mockImplementation(() => {});
             component.onConversationSelected(activeConversation?.id ?? 1);
             expect(setActiveConversationSpy).toHaveBeenCalled();
         });
@@ -548,13 +551,131 @@ examples.forEach((activeConversation) => {
             });
 
             it('should correctly populate the recents group in accordionConversationGroups using existing mocks', () => {
-                (metisConversationService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
 
                 component.prepareSidebarData();
                 const recentsGroup = component.accordionConversationGroups().recents;
                 expect(recentsGroup).toBeDefined();
                 expect(recentsGroup.entityData).toHaveLength(1);
                 expect(recentsGroup.entityData[0].isCurrent).toBe(true);
+            });
+        });
+
+        describe('empty direct messages in the sidebar', () => {
+            const emptyChat = { id: 101, type: ConversationType.ONE_TO_ONE } as ConversationDTO;
+            const usedChat = { id: 102, type: ConversationType.ONE_TO_ONE, lastMessageDate: dayjs() } as ConversationDTO;
+            const emptyChannel = { id: 103, type: ConversationType.CHANNEL } as ConversationDTO;
+            const emptyGroupChat = { id: 104, type: ConversationType.GROUP_CHAT } as ConversationDTO;
+
+            beforeEach(() => {
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
+                component.conversationsOfUser.set([emptyChat, usedChat, emptyChannel, emptyGroupChat]);
+            });
+
+            it('should leave an empty direct message out of the sidebar when it is not open', () => {
+                component.activeConversation.set(undefined);
+
+                component.prepareSidebarData();
+
+                expect(vi.mocked(courseOverviewService.groupConversationsByChannelType).mock.lastCall?.[1]).toEqual([usedChat, emptyChannel, emptyGroupChat]);
+                expect(courseOverviewService.mapConversationsToSidebarCardElements).toHaveBeenLastCalledWith([usedChat, emptyChannel, emptyGroupChat]);
+            });
+
+            it('should keep an empty direct message in the sidebar while it is open', () => {
+                component.activeConversation.set(emptyChat);
+
+                component.prepareSidebarData();
+
+                expect(vi.mocked(courseOverviewService.groupConversationsByChannelType).mock.lastCall?.[1]).toEqual([emptyChat, usedChat, emptyChannel, emptyGroupChat]);
+            });
+
+            it('should reload the sidebar when the user leaves an empty direct message', () => {
+                fixture.detectChanges();
+                component.conversationsOfUser.set([emptyChat, usedChat]);
+                activeConversation$.next(emptyChat);
+                const prepareSidebarDataSpy = vi.spyOn(component, 'prepareSidebarData');
+
+                activeConversation$.next(usedChat);
+
+                expect(prepareSidebarDataSpy).toHaveBeenCalledOnce();
+            });
+
+            it('should not reload the sidebar when the user leaves a direct message that has messages', () => {
+                fixture.detectChanges();
+                component.conversationsOfUser.set([emptyChat, usedChat]);
+                activeConversation$.next(usedChat);
+                const prepareSidebarDataSpy = vi.spyOn(component, 'prepareSidebarData');
+
+                activeConversation$.next(emptyChat);
+
+                expect(prepareSidebarDataSpy).not.toHaveBeenCalled();
+            });
+        });
+
+        describe('an empty direct message that receives its first message', () => {
+            let emptyChat: ConversationDTO;
+            let usedChat: ConversationDTO;
+            let conversationsOfUser$: BehaviorSubject<ConversationDTO[]>;
+
+            beforeEach(() => {
+                emptyChat = { id: 101, type: ConversationType.ONE_TO_ONE } as ConversationDTO;
+                usedChat = { id: 102, type: ConversationType.ONE_TO_ONE, lastMessageDate: dayjs() } as ConversationDTO;
+                conversationsOfUser$ = new BehaviorSubject<ConversationDTO[]>([emptyChat, usedChat]);
+                Object.defineProperty(courseConversationsService, 'conversationsOfUser$', { get: () => conversationsOfUser$.asObservable() });
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockReturnValue(of({}));
+                vi.mocked(courseOverviewService.mapConversationsToSidebarCardElements).mockImplementation((conversations) =>
+                    conversations.map((conversation) => ({ id: conversation.id!, title: 'chat', size: 'S', conversation })),
+                );
+                fixture.detectChanges();
+                component.prepareSidebarData();
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockClear();
+                vi.mocked(courseOverviewService.groupConversationsByChannelType).mockClear();
+            });
+
+            it('should add the chat to the sidebar when the other participant sends the first message', () => {
+                expect(component.sidebarConversations().map((card) => card.id)).toEqual([usedChat.id]);
+
+                // the service updates the cached chat in place when the message event arrives
+                emptyChat.lastMessageDate = dayjs();
+                conversationsOfUser$.next([emptyChat, usedChat]);
+
+                expect(component.sidebarConversations().map((card) => card.id)).toEqual([emptyChat.id, usedChat.id]);
+                expect(vi.mocked(courseOverviewService.groupConversationsByChannelType).mock.lastCall?.[1]).toContain(emptyChat);
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
+            it('should keep the chat out of the sidebar while it is still empty', () => {
+                conversationsOfUser$.next([emptyChat, usedChat]);
+
+                expect(courseOverviewService.groupConversationsByChannelType).not.toHaveBeenCalled();
+                expect(component.sidebarConversations().map((card) => card.id)).toEqual([usedChat.id]);
+            });
+        });
+
+        describe('opening a conversation that the sidebar does not list yet', () => {
+            const newChannel = { id: 201, type: ConversationType.CHANNEL } as ConversationDTO;
+            const knownChannel = { id: 202, type: ConversationType.CHANNEL } as ConversationDTO;
+
+            beforeEach(() => {
+                fixture.detectChanges();
+                (courseConversationsService.forceRefresh as ReturnType<typeof vi.fn>).mockClear();
+                component.conversationsOfUser.set([newChannel, knownChannel]);
+                component.sidebarConversations.set([{ id: knownChannel.id!, title: 'known', size: 'S', conversation: knownChannel }]);
+                vi.mocked(courseOverviewService.groupConversationsByChannelType).mockClear();
+            });
+
+            it('should rebuild the sidebar without asking the server again', () => {
+                activeConversation$.next(newChannel);
+
+                expect(courseOverviewService.groupConversationsByChannelType).toHaveBeenCalledOnce();
+                expect(vi.mocked(courseOverviewService.groupConversationsByChannelType).mock.lastCall?.[1]).toContain(newChannel);
+                expect(courseConversationsService.forceRefresh).not.toHaveBeenCalled();
+            });
+
+            it('should leave the sidebar alone when the conversation is already listed', () => {
+                activeConversation$.next(knownChannel);
+
+                expect(courseOverviewService.groupConversationsByChannelType).not.toHaveBeenCalled();
             });
         });
 
@@ -705,8 +826,8 @@ examples.forEach((activeConversation) => {
 
         it('should mark all channels as read', () => {
             fixture.detectChanges();
-            const markAllChannelsAsRead = vi.spyOn(metisConversationService, 'markAllChannelsAsRead').mockReturnValue(of());
-            const forceRefresh = vi.spyOn(metisConversationService, 'forceRefresh');
+            const markAllChannelsAsRead = vi.spyOn(courseConversationsService, 'markAllChannelsAsRead').mockReturnValue(of());
+            const forceRefresh = vi.spyOn(courseConversationsService, 'forceRefresh');
             forceRefresh.mockClear();
             component.markAllChannelAsRead();
             expect(markAllChannelsAsRead).toHaveBeenCalledOnce();
@@ -929,7 +1050,7 @@ examples.forEach((activeConversation) => {
 
             it('should track last known conversation ID when active conversation changes', () => {
                 const newConversation = { id: 123, type: 'channel' } as ConversationDTO;
-                vi.spyOn(metisConversationService, 'activeConversation$', 'get').mockReturnValue(of(newConversation));
+                vi.spyOn(courseConversationsService, 'activeConversation$', 'get').mockReturnValue(of(newConversation));
 
                 component.ngOnInit();
                 vi.advanceTimersByTime(0);

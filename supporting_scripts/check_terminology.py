@@ -197,7 +197,7 @@ SELF_TEST_CASES = (
 # Which paths the scan covers. The changelog entries matter most: they are in scope because their prose is editable
 # after merge, and they are the case somebody is most likely to assume is exempt.
 SELF_TEST_PATHS = (
-    (False, "src/main/resources/config/liquibase/changelog/20260410144433_changelog.xml"),
+    (False, "src/main/resources/config/liquibase/history/v10/20260410144433_changelog.xml"),
     (False, "src/main/resources/config/liquibase/master.xml"),
     (True, "supporting_scripts/check_terminology.py"),
     (True, "documentation/docs/developer/guidelines/terminology.mdx"),

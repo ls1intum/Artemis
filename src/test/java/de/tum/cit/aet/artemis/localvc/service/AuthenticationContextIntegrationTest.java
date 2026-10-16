@@ -4,7 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.UnknownHostException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -16,30 +19,75 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndepend
 class AuthenticationContextIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
     @Test
-    void testSessionContext_getIpAddress() {
+    void testSessionContext_getIpAddress_unresolved() {
         ServerSession session = mock(ServerSession.class);
-        InetSocketAddress clientAddress = InetSocketAddress.createUnresolved("192.168.1.10", 22);
-        when(session.getClientAddress()).thenReturn(clientAddress);
+        when(session.getClientAddress()).thenReturn(InetSocketAddress.createUnresolved("192.168.1.10", 22));
 
-        AuthenticationContext.Session sessionContext = new AuthenticationContext.Session(session);
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
 
-        String ipAddress = sessionContext.getIpAddress();
-
-        assertThat(ipAddress).contains("192.168.1.10");
-        assertThat(ipAddress).contains("22");
+        assertThat(ipAddress).isEqualTo("192.168.1.10");
     }
 
     @Test
     void testSessionContext_getIpAddress_withResolved() {
         ServerSession session = mock(ServerSession.class);
-        InetSocketAddress clientAddress = new InetSocketAddress("10.0.0.50", 2222);
+        when(session.getClientAddress()).thenReturn(new InetSocketAddress("10.0.0.50", 2222));
+
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
+
+        assertThat(ipAddress).isEqualTo("10.0.0.50");
+    }
+
+    @Test
+    void testSessionContext_getIpAddress_withHostname() throws UnknownHostException {
+        // A peer whose reverse lookup supplied a hostname, as production ssh clients arrive
+        InetSocketAddress clientAddress = new InetSocketAddress(InetAddress.getByAddress("host-203-0-113-42.dialup.example.net", new byte[] { (byte) 203, 0, (byte) 113, 42 }),
+                52134);
+        assertThat(clientAddress.toString()).hasSizeGreaterThan(45);
+
+        ServerSession session = mock(ServerSession.class);
         when(session.getClientAddress()).thenReturn(clientAddress);
 
-        AuthenticationContext.Session sessionContext = new AuthenticationContext.Session(session);
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
 
-        String ipAddress = sessionContext.getIpAddress();
+        assertThat(ipAddress).isEqualTo("203.0.113.42");
+    }
 
-        assertThat(ipAddress).contains("10.0.0.50");
+    @Test
+    void testSessionContext_getIpAddress_ipv6() throws UnknownHostException {
+        InetSocketAddress clientAddress = new InetSocketAddress(InetAddress.getByName("2001:db8::1"), 22);
+
+        ServerSession session = mock(ServerSession.class);
+        when(session.getClientAddress()).thenReturn(clientAddress);
+
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
+
+        assertThat(ipAddress).isEqualTo("2001:db8:0:0:0:0:0:1");
+    }
+
+    @Test
+    void testSessionContext_getIpAddress_unresolvedHostname() {
+        // An unresolved address keeps whatever string it was created from, so a hostname arrives here unshortened
+        String hostname = "a-very-long-student-machine-name.subdomain.students.example.net";
+        assertThat(hostname).hasSizeGreaterThan(45);
+
+        ServerSession session = mock(ServerSession.class);
+        when(session.getClientAddress()).thenReturn(InetSocketAddress.createUnresolved(hostname, 22));
+
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
+
+        assertThat(ipAddress).isNull();
+    }
+
+    @Test
+    void testSessionContext_getIpAddress_nonIpSocket() {
+        ServerSession session = mock(ServerSession.class);
+        when(session.getClientAddress()).thenReturn(new SocketAddress() {
+        });
+
+        String ipAddress = new AuthenticationContext.Session(session).getIpAddress();
+
+        assertThat(ipAddress).isNull();
     }
 
     @Test

@@ -1,0 +1,49 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Playwright multi-node setup on the Redis distributed data provider
+#
+# Layered over playwright-E2E-tests-multi-node.yml: the stack stays the same, only the distributed data provider changes.
+# The three nodes use the Redis (Valkey) container instead of forming an embedded Hazelcast cluster, so with this file no
+# Hazelcast instance is created at all and the run exercises the Redis implementation of every distributed structure.
+#
+# Used by supporting_scripts/ci/E2E-tests/execute.sh (`multi-node-redis`) and by the local multi-node runner
+# supporting_scripts/e2e/run-e2e-tests-local-multinode.sh (`--middleware redis`).
+#
+# Every node gets a distinct Redis client name. That name is the node identity the Redis provider reports, so two nodes
+# sharing it would look like a single node to the build agent cleanup.
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+  redis:
+    extends:
+      file: ./redis.yml
+      service: redis
+
+  artemis-app-node-1:
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./artemis/config/middleware-redis.env
+    environment:
+      SPRING_DATA_REDIS_HOST: 'artemis-redis'
+      SPRING_DATA_REDIS_CLIENTNAME: 'artemis-node-1'
+
+  artemis-app-node-2:
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./artemis/config/middleware-redis.env
+    environment:
+      SPRING_DATA_REDIS_HOST: 'artemis-redis'
+      SPRING_DATA_REDIS_CLIENTNAME: 'artemis-node-2'
+
+  artemis-app-node-3:
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - ./artemis/config/middleware-redis.env
+    environment:
+      SPRING_DATA_REDIS_HOST: 'artemis-redis'
+      SPRING_DATA_REDIS_CLIENTNAME: 'artemis-node-3'

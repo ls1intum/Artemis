@@ -21,6 +21,13 @@ import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
     template: '',
 })
 export abstract class ImportCourseCompetenciesComponent implements OnInit, ComponentCanDeactivate {
+    protected readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
+    protected readonly router: Router = inject(Router);
+    protected readonly courseCompetencyService: CourseCompetencyService = inject(CourseCompetencyService);
+    protected readonly alertService: AlertService = inject(AlertService);
+    private readonly translateService: TranslateService = inject(TranslateService);
+    private readonly sortingService: SortService = inject(SortService);
+
     // this attribute has to be set when using the common template (import-course-competencies.component.html)
     abstract entityType: string;
     // set this attribute to hide the options to import relation
@@ -72,13 +79,6 @@ export abstract class ImportCourseCompetenciesComponent implements OnInit, Compo
         COURSE_TITLE: 'course.title',
         SEMESTER: 'course.semester',
     };
-
-    protected readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
-    protected readonly router: Router = inject(Router);
-    protected readonly courseCompetencyService: CourseCompetencyService = inject(CourseCompetencyService);
-    protected readonly alertService: AlertService = inject(AlertService);
-    private readonly translateService: TranslateService = inject(TranslateService);
-    private readonly sortingService: SortService = inject(SortService);
 
     ngOnInit(): void {
         this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));

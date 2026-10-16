@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { MODULE_FEATURE_SHARING } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -26,16 +26,16 @@ interface ParticipationWithCircularReferences {
 }
 
 /** the programming exercise sharing service */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseSharingService {
+    private readonly http = inject(HttpClient);
+    private readonly profileService = inject(ProfileService);
+
     protected readonly baseSharingConfigUrl = 'api/core/sharing/config';
     protected readonly resourceUrl = 'api/programming/sharing/import';
     protected readonly resourceUrlBasket = 'api/programming/sharing/import/basket/';
     protected readonly resourceUrlExport = 'api/programming/sharing/export';
     protected readonly resourceUrlSetupImport = 'api/programming/sharing/setup-import';
-
-    private readonly http = inject(HttpClient);
-    private readonly profileService = inject(ProfileService);
 
     /**
      * loads the Shopping Basket via the Service

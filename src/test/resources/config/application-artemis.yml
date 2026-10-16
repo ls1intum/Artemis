@@ -9,6 +9,7 @@ artemis:
     repo-download-clone-path: ./local/server-integration-test/repos-download
     data-export-path: ./local/server-integration-test/data-exports
     build-logs-path: ./local/server-integration-test/build-logs
+    failed-build-logs-path: ./local/server-integration-test/failed-build-logs
     file-upload-path: ./local/server-integration-test/uploads
     submission-export-path: ./local/server-integration-test/exports
     checked-out-repos-path: ./local/server-integration-test/checked-out-repos
@@ -16,6 +17,12 @@ artemis:
     version-control.ssh-private-key-folder-path: ./local/server-integration-test/ssh-keys
     temp-path: ./local/server-integration-test/temp
     bcrypt-salt-rounds: 4  # We don't need secure passwords for testing. Lower rounds will speed up tests. 4 ist the lowest allowed round count.
+    mail:
+        retry:
+            # Off in tests: a mail that fails to send would otherwise be sent again by a background job while another test stubs or
+            # resets the shared mail sender, which corrupts Mockito's state. The tests of the retry queue construct it with its own
+            # properties and drive the job themselves.
+            enabled: false
     user-management:
         use-external: true # enables external user management (actual LDAP authentication requires artemis.user-management.ldap.enabled=true)
         ldap:
@@ -77,8 +84,17 @@ artemis:
         enabled: true
         url: http://iris.fake
         secret-token: secret-token
+        proactive:
+            # The admission cooldown spaces out real triggers; integration tests fire several for the same student
+            # and exercise back to back and would otherwise reject each other. Its behaviour is covered directly in
+            # PyrisJobServiceStruggleTest and IrisStruggleInterventionServiceTriggerTest.
+            trigger-cooldown: 1ms
     atlas:
         enabled: true
+        atlasllm:
+            enabled: true # Production defaults this off; the agent and orchestrator tests need their beans, and the shared ChatClient is mocked.
+        orchestrator:
+            responses-api-enabled: false # General integration tests mock the shared ChatClient; adapter tests enable Responses explicitly.
         atlasml:
             enabled: true
             base-url: https://fake.fake
@@ -98,8 +114,9 @@ artemis:
                 - 127.0.0.0/8
 
 info:
-    operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service
-    operatorAdminName: Some Universities Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
+    operatorName: Artemis Test Operations
+    operatorAdminName: Artemis Test Administrator
+    universityName: Artemis Test University
     contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
 
 spring:

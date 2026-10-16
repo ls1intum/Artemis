@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.admin.service.export;
 
+import static de.tum.cit.aet.artemis.admin.web.ExportWebsocketTopics.COURSE_ARCHIVE;
+import static de.tum.cit.aet.artemis.admin.web.ExportWebsocketTopics.EXAM_ARCHIVE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.course.service.CourseArchiveService.TOTAL_ARCHIVE_STEPS;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -32,6 +35,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
@@ -40,6 +44,7 @@ import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseExamExportErrorCause;
 import de.tum.cit.aet.artemis.course.domain.CourseExamExportState;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
+import de.tum.cit.aet.artemis.course.service.CourseOperationClaim;
 import de.tum.cit.aet.artemis.course.service.CourseOperationProgressService;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -114,8 +119,6 @@ public class CourseExamExportService {
         this.objectMapper = objectMapper;
     }
 
-    private static final int TOTAL_ARCHIVE_STEPS = 4;
-
     /**
      * Exports the entire course into a single zip file that is saved in the directory specified by outputDir.
      * This is used to export all exercises and exams of a course along with student submissions for the course archive
@@ -128,14 +131,43 @@ public class CourseExamExportService {
      */
     public Optional<Path> exportCourseForArchive(Course course, Path outputDir, List<String> exportErrors, Map<Long, ExamScoresDTO> examScoresData) {
         ZonedDateTime startedAt = ZonedDateTime.now();
+        CourseOperationClaim operationClaim = progressService.startOperation(course.getId(), CourseOperationType.ARCHIVE, "Creating directories", TOTAL_ARCHIVE_STEPS, startedAt);
+        try {
+            Optional<Path> archivedCourse = exportCourseForArchive(course, outputDir, exportErrors, examScoresData, operationClaim);
+            if (archivedCourse.isPresent()) {
+                progressService.completeOperation(operationClaim, TOTAL_ARCHIVE_STEPS, exportErrors.size());
+            }
+            else {
+                progressService.failOperation(operationClaim, "Archive failed", 0, TOTAL_ARCHIVE_STEPS, exportErrors.size(), "No course archive was created", 0);
+            }
+            return archivedCourse;
+        }
+        catch (RuntimeException e) {
+            progressService.failOperation(operationClaim, "Archive failed", 0, TOTAL_ARCHIVE_STEPS, 0, e.getMessage(), 0);
+            throw e;
+        }
+        finally {
+            progressService.releaseOperationClaim(operationClaim);
+        }
+    }
+
+    /**
+     * Exports the course using an operation claim acquired before an asynchronous handoff.
+     *
+     * @param course         The course to export
+     * @param outputDir      The directory where the exported course is saved
+     * @param exportErrors   List of failures that occurred during the export
+     * @param examScoresData Map of exam ID to ExamScoresDTO containing comprehensive exam score data
+     * @param operationClaim the claim that owns the archive operation
+     * @return Path to the zip file
+     */
+    public Optional<Path> exportCourseForArchive(Course course, Path outputDir, List<String> exportErrors, Map<Long, ExamScoresDTO> examScoresData,
+            CourseOperationClaim operationClaim) {
         int stepsCompleted = 0;
 
         // Used for sending export progress notifications to instructors
-        var notificationTopic = "/topic/courses/" + course.getId() + "/export-course";
+        var notificationTopic = COURSE_ARCHIVE.at(course.getId());
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."), null);
-
-        // Start progress tracking
-        progressService.startOperation(course.getId(), CourseOperationType.ARCHIVE, "Creating directories", TOTAL_ARCHIVE_STEPS);
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
         var courseDirName = course.getShortName() + "-" + course.getTitle() + "-" + timestamp;
@@ -151,16 +183,14 @@ public class CourseExamExportService {
             String message = "Failed to export course " + course.getId() + " because the temporary directory: " + tmpCourseDir + " cannot be created.";
             notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED_WITH_ERRORS, List.of(message),
                     CourseExamExportErrorCause.DIR_NOT_CREATED.toString());
-            progressService.failOperation(course.getId(), CourseOperationType.ARCHIVE, "Creating directories", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, startedAt, message,
-                    calculateArchiveProgress(stepsCompleted));
+            progressService.failOperation(operationClaim, "Creating directories", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, message, calculateArchiveProgress(stepsCompleted));
             logMessageAndAppendToList(message, exportErrors, e);
             return Optional.empty();
         }
 
         try {
             // Step 1: Export course exercises and exams
-            progressService.updateProgress(course.getId(), CourseOperationType.ARCHIVE, "Exporting exercises", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, startedAt,
-                    calculateArchiveProgress(stepsCompleted));
+            progressService.updateProgress(operationClaim, "Exporting exercises", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, calculateArchiveProgress(stepsCompleted));
             List<Path> exportedFiles = exportCourseAndExamExercises(notificationTopic, course, tmpCourseDir.toString(), exportErrors, reportData);
             stepsCompleted++;
 
@@ -169,14 +199,12 @@ public class CourseExamExportService {
                 exportErrors.add(message);
                 notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.COMPLETED_WITH_ERRORS, List.of(message),
                         CourseExamExportErrorCause.NOTHING_TO_EXPORT.toString());
-                progressService.failOperation(course.getId(), CourseOperationType.ARCHIVE, "Exporting exercises", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, startedAt, message,
-                        calculateArchiveProgress(stepsCompleted));
+                progressService.failOperation(operationClaim, "Exporting exercises", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, message, calculateArchiveProgress(stepsCompleted));
                 return Optional.empty();
             }
 
             // Step 2: Export student data
-            progressService.updateProgress(course.getId(), CourseOperationType.ARCHIVE, "Exporting student data", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, startedAt,
-                    calculateArchiveProgress(stepsCompleted));
+            progressService.updateProgress(operationClaim, "Exporting student data", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, calculateArchiveProgress(stepsCompleted));
             notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Exporting student data..."), null);
             List<Path> studentDataFiles = courseStudentDataExportService.exportAllStudentData(course.getId(), tmpCourseDir, exportErrors);
             exportedFiles.addAll(studentDataFiles);
@@ -192,8 +220,7 @@ public class CourseExamExportService {
             stepsCompleted++;
 
             // Step 3: Write report and error file
-            progressService.updateProgress(course.getId(), CourseOperationType.ARCHIVE, "Writing reports", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, startedAt,
-                    calculateArchiveProgress(stepsCompleted));
+            progressService.updateProgress(operationClaim, "Writing reports", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, calculateArchiveProgress(stepsCompleted));
             try {
                 exportedFiles.add(writeReport(reportData, tmpCourseDir));
                 exportedFiles.add(writeFile(exportErrors, tmpCourseDir, "exportErrors.txt"));
@@ -204,19 +231,16 @@ public class CourseExamExportService {
             stepsCompleted++;
 
             // Step 4: Create zip file
-            progressService.updateProgress(course.getId(), CourseOperationType.ARCHIVE, "Creating archive", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, startedAt,
-                    calculateArchiveProgress(stepsCompleted));
+            progressService.updateProgress(operationClaim, "Creating archive", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, 0, 0, calculateArchiveProgress(stepsCompleted));
             Optional<Path> exportedCourse = zipExportedExercises(outputDir, exportErrors, notificationTopic, tmpCourseDir);
             stepsCompleted++;
 
-            progressService.completeOperation(course.getId(), CourseOperationType.ARCHIVE, TOTAL_ARCHIVE_STEPS, exportErrors.size(), startedAt);
-            log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), exportedCourse.orElse(null));
+            exportedCourse.ifPresent(path -> log.info("Successfully exported course {}. The zip file is located at: {}", course.getId(), path));
             return exportedCourse;
         }
         catch (Exception e) {
             log.error("Failed to archive course {}", course.getId(), e);
-            progressService.failOperation(course.getId(), CourseOperationType.ARCHIVE, "Archive failed", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, startedAt, e.getMessage(),
-                    calculateArchiveProgress(stepsCompleted));
+            progressService.failOperation(operationClaim, "Archive failed", stepsCompleted, TOTAL_ARCHIVE_STEPS, 0, e.getMessage(), calculateArchiveProgress(stepsCompleted));
             throw e;
         }
     }
@@ -233,7 +257,7 @@ public class CourseExamExportService {
         return (double) stepsCompleted / TOTAL_ARCHIVE_STEPS * 100.0;
     }
 
-    private Optional<Path> zipExportedExercises(Path outputDir, List<String> exportErrors, String notificationTopic, Path tmpDir) {
+    private Optional<Path> zipExportedExercises(Path outputDir, List<String> exportErrors, WebsocketDestination notificationTopic, Path tmpDir) {
         // Zip all exported exercises into a single zip file.
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Done exporting exercises. Creating course zip..."), null);
         Path courseZip = outputDir.resolve(tmpDir.getFileName() + ".zip");
@@ -242,8 +266,11 @@ public class CourseExamExportService {
         // Delete temporary directory used for zipping
         fileService.scheduleDirectoryPathForRecursiveDeletion(tmpDir, 1);
 
-        var exportState = exportErrors.isEmpty() ? CourseExamExportState.COMPLETED : CourseExamExportState.COMPLETED_WITH_WARNINGS;
-        notifyUserAboutExerciseExportState(notificationTopic, exportState, exportErrors, null);
+        var exportState = CourseExamExportState.COMPLETED_WITH_ERRORS;
+        if (exportedCourse.isPresent()) {
+            exportState = exportErrors.isEmpty() ? CourseExamExportState.COMPLETED : CourseExamExportState.COMPLETED_WITH_WARNINGS;
+        }
+        notifyUserAboutExerciseExportState(notificationTopic, exportState, exportErrors, exportedCourse.isEmpty() ? CourseExamExportErrorCause.ZIP_NOT_CREATED.toString() : null);
         return exportedCourse;
     }
 
@@ -260,7 +287,7 @@ public class CourseExamExportService {
         ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
 
         // Used for sending export progress notifications to instructors
-        var notificationTopic = "/topic/exams/" + exam.getId() + "/export";
+        var notificationTopic = EXAM_ARCHIVE.at(exam.getId());
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."), null);
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
@@ -311,7 +338,8 @@ public class CourseExamExportService {
      * @param reportData        list of all exercises and their statistics
      * @return list of zip files
      */
-    private List<Path> exportCourseAndExamExercises(String notificationTopic, Course course, String outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) {
+    private List<Path> exportCourseAndExamExercises(WebsocketDestination notificationTopic, Course course, String outputDir, List<String> exportErrors,
+            List<ArchivalReportEntry> reportData) {
         ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
 
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export course exercises and exams..."), null);
@@ -357,8 +385,8 @@ public class CourseExamExportService {
      * @param reportData         List of all exercises and their statistics
      * @return List of paths for the exported exercises
      */
-    private List<Path> exportCourseExercises(String notificationTopic, Course course, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
-            List<ArchivalReportEntry> reportData) {
+    private List<Path> exportCourseExercises(WebsocketDestination notificationTopic, Course course, String outputDir, int progress, int totalExerciseCount,
+            List<String> exportErrors, List<ArchivalReportEntry> reportData) {
         log.info("Exporting course exercises for course {} and title {}", course.getId(), course.getTitle());
 
         Path exercisesDir = Path.of(outputDir, "course-exercises");
@@ -385,7 +413,7 @@ public class CourseExamExportService {
      * @param reportData         list of all exercises and their statistics
      * @return List of paths
      */
-    private List<Path> exportExams(String notificationTopic, List<Exam> exams, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
+    private List<Path> exportExams(WebsocketDestination notificationTopic, List<Exam> exams, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
             List<ArchivalReportEntry> reportData) {
         ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
 
@@ -434,7 +462,7 @@ public class CourseExamExportService {
      * @param reportData         List of all exercises and their statistics
      * @return List of paths
      */
-    private List<Path> exportExam(String notificationTopic, Exam exam, Set<Exercise> examExercises, String outputDir, int progress, int totalExerciseCount,
+    private List<Path> exportExam(WebsocketDestination notificationTopic, Exam exam, Set<Exercise> examExercises, String outputDir, int progress, int totalExerciseCount,
             List<String> exportErrors, List<ArchivalReportEntry> reportData) {
         log.info("Export course exam {}", exam.getId());
 
@@ -468,8 +496,8 @@ public class CourseExamExportService {
      * @param reportData         List of all exercises and their statistics
      * @return List of paths of the exported exercises
      */
-    private List<Path> exportExercises(String notificationTopic, Set<Exercise> exercises, Path outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
-            List<ArchivalReportEntry> reportData) {
+    private List<Path> exportExercises(WebsocketDestination notificationTopic, Set<Exercise> exercises, Path outputDir, int progress, int totalExerciseCount,
+            List<String> exportErrors, List<ArchivalReportEntry> reportData) {
         List<Path> exportedExercises = new ArrayList<>();
         int currentProgress = progress;
 
@@ -561,7 +589,7 @@ public class CourseExamExportService {
      * @param exportState The export state
      * @param messages    optional messages to send
      */
-    private void notifyUserAboutExerciseExportState(String topic, CourseExamExportState exportState, List<String> messages, String subMessage) {
+    private void notifyUserAboutExerciseExportState(WebsocketDestination topic, CourseExamExportState exportState, List<String> messages, String subMessage) {
         Map<String, String> payload = new HashMap<>();
         payload.put("exportState", exportState.toString());
         payload.put("message", String.join("\n", messages));

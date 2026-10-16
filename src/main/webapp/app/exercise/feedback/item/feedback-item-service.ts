@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
@@ -23,7 +23,7 @@ export interface FeedbackItemService {
     group(feedbackItems: FeedbackItem[], exercise: Exercise): FeedbackNode[];
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class FeedbackItemServiceImpl implements FeedbackItemService {
     private translateService = inject(TranslateService);
 

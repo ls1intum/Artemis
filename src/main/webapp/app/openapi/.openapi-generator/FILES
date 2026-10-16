@@ -5,7 +5,6 @@ api/hyperion-code-generation-api.ts
 api/hyperion-faq-api.ts
 api/hyperion-problem-statement-api.ts
 api/hyperion-quiz-question-generation-api.ts
-api/legacy-calendar-api.ts
 api/quiz-training-api.ts
 api/tutorial-group-api.ts
 api/tutorial-group-free-period-api.ts

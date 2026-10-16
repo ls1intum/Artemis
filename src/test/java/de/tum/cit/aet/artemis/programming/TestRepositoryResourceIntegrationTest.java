@@ -56,7 +56,6 @@ class TestRepositoryResourceIntegrationTest extends AbstractProgrammingIntegrati
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         Course course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
 
         // Seed a LocalVC-compatible repository for the TESTS repo
         var testsSlug = programmingExercise.getProjectKey().toLowerCase(Locale.ROOT) + "-" + RepositoryType.TESTS.getName();

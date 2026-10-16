@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -18,6 +19,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,12 +40,19 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatMode;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisPipelineVariant;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisBuildLogEntryDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
+import de.tum.cit.aet.artemis.iris.util.IrisMessageFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -75,6 +84,15 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private IrisChatSessionUtilService irisChatSessionUtilService;
+
+    @Autowired
+    private IrisMessageService irisMessageService;
+
+    @Autowired
+    private IrisMessageRepository irisMessageRepository;
+
+    @Autowired
+    private PyrisJobService pyrisJobService;
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
@@ -109,7 +127,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         exercise.setProjectType(ProjectType.PLAIN_GRADLE);
         exercise.setTestRepositoryUri(localVCBaseUri + "/git/" + projectKey + "/" + projectKey.toLowerCase(Locale.ROOT) + "-tests.git");
         programmingExerciseRepository.save(exercise);
-        exercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithAllParticipationsById(exercise.getId()).orElseThrow();
 
         // Set the correct repository URIs for the template and the solution participation.
         String templateRepositorySlug = projectKey.toLowerCase(Locale.ROOT) + "-exercise";
@@ -239,7 +257,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(5, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("progress_stalled")), any());
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("progress_stalled")), isNull(), any());
     }
 
     @Test
@@ -261,7 +279,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any());
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), isNull(), any());
     }
 
     @Test
@@ -283,7 +301,31 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any());
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), isNull(), any());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void buildFailedEvent_chatJobDoesNotInheritTriggeringUserMessageId() {
+        IrisChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(exercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession), irisSession, IrisMessageSender.USER);
+        irisMessageRepository.save(userMessage);
+
+        Result result = createFailingSubmission(studentParticipation);
+        AtomicReference<String> jobToken = new AtomicReference<>();
+        irisRequestMockProvider.mockBuildFailedRunResponse(dto -> {
+            jobToken.set(dto.settings().authenticationToken());
+            pipelineDone.set(true);
+        });
+
+        pyrisEventService.trigger(new NewResultEvent(result));
+
+        await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
+        // The event run is not caused by a user message, so the job must carry no triggering user message id.
+        ChatJob job = (ChatJob) pyrisJobService.getJob(jobToken.get());
+        assertThat(job).isNotNull();
+        assertThat(job.userMessageId()).isNull();
     }
 
     @Test
@@ -308,7 +350,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         await().atMost(5, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
         ArgumentCaptor<IrisChatSession> sessionCaptor = ArgumentCaptor.forClass(IrisChatSession.class);
-        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), sessionCaptor.capture(), eq(Optional.of("build_failed")), any());
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), sessionCaptor.capture(), eq(Optional.of("build_failed")), isNull(), any());
 
         IrisChatSession usedSession = sessionCaptor.getValue();
         assertThat(usedSession.getMode()).isEqualTo(IrisChatMode.PROGRAMMING_EXERCISE_CHAT);
@@ -354,7 +396,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         pyrisEventService.trigger(new NewResultEvent(result)).join();
 
         verify(irisChatSessionService, times(2)).handleNewResultEvent(any(NewResultEvent.class));
-        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), isNull(), any());
     }
 
     @Test
@@ -368,7 +410,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         pyrisEventService.trigger(new NewResultEvent(result)).join();
 
         verify(irisChatSessionService, times(1)).handleNewResultEvent(any(NewResultEvent.class));
-        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), isNull(), any());
     }
 
     @Test
@@ -384,7 +426,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         pyrisEventService.trigger(event).join();
 
         verify(irisChatSessionService, times(1)).handleNewResultEvent(event);
-        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), isNull(), any());
     }
 
     @Test
@@ -399,7 +441,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         pyrisEventService.trigger(event).join();
 
         verify(irisChatSessionService, times(1)).handleNewResultEvent(event);
-        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), isNull(), any());
     }
 
     @Test
@@ -414,7 +456,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
         var event = new NewResultEvent(result);
 
         verify(irisChatSessionService, after(2000).never()).handleNewResultEvent(event);
-        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), any());
+        verify(pyrisPipelineService, after(2000).never()).executeChatPipeline(any(), any(), any(), any(), isNull(), any());
     }
 
     @Test
@@ -440,7 +482,7 @@ class PyrisEventSystemIntegrationTest extends AbstractIrisIntegrationTest {
 
         await().atMost(2, TimeUnit.SECONDS).until(() -> pipelineDone.get());
 
-        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), any());
+        verify(pyrisPipelineService, times(1)).executeChatPipeline(eq("default"), eq("moderate"), eq(irisSession), eq(Optional.of("build_failed")), isNull(), any());
     }
 
 }

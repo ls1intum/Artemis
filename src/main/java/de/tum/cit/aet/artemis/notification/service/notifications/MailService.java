@@ -17,7 +17,6 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.admin.dto.ComponentVulnerabilitiesDTO;
-import de.tum.cit.aet.artemis.admin.dto.DuplicateUserEmailReportDTO;
 import de.tum.cit.aet.artemis.admin.dto.FeatureUsageDigestDTO;
 import de.tum.cit.aet.artemis.core.dto.ArtemisVersionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisDashboardAlertDTO;
@@ -57,10 +56,20 @@ public class MailService {
 
     private static final String SHOULD_RECOMMEND_UPGRADE = "shouldRecommendUpgrade";
 
-    private static final String DUPLICATE_USER_EMAIL_REPORT = "duplicateUserEmailReport";
+    private static final String ACTIVATION_DEADLINE_AMOUNT = "activationDeadlineAmount";
+
+    private static final String ACTIVATION_DEADLINE_IN_HOURS = "activationDeadlineInHours";
+
+    private static final int MINUTES_PER_HOUR = 60;
 
     @Value("${server.url}")
     private URL artemisServerUrl;
+
+    /**
+     * The time after which {@code UserScheduleService} deletes an account that was not activated, which is the only deadline for the activation link.
+     */
+    @Value("${artemis.user-management.registration.cleanup-time-minutes:60}")
+    private long nonActivatedUserCleanupMinutes;
 
     private final MessageSource messageSource;
 
@@ -113,13 +122,29 @@ public class MailService {
         return context;
     }
 
+    /**
+     * Sends the activation link to a self-registered user. The mail names how long the user has to activate, because the
+     * server deletes accounts that stay non-activated for the configured cleanup time. The sentence is left out when that
+     * time is not positive.
+     *
+     * @param recipient the self-registered user, carrying the activation key
+     */
     public void sendActivationEmail(MailRecipientDTO recipient) {
         log.debug("Sending activation email to '{}'", recipient.email());
-        sendEmailFromTemplate(recipient, "mail/activationEmail", "email.activation.title");
+        Locale locale = Locale.forLanguageTag(recipient.langKey());
+        Context context = createBaseContext(recipient, locale);
+        // A non-positive value would delete the account right away, so there is no time to name.
+        if (nonActivatedUserCleanupMinutes > 0) {
+            boolean inHours = nonActivatedUserCleanupMinutes % MINUTES_PER_HOUR == 0;
+            context.setVariable(ACTIVATION_DEADLINE_IN_HOURS, inHours);
+            context.setVariable(ACTIVATION_DEADLINE_AMOUNT, inHours ? nonActivatedUserCleanupMinutes / MINUTES_PER_HOUR : nonActivatedUserCleanupMinutes);
+        }
+        prepareTemplateAndSendEmail(recipient, "mail/activationEmail", "email.activation.title", context);
     }
 
     public void sendPasswordResetMail(MailRecipientDTO recipient) {
         log.debug("Sending password reset email to '{}'", recipient.email());
+        assert recipient.resetKey() != null;
         sendEmailFromTemplate(recipient, "mail/passwordResetEmail", "email.reset.title");
     }
 
@@ -214,7 +239,7 @@ public class MailService {
      *
      * @param recipient the admin recipient to notify
      * @param digest    the aggregated usage summary to include in the email
-     * @return true when the email reached the mail transport, false when sending failed or mail is not configured
+     * @return true when the email was accepted by the SMTP server, false when sending failed, the mail was kept in the retry queue, or mail is not configured
      */
     public boolean sendFeatureUsageDigestEmail(MailRecipientDTO recipient, FeatureUsageDigestDTO digest) {
         log.debug("Sending feature usage digest email to admin email address '{}'", recipient.email());
@@ -228,20 +253,6 @@ public class MailService {
         String content = templateEngine.process("mail/featureUsageDigestEmail", context);
         String subject = messageSource.getMessage("email.featureUsageDigest.title", null, context.getLocale());
         return mailSendingService.sendEmailSync(recipient, subject, content, false, true);
-    }
-
-    /**
-     * Sends the privacy-minimized weekly duplicate-user-email report to the main administrator.
-     *
-     * @param admin  the configured administrator recipient
-     * @param report the affected account count and capped numeric identifier list
-     */
-    public void sendDuplicateUserEmailReportEmail(MailRecipientDTO admin, DuplicateUserEmailReportDTO report) {
-        log.debug("Sending duplicate user email report to the configured admin email address");
-        Locale locale = Locale.forLanguageTag(admin.langKey());
-        Context context = createBaseContext(admin, locale);
-        context.setVariable(DUPLICATE_USER_EMAIL_REPORT, report);
-        prepareTemplateAndSendEmail(admin, "mail/duplicateUserEmailReportEmail", "email.duplicateUserEmail.title", context);
     }
 
     /**

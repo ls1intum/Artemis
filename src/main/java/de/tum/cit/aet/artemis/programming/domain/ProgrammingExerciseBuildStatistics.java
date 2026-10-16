@@ -6,11 +6,13 @@ import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.AggregateRoot;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "programming_exercise_build_statistics")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@AggregateRoot("Keyed by exercise id as a plain column with no foreign key.")
 public class ProgrammingExerciseBuildStatistics extends DomainObject {
 
     @Column(name = "build_duration_seconds")

@@ -1,4 +1,4 @@
-<tum-ui-dialog
+<tumaet-ui-dialog
     [(visible)]="visible"
     [closable]="true"
     [closeOnEscape]="true"
@@ -17,7 +17,7 @@
                 <ul class="grid grid-cols-2 gap-2 whitespace-nowrap list-none my-0 p-0 sm:grid-cols-4">
                     @for (status of this.buildStatusFilterValues; track status) {
                         <li class="flex items-center gap-2">
-                            <tum-ui-radio-button
+                            <tumaet-ui-radio-button
                                 inputId="buildStatusFilter-{{ status }}"
                                 name="buildStatusFilter"
                                 [value]="status"
@@ -30,7 +30,7 @@
                         </li>
                     }
                     <li class="flex items-center gap-2">
-                        <tum-ui-radio-button
+                        <tumaet-ui-radio-button
                             inputId="buildStatusFilter-none"
                             name="buildStatusFilter"
                             [value]="undefined"
@@ -51,7 +51,7 @@
                     </h5>
                 </div>
                 <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
-                    <tum-ui-autocomplete
+                    <tumaet-ui-autocomplete
                         [ariaLabel]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
                         class="w-full"
                         [placeholder]="'artemisApp.buildQueue.filter.buildAgentAddress' | artemisTranslate"
@@ -71,25 +71,31 @@
             </div>
             <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
                 <div class="flex items-center gap-2">
-                    <span class="form-item-prepend" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.from"></span>
-                    <jhi-date-time-picker
+                    <span id="finished-builds-filter-from-label" class="form-item-prepend" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.from"></span>
+                    <tumaet-ui-date-picker
                         id="field_startDate"
+                        class="min-w-0 flex-1"
+                        inputId="finished-builds-filter-from"
                         [shouldDisplayTimeZoneWarning]="false"
-                        [labelName]="''"
-                        [(ngModel)]="finishedBuildJobFilter.buildSubmissionDateFilterFrom"
-                        [error]="!finishedBuildJobFilter.areDatesValid"
-                        (valueChange)="filterDateChanged()"
+                        [ariaLabelledBy]="'finished-builds-filter-from-label'"
+                        [value]="finishedBuildJobFilter.buildSubmissionDateFilterFrom"
+                        [invalid]="!finishedBuildJobFilter.areDatesValid"
+                        (valueChange)="onFromDateChange($event)"
+                        (inputValidityChange)="isFromTextValid.set($event)"
                     />
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="form-item-prepend" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.to"></span>
-                    <jhi-date-time-picker
+                    <span id="finished-builds-filter-to-label" class="form-item-prepend" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.to"></span>
+                    <tumaet-ui-date-picker
                         id="field_endDate"
+                        class="min-w-0 flex-1"
+                        inputId="finished-builds-filter-to"
                         [shouldDisplayTimeZoneWarning]="false"
-                        [labelName]="''"
-                        [(ngModel)]="finishedBuildJobFilter.buildSubmissionDateFilterTo"
-                        [error]="!finishedBuildJobFilter.areDatesValid"
-                        (valueChange)="filterDateChanged()"
+                        [ariaLabelledBy]="'finished-builds-filter-to-label'"
+                        [value]="finishedBuildJobFilter.buildSubmissionDateFilterTo"
+                        [invalid]="!finishedBuildJobFilter.areDatesValid"
+                        (valueChange)="onToDateChange($event)"
+                        (inputValidityChange)="isToTextValid.set($event)"
                     />
                     @if (!finishedBuildJobFilter.areDatesValid) {
                         <span class="text-state-danger" jhiTranslate="artemisApp.buildQueue.filter.buildSubmissionDate.invalidDate"></span>
@@ -105,9 +111,21 @@
             <div class="finished-build-jobs-filter-background-accent px-3 my-0 py-2">
                 <div class="flex flex-wrap items-center gap-2">
                     <span jhiTranslate="artemisApp.buildQueue.filter.buildDuration.lowerBound"></span>
-                    <input tumUiInput type="number" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterLowerBound" (change)="filterDurationChanged()" />
+                    <input
+                        [attr.aria-label]="'artemisApp.buildQueue.filter.buildDuration.lowerBound' | artemisTranslate"
+                        tumAetUiInput
+                        type="number"
+                        [(ngModel)]="finishedBuildJobFilter.buildDurationFilterLowerBound"
+                        (change)="filterDurationChanged()"
+                    />
                     <span jhiTranslate="artemisApp.buildQueue.filter.buildDuration.upperBound"></span>
-                    <input tumUiInput type="number" [(ngModel)]="finishedBuildJobFilter.buildDurationFilterUpperBound" (change)="filterDurationChanged()" />
+                    <input
+                        [attr.aria-label]="'artemisApp.buildQueue.filter.buildDuration.upperBound' | artemisTranslate"
+                        tumAetUiInput
+                        type="number"
+                        [(ngModel)]="finishedBuildJobFilter.buildDurationFilterUpperBound"
+                        (change)="filterDurationChanged()"
+                    />
                     @if (!finishedBuildJobFilter.areDurationFiltersValid) {
                         <span class="text-state-danger" jhiTranslate="artemisApp.buildQueue.filter.buildDuration.invalidState"></span>
                     }
@@ -116,7 +134,7 @@
         </div>
     </div>
     <ng-template #footer>
-        <tum-ui-button severity="secondary" size="small" (clicked)="cancel()">{{ 'artemisApp.buildQueue.filter.close' | artemisTranslate }}</tum-ui-button>
-        <tum-ui-button size="small" (clicked)="confirm()">{{ 'artemisApp.buildQueue.filter.apply' | artemisTranslate }}</tum-ui-button>
+        <tumaet-ui-button severity="secondary" size="small" (clicked)="cancel()">{{ 'artemisApp.buildQueue.filter.close' | artemisTranslate }}</tumaet-ui-button>
+        <tumaet-ui-button size="small" (clicked)="confirm()">{{ 'artemisApp.buildQueue.filter.apply' | artemisTranslate }}</tumaet-ui-button>
     </ng-template>
-</tum-ui-dialog>
+</tumaet-ui-dialog>

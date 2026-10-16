@@ -37,6 +37,7 @@
     <!-- Delete -->
     @if (exercise().isAtLeastInstructor) {
         <button
+            type="button"
             id="delete-exercise"
             jhiDeleteButton
             [entityTitle]="exercise().title || ''"

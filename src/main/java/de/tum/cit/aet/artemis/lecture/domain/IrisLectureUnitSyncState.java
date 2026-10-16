@@ -9,6 +9,7 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.Parent;
 
 @Entity
 @Table(name = "iris_lecture_unit_sync_state")
@@ -21,7 +22,20 @@ public class IrisLectureUnitSyncState extends DomainObject {
 
     public static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
 
+    /**
+     * Pyris does not hold the lecture unit, so there is nothing to synchronise until it is ingested. Settled rather
+     * than retried, because only an ingestion changes that answer. The ingestion reopens the row when it completes.
+     */
+    public static final String STATUS_NOT_INGESTED = "NOT_INGESTED";
+
+    /**
+     * The synchronisation failed often enough that it is treated as permanent, mirroring what the ingestion state
+     * machine does after its own retry limit.
+     */
+    public static final String STATUS_FAILED = "FAILED";
+
     @Column(name = "lecture_unit_id", nullable = false, unique = true)
+    @Parent
     private Long lectureUnitId;
 
     @Column(name = "metadata_hash", length = 64)

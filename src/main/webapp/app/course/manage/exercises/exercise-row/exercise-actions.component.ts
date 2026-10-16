@@ -20,7 +20,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { PROFILE_LOCALCI } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
 import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
@@ -39,18 +39,6 @@ import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseActionsComponent {
-    readonly exercise = input.required<Exercise>();
-    readonly courseId = input.required<number>();
-    readonly course = input<Course | undefined>(undefined);
-
-    readonly exerciseUpdated = output<Exercise>();
-    readonly exerciseDeleted = output<Exercise>();
-    /**
-     * Width (px) the actions column must reserve for this row's quiz buttons plus the ellipsis trigger; 0 for
-     * non-quiz rows. The table floors the shared column at the max across its rows (see exercise-table).
-     */
-    readonly quizActionsMinWidth = output<number>();
-
     private readonly destroyRef = inject(DestroyRef);
     private readonly textExerciseService = inject(TextExerciseService);
     private readonly fileUploadExerciseService = inject(FileUploadExerciseService);
@@ -63,7 +51,21 @@ export class ExerciseActionsComponent {
     private readonly profileService = inject(ProfileService);
     private readonly featureToggleService = inject(FeatureToggleService);
 
+    readonly exercise = input.required<Exercise>();
+    readonly courseId = input.required<number>();
+    readonly course = input<Course | undefined>(undefined);
+
+    readonly exerciseUpdated = output<Exercise>();
+    readonly exerciseDeleted = output<Exercise>();
+    /**
+     * Width (px) the actions column must reserve for this row's quiz buttons plus the ellipsis trigger; 0 for
+     * non-quiz rows. The table floors the shared column at the max across its rows (see exercise-table).
+     */
+    readonly quizActionsMinWidth = output<number>();
+
     private readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+    /** Variant generation runs in Hyperion; without the module its endpoints are not registered. */
+    private readonly hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
     /**
      * Whether programming exercises are enabled server-side; defaults to active until the toggle resolves. Actions
      * are data, not markup, so this folds into `ActionItem.disabled` instead of a `jhiFeatureToggle` directive.
@@ -205,8 +207,9 @@ export class ExerciseActionsComponent {
             });
         }
         // Sits between the info/success-colored buttons above and the warning-colored edit buttons below, matching its
-        // own warning color. Only offered for exercise types the generator supports; the server rejects the rest.
-        if (ex.isAtLeastEditor && supportsAiVariantGeneration(ex)) {
+        // own warning color. Only offered when Hyperion is enabled and for exercise types the generator supports; the
+        // server rejects other types.
+        if (this.hyperionEnabled && ex.isAtLeastEditor && supportsAiVariantGeneration(ex)) {
             items.push({
                 id: 'create-variant-ai',
                 labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',

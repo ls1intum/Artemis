@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -226,6 +226,46 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         fixture.destroy();
     });
 
+    it.each([
+        {
+            outcome: 'success',
+            finish: (subject: Subject<StudentParticipation>) => {
+                subject.next({ id: 3, initializationState: InitializationState.UNINITIALIZED });
+                subject.complete();
+            },
+        },
+        { outcome: 'error', finish: (subject: Subject<StudentParticipation>) => subject.error(new HttpErrorResponse({ status: 500 })) },
+    ])('should keep the start exercise button disabled while the request is pending and enable it again after $outcome', async ({ finish }) => {
+        const participationSubject = new Subject<StudentParticipation>();
+        startExerciseStub.mockReturnValue(participationSubject);
+
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('exercise', { ...exercise, studentParticipations: [] });
+        TestBed.tick();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const startExerciseButton = () => debugElement.query(By.css('button.start-exercise'));
+        expect(startExerciseButton().componentInstance.buttonLoading()).toBe(false);
+
+        startExerciseButton().nativeElement.click();
+        fixture.detectChanges();
+
+        expect(comp.isLoading()).toBe(true);
+        expect(startExerciseButton().componentInstance.buttonLoading()).toBe(true);
+
+        // A second click before the button is rendered as disabled must not send a second request
+        comp.startExercise();
+        expect(startExerciseStub).toHaveBeenCalledOnce();
+
+        finish(participationSubject);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(comp.isLoading()).toBe(false);
+        expect(startExerciseButton().componentInstance.buttonLoading()).toBe(false);
+    });
+
     it('should reflect the correct participation state for practice mode', async () => {
         const exerciseData = {
             id: 43,
@@ -260,6 +300,101 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         codeButton = fixture.debugElement.query(By.css('jhi-code-button'));
         expect(codeButton).toBeNull();
+
+        fixture.destroy();
+    });
+
+    it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])('should offer practice mode for a team %s exercise after the due date', async (type) => {
+        const teamParticipation = { id: 1, initializationState: InitializationState.FINISHED, testRun: false } as StudentParticipation;
+        const teamExerciseAfterDueDate = {
+            ...teamExerciseWithTeamAssigned,
+            id: 46,
+            type,
+            dueDate: dayjs().subtract(5, 'minutes'),
+            studentParticipations: [teamParticipation],
+        } as Exercise;
+
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('exercise', teamExerciseAfterDueDate);
+        TestBed.tick();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // the graded participation belongs to the team, practice is the student's own participation
+        expect(comp.practiceParticipation()).toBeUndefined();
+        expect(comp.isStartPracticeAvailable()).toBe(true);
+        // only the programming exercise offers the button here, the text and modeling exercises start practice from the header
+        expect(fixture.debugElement.query(By.css('jhi-start-practice-mode-button')) !== null).toBe(type === ExerciseType.PROGRAMMING);
+
+        comp.receiveNewParticipation({ id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation);
+        fixture.changeDetectorRef.detectChanges();
+        await fixture.whenStable();
+
+        expect(comp.practiceParticipation()?.id).toBe(2);
+        expect(comp.gradedParticipation()?.id).toBe(1);
+        expect(comp.isStartPracticeAvailable()).toBe(false);
+
+        fixture.destroy();
+    });
+
+    it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING])(
+        'should not offer practice mode for a team %s exercise while an extension of the team is running',
+        async (type) => {
+            const teamParticipation = {
+                id: 1,
+                initializationState: InitializationState.FINISHED,
+                testRun: false,
+                individualDueDate: dayjs().add(1, 'hour'),
+            } as StudentParticipation;
+            const teamExercise = {
+                ...teamExerciseWithTeamAssigned,
+                id: 47,
+                type,
+                dueDate: dayjs().subtract(1, 'day'),
+                studentParticipations: [teamParticipation],
+            } as Exercise;
+
+            fixture.componentRef.setInput('courseId', 1);
+            fixture.componentRef.setInput('exercise', teamExercise);
+            TestBed.tick();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(comp.gradedParticipation()?.id).toBe(1);
+            expect(comp.isStartPracticeAvailable()).toBe(false);
+            expect(fixture.debugElement.query(By.css('jhi-start-practice-mode-button'))).toBeNull();
+
+            // once the extension has passed, the practice mode is offered
+            const finishedExtension = { ...teamExercise, studentParticipations: [{ ...teamParticipation, individualDueDate: dayjs().subtract(1, 'minute') }] } as Exercise;
+            fixture.componentRef.setInput('exercise', finishedExtension);
+            TestBed.tick();
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            expect(comp.isStartPracticeAvailable()).toBe(true);
+
+            fixture.destroy();
+        },
+    );
+
+    it('should not offer practice mode for a student exercise while an extension is running', async () => {
+        const graded = { id: 5, initializationState: InitializationState.FINISHED, testRun: false, individualDueDate: dayjs().add(1, 'hour') } as StudentParticipation;
+        const exerciseWithExtension = {
+            ...teamExerciseWithTeamAssigned,
+            id: 48,
+            teamMode: false,
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().subtract(1, 'day'),
+            studentParticipations: [graded],
+        } as Exercise;
+
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('exercise', exerciseWithExtension);
+        TestBed.tick();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(comp.isStartPracticeAvailable()).toBe(false);
 
         fixture.destroy();
     });

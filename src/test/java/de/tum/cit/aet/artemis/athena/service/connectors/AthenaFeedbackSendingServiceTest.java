@@ -112,7 +112,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         athenaConfig.setCourse(course);
         athenaConfig.setGradingFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        course = courseRepository.save(course);
+        course = courseUtilService.saveWithConfigurations(course);
         // Course.athenaConfig is lazy, so an exercise that comes back from a save carries a course without it. In
         // production the entry point resolves it with CourseAthenaConfigRepository before anything asks the exercise;
         // here the course that already holds it is put back, which leaves the service under test the same input.
@@ -137,8 +137,7 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
         textFeedback.setResult(textResult);
         textFeedback = feedbackRepository.save(textFeedback);
 
-        programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise();
-        programmingExercise.setCourse(course);
+        programmingExercise = programmingExerciseUtilService.createSampleProgrammingExercise(course);
         // Athena grading feedback is only offered for manually assessed programming exercises; automatically
         // assessed ones rely on unit-test feedback.
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -261,14 +260,14 @@ class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 
     @Test
     void testSendFeedbackWithFeedbackSuggestionsDisabled() {
-        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
+        textExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(new CourseAthenaConfig());
         athenaFeedbackSendingService.sendFeedback(textExercise, textSubmission, List.of(textFeedback));
         await().untilAsserted(
                 () -> assertThat(asyncExceptionLogAppender.list).extracting(AthenaFeedbackSendingServiceTest::getExceptionName).contains(IllegalArgumentException.class.getName()));
 
         asyncExceptionLogAppender.list.clear();
 
-        programmingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(null);
+        programmingExercise.getCourseViaExerciseGroupOrCourseMember().setAthenaConfig(new CourseAthenaConfig());
         athenaFeedbackSendingService.sendFeedback(programmingExercise, programmingSubmission, List.of(programmingFeedback));
         await().untilAsserted(
                 () -> assertThat(asyncExceptionLogAppender.list).extracting(AthenaFeedbackSendingServiceTest::getExceptionName).contains(IllegalArgumentException.class.getName()));

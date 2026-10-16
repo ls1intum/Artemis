@@ -1,4 +1,4 @@
-<tum-ui-dialog [(visible)]="visible" [dismissableMask]="true" size="large" [header]="'artemisApp.learnerProfile.onboardingModal.title' | artemisTranslate">
+<tumaet-ui-dialog [(visible)]="visible" [dismissableMask]="true" size="large" [header]="'artemisApp.learnerProfile.onboardingModal.title' | artemisTranslate">
     <div class="onboarding-progress">
         <span class="progress-circle" [class.active]="step() >= 0"></span>
         <span class="progress-line"></span>
@@ -50,30 +50,31 @@
                 </label>
             </fieldset>
         }
+        @default {}
     }
     <ng-template #footer>
         <div class="flex w-full items-center justify-between">
-            <tum-ui-button severity="secondary" [disabled]="step() === 0" (clicked)="back()">
+            <tumaet-ui-button severity="secondary" [disabled]="step() === 0" (clicked)="back()">
                 <span jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.back"></span>
-            </tum-ui-button>
+            </tumaet-ui-button>
             <div class="flex justify-end gap-2">
                 @if (step() < totalSteps - 1) {
                     @if (selected()[step()] === undefined) {
-                        <tum-ui-button severity="secondary" (clicked)="next()">
+                        <tumaet-ui-button severity="secondary" (clicked)="next()">
                             <span jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.skip"></span>
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     } @else {
-                        <tum-ui-button (clicked)="next()">
+                        <tumaet-ui-button (clicked)="next()">
                             <span jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.next"></span>
-                        </tum-ui-button>
+                        </tumaet-ui-button>
                     }
                 }
                 @if (step() === totalSteps - 1) {
-                    <tum-ui-button severity="success" (clicked)="finish()">
+                    <tumaet-ui-button severity="success" (clicked)="finish()">
                         <span jhiTranslate="artemisApp.learnerProfile.onboardingModal.buttons.finish"></span>
-                    </tum-ui-button>
+                    </tumaet-ui-button>
                 }
             </div>
         </div>
     </ng-template>
-</tum-ui-dialog>
+</tumaet-ui-dialog>

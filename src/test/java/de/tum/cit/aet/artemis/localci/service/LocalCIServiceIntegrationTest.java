@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService.BuildStatus;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
@@ -113,17 +112,21 @@ class LocalCIServiceIntegrationTest extends AbstractProgrammingIntegrationLocalC
     void testRecreateBuildPlanForExercise() throws IOException {
         Course course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         ProgrammingExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise.getBuildConfig().setBuildPlanConfiguration(null);
+        var buildConfig = programmingExerciseUtilService.buildConfigOf(exercise);
+        buildConfig.setBuildPlanConfiguration(null);
+        programmingExerciseBuildConfigRepository.save(buildConfig);
         continuousIntegrationService.recreateBuildPlansForExercise(exercise);
 
-        String actualBuildConfig = exercise.getBuildConfig().getBuildPlanConfiguration();
+        // Read back what the service wrote rather than the instance handed to it.
+        var recreatedBuildConfig = programmingExerciseBuildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId());
+        String actualBuildConfig = recreatedBuildConfig.getBuildPlanConfiguration();
 
-        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise);
+        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(exercise, recreatedBuildConfig);
         String image = buildPhasesTemplateService.getDefaultDockerImageFor(exercise);
         String expectedBuildConfig = new BuildPlanPhasesDTO(phases, image).toBuildPlanConfiguration();
 
         assertThat(actualBuildConfig).isEqualTo(expectedBuildConfig);
-        assertThat(exercise.getBuildConfig().getBuildScript()).isNull();
+        assertThat(recreatedBuildConfig.getBuildScript()).isNull();
         // test that the method does not throw an exception when the exercise is null
         continuousIntegrationService.recreateBuildPlansForExercise(null);
     }
@@ -131,13 +134,12 @@ class LocalCIServiceIntegrationTest extends AbstractProgrammingIntegrationLocalC
     @Test
     void testGetBuildPlanPhasesForWithoutCache() {
         ReflectionTestUtils.setField(buildPhasesTemplateService, "templateCache", new ConcurrentHashMap<>());
-        ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        programmingExercise.setBuildConfig(new ProgrammingExerciseBuildConfig());
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(courseUtilService.addEmptyCourse());
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setProjectType(null);
         programmingExercise.setStaticCodeAnalysisEnabled(false);
-        programmingExercise.getBuildConfig().setSequentialTestRuns(false);
-        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise);
+        List<BuildPhaseDTO> phases = buildPhasesTemplateService.getDefaultBuildPlanPhasesFor(programmingExercise,
+                programmingExerciseUtilService.buildConfigOf(programmingExercise));
         assertThat(phases).isNotNull();
     }
 

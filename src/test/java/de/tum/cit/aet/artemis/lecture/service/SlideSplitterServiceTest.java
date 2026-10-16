@@ -117,8 +117,8 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
     /**
      * Re-uploading a file replaces the deck rather than adding a second copy of it. This path creates a slide per page
-     * unconditionally, so without detaching the previous set the unit would carry both: a three page file uploaded
-     * twice left six slides attached, each page present twice, and nothing in the UI to tell them apart.
+     * unconditionally, so without superseding the previous set the unit would carry both: a three page file uploaded
+     * twice left six slides in the deck, each page present twice, and nothing in the UI to tell them apart.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
@@ -137,23 +137,19 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(attachedImagePaths).as("the unit carries exactly one slide per page of the re-uploaded file").hasSize(3).doesNotHaveDuplicates();
         assertThat(attachedImagePaths).as("every attached slide belongs to the new deck").doesNotContainAnyElementsOf(firstImagePaths);
 
-        // Detached rather than deleted: the rows may still be referenced, and they keep pointing at files that exist.
+        // Superseded rather than deleted: the rows may still be referenced, and they keep pointing at files that exist.
         assertThat(firstSlides).allSatisfy(slide -> {
             Slide reloaded = slideRepository.findById(slide.getId()).orElseThrow();
-            assertThat(reloaded.getAttachmentVideoUnit()).as("a superseded slide is detached from the unit").isNull();
-            // Resolved from the slide as it was before detaching, because the reloaded row no longer names the unit
-            // whose id the stored file name is relative to.
-            assertThat(slideImageFile(slide)).as("a detached slide still points at a file that exists").exists();
+            assertThat(reloaded.isSuperseded()).as("a slide of the previous deck is marked superseded").isTrue();
+            assertThat(reloaded.getAttachmentVideoUnit()).as("a superseded slide still names the unit it was uploaded to").isEqualTo(testAttachmentVideoUnit);
+            assertThat(slideImageFile(reloaded)).as("a superseded slide still points at a file that exists").exists();
         });
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithHiddenPagesAndPageOrder() throws IOException {
-        // Create and save an Exercise
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -311,28 +307,16 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(slides).isNotNull();
         assertThat(slides.size()).isEqualTo(2); // Should only have 2 slides attached to unit
 
-        // Check if slide 3 exists but is detached - use actual ID
-        Long thirdSlideId = slideIds.get(2);
-        Slide slide3 = slideRepository.findById(thirdSlideId).orElse(null);
-
-        // If slide3 is null, the service is completely removing it rather than detaching
-        if (slide3 == null) {
-            // Test that it was removed instead
-            assertThat(slideRepository.existsById(thirdSlideId)).isFalse();
-        }
-        else {
-            // Test that it was detached
-            assertThat(slide3.getAttachmentVideoUnit()).isNull();
-        }
+        // Slide 3 is out of the deck, which keeps the row and marks it rather than deleting it
+        Slide slide3 = slideRepository.findById(slideIds.get(2)).orElseThrow();
+        assertThat(slide3.isSuperseded()).isTrue();
+        assertThat(slide3.getAttachmentVideoUnit()).isEqualTo(testAttachmentVideoUnit);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_UpdateHiddenStatus() throws IOException {
-        // Create and save an Exercise1
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -666,10 +650,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithExistingAndNewSlides() throws IOException {
-        // Create and save an Exercise
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise for Mixed Slides");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise for Mixed Slides");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -777,10 +758,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithStrings() throws IOException, InterruptedException {
-        // Create and save an Exercise for testing
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -975,10 +953,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithStringsJson() throws IOException, InterruptedException {
-        // Create and save an Exercise for testing
-        Exercise testExercise = new TextExercise();
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
+        Exercise testExercise = createAndSaveExercise("Test Exercise");
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
@@ -1077,4 +1052,19 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
     private static Path slideImageFile(Slide slide) {
         return new FileSystemLocation.Slide(slide.getAttachmentVideoUnit().getId(), slide.getSlideNumber(), slide.getSlideImagePath()).path();
     }
+
+    /**
+     * Creates and saves a text exercise that a hidden page can point at. It names a course because an exercise row
+     * belongs to a course or to an exercise group, never to neither.
+     *
+     * @param title the title of the exercise
+     * @return the saved exercise
+     */
+    private Exercise createAndSaveExercise(String title) {
+        Exercise testExercise = new TextExercise();
+        testExercise.setTitle(title);
+        testExercise.setCourse(courseUtilService.addEmptyCourse());
+        return exerciseRepository.save(testExercise);
+    }
+
 }

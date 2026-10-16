@@ -331,6 +331,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         Feedback feedback = new Feedback();
         feedback.setDetailText("short text");
         feedback.setHasLongFeedbackText(true);
+        result.addFeedback(feedback);
         feedback = feedbackRepository.save(feedback);
 
         LongFeedbackText longFeedbackText = new LongFeedbackText();
@@ -475,6 +476,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentBatchTest {
         Feedback feedback = new Feedback();
         feedback.setDetailText("short text");
         feedback.setHasLongFeedbackText(true);
+        result.addFeedback(feedback);
         feedback = feedbackRepository.save(feedback);
 
         LongFeedbackText longFeedbackText = new LongFeedbackText();

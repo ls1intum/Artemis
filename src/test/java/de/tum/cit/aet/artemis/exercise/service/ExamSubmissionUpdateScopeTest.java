@@ -126,7 +126,7 @@ class ExamSubmissionUpdateScopeTest extends AbstractSpringIntegrationIndependent
     }
 
     private void sendViaWebsocket(long destinationParticipationId) {
-        var payload = new TeamTextSubmissionUpdateDTO(storedExamSubmission.getId(), UPDATE_TEXT, Language.ENGLISH, true, null);
+        var payload = new TeamTextSubmissionUpdateDTO(storedExamSubmission.getId(), UPDATE_TEXT, Language.ENGLISH, true);
         Principal principal = mock(Principal.class);
         when(principal.getName()).thenReturn(TEST_PREFIX + "student1");
         try {

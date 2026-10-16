@@ -147,9 +147,7 @@ public class PermanentUserDeletionService {
 
     private User loadUserForDeletion(long userId) {
         User user = userRepository.findByIdForDeletion(userId).orElseThrow(() -> new IllegalArgumentException("User " + userId + " does not exist"));
-        // The repository fetches both associations because this service deliberately has no transaction boundary.
-        user.getAuthorities().size();
-        user.getLearnerProfile();
+        // The repository query fetches the authorities because this service deliberately has no transaction boundary.
         return user;
     }
 
@@ -176,9 +174,6 @@ public class PermanentUserDeletionService {
         boolean forced = mode == UserDeletionMode.ADMIN_FORCED;
 
         accountCredentialRevocationService.revokeAllCredentials(user, "permanent user deletion");
-        if (user.getLearnerProfile() != null) {
-            userOwnedContentDeletionService.deleteLearnerProfile(userId, user.getLearnerProfile().getId());
-        }
 
         if (forced) {
             detachSharedActorReferences(userId);

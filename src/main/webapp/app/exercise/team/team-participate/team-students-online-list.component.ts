@@ -70,7 +70,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
                 error: (error: unknown) => captureException(error),
             });
         setTimeout(() => {
-            this.websocketService.send<object>(this.buildWebsocketTopic('/trigger'), {});
+            this.websocketService.send<object>(this.buildSendDestination('/trigger'), {});
         }, 700);
     }
 
@@ -78,7 +78,7 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
         const typing$ = this.typing$();
         if (typing$) {
             this.typingSubscription = typing$.pipe(throttleTime(this.SEND_TYPING_INTERVAL)).subscribe({
-                next: () => this.websocketService.send<object>(this.buildWebsocketTopic('/typing'), {}),
+                next: () => this.websocketService.send<object>(this.buildSendDestination('/typing'), {}),
                 error: (error: unknown) => captureException(error),
             });
         }
@@ -166,9 +166,16 @@ export class TeamStudentsOnlineListComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Topic for updates on online status of team members (needs to match route in ParticipationTeamWebsocketService.java)
+     * Topic for updates on online status of team members (needs to match ExerciseWebsocketTopics.TEAM_ONLINE_STUDENTS)
      */
-    private buildWebsocketTopic(path = ''): string {
-        return `/topic/participations/${this.participation().id}/team${path}`;
+    private buildWebsocketTopic(): string {
+        return `/topic/participations/${this.participation().id}/team`;
+    }
+
+    /**
+     * Destination for messages to the server (needs to match the routes in ParticipationTeamWebsocketService.java)
+     */
+    private buildSendDestination(path: string): string {
+        return `/app/participations/${this.participation().id}/team${path}`;
     }
 }
