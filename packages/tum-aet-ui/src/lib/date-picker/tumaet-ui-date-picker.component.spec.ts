@@ -82,6 +82,29 @@ describe('TumAetUiDatePickerComponent', () => {
         expect(input().value).toBe('13.06.2026 08:30xx');
     });
 
+    it('defers text errors until blur without allowing an incomplete date to be submitted', () => {
+        fixture.componentRef.setInput('validateOnBlur', true);
+        fixture.detectChanges();
+        input().value = '13.06.';
+        input().dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(component.isValid()).toBe(false);
+        expect(input().getAttribute('aria-invalid')).toBe('false');
+        expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+
+        input().dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+        expect(input().getAttribute('aria-invalid')).toBe('true');
+        expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
+
+        input().value = '13.06.2026 09:15';
+        input().dispatchEvent(new Event('input'));
+        input().dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+        expect(component.isValid()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+    });
+
     it('clears the value and the displayed text', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.detectChanges();
