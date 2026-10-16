@@ -213,7 +213,6 @@
                 "tryFormatted": "Try formatted editor (experimental)",
                 "useMarkdown": "Use Markdown editor",
                 "unsupported": "This message uses formatting that is currently only editable in Markdown.",
-                "moreOptions": "Attachments, slides, FAQs and emoji search are available in the Markdown editor.",
                 "formatting": "Message formatting",
                 "bold": "Bold (Ctrl/Cmd+B)",
                 "italic": "Italic (Ctrl/Cmd+I)",
@@ -245,7 +244,21 @@
                     "channel": "Channel",
                     "exercise": "Exercise",
                     "lecture": "Lecture",
-                    "message": "Message"
+                    "message": "Message",
+                    "faq": "FAQ",
+                    "slide": "Slide",
+                    "lecture-unit": "Lecture attachment"
+                },
+                "attachments": "Attach images or PDFs",
+                "slides": "Slides and lecture attachments",
+                "faq": "Frequently asked questions",
+                "emoji": "Emoji search",
+                "uploading": "Uploading attachments…",
+                "errors": {
+                    "position": "Place the cursor in message text outside links or code before inserting an item.",
+                    "conversation": "Open a conversation to attach files.",
+                    "upload": "Could not attach “{{name}}”. Choose an image or PDF up to {{max}} MB.",
+                    "busy": "An attachment is still uploading. Please try these files again when it finishes."
                 }
             }
         },

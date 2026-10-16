@@ -115,6 +115,46 @@ describe('Message editor editing transactions', () => {
         expect(editor.deleteItem(true)).toBe(false);
     });
 
+    it('recovers a resource insertion bookmark after undo replaces the editable DOM', () => {
+        editor.load('Before');
+        select(root.querySelector('p')!.firstChild!, 6);
+        editor.insertText(' after');
+        const bookmark = editor.captureEntitySelection()!;
+        editor.undo();
+        const recovered = editor.resolveEntitySelection(bookmark)!;
+        editor.insertMarkdown('[faq]Question(/courses/1/faq?faqId=1)[/faq]', recovered);
+        expect(changed).toHaveBeenLastCalledWith('Before[faq]Question(/courses/1/faq?faqId=1)[/faq]');
+    });
+
+    it('keeps a recovered caret after an existing reference rather than selecting that reference', () => {
+        editor.load('Hello [user]Anna(anna)[/user]');
+        const paragraph = root.querySelector('p')!;
+        select(paragraph, paragraph.childNodes.length);
+        const bookmark = editor.captureEntitySelection()!;
+        editor.insertText('x');
+        editor.undo();
+        const recovered = editor.resolveEntitySelection(bookmark)!;
+        expect(recovered.collapsed).toBe(true);
+        editor.insertMarkdown('[faq]Question(/courses/1/faq?faqId=1)[/faq]', recovered);
+        expect(changed).toHaveBeenLastCalledWith('Hello [user]Anna(anna)[/user][faq]Question(/courses/1/faq?faqId=1)[/faq]');
+    });
+
+    it('recovers the insertion point after changing the paragraph to a list', () => {
+        editor.load('Before');
+        select(root.querySelector('p')!.firstChild!, 6);
+        const bookmark = editor.captureEntitySelection()!;
+        editor.block('ul');
+        editor.insertMarkdown('[faq]Question(/courses/1/faq?faqId=1)[/faq]', editor.resolveEntitySelection(bookmark));
+        expect(changed).toHaveBeenLastCalledWith('- Before[faq]Question(/courses/1/faq?faqId=1)[/faq]');
+    });
+
+    it('rejects insertion into code and unrecognized bookmarks', () => {
+        editor.load('`code`');
+        select(root.querySelector('code')!.firstChild!, 2);
+        expect(editor.captureEntitySelection()).toBeUndefined();
+        expect(editor.resolveEntitySelection(document.createRange())).toBeUndefined();
+    });
+
     it('edits a link target without exposing Markdown, and can unlink while preserving its label', () => {
         editor.load('Read the guide');
         select(root.querySelector('p')!.firstChild!, 9, 14);

@@ -66,6 +66,17 @@ describe('Message editor conversion', () => {
         expect(roundTrip('![diagram](/diagram.png "Caption")')).toBe('![diagram](/diagram.png "Caption")');
     });
 
+    it('previews an attached image inside a protected item while preserving its original source', () => {
+        const source = '![diagram](/api/core/files/attachments/diagram.png)';
+        const element = document.createElement('div');
+        element.innerHTML = messageToEditorHtml(source);
+        const image = element.querySelector('img')!;
+        expect(image?.getAttribute('src')).toBe('/api/core/files/attachments/diagram.png');
+        expect(image.getAttribute('alt')).toBe('diagram');
+        expect(image.closest('[contenteditable="false"]')).not.toBeNull();
+        expect(editorToMessage(element)).toBe(source);
+    });
+
     it.each(['| a | b |\n|---|---|\n| 1 | 2 |', '$$x^2$$', '<table><tr><td>Keep me</td></tr></table>', '<span style="color:red">Text</span>'])(
         'keeps unsupported legacy content in the Markdown editor: %s',
         (message) => {

@@ -8,12 +8,13 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { MessageCompletion, MessageEditorDom } from './message-editor-dom';
 import { MessageEditorSuggestions, MessageSuggestion } from './message-editor-suggestions';
 import { isMessageLinkSafe } from './message-editor-conversion';
+import { MessageEditorToolsComponent, MessageResourceInsertion } from './message-editor-tools.component';
 
 @Component({
     selector: 'jhi-message-editor',
     templateUrl: './message-editor.component.html',
     styleUrl: './message-editor.component.scss',
-    imports: [ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, CdkOverlayOrigin, CdkConnectedOverlay],
+    imports: [ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, CdkOverlayOrigin, CdkConnectedOverlay, MessageEditorToolsComponent],
     providers: [MessageEditorSuggestions],
     encapsulation: ViewEncapsulation.None,
     host: { '(keydown)': 'toolbarKeydown($event)' },
@@ -29,7 +30,12 @@ export class MessageEditorComponent {
     readonly editing = input(false);
     readonly suppressNewlineOnEnter = input(true);
     readonly contentChange = output<string>();
+    readonly uploadingChange = output<boolean>();
     private readonly editable = viewChild<ElementRef<HTMLElement>>('editable');
+    private readonly tools = viewChild(MessageEditorToolsComponent);
+    protected readonly uploading = signal(false);
+    protected readonly editorRevision = signal(0);
+    protected readonly captureEntitySelection = () => this.editor?.captureEntitySelection();
 
     readonly suggestions = signal<MessageSuggestion[]>([]);
     readonly suggestionsOpen = signal(false);
@@ -89,6 +95,7 @@ export class MessageEditorComponent {
                 });
                 if (content !== this.lastValue) {
                     this.editor.load(content);
+                    this.editorRevision.update((revision) => revision + 1);
                     this.lastValue = content;
                     this.dismissSuggestions();
                     this.linkOpen.set(false);
@@ -242,6 +249,9 @@ export class MessageEditorComponent {
             } else {
                 // The existing parent form handles the send shortcut after the synchronous input update.
                 event.preventDefault();
+                if (this.uploading()) {
+                    event.stopPropagation();
+                }
             }
         }
     }
@@ -254,13 +264,35 @@ export class MessageEditorComponent {
 
     protected paste(event: ClipboardEvent): void {
         event.preventDefault();
-        this.editor?.insertText(event.clipboardData?.getData('text/plain') ?? '');
+        const files = Array.from(event.clipboardData?.files ?? []);
+        if (files.length) {
+            void this.tools()?.uploadFiles(files);
+        } else {
+            this.editor?.insertText(event.clipboardData?.getData('text/plain') ?? '');
+        }
         this.dismissSuggestions();
     }
 
     protected drop(event: DragEvent): void {
-        // File upload and rich HTML drag/drop stay in the existing editor during the exploration.
         event.preventDefault();
+        void this.tools()?.uploadFiles(Array.from(event.dataTransfer?.files ?? []));
+        this.dismissSuggestions();
+    }
+
+    protected insertResource(insertion: MessageResourceInsertion): void {
+        const range = this.editor?.resolveEntitySelection(insertion.range);
+        if (range && this.editable()?.nativeElement.contains(range.commonAncestorContainer)) {
+            this.dismissSuggestions();
+            this.editor?.insertMarkdown(insertion.markdown, range);
+            this.focus();
+        } else {
+            this.tools()?.error.set('position');
+        }
+    }
+
+    protected uploadStateChanged(uploading: boolean): void {
+        this.uploading.set(uploading);
+        this.uploadingChange.emit(uploading);
     }
 
     private scheduleSuggestions(): void {
@@ -381,7 +413,7 @@ export class MessageEditorComponent {
         this.focus();
     }
 
-    private focus(): void {
+    protected focus(): void {
         this.editor?.focus();
     }
 }

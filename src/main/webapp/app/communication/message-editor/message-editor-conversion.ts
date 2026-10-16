@@ -35,7 +35,7 @@ markdown.renderer.rules.image = (tokens, index) => {
     const label = token.content;
     const source = String(token.attrGet('src') ?? '');
     const title = token.attrGet('title');
-    return referenceHtml(`![${label}](${source}${title ? ' ' + JSON.stringify(String(title)) : ''})`, label || source, 'image');
+    return referenceHtml(`![${label}](${source}${title ? ' ' + JSON.stringify(String(title)) : ''})`, label || source, 'image', source);
 };
 
 const serializer = new TurndownService({ bulletListMarker: '-', codeBlockStyle: 'fenced', emDelimiter: '*', strongDelimiter: '**' });
@@ -74,8 +74,10 @@ serializer.addRule('message-list-item', {
     },
 });
 
-function referenceHtml(source: string, label: string, type: string): string {
-    return `<span contenteditable="false" data-message-reference="${markdown.utils.escapeHtml(source)}" data-reference-type="${type}">${markdown.utils.escapeHtml(label)}</span>`;
+function referenceHtml(source: string, label: string, type: string, imageSource?: string): string {
+    const escapedLabel = markdown.utils.escapeHtml(label);
+    const image = imageSource ? `<img src="${markdown.utils.escapeHtml(imageSource)}" alt="${escapedLabel}">` : '';
+    return `<span contenteditable="false" data-message-reference="${markdown.utils.escapeHtml(source)}" data-reference-type="${type}">${image}${escapedLabel}</span>`;
 }
 
 /** Reads code without the caret placeholders that are needed by native browser editing. */
@@ -107,8 +109,8 @@ export function messageToEditorHtml(source: string): string {
     // Literal code is escaped by markdown-it and cannot match these tag boundaries.
     const html = markdown.render(source).replace(/(<\/(?:p|li|ul|ol|blockquote|pre)>|<(?:ul|ol|blockquote|li)>|<br>)\n/g, '$1');
     return DOMPurify.sanitize(html, {
-        ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'ins', 'u', 's', 'del', 'code', 'pre', 'blockquote', 'ul', 'ol', 'li', 'a', 'span'],
-        ALLOWED_ATTR: ['href', 'title', 'start', 'class', 'contenteditable', 'data-message-reference', 'data-reference-type'],
+        ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'ins', 'u', 's', 'del', 'code', 'pre', 'blockquote', 'ul', 'ol', 'li', 'a', 'span', 'img'],
+        ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'start', 'class', 'contenteditable', 'data-message-reference', 'data-reference-type'],
         ALLOW_DATA_ATTR: false,
     });
 }

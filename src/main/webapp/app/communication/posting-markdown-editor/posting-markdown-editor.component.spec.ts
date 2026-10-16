@@ -852,6 +852,25 @@ describe('PostingsMarkdownEditor', () => {
         expect(component.content()).toBe('$$x^2$$');
     });
 
+    it('invalidates the form during an attachment upload and revalidates it when the upload finishes', () => {
+        const changed = vi.fn();
+        component.registerOnValidatorChange(changed);
+        expect(component.validate()).toBeNull();
+        component.formattedUploadStateChanged(true);
+        expect(component.validate()).toEqual({ attachmentUploading: true });
+        component.formattedUploadStateChanged(false);
+        expect(component.validate()).toBeNull();
+        expect(changed).toHaveBeenCalledTimes(2);
+    });
+
+    it('clears pending upload validation when an external message switches back to Markdown', () => {
+        component.formattedMode.set(true);
+        component.formattedUploadStateChanged(true);
+        component.writeValue('$$x^2$$');
+        expect(component.formattedMode()).toBe(false);
+        expect(component.validate()).toBeNull();
+    });
+
     it('should insert emoji at the cursor position', () => {
         const emojiAction = new EmojiAction(component.viewContainerRef, mockOverlay as any, overlayPositionBuilderMock as any);
         const mockCursorPosition = new TextEditorPosition(1, 5);
