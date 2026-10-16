@@ -5,8 +5,8 @@ sidebar_label: FAQs
 ---
 
 import Image, {ImageSize} from "../../../src/components/Image/Image";
-import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 import instructorViewImg from './assets/faq/instructor-view.png';
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
 ## What Are FAQs in Artemis?
 
@@ -24,9 +24,11 @@ The FAQ overview provides a user-friendly interface for managing questions.
 At the top of the page, instructors can search for specific FAQs or filter them by topic. Below that, a list of all existing FAQs is shown in a table, making it easy to view and edit entries.
 
 There is also a button to create new FAQs.
-If the **IRIS** feature is enabled, an additional button allows all FAQs to be added to IRIS. This enables the virtual tutor to include FAQ content when answering student questions.
+When Iris is enabled for the course, accepted FAQs are synchronized automatically in the background when you create or edit them. Deleted FAQs are removed from Iris in the background. Saving and deleting FAQs does not wait for Iris to respond.
 
-<Image src={instructorViewImg} alt={"Instructor View"} size={ImageSize.large} />
+If Iris is temporarily unavailable, you can continue managing FAQs. Artemis checks for missing, changed, and removed FAQs every 10 minutes and retries synchronization. Larger backlogs can take several runs to process.
+
+<Image src={instructorViewImg} alt="FAQ management with search, category filters, and three accepted questions" size={ImageSize.large} />
 
 ## FAQ Table Details
 
