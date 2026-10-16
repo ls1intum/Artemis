@@ -37,6 +37,7 @@
                 // Remove once the aliases are gone after their sunset.
                 "-Dspringdoc.paths-to-exclude=/api/tutorialgroup/courses/*/tutorial-groups-configuration/**",
                 "-Dartemis.hyperion.enabled=true",
+                "-Dartemis.hyperion.exercise-generation.enabled=true",
                 "-Dartemis.weaviate.enabled=true",
                 "-Dartemis.openapi-docs-generation=true",
                 "-Dartemis.iris.enabled=true",

@@ -526,6 +526,23 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textChangedEmitTimeouts.set(modelKey, timeoutId);
     }
 
+    /**
+     * Emits a text change that is still waiting in the {@link textChangedEmitDelay} debounce right away, so that consumers
+     * that act on the content immediately (e.g. submitting a message on Enter) do not read a stale value.
+     * Does nothing if no change is pending.
+     */
+    flushPendingTextChange(): void {
+        const model = this.getModel();
+        const modelKey = model?.uri?.toString() ?? '';
+        const pending = this.textChangedEmitTimeouts.get(modelKey);
+        if (!pending) {
+            return;
+        }
+        clearTimeout(pending);
+        this.textChangedEmitTimeouts.delete(modelKey);
+        this.textChanged.emit({ text: this.getText(), fileName: this.extractFilePathFromModel(model) });
+    }
+
     private extractFilePathFromModel(model: monaco.editor.ITextModel | null): string {
         const path = model?.uri?.path ?? '';
         if (!path) {

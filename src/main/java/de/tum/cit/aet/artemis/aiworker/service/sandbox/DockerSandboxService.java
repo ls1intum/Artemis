@@ -291,6 +291,9 @@ public class DockerSandboxService implements InteractiveSandbox, SandboxApi {
         try (var inspect = dockerClient.inspectImageCmd(settings.image())) {
             immutableImageId = inspect.exec().getId();
         }
+        if (immutableImageId == null || immutableImageId.isBlank()) {
+            throw new SandboxUnavailableException("Interactive sandbox image inspection returned no image ID");
+        }
         HostConfig hostConfig = hardenedHostConfig(dockerClient, immutableImageId);
         try (final var createCommand = dockerClient.createContainerCmd(immutableImageId)) {
             // The main process only keeps the container warm; the session is driven by separate `docker exec` calls and removed explicitly at teardown.

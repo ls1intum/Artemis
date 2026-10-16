@@ -126,9 +126,19 @@ This section describes the code paths. All classes are in the module
 
 ### Writing the index
 
-Every change of a searchable item is written to the database table `weaviate_outbox` in the same request
-(`SearchableEntityWeaviateService`). The `WeaviateOutboxDispatcher` on the scheduling node is the only writer to
-Weaviate. It reads the outbox and applies the entries:
+Every change of a searchable item is written to the database table `weaviate_outbox` (`SearchableEntityWeaviateService`).
+The upsert of an exercise, an exam, a lecture, a lecture unit, a FAQ, a channel or a course is written on the
+`weaviateOutboxEnqueueExecutor` thread and not on the request thread, so the person who edits an item does not wait for it.
+The executor has one thread, which keeps the rows of a node in the order of the changes, and a request that finds its queue
+full waits for room instead of overtaking what is queued. An upsert that is still queued when a node stops is lost, like one
+whose write failed, and the reconcile passes repair it. Deletes, including the bulk deletes of a course reset or of a deleted
+post or channel, and the upserts of posts and answer posts are written before the request returns: the reconcile passes skip
+posts and answer posts by default, and a delete that is lost leaves removed data searchable. Under the `test` profile the
+executor is synchronous, so a test finds the row of its change before it continues. Live deletes, including bulk deletes,
+use the same queue as live upserts and wait for their outbox write to finish before source cleanup continues. This keeps
+an older queued update from receiving a newer outbox id and restoring a search hit while its source is being deleted.
+Reconcile writes stay on their calling thread so a failed write reaches the pass that retries it. The `WeaviateOutboxDispatcher` on the scheduling
+node is the only writer to Weaviate. It reads the outbox and applies the entries:
 
 1. `SearchableEntityResolver` loads the item from the database and builds its property map. It adds
    `chunk_hashes` (the SHA-256 of every embedding input) and `chunker_version`.

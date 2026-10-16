@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -43,7 +44,7 @@ import {
 } from 'test/helpers/sample/communication-sample-data';
 import { ITEMS_PER_PAGE } from 'app/foundation/constants/pagination.constants';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
-import { Conversation, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
+import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { SavedPostService } from 'app/communication/service/saved-post.service';
@@ -134,6 +135,151 @@ describe('CommunicationService', () => {
     afterEach(() => {
         vi.useRealTimers();
         vi.restoreAllMocks();
+    });
+
+    it('finishes only the requested page and calls its anchor hook before publishing the response', () => {
+        const response = new Subject<HttpResponse<Post[]>>();
+        vi.spyOn(postService, 'getPosts').mockReturnValue(response);
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        const events: string[] = [];
+        const subscription = communicationService.posts.subscribe(() => events.push('posts'));
+        const callbacks = { beforeApply: vi.fn(() => events.push('anchor')), complete: vi.fn((applied: boolean) => events.push('complete:' + applied)) };
+        communicationService.getFilteredPosts({ courseId: course.id, page: 1 }, true, undefined, callbacks);
+        communicationService['posts$'].next([post]); // A live update is independent of the outstanding request.
+        expect(callbacks.beforeApply).not.toHaveBeenCalled();
+        expect(callbacks.complete).not.toHaveBeenCalled();
+        events.length = 0;
+        response.next(new HttpResponse({ body: [post] }));
+        expect(events).toEqual(['anchor', 'posts']);
+        response.complete();
+        expect(events).toEqual(['anchor', 'posts', 'complete:true']);
+        subscription.unsubscribe();
+    });
+
+    it('retries an unsuccessful request before allowing cache hits', () => {
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        const response = new Subject<HttpResponse<Post[]>>();
+        const request = vi
+            .spyOn(postService, 'getPosts')
+            .mockReturnValueOnce(response)
+            .mockReturnValue(of(new HttpResponse({ body: [post] })));
+        const callbacks = { beforeApply: vi.fn(), complete: vi.fn() };
+        const filter = { courseId: course.id, page: 0 };
+        communicationService.getFilteredPosts(filter, true, undefined, callbacks);
+        response.complete();
+        expect(callbacks.beforeApply).not.toHaveBeenCalled();
+        expect(callbacks.complete).toHaveBeenCalledExactlyOnceWith(false);
+        callbacks.complete.mockClear();
+        communicationService.getFilteredPosts(filter, false, undefined, callbacks);
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(callbacks.beforeApply).toHaveBeenCalledOnce();
+        expect(callbacks.complete).toHaveBeenCalledExactlyOnceWith(true);
+        callbacks.complete.mockClear();
+        communicationService.getFilteredPosts(filter, false, undefined, callbacks);
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(callbacks.complete).toHaveBeenCalledExactlyOnceWith(true);
+    });
+
+    it('does not invalidate a newer successful cache when an older request fails', () => {
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        const older = new Subject<HttpResponse<Post[]>>();
+        const request = vi
+            .spyOn(postService, 'getPosts')
+            .mockReturnValueOnce(older)
+            .mockReturnValue(of(new HttpResponse({ body: [post] })));
+        const filter = { courseId: course.id, page: 1 };
+        communicationService.getFilteredPosts(filter, true);
+        communicationService.getFilteredPosts(filter, true);
+        older.complete();
+
+        communicationService.getFilteredPosts(filter, false);
+
+        expect(request).toHaveBeenCalledTimes(2);
+    });
+
+    it.each([
+        [PageType.OVERVIEW, false],
+        [PageType.PAGE_SECTION, false],
+        [PageType.OVERVIEW, true],
+        [PageType.PAGE_SECTION, true],
+    ] as const)('discards superseded responses on %s with forceUpdate=%s', (pageType, forceUpdate) => {
+        const subscribe = vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        communicationService.setPageType(pageType);
+        const older = new Subject<HttpResponse<Post[]>>();
+        const currentPosts = [{ id: 200, conversation: { id: 2 } }] as Post[];
+        const currentFilter = { courseId: course.id, conversationIds: [2], page: 0 };
+        const request = vi
+            .spyOn(postService, 'getPosts')
+            .mockReturnValueOnce(older)
+            .mockReturnValue(of(new HttpResponse({ body: currentPosts, headers: new HttpHeaders({ 'X-Total-Count': '20' }) })));
+        const olderCallbacks = { beforeApply: vi.fn(), complete: vi.fn() };
+        const currentCallbacks = { beforeApply: vi.fn(), complete: vi.fn() };
+        const publishedPosts = vi.fn();
+        const publishedTotals = vi.fn();
+        const postsSubscription = communicationService.posts.subscribe(publishedPosts);
+        const totalsSubscription = communicationService.totalNumberOfPosts.subscribe(publishedTotals);
+        communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [1], page: 1 }, forceUpdate, undefined, olderCallbacks);
+        communicationService.getFilteredPosts(currentFilter, true, undefined, currentCallbacks);
+        publishedPosts.mockClear();
+        publishedTotals.mockClear();
+        subscribe.mockClear();
+
+        older.next(new HttpResponse({ body: [{ id: 100, conversation: { id: 1 } }] as Post[], headers: new HttpHeaders({ 'X-Total-Count': '100' }) }));
+        older.complete();
+
+        expect(olderCallbacks.beforeApply).not.toHaveBeenCalled();
+        expect(olderCallbacks.complete).toHaveBeenCalledExactlyOnceWith(false);
+        expect(currentCallbacks.beforeApply).toHaveBeenCalledOnce();
+        expect(currentCallbacks.complete).toHaveBeenCalledExactlyOnceWith(true);
+        expect(publishedPosts).not.toHaveBeenCalled();
+        expect(publishedTotals).not.toHaveBeenCalled();
+        expect(subscribe).not.toHaveBeenCalled();
+        // A subsequent cache hit must still publish only the current conversation, without a retry.
+        communicationService.getFilteredPosts(currentFilter, false);
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(publishedPosts).toHaveBeenCalledExactlyOnceWith(currentPosts);
+        expect(publishedTotals).toHaveBeenCalledExactlyOnceWith(20);
+        postsSubscription.unsubscribe();
+        totalsSubscription.unsubscribe();
+    });
+
+    it.each([PageType.OVERVIEW, PageType.PAGE_SECTION])('keeps live updates independent of failed-page retries on %s', (pageType) => {
+        vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        communicationService.setPageType(pageType);
+        const conversation = { id: 99 } as ConversationDTO;
+        const page = (first: number, last: number) => Array.from({ length: last - first + 1 }, (_, index) => ({ id: first + index }) as Post);
+        const response = (posts: Post[]) => of(new HttpResponse({ body: posts, headers: new HttpHeaders({ 'X-Total-Count': '151' }) }));
+        const failed = new Subject<HttpResponse<Post[]>>();
+        const request = vi
+            .spyOn(postService, 'getPosts')
+            .mockReturnValueOnce(response(page(1, 50)))
+            .mockReturnValueOnce(failed)
+            .mockReturnValueOnce(response(page(50, 99)))
+            .mockReturnValueOnce(response(page(100, 149)))
+            .mockReturnValueOnce(response(page(150, 150)));
+        const firstFilter = { courseId: course.id, conversationIds: [99], page: 0, pageSize: 50 };
+        const failedFilter = { ...firstFilter, page: 1 };
+        let visible: Post[] = [];
+        const subscription = communicationService.posts.subscribe((posts) => (visible = [...posts]));
+        communicationService.getFilteredPosts(firstFilter, true, conversation);
+        communicationService.getFilteredPosts(failedFilter, false, conversation);
+        failed.complete();
+
+        communicationService['handleNewOrUpdatedMessage']({ action: CommunicationCrudAction.CREATE, post: { id: 151, conversation, creationDate: dayjs() } as Post });
+
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(visible).toHaveLength(51);
+        expect(failedFilter).toEqual({ ...firstFilter, page: 1 });
+        communicationService.getFilteredPosts(failedFilter, false, conversation);
+        expect(request).toHaveBeenCalledTimes(3);
+        expect(visible).toHaveLength(100);
+        expect(new Set(visible.map((post) => post.id)).size).toBe(100);
+        communicationService.getFilteredPosts({ ...firstFilter, page: 2 }, false, conversation);
+        expect(visible).toHaveLength(150);
+        communicationService.getFilteredPosts({ ...firstFilter, page: 3 }, false, conversation);
+        expect(visible).toHaveLength(151);
+        expect(new Set(visible.map((post) => post.id))).toEqual(new Set(Array.from({ length: 151 }, (_, index) => index + 1)));
+        subscription.unsubscribe();
     });
 
     describe('Invoke post service methods', () => {
