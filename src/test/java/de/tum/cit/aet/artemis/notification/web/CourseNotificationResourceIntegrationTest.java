@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,11 +53,20 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
 
     private Course course;
 
+    private Object originalServiceMap;
+
     @BeforeEach
     void setUp() {
+        // The notification service is shared by every test of the Spring context, so the channels replaced below have to be put back
+        originalServiceMap = ReflectionTestUtils.getField(courseNotificationService, "serviceMap");
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+    }
+
+    @AfterEach
+    void restoreServiceMap() {
+        ReflectionTestUtils.setField(courseNotificationService, "serviceMap", originalServiceMap);
     }
 
     @Test

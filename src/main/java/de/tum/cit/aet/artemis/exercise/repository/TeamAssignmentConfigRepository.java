@@ -111,10 +111,10 @@ public interface TeamAssignmentConfigRepository extends ArtemisJpaRepository<Tea
      * Puts the configuration of an exercise onto it, for a flow that reads or maps it through the exercise. An exercise
      * without a configuration is left empty, which reads as "not a team exercise".
      *
-     * @param exercise the exercise, may be null
+     * @param exercise the exercise; one that is not persisted yet has no stored configuration and is left untouched
      */
-    default void attachTo(@Nullable Exercise exercise) {
-        if (exercise != null && exercise.getId() != null) {
+    default void attachTo(Exercise exercise) {
+        if (exercise.getId() != null) {
             exercise.setTeamAssignmentConfig(findByExerciseId(exercise.getId()).orElse(null));
         }
     }

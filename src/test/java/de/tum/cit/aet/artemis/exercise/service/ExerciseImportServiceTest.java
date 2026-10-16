@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -176,6 +178,69 @@ class ExerciseImportServiceTest {
         assertThat(newExercise.getTeamAssignmentConfig()).isNotNull().isNotSameAs(callerConfig);
         assertThat(newExercise.getTeamAssignmentConfig().getId()).as("the copy must not reuse the caller's id").isNull();
         assertThat(newExercise.getTeamAssignmentConfig().getMinTeamSize()).isEqualTo(2);
+    }
+
+    private static PlagiarismDetectionConfig storedPlagiarismConfig(TextExercise exercise, long id, int similarityThreshold) {
+        PlagiarismDetectionConfig config = PlagiarismDetectionConfig.createDefault();
+        config.setSimilarityThreshold(similarityThreshold);
+        config.setMinimumSize(77);
+        config.setId(id);
+        config.setExercise(exercise);
+        ReflectionTestUtils.setField(config, "exerciseId", exercise.getId());
+        return config;
+    }
+
+    @Test
+    void copiesThePlagiarismDetectionConfigOfTheSourceAsAConfigurationOfNoExercise() {
+        TextExercise source = sourceWithContent();
+        source.setId(11L);
+        PlagiarismDetectionConfig sourceConfig = storedPlagiarismConfig(source, 500L, 66);
+        source.setPlagiarismDetectionConfig(sourceConfig);
+        TextExercise newExercise = new TextExercise();
+        newExercise.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
+
+        service.copyBasis(newExercise, source);
+
+        PlagiarismDetectionConfig copy = newExercise.getPlagiarismDetectionConfig();
+        assertThat(copy).isNotNull().isNotSameAs(sourceConfig);
+        assertThat(copy.getSimilarityThreshold()).isEqualTo(66);
+        assertThat(copy.getMinimumSize()).isEqualTo(77);
+        assertThat(copy.getId()).as("the imported exercise gets a new row").isNull();
+        assertThat(copy.getExercise()).as("the copy is not attached to the source's exercise").isNull();
+        assertThat(copy.getExerciseId()).isNull();
+        assertThat(sourceConfig.getId()).as("the source's configuration is left alone").isEqualTo(500L);
+        assertThat(sourceConfig.getExercise()).isSameAs(source);
+    }
+
+    @Test
+    void copiesTheCallersOwnPlagiarismDetectionConfigInsteadOfTheSourcesOne() {
+        TextExercise source = sourceWithContent();
+        source.setId(11L);
+        source.setPlagiarismDetectionConfig(storedPlagiarismConfig(source, 500L, 66));
+        TextExercise newExercise = new TextExercise();
+        newExercise.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
+        PlagiarismDetectionConfig callerConfig = PlagiarismDetectionConfig.createDefault();
+        callerConfig.setSimilarityThreshold(31);
+        newExercise.setPlagiarismDetectionConfig(callerConfig);
+
+        service.copyBasis(newExercise, source);
+
+        PlagiarismDetectionConfig copy = newExercise.getPlagiarismDetectionConfig();
+        assertThat(copy).isNotSameAs(callerConfig);
+        assertThat(copy.getSimilarityThreshold()).as("the edited settings win over the source's").isEqualTo(31);
+        assertThat(copy.getExercise()).isNull();
+        assertThat(copy.getExerciseId()).isNull();
+    }
+
+    @Test
+    void leavesThePlagiarismDetectionConfigEmptyWhenNeitherSideHasOne() {
+        TextExercise source = sourceWithContent();
+        TextExercise newExercise = new TextExercise();
+        newExercise.setCourse(source.getCourseViaExerciseGroupOrCourseMember());
+
+        service.copyBasis(newExercise, source);
+
+        assertThat(newExercise.getPlagiarismDetectionConfig()).isNull();
     }
 
     @Test

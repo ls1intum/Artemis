@@ -231,6 +231,15 @@ management:
             export:
                 enabled: true
                 step: 60
+    otlp:
+        # spring-boot-starter-opentelemetry (used for LLM tracing, see application-artemis.yml) puts
+        # micrometer-registry-otlp on the classpath, and Spring Boot then auto-configures an OTLP push meter
+        # registry that is enabled by default and pushes to http://localhost:4318/v1/metrics every step. Artemis
+        # is scraped by Prometheus and runs no OTLP collector, so every step logged a ConnectException warning.
+        # Disabling metrics export does not affect OTLP tracing, which is configured separately.
+        metrics:
+            export:
+                enabled: false
     metrics:
         distribution:
             percentiles-histogram:
@@ -253,6 +262,13 @@ management:
                     name: http.server.requests
 
 spring: #disabled by default, you must enable it
+    mail:
+        properties:
+            # Without a timeout the mail library waits forever for an SMTP server that stopped answering and blocks the thread
+            # that sends (milliseconds)
+            mail.smtp.connectiontimeout: 10000
+            mail.smtp.timeout: 30000
+            mail.smtp.writetimeout: 30000
     ai:
         model:
             chat: none # possible values: openai, none (since Spring AI 2.0 the openai module also serves Azure OpenAI / Microsoft Foundry)
