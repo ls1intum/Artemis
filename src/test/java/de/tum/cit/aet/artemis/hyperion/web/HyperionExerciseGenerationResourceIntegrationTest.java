@@ -3,10 +3,14 @@ package de.tum.cit.aet.artemis.hyperion.web;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
@@ -14,6 +18,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.aiworker.domain.WorkerState;
+import de.tum.cit.aet.artemis.aiworker.dto.WorkerStatusDTO;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.hyperion.dto.ExerciseGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GenerationMode;
@@ -92,6 +98,28 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
         programmingExerciseRepository.saveAndFlush(exercise);
 
         org.assertj.core.api.Assertions.assertThat(programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId)).isFalse();
+    }
+
+    @Test
+    @WithAnonymousUser
+    void generationWorkers_anonymous_isUnauthorized() throws Exception {
+        request.performMvcRequest(get("/api/aiworker/admin/workers")).andExpect(status().isUnauthorized());
+        Mockito.verify(aiWorkers, Mockito.never()).workerStatuses();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void generationWorkers_instructor_isForbidden() throws Exception {
+        request.performMvcRequest(get("/api/aiworker/admin/workers")).andExpect(status().isForbidden());
+        Mockito.verify(aiWorkers, Mockito.never()).workerStatuses();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void generationWorkers_admin_returnsDiagnosticSnapshot() throws Exception {
+        Mockito.when(aiWorkers.workerStatuses()).thenReturn(List.of(new WorkerStatusDTO("worker-1", WorkerState.OFFLINE, null, null, null, null, false)));
+        request.performMvcRequest(get("/api/aiworker/admin/workers")).andExpect(status().isOk()).andExpect(jsonPath("$[0].workerId").value("worker-1"))
+                .andExpect(jsonPath("$[0].state").value("OFFLINE")).andExpect(jsonPath("$[0].lastHeartbeat").doesNotExist());
     }
 
     @Test
@@ -242,37 +270,43 @@ class HyperionExerciseGenerationResourceIntegrationTest extends AbstractSpringIn
     @Test
     @WithAnonymousUser
     void revertExerciseGeneration_anonymous_returnsUnauthorized() throws Exception {
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isUnauthorized());
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}/revert", exerciseId, "adapt-job"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void revertExerciseGeneration_student_returnsForbidden() throws Exception {
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isForbidden());
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}/revert", exerciseId, "adapt-job"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void revertExerciseGeneration_tutor_returnsForbidden() throws Exception {
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isForbidden());
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}/revert", exerciseId, "adapt-job"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void revertExerciseGeneration_editor_passesAuthorizationAndReturnsNotFound() throws Exception {
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isNotFound());
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}/revert", exerciseId, "adapt-job"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
     @WithMockUser(username = OTHER_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void revertExerciseGeneration_wrongCourseInstructor_returnsForbidden() throws Exception {
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isForbidden());
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}/revert", exerciseId, "adapt-job"))
+                .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void revertExerciseGeneration_admin_passesAuthorizationAndReturnsNotFound() throws Exception {
-        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert", exerciseId)).andExpect(status().isNotFound());
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}/revert", exerciseId, "adapt-job"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

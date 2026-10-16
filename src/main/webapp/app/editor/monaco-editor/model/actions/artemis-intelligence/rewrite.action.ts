@@ -4,6 +4,7 @@ import RewritingVariant from 'app/editor/monaco-editor/model/actions/artemis-int
 import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { WritableSignal } from '@angular/core';
 import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-range.model';
 
 /**
  * Artemis Intelligence action for rewriting in the editor.
@@ -18,6 +19,7 @@ export class RewriteAction extends TextEditorAction {
         private readonly rewritingVariant: RewritingVariant,
         private readonly courseId: number,
         private readonly resultSignal: WritableSignal<RewriteResult>,
+        private readonly canApplyResult: () => boolean = () => true,
     ) {
         super(RewriteAction.ID, 'artemisApp.markdownEditor.artemisIntelligence.commands.rewrite');
     }
@@ -28,5 +30,11 @@ export class RewriteAction extends TextEditorAction {
      */
     run(editor: TextEditor): void {
         this.rewriteMarkdown(editor, this.artemisIntelligenceService, this.rewritingVariant, this.courseId, this.resultSignal);
+    }
+
+    override replaceTextAtRange(editor: TextEditor, range: TextEditorRange, text: string): void {
+        if (this.canApplyResult()) {
+            super.replaceTextAtRange(editor, range, text);
+        }
     }
 }

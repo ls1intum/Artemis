@@ -379,7 +379,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     protected readonly TAB_VISUAL = MarkdownEditorMonacoComponent.TAB_VISUAL;
 
     readonly EditType = PostingEditType;
-    private reviewCommentManager?: ReviewCommentWidgetManager;
+    // Lazy manager creation must invalidate draft checks made before it exists.
+    private readonly reviewCommentManagerValue = signal<ReviewCommentWidgetManager | undefined>(undefined);
+
+    private get reviewCommentManager(): ReviewCommentWidgetManager | undefined {
+        return this.reviewCommentManagerValue();
+    }
+
+    private set reviewCommentManager(manager: ReviewCommentWidgetManager | undefined) {
+        this.reviewCommentManagerValue.set(manager);
+    }
 
     constructor() {
         this.uniqueMarkdownEditorId.set('markdown-editor-' + generateUuid());
@@ -1079,6 +1088,10 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.reviewCommentManager?.clearDrafts();
     }
 
+    hasReviewCommentDrafts(): boolean {
+        return this.reviewCommentManager?.hasDrafts() ?? false;
+    }
+
     private getReviewCommentManager(): ReviewCommentWidgetManager | undefined {
         if (!this.monacoEditor()) {
             return undefined;
@@ -1099,7 +1112,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 onApplyInlineFix: ({ thread }) => this.onApplyInlineFix.emit({ threadId: thread.id }),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.showLocationWarning(),
-                showFeedbackAction: () => false,
             });
         }
         return this.reviewCommentManager;

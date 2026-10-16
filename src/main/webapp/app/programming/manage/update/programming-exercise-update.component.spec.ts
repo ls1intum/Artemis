@@ -28,7 +28,7 @@ import * as Utils from 'app/exercise/course-exercises/course-utils';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { FormFooterComponent } from 'app/shared-ui/form/form-footer/form-footer.component';
 import {
     APP_NAME_PATTERN_FOR_SWIFT,
@@ -37,7 +37,6 @@ import {
     PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN,
     PROGRAMMING_EXERCISE_NAME_MAX_LENGTH,
 } from 'app/foundation/constants/input.constants';
-import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockProvider } from 'ng-mocks';
@@ -66,8 +65,6 @@ vi.mock('y-monaco', () => ({
         this.destroy = vi.fn();
     }),
 }));
-
-const AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE = 'autoStartCodeGenerationAllRepositories';
 
 /**
  * Typed view onto the protected `viewChild` signals so the spec can override them
@@ -175,6 +172,21 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('captures the settings document before saving and acknowledges only its successful response', () => {
+        const response = new Subject<HttpResponse<ProgrammingExercise>>();
+        const acknowledge = vi.fn();
+        const capture = vi.fn(() => acknowledge);
+        const problem = { editableInstructions: () => ({ createCanonicalSaveAcknowledgement: capture }) };
+        comp.exerciseProblemComponent = (() => problem) as unknown as typeof comp.exerciseProblemComponent;
+        vi.spyOn(comp as any, 'onSaveSuccess').mockImplementation(() => {});
+        comp['subscribeToSaveResponse'](response);
+        expect(capture).toHaveBeenCalledOnce();
+        expect(acknowledge).not.toHaveBeenCalled();
+        comp.exerciseProblemComponent = (() => undefined) as unknown as typeof comp.exerciseProblemComponent;
+        response.next(new HttpResponse({ body: { id: 42, problemStatement: 'saved by settings' } as ProgrammingExercise }));
+        expect(acknowledge).toHaveBeenCalledExactlyOnceWith('saved by settings');
+    });
+
     describe('initializeEditMode', () => {
         function recreateComponent() {
             fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
@@ -267,6 +279,54 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(refreshSpy).toHaveBeenCalledOnce();
         });
 
+        it.each([ProjectType.PLAIN_MAVEN, ProjectType.PLAIN_GRADLE])('preserves AI creation with whole-exercise generation off for %s', (projectType) => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_HYPERION);
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.projectType = projectType;
+            entity.releaseDate = dayjs().add(1, 'day');
+            comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
+            const created = Object.assign(new ProgrammingExercise(course, undefined), entity, { id: 42, templateParticipation: { id: 420 } });
+            vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: created })));
+            const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+            expect(comp.showGenerateWithAi()).toBe(true);
+            comp.saveWithAi();
+            expect(programmingExerciseService.automaticSetup).toHaveBeenCalledWith(entity, true);
+            expect(navigate).toHaveBeenCalledWith(['course-management', 1, 'programming-exercises', 42, 'code-editor', 'TEMPLATE', 420], {
+                state: { autoStartCodeGenerationAllRepositories: true },
+            });
+            expect(comp.isSaving()).toBe(false);
+        });
+
+        it('updates legacy creation eligibility when the language callback mutates the existing exercise', () => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_HYPERION);
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.projectType = ProjectType.PLAIN_MAVEN;
+            comp.programmingExercise = entity;
+            expect(comp.showGenerateWithAi()).toBe(true);
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.PYTHON);
+            expect(comp.showGenerateWithAi()).toBe(false);
+            comp.onProgrammingLanguageChange(ProgrammingLanguage.JAVA);
+            expect(comp.showGenerateWithAi()).toBe(true);
+        });
+
+        it('does not use legacy AI creation when the replacement supports the selected configuration', () => {
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation(
+                (feature) => feature === MODULE_FEATURE_HYPERION || feature === MODULE_FEATURE_HYPERION_EXERCISE_GENERATION,
+            );
+            const entity = new ProgrammingExercise(course, undefined);
+            entity.programmingLanguage = ProgrammingLanguage.JAVA;
+            entity.projectType = ProjectType.PLAIN_GRADLE;
+            entity.releaseDate = dayjs().add(1, 'day');
+            comp.programmingExercise = entity;
+            const setup = vi.spyOn(programmingExerciseService, 'automaticSetup');
+            expect(comp.showGenerateWithAi()).toBe(false);
+            comp.saveWithAi();
+            expect(setup).not.toHaveBeenCalled();
+        });
+
         it('should trim the exercise title before saving', () => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
@@ -298,7 +358,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const entity = new ProgrammingExercise(new Course(), undefined);
             entity.id = 1;
             entity.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-            entity.releaseDate = dayjs();
+            entity.releaseDate = dayjs().add(1, 'day');
             vi.spyOn(programmingExerciseService, 'update').mockReturnValue(
                 of(
                     new HttpResponse({
@@ -391,159 +451,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 fixture.changeDetectorRef.detectChanges();
                 expect(comp.programmingExercise.projectType).toBe(ProjectType.PLAIN_GRADLE);
             });
-        });
-    });
-
-    describe('save with AI', () => {
-        it('should call automatic setup with empty repositories and navigate to template editor', () => {
-            const entity = new ProgrammingExercise(course, undefined);
-            entity.releaseDate = dayjs();
-            entity.course = course;
-
-            const savedEntity = new ProgrammingExercise(course, undefined);
-            savedEntity.id = 7;
-            savedEntity.course = course;
-            savedEntity.templateParticipation = { id: 11 } as any;
-
-            comp.programmingExercise = entity;
-            comp.backupExercise = {} as ProgrammingExercise;
-            comp.hyperionEnabled = true;
-
-            const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
-            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
-            const router = TestBed.inject(Router) as unknown as MockRouter;
-
-            comp.saveExerciseWithAi();
-
-            expect(comp.isGeneratingWithAi()).toBe(true);
-            expect(setupSpy).toHaveBeenCalledWith(entity, true);
-
-            response$.next(new HttpResponse({ body: savedEntity }));
-
-            expect(router.navigate).toHaveBeenCalledWith(
-                ['course-management', courseId, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, savedEntity.templateParticipation!.id],
-                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
-            );
-            expect(comp.isGeneratingWithAi()).toBe(false);
-        });
-
-        it('should navigate to the exam template editor with auto-start state after AI exercise creation in exam mode', () => {
-            const entity = new ProgrammingExercise(undefined, undefined);
-            entity.releaseDate = dayjs();
-            const exerciseGroup = new ExerciseGroup();
-            exerciseGroup.id = 3;
-            exerciseGroup.exam = { id: 9, course } as any;
-            entity.exerciseGroup = exerciseGroup;
-
-            const savedEntity = new ProgrammingExercise(undefined, exerciseGroup);
-            savedEntity.id = 7;
-            savedEntity.templateParticipation = { id: 11 } as any;
-
-            comp.programmingExercise = entity;
-            comp.backupExercise = {} as ProgrammingExercise;
-            comp.hyperionEnabled = true;
-
-            const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
-            vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
-            const router = TestBed.inject(Router) as unknown as MockRouter;
-
-            comp.saveExerciseWithAi();
-
-            response$.next(new HttpResponse({ body: savedEntity }));
-
-            expect(router.navigate).toHaveBeenCalledWith(
-                ['course-management', courseId, 'exams', 9, 'exercise-groups', 3, 'programming-exercises', savedEntity.id, 'code-editor', RepositoryType.TEMPLATE, 11],
-                { state: { [AUTO_START_CODE_GENERATION_ALL_REPOSITORIES_STATE]: true } },
-            );
-        });
-
-        it('should fall back to regular save when hyperion is disabled', () => {
-            const entity = new ProgrammingExercise(course, undefined);
-            entity.releaseDate = dayjs();
-            entity.course = course;
-
-            comp.programmingExercise = entity;
-            comp.backupExercise = {} as ProgrammingExercise;
-            comp.hyperionEnabled = false;
-
-            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
-
-            comp.saveExerciseWithAi();
-
-            expect(setupSpy).toHaveBeenCalledWith(entity);
-        });
-
-        it('should reset generating flag on save error', () => {
-            const entity = new ProgrammingExercise(course, undefined);
-            entity.releaseDate = dayjs();
-            entity.course = course;
-
-            comp.programmingExercise = entity;
-            comp.backupExercise = {} as ProgrammingExercise;
-            comp.hyperionEnabled = true;
-
-            const response$ = new Subject<HttpResponse<ProgrammingExercise>>();
-            vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(response$);
-
-            comp.saveExerciseWithAi();
-            expect(comp.isGeneratingWithAi()).toBe(true);
-
-            response$.error(new HttpErrorResponse({ headers: new HttpHeaders({ 'X-artemisApp-alert': 'error-message' }) }));
-
-            expect(comp.isGeneratingWithAi()).toBe(false);
-            expect(comp.isSaving()).toBe(false);
-        });
-
-        it('should treat null id as a new exercise and use empty repositories setup', () => {
-            const entity = new ProgrammingExercise(course, undefined);
-            entity.releaseDate = dayjs();
-            entity.course = course;
-            entity.id = null as unknown as number;
-
-            comp.programmingExercise = entity;
-            comp.backupExercise = {} as ProgrammingExercise;
-            comp.hyperionEnabled = true;
-
-            const setupSpy = vi.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
-
-            comp.saveExerciseWithAi();
-
-            expect(setupSpy).toHaveBeenCalledWith(entity, true);
-        });
-    });
-
-    describe('generate with AI visibility', () => {
-        it('should only show for java when hyperion is enabled', () => {
-            const entity = new ProgrammingExercise(course, undefined);
-            entity.programmingLanguage = ProgrammingLanguage.JAVA;
-
-            comp.programmingExercise = entity;
-            comp.hyperionEnabled = true;
-            comp.isImportFromExistingExercise = false;
-            comp.isImportFromFile = false;
-            comp.isImportFromSharing = false;
-
-            expect(comp.showGenerateWithAi()).toBe(true);
-
-            const kotlinExercise = new ProgrammingExercise(course, undefined);
-            kotlinExercise.programmingLanguage = ProgrammingLanguage.KOTLIN;
-            comp.programmingExercise = kotlinExercise;
-
-            expect(comp.showGenerateWithAi()).toBe(false);
-        });
-
-        it('should still show when id is null', () => {
-            const entity = new ProgrammingExercise(course, undefined);
-            entity.programmingLanguage = ProgrammingLanguage.JAVA;
-            entity.id = null as unknown as number;
-
-            comp.programmingExercise = entity;
-            comp.hyperionEnabled = true;
-            comp.isImportFromExistingExercise = false;
-            comp.isImportFromFile = false;
-            comp.isImportFromSharing = false;
-
-            expect(comp.showGenerateWithAi()).toBe(true);
         });
     });
 
@@ -806,19 +713,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             saveButton().click();
 
             expect(saveSpy).not.toHaveBeenCalled();
-        });
-
-        it('lets a click generate with AI when the reasons on display are outdated but the exercise is valid', () => {
-            const saveWithAiSpy = vi.spyOn(comp, 'saveWithAi').mockImplementation(() => undefined);
-            vi.spyOn(comp, 'showGenerateWithAi').mockReturnValue(true);
-            fixture.detectChanges();
-            fillInRequiredFields();
-            const generateButton = footer().nativeElement.querySelector('#generate-with-ai') as HTMLButtonElement;
-            expect(generateButton).not.toBeNull();
-
-            generateButton.click();
-
-            expect(saveWithAiSpy).toHaveBeenCalledOnce();
         });
     });
 

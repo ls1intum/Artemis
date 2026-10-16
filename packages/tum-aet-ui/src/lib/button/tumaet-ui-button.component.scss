@@ -23,7 +23,7 @@
         transition: background-color 0.15s ease;
     }
 
-    &:hover:not(:disabled)::after {
+    &:hover:not(:disabled, [aria-disabled='true'])::after {
         background-color: color-mix(in srgb, var(--tumaet-ui-text-color) 5%, transparent);
     }
 

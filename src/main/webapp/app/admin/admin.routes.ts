@@ -1,7 +1,8 @@
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CanActivateFn, Router, Routes } from '@angular/router';
 import { inject } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_GLOBAL_SEARCH } from 'app/app.constants';
+import { MODULE_FEATURE_AIWORKER, MODULE_FEATURE_GLOBAL_SEARCH } from 'app/app.constants';
 import { userManagementRoute } from 'app/admin/user-management/user-management.route';
 import { systemNotificationManagementRoute } from 'app/admin/system-notification-management/system-notification-management.route';
 
@@ -28,6 +29,8 @@ const globalSearchEnabledGuard: CanActivateFn = () => {
     }
     return inject(Router).createUrlTree(['/']);
 };
+
+const aiWorkerEnabledGuard: CanActivateFn = () => (inject(ProfileService).isModuleFeatureActive(MODULE_FEATURE_AIWORKER) ? true : inject(Router).createUrlTree(['/']));
 
 const childRoutes: Routes = [
     {
@@ -199,6 +202,21 @@ const childRoutes: Routes = [
         data: {
             authorities: IS_AT_LEAST_SUPER_ADMIN,
             pageTitle: 'artemisApp.adminPasskeyManagement.title',
+        },
+    },
+    {
+        path: 'ai-workers',
+        canActivate: [UserRouteAccessService, aiWorkerEnabledGuard],
+        loadComponent: () => import('app/aiworker/admin/ai-workers.component').then((m) => m.AiWorkersComponent),
+        data: { pageTitle: 'artemisApp.aiworker.title', authorities: IS_AT_LEAST_ADMIN },
+    },
+    {
+        path: 'hyperion-generations',
+        canActivate: [UserRouteAccessService],
+        loadComponent: () => import('app/hyperion/admin/hyperion-generations.component').then((m) => m.HyperionGenerationsComponent),
+        data: {
+            pageTitle: 'artemisApp.hyperion.workers.title',
+            authorities: IS_AT_LEAST_ADMIN,
         },
     },
     {

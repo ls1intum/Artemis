@@ -72,6 +72,8 @@ export class AdminSidebarComponent {
     passkeyEnabled = input<boolean>(false);
     isSuperAdmin = input<boolean>(false);
     irisEnabled = input<boolean>(false);
+    hyperionGenerationEnabled = input(false);
+    aiWorkerEnabled = input(false);
     weaviateEnabled = input<boolean>(false);
 
     toggleCollapseState = output<void>();
@@ -235,6 +237,26 @@ export class AdminSidebarComponent {
                 testId: 'admin-websocket',
             },
         ];
+
+        if (this.aiWorkerEnabled()) {
+            monitoringItems.push({
+                routerLink: '/admin/ai-workers',
+                icon: faRobot,
+                title: 'AI Workers',
+                translation: 'artemisApp.aiworker.title',
+                testId: 'admin-ai-workers',
+            });
+        }
+
+        if (this.hyperionGenerationEnabled()) {
+            monitoringItems.push({
+                routerLink: '/admin/hyperion-generations',
+                icon: faRobot,
+                title: 'Generations',
+                translation: 'artemisApp.hyperion.workers.title',
+                testId: 'admin-hyperion-workers',
+            });
+        }
 
         // Only surface the ingestion dashboard when the global search (Weaviate) integration is enabled for this instance.
         if (this.weaviateEnabled()) {

@@ -1,3 +1,4 @@
+import { usesCanonicalProblemStatementSync } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 import { Component, DestroyRef, Injector, OnDestroy, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DifficultyLevel } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -82,8 +83,11 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
 
     readonly editableInstructions = viewChild<ProgrammingExerciseEditableInstructionComponent>('editableInstructions');
 
+    readonly canonicalBaseIsolation = computed(() => usesCanonicalProblemStatementSync(this.programmingExercise(), this.aiOps.hyperionGenerationSupported));
+
     // Delegate signals for template binding compatibility
     readonly userPrompt = this.aiOps.userPrompt;
+    readonly generationBrief = this.aiOps.generationBrief;
     readonly isGeneratingOrRefining = this.aiOps.isGeneratingOrRefining;
     protected readonly isPromptNearLimit = this.aiOps.isPromptNearLimit;
     readonly hyperionEnabled = this.aiOps.hyperionEnabled;
