@@ -10,6 +10,13 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { FindLanguageFromKeyPipe } from 'app/foundation/language/find-language-from-key.pipe';
 import { TumAetUiButtonComponent, TumAetUiFormFieldComponent, TumAetUiInputDirective, TumAetUiMessageComponent, TumAetUiSelectComponent } from '@tumaet/ui-angular';
 import { MODULE_FEATURE_SAML2 } from 'app/app.constants';
+import { PendingEmailChangeDTO } from 'app/account/user/shared/dto/pending-email-change.dto';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
+
+/** Error keys of the server that are shown as their own message. All other failures show a generic message. */
+const EMAIL_CHANGE_ERROR_KEYS = ['emailInvalid', 'emailChangeUnavailable', 'emailChangeRequestedTooRecently', 'noPendingEmailChange'];
+const GENERIC_ERROR_MESSAGE_KEY = 'settings.messages.error.fail';
 
 /**
  * Type definition for the user settings form controls.
@@ -33,6 +40,7 @@ interface SettingsForm {
         FormsModule,
         ReactiveFormsModule,
         ArtemisTranslatePipe,
+        ArtemisDatePipe,
         TumAetUiButtonComponent,
         TumAetUiFormFieldComponent,
         TumAetUiInputDirective,
@@ -50,6 +58,20 @@ export class SettingsComponent implements OnInit {
     readonly success = signal(false);
     /** Indicates email already exists error */
     readonly errorEmailExists = signal(false);
+    /** Translation key of the error to show for any other failure, undefined when there is none */
+    readonly errorMessageKey = signal<string | undefined>(undefined);
+    /** The request to change the email address that waits for confirmation, undefined when there is none */
+    readonly pendingEmailChange = signal<PendingEmailChangeDTO | undefined>(undefined);
+    /** Indicates the last save created or replaced an email change request, so confirmation mails were sent */
+    readonly emailChangeRequested = signal(false);
+    /** Indicates the confirmation mails of the pending email change were sent again */
+    readonly confirmationMailsResent = signal(false);
+    /** Indicates the pending email change was cancelled */
+    readonly emailChangeCancelled = signal(false);
+    /** Indicates a resend or cancel request of the pending email change is running */
+    readonly pendingChangeRequestRunning = signal(false);
+    /** Whether the server can send emails. Without it an email change cannot be confirmed, so the email cannot be changed. */
+    readonly mailConfigured = signal(true);
     /** The current user's account data */
     readonly currentUser = signal<User | undefined>(undefined);
     /** List of available languages for the language selector */
@@ -75,6 +97,7 @@ export class SettingsComponent implements OnInit {
         this.isSaml2Active.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_SAML2));
         this.allowedEmailPattern = profileInfo.allowedEmailPattern;
         this.allowedEmailPatternReadable.set(profileInfo.allowedEmailPatternReadable);
+        this.mailConfigured.set(profileInfo.mailConfigured);
 
         this.settingsForm = new FormGroup<SettingsForm>({
             firstName: new FormControl<string>('', {
@@ -111,13 +134,23 @@ export class SettingsComponent implements OnInit {
                 this.currentUser.set(user);
                 this.isInternalUser.set(user.internal || false);
                 this.updateNameAndEmailControlState(user.internal || false);
+                if (user.internal && !this.isSaml2Active()) {
+                    this.loadPendingEmailChange();
+                }
             }
         });
     }
 
     /**
+     * Loads the current pending request for the internal account without modifying its confirmed address.
+     */
+    private loadPendingEmailChange(): void {
+        this.accountService.getPendingEmailChange().subscribe((pendingEmailChange) => this.pendingEmailChange.set(pendingEmailChange));
+    }
+
+    /**
      * Enables or disables the firstName, lastName, and email form controls based on
-     * whether the user is internal and whether SAML2 is active.
+     * whether the user is internal and whether SAML2 is active. The email is also disabled when the server cannot send mails.
      * Disabled controls are excluded from validation, preventing spurious errors.
      */
     private updateNameAndEmailControlState(isInternal: boolean): void {
@@ -125,54 +158,124 @@ export class SettingsComponent implements OnInit {
         const action = shouldDisable ? 'disable' : 'enable';
         this.settingsForm.controls.firstName[action]();
         this.settingsForm.controls.lastName[action]();
-        this.settingsForm.controls.email[action]();
+        this.settingsForm.controls.email[shouldDisable || !this.mailConfigured() ? 'disable' : 'enable']();
     }
 
     /**
      * Saves the user's settings to the server.
-     * Updates first name, last name, email, and language preference.
+     * Updates first name, last name and language preference. A changed email address is not applied: the server
+     * creates a pending request and mails a confirmation link to the current and the new address. The account
+     * keeps its current email address until both links are confirmed, so the form shows the current address again.
      * If the language changed, updates the application's display language.
      */
     saveSettings() {
-        this.success.set(false);
-        this.errorEmailExists.set(false);
+        this.resetMessages();
 
-        const userToUpdate = this.currentUser();
-        if (!userToUpdate) {
+        const currentUser = this.currentUser();
+        if (!currentUser) {
             return;
         }
 
-        // Update user object with form values
         const firstName = this.settingsForm.controls.firstName.value;
         const lastName = this.settingsForm.controls.lastName.value;
         const email = this.settingsForm.controls.email.value;
         const langKey = this.settingsForm.controls.langKey.value;
 
+        const userToSave = deepClone(currentUser);
         // When SAML2 is active, name and email are managed by the IdP — only langKey can be changed
         if (!this.isSaml2Active()) {
-            userToUpdate.firstName = firstName || undefined;
-            userToUpdate.lastName = lastName || undefined;
-            userToUpdate.email = email || undefined;
+            userToSave.firstName = firstName || undefined;
+            userToSave.lastName = lastName || undefined;
+            userToSave.email = email || undefined;
         }
-        userToUpdate.langKey = langKey || undefined;
+        userToSave.langKey = langKey || undefined;
 
-        this.accountService.save(userToUpdate).subscribe({
-            next: () => {
+        this.accountService.save(userToSave).subscribe({
+            next: (response) => {
                 this.success.set(true);
-                this.accountService.authenticate(userToUpdate);
+                const pendingEmailChange = response.pendingEmailChange ?? undefined;
+                this.pendingEmailChange.set(pendingEmailChange);
+                this.emailChangeRequested.set(pendingEmailChange !== undefined && userToSave.email !== currentUser.email);
+
+                // The email address of the account stays the current one until the change is confirmed from both addresses.
+                const updatedUser = cloneWith(userToSave, { email: currentUser.email });
+                this.currentUser.set(updatedUser);
+                this.accountService.authenticate(updatedUser);
+                this.settingsForm.controls.email.setValue(currentUser.email ?? '');
 
                 // Update UI language if the user changed their language preference
                 if (langKey && langKey !== this.translateService.getCurrentLang()) {
                     this.translateService.use(langKey);
                 }
             },
+            error: (response) => this.handleError(response),
+        });
+    }
+
+    /**
+     * Sends the confirmation links of the pending email change to both addresses again.
+     * Earlier confirmations are reset and the validity of the request restarts.
+     */
+    resendConfirmationMails() {
+        this.resetMessages();
+        this.pendingChangeRequestRunning.set(true);
+        this.accountService.resendPendingEmailChange().subscribe({
+            next: (pendingEmailChange) => {
+                this.pendingChangeRequestRunning.set(false);
+                this.pendingEmailChange.set(pendingEmailChange);
+                this.confirmationMailsResent.set(true);
+            },
             error: (response) => {
-                if (response.status === 400 && response.error?.type === 'https://www.jhipster.tech/problem/email-already-used') {
-                    this.errorEmailExists.set(true);
-                } else {
-                    this.success.set(false);
-                }
+                this.pendingChangeRequestRunning.set(false);
+                this.handleError(response);
             },
         });
+    }
+
+    /**
+     * Cancels the pending email change. The email address of the account was never changed, so nothing else is reverted.
+     */
+    cancelEmailChange() {
+        this.resetMessages();
+        this.pendingChangeRequestRunning.set(true);
+        this.accountService.cancelPendingEmailChange().subscribe({
+            next: () => {
+                this.pendingChangeRequestRunning.set(false);
+                this.pendingEmailChange.set(undefined);
+                this.emailChangeCancelled.set(true);
+            },
+            error: () => {
+                this.pendingChangeRequestRunning.set(false);
+                this.errorMessageKey.set(GENERIC_ERROR_MESSAGE_KEY);
+            },
+        });
+    }
+
+    /**
+     * Clears feedback from the previous settings or email-change action before starting the next action.
+     */
+    private resetMessages(): void {
+        this.success.set(false);
+        this.errorEmailExists.set(false);
+        this.errorMessageKey.set(undefined);
+        this.emailChangeRequested.set(false);
+        this.confirmationMailsResent.set(false);
+        this.emailChangeCancelled.set(false);
+    }
+
+    /**
+     * Maps account-save and resend errors to localized feedback while preserving the pending request.
+     * @param response the server error returned by the settings or resend request
+     */
+    private handleError(response: { status?: number; error?: { type?: string; errorKey?: string } }): void {
+        this.success.set(false);
+        const errorKey = response.error?.errorKey;
+        if (response.status === 400 && (response.error?.type === 'https://www.jhipster.tech/problem/email-already-used' || errorKey === 'emailAlreadyUsed')) {
+            this.errorEmailExists.set(true);
+        } else if (response.status === 400 && errorKey && EMAIL_CHANGE_ERROR_KEYS.includes(errorKey)) {
+            this.errorMessageKey.set(`settings.messages.error.${errorKey}`);
+        } else {
+            this.errorMessageKey.set(GENERIC_ERROR_MESSAGE_KEY);
+        }
     }
 }

@@ -10,12 +10,31 @@
             "button": "Speichern"
         },
         "saml2SyncedInfo": "Dein Name und deine E-Mail-Adresse werden von deiner Institution über SAML2 verwaltet und können hier nicht geändert werden.",
+        "pendingEmailChange": {
+            "title": "Änderung der E-Mail-Adresse wartet auf Bestätigung",
+            "description": "Deine E-Mail-Adresse ändert sich erst, wenn du die Änderung von beiden Adressen aus bestätigt hast. Wir haben an jede einen Link geschickt.",
+            "currentAddress": "Aktuelle Adresse",
+            "newAddress": "Neue Adresse",
+            "confirmed": "bestätigt",
+            "notConfirmed": "noch nicht bestätigt",
+            "expires": "Die Links sind gültig bis",
+            "resend": "Bestätigungs-E-Mails erneut senden",
+            "cancel": "Änderung abbrechen"
+        },
         "messages": {
             "error": {
                 "fail": "<strong>Es ist ein Fehler aufgetreten!</strong> Die Einstellungen konnten nicht gespeichert werden.",
-                "emailExists": "<strong>E-Mail ist bereits in Verwendung!</strong> Bitte wähle eine andere aus."
+                "emailExists": "<strong>E-Mail ist bereits in Verwendung!</strong> Bitte wähle eine andere aus.",
+                "emailInvalid": "<strong>Diese E-Mail-Adresse ist nicht erlaubt.</strong> Bitte verwende eine Adresse, die zum erlaubten Muster passt.",
+                "emailChangeUnavailable": "<strong>Die E-Mail-Adresse kann hier nicht geändert werden.</strong> Diese Artemis-Instanz kann keine E-Mails versenden. Bitte wende dich an eine Administratorin oder einen Administrator.",
+                "emailChangeRequestedTooRecently": "<strong>Bitte warte einen Moment.</strong> Du hast vor weniger als einer Minute eine Änderung der E-Mail-Adresse angefordert. Versuche es in einer Minute erneut.",
+                "noPendingEmailChange": "<strong>Es gibt keine offene Änderung der E-Mail-Adresse.</strong> Sie ist möglicherweise abgelaufen oder wurde bereits abgebrochen."
             },
             "success": "<strong>Einstellungen wurden gespeichert!</strong>",
+            "successEmailChangeRequested": "<strong>Einstellungen wurden gespeichert!</strong> Wir haben eine Bestätigungs-E-Mail an deine aktuelle Adresse und eine an deine neue Adresse geschickt. Deine E-Mail-Adresse ändert sich, sobald du beide bestätigt hast. Bis dahin gilt weiterhin deine aktuelle Adresse.",
+            "confirmationMailsResent": "<strong>Bestätigungs-E-Mails erneut gesendet.</strong> Wir haben neue Links an deine aktuelle und deine neue Adresse geschickt. Frühere Links funktionieren nicht mehr.",
+            "emailChangeCancelled": "<strong>Änderung der E-Mail-Adresse abgebrochen.</strong> Deine E-Mail-Adresse bleibt unverändert.",
+            "emailChangeUnavailableHint": "Du kannst deine E-Mail-Adresse hier nicht ändern, weil diese Artemis-Instanz keine Bestätigungs-E-Mails senden kann. Bitte wende dich an eine Administratorin oder einen Administrator, um sie ändern zu lassen.",
             "validate": {
                 "firstname": {
                     "required": "Dein Vorname wird benötigt.",

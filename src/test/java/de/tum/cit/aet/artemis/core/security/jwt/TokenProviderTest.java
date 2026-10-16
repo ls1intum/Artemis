@@ -4,7 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Map;
 
 import javax.crypto.SecretKey;
 
@@ -284,6 +287,40 @@ class TokenProviderTest {
             assertThat(authenticationMethod).isEqualTo(AuthenticationMethod.SAML2);
         }
 
+    }
+
+    @Nested
+    class SessionStartTests {
+
+        /**
+         * Credential creation compares this to the time the credentials last changed, so it has to be the login that started the
+         * session, not the latest silent rotation: a rotation preserves the original {@code iat}.
+         */
+        @Test
+        void theRequestAuthenticationCarriesWhenTheSessionStarted() {
+            Authentication authentication = AuthenticationFactory.createUsernamePasswordAuthentication(USER_NAME);
+            Date issuedAt = new Date(System.currentTimeMillis() - 3 * TEN_MINUTES);
+            String token = tokenProvider.createToken(authentication, issuedAt, new Date(System.currentTimeMillis() + ONE_MINUTE), null, null);
+
+            Authentication requestAuthentication = tokenProvider.getAuthentication(token);
+
+            assertThat(requestAuthentication).isNotNull();
+            assertThat(requestAuthentication.getDetails()).isInstanceOf(Map.class);
+            Instant sessionStartedAt = (Instant) ((Map<?, ?>) requestAuthentication.getDetails()).get(TokenProvider.SESSION_STARTED_AT);
+            // The token stores whole seconds.
+            assertThat(sessionStartedAt).isEqualTo(issuedAt.toInstant().truncatedTo(ChronoUnit.SECONDS));
+        }
+
+        @Test
+        void aTokenWithoutIssuedAtCarriesNoSessionStart() {
+            String token = Jwts.builder().subject(USER_NAME).claim("auth", "ROLE_USER").signWith(key, Jwts.SIG.HS512).expiration(new Date(System.currentTimeMillis() + ONE_MINUTE))
+                    .compact();
+
+            Authentication requestAuthentication = tokenProvider.getAuthentication(token);
+
+            assertThat(requestAuthentication).isNotNull();
+            assertThat(((Map<?, ?>) requestAuthentication.getDetails()).containsKey(TokenProvider.SESSION_STARTED_AT)).isFalse();
+        }
     }
 
     private String createUnsupportedToken() {

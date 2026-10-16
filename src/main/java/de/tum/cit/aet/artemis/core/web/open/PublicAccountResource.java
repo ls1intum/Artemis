@@ -60,7 +60,6 @@ import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
-import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 
@@ -105,8 +104,6 @@ public class PublicAccountResource {
 
     private final LoginOptionsService loginOptionsService;
 
-    private final UserVcsAccessTokenService userVcsAccessTokenService;
-
     private final UserRecoveryKeyService userRecoveryKeyService;
 
     private final UserAiPreferenceService userAiPreferenceService;
@@ -115,8 +112,7 @@ public class PublicAccountResource {
 
     public PublicAccountResource(AccountService accountService, UserService userService, MailService mailService, UserRepository userRepository,
             Optional<PasskeyCredentialsRepository> passkeyCredentialsRepository, TokenProvider tokenProvider, LoginOptionsService loginOptionsService,
-            UserVcsAccessTokenService userVcsAccessTokenService, UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService,
-            AccountSecurityEventService accountSecurityEventService) {
+            UserRecoveryKeyService userRecoveryKeyService, UserAiPreferenceService userAiPreferenceService, AccountSecurityEventService accountSecurityEventService) {
         this.accountService = accountService;
         this.userService = userService;
         this.mailService = mailService;
@@ -124,7 +120,6 @@ public class PublicAccountResource {
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
         this.tokenProvider = tokenProvider;
         this.loginOptionsService = loginOptionsService;
-        this.userVcsAccessTokenService = userVcsAccessTokenService;
         this.userRecoveryKeyService = userRecoveryKeyService;
         this.userAiPreferenceService = userAiPreferenceService;
         this.accountSecurityEventService = accountSecurityEventService;
@@ -261,8 +256,7 @@ public class PublicAccountResource {
         userDTO.setSelectedLLMUsage(userAiPreferenceService.findDecision(user.getId()));
         userDTO.setSelectedLLMUsageTimestamp(userAiPreferenceService.findDecisionDate(user.getId()));
         userDTO.setMemirisEnabled(userAiPreferenceService.isMemirisEnabled(user.getId()));
-        userDTO.setVcsAccessToken(userVcsAccessTokenService.findToken(user.getId()));
-        userDTO.setVcsAccessTokenExpiryDate(userVcsAccessTokenService.findExpiryDate(user.getId()));
+        accountService.addPersonalVcsAccessTokenIfSessionIsCurrent(userDTO, user.getId());
         userDTO.setAskToSetupPasskey(shouldPromptUserToSetupPasskey);
         userDTO.setLoggedInWithPasskey(isLoggedInWithPasskey);
         userDTO.setPasskeySuperAdminApproved(isPasskeySuperAdminApproved);
