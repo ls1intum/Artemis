@@ -863,7 +863,7 @@ class EmailChangeIntegrationTest extends AbstractSpringIntegrationIndependentTes
         for (Locale locale : List.of(Locale.ENGLISH, Locale.GERMAN)) {
             for (boolean forCurrentAddress : List.of(true, false)) {
                 Context context = new Context(locale);
-                context.setVariable("user", new MailRecipientDTO("owner@test.de", locale.getLanguage(), LOGIN, "First", "Last"));
+                context.setVariable("user", new MailRecipientDTO("owner@test.de", locale.getLanguage(), LOGIN, "First", "Last", null, null));
                 context.setVariable("baseUrl", URI.create("https://artemis.example.org").toURL());
                 context.setVariable("forCurrentAddress", forCurrentAddress);
                 context.setVariable("newEmail", "<script>alert(1)</script>@test.de");
