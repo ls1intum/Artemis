@@ -2,10 +2,8 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import javax.crypto.SecretKey;
 
@@ -21,6 +19,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJobType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 
@@ -49,6 +48,8 @@ public class PyrisCallbackTokenService {
     static final String AUDIENCE = "pyris-callback";
 
     static final String JOB_TYPE_CLAIM = "job";
+
+    static final String INVOCATION_CLAIM = "inv";
 
     private static final String ALGORITHM = Jwts.SIG.HS512.getId();
 
@@ -97,52 +98,36 @@ public class PyrisCallbackTokenService {
     }
 
     /**
-     * Issues the token for a registered run.
+     * Issues the token for a registered run. It names the run, its kind and, if the run has one, its invocation.
      *
      * @param job the run, as stored in the job map; null when no such run is registered, which fails
      * @return the signed token
-     */
-    public String issue(@Nullable PyrisJob job) {
-        return issue(job, null);
-    }
-
-    /**
-     * Issues the token for a registered run. The issue and expiry times are fixed before {@code beforeSigning} runs and the
-     * token is signed with exactly these times, so a caller that has to keep something alive at least as long as the token
-     * can do so before the token exists, and no pause in between can make the token outlive it.
-     *
-     * @param job           the run, as stored in the job map; null when no such run is registered, which fails
-     * @param beforeSigning receives the expiry the token will carry, before it is signed; may be null
-     * @return the signed token
      * @throws IllegalStateException if no run is given
      */
-    public String issue(@Nullable PyrisJob job, @Nullable Consumer<Instant> beforeSigning) {
+    public String issue(@Nullable PyrisJob job) {
         if (job == null) {
             throw new IllegalStateException("Cannot issue a callback token for a run that is not registered");
         }
         PyrisJobType type = PyrisJobType.of(job);
-        // A JWT carries times in whole seconds; truncating here keeps the expiry handed out equal to the one in the token.
-        Instant issuedAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
-        Instant expiresAt = issuedAt.plus(validity(type));
-        if (beforeSigning != null) {
-            beforeSigning.accept(expiresAt);
-        }
+        Instant issuedAt = Instant.now();
         // @formatter:off
-        return Jwts.builder()
+        JwtBuilder builder = Jwts.builder()
             .issuer(ISSUER)
             .audience().add(AUDIENCE).and()
             .subject(job.jobId())
             .claim(JOB_TYPE_CLAIM, type.claimValue())
             .issuedAt(Date.from(issuedAt))
-            .expiration(Date.from(expiresAt))
-            .signWith(getKey(), Jwts.SIG.HS512)
-            .compact();
+            .expiration(Date.from(issuedAt.plus(validity(type))));
         // @formatter:on
+        if (job.invocationId() != null) {
+            builder.claim(INVOCATION_CLAIM, job.invocationId());
+        }
+        return builder.signWith(getKey(), Jwts.SIG.HS512).compact();
     }
 
     /**
-     * Verifies a token presented by Pyris: signature with the callback key and algorithm, issuer, audience, expiry, and that
-     * it names a run and a known kind of run.
+     * Verifies a token presented by Pyris: signature with the callback key and algorithm, issuer, audience, issue time,
+     * expiry, and that it names a run and a known kind of run.
      *
      * @param token the presented token
      * @return the run and kind the token was issued for, or empty if the token is not valid
@@ -162,18 +147,21 @@ public class PyrisCallbackTokenService {
         Claims claims = jws.getPayload();
         String runId = claims.getSubject();
         Object typeClaim = claims.get(JOB_TYPE_CLAIM);
-        if (runId == null || runId.isBlank() || !(typeClaim instanceof String typeValue) || claims.getExpiration() == null) {
+        Object invocationClaim = claims.get(INVOCATION_CLAIM);
+        if (runId == null || runId.isBlank() || !(typeClaim instanceof String typeValue) || claims.getIssuedAt() == null || claims.getExpiration() == null
+                || (invocationClaim != null && !(invocationClaim instanceof String))) {
             return Optional.empty();
         }
-        return PyrisJobType.fromClaimValue(typeValue).map(type -> new VerifiedCallback(runId, type));
+        return PyrisJobType.fromClaimValue(typeValue).map(type -> new VerifiedCallback(runId, type, (String) invocationClaim));
     }
 
     /**
      * What a valid callback token proves.
      *
-     * @param runId the run the token was issued for
-     * @param type  the kind of that run
+     * @param runId        the run the token was issued for
+     * @param type         the kind of that run
+     * @param invocationId the invocation of that run, or null for a run without one
      */
-    public record VerifiedCallback(String runId, PyrisJobType type) {
+    public record VerifiedCallback(String runId, PyrisJobType type, @Nullable String invocationId) {
     }
 }

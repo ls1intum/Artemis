@@ -129,7 +129,7 @@ class PyrisInternalIngestionWorkerResourceIntegrationTest extends AbstractIrisIn
         assertThat(UUID.fromString(settings.runId()).toString()).as("the run id is a plain UUID").isEqualTo(settings.runId());
         assertThat(reloadState().getIngestionJobToken()).as("the processing state fences on the run id").isEqualTo(settings.runId());
         assertThat(callbackTokenService.verify(settings.authenticationToken())).as("the token is a callback token for exactly this run")
-                .contains(new PyrisCallbackTokenService.VerifiedCallback(settings.runId(), PyrisJobType.LECTURE_INGESTION));
+                .contains(new PyrisCallbackTokenService.VerifiedCallback(settings.runId(), PyrisJobType.LECTURE_INGESTION, null));
     }
 
     @Test

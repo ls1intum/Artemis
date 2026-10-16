@@ -429,7 +429,7 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void ask_withARunIdThatWasAlreadyUsed_shouldReturnConflict() throws Exception {
+    void ask_withTheRunIdOfARunInProgress_shouldReturnConflict() throws Exception {
         irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> {
         });
         var requestDTO = new GlobalSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());

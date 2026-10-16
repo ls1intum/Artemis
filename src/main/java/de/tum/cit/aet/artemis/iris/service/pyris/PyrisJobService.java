@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -64,14 +63,6 @@ public class PyrisJobService {
      */
     private static final String PYRIS_JOB_MAP_NAME = "pyris-job-map-v2";
 
-    private static final String GLOBAL_SEARCH_RUN_ID_MAP_NAME = "pyris-global-search-run-ids";
-
-    /**
-     * How much longer a global search run id stays reserved than the last token issued for it, so that nodes whose clocks
-     * differ by up to this much still never accept that token for a later run with the same id.
-     */
-    static final Duration GLOBAL_SEARCH_RUN_ID_RESERVATION_MARGIN = Duration.ofMinutes(5);
-
     private static final String CHAT_JOB_CLIENT_ID_MAP_NAME = "pyris-chat-job-client-id-map";
 
     private final DistributedDataProvider distributedDataProvider;
@@ -93,9 +84,6 @@ public class PyrisJobService {
 
     @Nullable
     private DistributedMap<String, String> struggleCooldownMap;
-
-    @Nullable
-    private DistributedMap<String, String> globalSearchRunIdMap;
 
     @Value("${artemis.iris.jobs.timeout:300}")
     private int jobTimeout; // in seconds
@@ -151,16 +139,6 @@ public class PyrisJobService {
             this.struggleCooldownMap = this.distributedDataProvider.getExpiringMap("struggle-cooldown-map", proactiveProperties.getTriggerCooldown());
         }
         return this.struggleCooldownMap;
-    }
-
-    // Reservations of client-chosen global search run ids, keyed by run id, valued by the user login. A reservation outlives every token issued for
-    // its run id, see #reserveGlobalSearchRunIdBeyond(String, String, Instant), so a token can never be accepted for a later run with the same id.
-    private DistributedMap<String, String> getGlobalSearchRunIdMap() {
-        if (this.globalSearchRunIdMap == null) {
-            this.globalSearchRunIdMap = this.distributedDataProvider.getExpiringMap(GLOBAL_SEARCH_RUN_ID_MAP_NAME,
-                    PyrisCallbackTokenService.INTERACTIVE_VALIDITY.plus(GLOBAL_SEARCH_RUN_ID_RESERVATION_MARGIN));
-        }
-        return this.globalSearchRunIdMap;
     }
 
     // Per student, exercise AND intent, so a confirm_close legitimately following its own decide is not blocked. The intent is
@@ -452,45 +430,18 @@ public class PyrisJobService {
      * Adds a new global search answer job to the job map.
      * The job stores the requesting user's login so that WebSocket status updates can be routed.
      * <p>
-     * The client chooses the run id, so it is reserved first: an id that was used before, by anyone, is rejected for as long
-     * as a token issued for it could still be valid, and an id that names any other job is rejected as well. Otherwise a
-     * client could replace another job, or a late callback of an earlier run could be accepted for this one.
+     * The client chooses the run id, so it can arrive again. The job is registered only if no job with that id exists, so a
+     * client cannot replace another job, and it gets a fresh invocation id that its callback token carries, so a token of an
+     * earlier request with the same run id is never accepted for this one, also not after the distributed state was lost.
      *
      * @param userLogin the login of the user who initiated the search
      * @param runId     the client-generated UUID that identifies this job and is echoed in WebSocket callbacks
-     * @throws ConflictException if the run id is already in use
+     * @throws ConflictException if a job with this run id exists
      */
     public void addGlobalSearchAnswerJob(String userLogin, String runId) {
-        if (getGlobalSearchRunIdMap().putIfAbsent(runId, userLogin) != null) {
-            throw new ConflictException("The run id was already used", "Job", "runIdInUse");
-        }
-        if (getPyrisJobMap().putIfAbsent(runId, new GlobalSearchAnswerJob(runId, userLogin), Duration.ofSeconds(jobTimeout)) != null) {
-            throw new ConflictException("The run id was already used", "Job", "runIdInUse");
-        }
-    }
-
-    /**
-     * Keeps a global search run id reserved until {@code tokenExpiry} plus a margin, before a token with that expiry is
-     * issued for it. Only the user who reserved the id can extend the reservation.
-     *
-     * @param runId       the global search run id
-     * @param userLogin   the user who reserved it
-     * @param tokenExpiry the expiry of the token about to be issued for the run
-     * @throws ConflictException if the reservation no longer belongs to this user
-     */
-    public void reserveGlobalSearchRunIdBeyond(String runId, String userLogin, Instant tokenExpiry) {
-        var map = getGlobalSearchRunIdMap();
-        map.lock(runId);
-        try {
-            String owner = map.get(runId);
-            if (owner != null && !owner.equals(userLogin)) {
-                throw new ConflictException("The run id was already used", "Job", "runIdInUse");
-            }
-            Duration timeToLive = Duration.between(Instant.now(), tokenExpiry.plus(GLOBAL_SEARCH_RUN_ID_RESERVATION_MARGIN));
-            map.put(runId, userLogin, timeToLive);
-        }
-        finally {
-            map.unlock(runId);
+        var job = new GlobalSearchAnswerJob(runId, userLogin, UUID.randomUUID().toString());
+        if (getPyrisJobMap().putIfAbsent(runId, job, Duration.ofSeconds(jobTimeout)) != null) {
+            throw new ConflictException("The run id is already in use", "Job", "runIdInUse");
         }
     }
 
@@ -631,7 +582,7 @@ public class PyrisJobService {
      * Anything else, including a plain run id, is rejected: the run id is not a secret.</li>
      * <li>The run id in the URL must be the run the token was issued for.</li>
      * <li>The job is looked up by that run id, for a lecture ingestion run also in the processing state, and must be of
-     * the kind the token was issued for and of the expected class.</li>
+     * the kind and, where it has one, the invocation the token was issued for, and of the expected class.</li>
      * </ol>
      *
      * @param request  the HttpServletRequest object representing the incoming request
@@ -656,7 +607,7 @@ public class PyrisJobService {
         if (job == null && verified.type() == PyrisJobType.LECTURE_INGESTION) {
             job = recoverIngestionJobFromDatabase(verified.runId());
         }
-        if (job == null || PyrisJobType.of(job) != verified.type()) {
+        if (job == null || PyrisJobType.of(job) != verified.type() || !Objects.equals(job.invocationId(), verified.invocationId())) {
             throw new AccessForbiddenException("No valid token provided");
         }
         if (!jobClass.isInstance(job)) {

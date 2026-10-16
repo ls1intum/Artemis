@@ -338,8 +338,8 @@ public class PyrisConnectorService {
             if (!(pyrisJobService.getJob(runId) instanceof GlobalSearchAnswerJob job)) {
                 throw new IllegalStateException("No global search answer job is registered for run " + runId);
             }
-            // The client chose the run id, so it stays reserved beyond the expiry of this token: a later run with the same id can never accept it.
-            var callbackToken = callbackTokenService.issue(job, expiresAt -> pyrisJobService.reserveGlobalSearchRunIdBeyond(runId, job.userLogin(), expiresAt));
+            // The token names this request's invocation, so it is never accepted for a later request with the same client-chosen run id.
+            var callbackToken = callbackTokenService.issue(job);
             var settings = new PyrisPipelineExecutionSettingsDTO(runId, callbackToken, aiSelection, artemisBaseUrl, null, IrisSupportLevel.MODERATE.jsonValue(), Boolean.TRUE);
             var requestDTO = new PyrisGlobalSearchAnswerRequestDTO(query, limit, settings, accessContext, entityCandidates, courseIds, excludeCourseIds, searchesNothing);
             var response = restTemplate.postForEntity(pyrisUrl + endpoint, requestDTO, Void.class);

@@ -8,12 +8,10 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +23,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DefaultTimeToLiveDistributedMap;
-import de.tum.cit.aet.artemis.core.service.distributed.api.map.DelegatingDistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.iris.config.IrisProactiveProperties;
@@ -36,33 +33,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 
 /**
- * Unit tests for how {@link PyrisJobService} authenticates Pyris callbacks with signed tokens, and for the reservation that keeps a client-chosen global search
- * run id from ever being reused while a token for it could be valid. Real local maps stand behind the distributed ones, so putIfAbsent and expiry behave as in
- * production.
+ * Unit tests for how {@link PyrisJobService} authenticates Pyris callbacks with signed tokens, including client-chosen global search run ids that arrive
+ * again. Real local maps stand behind the distributed ones, so putIfAbsent and expiry behave as in production.
  */
 class PyrisJobServiceCallbackAuthenticationTest {
-
-    private final Map<String, DistributedMap<?, ?>> maps = new HashMap<>();
-
-    /**
-     * Records until when each entry was last written to stay, which a local map does not expose.
-     */
-    private static final class ExpiryRecordingMap extends DelegatingDistributedMap<String, String> {
-
-        private final Map<String, Instant> writtenUntil = new HashMap<>();
-
-        private ExpiryRecordingMap(Duration defaultTimeToLive) {
-            super(new DefaultTimeToLiveDistributedMap<>(new LocalMap<>(), defaultTimeToLive));
-        }
-
-        @Override
-        public void put(String key, String value, Duration timeToLive) {
-            writtenUntil.put(key, Instant.now().plus(timeToLive));
-            super.put(key, value, timeToLive);
-        }
-    }
-
-    private ExpiryRecordingMap reservations;
 
     private PyrisCallbackTokenService tokenService;
 
@@ -71,17 +45,20 @@ class PyrisJobServiceCallbackAuthenticationTest {
     @BeforeEach
     void setUp() {
         var distributedDataProvider = mock(DistributedDataProvider.class);
-        doAnswer(invocation -> maps.computeIfAbsent(invocation.getArgument(0), name -> {
-            Duration defaultTimeToLive = invocation.getArgument(1);
-            if ("pyris-global-search-run-ids".equals(name)) {
-                reservations = new ExpiryRecordingMap(defaultTimeToLive);
-                return reservations;
-            }
-            return new DefaultTimeToLiveDistributedMap<>(new LocalMap<>(), defaultTimeToLive);
-        })).when(distributedDataProvider).getExpiringMap(anyString(), any(Duration.class));
         tokenService = PyrisCallbackTokenTestUtil.tokenService();
-        service = new PyrisJobService(distributedDataProvider, Optional.empty(), new IrisProactiveProperties(), mock(IrisLectureMaterialVersionService.class), tokenService);
-        ReflectionTestUtils.setField(service, "jobTimeout", 300);
+        service = serviceOverFreshDistributedState();
+    }
+
+    // A service whose distributed maps start empty, as after a restart of the whole cluster; the token key stays the same.
+    private PyrisJobService serviceOverFreshDistributedState() {
+        Map<String, DistributedMap<?, ?>> maps = new HashMap<>();
+        var distributedDataProvider = mock(DistributedDataProvider.class);
+        doAnswer(invocation -> maps.computeIfAbsent(invocation.getArgument(0), name -> new DefaultTimeToLiveDistributedMap<>(new LocalMap<>(), invocation.getArgument(1))))
+                .when(distributedDataProvider).getExpiringMap(anyString(), any(Duration.class));
+        var freshService = new PyrisJobService(distributedDataProvider, Optional.empty(), new IrisProactiveProperties(), mock(IrisLectureMaterialVersionService.class),
+                tokenService);
+        ReflectionTestUtils.setField(freshService, "jobTimeout", 300);
+        return freshService;
     }
 
     private static MockHttpServletRequest withAuthorization(String value) {
@@ -179,13 +156,42 @@ class PyrisJobServiceCallbackAuthenticationTest {
     }
 
     @Test
-    void aGlobalSearchRunIdCannotBeUsedTwiceEvenAfterTheRunFinished() {
+    void aTokenOfAnEarlierGlobalSearchRequestNeverAuthenticatesALaterOneWithTheSameRunId() {
         String runId = UUID.randomUUID().toString();
         service.addGlobalSearchAnswerJob("student", runId);
+        String earlierToken = tokenService.issue(service.getJob(runId));
         service.finishGlobalSearchAnswerJob((GlobalSearchAnswerJob) service.getJob(runId), null, false);
 
-        assertThatThrownBy(() -> service.addGlobalSearchAnswerJob("student", runId)).isInstanceOf(ConflictException.class);
+        service.addGlobalSearchAnswerJob("student", runId);
+
+        assertThatThrownBy(() -> service.getAndAuthenticateJobFromHeaderElseThrow(withAuthorization("Bearer " + earlierToken), runId, GlobalSearchAnswerJob.class))
+                .isInstanceOf(AccessForbiddenException.class);
+        String laterToken = tokenService.issue(service.getJob(runId));
+        assertThat(service.getAndAuthenticateJobFromHeaderElseThrow(withAuthorization("Bearer " + laterToken), runId, GlobalSearchAnswerJob.class).jobId()).isEqualTo(runId);
+    }
+
+    @Test
+    void aTokenOfAnotherUsersGlobalSearchRequestIsRejectedAfterTheDistributedStateWasLost() {
+        String runId = UUID.randomUUID().toString();
+        service.addGlobalSearchAnswerJob("alice", runId);
+        String aliceToken = tokenService.issue(service.getJob(runId));
+
+        // The cluster restarts: every job and map entry is gone, the signing key is not.
+        PyrisJobService afterRestart = serviceOverFreshDistributedState();
+        afterRestart.addGlobalSearchAnswerJob("bob", runId);
+
+        assertThatThrownBy(() -> afterRestart.getAndAuthenticateJobFromHeaderElseThrow(withAuthorization("Bearer " + aliceToken), runId, GlobalSearchAnswerJob.class))
+                .isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    void aGlobalSearchRunIdCannotReplaceAJobInProgress() {
+        String runId = UUID.randomUUID().toString();
+        service.addGlobalSearchAnswerJob("student", runId);
+        var inProgress = service.getJob(runId);
+
         assertThatThrownBy(() -> service.addGlobalSearchAnswerJob("someone-else", runId)).isInstanceOf(ConflictException.class);
+        assertThat(service.getJob(runId)).isEqualTo(inProgress);
     }
 
     @Test
@@ -195,38 +201,5 @@ class PyrisJobServiceCallbackAuthenticationTest {
 
         assertThatThrownBy(() -> service.addGlobalSearchAnswerJob("attacker", chatRunId)).isInstanceOf(ConflictException.class);
         assertThat(service.getJob(chatRunId)).as("the existing job is unchanged").isEqualTo(chatJob);
-    }
-
-    @Test
-    void theGlobalSearchReservationOutlivesTheTokenEvenWhenSigningIsDelayed() {
-        String runId = UUID.randomUUID().toString();
-        service.addGlobalSearchAnswerJob("student", runId);
-        var job = service.getJob(runId);
-        var expiry = new AtomicReference<Instant>();
-
-        tokenService.issue(job, tokenExpiry -> {
-            expiry.set(tokenExpiry);
-            service.reserveGlobalSearchRunIdBeyond(runId, "student", tokenExpiry);
-            try {
-                // A pause after the reservation and before signing: the token keeps the expiry it was given
-                Thread.sleep(1100);
-            }
-            catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
-
-        assertThat(reservations.get(runId)).isEqualTo("student");
-        // Both instants come from the same clock, apart from the few milliseconds between computing the time to live and recording it.
-        assertThat(reservations.writtenUntil.get(runId)).as("the reservation ends at least the margin after the token expires")
-                .isAfterOrEqualTo(expiry.get().plus(PyrisJobService.GLOBAL_SEARCH_RUN_ID_RESERVATION_MARGIN).minusMillis(100));
-    }
-
-    @Test
-    void onlyTheOwnerCanExtendAGlobalSearchReservation() {
-        String runId = UUID.randomUUID().toString();
-        service.addGlobalSearchAnswerJob("student", runId);
-
-        assertThatThrownBy(() -> service.reserveGlobalSearchRunIdBeyond(runId, "someone-else", Instant.now().plus(Duration.ofHours(6)))).isInstanceOf(ConflictException.class);
     }
 }

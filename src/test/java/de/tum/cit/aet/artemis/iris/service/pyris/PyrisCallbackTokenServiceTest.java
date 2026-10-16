@@ -8,7 +8,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicReference;
 
 import javax.crypto.SecretKey;
 
@@ -77,7 +76,7 @@ class PyrisCallbackTokenServiceTest {
         String token = service.issue(new ChatJob(RUN_ID, 1L, 2L, null, null, null, null));
 
         assertThat(token).doesNotContain(RUN_ID).as("the token is a signed JWT").matches("[\\w-]+\\.[\\w-]+\\.[\\w-]+");
-        assertThat(service.verify(token)).contains(new PyrisCallbackTokenService.VerifiedCallback(RUN_ID, PyrisJobType.CHAT));
+        assertThat(service.verify(token)).contains(new PyrisCallbackTokenService.VerifiedCallback(RUN_ID, PyrisJobType.CHAT, null));
     }
 
     @Test
@@ -86,8 +85,8 @@ class PyrisCallbackTokenServiceTest {
                 .contains(PyrisJobType.LECTURE_INGESTION);
         assertThat(service.verify(service.issue(new FaqIngestionWebhookJob(RUN_ID, 1L, 2L)))).map(PyrisCallbackTokenService.VerifiedCallback::type)
                 .contains(PyrisJobType.FAQ_INGESTION);
-        assertThat(service.verify(service.issue(new GlobalSearchAnswerJob(RUN_ID, "student")))).map(PyrisCallbackTokenService.VerifiedCallback::type)
-                .contains(PyrisJobType.GLOBAL_SEARCH_ANSWER);
+        assertThat(service.verify(service.issue(new GlobalSearchAnswerJob(RUN_ID, "student", "invocation-1"))))
+                .contains(new PyrisCallbackTokenService.VerifiedCallback(RUN_ID, PyrisJobType.GLOBAL_SEARCH_ANSWER, "invocation-1"));
     }
 
     @Test
@@ -97,25 +96,6 @@ class PyrisCallbackTokenServiceTest {
         assertThat(service.validity(PyrisJobType.CHAT)).isEqualTo(Duration.ofHours(6));
         assertThat(new PyrisCallbackTokenService(tokenProvider, 2, 5 * 3600).validity(PyrisJobType.LECTURE_INGESTION)).as("the longer of both limits counts")
                 .isEqualTo(Duration.ofHours(6));
-    }
-
-    @Test
-    void tokenCarriesExactlyTheExpiryHandedOutBeforeSigning() throws InterruptedException {
-        var handedOut = new AtomicReference<Instant>();
-
-        String token = service.issue(new GlobalSearchAnswerJob(RUN_ID, "student"), expiry -> {
-            handedOut.set(expiry);
-            try {
-                // A pause between fixing the times and signing must not move the expiry the token carries.
-                Thread.sleep(1100);
-            }
-            catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        });
-
-        Date expiration = Jwts.parser().verifyWith(callbackKey).build().parseSignedClaims(token).getPayload().getExpiration();
-        assertThat(expiration.toInstant()).isEqualTo(handedOut.get());
     }
 
     @Test
@@ -169,6 +149,12 @@ class PyrisCallbackTokenServiceTest {
         assertThat(service.verify(validClaims().claim(PyrisCallbackTokenService.JOB_TYPE_CLAIM, null).signWith(callbackKey, Jwts.SIG.HS512).compact())).isEmpty();
         assertThat(service.verify(validClaims().claim(PyrisCallbackTokenService.JOB_TYPE_CLAIM, "admin").signWith(callbackKey, Jwts.SIG.HS512).compact())).isEmpty();
         assertThat(service.verify(validClaims().expiration(null).signWith(callbackKey, Jwts.SIG.HS512).compact())).isEmpty();
+    }
+
+    @Test
+    void rejectsAMissingIssueTimeOrAMalformedInvocation() {
+        assertThat(service.verify(validClaims().issuedAt(null).signWith(callbackKey, Jwts.SIG.HS512).compact())).isEmpty();
+        assertThat(service.verify(validClaims().claim(PyrisCallbackTokenService.INVOCATION_CLAIM, 42).signWith(callbackKey, Jwts.SIG.HS512).compact())).isEmpty();
     }
 
     @Test

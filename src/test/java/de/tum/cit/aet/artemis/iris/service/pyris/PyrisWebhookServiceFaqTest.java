@@ -50,7 +50,7 @@ class PyrisWebhookServiceFaqTest {
         assertThat(payload.getValue().settings().variant()).isEqualTo("default");
         assertThat(payload.getValue().settings().runId()).isEqualTo("job-token");
         assertThat(tokenService.verify(payload.getValue().settings().authenticationToken())).as("the token is a callback token for this FAQ run")
-                .contains(new PyrisCallbackTokenService.VerifiedCallback("job-token", PyrisJobType.FAQ_INGESTION));
+                .contains(new PyrisCallbackTokenService.VerifiedCallback("job-token", PyrisJobType.FAQ_INGESTION, null));
         assertThat(payload.getValue().pyrisFaqWebhookDTO().contentFingerprint()).isEqualTo(faq.computeContentFingerprint());
     }
 }
