@@ -31,8 +31,10 @@ class AgentSystemPromptTest {
     void singleLoopUsesGradleLayoutAndStableGradedTestNames(Mode mode) {
         String prompt = prompts.build(input(false), mode);
 
-        assertThat(prompt).contains("tests/test/<package path>", "tests/build.gradle", "DisplayNameGenerator.Simple.class", "@Policy(value = \"SecurityPolicy.yaml\")",
-                "theFollowingClassesAreTestClasses", "SECURITY BOUNDARY", "./gradlew", "Design an observable learner entry point").doesNotContain("Maven", "mvn ");
+        assertThat(prompt)
+                .contains("tests/test/<package path>", "tests/build.gradle", "DisplayNameGenerator.Simple.class", "@Policy(value = \"SecurityPolicy.yaml\")",
+                        "theFollowingClassesAreTestClasses", "SECURITY BOUNDARY", "./gradlew", "Design an observable learner entry point", "Java 25", "JUnit Jupiter")
+                .doesNotContain("Maven", "mvn ", "For an existing Ares 1 harness");
         if (mode == Mode.ADAPT) {
             assertThat(prompt).contains("Edit only exercise-specific test sources required by the feedback; preserve all others.");
         }

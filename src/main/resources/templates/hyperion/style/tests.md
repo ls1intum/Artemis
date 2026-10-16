@@ -55,7 +55,7 @@ tell a student what rule failed and why; the message is part of the pedagogy.
 
 ## Harness conventions (Java/Ares)
 
-For the current Ares 2 harness, use `org.junit.jupiter.api.Test`, `de.tum.cit.ase.ares.api.jupiter.Public`,
+Use Java 25 and the current Ares 2 harness. Use `org.junit.jupiter.api.Test`, `de.tum.cit.ase.ares.api.jupiter.Public`,
 `de.tum.cit.ase.ares.api.Policy`, and `de.tum.cit.ase.ares.api.StrictTimeout`. Keep an explicit
 `@Policy(value = "SecurityPolicy.yaml")` on every test class. Update only the policy's instructor-test
 class list to match the test source files; never change its supervised package or resource permissions.
@@ -68,7 +68,6 @@ Reflection belongs only in instructor tests. Never import JUnit or Ares into sol
 reflective lookup there to evade references to absent student-created classes. Given starter code must compile
 without those classes; learner-owned methods can remain TODO bodies.
 
-For an existing Ares 1 harness, keep the seeded path annotations and imports instead of migrating the harness.
 Use JUnit `DisplayNameGeneration` with `DisplayNameGenerator.Simple.class` so reports retain method names.
 Use these supported imports and helper signatures. For a compiler diagnostic, inspect the named generated source,
 not dependency internals. The sandbox tools do not permit dependency-cache or JAR inspection.

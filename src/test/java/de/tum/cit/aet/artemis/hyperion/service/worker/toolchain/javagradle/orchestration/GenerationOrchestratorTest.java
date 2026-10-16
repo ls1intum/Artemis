@@ -17,10 +17,13 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +44,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -102,6 +106,8 @@ class GenerationOrchestratorTest {
 
     private GenerationInput exercise;
 
+    private Map<String, String> testsHarness;
+
     private static final WorkspaceSnapshot SEED = new WorkspaceSnapshot(List.of());
 
     private static final String JOB_ID = "job-1";
@@ -109,7 +115,11 @@ class GenerationOrchestratorTest {
     private static final String SESSION_ID = "session-abc";
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
+        testsHarness = new HashMap<>();
+        for (String path : List.of("build.gradle", "gradle/AresReservedPackages.gradle", "SecurityPolicy.yaml")) {
+            testsHarness.put(path, new ClassPathResource("templates/java/test/gradle/projectTemplate/" + path).getContentAsString(StandardCharsets.UTF_8));
+        }
         sandbox = mock(InteractiveSandbox.class);
         workspace = mock(GenerationWorkspace.class);
         agentLoopRunner = mock(AgentLoopRunner.class);
@@ -128,7 +138,7 @@ class GenerationOrchestratorTest {
                 : new GenerationWorkspace.RepositoryExtraction(Map.of(), false));
         when(workspace.extractProblemStatement(any(), anyString())).thenReturn("PROBLEM STATEMENT");
         when(workspace.seedWorkspace(any(), anyString(), any(), any(), any(), anyBoolean()))
-                .thenReturn(new GenerationWorkspace.WorkspaceSeed(Map.of(), Map.of(), Map.of(), Map.of()));
+                .thenReturn(new GenerationWorkspace.WorkspaceSeed(testsHarness, Map.of(), Map.of(), Map.of()));
         // Fixtures below explicitly control whether an existing statement is authoritative.
         when(systemPromptService.isAuthoritativeProblemStatement(any())).thenAnswer(invocation -> {
             String statement = ((GenerationInput) invocation.getArgument(0)).problemStatement();
@@ -190,7 +200,7 @@ class GenerationOrchestratorTest {
     /** Without a non-empty TEMPLATE baseline, "could not be read" and "legitimately produced nothing" are the same empty map and the extraction-failed guard is unobservable. */
     private void seedNonEmptyTemplateBaseline() {
         when(workspace.seedWorkspace(any(), anyString(), any(), any(), any(), anyBoolean()))
-                .thenReturn(new GenerationWorkspace.WorkspaceSeed(Map.of(), Map.of(), Map.of(RepositoryRole.TEMPLATE, Map.of("src/Given.java", "class Given {}")), Map.of()));
+                .thenReturn(new GenerationWorkspace.WorkspaceSeed(testsHarness, Map.of(), Map.of(RepositoryRole.TEMPLATE, Map.of("src/Given.java", "class Given {}")), Map.of()));
     }
 
     private void makeSolutionChangeOnEachExtraction() {
@@ -236,6 +246,41 @@ class GenerationOrchestratorTest {
         verify(agentLoopRunner, never()).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
         verify(verifier, never()).verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class));
         verify(sandbox).destroySession(SESSION_ID);
+    }
+
+    @ParameterizedTest
+    @MethodSource("unsupportedHarnesses")
+    void unsupportedHarnessStopsBeforeReadinessOrAuthoring(Mode mode, String dependency) {
+        service = newService(true);
+        Map<String, String> unsupportedHarness = new HashMap<>(testsHarness);
+        if (dependency.isEmpty()) {
+            unsupportedHarness.remove("build.gradle");
+        }
+        else {
+            unsupportedHarness.put("build.gradle", "dependencies {\n    testImplementation '" + dependency + "'\n}\napply from: 'gradle/AresReservedPackages.gradle'\n");
+        }
+        when(workspace.seedWorkspace(any(), anyString(), any(), any(), any(), anyBoolean()))
+                .thenReturn(new GenerationWorkspace.WorkspaceSeed(unsupportedHarness, Map.of(), Map.of(), Map.of()));
+
+        GenerationOutcome outcome = service.generate(exercise, SEED, "Build an exercise.", JOB_ID, mode, () -> false, null, null, null, null, null, _ -> {
+        }, _ -> {
+        });
+
+        assertThat(outcome.terminationReason()).isEqualTo(TerminationReason.ENVIRONMENT_UNAVAILABLE);
+        assertThat(outcome.loopResult().status()).isEqualTo(AgentLoopResult.Status.ERROR);
+        assertThat(outcome.errorMessage()).contains("Ares 2", "Migrate the exercise harness manually", "does not change build dependencies");
+        assertThat(outcome.isMechanicallyVerified()).isFalse();
+        verify(workspace, never()).stageBuildReadinessFixture(any(), anyString(), any());
+        verify(verifier, never()).checkBuildEnvironment(any(), anyString(), any());
+        verify(agentLoopRunner, never()).runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any());
+        verifyNoInteractions(stagedGenerationRunner);
+        verify(systemPromptService, never()).build(any(), any());
+        verify(sandbox).destroySession(SESSION_ID);
+    }
+
+    private static Stream<Arguments> unsupportedHarnesses() {
+        return Stream.of(Mode.GENERATE, Mode.ADAPT).flatMap(
+                mode -> Stream.of("de.tum.in.ase:artemis-java-test-sandbox:1.15.0", "org.junit.jupiter:junit-jupiter:6.1.3", "").map(dependency -> Arguments.of(mode, dependency)));
     }
 
     @Test
@@ -664,7 +709,7 @@ class GenerationOrchestratorTest {
         when(agentLoopRunner.runSession(anyString(), any(), anyString(), any(), anyInt(), any(), any(), any())).thenReturn(loopSession(completed()));
         when(verifier.verify(any(), anyString(), any(), any(VerificationRequest.class), any(Runnable.class))).thenReturn(accepted());
         when(workspace.seedWorkspace(any(), anyString(), any(), any(), any(), anyBoolean()))
-                .thenReturn(new GenerationWorkspace.WorkspaceSeed(Map.of(), Map.of(), Map.of(RepositoryRole.SOLUTION, Map.of("src/Huge.java", "x".repeat(30_000))), Map.of()));
+                .thenReturn(new GenerationWorkspace.WorkspaceSeed(testsHarness, Map.of(), Map.of(RepositoryRole.SOLUTION, Map.of("src/Huge.java", "x".repeat(30_000))), Map.of()));
     }
 
     @Test

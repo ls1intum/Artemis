@@ -140,17 +140,32 @@ class DifferentialVerifierTest {
             + "{\"name\":\"sortsArrayWithDuplicates\",\"seamWeightTier\":3,\"visibility\":\"ALWAYS\"}]}";
 
     private static Map<String, String> harness() {
-        return Map.of("build.gradle", aresGradle());
+        return withHarness(Map.of());
     }
 
     private static Map<String, String> withHarness(Map<String, String> files) {
-        Map<String, String> result = new LinkedHashMap<>(harness());
+        Map<String, String> result = new LinkedHashMap<>();
+        result.put("build.gradle", aresGradle());
+        result.put("gradle/AresReservedPackages.gradle", aresResource("gradle/AresReservedPackages.gradle"));
         result.putAll(files);
+        if (!files.containsKey("SecurityPolicy.yaml")) {
+            String classes = files.keySet().stream().filter(path -> path.endsWith(".java"))
+                    .filter(path -> path.startsWith("test/") || path.startsWith("behavior/test/") || path.startsWith("structural/test/"))
+                    .map(path -> path.substring(path.indexOf("test/") + 5, path.length() - 5).replace('/', '.')).sorted().map(name -> "    - \"" + name + "\"\n")
+                    .collect(Collectors.joining());
+            String policy = aresResource("SecurityPolicy.yaml").replace("${packageName}", "de.test");
+            result.put("SecurityPolicy.yaml", policy.replaceAll("(?m)  theFollowingClassesAreTestClasses:\\n(?:    - [^\\n]*\\n)*",
+                    java.util.regex.Matcher.quoteReplacement("  theFollowingClassesAreTestClasses:\n" + classes)));
+        }
         return result;
     }
 
     private static String aresGradle() {
-        try (var stream = new GenerationResources().getResource(java.nio.file.Path.of("hyperion/legacy-ares1-build.gradle")).getInputStream()) {
+        return aresResource("build.gradle");
+    }
+
+    private static String aresResource(String path) {
+        try (var stream = new GenerationResources().getResource(java.nio.file.Path.of("templates/java/test/gradle/projectTemplate", path)).getInputStream()) {
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         }
         catch (IOException exception) {
@@ -699,7 +714,7 @@ class DifferentialVerifierTest {
                 new VerificationRequest(producedTests, producedTests, Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of()), NO_RESTORE);
 
         assertThat(result.mechanicallyVerified()).isFalse();
-        assertThat(result.reasons()).anyMatch(r -> r.contains("artemis-java-test-sandbox"));
+        assertThat(result.reasons()).anyMatch(r -> r.contains("requires the current Ares 2 dependency"));
         assertThat(result.reasons()).anyMatch(r -> r.contains("@StrictTimeout"));
     }
 
@@ -717,17 +732,16 @@ class DifferentialVerifierTest {
         String generatedTest = """
                 package de.test;
                 import org.junit.jupiter.api.Test;
-                import de.tum.in.test.api.BlacklistPath;
-                import de.tum.in.test.api.StrictTimeout;
-                import de.tum.in.test.api.WhitelistPath;
-                import de.tum.in.test.api.jupiter.Public;
-                @Public @WhitelistPath("build") @BlacklistPath("build/classes/java/test")
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+                @Public @Policy(value = "SecurityPolicy.yaml")
                 class GeneratedTest {
                     @Test @StrictTimeout(1) void adaptedBehaviour() {}
                 }
                 """;
-        Map<String, String> seedTests = Map.of("build.gradle", aresGradle(), "test/de/test/LegacyTest.java", legacyTest);
-        Map<String, String> producedTests = Map.of("build.gradle", aresGradle(), "test/de/test/LegacyTest.java", legacyTest, "test/de/test/GeneratedTest.java", generatedTest);
+        Map<String, String> seedTests = withHarness(Map.of("test/de/test/LegacyTest.java", legacyTest));
+        Map<String, String> producedTests = withHarness(Map.of("test/de/test/LegacyTest.java", legacyTest, "test/de/test/GeneratedTest.java", generatedTest));
         VerificationRequest request = new VerificationRequest(seedTests, Map.of(), Map.of(), producedTests, Map.of(), Map.of(), Set.of(), SeededStructuralTests.EMPTY, Set.of(),
                 PROBLEM_STATEMENT_WITH_TASK, true);
 
@@ -746,23 +760,22 @@ class DifferentialVerifierTest {
         String test = """
                 package de.test;
                 import org.junit.jupiter.api.Test;
-                import de.tum.in.test.api.BlacklistPath;
-                import de.tum.in.test.api.StrictTimeout;
-                import de.tum.in.test.api.WhitelistPath;
-                import de.tum.in.test.api.jupiter.Public;
-                @Public @WhitelistPath("build") @BlacklistPath("build/classes/java/test")
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+                @Public @Policy(value = "SecurityPolicy.yaml")
                 class SortTest {
                     @Test @StrictTimeout(1) void sortsUnsortedArray() {}
                     @Test @StrictTimeout(1) void sortsArrayWithDuplicates() {}
                 }
                 """;
-        Map<String, String> tests = Map.of("build.gradle", pom, "test/de/test/SortTest.java", test, "test/de/test/FakeAres.java",
-                "package de.tum.in.test.api; public @interface Public {}");
+        Map<String, String> tests = withHarness(
+                Map.of("build.gradle", pom, "test/de/test/SortTest.java", test, "test/de/test/FakeAres.java", "package de.tum.cit.ase.ares.api; public @interface Public {}"));
         Map<String, String> template = Map.of("src/de/test/Exercise.java", "package de.test; class Exercise {}");
         Map<String, String> solution = Map.of("src/de/test/Exercise.java", "package de.test; class Exercise {}");
 
         VerificationResult result = newVerifier().verify(new ScriptedSandbox(result(2, 0, 0, 0), result(2, 2, 0, 1), PROBLEM_STATEMENT_WITH_TASK), "s", exercise,
-                new VerificationRequest(Map.of("build.gradle", pom), tests, template, solution, Set.of(), SeededStructuralTests.EMPTY, Set.of()), NO_RESTORE);
+                new VerificationRequest(harness(), tests, template, solution, Set.of(), SeededStructuralTests.EMPTY, Set.of()), NO_RESTORE);
 
         assertThat(result.mechanicallyVerified()).isFalse();
         assertThat(result.reasons()).anyMatch(reason -> reason.contains("canonical source roots") && reason.contains("FakeAres.java"));
@@ -1350,18 +1363,17 @@ class DifferentialVerifierTest {
             String test = """
                     package de.test;
                     import org.junit.jupiter.api.Test;
-                    import de.tum.in.test.api.BlacklistPath;
-                    import de.tum.in.test.api.StrictTimeout;
-                    import de.tum.in.test.api.WhitelistPath;
-                    import de.tum.in.test.api.jupiter.Public;
-                    @Public @WhitelistPath("build") @BlacklistPath("build/classes/java/test")
+                    import de.tum.cit.ase.ares.api.Policy;
+                    import de.tum.cit.ase.ares.api.StrictTimeout;
+                    import de.tum.cit.ase.ares.api.jupiter.Public;
+                    @Public @Policy(value = "SecurityPolicy.yaml")
                     class SpellTest {
                         @Test @StrictTimeout(1) void sortsUnsortedArray() {}
                         @Test @StrictTimeout(1) void sortsArrayWithDuplicates() {}
                     }
                     """;
             Map<String, String> solutionFiles = Map.of("src/de/test/Mage.java", mage, "src/de/test/FireSpell.java", "package de.test; public class FireSpell {}");
-            Map<String, String> testsFiles = Map.of("build.gradle", aresGradle(), "test/de/test/SpellTest.java", test);
+            Map<String, String> testsFiles = withHarness(Map.of("test/de/test/SpellTest.java", test));
             List<String> names = List.of(DEFAULT_BOUND_NAMES);
             GenerationInput javaExercise = input();
             javaExercise = new GenerationInput(javaExercise.id(), "de.test", null, false, Set.of());
@@ -1536,8 +1548,8 @@ class DifferentialVerifierTest {
             return Stream.of(
                     Arguments.of("a repository that could not be extracted disables the integrity gates, so the candidate cannot be trusted", Map.<String, String>of(),
                             Map.<String, String>of(), Set.of("template"), PROBLEM_STATEMENT_WITH_TASK, null, "could not be safely extracted"),
-                    Arguments.of("a graded test drawing on unseeded randomness scores the same submission differently on re-run", Map.of("test/de/test/SortTest.java",
-                            "package de.test; import de.tum.in.test.api.*; @Public @Strict @WhitelistPath(\"build\") @BlacklistPath(\"build/classes/java/test\") class SortTest { void sorts() { int pivot = new Random().nextInt(); } }"),
+                    Arguments.of("a graded test drawing on unseeded randomness scores the same submission differently on re-run",
+                            Map.of("test/de/test/SortTest.java", "package de.test; class SortTest { void sorts() { int pivot = new Random().nextInt(); } }"),
                             Map.<String, String>of(), Set.<String>of(), PROBLEM_STATEMENT_WITH_TASK, null, "unseeded randomness"),
                     Arguments.of("a template stub that walks the stack fails only the bound test and behaves implemented for every other caller", Map.<String, String>of(),
                             Map.of("src/de/test/Sorter.java", "package de.test; public class Sorter { void sort() { StackWalker.getInstance().walk(frames -> null); } }"),

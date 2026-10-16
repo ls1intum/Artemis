@@ -15,6 +15,34 @@ import org.junit.jupiter.params.provider.ValueSource;
  */
 class JavaSourceInspectorTest {
 
+    @Test
+    void javaTestAnnotationSummary_rejectsLegacyAresAnnotations() {
+        String source = """
+                @de.tum.in.test.api.jupiter.Public
+                @de.tum.in.test.api.WhitelistPath("build")
+                @de.tum.in.test.api.BlacklistPath("build/classes/java/test")
+                class LegacyTest {
+                    @org.junit.jupiter.api.Test @de.tum.in.test.api.StrictTimeout(1)
+                    void runs() {}
+                }
+                """;
+
+        var summary = JavaSourceInspector.javaTestAnnotationSummary(source);
+
+        assertThat(summary.hasTestMethods()).isTrue();
+        assertThat(summary.classWithMissingAresAnnotations()).isTrue();
+        assertThat(summary.testMethodWithoutStrictTimeout()).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "@Policy", "@Policy(activated = false)", "@Policy(value = \"other.yaml\")" })
+    void javaTestAnnotationSummary_rejectsImplicitDisabledOrAlternatePolicies(String policy) {
+        String source = "import de.tum.cit.ase.ares.api.Policy; @de.tum.cit.ase.ares.api.jupiter.Public " + policy
+                + " class TestCase { @org.junit.jupiter.api.Test @de.tum.cit.ase.ares.api.StrictTimeout(1) void runs() {} }";
+
+        assertThat(JavaSourceInspector.javaTestAnnotationSummary(source).unsupportedAnnotationSyntax()).isTrue();
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "\n", "\r", "\r\n" })
     void stripJavaComments_preservesJavaLineTerminators(String newline) {
@@ -69,15 +97,13 @@ class JavaSourceInspectorTest {
     void javaTestAnnotationSummary_readsAnAnnotationWhoseArgumentListSpansLines() {
         // Line-at-a-time reading would see "@StrictTimeout(" with no argument and reject a valid bound.
         String source = """
-                import de.tum.in.test.api.BlacklistPath;
-                import de.tum.in.test.api.StrictTimeout;
-                import de.tum.in.test.api.WhitelistPath;
-                import de.tum.in.test.api.jupiter.Public;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
                 import org.junit.jupiter.api.Test;
 
                 @Public
-                @WhitelistPath("build")
-                @BlacklistPath("build/classes/java/test")
+                @Policy(value = "SecurityPolicy.yaml")
                 class StackTest {
 
                     @StrictTimeout(
@@ -99,15 +125,13 @@ class JavaSourceInspectorTest {
     void javaTestAnnotationSummary_attributesEachMethodToTheClassItIsDeclaredIn() {
         // Two top-level classes in one file: the trusted annotations on the first must not vouch for a test method in the second.
         String source = """
-                import de.tum.in.test.api.BlacklistPath;
-                import de.tum.in.test.api.StrictTimeout;
-                import de.tum.in.test.api.WhitelistPath;
-                import de.tum.in.test.api.jupiter.Public;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
                 import org.junit.jupiter.api.Test;
 
                 @Public
-                @WhitelistPath("build")
-                @BlacklistPath("build/classes/java/test")
+                @Policy(value = "SecurityPolicy.yaml")
                 class GuardedTest {
 
                     @StrictTimeout(1)
@@ -135,10 +159,9 @@ class JavaSourceInspectorTest {
     @Test
     void unannotatedClassCannotBorrowRestrictionsOrTimeoutFromEarlierClass() {
         String source = """
-                @de.tum.in.test.api.jupiter.Public
-                @de.tum.in.test.api.WhitelistPath("build")
-                @de.tum.in.test.api.BlacklistPath("build/classes/java/test")
-                @de.tum.in.test.api.StrictTimeout(1)
+                @de.tum.cit.ase.ares.api.jupiter.Public
+                @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+                @de.tum.cit.ase.ares.api.StrictTimeout(1)
                 class Decoy {}
                 class Actual {
                     @org.junit.jupiter.api.Test
@@ -155,10 +178,9 @@ class JavaSourceInspectorTest {
     void completedNestedClassCannotVouchForOuterMethods() {
         String source = """
                 class Outer {
-                    @de.tum.in.test.api.jupiter.Public
-                    @de.tum.in.test.api.WhitelistPath("build")
-                    @de.tum.in.test.api.BlacklistPath("build/classes/java/test")
-                    @de.tum.in.test.api.StrictTimeout(1)
+                    @de.tum.cit.ase.ares.api.jupiter.Public
+                    @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+                    @de.tum.cit.ase.ares.api.StrictTimeout(1)
                     class Decoy {
                         String misleading = "{{{{";
                     }
@@ -218,7 +240,7 @@ class JavaSourceInspectorTest {
 
     @Test
     void encodedCommentsCannotSupplySafetyAnnotations() {
-        String source = "\\" + "u002f" + "\\" + "u002a @de.tum.in.test.api.jupiter.Public @de.tum.in.test.api.StrictTimeout(1) */ "
+        String source = "\\" + "u002f" + "\\" + "u002a @de.tum.cit.ase.ares.api.jupiter.Public @de.tum.cit.ase.ares.api.StrictTimeout(1) */ "
                 + "class TestCase { @org.junit.jupiter.api.Test void runs() {} }";
         var summary = JavaSourceInspector.javaTestAnnotationSummary(source);
         assertThat(summary.unsupportedAnnotationSyntax()).isFalse();
@@ -242,9 +264,8 @@ class JavaSourceInspectorTest {
     @Test
     void inlineTrustedAnnotationsAreAcceptedWithoutDependingOnLineBreaks() {
         String source = """
-                @de.tum.in.test.api.jupiter.Public @de.tum.in.test.api.WhitelistPath("build")
-                @de.tum.in.test.api.BlacklistPath("build/classes/java/test") class TestCase {
-                  @org.junit.jupiter.api.Test @de.tum.in.test.api.StrictTimeout(1) void checks() {}
+                @de.tum.cit.ase.ares.api.jupiter.Public @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml") class TestCase {
+                  @org.junit.jupiter.api.Test @de.tum.cit.ase.ares.api.StrictTimeout(1) void checks() {}
                 }
                 """;
         var summary = JavaSourceInspector.javaTestAnnotationSummary(source);
@@ -256,10 +277,9 @@ class JavaSourceInspectorTest {
     @Test
     void annotationTextBlockCannotSupplyClassRestrictionsOrTimeout() {
         String source = "@SuppressWarnings(" + "\"\"\"\n" + """
-                @de.tum.in.test.api.jupiter.Public
-                @de.tum.in.test.api.WhitelistPath("build")
-                @de.tum.in.test.api.BlacklistPath("build/classes/java/test")
-                @de.tum.in.test.api.StrictTimeout(1)
+                @de.tum.cit.ase.ares.api.jupiter.Public
+                @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+                @de.tum.cit.ase.ares.api.StrictTimeout(1)
                 """ + "\"\"\")\n" + """
                 class TestCase {
                     @org.junit.jupiter.api.Test
