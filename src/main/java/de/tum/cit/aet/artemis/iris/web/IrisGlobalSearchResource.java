@@ -205,18 +205,18 @@ public class IrisGlobalSearchResource {
         userAiPreferenceService.hasOptedIntoLlmUsageElseThrow(user.getId());
         var selectedLlmUsage = userAiPreferenceService.findDecision(user.getId());
         var accessContext = irisAccessContextService.resolveAccessContext(user);
-        // Resolved BEFORE the job token is registered: an all-courses-Iris-disabled request is a
+        // Resolved BEFORE the job is registered: an all-courses-Iris-disabled request is a
         // genuine rejection (AccessForbiddenAlertException from lectureSearchScope), not a transient
-        // failure, and must never leave an orphaned job token behind for that case.
+        // failure, and must never leave an orphaned job behind for that case.
         var excludedCourseIds = requestDTO.excludeCourseIds() == null ? List.<Long>of() : requestDTO.excludeCourseIds();
         var scope = lectureSearchScope(requestDTO.courseIds(), excludedCourseIds, accessContext, true);
         // Entity candidates are pre-fetched with the palette's access filtering, because channel
         // membership, exam registrations and role-dependent release rules only exist in the Artemis
         // database; Pyris renders them into cards and reranks them against the lecture content.
-        // Pre-fetched BEFORE the job token is registered, same reasoning as scope above: its strict
+        // Pre-fetched BEFORE the job is registered, same reasoning as scope above: its strict
         // access-filter path can throw synchronously on a stale or inaccessible course ID, and a
         // repository or mapping failure can escape too, none of it a transport-level ambiguity, so
-        // none of it may leave an orphaned token behind either. A genuine Weaviate hiccup is still
+        // none of it may leave an orphaned job behind either. A genuine Weaviate hiccup is still
         // swallowed below rather than failing the whole answer, since the lecture-content-only
         // answer could still succeed.
         // searchesNothing (every requested course excluded) still answers rather than short-circuiting
@@ -232,7 +232,7 @@ public class IrisGlobalSearchResource {
             pyrisJobService.captureGlobalSearchMaterialVersions(principal.getName(), requestDTO.runId().toString(), scope.courseIds());
         }
         // Note: do NOT remove the job on exception here. Transport-level failures are ambiguous —
-        // Pyris may have received the request and already started the pipeline. Removing the token
+        // Pyris may have received the request and already started the pipeline. Removing the job
         // would break WebSocket routing for any callbacks that arrive later.
         // Jobs expire automatically via the Hazelcast TTL (default 5 minutes).
         pyrisConnectorService.executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), selectedLlmUsage, accessContext,

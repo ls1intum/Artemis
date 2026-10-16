@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,25 +44,24 @@ class PyrisJobServiceTest {
         jobMap = mock(DistributedMap.class);
         clientIdMap = mock(DistributedMap.class);
         doAnswer(invocation -> switch ((String) invocation.getArgument(0)) {
-            case "pyris-job-map" -> jobMap;
+            case "pyris-job-map-v2" -> jobMap;
             case "pyris-chat-job-client-id-map" -> clientIdMap;
             default -> throw new AssertionError("Unexpected distributed map: " + invocation.getArgument(0));
         }).when(distributedDataProvider).getExpiringMap(anyString(), any(Duration.class));
 
         materialVersionService = mock(IrisLectureMaterialVersionService.class);
         service = new PyrisJobService(distributedDataProvider, Optional.<LectureUnitProcessingStateRepositoryApi>empty(), mock(IrisProactiveProperties.class),
-                materialVersionService);
-        ReflectionTestUtils.setField(service, "serverUrl", "https://artemis.example");
-        ReflectionTestUtils.setField(service, "instanceId", "node-1");
+                materialVersionService, PyrisCallbackTokenTestUtil.tokenService());
         ReflectionTestUtils.setField(service, "jobTimeout", 300);
     }
 
     @Test
     void addChatJobStoresClientIdWithoutChangingTheDistributedJobShape() {
-        String token = service.addChatJob(1L, 2L, 3L, 4L, "tab-7");
+        String runId = service.addChatJob(1L, 2L, 3L, 4L, "tab-7");
 
-        verify(jobMap).put(token, new ChatJob(token, 1L, 2L, 3L, null, 4L, null));
-        verify(clientIdMap).put(token, "tab-7");
+        assertThat(UUID.fromString(runId).toString()).as("the run id is a plain random UUID").isEqualTo(runId);
+        verify(jobMap).putIfAbsent(runId, new ChatJob(runId, 1L, 2L, 3L, null, 4L, null), Duration.ofSeconds(300));
+        verify(clientIdMap).put(runId, "tab-7");
     }
 
     @Test
@@ -87,7 +87,7 @@ class PyrisJobServiceTest {
     void getAndAuthenticateJobWithoutAuthorizationHeaderThrowsAccessForbidden() {
         var request = new MockHttpServletRequest();
 
-        assertThatThrownBy(() -> service.getAndAuthenticateJobFromHeaderElseThrow(request, ChatJob.class)).isInstanceOf(AccessForbiddenException.class)
+        assertThatThrownBy(() -> service.getAndAuthenticateJobFromHeaderElseThrow(request, "run-1", ChatJob.class)).isInstanceOf(AccessForbiddenException.class)
                 .hasMessage("No valid token provided");
     }
 }

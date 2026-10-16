@@ -8,8 +8,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -20,10 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.util.ArtemisApp;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -251,9 +247,9 @@ class IrisResponseNotificationIntegrationTest extends AbstractIrisChatSessionTes
     }
 
     private void sendStatus(String jobId, String result) throws Exception {
-        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, PyrisRunState.FINISHED, null, null, null, null, null, null), HttpStatus.OK, headers);
+        var callback = pyrisCallbackCredentials(jobId);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + callback.runId() + "/status",
+                new PyrisChatStatusUpdateDTO(result, PyrisRunState.FINISHED, null, null, null, null, null, null), HttpStatus.OK, callback.headers());
     }
 
     private static String messagesUrl(IrisChatSession session) {

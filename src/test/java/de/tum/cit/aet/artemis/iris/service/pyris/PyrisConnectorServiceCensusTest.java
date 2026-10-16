@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
@@ -48,7 +49,8 @@ class PyrisConnectorServiceCensusTest {
     }
 
     private static PyrisConnectorService connectorFor(RestTemplate censusTemplate, String pyrisUrl) {
-        PyrisConnectorService service = new PyrisConnectorService(new RestTemplate(), censusTemplate, JsonObjectMapper.get());
+        PyrisConnectorService service = new PyrisConnectorService(new RestTemplate(), censusTemplate, JsonObjectMapper.get(), mock(PyrisJobService.class),
+                mock(PyrisCallbackTokenService.class));
         ReflectionTestUtils.setField(service, "pyrisUrl", pyrisUrl);
         ReflectionTestUtils.setField(service, "artemisBaseUrl", "https://artemis.test");
         return service;

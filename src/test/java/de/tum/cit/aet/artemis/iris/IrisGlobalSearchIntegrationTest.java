@@ -12,18 +12,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchAnswerWebsocketDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchAskRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.GlobalSearchLectureRequestDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisAccessContextDTO;
@@ -412,6 +410,49 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ask_sendsTheClientRunIdButNeverTheCallbackTokenToTheClient() throws Exception {
+        AtomicReference<PyrisPipelineExecutionSettingsDTO> sentSettings = new AtomicReference<>();
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> sentSettings.set(dto.settings()));
+        var requestDTO = new GlobalSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
+
+        request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
+        var settings = sentSettings.get();
+        sendGlobalSearchAnswerStatus(settings.authenticationToken(), new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null));
+        sendGlobalSearchAnswerStatus(settings.authenticationToken(), new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FINISHED, null, "An answer.", List.of()));
+
+        assertThat(settings.runId()).isEqualTo(requestDTO.runId().toString());
+        assertThat(settings.authenticationToken()).isNotEqualTo(settings.runId());
+        verifyMessageWasSentOverWebsocket(TEST_PREFIX + "student1", "global-search-answer",
+                obj -> obj instanceof IrisGlobalSearchAnswerWebsocketDTO dto && !dto.isThinking() && settings.runId().equals(dto.runId()));
+        assertNoWebsocketPayloadContains(settings.authenticationToken());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ask_withARunIdThatWasAlreadyUsed_shouldReturnConflict() throws Exception {
+        irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> {
+        });
+        var requestDTO = new GlobalSearchAskRequestDTO("What is backpropagation?", 5, UUID.randomUUID());
+        request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.ACCEPTED);
+
+        request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void ask_whenPyrisRejectsTheRequestAndQuotesIt_shouldNotForwardTheQuoteToTheClient() throws Exception {
+        AtomicReference<PyrisGlobalSearchAnswerRequestDTO> sent = new AtomicReference<>();
+        irisRequestMockProvider.mockGlobalSearchIrisAnswerErrorEchoingTheRequest(HttpStatus.UNPROCESSABLE_CONTENT, sent::set);
+        var requestDTO = new GlobalSearchAskRequestDTO("machine learning", 5, UUID.randomUUID());
+
+        var response = request.postWithoutResponseBody("/api/iris/search-answer", requestDTO, HttpStatus.INTERNAL_SERVER_ERROR, null);
+
+        assertThat(sent.get().settings().authenticationToken()).isNotBlank();
+        assertThat(response.getContentAsString()).doesNotContain(sent.get().settings().authenticationToken()).doesNotContain("authenticationToken");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void ask_thinkingWebhook_shouldForwardThinkingToWebSocket() throws Exception {
         AtomicReference<String> jobIdRef = new AtomicReference<>();
         irisRequestMockProvider.mockGlobalSearchIrisAnswer(dto -> jobIdRef.set(dto.settings().authenticationToken()));
@@ -599,7 +640,7 @@ class IrisGlobalSearchIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private void sendGlobalSearchAnswerStatus(String jobId, PyrisGlobalSearchAnswerStatusUpdateDTO statusUpdate) throws Exception {
-        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/global-search/runs/" + jobId + "/status", statusUpdate, HttpStatus.OK, headers);
+        var callback = pyrisCallbackCredentials(jobId);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/global-search/runs/" + callback.runId() + "/status", statusUpdate, HttpStatus.OK, callback.headers());
     }
 }

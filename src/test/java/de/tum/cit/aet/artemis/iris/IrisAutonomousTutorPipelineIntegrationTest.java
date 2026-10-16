@@ -120,7 +120,7 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
         String token = pyrisJobService.addAutonomousTutorJob(post.getId(), course.getId());
 
         var mockRequest = new org.springframework.mock.web.MockHttpServletRequest();
-        mockRequest.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
+        mockRequest.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + pyrisCallbackCredentials(token).token());
 
         var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Polymorphism allows ...", true, 0.9, PyrisRunState.FINISHED, null, List.of());
         var response = pyrisInternalStatusUpdateResource.setAutonomousTutorJobStatus(token, statusUpdate, mockRequest);
@@ -134,7 +134,7 @@ class IrisAutonomousTutorPipelineIntegrationTest extends AbstractIrisIntegration
         String token = pyrisJobService.addAutonomousTutorJob(post.getId(), course.getId());
 
         var mockRequest = new org.springframework.mock.web.MockHttpServletRequest();
-        mockRequest.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
+        mockRequest.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + pyrisCallbackCredentials(token).token());
 
         var statusUpdate = new PyrisAutonomousTutorPipelineStatusUpdateDTO("Encapsulation hides ...", true, 0.9, PyrisRunState.FINISHED, null, List.of());
 

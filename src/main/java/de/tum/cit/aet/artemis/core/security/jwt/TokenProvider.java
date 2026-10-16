@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.security.jwt;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 
 import org.jspecify.annotations.NonNull;
@@ -101,6 +103,24 @@ public class TokenProvider {
         this.key = Keys.hmacShaKeyFor(keyBytes);
         this.tokenValidityInMilliseconds = 1000 * jHipsterProperties.getSecurity().getAuthentication().getJwt().getTokenValidityInSeconds();
         this.tokenValidityInMillisecondsForRememberMe = 1000 * jHipsterProperties.getSecurity().getAuthentication().getJwt().getTokenValidityInSecondsForRememberMe();
+    }
+
+    /**
+     * Derives a signing key for one other purpose from the session key, so tokens of that purpose and session tokens can
+     * never be verified with each other's key. Every node holds the same session key, so every node derives the same key.
+     *
+     * @param purpose a fixed label naming the purpose, for example {@code "artemis:iris:pyris-callback-token:v1"}
+     * @return a 512-bit HMAC key, enough for HS512
+     */
+    public SecretKey deriveSigningKey(String purpose) {
+        try {
+            Mac mac = Mac.getInstance("HmacSHA512");
+            mac.init(key);
+            return Keys.hmacShaKeyFor(mac.doFinal(purpose.getBytes(StandardCharsets.UTF_8)));
+        }
+        catch (GeneralSecurityException e) {
+            throw new IllegalStateException("Could not derive a signing key", e);
+        }
     }
 
     /**

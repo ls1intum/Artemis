@@ -10,22 +10,18 @@ import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -165,9 +161,9 @@ class MemirisIntegrationTest extends AbstractIrisIntegrationTest {
 
     private void sendCourseStatus(String jobId, String result, PyrisRunState runState, List<String> suggestions, List<MemirisMemoryDTO> accessedMemories,
             List<MemirisMemoryDTO> createdMemories) throws Exception {
-        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
-        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
-                new PyrisChatStatusUpdateDTO(result, runState, null, null, suggestions, null, accessedMemories, createdMemories), HttpStatus.OK, headers);
+        var callback = pyrisCallbackCredentials(jobId);
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + callback.runId() + "/status",
+                new PyrisChatStatusUpdateDTO(result, runState, null, null, suggestions, null, accessedMemories, createdMemories), HttpStatus.OK, callback.headers());
     }
 
     @Test

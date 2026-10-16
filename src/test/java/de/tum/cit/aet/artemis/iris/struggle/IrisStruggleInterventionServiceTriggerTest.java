@@ -322,7 +322,7 @@ class IrisStruggleInterventionServiceTriggerTest {
         var result = service.prepareTrigger(EX, user, null, null, null, null, null);
 
         assertThat(result.accepted()).isTrue();
-        assertThat(result.trigger().jobToken()).isEqualTo("tok");
+        assertThat(result.trigger().runId()).isEqualTo("tok");
         verify(authCheckService).checkHasAtLeastRoleForExerciseElseThrow(eq(Role.STUDENT), eq(exercise), eq(user));
     }
 

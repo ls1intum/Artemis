@@ -106,13 +106,21 @@ class WireFormatContractTest {
         String json = "{\"bootId\":\"boot-1\"}";
         var dto = mapper.readValue(json, PyrisWorkerHeartbeatRequestDTO.class);
         assertThat(dto.bootId()).isEqualTo("boot-1");
-        assertThat(dto.activeJobTokens()).isNull();
+        assertThat(dto.reportedRunIds()).isEmpty();
     }
 
     @Test
-    void workerHeartbeatResponseSerializesRevokedTokensCamelCase() throws Exception {
-        String json = mapper.writeValueAsString(new PyrisWorkerHeartbeatResponseDTO(java.util.List.of("tok-a")));
-        assertThat(json).contains("\"revokedJobTokens\":[\"tok-a\"]");
+    void workerHeartbeatRequestPrefersRunIdsAndFallsBackToTheEarlierField() throws Exception {
+        var current = mapper.readValue("{\"bootId\":\"boot-1\",\"activeRunIds\":[\"run-a\"],\"activeJobTokens\":[\"other\"]}", PyrisWorkerHeartbeatRequestDTO.class);
+        assertThat(current.reportedRunIds()).containsExactly("run-a");
+        var earlier = mapper.readValue("{\"bootId\":\"boot-1\",\"activeJobTokens\":[\"run-b\"]}", PyrisWorkerHeartbeatRequestDTO.class);
+        assertThat(earlier.reportedRunIds()).containsExactly("run-b");
+    }
+
+    @Test
+    void workerHeartbeatResponseSerializesRevokedRunIdsUnderBothNames() throws Exception {
+        String json = mapper.writeValueAsString(PyrisWorkerHeartbeatResponseDTO.of(java.util.List.of("run-a")));
+        assertThat(json).contains("\"revokedRunIds\":[\"run-a\"]").contains("\"revokedJobTokens\":[\"run-a\"]");
         assertThat(json).doesNotContain("revoked_job_tokens");
     }
 

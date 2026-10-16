@@ -287,24 +287,25 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
 
-        String token = pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), irisSession.id());
+        String runId = pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), irisSession.id());
+        String token = pyrisCallbackCredentials(runId).token();
 
-        // Manually authenticate the job to verify token registration
+        // Manually authenticate the job to verify its registration
         var mockRequest = new org.springframework.mock.web.MockHttpServletRequest();
         mockRequest.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
-        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(mockRequest, de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob.class);
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(mockRequest, runId, de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob.class);
         assertThat(job).isNotNull();
-        assertThat(job.jobId()).isEqualTo(token);
+        assertThat(job.jobId()).isEqualTo(runId);
         var statusUpdate = new TutorSuggestionStatusUpdateDTO("Test suggestion", "Test result", PyrisRunState.FINISHED, null, null);
         var mockRequestForStatusUpdate = new org.springframework.mock.web.MockHttpServletRequest();
         mockRequestForStatusUpdate.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
-        publicPyrisStatusUpdateResource.setTutorSuggestionJobStatus(token, statusUpdate, mockRequestForStatusUpdate);
+        publicPyrisStatusUpdateResource.setTutorSuggestionJobStatus(runId, statusUpdate, mockRequestForStatusUpdate);
 
         // Remove the job and assert that accessing it throws an exception
         var requestAfterRemoval = new org.springframework.mock.web.MockHttpServletRequest();
         requestAfterRemoval.addHeader(HttpHeaders.AUTHORIZATION, Constants.BEARER_PREFIX + token);
         assertThatThrownBy(
-                () -> pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(requestAfterRemoval, de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob.class))
+                () -> pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(requestAfterRemoval, runId, de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob.class))
                 .isInstanceOf(de.tum.cit.aet.artemis.core.exception.AccessForbiddenException.class).hasMessageContaining("No valid token provided");
 
         // Check if the messages where saved
