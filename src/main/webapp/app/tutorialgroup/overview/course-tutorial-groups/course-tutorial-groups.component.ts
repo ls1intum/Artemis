@@ -21,7 +21,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import { convertTutorialGroupArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { convertTutorialGroupSummaryArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { SidebarView } from 'app/course/shared/sidebar-view.interface';
 
 @Component({
@@ -145,7 +145,7 @@ export class CourseTutorialGroupsComponent implements SidebarView {
     private loadAndSetTutorialGroups(courseId: number) {
         this.tutorialGroupApiService
             .getTutorialGroupsForCourse(courseId)
-            .pipe(map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)))
+            .pipe(map((tutorialGroups) => convertTutorialGroupSummaryArrayDatesFromServer(tutorialGroups)))
             .subscribe({
                 next: (tutorialGroups) => {
                     this.tutorialGroups.set(tutorialGroups);
