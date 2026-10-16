@@ -233,6 +233,10 @@ export class CommunicationService implements OnDestroy {
                     }),
                 )
                 .subscribe((res) => {
+                    // A newer request owns the shared cache, including its messages, total and subscription context.
+                    if (requestId !== this.filteredPostsRequestId) {
+                        return;
+                    }
                     requestCallbacks?.beforeApply();
                     if (!forceUpdate && (PageType.OVERVIEW === this.pageType || PageType.PAGE_SECTION === this.pageType)) {
                         // if infinite scroll enabled, add fetched posts to the end of cachedPosts

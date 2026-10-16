@@ -197,6 +197,52 @@ describe('CommunicationService', () => {
         expect(request).toHaveBeenCalledTimes(2);
     });
 
+    it.each([
+        [PageType.OVERVIEW, false],
+        [PageType.PAGE_SECTION, false],
+        [PageType.OVERVIEW, true],
+        [PageType.PAGE_SECTION, true],
+    ] as const)('discards superseded responses on %s with forceUpdate=%s', (pageType, forceUpdate) => {
+        const subscribe = vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
+        communicationService.setPageType(pageType);
+        const older = new Subject<HttpResponse<Post[]>>();
+        const currentPosts = [{ id: 200, conversation: { id: 2 } }] as Post[];
+        const currentFilter = { courseId: course.id, conversationIds: [2], page: 0 };
+        const request = vi
+            .spyOn(postService, 'getPosts')
+            .mockReturnValueOnce(older)
+            .mockReturnValue(of(new HttpResponse({ body: currentPosts, headers: new HttpHeaders({ 'X-Total-Count': '20' }) })));
+        const olderCallbacks = { beforeApply: vi.fn(), complete: vi.fn() };
+        const currentCallbacks = { beforeApply: vi.fn(), complete: vi.fn() };
+        const publishedPosts = vi.fn();
+        const publishedTotals = vi.fn();
+        const postsSubscription = communicationService.posts.subscribe(publishedPosts);
+        const totalsSubscription = communicationService.totalNumberOfPosts.subscribe(publishedTotals);
+        communicationService.getFilteredPosts({ courseId: course.id, conversationIds: [1], page: 1 }, forceUpdate, undefined, olderCallbacks);
+        communicationService.getFilteredPosts(currentFilter, true, undefined, currentCallbacks);
+        publishedPosts.mockClear();
+        publishedTotals.mockClear();
+        subscribe.mockClear();
+
+        older.next(new HttpResponse({ body: [{ id: 100, conversation: { id: 1 } }] as Post[], headers: new HttpHeaders({ 'X-Total-Count': '100' }) }));
+        older.complete();
+
+        expect(olderCallbacks.beforeApply).not.toHaveBeenCalled();
+        expect(olderCallbacks.complete).toHaveBeenCalledExactlyOnceWith(false);
+        expect(currentCallbacks.beforeApply).toHaveBeenCalledOnce();
+        expect(currentCallbacks.complete).toHaveBeenCalledExactlyOnceWith(true);
+        expect(publishedPosts).not.toHaveBeenCalled();
+        expect(publishedTotals).not.toHaveBeenCalled();
+        expect(subscribe).not.toHaveBeenCalled();
+        // A subsequent cache hit must still publish only the current conversation, without a retry.
+        communicationService.getFilteredPosts(currentFilter, false);
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(publishedPosts).toHaveBeenCalledExactlyOnceWith(currentPosts);
+        expect(publishedTotals).toHaveBeenCalledExactlyOnceWith(20);
+        postsSubscription.unsubscribe();
+        totalsSubscription.unsubscribe();
+    });
+
     it.each([PageType.OVERVIEW, PageType.PAGE_SECTION])('keeps live updates independent of failed-page retries on %s', (pageType) => {
         vi.spyOn(communicationService, 'createSubscriptionFromPostContextFilter').mockImplementation(() => {});
         communicationService.setPageType(pageType);
