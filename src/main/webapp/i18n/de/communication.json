@@ -233,7 +233,7 @@
                 "unlink": "Verlinkung entfernen",
                 "invalidLink": "Gib eine gültige Web-, E-Mail- oder Artemis-URL ein.",
                 "message": "Nachricht",
-                "hint": "Mit @ nach Personen oder mit # nach Kanälen, Aufgaben und Vorlesungen suchen. Die Rücktaste wählt einen Verweis aus; erneutes Drücken löscht ihn.",
+                "hint": "Mit @ nach Personen oder mit # nach Kanälen, Aufgaben und Vorlesungen suchen. Umschalt+Enter fügt eine neue Zeile ein. Die Rücktaste wählt einen Link oder Verweis aus; erneutes Drücken löscht ihn.",
                 "loading": "Suche läuft…",
                 "searchError": "Die Suche konnte nicht geladen werden. Dein Text bleibt erhalten.",
                 "retry": "Erneut versuchen",

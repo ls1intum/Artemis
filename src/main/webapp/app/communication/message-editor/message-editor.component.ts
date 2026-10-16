@@ -163,6 +163,9 @@ export class MessageEditorComponent {
             return;
         }
         const command = event.ctrlKey || event.metaKey;
+        if (event.key.startsWith('Arrow') || ['Home', 'End', 'Escape', 'Tab'].includes(event.key) || (command && event.key.toLowerCase() === 'a')) {
+            this.editor?.clearItemHighlight();
+        }
         if (command && ['z', 'y', 'b', 'i', 'u', 'k'].includes(event.key.toLowerCase())) {
             event.preventDefault();
             event.stopPropagation();
@@ -323,6 +326,10 @@ export class MessageEditorComponent {
         this.dismissSuggestions();
         this.editor?.rememberSelection();
         this.scheduleSuggestions();
+    }
+
+    protected clearItemHighlight(): void {
+        this.editor?.clearItemHighlight();
     }
 
     protected clicked(event: MouseEvent): void {

@@ -233,7 +233,7 @@
                 "unlink": "Remove link",
                 "invalidLink": "Enter a valid web, email or Artemis URL.",
                 "message": "Message",
-                "hint": "Type @ for people or # for channels, exercises and lectures. Backspace selects a reference; press again to delete it.",
+                "hint": "Type @ for people or # for channels, exercises and lectures. Shift+Enter adds a new line. Backspace selects a link or reference; press again to delete it.",
                 "loading": "Searching…",
                 "searchError": "Search could not be loaded. Your text is unchanged.",
                 "retry": "Retry",

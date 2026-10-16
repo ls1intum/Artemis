@@ -40,6 +40,7 @@ export class MessageEditorDom {
     /** Saves the active selection before a toolbar or form takes focus. */
     rememberSelection(): void {
         const range = this.range();
+        this.highlightItem(range);
         this.savedRange = range.cloneRange();
     }
 
@@ -75,11 +76,33 @@ export class MessageEditorDom {
         const selection = this.element.ownerDocument.getSelection();
         selection?.removeAllRanges();
         selection?.addRange(range);
+        this.highlightItem(range);
         this.savedRange = range.cloneRange();
+    }
+
+    /** Removes presentation-only selection state when navigation or pointer input moves the caret. */
+    clearItemHighlight(): void {
+        this.element.querySelector('[data-message-selected]')?.removeAttribute('data-message-selected');
+    }
+
+    private selectedItem(range: Range): HTMLElement | undefined {
+        if (range.startContainer === range.endContainer && range.endOffset === range.startOffset + 1) {
+            const node = range.startContainer.childNodes[range.startOffset];
+            if (this.isItem(node)) {
+                return node;
+            }
+        }
+        return undefined;
+    }
+
+    private highlightItem(range: Range): void {
+        this.clearItemHighlight();
+        this.selectedItem(range)?.setAttribute('data-message-selected', '');
     }
 
     /** Records the pre-edit selection so undo returns to the actual insertion point. */
     beforeInput(): void {
+        this.clearItemHighlight();
         if (this.historyIndex >= 0) {
             this.history[this.historyIndex] = this.snapshot();
         }
@@ -312,19 +335,30 @@ export class MessageEditorDom {
     deleteItem(backward: boolean): boolean {
         const range = this.range();
         if (!range.collapsed) {
-            if (range.startContainer === range.endContainer && range.endOffset === range.startOffset + 1) {
-                const selected = range.startContainer.childNodes[range.startOffset];
-                if (this.isItem(selected)) {
-                    this.transact(() => {
-                        range.deleteContents();
-                        this.select(range);
-                    });
-                    return true;
-                }
+            const selected = this.selectedItem(range);
+            if (selected) {
+                this.transact(() => {
+                    // Consume one separator with the item, retaining surrounding words and other whitespace.
+                    const following = selected.nextSibling;
+                    if (following?.nodeType === Node.TEXT_NODE && /^[ \u00a0]/.test(following.textContent ?? '')) {
+                        range.setEnd(following, 1);
+                    }
+                    range.deleteContents();
+                    this.select(range);
+                });
+                return true;
             }
             return false;
         }
-        const item = this.adjacent(range.startContainer, range.startOffset, backward);
+        let item = this.adjacent(range.startContainer, range.startOffset, backward);
+        if (backward && !this.isItem(item)) {
+            // Completion leaves one space after an item. It should not require a separate deletion press.
+            if (range.startContainer.nodeType === Node.TEXT_NODE && range.startOffset === 1 && /^[ \u00a0]/.test(range.startContainer.textContent ?? '')) {
+                item = this.adjacent(range.startContainer, 0, true);
+            } else if (range.startContainer.nodeType !== Node.TEXT_NODE && item?.nodeType === Node.TEXT_NODE && /^[ \u00a0]$/.test(item.textContent ?? '')) {
+                item = this.adjacent(item, 0, true);
+            }
+        }
         if (!this.isItem(item)) {
             return false;
         }

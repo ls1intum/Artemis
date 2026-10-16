@@ -59,6 +59,7 @@ describe('Message editor editing transactions', () => {
         select(paragraph, paragraph.childNodes.length);
         expect(editor.deleteItem(true)).toBe(true);
         expect(window.getSelection()!.toString()).toBe('@Anna');
+        expect(root.querySelector('[data-message-selected]')?.textContent).toBe('@Anna');
         expect(changed).not.toHaveBeenCalled();
         expect(editor.deleteItem(true)).toBe(true);
         expect(changed).toHaveBeenLastCalledWith('Hello');
@@ -73,6 +74,45 @@ describe('Message editor editing transactions', () => {
         expect(window.getSelection()!.toString()).toBe('Guide');
         editor.deleteItem(false);
         expect(changed).toHaveBeenLastCalledWith('after');
+    });
+
+    it('selects an inserted reference on the first Backspace across its completion space, then removes it on the second', () => {
+        editor.load('Before ');
+        select(root.querySelector('p')!.firstChild!, 6);
+        editor.insertMarkdown('[user]Anna(anna)[/user] ');
+        changed.mockClear();
+        expect(editor.deleteItem(true)).toBe(true);
+        expect(changed).not.toHaveBeenCalled();
+        expect(window.getSelection()!.toString()).toBe('@Anna');
+        expect(root.querySelector('[data-message-selected]')?.textContent).toBe('@Anna');
+        expect(editor.deleteItem(true)).toBe(true);
+        expect(root.textContent).toBe('Before');
+        expect(root.querySelector('[data-message-reference]')).toBeNull();
+        editor.undo();
+        expect(root.querySelector('[data-message-reference]')?.textContent).toBe('@Anna');
+    });
+
+    it('preserves text on both sides when deleting a link from after its separating space', () => {
+        editor.load('Read [Guide](https://example.org) next');
+        const paragraph = root.querySelector('p')!;
+        select(paragraph.lastChild!, 1);
+        expect(editor.deleteItem(true)).toBe(true);
+        expect(window.getSelection()!.toString()).toBe('Guide');
+        expect(root.querySelector('[data-message-selected]')?.tagName).toBe('A');
+        expect(editor.deleteItem(true)).toBe(true);
+        expect(root.textContent).toBe('Read next');
+        expect(changed).toHaveBeenLastCalledWith('Read next');
+    });
+
+    it('clears the item highlight when the caret moves away', () => {
+        editor.load('Read [Guide](https://example.org)');
+        const paragraph = root.querySelector('p')!;
+        select(paragraph, paragraph.childNodes.length);
+        editor.deleteItem(true);
+        select(paragraph.firstChild!, 2);
+        editor.rememberSelection();
+        expect(root.querySelector('[data-message-selected]')).toBeNull();
+        expect(editor.deleteItem(true)).toBe(false);
     });
 
     it('edits a link target without exposing Markdown, and can unlink while preserving its label', () => {
