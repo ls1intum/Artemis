@@ -699,6 +699,53 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
+    void persist_emptyVerifiedTemplateRemovesOldFiles() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(repositoryService.getFiles(repository)).thenReturn(Map.of("src/Old.java", FileType.FILE, "src/old.class", FileType.FILE), Map.of(), Map.of());
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        GenerationOutcome outcome = outcomeWith(Map.of(), Map.of("Solution.java", "solution"), Map.of("Test.java", "test"), "");
+        when(outcome.seedRepositoryHeads()).thenReturn(Map.of(RepositoryType.TEMPLATE, "pre-template"));
+
+        GenerationPersistenceService.PersistResult result = service.persist(exercise, user, outcome);
+
+        verify(repositoryService).deleteFile(repository, "src/Old.java");
+        verify(repositoryService).deleteFile(repository, "src/old.class");
+        verify(gitService).pushCommitWithLease(repository, "hash-template", "main", "pre-template");
+        assertThat(result.postPersistHeads()).containsEntry(RepositoryType.TEMPLATE, "hash-template");
+    }
+
+    @Test
+    void persist_emptyVerifiedTemplateRejectsChangedHeadBeforeDeletingFiles() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.getLocalHeadHash(repository)).thenReturn("changed-template");
+        GenerationOutcome outcome = outcomeWith(Map.of(), Map.of("Solution.java", "solution"), Map.of("Test.java", "test"), "");
+        when(outcome.seedRepositoryHeads()).thenReturn(Map.of(RepositoryType.TEMPLATE, "pre-template"));
+
+        assertThatThrownBy(() -> service.persist(exercise, user, outcome)).isInstanceOf(GenerationIncompleteException.class)
+                .hasMessageContaining("changed after Hyperion verified");
+
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+    }
+
+    @Test
+    void persist_emptyVerifiedTemplateAlreadyCleanDoesNotCreateCommit() throws Exception {
+        stubSuccessfulCheckoutAndCommits();
+        when(gitService.isWorkingCopyClean(repository)).thenReturn(true, false, false);
+        when(gitService.getLastCommitHash(templateUri, "main")).thenReturn("pre-template");
+        when(gitService.getLastCommitHash(solutionUri, "main")).thenReturn("hash-template");
+        when(gitService.getLastCommitHash(testsUri, "main")).thenReturn("hash-solution");
+        when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
+        GenerationOutcome outcome = outcomeWith(Map.of(), Map.of("Solution.java", "solution"), Map.of("Test.java", "test"), "");
+        when(outcome.seedRepositoryHeads()).thenReturn(Map.of(RepositoryType.TEMPLATE, "pre-template"));
+
+        GenerationPersistenceService.PersistResult result = service.persist(exercise, user, outcome);
+
+        assertThat(result.postPersistHeads()).doesNotContainKey(RepositoryType.TEMPLATE);
+        verify(gitService, never()).pushCommitWithLease(repository, "hash-template", "main", "pre-template");
+        verify(repositoryService, never()).deleteFile(any(), anyString());
+    }
+
+    @Test
     void persist_detectsRepositoryDivergenceBeforeMetadataFinalizationWithoutOverwritingIt() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(gitService.getLastCommitHash(templateUri, "main")).thenReturn("concurrent-instructor-head");
