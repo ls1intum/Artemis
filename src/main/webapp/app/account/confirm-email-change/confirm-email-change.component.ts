@@ -74,6 +74,10 @@ export class ConfirmEmailChangeComponent implements OnInit {
         });
     }
 
+    /**
+     * Shows whether the other address still needs confirmation and refreshes the signed-in identity after completion.
+     * @param response the server result for the explicitly confirmed link
+     */
     private handleConfirmed(response: ConfirmEmailChangeResponse): void {
         if (!response.completed) {
             this.state.set('waitingForOtherAddress');
@@ -86,6 +90,10 @@ export class ConfirmEmailChangeComponent implements OnInit {
         }
     }
 
+    /**
+     * Maps terminal link/address errors to their page states and keeps unexpected failures retryable.
+     * @param error the failed confirmation response
+     */
     private handleError(error: HttpErrorResponse): void {
         const errorKey = error.error?.errorKey;
         if (error.status === 400 && errorKey === 'invalidEmailChangeKey') {

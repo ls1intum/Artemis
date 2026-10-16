@@ -233,11 +233,27 @@ public class EmailChangeService {
         return new EmailChangeConfirmationResultDTO(true, address);
     }
 
+    /**
+     * Reloads the pending request and requires it to still own the supplied confirmation key.
+     * This check prevents a cancelled or replaced request from being confirmed through an older snapshot.
+     *
+     * @param userId the account whose pending request is checked
+     * @param keyId  the confirmation key that must still belong to that request
+     * @return the current pending request
+     * @throws BadRequestAlertException if the request no longer owns the key
+     */
     private PendingEmailChange pendingChangeWithKey(long userId, String keyId) {
         return userRecoveryKeyService.findPendingEmailChange(userId).filter(pending -> keyId.equals(pending.getCurrentKeyId()) || keyId.equals(pending.getNewKeyId()))
                 .orElseThrow(EmailChangeService::invalidKey);
     }
 
+    /**
+     * Revalidates the account and destination address, then applies a fully confirmed request with a conditional update.
+     * Both confirmation key ids identify the request at the write boundary; cleanup preserves any newer request.
+     *
+     * @param userId the account whose address is changed
+     * @param change the fully confirmed request just reloaded from persistence
+     */
     private void applyChange(long userId, PendingEmailChange change) {
         User user = userRepository.findById(userId).filter(account -> Boolean.TRUE.equals(account.getActivated()) && !account.isDeleted()).orElse(null);
         if (user == null) {
@@ -273,6 +289,14 @@ public class EmailChangeService {
         accountSecurityEventService.recordEmailChanged(user, previousEmail, previousLangKey);
     }
 
+    /**
+     * Claims the account cooldown, replaces pending confirmation keys and sends fresh links to both addresses.
+     * Only hashes are persisted. An account without a current address starts with that side already confirmed.
+     *
+     * @param user     the account requesting the change
+     * @param newEmail the canonical destination address, validated by the caller
+     * @return the newly stored pending request without confirmation secrets
+     */
     private PendingEmailChangeDTO startRequest(User user, String newEmail) {
         requireNotRequestedTooRecently(user.getId());
         String currentKeyId = RandomUtil.generateResetKeyId();
@@ -295,16 +319,37 @@ public class EmailChangeService {
         return PendingEmailChangeDTO.of(change, VALIDITY);
     }
 
+    /**
+     * Sends the address-specific confirmation template with its own key and the request validity period.
+     *
+     * @param recipient         the current or proposed address receiving this link
+     * @param forCurrentAddress whether this link confirms the existing address
+     * @param newEmail          the proposed account address shown in the message
+     * @param keyId             the public lookup id of this confirmation key
+     * @param keySecret         the unpersisted secret included in the confirmation link
+     */
     private void sendConfirmationMail(MailRecipientDTO recipient, boolean forCurrentAddress, String newEmail, String keyId, String keySecret) {
         String subjectKey = forCurrentAddress ? "email.emailChange.current.title" : "email.emailChange.new.title";
         mailSendingService.buildAndSendAsync(recipient, subjectKey, "mail/emailChangeConfirmationEmail",
                 Map.of("forCurrentAddress", forCurrentAddress, "newEmail", newEmail, "keyId", keyId, "keySecret", keySecret, "validityInHours", VALIDITY.toHours()));
     }
 
+    /**
+     * Reads the pending request only while its validity period remains open; this read does not delete expired rows.
+     *
+     * @param userId the account whose pending request is read
+     * @return the unexpired pending request, if present
+     */
     private Optional<PendingEmailChange> findValidPendingChange(long userId) {
         return userRecoveryKeyService.findPendingEmailChange(userId).filter(change -> !isExpired(change));
     }
 
+    /**
+     * Treats the exact end of the validity period as expired.
+     *
+     * @param change the request whose creation time defines the validity period
+     * @return whether confirmation is no longer allowed
+     */
     private static boolean isExpired(PendingEmailChange change) {
         return !change.getRequestedAt().plus(VALIDITY).isAfter(Instant.now());
     }
@@ -319,6 +364,11 @@ public class EmailChangeService {
         }
     }
 
+    /**
+     * Rejects changes when the instance cannot deliver the confirmation links required to complete them.
+     *
+     * @throws BadRequestAlertException with {@code emailChangeUnavailable} when mail is unavailable
+     */
     private void requireMailConfigured() {
         if (!mailSendingService.isMailConfigured()) {
             throw new BadRequestAlertException("The e-mail address cannot be changed here because this Artemis instance cannot send mail to confirm it", ENTITY_NAME,
@@ -326,12 +376,23 @@ public class EmailChangeService {
         }
     }
 
+    /**
+     * Applies the current configured address restriction, including when a previously requested change is confirmed.
+     *
+     * @param email the canonical address to validate
+     * @throws BadRequestAlertException with {@code emailInvalid} if the address violates the configured pattern
+     */
     private void checkAddressAllowed(String email) {
         if (allowedEmailPattern.isPresent() && !allowedEmailPattern.get().matcher(email).matches()) {
             throw new BadRequestAlertException("The provided email is invalid and does not follow the specified pattern", ENTITY_NAME, "emailInvalid");
         }
     }
 
+    /**
+     * Uses the same public error for unknown, replaced, invalid and expired confirmation keys.
+     *
+     * @return the confirmation-key validation error
+     */
     private static BadRequestAlertException invalidKey() {
         return new BadRequestAlertException("The key to confirm the e-mail change is invalid or has expired", ENTITY_NAME, "invalidEmailChangeKey");
     }

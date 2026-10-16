@@ -249,6 +249,12 @@ public class UserRecoveryKeyService {
         throw new IllegalStateException("The recovery key row of user " + userId + " kept disappearing while it was written");
     }
 
+    /**
+     * Inserts an empty recovery row without merging a stale snapshot over concurrent recovery or confirmation state.
+     * A concurrent insert may win; the caller then performs its column-specific write against that existing row.
+     *
+     * @param userId the account whose shared recovery row must exist
+     */
     private void createRowIfMissing(long userId) {
         if (userRecoveryKeyRepository.existsById(userId)) {
             return;
