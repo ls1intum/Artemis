@@ -108,7 +108,7 @@ export function getRegisteredStudentsResource(courseId: Signal<number | undefine
  * @param tutorialGroupId 
  */
 export function getTitleResource(tutorialGroupId: Signal<number | undefined> | number): HttpResourceRef<string | undefined> {
-    return httpResource<string>(() => {
+    return httpResource.text(() => {
         const tutorialGroupIdValue = typeof tutorialGroupId === 'function' ? tutorialGroupId() : tutorialGroupId;
         if (tutorialGroupIdValue === undefined) {
             return undefined;
