@@ -108,6 +108,54 @@ describe('Formatted message attachment and resource controls', () => {
         expect(component.error()).toBe('position');
     });
 
+    it('keeps slide numbers separate from long names and previews only the hovered slide', async () => {
+        search.mockResolvedValue([
+            {
+                label: 'A very long lecture title › Slides › 3',
+                resourceLabel: 'A very long lecture title › Slides',
+                slideNumber: 3,
+                previewUrl: '/api/core/files/slides/7',
+                kind: 'slide',
+                markdown: '[slide]Slides Slide 3(#7)[/slide]',
+            },
+        ]);
+        (fixture.nativeElement.querySelector('[data-testid="message-slides-button"]') as HTMLButtonElement).click();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="message-slide-preview"]')).toBeNull();
+        const option = document.querySelector('[data-testid="message-resource-option"]') as HTMLElement;
+        expect(option.querySelector('[data-testid="message-slide-number"]')?.textContent).toContain('3');
+        option.dispatchEvent(new MouseEvent('mouseenter'));
+        fixture.detectChanges();
+        const image = document.querySelector('[data-testid="message-slide-preview"] img') as HTMLImageElement;
+        expect(image.getAttribute('src')).toBe('/api/core/files/slides/7');
+        expect(image.alt).toBe('A very long lecture title › Slides › 3');
+        image.dispatchEvent(new Event('error'));
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="message-slide-preview"] img')).toBeNull();
+        expect(document.querySelector('[data-testid="message-slide-preview"]')?.textContent).toContain('artemisApp.communication.formattedEditor.previewUnavailable');
+        option.dispatchEvent(new MouseEvent('mouseleave'));
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="message-slide-preview"]')).toBeNull();
+    });
+
+    it('previews keyboard-selected slides and removes the preview when the picker closes', async () => {
+        search.mockResolvedValue([
+            { label: 'Attachment', kind: 'lecture-unit', markdown: '[lecture-unit]Slides(lecture/slides.pdf)[/lecture-unit]' },
+            { label: 'Slide 2', kind: 'slide', slideNumber: 2, previewUrl: '/api/core/files/slides/8', markdown: '[slide]Slides Slide 2(#8)[/slide]' },
+        ]);
+        (fixture.nativeElement.querySelector('[data-testid="message-slides-button"]') as HTMLButtonElement).click();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const input = document.querySelector('[data-testid="message-resource-search"]')!;
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="message-slide-preview"] img')?.getAttribute('src')).toBe('/api/core/files/slides/8');
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+        expect(document.querySelector('[data-testid="message-slide-preview"]')).toBeNull();
+    });
+
     it('inserts the selected slide at the original caret after the search field takes focus', async () => {
         const emit = vi.spyOn(component.insert, 'emit');
         (fixture.nativeElement.querySelector('[data-testid="message-slides-button"]') as HTMLButtonElement).click();

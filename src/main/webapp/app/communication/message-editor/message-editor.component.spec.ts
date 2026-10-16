@@ -53,6 +53,18 @@ describe('Formatted message composer', () => {
         fixture.destroy();
     });
 
+    it('closes the link popup when the link toolbar button is clicked again', () => {
+        caretAtEnd();
+        const button = fixture.nativeElement.querySelector('[data-testid="message-link-button"]') as HTMLButtonElement;
+        button.click();
+        fixture.detectChanges();
+        expect(component.linkOpen()).toBe(true);
+        button.click();
+        fixture.detectChanges();
+        expect(component.linkOpen()).toBe(false);
+        expect(document.activeElement).toBe(editable);
+    });
+
     it('immediately emits the current message without debounce', () => {
         const emit = vi.spyOn(component.contentChange, 'emit');
         editable.innerHTML = '<p>Hello <strong>world</strong></p>';

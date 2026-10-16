@@ -108,9 +108,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     readonly lectureAttachmentReferenceAction = signal<LectureAttachmentReferenceAction>(undefined!);
     readonly defaultActions = signal<TextEditorAction[]>(undefined!);
     readonly content = signal<string | undefined>(undefined);
-    readonly formattedMode = signal(false);
+    private readonly supportsFormattedContent = signal(true);
+    readonly formattedMode = computed(() => this.supportsFormattedContent() && !!this.effectiveCourseId());
     readonly uploadingFormattedAttachment = signal(false);
-    readonly canUseFormatted = computed(() => canEditMessageVisually(this.content() ?? ''));
     readonly effectiveCourseId = computed(() => this.course()?.id ?? this.communicationService.getCourse()?.id);
     readonly effectiveConversation = computed(() => this.activeConversation() ?? this.communicationService.getCurrentConversation());
     readonly isUpdating = computed(() => this.editType() === PostingEditType.UPDATE);
@@ -238,9 +238,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         if (this.uploadingFormattedAttachment()) {
             this.formattedUploadStateChanged(false);
         }
-        if (!canEditMessageVisually(value ?? '')) {
-            this.formattedMode.set(false);
-        }
+        this.supportsFormattedContent.set(canEditMessageVisually(value ?? ''));
         this.content.set(value ?? '');
     }
 
@@ -265,21 +263,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         this.content.set(newValue);
         this.onChange(newValue);
         this.valueChanged();
-    }
-
-    /** Opts this composer into the exploration after synchronizing the existing editor. */
-    toggleFormattedMode(): void {
-        if (this.uploadingFormattedAttachment()) {
-            return;
-        }
-        if (this.formattedMode()) {
-            this.formattedMode.set(false);
-            return;
-        }
-        this.flushPendingTextChange();
-        if (this.canUseFormatted()) {
-            this.formattedMode.set(true);
-        }
     }
 
     /** Ignores delayed emissions from the hidden Markdown editor while formatted editing owns the value. */

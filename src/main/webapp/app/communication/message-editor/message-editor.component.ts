@@ -373,6 +373,10 @@ export class MessageEditorComponent {
     }
 
     protected openLink(link?: HTMLAnchorElement): void {
+        if (!link && this.linkOpen()) {
+            this.closeLink();
+            return;
+        }
         this.editor?.rememberSelection();
         this.dismissSuggestions();
         this.existingLink = link;

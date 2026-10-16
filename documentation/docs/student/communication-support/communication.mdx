@@ -311,14 +311,14 @@ To foster interaction between users, we integrate the well-known emoji reaction 
 Each user in the course can react on any message by making use of the emoji selection button.
 The ➕ emoji serves as the up-voting reaction, which influences the display order of messages.
 
-### Try the Formatted Message Editor
+### Formatted Message Editor
 
-In the web app, select **Try formatted editor (experimental)** above a message or reply to edit text with its formatting visible.
-Use the toolbar to format selected text or add a link. Select an existing link to change its text or destination.
+In the web app, messages and replies open with their formatting visible.
+Use the toolbar to format selected text or add a link. Select the link toolbar button again to close its popup. Select an existing link to change its text or destination.
 **Remove link** keeps the text and removes its destination.
 Select text before using a formatting control to remove existing formatting.
 
-<Image src={formattedMessageEditorImg} alt={"A message with formatted text, a person mention, course references and an attached image"} size={ImageSize.large} />
+<Image src={formattedMessageEditorImg} alt={"A message with slide and FAQ references, an image preview and a PDF attachment"} size={ImageSize.large} />
 
 Type `@` to search for people, or `#` to search for channels, exercises and lectures in the current course.
 Use the arrow keys to choose a result and Enter to insert it. Enter accepts the result without sending the message;
@@ -332,9 +332,10 @@ Enter sends a message in normal text, while Shift+Enter inserts a line break. In
 The toolbar also lets you attach images or PDFs, search lecture attachments and individual slides, reference a published FAQ, or search for an emoji.
 Images have a thumbnail in the editor, and PDFs appear as links. You can also paste or drop files into the message.
 Uploads use the same file types and size limits as the Markdown editor. Wait for an upload to finish before sending or saving.
-Resource pickers insert at the cursor position you selected before opening them.
+Resource pickers insert at the cursor position you selected before opening them. Slide numbers stay visible beside the title.
+Hover over a slide or select it with the arrow keys to preview it before inserting.
+The compact emoji picker closes when you click outside it or press Escape.
 
-Select **Use Markdown editor** to return to the existing editor.
 Messages with tables, mathematical formulas or other unsupported formatting remain in the Markdown editor to preserve their content.
 The formatted editor is an exploration for the web app; the iOS app continues to use its existing editor.
 

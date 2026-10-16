@@ -41,6 +41,7 @@
             [attr.aria-label]="'artemisApp.communication.formattedEditor.link' | artemisTranslate"
             [title]="'artemisApp.communication.formattedEditor.link' | artemisTranslate"
             data-testid="message-link-button"
+            [attr.aria-expanded]="linkOpen()"
             (mousedown)="remember($event)"
             (click)="openLink()"
         >

@@ -62,9 +62,12 @@ export class MessageEditorResources {
                         ...(unit.slides ?? [])
                             .filter((slide) => !!slide.id)
                             .map((slide, index): MessageSuggestion => ({
-                                label: `${label} › ${index + 1}`,
+                                label: `${label} › ${slide.slideNumber ?? index + 1}`,
+                                resourceLabel: label,
+                                slideNumber: slide.slideNumber ?? index + 1,
+                                previewUrl: `/api/core/files/slides/${slide.id}`,
                                 kind: 'slide',
-                                markdown: `[slide]${sanitizeStringForMarkdownEditor(unit.name)} Slide ${index + 1}(#${slide.id})[/slide]`,
+                                markdown: `[slide]${sanitizeStringForMarkdownEditor(unit.name)} Slide ${slide.slideNumber ?? index + 1}(#${slide.id})[/slide]`,
                             })),
                     ];
                 }),

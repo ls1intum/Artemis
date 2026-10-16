@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, effect, inject, input, output, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -40,6 +40,14 @@ export class MessageEditorToolsComponent {
     readonly closed = output<void>();
     private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
     private readonly queryInput = viewChild<ElementRef<HTMLInputElement>>('queryInput');
+    private readonly optionOrigins = viewChildren<CdkOverlayOrigin>('optionOrigin');
+    protected readonly preview = signal<{ item: MessageSuggestion; origin: CdkOverlayOrigin } | undefined>(undefined);
+    protected readonly previewFailed = signal(false);
+    protected readonly previewPositions = [
+        { originX: 'end' as const, originY: 'center' as const, overlayX: 'start' as const, overlayY: 'center' as const, offsetX: 8 },
+        { originX: 'start' as const, originY: 'center' as const, overlayX: 'end' as const, overlayY: 'center' as const, offsetX: -8 },
+        { originX: 'center' as const, originY: 'bottom' as const, overlayX: 'center' as const, overlayY: 'top' as const, offsetY: 8 },
+    ];
 
     readonly picker = signal<MessageResourceKind | 'emoji' | undefined>(undefined);
     readonly uploading = signal(false);
@@ -101,6 +109,7 @@ export class MessageEditorToolsComponent {
     protected close(restoreFocus = true): void {
         this.request++;
         this.picker.set(undefined);
+        this.preview.set(undefined);
         this.results.set([]);
         this.failed.set(false);
         if (restoreFocus) {
@@ -117,6 +126,7 @@ export class MessageEditorToolsComponent {
             return;
         }
         const request = ++this.request;
+        this.preview.set(undefined);
         this.loading.set(true);
         this.failed.set(false);
         this.active.set(0);
@@ -168,8 +178,17 @@ export class MessageEditorToolsComponent {
         } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
             event.preventDefault();
             const length = this.results().length;
-            this.active.set(length ? (this.active() + (event.key === 'ArrowDown' ? 1 : length - 1)) % length : 0);
+            this.activate(length ? (this.active() + (event.key === 'ArrowDown' ? 1 : length - 1)) % length : 0);
         }
+    }
+
+    /** Loads a single preview on pointer hover or keyboard navigation, using the existing authorized slide endpoint. */
+    protected activate(index: number): void {
+        this.active.set(index);
+        const item = this.results()[index];
+        const origin = this.optionOrigins()[index];
+        this.previewFailed.set(false);
+        this.preview.set(item?.previewUrl && origin ? { item, origin } : undefined);
     }
 
     protected openFiles(): void {

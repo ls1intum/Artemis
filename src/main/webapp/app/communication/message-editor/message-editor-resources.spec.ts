@@ -28,7 +28,10 @@ describe('Formatted message resources', () => {
                                     type: 'attachment',
                                     name: 'Slides',
                                     attachment: { link: '/attachments/lecture/handout.pdf', studentVersion: '/attachments/lecture/student.pdf', version: 3 },
-                                    slides: [{ id: 7 }, { id: 8 }],
+                                    slides: [
+                                        { id: 7, slideNumber: 3 },
+                                        { id: 8, slideNumber: 5 },
+                                    ],
                                 },
                                 { type: 'text', name: 'Text unit' },
                             ],
@@ -62,10 +65,11 @@ describe('Formatted message resources', () => {
         const result = await resources.search('slides', '', 1);
         expect(result.map((item) => item.markdown)).toEqual([
             '[lecture-unit]Slides(lecture/student.pdf?version=3)[/lecture-unit]',
-            '[slide]Slides Slide 1(#7)[/slide]',
-            '[slide]Slides Slide 2(#8)[/slide]',
+            '[slide]Slides Slide 3(#7)[/slide]',
+            '[slide]Slides Slide 5(#8)[/slide]',
         ]);
         expect(result[1].label).toContain('Lecture 2');
+        expect(result[1]).toMatchObject({ slideNumber: 3, resourceLabel: 'Lecture 2 › Slides', previewUrl: '/api/core/files/slides/7' });
         expect(files.addAttachmentVersionToUrl).toHaveBeenCalledWith('/attachments/lecture/student.pdf', 3);
         expect(await resources.search('slides', '2', 1)).toHaveLength(3);
         expect(lectures.findAllByCourseIdWithSlides).toHaveBeenCalledTimes(1);
