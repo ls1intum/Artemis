@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.env.MapPropertySource;
@@ -157,10 +159,11 @@ class HyperionWebsocketServiceTest {
         return logAppender.list.stream().filter(event -> event.getFormattedMessage().contains(TOPIC)).toList();
     }
 
-    @Test
-    void publishesExerciseStateToItsSharedTopic() {
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void publishesExerciseStateToItsSharedTopic(boolean running) {
         var messaging = mock(WebsocketMessagingService.class);
-        var state = new ExerciseGenerationStateDTO(42, "job-1", true);
+        var state = new ExerciseGenerationStateDTO(42, "job-1", running);
 
         try (var context = new AnnotationConfigApplicationContext()) {
             context.getEnvironment().setActiveProfiles("core");

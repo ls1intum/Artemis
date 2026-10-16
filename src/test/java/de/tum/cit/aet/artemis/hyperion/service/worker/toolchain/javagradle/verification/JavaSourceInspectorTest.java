@@ -16,6 +16,36 @@ import org.junit.jupiter.params.provider.ValueSource;
 class JavaSourceInspectorTest {
 
     @Test
+    void declaresPackageMatchingPath_handlesLongQualifiedPackagesAndRejectsMalformedOnes() {
+        String packageName = "segment.".repeat(10_000) + "last";
+        String path = "src/" + packageName.replace('.', '/') + "/Example.java";
+
+        assertThat(JavaSourceInspector.declaresPackageMatchingPath(path, "package " + packageName + "; class Example {}", List.of("src/"))).isTrue();
+        assertThat(JavaSourceInspector.declaresPackageMatchingPath(path, "package " + packageName + ".; class Example {}", List.of("src/"))).isFalse();
+        assertThat(JavaSourceInspector.declaresPackageMatchingPath("src/other/Example.java", "package " + packageName + "; class Example {}", List.of("src/"))).isFalse();
+    }
+
+    @Test
+    void javaTestAnnotationSummary_handlesLongQualifiedAnnotationsWithoutLosingRestrictions() {
+        String source = "@" + "segment \t.\n".repeat(10_000) + "Marker\n" + """
+                @de.tum.cit.ase.ares.api.jupiter.Public
+                @de.tum.cit.ase.ares.api.Policy(value = "SecurityPolicy.yaml")
+                class ExampleTest {
+                    @org.junit.jupiter.api.Test
+                    @de.tum.cit.ase.ares.api.StrictTimeout(1)
+                    void checks() {}
+                }
+                """;
+
+        var summary = JavaSourceInspector.javaTestAnnotationSummary(source);
+
+        assertThat(summary.hasTestMethods()).isTrue();
+        assertThat(summary.classWithMissingAresAnnotations()).isFalse();
+        assertThat(summary.testMethodWithoutStrictTimeout()).isFalse();
+        assertThat(summary.unsupportedAnnotationSyntax()).isFalse();
+    }
+
+    @Test
     void javaTestAnnotationSummary_rejectsLegacyAresAnnotations() {
         String source = """
                 @de.tum.in.test.api.jupiter.Public

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.Map;
@@ -16,13 +17,15 @@ class ContractWitnessProbeTest {
     private static final String GENERATED_TEST = """
             package de.tum.cit.aet.nodraft;
 
-            import de.tum.in.test.api.jupiter.Public;
-            import de.tum.in.test.api.StrictTimeout;
+            import de.tum.cit.ase.ares.api.jupiter.Public;
+            import de.tum.cit.ase.ares.api.StrictTimeout;
+            import de.tum.cit.ase.ares.api.Policy;
             import org.junit.jupiter.api.Test;
 
             import static org.junit.jupiter.api.Assertions.*;
 
             @Public
+            @Policy(value = "SecurityPolicy.yaml")
             @StrictTimeout(1)
             class RosterParserTest {
 
@@ -56,11 +59,46 @@ class ContractWitnessProbeTest {
     }
 
     @Test
-    void buildProbeSource_doesNotCopyTheGradedSuitesHarnessAnnotations() {
-        // Copying @Public/@StrictTimeout would make this throwaway probe look like a graded test to the production harness.
+    void buildProbeSourceUsesExplicitAresRestrictionsWithoutDependingOnHostImports() {
         String probe = ContractWitnessProbe.buildProbeSource(GENERATED_TEST, List.of(NEGATIVE_SALARY));
 
-        assertThat(probe).doesNotContain("@Public").doesNotContain("@StrictTimeout");
+        assertThat(probe).contains("@de.tum.cit.ase.ares.api.jupiter.Public", "@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")",
+                "@de.tum.cit.ase.ares.api.StrictTimeout(15)", "@org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)");
+        assertThat(JavaSourceInspector.javaTestAnnotationSummary(probe)).isEqualTo(new JavaSourceInspector.JavaTestAnnotationSummary(true, false, false, false));
+    }
+
+    @Test
+    void workspaceOverlayRegistersOnlyTheTemporaryInstructorClassAndPreservesTheCandidate() {
+        String policy = """
+                regardingTheSupervisedCode:
+                  theSupervisedCodeUsesTheFollowingPackage: "de.tum.cit.aet.nodraft"
+                  theFollowingClassesAreTestClasses:
+                    - "de.tum.cit.aet.nodraft.RosterParserTest"
+                  theFollowingResourceAccessesArePermitted:
+                    regardingNetworkConnections: [ ]
+                """;
+        String hostPath = "test/de/tum/cit/aet/nodraft/RosterParserTest.java";
+        Map<String, String> candidate = Map.of(hostPath, GENERATED_TEST, "SecurityPolicy.yaml", policy);
+        String path = ContractWitnessProbe.probePath(hostPath, candidate.keySet());
+        String source = ContractWitnessProbe.buildProbeSource(GENERATED_TEST, List.of(NEGATIVE_SALARY));
+
+        Map<String, String> overlay = ContractWitnessProbe.workspaceOverlay(candidate, path, source);
+
+        assertThat(overlay).containsOnlyKeys("tests/" + path, "tests/SecurityPolicy.yaml");
+        assertThat(overlay.get("tests/" + path)).isEqualTo(source);
+        assertThat(overlay.get("tests/SecurityPolicy.yaml")).contains("    - \"de.tum.cit.aet.nodraft.HyperionContractWitnessProbeTest\"\n",
+                "    - \"de.tum.cit.aet.nodraft.RosterParserTest\"\n");
+        assertThat(AresSecurityPolicy.onlyTestClassesChanged(policy, overlay.get("tests/SecurityPolicy.yaml"))).isTrue();
+        assertThat(candidate).containsExactlyInAnyOrderEntriesOf(Map.of(hostPath, GENERATED_TEST, "SecurityPolicy.yaml", policy));
+    }
+
+    @Test
+    void workspaceOverlayRejectsAMissingPolicyOrAnExistingProbe() {
+        String path = "test/example/HyperionContractWitnessProbeTest.java";
+        assertThatThrownBy(() -> ContractWitnessProbe.workspaceOverlay(Map.of(), path, "probe")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("requires the candidate's Ares 2 security policy");
+        assertThatThrownBy(() -> ContractWitnessProbe.workspaceOverlay(Map.of(path, "existing"), path, "probe")).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("overwrite");
     }
 
     @Test

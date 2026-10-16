@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 
 import java.io.IOException;
@@ -37,6 +38,8 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.Gener
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationResources;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.CollectedReports;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.SandboxBuildCommands;
@@ -53,6 +56,15 @@ class DockerGradleBuildTest {
     private final GenerationWorkspace workspace = new GenerationWorkspace(commands, resources);
 
     private final GenerationInput exercise = new GenerationInput(1, "de.tum.cit.aet.reference", "Count passing scores.", false, Set.of());
+
+    private static final ContractWitness HIGH_SCORE_WITNESS = new ContractWitness("R1", "testScoreAboveOneHundred", """
+            @org.junit.jupiter.api.Test
+            void testScoreAboveOneHundred() throws java.io.IOException {
+                int score = Integer.parseInt(java.nio.file.Files.readString(java.nio.file.Path.of("fixtures/witness-scores.txt")).strip());
+                org.junit.jupiter.api.Assertions.assertThrows(SecurityException.class, UnregisteredFixtureReader::readFixture);
+                org.junit.jupiter.api.Assertions.assertEquals(1, ScoreCalculator.countPassing(new int[] {score}), "R1: every score at least 50 passes");
+            }
+            """, "incorrectly rejects passing scores above 100");
 
     private DockerClient docker;
 
@@ -106,6 +118,80 @@ class DockerGradleBuildTest {
         try (var archive = sandbox.copyOut(session, "/workspace/" + path)) {
             assertThat(WorkspaceArchive.readTar(archive, "")).containsExactlyEntriesOf(Map.of("large.md", prefix + "updated suffix"));
         }
+    }
+
+    @Test
+    void contractWitnessRunsUnderAresAndRestoresTheCandidatePolicy() throws IOException {
+        String session = sandbox.createSession();
+        var seed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, probeSnapshot(), true);
+
+        var outcomes = new DifferentialVerifier(commands).evaluateContractWitnesses(sandbox, session, exercise, seed.testsSeedSnapshot(), SeededStructuralTests.EMPTY,
+                List.of(HIGH_SCORE_WITNESS), candidateRestorer(session, seed));
+
+        assertThat(outcomes).singleElement().satisfies(outcome -> {
+            assertThat(outcome.disposition()).as(outcome.diagnostic()).isEqualTo(ContractWitnessOutcome.Disposition.REFERENCE_PASSED_STARTER_FAILED);
+        });
+        assertCandidateRestored(session, seed);
+    }
+
+    @Test
+    void semanticMutantCounterexampleRunsUnderAresAndRestoresTheCandidatePolicy() throws IOException {
+        String session = sandbox.createSession();
+        var seed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, probeSnapshot(), true);
+        String path = "src/de/tum/cit/aet/reference/ScoreCalculator.java";
+        String original = seed.repositoryTextFiles().get(RepositoryRole.SOLUTION).get(path);
+        var mutant = new SemanticMutant("R1", path, original, original.replace("score >= 50", "score >= 50 && score <= 100"), HIGH_SCORE_WITNESS);
+
+        var outcomes = new DifferentialVerifier(commands).evaluateSemanticMutants(sandbox, session, exercise, seed.testsSeedSnapshot(),
+                seed.repositoryTextFiles().get(RepositoryRole.SOLUTION), SeededStructuralTests.EMPTY, List.of(mutant), candidateRestorer(session, seed));
+
+        assertThat(outcomes).singleElement().satisfies(outcome -> {
+            assertThat(outcome.disposition()).as(outcome.diagnostic()).isEqualTo(SemanticMutantOutcome.Disposition.SURVIVED_GRADED_SUITE);
+        });
+        assertCandidateRestored(session, seed);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void probeBuildFailureRestoresTheExactPolicyAndRemovesTemporarySources(boolean semanticMutant) throws IOException {
+        String session = sandbox.createSession();
+        var seed = workspace.seedWorkspace(sandbox, session, exercise, Mode.ADAPT, snapshot(), true);
+        Runnable restore = candidateRestorer(session, seed);
+        if (semanticMutant) {
+            var host = ContractWitnessProbe.host(seed.testsSeedSnapshot()).orElseThrow();
+            String path = ContractWitnessProbe.probePath(host.getKey(), seed.testsSeedSnapshot().keySet());
+            var overlay = ContractWitnessProbe.workspaceOverlay(seed.testsSeedSnapshot(), path,
+                    ContractWitnessProbe.buildProbeSource(host.getValue(), List.of(HIGH_SCORE_WITNESS)));
+            assertThatThrownBy(() -> SemanticMutantWorkspaceProbe.run(sandbox, session, null, overlay, restore, () -> {
+            }, () -> {
+                throw new IllegalStateException("injected build failure");
+            })).isInstanceOf(IllegalStateException.class).hasMessage("injected build failure");
+        }
+        else {
+            assertThatThrownBy(() -> ContractWitnessEvaluator.evaluate(sandbox, session, exercise.id(), seed.testsSeedSnapshot(), List.of(HIGH_SCORE_WITNESS), restore, () -> {
+            }, () -> {
+                throw new IllegalStateException("injected build failure");
+            }, () -> {
+                throw new AssertionError("starter build must not run after a failed reference build");
+            })).isInstanceOf(DifferentialVerifier.VerificationInfrastructureException.class);
+        }
+        assertCandidateRestored(session, seed);
+    }
+
+    private Runnable candidateRestorer(String session, GenerationWorkspace.WorkspaceSeed seed) {
+        return () -> {
+            sandbox.resetSession(session);
+            workspace.materializeRepositoryFiles(sandbox, session, exercise, Mode.ADAPT, seed.repositoryTextFiles(), seed.repositoryMetadata(), seed.repositoryBinaryFiles(),
+                    exercise.problemStatement(), null, null);
+        };
+    }
+
+    private void assertCandidateRestored(String session, GenerationWorkspace.WorkspaceSeed seed) {
+        JavaSourceSnapshot restored = JavaSourceSnapshot.capture(sandbox, session);
+        assertThat(restored.testsFiles()).containsExactlyInAnyOrderEntriesOf(seed.testsSeedSnapshot());
+        assertThat(restored.solutionFiles()).containsExactlyInAnyOrderEntriesOf(seed.repositoryTextFiles().get(RepositoryRole.SOLUTION));
+        assertThat(restored.templateFiles()).containsExactlyInAnyOrderEntriesOf(seed.repositoryTextFiles().get(RepositoryRole.TEMPLATE));
+        assertThat(restored.testsFiles().keySet()).noneMatch(path -> path.contains(ContractWitnessProbe.PROBE_CLASS_NAME));
     }
 
     @Test
@@ -373,6 +459,34 @@ class DockerGradleBuildTest {
         try (var tar = sandbox.copyOut(session, SandboxBuildCommands.reportsDirectoryFor(lane))) {
             return BuildSummary.fromReports(CollectedReports.read(tar, lane), result.exitCode(), result.combinedOutput());
         }
+    }
+
+    private WorkspaceSnapshot probeSnapshot() throws IOException {
+        List<WorkspaceFile> files = new ArrayList<>();
+        for (WorkspaceFile file : snapshot().files()) {
+            String text = new String(file.content(), StandardCharsets.UTF_8);
+            if (file.path().equals("tests/SecurityPolicy.yaml")) {
+                text = text.replace("JAVA_USING_GRADLE_ARCHUNIT_AND_ASPECTJ", "JAVA_USING_GRADLE_ARCHUNIT_AND_INSTRUMENTATION");
+            }
+            else if (file.path().equals("tests/test/de/tum/cit/aet/reference/ScoreCalculatorTest.java")) {
+                // A separate top-level class is not exempted by the host test class's policy entry.
+                text += """
+
+                        final class UnregisteredFixtureReader {
+                            static String readFixture() throws java.io.IOException {
+                                return java.nio.file.Files.readString(java.nio.file.Path.of("fixtures/witness-scores.txt"));
+                            }
+                        }
+                        """;
+            }
+            else {
+                files.add(file);
+                continue;
+            }
+            files.add(new WorkspaceFile(file.path(), text.getBytes(StandardCharsets.UTF_8), file.executable()));
+        }
+        files.add(new WorkspaceFile("tests/fixtures/witness-scores.txt", "150\n".getBytes(StandardCharsets.UTF_8), false));
+        return new WorkspaceSnapshot(files);
     }
 
     private WorkspaceSnapshot snapshot() throws IOException {

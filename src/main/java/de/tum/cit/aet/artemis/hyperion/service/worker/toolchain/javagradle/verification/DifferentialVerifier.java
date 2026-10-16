@@ -848,7 +848,7 @@ public class DifferentialVerifier {
     }
 
     private BuildSummary runSemanticMutantProbe(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, SeededStructuralTests seededStructuralTests,
-            @Nullable SemanticMutant mutant, Map.@Nullable Entry<String, String> counterexampleProbe, Runnable restoreCandidate) {
+            @Nullable SemanticMutant mutant, @Nullable Map<String, String> counterexampleProbe, Runnable restoreCandidate) {
         return SemanticMutantWorkspaceProbe.run(sandbox, sessionId, mutant, counterexampleProbe, restoreCandidate,
                 () -> seedPristineVerifyScript(sandbox, sessionId, exercise, seededStructuralTests),
                 () -> runPristineBuild(sandbox, sessionId, sandboxBuildCommandService.behavioralSolutionBuildCommand(), GenerationWorkspace.directoryFor(RepositoryRole.SOLUTION)));

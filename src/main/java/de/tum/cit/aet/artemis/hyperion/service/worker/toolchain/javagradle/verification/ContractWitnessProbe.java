@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,8 @@ public final class ContractWitnessProbe {
     }
 
     /**
-     * Combines witness methods with an existing test's package and imports. Omits class-level harness annotations so the probe is not classified as a graded test.
+     * Combines witness methods with an existing test's package and imports, using the same Ares restrictions as instructor tests. The caller restores the candidate after probing,
+     * so these temporary tests never enter the saved grading suite.
      *
      * @param existingTestSource one graded test source from the same repository, used only as the source of the package and import declarations
      * @param witnesses          the candidate witnesses, each contributing one method
@@ -52,11 +54,27 @@ public final class ContractWitnessProbe {
         if (!imports.isEmpty()) {
             source.append("\n");
         }
-        source.append("class ").append(PROBE_CLASS_NAME).append(" {\n");
+        source.append("@de.tum.cit.ase.ares.api.jupiter.Public\n").append("@de.tum.cit.ase.ares.api.Policy(value = \"SecurityPolicy.yaml\")\n")
+                .append("@de.tum.cit.ase.ares.api.StrictTimeout(").append(JavaSourceInspector.MAX_STRICT_TIMEOUT_SECONDS).append(")\n")
+                .append("@org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)\n").append("class ").append(PROBE_CLASS_NAME)
+                .append(" {\n");
         for (ContractWitness witness : witnesses) {
             source.append("\n").append(witness.code().strip().indent(4));
         }
         return source.append("}\n").toString();
+    }
+
+    /** Builds the temporary source and policy overlay without changing the candidate's resource permissions. */
+    static Map<String, String> workspaceOverlay(Map<String, String> testsFiles, String probePath, String probeSource) {
+        Map<String, String> augmentedTests = new LinkedHashMap<>(testsFiles);
+        if (augmentedTests.putIfAbsent(probePath, probeSource) != null) {
+            throw new IllegalArgumentException("The contract-witness probe would overwrite an existing test");
+        }
+        String policy = AresSecurityPolicy.registerTestClasses(augmentedTests);
+        if (policy == null) {
+            throw new IllegalArgumentException("The contract-witness probe requires the candidate's Ares 2 security policy");
+        }
+        return Map.of("tests/" + probePath, probeSource, "tests/" + AresSecurityPolicy.PATH, policy);
     }
 
     /**

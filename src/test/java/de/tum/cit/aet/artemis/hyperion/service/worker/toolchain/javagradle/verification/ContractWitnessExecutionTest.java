@@ -5,11 +5,13 @@ import static org.assertj.core.groups.Tuple.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -24,12 +26,19 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.Gener
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome.Disposition;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.SandboxBuildCommands;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.WorkspaceArchive;
 
 class ContractWitnessExecutionTest {
 
     private static final Map<String, String> TESTS = Map.of("test/example/SchedulerTest.java",
             "package example; import org.junit.jupiter.api.Test; import static org.junit.jupiter.api.Assertions.*;"
-                    + " class SchedulerTest { @Test void existing() { assertTrue(true); } }");
+                    + " class SchedulerTest { @Test void existing() { assertTrue(true); } }",
+            "SecurityPolicy.yaml", """
+                    regardingTheSupervisedCode:
+                      theFollowingClassesAreTestClasses:
+                        - "example.SchedulerTest"
+                      theFollowingResourceAccessesArePermitted: { }
+                    """);
 
     private static final ContractWitness MALFORMED = new ContractWitness("R1", "malformed", "@Test void malformed() { assertTrue(false); }", "does not compile");
 
@@ -121,6 +130,15 @@ class ContractWitnessExecutionTest {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         when(sandbox.exec(anyString(), any(), any(String[].class))).thenReturn(new SandboxExecResultDTO(0, "", "", false));
         when(sandbox.copyOut(anyString(), anyString())).thenReturn(first, remaining);
+        doAnswer(invocation -> {
+            try (var archive = new TarArchiveInputStream(invocation.getArgument(2, InputStream.class))) {
+                Map<String, String> overlay = WorkspaceArchive.readTar(archive, "");
+                assertThat(overlay).containsKeys("tests/test/example/HyperionContractWitnessProbeTest.java", "tests/SecurityPolicy.yaml");
+                assertThat(overlay.get("tests/SecurityPolicy.yaml")).contains("    - \"example.HyperionContractWitnessProbeTest\"");
+                assertThat(AresSecurityPolicy.onlyTestClassesChanged(TESTS.get("SecurityPolicy.yaml"), overlay.get("tests/SecurityPolicy.yaml"))).isTrue();
+            }
+            return null;
+        }).when(sandbox).copyIn(anyString(), eq("/workspace"), any());
         return sandbox;
     }
 

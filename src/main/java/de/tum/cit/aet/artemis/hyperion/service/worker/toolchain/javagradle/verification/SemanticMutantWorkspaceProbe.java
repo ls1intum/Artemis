@@ -18,7 +18,7 @@ final class SemanticMutantWorkspaceProbe {
     private SemanticMutantWorkspaceProbe() {
     }
 
-    static BuildSummary run(InteractiveSandbox sandbox, String sessionId, @Nullable SemanticMutant mutant, Map.@Nullable Entry<String, String> counterexampleProbe,
+    static BuildSummary run(InteractiveSandbox sandbox, String sessionId, @Nullable SemanticMutant mutant, @Nullable Map<String, String> counterexampleProbe,
             Runnable restoreCandidate, Runnable prepareBuild, Supplier<BuildSummary> build) {
         try {
             restoreCandidate.run();
@@ -27,7 +27,7 @@ final class SemanticMutantWorkspaceProbe {
                 files.put(GenerationWorkspace.directoryFor(RepositoryRole.SOLUTION) + "/" + mutant.solutionPath(), mutant.mutantSource());
             }
             if (counterexampleProbe != null) {
-                files.put(GenerationWorkspace.directoryFor(RepositoryRole.TESTS) + "/" + counterexampleProbe.getKey(), counterexampleProbe.getValue());
+                files.putAll(counterexampleProbe);
             }
             if (!files.isEmpty()) {
                 sandbox.copyIn(sessionId, GenerationWorkspace.WORKSPACE, WorkspaceArchive.buildWorkspaceTarStream(files, Map.of()));
