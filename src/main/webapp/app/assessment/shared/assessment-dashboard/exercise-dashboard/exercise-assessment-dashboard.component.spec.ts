@@ -354,6 +354,22 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(complaintsLink.getAttribute('aria-label')).toBe('artemisApp.exercise.complaints');
     });
 
+    it('should open the manual assessment upload dialog', () => {
+        expect(comp['uploadDialogVisible']()).toBe(false);
+
+        comp.openAssessmentUpload();
+
+        expect(comp['uploadDialogVisible']()).toBe(true);
+    });
+
+    it('should reload the dashboard data after manual assessments were uploaded', () => {
+        const loadAllSpy = vi.spyOn(comp, 'loadAll').mockImplementation(() => {});
+
+        comp.onAssessmentsUploaded();
+
+        expect(loadAllSpy).toHaveBeenCalledOnce();
+    });
+
     it('should initialize with tutor leaderboard entry', () => {
         const tutor = { id: 10, login: 'tutor1' } as User;
         accountService.userIdentity.set(tutor);

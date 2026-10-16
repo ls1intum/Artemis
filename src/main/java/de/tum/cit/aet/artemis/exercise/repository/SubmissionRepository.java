@@ -613,4 +613,41 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                  )
             """)
     Optional<Submission> findLatestSubmissionByParticipationId(@Param("participationId") long participationId);
+
+    /**
+     * Loads the latest submission for every requested participation in a single exercise-scoped query, with each submission's {@code results} collection eagerly fetched.
+     * Participations without a submission are intentionally absent.
+     * <p>
+     * The assessment-upload storage path inspects {@code Submission.results} for every returned submission (to find the manual result it overwrites) and replaces that result's
+     * feedback; fetching both collections here keeps that a single query instead of two lazy loads per participation, so a batch import scales independently of its size. The
+     * participation and its student and team are fetched for the same reason: they are eager to-ones that Hibernate would otherwise resolve with one select per returned
+     * submission, since no transaction spans this call and the one that already loaded the participations. All three are to-one associations, so they add columns rather than
+     * rows.
+     * <p>
+     * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains persisted ids.
+     * <p>
+     * <b>Postcondition:</b> at most one submission per requested participation is returned, it is that participation's latest submission, and its {@code participation} (with
+     * the participant), {@code results} and their {@code feedbacks} are initialized.
+     *
+     * @param exerciseId       the target exercise id
+     * @param participationIds the participations being imported
+     * @return at most one submission per participation, each with its results and their feedback initialized
+     */
+    @Query("""
+            SELECT DISTINCT s
+            FROM Submission s
+                LEFT JOIN FETCH TREAT(s.participation AS StudentParticipation) p
+                LEFT JOIN FETCH p.student
+                LEFT JOIN FETCH p.team
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+            WHERE p.exercise.id = :exerciseId
+                AND p.id IN :participationIds
+                AND s.id = (
+                    SELECT MAX(s2.id)
+                    FROM Submission s2
+                    WHERE s2.participation.id = s.participation.id
+                )
+            """)
+    List<Submission> findLatestSubmissionsForAssessmentUpload(@Param("exerciseId") final long exerciseId, @Param("participationIds") final Collection<Long> participationIds);
 }
