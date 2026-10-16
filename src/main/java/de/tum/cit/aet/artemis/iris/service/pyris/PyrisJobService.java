@@ -338,7 +338,7 @@ public class PyrisJobService {
      * @param exerciseId the exercise the student is struggling on
      */
     public void releaseStruggleInFlightJob(String token, long userId, long exerciseId) {
-        getPyrisJobMap().remove(token);
+        removeJobWithGeneratedRunId(token);
         getStruggleInFlightMap().remove(struggleInFlightKey(userId, exerciseId), token);
     }
 
@@ -553,7 +553,19 @@ public class PyrisJobService {
      * @param runId the run id of the job to remove
      */
     public void removeJobByRunId(String runId) {
-        getPyrisJobMap().remove(runId);
+        removeJobWithGeneratedRunId(runId);
+    }
+
+    // Removes the job of a run id Artemis generated. Once that job expired, a client can register a global search request under the same run id;
+    // such a job carries an invocation id and is left alone.
+    private void removeJobWithGeneratedRunId(String runId) {
+        runWithJobLock(runId, () -> {
+            var current = getPyrisJobMap().get(runId);
+            if (current != null && current.invocationId() == null) {
+                getPyrisJobMap().remove(runId);
+            }
+            return null;
+        });
     }
 
     /**

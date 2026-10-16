@@ -38,6 +38,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
  */
 class PyrisJobServiceCallbackAuthenticationTest {
 
+    // The distributed maps behind the service created last.
+    private Map<String, DistributedMap<?, ?>> maps;
+
     private PyrisCallbackTokenService tokenService;
 
     private PyrisJobService service;
@@ -51,7 +54,7 @@ class PyrisJobServiceCallbackAuthenticationTest {
 
     // A service whose distributed maps start empty, as after a restart of the whole cluster; the token key stays the same.
     private PyrisJobService serviceOverFreshDistributedState() {
-        Map<String, DistributedMap<?, ?>> maps = new HashMap<>();
+        maps = new HashMap<>();
         var distributedDataProvider = mock(DistributedDataProvider.class);
         doAnswer(invocation -> maps.computeIfAbsent(invocation.getArgument(0), name -> new DefaultTimeToLiveDistributedMap<>(new LocalMap<>(), invocation.getArgument(1))))
                 .when(distributedDataProvider).getExpiringMap(anyString(), any(Duration.class));
@@ -59,6 +62,12 @@ class PyrisJobServiceCallbackAuthenticationTest {
                 tokenService);
         ReflectionTestUtils.setField(freshService, "jobTimeout", 300);
         return freshService;
+    }
+
+    // What the expiry of a job's map entry does.
+    @SuppressWarnings("unchecked")
+    private void expire(String runId) {
+        ((DistributedMap<String, PyrisJob>) maps.get("pyris-job-map-v2")).remove(runId);
     }
 
     private static MockHttpServletRequest withAuthorization(String value) {
@@ -208,7 +217,7 @@ class PyrisJobServiceCallbackAuthenticationTest {
         String runId = UUID.randomUUID().toString();
         GlobalSearchAnswerJob alicesJob = service.addGlobalSearchAnswerJob("alice", runId);
         // Alice's request stalls before dispatch; its entry expires and Bob registers the same run id.
-        service.removeJobByRunId(runId);
+        expire(runId);
         service.addGlobalSearchAnswerJob("bob", runId);
 
         // The dispatch signs the job registered for Alice's request, so her token never authenticates as Bob's job.
@@ -222,7 +231,7 @@ class PyrisJobServiceCallbackAuthenticationTest {
         String runId = UUID.randomUUID().toString();
         GlobalSearchAnswerJob alicesJob = service.addGlobalSearchAnswerJob("alice", runId);
         // Alice's callback was authenticated, then her entry expired and Bob registered the same run id.
-        service.removeJobByRunId(runId);
+        expire(runId);
         GlobalSearchAnswerJob bobsJob = service.addGlobalSearchAnswerJob("bob", runId);
 
         service.updateJob(alicesJob);
@@ -240,7 +249,7 @@ class PyrisJobServiceCallbackAuthenticationTest {
     void anUpdateDoesNotBringBackAnExpiredGlobalSearchRequest() {
         String runId = UUID.randomUUID().toString();
         GlobalSearchAnswerJob job = service.addGlobalSearchAnswerJob("student", runId);
-        service.removeJobByRunId(runId);
+        expire(runId);
 
         service.updateJob(job);
 
@@ -252,7 +261,7 @@ class PyrisJobServiceCallbackAuthenticationTest {
         String runId = service.addTutorSuggestionJob(1L, 2L, 3L);
         var tutorJob = service.getJob(runId);
         // The tutor suggestion callback was authenticated, then its entry expired and a client sent the run id for a global search request.
-        service.removeJobByRunId(runId);
+        expire(runId);
         GlobalSearchAnswerJob globalSearchJob = service.addGlobalSearchAnswerJob("bob", runId);
 
         service.updateJob(tutorJob);
@@ -272,5 +281,34 @@ class PyrisJobServiceCallbackAuthenticationTest {
         assertThat(service.getJob(runId)).isNull();
         service.updateJob(job);
         assertThat(service.getJob(runId)).as("a job whose run id Artemis generated may still be stored again after it expired").isEqualTo(job);
+    }
+
+    @Test
+    void cleanupOfAJobWhoseRunIdWasTakenByAGlobalSearchRequestLeavesTheRequestAlone() {
+        String ingestionRunId = service.addLectureIngestionWebhookJob(1L, 2L, 3L);
+        var struggleRunId = service.addStruggleInterventionJobIfNonePending(1L, 7L, 42L, "decide", null, null, null, null).orElseThrow();
+        // Both jobs expired, and clients sent their run ids for global search requests.
+        expire(ingestionRunId);
+        expire(struggleRunId);
+        GlobalSearchAnswerJob firstRequest = service.addGlobalSearchAnswerJob("bob", ingestionRunId);
+        GlobalSearchAnswerJob secondRequest = service.addGlobalSearchAnswerJob("carol", struggleRunId);
+
+        service.removeJobByRunId(ingestionRunId);
+        service.releaseStruggleInFlightJob(struggleRunId, 7L, 42L);
+
+        assertThat(service.getJob(ingestionRunId)).isEqualTo(firstRequest);
+        assertThat(service.getJob(struggleRunId)).isEqualTo(secondRequest);
+    }
+
+    @Test
+    void cleanupRemovesTheJobsArtemisRegistered() {
+        String ingestionRunId = service.addLectureIngestionWebhookJob(1L, 2L, 3L);
+        var struggleRunId = service.addStruggleInterventionJobIfNonePending(1L, 7L, 42L, "decide", null, null, null, null).orElseThrow();
+
+        service.removeJobByRunId(ingestionRunId);
+        service.releaseStruggleInFlightJob(struggleRunId, 7L, 42L);
+
+        assertThat(service.getJob(ingestionRunId)).isNull();
+        assertThat(service.getJob(struggleRunId)).isNull();
     }
 }
