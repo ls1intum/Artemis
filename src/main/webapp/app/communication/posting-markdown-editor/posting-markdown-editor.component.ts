@@ -14,7 +14,7 @@ import {
     viewChild,
 } from '@angular/core';
 import monaco from 'monaco-editor';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -62,12 +62,17 @@ import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect
             useExisting: forwardRef(() => PostingMarkdownEditorComponent),
             multi: true,
         },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => PostingMarkdownEditorComponent),
+            multi: true,
+        },
     ],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [MarkdownEditorMonacoComponent, PostingContentComponent, MessageEditorComponent, TumAetUiButtonDirective, ArtemisTranslatePipe, RedirectToIrisButtonComponent],
 })
-export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterViewInit {
+export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterViewInit, Validator {
     private communicationService = inject(CommunicationService);
     private fileService = inject(FileService);
     private courseManagementService = inject(CourseManagementService);
@@ -104,6 +109,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     readonly defaultActions = signal<TextEditorAction[]>(undefined!);
     readonly content = signal<string | undefined>(undefined);
     readonly formattedMode = signal(false);
+    readonly uploadingFormattedAttachment = signal(false);
     readonly canUseFormatted = computed(() => canEditMessageVisually(this.content() ?? ''));
     readonly effectiveCourseId = computed(() => this.course()?.id ?? this.communicationService.getCourse()?.id);
     readonly effectiveConversation = computed(() => this.activeConversation() ?? this.communicationService.getCurrentConversation());
@@ -200,6 +206,21 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * the callback function to register on UI change
      */
     onChange = (_val: string) => {};
+    private validatorChanged = () => {};
+
+    /** Prevents a form submission from discarding an attachment that is still uploading. */
+    validate(): ValidationErrors | null {
+        return this.uploadingFormattedAttachment() ? { attachmentUploading: true } : null;
+    }
+
+    registerOnValidatorChange(callback: () => void): void {
+        this.validatorChanged = callback;
+    }
+
+    formattedUploadStateChanged(uploading: boolean): void {
+        this.uploadingFormattedAttachment.set(uploading);
+        this.validatorChanged();
+    }
 
     /**
      * emits the value change from component
@@ -214,6 +235,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * @param value
      */
     writeValue(value: string | undefined): void {
+        if (this.uploadingFormattedAttachment()) {
+            this.formattedUploadStateChanged(false);
+        }
         if (!canEditMessageVisually(value ?? '')) {
             this.formattedMode.set(false);
         }
@@ -245,6 +269,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
     /** Opts this composer into the exploration after synchronizing the existing editor. */
     toggleFormattedMode(): void {
+        if (this.uploadingFormattedAttachment()) {
+            return;
+        }
         if (this.formattedMode()) {
             this.formattedMode.set(false);
             return;

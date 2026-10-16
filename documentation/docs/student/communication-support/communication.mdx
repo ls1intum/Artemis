@@ -318,17 +318,23 @@ Use the toolbar to format selected text or add a link. Select an existing link t
 **Remove link** keeps the text and removes its destination.
 Select text before using a formatting control to remove existing formatting.
 
-<Image src={formattedMessageEditorImg} alt={"A message being edited with formatted text, a person mention and an exercise reference"} size={ImageSize.large} />
+<Image src={formattedMessageEditorImg} alt={"A message with formatted text, a person mention, course references and an attached image"} size={ImageSize.large} />
 
 Type `@` to search for people, or `#` to search for channels, exercises and lectures in the current course.
 Use the arrow keys to choose a result and Enter to insert it. Enter accepts the result without sending the message;
 Escape closes the suggestions. Numeric references such as `#123` remain available for linking to messages.
 
-Pressing Backspace immediately after a reference or link selects the whole item. Press Backspace again to delete it.
+Pressing Backspace immediately after a reference or link selects only that item, including when the cursor follows its automatic separating space.
+Press Backspace again to delete it. The surrounding text stays unchanged.
 Use Ctrl+Z or Command+Z to undo edits, formatting and reference insertions.
 Enter sends a message in normal text, while Shift+Enter inserts a line break. Inside lists, quotes and code blocks, Enter continues editing.
 
-Select **Use Markdown editor** to return to the existing editor, including file uploads, slide and FAQ references, and emoji search.
+The toolbar also lets you attach images or PDFs, search lecture attachments and individual slides, reference a published FAQ, or search for an emoji.
+Images have a thumbnail in the editor, and PDFs appear as links. You can also paste or drop files into the message.
+Uploads use the same file types and size limits as the Markdown editor. Wait for an upload to finish before sending or saving.
+Resource pickers insert at the cursor position you selected before opening them.
+
+Select **Use Markdown editor** to return to the existing editor.
 Messages with tables, mathematical formulas or other unsupported formatting remain in the Markdown editor to preserve their content.
 The formatted editor is an exploration for the web app; the iOS app continues to use its existing editor.
 

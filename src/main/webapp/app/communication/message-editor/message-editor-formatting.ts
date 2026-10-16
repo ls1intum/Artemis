@@ -17,7 +17,8 @@ function append(parent: Node, node: Node): void {
     }
 }
 
-function selectedOffset(root: HTMLElement, container: Node, offset: number): number {
+/** Locates a selection boundary in the document's visible text for DOM-replacement bookmarks. */
+export function messageSelectionOffset(root: HTMLElement, container: Node, offset: number): number {
     const prefix = root.ownerDocument.createRange();
     prefix.selectNodeContents(root);
     prefix.setEnd(container, offset);
@@ -25,7 +26,7 @@ function selectedOffset(root: HTMLElement, container: Node, offset: number): num
 }
 
 /** Restores selection boundaries in the rebuilt inline runs, including boundaries between marked and plain text. */
-function restoreSelection(root: HTMLElement, start: number, end: number): Range {
+export function restoreMessageSelection(root: HTMLElement, start: number, end: number): Range {
     const point = (offset: number, preferNext: boolean): { node: Node; offset: number } => {
         const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
         let node = walker.nextNode();
@@ -54,8 +55,8 @@ function restoreSelection(root: HTMLElement, start: number, end: number): Range 
  * Protected references and code blocks remain intact. DOM rebuilding happens only for an explicit formatting action.
  */
 export function formatMessageSelection(root: HTMLElement, range: Range, tag: string): Range {
-    const start = selectedOffset(root, range.startContainer, range.startOffset);
-    const end = selectedOffset(root, range.endContainer, range.endOffset);
+    const start = messageSelectionOffset(root, range.startContainer, range.startOffset);
+    const end = messageSelectionOffset(root, range.endContainer, range.endOffset);
     const target = tag.toUpperCase();
     const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     let text = walker.nextNode();
@@ -127,5 +128,5 @@ export function formatMessageSelection(root: HTMLElement, range: Range, tag: str
         render(node, fragment, []);
     }
     root.replaceChildren(fragment);
-    return restoreSelection(root, start, end);
+    return restoreMessageSelection(root, start, end);
 }

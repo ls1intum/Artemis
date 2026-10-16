@@ -213,7 +213,6 @@
                 "tryFormatted": "Formatierten Editor ausprobieren (experimentell)",
                 "useMarkdown": "Markdown-Editor verwenden",
                 "unsupported": "Diese Nachricht verwendet Formatierungen, die derzeit nur in Markdown bearbeitet werden können.",
-                "moreOptions": "Anhänge, Folien, FAQs und die Emoji-Suche sind im Markdown-Editor verfügbar.",
                 "formatting": "Nachricht formatieren",
                 "bold": "Fett (Strg/Cmd+B)",
                 "italic": "Kursiv (Strg/Cmd+I)",
@@ -245,7 +244,21 @@
                     "channel": "Kanal",
                     "exercise": "Aufgabe",
                     "lecture": "Vorlesung",
-                    "message": "Nachricht"
+                    "message": "Nachricht",
+                    "faq": "FAQ",
+                    "slide": "Folie",
+                    "lecture-unit": "Vorlesungsanhang"
+                },
+                "attachments": "Bilder oder PDFs anhängen",
+                "slides": "Folien und Vorlesungsanhänge",
+                "faq": "Häufig gestellte Fragen",
+                "emoji": "Emojis suchen",
+                "uploading": "Anhänge werden hochgeladen…",
+                "errors": {
+                    "position": "Setze den Cursor vor dem Einfügen in den Nachrichtentext außerhalb von Links oder Code.",
+                    "conversation": "Öffne eine Unterhaltung, um Dateien anzuhängen.",
+                    "upload": "„{{name}}“ konnte nicht angehängt werden. Wähle ein Bild oder eine PDF mit höchstens {{max}} MB.",
+                    "busy": "Ein Anhang wird noch hochgeladen. Bitte füge diese Dateien anschließend erneut ein."
                 }
             }
         },

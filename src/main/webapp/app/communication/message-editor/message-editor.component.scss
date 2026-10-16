@@ -54,6 +54,22 @@ jhi-message-editor .message-editor-content {
         box-decoration-break: clone;
     }
 
+    [data-reference-type='image'] {
+        display: inline-flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        max-width: 100%;
+        padding: 0.25rem;
+        vertical-align: top;
+        font-size: 0.75rem;
+
+        img {
+            max-width: 100%;
+            max-height: 10rem;
+            object-fit: contain;
+        }
+    }
+
     a {
         color: color-mix(in srgb, var(--primary) 70%, var(--artemis-control-color));
         text-decoration: underline;
@@ -111,4 +127,13 @@ jhi-message-editor .message-editor-content {
 
 .message-suggestion[aria-selected='true'] {
     background: var(--hover-slightly-darker-body-bg);
+}
+
+.message-resource-picker {
+    width: min(28rem, calc(100vw - 1rem));
+    max-height: min(32rem, calc(100dvh - 1rem));
+
+    .emoji-mart {
+        max-width: 100%;
+    }
 }

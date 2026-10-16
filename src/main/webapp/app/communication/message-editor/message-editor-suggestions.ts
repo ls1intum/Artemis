@@ -9,7 +9,7 @@ import { sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.ut
 
 export interface MessageSuggestion {
     label: string;
-    kind: 'user' | 'channel' | 'exercise' | 'lecture' | 'message';
+    kind: 'user' | 'channel' | 'exercise' | 'lecture' | 'message' | 'faq' | 'slide' | 'lecture-unit';
     markdown: string;
 }
 

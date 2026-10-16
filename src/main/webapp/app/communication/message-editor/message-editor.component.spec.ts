@@ -4,6 +4,10 @@ import { MockProvider } from 'ng-mocks';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MessageEditorComponent } from './message-editor.component';
 import { MessageEditorSuggestions } from './message-editor-suggestions';
+import { MessageEditorToolsComponent } from './message-editor-tools.component';
+import { MessageEditorResources } from './message-editor-resources';
+import { FileUploaderService } from 'app/foundation/service/file-uploader.service';
+import { By } from '@angular/platform-browser';
 
 describe('Formatted message composer', () => {
     let fixture: ComponentFixture<MessageEditorComponent>;
@@ -28,8 +32,12 @@ describe('Formatted message composer', () => {
 
     beforeEach(async () => {
         search.mockReset().mockResolvedValue([{ label: '@Anna', kind: 'user', markdown: '[user]Anna(anna)[/user]' }]);
-        await TestBed.configureTestingModule({ imports: [MessageEditorComponent], providers: [MockProvider(TranslateService)] })
+        await TestBed.configureTestingModule({
+            imports: [MessageEditorComponent],
+            providers: [MockProvider(TranslateService), MockProvider(FileUploaderService, { acceptedMarkdownFileExtensions: [] })],
+        })
             .overrideComponent(MessageEditorComponent, { set: { providers: [{ provide: MessageEditorSuggestions, useValue: { search } }] } })
+            .overrideComponent(MessageEditorToolsComponent, { set: { providers: [MockProvider(MessageEditorResources)] } })
             .compileComponents();
         fixture = TestBed.createComponent(MessageEditorComponent);
         component = fixture.componentInstance;
@@ -50,6 +58,38 @@ describe('Formatted message composer', () => {
         editable.innerHTML = '<p>Hello <strong>world</strong></p>';
         editable.dispatchEvent(new InputEvent('input', { bubbles: true }));
         expect(emit).toHaveBeenLastCalledWith('Hello **world**');
+    });
+
+    it('inserts a picked reference at a captured caret and blocks sending while an upload is pending', () => {
+        caretAtEnd();
+        const tools = fixture.debugElement.query(By.directive(MessageEditorToolsComponent)).componentInstance as MessageEditorToolsComponent;
+        const emit = vi.spyOn(component.contentChange, 'emit');
+        tools.insert.emit({ markdown: '[faq]Question(/courses/1/faq?faqId=1)[/faq]', range: tools.captureSelection()()! });
+        expect(emit).toHaveBeenLastCalledWith('Hello[faq]Question(/courses/1/faq?faqId=1)[/faq]');
+        const bubbled = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', bubbled);
+        tools.uploadingChange.emit(true);
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(bubbled).not.toHaveBeenCalled();
+        tools.uploadingChange.emit(false);
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(bubbled).toHaveBeenCalledOnce();
+    });
+
+    it('routes pasted and dropped files to the existing conversation upload flow', () => {
+        const tools = fixture.debugElement.query(By.directive(MessageEditorToolsComponent)).componentInstance as MessageEditorToolsComponent;
+        const upload = vi.spyOn(tools, 'uploadFiles').mockResolvedValue(undefined);
+        const files = [new File(['image'], 'image.png')];
+        const paste = new Event('paste', { bubbles: true, cancelable: true });
+        Object.defineProperty(paste, 'clipboardData', { value: { files } });
+        editable.dispatchEvent(paste);
+        const drop = new Event('drop', { bubbles: true, cancelable: true });
+        Object.defineProperty(drop, 'dataTransfer', { value: { files } });
+        editable.dispatchEvent(drop);
+        expect(upload).toHaveBeenNthCalledWith(1, files);
+        expect(upload).toHaveBeenNthCalledWith(2, files);
+        expect(paste.defaultPrevented).toBe(true);
+        expect(drop.defaultPrevented).toBe(true);
     });
 
     it('handles composition and Shift+Enter without bubbling a send shortcut', () => {

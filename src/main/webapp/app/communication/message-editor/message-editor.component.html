@@ -74,6 +74,15 @@
         >
             <fa-icon [icon]="icons.faHashtag" />
         </button>
+        <jhi-message-editor-tools
+            [courseId]="courseId()"
+            [conversationId]="conversation()?.id"
+            [editorRevision]="editorRevision()"
+            [captureSelection]="captureEntitySelection"
+            (insert)="insertResource($event)"
+            (uploadingChange)="uploadStateChanged($event)"
+            (closed)="focus()"
+        />
     </div>
 
     @if (linkOpen()) {
@@ -140,6 +149,7 @@
             (compositionend)="compositionEnd()"
             (paste)="paste($event)"
             (drop)="drop($event)"
+            (dragover)="$event.preventDefault()"
             (click)="clicked($event)"
             (keyup.arrowleft)="selectionChanged()"
             (keyup.arrowright)="selectionChanged()"

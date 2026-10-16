@@ -5,7 +5,7 @@
         variant="text"
         size="small"
         data-testid="toggle-formatted-message-editor"
-        [disabled]="!formattedMode() && (!canUseFormatted() || !effectiveCourseId())"
+        [disabled]="uploadingFormattedAttachment() || (!formattedMode() && (!canUseFormatted() || !effectiveCourseId()))"
         [attr.aria-pressed]="formattedMode()"
         (click)="toggleFormattedMode()"
         (keydown.enter)="$event.stopPropagation()"
@@ -20,20 +20,26 @@
     <jhi-message-editor
         [content]="content() ?? ''"
         (contentChange)="updateField($event)"
+        (uploadingChange)="formattedUploadStateChanged($event)"
         [courseId]="courseId"
         [conversation]="effectiveConversation()"
         [editing]="isUpdating()"
         [suppressNewlineOnEnter]="suppressNewlineOnEnter()"
     />
-    <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
-        <span class="text-xs text-muted-color">{{ 'artemisApp.communication.formattedEditor.moreOptions' | artemisTranslate }}</span>
+    <div class="mt-2 flex flex-wrap items-center justify-end gap-2">
         <div class="flex gap-2">
             @if (showCloseButton()) {
                 <button type="button" tumAetUiButton size="small" variant="text" (click)="closeEditor.emit()">{{ 'artemisApp.communication.cancel' | artemisTranslate }}</button>
             }
             @if (!isUpdating()) {
                 <jhi-redirect-to-iris-button [question]="content()" [course]="course()" [buttonLoading]="isButtonLoading()" [disabled]="isButtonLoading() || !isFormGroupValid()" />
-                <button type="submit" tumAetUiButton size="small" data-testid="send-formatted-message" [disabled]="isButtonLoading() || !isFormGroupValid()">
+                <button
+                    type="submit"
+                    tumAetUiButton
+                    size="small"
+                    data-testid="send-formatted-message"
+                    [disabled]="isButtonLoading() || uploadingFormattedAttachment() || !isFormGroupValid()"
+                >
                     {{ 'artemisApp.conversationsLayout.sendMessage' | artemisTranslate }}
                 </button>
             }

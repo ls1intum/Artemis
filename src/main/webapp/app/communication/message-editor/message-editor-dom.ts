@@ -1,5 +1,5 @@
 import { editorCodeText, editorToMessage, isMessageLinkSafe, messageToEditorHtml } from './message-editor-conversion';
-import { formatMessageSelection } from './message-editor-formatting';
+import { formatMessageSelection, messageSelectionOffset, restoreMessageSelection } from './message-editor-formatting';
 
 interface SelectionPoint {
     path: number[];
@@ -23,6 +23,8 @@ export class MessageEditorDom {
     private history: EditorSnapshot[] = [];
     private historyIndex = -1;
     private savedRange?: Range;
+    private revision = 0;
+    private readonly entitySelections = new WeakMap<Range, { revision: number; start: number; end: number }>();
 
     constructor(
         readonly element: HTMLElement,
@@ -30,6 +32,7 @@ export class MessageEditorDom {
     ) {}
 
     load(message: string): void {
+        this.revision++;
         this.element.innerHTML = messageToEditorHtml(message);
         this.ensureCaret();
         this.savedRange = undefined;
@@ -42,6 +45,50 @@ export class MessageEditorDom {
         const range = this.range();
         this.highlightItem(range);
         this.savedRange = range.cloneRange();
+    }
+
+    /** Captures a stable insertion range for asynchronous pickers without embedding references inside code or links. */
+    captureEntitySelection(): Range | undefined {
+        const range = this.range();
+        if (this.parentElement(range.commonAncestorContainer)?.closest('code, pre, a, [data-message-reference]')) {
+            return undefined;
+        }
+        const captured = range.cloneRange();
+        this.entitySelections.set(captured, {
+            revision: this.revision,
+            start: messageSelectionOffset(this.element, range.startContainer, range.startOffset),
+            end: messageSelectionOffset(this.element, range.endContainer, range.endOffset),
+        });
+        return captured;
+    }
+
+    /** Recovers a picker/upload bookmark after undo or formatting rebuilds the editable DOM. */
+    resolveEntitySelection(range: Range): Range | undefined {
+        const bookmark = this.entitySelections.get(range);
+        if (!bookmark) {
+            return undefined;
+        }
+        if (bookmark.revision !== this.revision) {
+            const length = this.element.textContent?.length ?? 0;
+            range = restoreMessageSelection(this.element, Math.min(bookmark.start, length), Math.min(bookmark.end, length));
+            const collapsed = range.collapsed;
+            const startItem = this.parentElement(range.startContainer)?.closest('[data-message-reference]');
+            const endItem = this.parentElement(range.endContainer)?.closest('[data-message-reference]');
+            if (startItem) {
+                if (collapsed && range.startOffset > 0) {
+                    range.setStartAfter(startItem);
+                } else {
+                    range.setStartBefore(startItem);
+                }
+                if (collapsed) {
+                    range.collapse(true);
+                }
+            }
+            if (endItem && !collapsed) {
+                range.setEndAfter(endItem);
+            }
+        }
+        return this.parentElement(range.commonAncestorContainer)?.closest('code, pre, a, [data-message-reference]') ? undefined : range;
     }
 
     /** Restores the editing selection after focusing the host, which can otherwise move the caret. */
@@ -214,6 +261,7 @@ export class MessageEditorDom {
         this.transact(() => {
             const range = this.range();
             if (!range.collapsed) {
+                this.revision++;
                 this.select(formatMessageSelection(this.element, range, tag));
                 return;
             }
@@ -233,6 +281,7 @@ export class MessageEditorDom {
     /** Applies a block style to the current paragraph without changing reference payloads. */
     block(tag: 'ul' | 'ol' | 'blockquote' | 'pre'): void {
         this.transact(() => {
+            this.revision++;
             const range = this.range();
             const parent = this.parentElement(range.startContainer);
             const existing = parent?.closest(tag);
@@ -455,6 +504,7 @@ export class MessageEditorDom {
     }
 
     private restore(snapshot: EditorSnapshot): void {
+        this.revision++;
         this.element.innerHTML = snapshot.html;
         const resolve = (point: SelectionPoint) => point.path.reduce<Node | undefined>((node, index) => node?.childNodes[index], this.element);
         if (snapshot.start && snapshot.end) {
