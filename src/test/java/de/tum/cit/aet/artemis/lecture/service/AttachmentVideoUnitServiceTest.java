@@ -465,6 +465,23 @@ class AttachmentVideoUnitServiceTest {
     }
 
     @Test
+    void visibilityOnlyUpdateRegeneratesTheStudentVersionEvenWhenReadingTheSavedSlidesFails() {
+        var attachment = attachment();
+        attachment.setStudentVersion("student.pdf");
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.NO_FILE_CHANGE);
+        var hiddenPages = List.of(new HiddenPageInfoDTO("21", ZonedDateTime.parse("2026-07-10T12:00:00Z"), null));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        // The first read builds the state before the update; the read after the visibility is saved fails
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(slide(21L, 1, null))).thenThrow(new IllegalStateException("database unavailable"));
+
+        assertThatCode(() -> service.updateAttachmentVideoUnit(unit, dto, attachment, null, null, false, hiddenPages, null, Set.of())).isInstanceOf(IllegalStateException.class);
+
+        verify(slideSplitterService).updateSlideVisibility(unit, hiddenPages);
+        verify(attachmentService).regenerateStudentVersionOrRemoveOutdated(attachment);
+    }
+
+    @Test
     void failureAfterStagingDiscardsTheStagedStudentVersion() throws Exception {
         var attachment = attachment();
         var unit = attachmentVideoUnit("Unit", attachment);

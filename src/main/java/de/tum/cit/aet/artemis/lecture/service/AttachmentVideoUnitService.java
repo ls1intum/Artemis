@@ -264,9 +264,10 @@ public class AttachmentVideoUnitService {
             keepAttachmentInStepWithUnit(existingAttachment, savedAttachmentVideoUnit);
         }
 
-        LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit, projectedSlideHiddenUntilBySlideNumber);
-        var updateKinds = lectureContentUpdateClassifierService.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
         try {
+            // Reading the saved state for Iris can fail too, after the slide visibility is saved; the regeneration below has to run either way.
+            LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit, projectedSlideHiddenUntilBySlideNumber);
+            var updateKinds = lectureContentUpdateClassifierService.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
             triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds, visibilitySyncDeferredToSlideSplit);
         }
         finally {
