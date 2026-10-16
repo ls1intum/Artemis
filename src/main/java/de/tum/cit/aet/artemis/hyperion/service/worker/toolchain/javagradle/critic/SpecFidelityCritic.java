@@ -473,7 +473,7 @@ public class SpecFidelityCritic {
     }
 
     private static boolean hasCompleteArtifactSet(Map<RepositoryRole, Map<String, String>> artifacts) {
-        return artifacts != null && List.of(RepositoryRole.SOLUTION, RepositoryRole.TEMPLATE, RepositoryRole.TESTS).stream()
+        return artifacts != null && artifacts.get(RepositoryRole.TEMPLATE) != null && List.of(RepositoryRole.SOLUTION, RepositoryRole.TESTS).stream()
                 .allMatch(type -> artifacts.get(type) != null && artifacts.get(type).values().stream().anyMatch(content -> content != null && !content.isBlank()));
     }
 

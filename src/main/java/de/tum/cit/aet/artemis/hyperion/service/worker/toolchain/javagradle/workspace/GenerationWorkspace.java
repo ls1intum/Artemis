@@ -47,7 +47,7 @@ public class GenerationWorkspace {
 
     private static final RepositoryRole[] SEEDED_REPOSITORIES = { RepositoryRole.TEMPLATE, RepositoryRole.SOLUTION, RepositoryRole.TESTS };
 
-    /** Must match {@link #directoryFor(RepositoryRole)}: the layout probe lists these directories and scans them for build manifests. */
+    /** Repository roots used for materialization and layout probing; must match {@link #directoryFor(RepositoryRole)}. */
     private static final String[] REPOSITORY_DIRECTORIES = { "solution", "template", "tests" };
 
     /**
@@ -414,6 +414,11 @@ public class GenerationWorkspace {
         }
         if (specDocument != null) {
             workspaceFiles.put(SPEC_DOCUMENT_FILE, specDocument);
+        }
+        SandboxExecResultDTO directories = sandbox.exec(sessionId, SANDBOX_READ_TIMEOUT, "sh", "-c",
+                "cd " + WORKSPACE + " && mkdir -p -- " + String.join(" ", REPOSITORY_DIRECTORIES));
+        if (!directories.isSuccess()) {
+            throw new IllegalStateException("Could not create sandbox repository directories: " + directories.combinedOutput());
         }
         sandbox.copyIn(sessionId, WORKSPACE, WorkspaceArchive.buildFilesTarStream(workspaceFiles, workspaceBinaryFiles, executableFiles));
     }

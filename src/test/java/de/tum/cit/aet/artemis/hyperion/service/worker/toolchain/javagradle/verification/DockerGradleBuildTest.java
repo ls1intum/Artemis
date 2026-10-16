@@ -19,6 +19,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import com.github.dockerjava.api.DockerClient;
 
@@ -32,6 +34,7 @@ import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationInput;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.GenerationResources;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.RepositoryRole;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent.SandboxAgentTools;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.CollectedReports;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
@@ -66,6 +69,29 @@ class DockerGradleBuildTest {
     void cleanup() throws IOException {
         sandbox.destroyActiveSessions();
         docker.close();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void emptyRepositoryRootsRemainReadableAfterSeedingAndReset(boolean reset) {
+        String session = sandbox.createSession();
+        WorkspaceSnapshot sourceOnlyTemplate = new WorkspaceSnapshot(List.of(new WorkspaceFile("template/src/Old.java", "class Old {}".getBytes(StandardCharsets.UTF_8), false)));
+        var seed = workspace.seedWorkspace(sandbox, session, exercise, Mode.GENERATE, sourceOnlyTemplate, true);
+        if (reset) {
+            sandbox.resetSession(session);
+            workspace.materializeRepositoryFiles(sandbox, session, exercise, Mode.GENERATE, seed.repositoryTextFiles(), seed.repositoryMetadata(), seed.repositoryBinaryFiles(),
+                    exercise.problemStatement(), null, null);
+        }
+
+        JavaSourceSnapshot sources = JavaSourceSnapshot.capture(sandbox, session);
+        assertThat(sources.templateFiles()).isEmpty();
+        assertThat(sources.solutionFiles()).isEmpty();
+        assertThat(sources.testsFiles()).isEmpty();
+        for (RepositoryRole role : List.of(RepositoryRole.TEMPLATE, RepositoryRole.SOLUTION, RepositoryRole.TESTS)) {
+            var extracted = workspace.extractRepository(sandbox, session, role, seed.repositoryMetadata().get(role));
+            assertThat(extracted.extractionFailed()).as("%s extraction after reset=%s", role, reset).isFalse();
+            assertThat(extracted.files()).isEmpty();
+        }
     }
 
     @Test

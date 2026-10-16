@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,6 +16,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import de.tum.cit.aet.artemis.aiworker.dto.SandboxExecResultDTO;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceFile;
 import de.tum.cit.aet.artemis.hyperion.protocol.WorkspaceSnapshot;
@@ -131,6 +133,16 @@ class GenerationWorkspaceTest {
         assertThat(sandbox.contents.binaryDigests()).containsEntry("tests/wrapper.jar", WorkspaceArchive.sha256(binary));
         assertThat(sandbox.contents.executableFiles()).containsExactly("tests/gradlew");
         assertThat(sandbox.contents.textFiles().containsKey("reference/problem-statement.md")).isEqualTo(mode == Mode.GENERATE);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void repositoryDirectoryFailureStopsMaterialization(boolean timedOut) {
+        var failed = FakeInteractiveSandbox.returning(new SandboxExecResultDTO(timedOut ? 0 : 1, "", "mkdir failed", timedOut));
+
+        assertThatThrownBy(() -> service.seedWorkspace(failed, "session", exercise, Mode.GENERATE, new WorkspaceSnapshot(List.of()), false))
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("Could not create sandbox repository directories");
+        assertThat(failed.copiedPaths()).isEmpty();
     }
 
     private static WorkspaceFile text(String path, String content, boolean executable) {

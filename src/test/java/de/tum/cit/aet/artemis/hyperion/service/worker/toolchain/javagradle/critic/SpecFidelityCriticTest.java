@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -153,6 +154,53 @@ class SpecFidelityCriticTest {
         return Map.of(RepositoryRole.SOLUTION, Map.of("src/ReviewFixture.java", "class ReviewFixture {}"), RepositoryRole.TEMPLATE,
                 Map.of("src/ReviewFixture.java", "class ReviewFixture {}"), RepositoryRole.TESTS,
                 Map.of("test-names.txt", testNames.isEmpty() ? "(no test names)" : String.join("\n", testNames)));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void emptyTemplateRunsBothQualityReviewPasses(boolean adaptation) {
+        var scripted = criticScripted(jsonResponse("{}"), jsonResponse("{}"));
+        Map<RepositoryRole, Map<String, String>> artifacts = Map.of(RepositoryRole.SOLUTION, COMPLETE_ARTIFACTS.get(RepositoryRole.SOLUTION), RepositoryRole.TEMPLATE, Map.of(),
+                RepositoryRole.TESTS, COMPLETE_ARTIFACTS.get(RepositoryRole.TESTS));
+
+        SpecFidelityReport report = adaptation
+                ? scripted.critic().critiqueAdaptation("Implement the requested behavior.", "# Task", List.of(), "Preserve the empty starter.", artifacts, null, () -> false, null)
+                : critique(scripted.critic(), "Implement the requested behavior.", "# Task", List.of(), artifacts, null);
+
+        assertThat(report.findings()).isEmpty();
+        verify(scripted.model(), times(2)).call(any(Prompt.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "SOLUTION", "TEMPLATE", "TESTS" })
+    void missingRepositorySnapshotStillStopsBothReviewEntryPoints(String missingRole) {
+        Map<RepositoryRole, Map<String, String>> artifacts = new EnumMap<>(COMPLETE_ARTIFACTS);
+        artifacts.remove(RepositoryRole.valueOf(missingRole));
+        var scripted = criticScripted(List.of());
+
+        SpecFidelityReport generation = critique(scripted.critic(), "Implement the requested behavior.", "# Task", List.of(), artifacts, null);
+        SpecFidelityReport adaptation = scripted.critic().critiqueAdaptation("Implement the requested behavior.", "# Task", List.of(), "Preserve the starter.", artifacts, null,
+                () -> false, null);
+
+        assertThat(generation.findings()).anySatisfy(finding -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
+        assertThat(adaptation.findings()).anySatisfy(finding -> assertThat(finding.kind()).isEqualTo(Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE));
+        verify(scripted.model(), never()).call(any(Prompt.class));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "SOLUTION", "TESTS" })
+    void emptyExecutableRepositoryStillStopsBothReviewEntryPoints(String emptyRole) {
+        Map<RepositoryRole, Map<String, String>> artifacts = new EnumMap<>(COMPLETE_ARTIFACTS);
+        artifacts.put(RepositoryRole.valueOf(emptyRole), Map.of());
+        var scripted = criticScripted(List.of());
+
+        SpecFidelityReport generation = critique(scripted.critic(), "Implement the requested behavior.", "# Task", List.of(), artifacts, null);
+        SpecFidelityReport adaptation = scripted.critic().critiqueAdaptation("Implement the requested behavior.", "# Task", List.of(), "Preserve the starter.", artifacts, null,
+                () -> false, null);
+
+        assertThat(generation.findings()).anySatisfy(finding -> assertThat(finding.kind()).isEqualTo(Kind.QUALITY_REVIEW_UNAVAILABLE));
+        assertThat(adaptation.findings()).anySatisfy(finding -> assertThat(finding.kind()).isEqualTo(Kind.ADAPTATION_SCOPE_REVIEW_UNAVAILABLE));
+        verify(scripted.model(), never()).call(any(Prompt.class));
     }
 
     @Test
