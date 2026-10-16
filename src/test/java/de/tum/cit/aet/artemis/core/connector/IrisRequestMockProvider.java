@@ -179,6 +179,10 @@ public class IrisRequestMockProvider {
         mockPostRequest("/competency-extraction/run", PyrisCompetencyExtractionPipelineExecutionDTO.class, responseConsumer);
     }
 
+    public void mockFaqIngestionWebhookError(HttpStatus status) {
+        mockPostError(webhooksApiURL.toString(), "/faqs/ingest", status.value());
+    }
+
     public void mockFaqIngestionWebhookRunResponse(Consumer<PyrisWebhookFaqIngestionExecutionDTO> responseConsumer) {
         mockWebhookPost("/faqs/ingest", PyrisWebhookFaqIngestionExecutionDTO.class, responseConsumer);
     }

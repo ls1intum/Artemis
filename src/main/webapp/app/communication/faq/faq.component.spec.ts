@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { NEVER, of, throwError } from 'rxjs';
+import { NEVER, Subject, of, throwError } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaqService } from 'app/communication/faq/faq.service';
@@ -17,6 +17,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AccountService } from 'app/core/auth/account.service';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { CourseTitleBarService } from 'app/course/shared/services/course-title-bar.service';
+import { DialogService } from 'primeng/dynamicdialog';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 
 function createFaq(id: number, category: string, color: string): Faq {
@@ -103,6 +105,7 @@ describe('FaqComponent', () => {
                     },
                 }),
                 provideHttpClient(),
+                DialogService,
             ],
         });
 
@@ -255,5 +258,55 @@ describe('FaqComponent', () => {
             expect.objectContaining({ id: faq1.id, faqState: FaqState.ACCEPTED, questionTitle: faq1.questionTitle }),
         );
         expect(faq1.faqState).toEqual(FaqState.PROPOSED);
+    });
+
+    it('reloads FAQs and categories after import', () => {
+        faqComponentFixture.detectChanges();
+        const faqsSpy = vi.spyOn(faqService, 'findAllByCourseId');
+        const categoriesSpy = vi.spyOn(faqService, 'findAllCategoriesByCourseId');
+        faqComponent.onFaqsImported(2);
+        expect(faqsSpy).toHaveBeenCalledExactlyOnceWith(1);
+        expect(categoriesSpy).toHaveBeenCalledExactlyOnceWith(1);
+        expect(faqComponent.faqs).toHaveLength(3);
+    });
+
+    it.each([true, false])('preserves the active search after import when FAQs reload first: %s', (faqsFirst) => {
+        faqComponentFixture.detectChanges();
+        faq2.questionTitle = 'matching question';
+        faq3.questionTitle = 'unrelated question';
+        vi.spyOn(faqService, 'hasSearchTokens').mockImplementation(FaqService.prototype.hasSearchTokens);
+        faqComponent.setSearchValue('matching');
+        faqComponent.refreshFaqList('matching');
+        expect(faqComponent.filteredFaqs()).toEqual([faq2]);
+        const faqsResponse = new Subject<HttpResponse<Faq[]>>();
+        const categoriesResponse = new Subject<HttpResponse<string[]>>();
+        vi.spyOn(faqService, 'findAllByCourseId').mockReturnValue(faqsResponse);
+        vi.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(categoriesResponse);
+
+        faqComponent.onFaqsImported(1);
+        const reloadFaqs = () => faqsResponse.next(new HttpResponse({ body: [faq1, faq2, faq3] }));
+        const reloadCategories = () => categoriesResponse.next(new HttpResponse({ body: [] }));
+        (faqsFirst ? reloadFaqs : reloadCategories)();
+        expect(faqComponent.filteredFaqs()).toEqual([faq2]);
+        (faqsFirst ? reloadCategories : reloadFaqs)();
+        expect(faqComponent.filteredFaqs()).toEqual([faq2]);
+        expect(faqComponent.searchInput.getValue()).toBe('matching');
+        faqsResponse.complete();
+        categoriesResponse.complete();
+    });
+
+    it('offers FAQ import to instructors and hides it from tutors', () => {
+        faqComponentFixture.detectChanges();
+        faqComponent.isAtLeastInstructor.set(true);
+        faqComponentFixture.detectChanges();
+        const view = TestBed.inject(CourseTitleBarService).actionsTemplate()!.createEmbeddedView({});
+        view.detectChanges();
+        const actions = view.rootNodes[0] as HTMLElement;
+        expect(actions.querySelector('[data-testid="import-faqs"]')).not.toBeNull();
+        faqComponent.isAtLeastInstructor.set(false);
+        faqComponentFixture.detectChanges();
+        view.detectChanges();
+        expect(actions.querySelector('[data-testid="import-faqs"]')).toBeNull();
+        view.destroy();
     });
 });
