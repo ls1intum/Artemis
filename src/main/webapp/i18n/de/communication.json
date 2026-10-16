@@ -208,7 +208,46 @@
                 "showMore": "Mehr anzeigen"
             },
             "newMessages": "Neu",
-            "newMessagesButton": "Zur ersten ungelesenen Nachricht springen"
+            "newMessagesButton": "Zur ersten ungelesenen Nachricht springen",
+            "formattedEditor": {
+                "tryFormatted": "Formatierten Editor ausprobieren (experimentell)",
+                "useMarkdown": "Markdown-Editor verwenden",
+                "unsupported": "Diese Nachricht verwendet Formatierungen, die derzeit nur in Markdown bearbeitet werden können.",
+                "moreOptions": "Anhänge, Folien, FAQs und die Emoji-Suche sind im Markdown-Editor verfügbar.",
+                "formatting": "Nachricht formatieren",
+                "bold": "Fett (Strg/Cmd+B)",
+                "italic": "Kursiv (Strg/Cmd+I)",
+                "underline": "Unterstrichen (Strg/Cmd+U)",
+                "strikethrough": "Durchgestrichen",
+                "inlineCode": "Inline-Code",
+                "bulletedList": "Aufzählung",
+                "orderedList": "Nummerierte Liste",
+                "quote": "Zitat",
+                "codeBlock": "Codeblock",
+                "link": "Link einfügen oder bearbeiten (Strg/Cmd+K)",
+                "mention": "Person erwähnen",
+                "reference": "Kanal, Aufgabe oder Vorlesung verlinken",
+                "linkText": "Linktext",
+                "linkUrl": "Link-URL",
+                "apply": "Übernehmen",
+                "unlink": "Verlinkung entfernen",
+                "invalidLink": "Gib eine gültige Web-, E-Mail- oder Artemis-URL ein.",
+                "message": "Nachricht",
+                "hint": "Mit @ nach Personen oder mit # nach Kanälen, Aufgaben und Vorlesungen suchen. Die Rücktaste wählt einen Verweis aus; erneutes Drücken löscht ihn.",
+                "loading": "Suche läuft…",
+                "searchError": "Die Suche konnte nicht geladen werden. Dein Text bleibt erhalten.",
+                "retry": "Erneut versuchen",
+                "noResults": "Keine Ergebnisse. Weiterschreiben oder mit Escape schließen.",
+                "choose": "Mit den Pfeiltasten auswählen und mit Enter einfügen. Escape schließt die Liste.",
+                "suggestions": "Nachrichtenverweise",
+                "kind": {
+                    "user": "Person",
+                    "channel": "Kanal",
+                    "exercise": "Aufgabe",
+                    "lecture": "Vorlesung",
+                    "message": "Nachricht"
+                }
+            }
         },
         "communicationDisabled": {
             "title": "Willkommen zur Kommunikation!",

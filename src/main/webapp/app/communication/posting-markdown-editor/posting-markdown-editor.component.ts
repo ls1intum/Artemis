@@ -47,6 +47,11 @@ import { PostingEditType } from '../communication.util';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { FileService } from 'app/foundation/service/file.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { MessageEditorComponent } from 'app/communication/message-editor/message-editor.component';
+import { canEditMessageVisually } from 'app/communication/message-editor/message-editor-conversion';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -60,7 +65,7 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
     ],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MarkdownEditorMonacoComponent, PostingContentComponent],
+    imports: [MarkdownEditorMonacoComponent, PostingContentComponent, MessageEditorComponent, TumAetUiButtonDirective, ArtemisTranslatePipe, RedirectToIrisButtonComponent],
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterViewInit {
     private communicationService = inject(CommunicationService);
@@ -98,6 +103,11 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     readonly lectureAttachmentReferenceAction = signal<LectureAttachmentReferenceAction>(undefined!);
     readonly defaultActions = signal<TextEditorAction[]>(undefined!);
     readonly content = signal<string | undefined>(undefined);
+    readonly formattedMode = signal(false);
+    readonly canUseFormatted = computed(() => canEditMessageVisually(this.content() ?? ''));
+    readonly effectiveCourseId = computed(() => this.course()?.id ?? this.communicationService.getCourse()?.id);
+    readonly effectiveConversation = computed(() => this.activeConversation() ?? this.communicationService.getCurrentConversation());
+    readonly isUpdating = computed(() => this.editType() === PostingEditType.UPDATE);
     previewMode = false;
     fallbackConversationId = computed<number | undefined>(() => this.activeConversation()?.id);
 
@@ -204,6 +214,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * @param value
      */
     writeValue(value: string | undefined): void {
+        if (!canEditMessageVisually(value ?? '')) {
+            this.formattedMode.set(false);
+        }
         this.content.set(value ?? '');
     }
 
@@ -230,6 +243,25 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         this.valueChanged();
     }
 
+    /** Opts this composer into the exploration after synchronizing the existing editor. */
+    toggleFormattedMode(): void {
+        if (this.formattedMode()) {
+            this.formattedMode.set(false);
+            return;
+        }
+        this.flushPendingTextChange();
+        if (this.canUseFormatted()) {
+            this.formattedMode.set(true);
+        }
+    }
+
+    /** Ignores delayed emissions from the hidden Markdown editor while formatted editing owns the value. */
+    onMarkdownChange(value: string): void {
+        if (!this.formattedMode()) {
+            this.updateField(value);
+        }
+    }
+
     onKeyDown(event: KeyboardEvent) {
         // Prevent a newline from being added to the text when pressing enter
         if (this.suppressNewlineOnEnter() && event.key === 'Enter' && !event.shiftKey) {
@@ -244,6 +276,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * keystrokes. Call this before submitting the form to sync the control with the editor.
      */
     flushPendingTextChange(): void {
-        this.markdownEditor().flushPendingTextChange();
+        if (!this.formattedMode()) {
+            this.markdownEditor().flushPendingTextChange();
+        }
     }
 }

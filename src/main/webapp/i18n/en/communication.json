@@ -208,7 +208,46 @@
                 "showMore": "Show more"
             },
             "newMessages": "New",
-            "newMessagesButton": "Jump to first unread message"
+            "newMessagesButton": "Jump to first unread message",
+            "formattedEditor": {
+                "tryFormatted": "Try formatted editor (experimental)",
+                "useMarkdown": "Use Markdown editor",
+                "unsupported": "This message uses formatting that is currently only editable in Markdown.",
+                "moreOptions": "Attachments, slides, FAQs and emoji search are available in the Markdown editor.",
+                "formatting": "Message formatting",
+                "bold": "Bold (Ctrl/Cmd+B)",
+                "italic": "Italic (Ctrl/Cmd+I)",
+                "underline": "Underline (Ctrl/Cmd+U)",
+                "strikethrough": "Strikethrough",
+                "inlineCode": "Inline code",
+                "bulletedList": "Bulleted list",
+                "orderedList": "Numbered list",
+                "quote": "Quote",
+                "codeBlock": "Code block",
+                "link": "Add or edit link (Ctrl/Cmd+K)",
+                "mention": "Mention a person",
+                "reference": "Reference a channel, exercise or lecture",
+                "linkText": "Link text",
+                "linkUrl": "Link URL",
+                "apply": "Apply",
+                "unlink": "Remove link",
+                "invalidLink": "Enter a valid web, email or Artemis URL.",
+                "message": "Message",
+                "hint": "Type @ for people or # for channels, exercises and lectures. Backspace selects a reference; press again to delete it.",
+                "loading": "Searching…",
+                "searchError": "Search could not be loaded. Your text is unchanged.",
+                "retry": "Retry",
+                "noResults": "No results. Keep typing or press Escape to close.",
+                "choose": "Use the arrow keys and Enter to insert. Escape closes this list.",
+                "suggestions": "Message references",
+                "kind": {
+                    "user": "Person",
+                    "channel": "Channel",
+                    "exercise": "Exercise",
+                    "lecture": "Lecture",
+                    "message": "Message"
+                }
+            }
         },
         "communicationDisabled": {
             "title": "Welcome to Communication!",

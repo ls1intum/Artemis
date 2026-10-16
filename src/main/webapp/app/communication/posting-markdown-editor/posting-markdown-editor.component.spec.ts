@@ -49,6 +49,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PostingEditType } from 'app/communication/communication.util';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { MessageEditorComponent } from 'app/communication/message-editor/message-editor.component';
+import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -156,8 +158,8 @@ describe('PostingsMarkdownEditor', () => {
             declarations: [],
         });
         TestBed.overrideComponent(PostingMarkdownEditorComponent, {
-            remove: { imports: [MarkdownEditorMonacoComponent] },
-            add: { imports: [MockComponent(MarkdownEditorMonacoComponent)] },
+            remove: { imports: [MarkdownEditorMonacoComponent, MessageEditorComponent, RedirectToIrisButtonComponent] },
+            add: { imports: [MockComponent(MarkdownEditorMonacoComponent), MockComponent(MessageEditorComponent), MockComponent(RedirectToIrisButtonComponent)] },
         });
         fixture = TestBed.createComponent(PostingMarkdownEditorComponent);
         component = fixture.componentInstance;
@@ -320,8 +322,8 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should write value of form group in content variable', () => {
-        component.writeValue(communicationAnswerPostUser2 as unknown as string);
-        expect(component.content()).toEqual(communicationAnswerPostUser2);
+        component.writeValue(communicationAnswerPostUser2.content);
+        expect(component.content()).toEqual(communicationAnswerPostUser2.content);
     });
 
     it('should write an empty string into content for undefined values', () => {
@@ -812,6 +814,42 @@ describe('PostingsMarkdownEditor', () => {
             getColumn: expect.any(Function),
         });
         expect(cursorPosition?.getColumn()).toBe(5);
+    });
+
+    it('flushes pending Markdown before opting into the formatted composer', () => {
+        component.content.set('Hello');
+        const flush = vi.spyOn(mockMarkdownEditorComponent, 'flushPendingTextChange').mockImplementation(() => component.updateField('Hello **world**'));
+        component.toggleFormattedMode();
+        expect(flush).toHaveBeenCalledOnce();
+        expect(component.formattedMode()).toBe(true);
+        expect(component.content()).toBe('Hello **world**');
+    });
+
+    it('keeps unsupported legacy content in the existing editor', () => {
+        component.content.set('$$x^2$$');
+        component.toggleFormattedMode();
+        expect(component.formattedMode()).toBe(false);
+        expect(component.content()).toBe('$$x^2$$');
+    });
+
+    it('does not flush a hidden Monaco instance over current formatted content', () => {
+        component.content.set('Hello');
+        component.toggleFormattedMode();
+        const flush = vi.spyOn(mockMarkdownEditorComponent, 'flushPendingTextChange');
+        flush.mockClear();
+        component.updateField('Hello [user]Anna(anna)[/user]');
+        component.flushPendingTextChange();
+        component.onMarkdownChange('stale value');
+        expect(flush).not.toHaveBeenCalled();
+        expect(component.content()).toBe('Hello [user]Anna(anna)[/user]');
+    });
+
+    it('returns to Markdown when a different message contains unsupported content', () => {
+        component.content.set('Hello');
+        component.toggleFormattedMode();
+        component.writeValue('$$x^2$$');
+        expect(component.formattedMode()).toBe(false);
+        expect(component.content()).toBe('$$x^2$$');
     });
 
     it('should insert emoji at the cursor position', () => {

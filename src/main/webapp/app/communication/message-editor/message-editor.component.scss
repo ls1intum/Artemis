@@ -1,0 +1,97 @@
+jhi-message-editor {
+    display: block;
+    min-width: 0;
+}
+
+jhi-message-editor .message-composer {
+    border: 1px solid var(--artemis-control-border);
+    background: var(--artemis-control-background);
+    color: var(--artemis-control-color);
+}
+
+jhi-message-editor .message-editor-divider {
+    border-color: var(--border-color);
+}
+
+.message-editor-muted {
+    color: var(--artemis-control-muted);
+}
+
+jhi-message-editor .message-editor-content {
+    min-height: 5rem;
+    max-height: 20rem;
+    overflow: auto;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    padding: 0.75rem;
+    outline: none;
+
+    &:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: -2px;
+    }
+
+    // The editable DOM belongs to the editing adapter, so Angular does not add encapsulation attributes.
+    :is(p, ul, ol, blockquote, pre) {
+        margin: 0 0 0.5rem;
+    }
+
+    ul {
+        list-style: disc;
+        padding-inline-start: 1.5rem;
+    }
+
+    ol {
+        list-style: decimal;
+        padding-inline-start: 1.5rem;
+    }
+
+    [data-message-reference] {
+        border-radius: 0.25rem;
+        background: color-mix(in srgb, var(--primary) 12%, var(--artemis-control-background));
+        color: var(--artemis-control-color);
+        padding-inline: 0.2rem;
+        box-decoration-break: clone;
+    }
+
+    a {
+        color: color-mix(in srgb, var(--primary) 70%, var(--artemis-control-color));
+        text-decoration: underline;
+        text-underline-offset: 0.15em;
+        cursor: text;
+    }
+
+    blockquote {
+        border-inline-start: 1px solid var(--border-color);
+        padding-inline-start: 0.75rem;
+        color: var(--artemis-control-muted);
+    }
+
+    code {
+        font-family: monospace;
+        background: var(--hover-slightly-darker-body-bg);
+    }
+
+    pre {
+        padding: 0.5rem;
+        background: var(--hover-slightly-darker-body-bg);
+        white-space: pre-wrap;
+    }
+
+    ::selection {
+        background: color-mix(in srgb, var(--primary) 25%, var(--artemis-control-background));
+    }
+}
+
+.message-suggestions {
+    border: 1px solid var(--border-color);
+    background: var(--popover-bg);
+    color: var(--body-color);
+    width: min(28rem, calc(100vw - 2rem));
+    max-height: 18rem;
+    overflow: auto;
+}
+
+.message-suggestion[aria-selected='true'] {
+    background: var(--hover-slightly-darker-body-bg);
+}
