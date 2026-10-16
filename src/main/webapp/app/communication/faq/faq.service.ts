@@ -40,7 +40,13 @@ export class FaqService {
             .pipe(map((res: EntityResponseType) => FaqService.convertFaqCategoriesFromServer(res)));
     }
 
-    /** Searches visible FAQs outside the target course without loading every source course. */
+    /**
+     * Searches visible FAQs outside the target course without loading every source course.
+     * @param courseId target course, excluded from the results
+     * @param searchTerm literal substring of the question, answer, or course name
+     * @param page zero-based result page
+     * @returns source FAQ details and exact pagination totals, normalizing omitted empty fields
+     */
     searchForImport(courseId: number, searchTerm: string, page: number): Observable<FaqImportSearchResult> {
         const params = new HttpParams().set('searchTerm', searchTerm).set('page', page);
         return this.http
@@ -48,7 +54,13 @@ export class FaqService {
             .pipe(map((result) => ({ resultsOnPage: result.resultsOnPage ?? [], numberOfPages: result.numberOfPages ?? 0, totalElements: result.totalElements ?? 0 })));
     }
 
-    /** Copies selected FAQs into the target course. Source access is rechecked by the server. */
+    /**
+     * Copies selected FAQs into the target course and decodes their categories for the course list.
+     * The server rechecks source access and accepts at most 500 distinct source IDs.
+     * @param courseId target course where the caller is an instructor
+     * @param faqIds source FAQ IDs selected across searches and pages
+     * @returns the created FAQ copies with their new IDs
+     */
     importFaqs(courseId: number, faqIds: number[]): Observable<EntityArrayResponseType> {
         return this.http
             .post<Faq[]>(`${this.resourceUrl}/${courseId}/faqs/import`, { faqIds }, { observe: 'response' })

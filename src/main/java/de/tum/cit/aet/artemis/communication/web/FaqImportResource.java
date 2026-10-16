@@ -54,6 +54,14 @@ public class FaqImportResource {
 
     private final Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService;
 
+    /**
+     * Creates the FAQ import endpoints and their optional global-search integration.
+     *
+     * @param faqImportService                searches and persists FAQ copies
+     * @param userRepository                  loads the caller for source authorization
+     * @param faqService                      ingests accepted copies into Iris when enabled
+     * @param searchableEntityWeaviateService indexes copies when global search is available
+     */
     public FaqImportResource(FaqImportService faqImportService, UserRepository userRepository, FaqService faqService,
             Optional<SearchableEntityWeaviateService> searchableEntityWeaviateService) {
         this.faqImportService = faqImportService;
@@ -92,8 +100,13 @@ public class FaqImportResource {
         return ResponseEntity.created(URI.create("/api/communication/courses/" + courseId + "/faqs")).body(imported.stream().map(FaqDTO::new).toList());
     }
 
+    /**
+     * Updates Iris and global search independently after the copy has been committed.
+     * Integration failures are logged without changing the successful import response, preventing duplicate copies on retry.
+     *
+     * @param faq persisted FAQ copy with its target course loaded
+     */
     private void indexImportedFaq(Faq faq) {
-        // The copies are already committed. An unavailable index must not turn a successful import into a retry that creates duplicates.
         try {
             faqService.autoIngestFaqIntoPyris(faq.getId());
         }

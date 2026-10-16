@@ -44,6 +44,13 @@ public class FaqImportService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    /**
+     * Creates the FAQ importer with repository persistence and source-course authorization.
+     *
+     * @param faqRepository             reads source FAQs and saves copies
+     * @param courseRepository          loads the target course
+     * @param authorizationCheckService checks the caller's current source access
+     */
     public FaqImportService(FaqRepository faqRepository, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService) {
         this.faqRepository = faqRepository;
         this.courseRepository = courseRepository;
@@ -97,6 +104,13 @@ public class FaqImportService {
         return faqRepository.saveAll(copies);
     }
 
+    /**
+     * Creates an unpersisted FAQ with independent categories, retaining the source content and publication state.
+     *
+     * @param source       FAQ to copy without modifying it
+     * @param targetCourse course that will own the new FAQ
+     * @return a copy without an ID, ready for insertion
+     */
     private Faq copyFaq(Faq source, Course targetCourse) {
         Faq copy = new Faq();
         copy.setQuestionTitle(source.getQuestionTitle());

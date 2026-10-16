@@ -63,15 +63,22 @@ export class FaqImportDialogComponent implements OnInit {
     private readonly searchChanges = new Subject<void>();
     private searchSubscription?: Subscription;
 
+    /** Debounces query changes and cancels the active request when the dialog is destroyed. */
     constructor() {
         this.searchChanges.pipe(debounceTime(300), takeUntilDestroyed()).subscribe(() => this.loadPage(0));
         this.destroyRef.onDestroy(() => this.searchSubscription?.unsubscribe());
     }
 
+    /** Loads the initial result page once the target course input is available. */
     ngOnInit(): void {
         this.loadPage(0);
     }
 
+    /**
+     * Cancels results for the previous query immediately and schedules a search from the first page.
+     * Existing selections remain available across queries.
+     * @param value the current search input
+     */
     protected changeSearch(value: string): void {
         this.searchTerm.set(value);
         // Cancel immediately so an earlier request cannot replace results while the next query is debounced.
@@ -81,6 +88,11 @@ export class FaqImportDialogComponent implements OnInit {
         this.searchChanges.next();
     }
 
+    /**
+     * Replaces the displayed page, cancelling any older request so its response cannot overwrite the results.
+     * A failed request leaves the selection intact and exposes the retry state.
+     * @param page zero-based result page
+     */
     protected loadPage(page: number): void {
         this.searchSubscription?.unsubscribe();
         this.page.set(page);
@@ -100,6 +112,11 @@ export class FaqImportDialogComponent implements OnInit {
         });
     }
 
+    /**
+     * Updates one FAQ selection without affecting selections on other pages or for other queries.
+     * @param id source FAQ ID
+     * @param checked whether the FAQ should be included in the import
+     */
     protected toggleFaq(id: number, checked: boolean): void {
         this.selectedIds.update((previous) => {
             const next = new Set(previous);
@@ -113,6 +130,10 @@ export class FaqImportDialogComponent implements OnInit {
         this.importFailed.set(false);
     }
 
+    /**
+     * Selects or deselects the displayed results while preserving selections outside the current page.
+     * @param checked whether all displayed FAQs should be included in the import
+     */
     protected togglePage(checked: boolean): void {
         this.selectedIds.update((previous) => {
             const next = new Set(previous);
@@ -128,11 +149,16 @@ export class FaqImportDialogComponent implements OnInit {
         this.importFailed.set(false);
     }
 
+    /** Clears the complete selection, including FAQs hidden by pagination or the current search. */
     protected clearSelection(): void {
         this.selectedIds.set(new Set());
         this.importFailed.set(false);
     }
 
+    /**
+     * Submits the selected IDs once, ignoring empty selections and concurrent submissions.
+     * Success emits the number of created copies and closes the dialog; failure preserves the selection for retry.
+     */
     protected importSelected(): void {
         if (!this.selectedCount() || this.importing()) {
             return;

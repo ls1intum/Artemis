@@ -149,12 +149,18 @@ export class FaqComponent implements OnInit, OnDestroy {
         this.filteredFaqs.set([...this.sortService.sortByProperty(this.filteredFaqs(), this.predicate, this.ascending)]);
     }
 
+    /**
+     * Reloads FAQs and categories after copying FAQs into this course and reports the created count.
+     * Each reload reapplies the visible search and category filters independently of response order.
+     * @param count number of FAQs created by the import
+     */
     onFaqsImported(count: number): void {
         this.loadAll();
         this.loadCourseFaqCategories(this.courseId());
         this.alertService.success('artemisApp.faq.import.success', { count });
     }
 
+    /** Reloads the course FAQs while preserving the active search, category filters, and sort order. */
     private loadAll() {
         this.faqService
             .findAllByCourseId(this.courseId())
@@ -171,6 +177,10 @@ export class FaqComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * Reloads categories, removes filters for categories that no longer exist, and reapplies the current search and sort.
+     * @param courseId course whose FAQ categories should be loaded
+     */
     private loadCourseFaqCategories(courseId: number) {
         loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
             this.existingCategories.set(existingCategories);
@@ -181,6 +191,11 @@ export class FaqComponent implements OnInit, OnDestroy {
         });
     }
 
+    /**
+     * Prunes category filters that are absent from the reloaded category list without changing the search query.
+     * @param activeFilters currently selected category names
+     * @param existingCategories categories still present in the course
+     */
     private checkAppliedFilter(activeFilters: Set<string>, existingCategories: FaqCategory[]) {
         const updatedFilters = new Set(activeFilters);
         updatedFilters.forEach((activeFilter) => {
