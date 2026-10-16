@@ -38,12 +38,16 @@ class WorkerTransportProviderTest {
     @Test
     void hazelcastClientSharesAcknowledgedEventWithCore() {
         var config = new com.hazelcast.config.Config().setClusterName("worker-transport-" + UUID.randomUUID());
+        // Keep the client away from other local clusters, including members bound only to loopback.
+        config.getNetworkConfig().setPort(0).setPortAutoIncrement(false);
+        config.getNetworkConfig().getInterfaces().setEnabled(true).addInterface("127.0.0.1");
         config.getNetworkConfig().getJoin().getAutoDetectionConfig().setEnabled(false);
         config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
         config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(false);
         var first = Hazelcast.newHazelcastInstance(config);
         try {
             var clientConfig = new ClientConfig().setClusterName(config.getClusterName());
+            clientConfig.getConnectionStrategyConfig().getConnectionRetryConfig().setClusterConnectTimeoutMillis(10_000);
             clientConfig.getNetworkConfig().addAddress("127.0.0.1:" + first.getCluster().getLocalMember().getSocketAddress().getPort());
             var second = HazelcastClient.newHazelcastClient(clientConfig);
             try {
