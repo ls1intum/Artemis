@@ -182,33 +182,7 @@
                                                 @if (row.instance && row.expanded) {
                                                     <tr class="presentation-detail-row" [id]="'presentation-detail-' + row.rowKey">
                                                         <td colspan="6">
-                                                            <div class="instance-detail-grid">
-                                                                <div>
-                                                                    <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.language"></span>:
-                                                                    {{ row.instance.language || '-' }}
-                                                                </div>
-                                                                <div>
-                                                                    <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.mode.label"></span>:
-                                                                    {{
-                                                                        row.instance.mode === PresentationAssessmentMode.ONLINE
-                                                                            ? ('artemisApp.presentationAssessment.mode.online' | artemisTranslate)
-                                                                            : ('artemisApp.presentationAssessment.mode.inPerson' | artemisTranslate)
-                                                                    }}
-                                                                </div>
-                                                                @if (row.instance.mode === PresentationAssessmentMode.ONLINE) {
-                                                                    <div>
-                                                                        <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></span>:
-                                                                        <a [href]="row.instance.meetingLink" target="_blank" rel="noopener noreferrer">{{
-                                                                            row.instance.meetingLink || '-'
-                                                                        }}</a>
-                                                                    </div>
-                                                                } @else {
-                                                                    <div>
-                                                                        <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.location"></span>:
-                                                                        {{ row.instance.location || '-' }}
-                                                                    </div>
-                                                                }
-                                                            </div>
+                                                            <jhi-presentation-assessment-instance-details [instance]="row.instance" />
                                                         </td>
                                                     </tr>
                                                 }
@@ -431,41 +405,10 @@
                                             @if (row.expanded) {
                                                 <tr class="presentation-detail-row" [id]="'presentation-overview-detail-' + row.rowKey">
                                                     <td colspan="7">
-                                                        <div class="instance-detail-grid">
-                                                            <div>
-                                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.description"></span>:
-                                                                {{ row.presentationAssessment.description || '-' }}
-                                                            </div>
-                                                            <div>
-                                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.exercise"></span>:
-                                                                {{ row.presentationAssessment.exerciseTitle || '-' }}
-                                                            </div>
-                                                            <div>
-                                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.language"></span>:
-                                                                {{ row.instance.language || '-' }}
-                                                            </div>
-                                                            <div>
-                                                                <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.mode.label"></span>:
-                                                                {{
-                                                                    row.instance.mode === PresentationAssessmentMode.ONLINE
-                                                                        ? ('artemisApp.presentationAssessment.mode.online' | artemisTranslate)
-                                                                        : ('artemisApp.presentationAssessment.mode.inPerson' | artemisTranslate)
-                                                                }}
-                                                            </div>
-                                                            @if (row.instance.mode === PresentationAssessmentMode.ONLINE) {
-                                                                <div>
-                                                                    <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.meetingLink"></span>:
-                                                                    <a [href]="row.instance.meetingLink" target="_blank" rel="noopener noreferrer">{{
-                                                                        row.instance.meetingLink || '-'
-                                                                    }}</a>
-                                                                </div>
-                                                            } @else {
-                                                                <div>
-                                                                    <span class="text-muted-color" jhiTranslate="artemisApp.presentationAssessment.location"></span>:
-                                                                    {{ row.instance.location || '-' }}
-                                                                </div>
-                                                            }
-                                                        </div>
+                                                        <jhi-presentation-assessment-instance-details
+                                                            [instance]="row.instance"
+                                                            [presentationAssessment]="row.presentationAssessment"
+                                                        />
                                                     </td>
                                                 </tr>
                                             }

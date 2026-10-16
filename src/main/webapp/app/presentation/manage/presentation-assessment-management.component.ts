@@ -32,7 +32,6 @@ import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/cou
 import {
     PresentationAssessment,
     PresentationAssessmentInstance,
-    PresentationAssessmentMode,
     PresentationAssessmentStatistics,
     PresentationAssessmentStudentRow,
     PresentationAssessmentStudentRowsRequest,
@@ -47,6 +46,7 @@ import {
     PresentationAssessmentInstanceFormDialogComponent,
     PresentationAssessmentInstanceFormResult,
 } from 'app/presentation/manage/presentation-assessment-instance-form-dialog.component';
+import { PresentationAssessmentInstanceDetailsComponent } from 'app/presentation/manage/presentation-assessment-instance-details.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { SidebarComponent } from 'app/course/sidebar/sidebar.component';
 import { CollapseState, SidebarItemShowAlways } from 'app/foundation/types/sidebar';
@@ -114,6 +114,7 @@ function positiveRouteId(value: string | null): number | undefined {
         RouterLink,
         PresentationAssessmentFormDialogComponent,
         PresentationAssessmentInstanceFormDialogComponent,
+        PresentationAssessmentInstanceDetailsComponent,
         TumAetUiButtonComponent,
         TumAetUiButtonDirective,
         TumAetUiButtonGroupComponent,
@@ -158,7 +159,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     protected readonly faUsers = faUsers;
     protected readonly faSearch = faSearch;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
-    protected readonly PresentationAssessmentMode = PresentationAssessmentMode;
     protected readonly ActionType = ActionType;
 
     private courseContextGeneration = 0;
