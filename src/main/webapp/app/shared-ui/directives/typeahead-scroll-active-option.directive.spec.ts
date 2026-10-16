@@ -97,4 +97,16 @@ describe('TypeaheadScrollActiveOptionDirective', () => {
         expect(options()[4].classList).toContain('active');
         expect(scrollIntoView).not.toHaveBeenCalled();
     });
+
+    it('does not scroll back to the active option when keys edit the search text', async () => {
+        await openPopup();
+        await press('ArrowDown');
+        scrollIntoView.mockClear();
+
+        await press('ArrowLeft');
+        await press('Home');
+
+        expect(options()[1].classList).toContain('active');
+        expect(scrollIntoView).not.toHaveBeenCalled();
+    });
 });
