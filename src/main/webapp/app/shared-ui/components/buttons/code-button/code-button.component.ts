@@ -114,7 +114,7 @@ export class CodeButtonComponent implements OnInit {
     private vcsAccessTokenReportedMissing = false;
     sshKeys?: UserSshPublicKey[];
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
-    programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
+    programmingLanguageToPreferredIde = new Map<ProgrammingLanguage, Ide>();
     theiaPortalURL!: string; // set in initTheia() from ngOnInit()
 
     // Input
@@ -237,11 +237,11 @@ export class CodeButtonComponent implements OnInit {
 
         this.initTheia(profileInfo);
 
-        void this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
-            if (programmingLanguageToIde.size) {
-                this.programmingLanguageToIde = programmingLanguageToIde;
+        void this.ideSettingsService.loadIdePreferences().then((programmingLanguageToPreferredIde) => {
+            if (programmingLanguageToPreferredIde.size) {
+                this.programmingLanguageToPreferredIde = programmingLanguageToPreferredIde;
             }
-            this.ideName.set(this.getIde().name);
+            this.ideName.set(this.getPreferredIde().name);
         });
     }
 
@@ -588,15 +588,19 @@ export class CodeButtonComponent implements OnInit {
     }
 
     buildIdeUrl(): string | undefined {
-        return this.externalCloningService.buildIdeUrl(this.getHttpOrSshRepositoryUri(false), this.getIde());
+        return this.externalCloningService.buildIdeUrl(this.getHttpOrSshRepositoryUri(false), this.getPreferredIde());
     }
 
-    getIde(): Ide {
-        return (
-            this.programmingLanguageToIde.get(this.programmingExerciseIdeConfiguration()?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
-            this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
-            this.vscodeFallback
-        );
+    private getPreferredIde(): Ide {
+        const programmingLanguage = this.programmingExerciseIdeConfiguration()?.programmingLanguage;
+        let preference: Ide | undefined;
+        if (programmingLanguage) {
+            preference = this.programmingLanguageToPreferredIde.get(programmingLanguage);
+        }
+        if (!preference) {
+            preference = this.programmingLanguageToPreferredIde.get(ProgrammingLanguage.EMPTY);
+        }
+        return preference ?? this.vscodeFallback;
     }
 
     /**
