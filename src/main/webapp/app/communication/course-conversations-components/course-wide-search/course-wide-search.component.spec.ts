@@ -139,7 +139,7 @@ describe('CourseWideSearchComponent', () => {
         expect(fetchPosts).not.toHaveBeenCalled();
     });
 
-    it('should preserve the visible results when an older page arrives and ignore duplicate loads', () => {
+    it('should preserve scrolling performed during a pending search page and ignore duplicate loads', () => {
         vi.runAllTimers();
         const container = component.content()!.nativeElement;
         Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
@@ -152,12 +152,13 @@ describe('CourseWideSearchComponent', () => {
         expect(fetchPosts).toHaveBeenCalledOnce();
         expect(container.scrollTop).toBe(20);
 
-        Object.defineProperty(container, 'scrollHeight', { value: 1600, configurable: true });
+        container.scrollTop = 220; // The reader moves while the response is pending.
         component.setPosts([{ id: 2 } as Post, examplePost]);
+        Object.defineProperty(container, 'scrollHeight', { value: 1600, configurable: true });
         component.isFetchingPosts.set(false);
         component.handleScrollOnNewMessage();
         vi.runAllTimers();
-        expect(container.scrollTop).toBe(620);
+        expect(container.scrollTop).toBe(820);
 
         container.scrollTop = 0;
         component.handleScrollOnNewMessage();

@@ -111,6 +111,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private resizeObserver?: ResizeObserver;
     private bottomScrollFrame: number | undefined;
     private pendingPageScrollDistance: number | undefined;
+    private preserveScrollOnNextPage = false;
     private restoringPageScroll = false;
     private pageScrollFrame: number | undefined;
 
@@ -485,6 +486,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * Applies pinned message filters, loads forwarded messages and their sources, and groups posts for rendering.
      */
     setPosts(): void {
+        if (this.preserveScrollOnNextPage) {
+            // Capture after any reader movement during loading, while the DOM still contains the previous page.
+            const element = this.content()?.nativeElement;
+            this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
+            this.preserveScrollOnNextPage = false;
+        }
         // Preserve the scroll state captured before the request until the new messages have been rendered.
         if (!this.isFetchingPosts()) {
             this.captureScrolledToBottom();
@@ -667,9 +674,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.canStartSaving = true;
             return;
         }
-        const element = this.content()?.nativeElement;
         // Navigation/restoration must keep looking for its target as pages arrive; only reader-driven pagination keeps a viewport anchor.
-        this.pendingPageScrollDistance = this.canStartSaving && this.focusOnPostId === undefined && element ? element.scrollHeight - element.scrollTop : undefined;
+        this.preserveScrollOnNextPage = this.canStartSaving && this.focusOnPostId === undefined;
         this.page += 1;
         this.fetchPosts();
     }
@@ -693,6 +699,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.page = 1;
         this.canStartSaving = false;
         this.pendingPageScrollDistance = undefined;
+        this.preserveScrollOnNextPage = false;
         this.fetchPosts(true);
     }
 
@@ -800,8 +807,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         } else {
             // We scroll to the element with a slight buffer to ensure its fully visible (-10)
             const containerEl = this.content()?.nativeElement;
+            if (this.bottomScrollFrame !== undefined) window.cancelAnimationFrame(this.bottomScrollFrame);
+            this.bottomScrollFrame = undefined;
             if (containerEl) {
                 containerEl.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop - 10);
+                // A ResizeObserver can run before the native scroll event. Historical navigation must stop bottom-following synchronously.
+                this.captureScrolledToBottom();
             }
             this.canStartSaving = true;
             if (isOpenThread) {

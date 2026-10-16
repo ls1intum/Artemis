@@ -458,7 +458,7 @@ examples.forEach((activeConversation) => {
             expect(container.scrollTop).toBe(1000);
         });
 
-        it('should keep the viewport anchored while loading older messages', () => {
+        it('should preserve scrolling performed while older messages are loading', () => {
             vi.runAllTimers();
             const container = component.content()!.nativeElement;
             Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
@@ -471,10 +471,13 @@ examples.forEach((activeConversation) => {
             expect(fetchPosts).toHaveBeenCalledOnce();
             expect(container.scrollTop).toBe(30);
 
+            container.scrollTop = 230; // The reader moves while the response is pending.
+            component.setPosts();
+            component.isFetchingPosts.set(false);
             Object.defineProperty(container, 'scrollHeight', { value: 1500, configurable: true });
             component.handleScrollOnNewMessage();
             vi.runAllTimers();
-            expect(container.scrollTop).toBe(530);
+            expect(container.scrollTop).toBe(730);
         });
 
         it('should follow layout changes at the bottom but preserve the position after the reader scrolls up', () => {
@@ -530,6 +533,19 @@ examples.forEach((activeConversation) => {
                 resize!();
                 vi.runAllTimers();
                 expect(top).toBe(200);
+
+                const historicalPost = {
+                    post: () => ({ id: 42 }),
+                    elementRef: { nativeElement: { offsetTop: 310 } },
+                } as PostingThreadComponent;
+                vi.spyOn(component, 'messages').mockReturnValue([historicalPost]);
+                component.scrollToBottomOfMessages(); // Initial positioning can still be queued when restoration begins.
+                void component.goToLastSelectedElement(42, false);
+                expect(top).toBe(300);
+                resize!(); // Delivered before the browser's scroll event.
+                vi.runAllTimers();
+                expect(top).toBe(300);
+                expect(component['wasScrolledToBottom']).toBe(false);
                 expect(observe).toHaveBeenCalledWith(container);
                 component.ngOnDestroy();
                 expect(disconnect).toHaveBeenCalledOnce();

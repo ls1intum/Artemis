@@ -65,6 +65,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     readonly posts = signal<Post[]>([]);
     private allConversationIds: number[] = [];
     private pendingPageScrollDistance: number | undefined;
+    private preserveScrollOnNextPage = false;
     private initialScrollPositioned = false;
     private scrollFrame: number | undefined;
     page = 1;
@@ -108,6 +109,12 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     setPosts(posts: Post[]): void {
+        if (this.preserveScrollOnNextPage) {
+            // The list remains scrollable during the request; anchor the reader's position immediately before rendering the response.
+            const element = this.content()?.nativeElement;
+            this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
+            this.preserveScrollOnNextPage = false;
+        }
         this.posts.set(posts.slice().reverse());
     }
 
@@ -135,8 +142,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     fetchNextPage() {
         if (this.isFetchingPosts() || this.posts().length >= this.totalNumberOfPosts()) return;
-        const element = this.content()?.nativeElement;
-        this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
+        this.preserveScrollOnNextPage = true;
         this.page += 1;
         this.fetchPosts();
     }
@@ -186,6 +192,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.page = 1;
         this.initialScrollPositioned = false;
         this.pendingPageScrollDistance = undefined;
+        this.preserveScrollOnNextPage = false;
         this.fetchPosts(true);
     }
 
