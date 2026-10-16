@@ -109,6 +109,6 @@ class LocalVCPushFilterTest {
     }
 
     private static GitRepositoryAccessDTO exercise() {
-        return new GitRepositoryAccessDTO(1L, 2L, null, true, null, null, null, null, null, null);
+        return new GitRepositoryAccessDTO(1L, 2L, null, true, null, null, null, null, null, null, null);
     }
 }
