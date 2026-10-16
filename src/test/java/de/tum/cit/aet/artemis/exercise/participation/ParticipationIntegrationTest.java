@@ -3121,6 +3121,46 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             assertThat(results.getFirst().participantIdentifier()).contains("student1");
         }
 
+        private StudentParticipation createParticipationWithLatestUntypedResult() {
+            var participation = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var automatic = participationUtilService.createSubmissionAndResult(participation, 50, true);
+            automatic.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(automatic);
+            participationUtilService.addResultToSubmission(null, ZonedDateTime.now(), automatic.getSubmission(), true, true, 80);
+            participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC_ATHENA, ZonedDateTime.now(), automatic.getSubmission(), true, true, 100);
+            return participation;
+        }
+
+        @ParameterizedTest
+        @CsvSource({ "50,60,0", "80,90,1", "90,100,0" })
+        void getParticipationsPage_scoreRangeUsesLatestUntypedResult(int lower, int upper, int expectedCount) throws Exception {
+            var participation = createParticipationWithLatestUntypedResult();
+            var search = new ParticipationSearchDTO(0, 50, SortingOrder.ASCENDING, "id", "", "All", lower, upper);
+
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+
+            assertThat(results).hasSize(expectedCount).allSatisfy(row -> {
+                assertThat(row.participationId()).isEqualTo(participation.getId());
+                assertThat(row.score()).isEqualTo(80D);
+            });
+        }
+
+        @ParameterizedTest
+        @EnumSource(SortingOrder.class)
+        void getParticipationsPage_scoreSortUsesLatestUntypedResult(SortingOrder order) throws Exception {
+            var participation = createParticipationWithLatestUntypedResult();
+            var other = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            var result = participationUtilService.createSubmissionAndResult(other, 70, true);
+            result.setAssessmentType(AssessmentType.AUTOMATIC);
+            resultRepository.save(result);
+            var search = buildParticipationSearch("", "All", "score", order);
+
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+
+            var expectedIds = order == SortingOrder.ASCENDING ? List.of(other.getId(), participation.getId()) : List.of(participation.getId(), other.getId());
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactlyElementsOf(expectedIds);
+        }
+
         @Test
         void getParticipationsPage_sortByParticipantNameAsc() throws Exception {
             var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");

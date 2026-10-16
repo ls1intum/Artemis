@@ -234,7 +234,7 @@ public class StudentParticipationSpecs {
         Root<Result> latestResultRoot = latestResultSub.from(Result.class);
         latestResultSub.select(cb.max(latestResultRoot.get(DomainObject_.ID)));
         latestResultSub.where(cb.equal(latestResultRoot.get(Result_.SUBMISSION), submissionRoot),
-                cb.notEqual(latestResultRoot.get(Result_.ASSESSMENT_TYPE), AssessmentType.AUTOMATIC_ATHENA));
+                cb.or(cb.isNull(latestResultRoot.get(Result_.ASSESSMENT_TYPE)), cb.notEqual(latestResultRoot.get(Result_.ASSESSMENT_TYPE), AssessmentType.AUTOMATIC_ATHENA)));
 
         Predicate isLatestResult = cb.equal(resultJoin.get(DomainObject_.ID), latestResultSub);
 
@@ -565,7 +565,7 @@ public class StudentParticipationSpecs {
         Root<Result> latestResultRoot = latestResultSub.from(Result.class);
         latestResultSub.select(cb.max(latestResultRoot.get(DomainObject_.ID)));
         latestResultSub.where(cb.equal(latestResultRoot.get(Result_.SUBMISSION), submissionRoot),
-                cb.notEqual(latestResultRoot.get(Result_.ASSESSMENT_TYPE), AssessmentType.AUTOMATIC_ATHENA));
+                cb.or(cb.isNull(latestResultRoot.get(Result_.ASSESSMENT_TYPE)), cb.notEqual(latestResultRoot.get(Result_.ASSESSMENT_TYPE), AssessmentType.AUTOMATIC_ATHENA)));
 
         sub.select(resultJoin.get(fieldName));
         sub.where(cb.equal(submissionRoot.get(Submission_.PARTICIPATION), root), cb.equal(submissionRoot.get(DomainObject_.ID), latestSubId),
