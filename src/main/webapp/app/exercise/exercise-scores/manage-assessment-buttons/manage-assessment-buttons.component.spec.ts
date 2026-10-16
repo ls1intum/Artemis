@@ -63,6 +63,37 @@ describe('ManageAssessmentButtonsComponent', () => {
         } as Participation);
     });
 
+    it('checks draft ownership separately for each round and preserves instructor access', () => {
+        fixture.componentRef.setInput('correctionRoundsEnabled', 2);
+        fixture.componentRef.setInput('ownedCorrectionRounds', [0]);
+        fixture.componentRef.setInput('participation', {
+            id: 10,
+            submissions: [
+                {
+                    id: 20,
+                    results: [
+                        { id: 30, correctionRound: 0, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() },
+                        { id: 31, correctionRound: 1, assessmentType: AssessmentType.MANUAL },
+                    ],
+                },
+            ],
+        });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelectorAll('[data-testid="manage-assessment-link"]')).toHaveLength(1);
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-cancel"]')).toBeNull();
+
+        fixture.componentRef.setInput('ownedCorrectionRounds', [1]);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-assessment-action="continue"]').getAttribute('data-correction-round')).toBe('1');
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-cancel"]')).not.toBeNull();
+
+        fixture.componentRef.setInput('ownedCorrectionRounds', []);
+        fixture.componentRef.setInput('exercise', { ...exercise, isAtLeastInstructor: true });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-assessment-action="continue"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('[data-testid="manage-assessment-cancel"]')).not.toBeNull();
+    });
+
     describe('assessmentLinkSeverity', () => {
         const withResult = (result?: Partial<Result>) =>
             fixture.componentRef.setInput('participation', {

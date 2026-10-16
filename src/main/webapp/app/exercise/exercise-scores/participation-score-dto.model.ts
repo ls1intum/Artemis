@@ -40,4 +40,5 @@ export interface CorrectionRoundResultDTO {
     assessmentType?: AssessmentType;
     completionDate?: dayjs.Dayjs;
     hasComplaint?: boolean;
+    ownedByCurrentUser?: boolean;
 }

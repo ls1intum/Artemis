@@ -2352,6 +2352,33 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(rows.getFirst().assessableCorrectionRounds()).containsExactly(0);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void assessmentQueueCarriesOwnershipPerCorrectionRound(boolean examMode) throws Exception {
+        var exercise = examMode
+                ? exerciseRepository.save(TextExerciseFactory
+                        .generateTextExerciseForExam(examRepository.save(ExamFactory.generateExamWithExerciseGroup(course, false)).getExerciseGroups().getFirst()))
+                : textExerciseUtilService.createIndividualTextExercise(course, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1));
+        var submission = participationUtilService.addSubmission(exercise, new TextSubmission().submitted(true), TEST_PREFIX + "student1");
+        for (int round = 0; round < 2; round++) {
+            var result = new Result().submission(submission).assessmentType(AssessmentType.MANUAL);
+            result.setExerciseId(exercise.getId());
+            result.setCorrectionRound(round);
+            result.setAssessor(userUtilService.getUserByLogin(TEST_PREFIX + (round == 0 ? "tutor1" : "instructor1")));
+            resultRepository.save(result);
+        }
+        var search = new ParticipationScoreSearchDTO(0, 20, SortingOrder.ASCENDING, "participationId", "", "All", null, null);
+        var rows = request.getList("/api/exercise/exercises/" + exercise.getId() + "/assessment-queue", HttpStatus.OK, ParticipationScoreDTO.class,
+                pageableSearchUtilService.searchMapping(search));
+
+        assertThat(rows).hasSize(1);
+        assertThat(rows.getFirst().correctionRoundResults()).hasSize(2).allSatisfy(result -> assertThat(result.ownedByCurrentUser()).isEqualTo(result.correctionRound() == 0));
+        if (examMode) {
+            assertThat(rows.getFirst()).extracting("participantName", "participantIdentifier", "studentId").containsOnlyNulls();
+        }
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationByExerciseAndStudentIdForTeam() throws Exception {

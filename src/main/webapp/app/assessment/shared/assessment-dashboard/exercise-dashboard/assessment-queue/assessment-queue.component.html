@@ -61,6 +61,7 @@
             [disabledTooltip]="assessmentDisabledTooltip()"
             [correctionRoundsEnabled]="correctionRoundsEnabled()"
             [assessableCorrectionRounds]="isTestRun() ? undefined : (dto.assessableCorrectionRounds ?? [])"
+            [ownedCorrectionRounds]="isTestRun() ? undefined : ownedCorrectionRounds(dto)"
             [isTestRun]="isTestRun()"
             (refresh)="refresh()"
         />

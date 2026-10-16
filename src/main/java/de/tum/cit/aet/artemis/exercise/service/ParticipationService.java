@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -1336,8 +1337,8 @@ public class ParticipationService {
         if (!submissionIds.isEmpty()) {
             Set<Result> results = resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(submissionIds);
             resultBySubmissionId = results.stream().collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity()));
-            correctionRoundResultsBySubmissionId = resultRepository.findCorrectionRoundResultsBySubmissionIds(submissionIds).stream()
-                    .collect(Collectors.groupingBy(CorrectionRoundResultDTO::submissionId));
+            correctionRoundResultsBySubmissionId = resultRepository.findCorrectionRoundResultsBySubmissionIds(submissionIds, SecurityUtils.getCurrentUserLogin().orElse(null))
+                    .stream().collect(Collectors.groupingBy(CorrectionRoundResultDTO::submissionId));
         }
 
         // Load submission counts for these IDs

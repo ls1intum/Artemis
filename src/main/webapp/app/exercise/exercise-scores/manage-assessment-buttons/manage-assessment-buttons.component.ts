@@ -41,6 +41,7 @@ export class ManageAssessmentButtonsComponent {
     readonly disabledTooltip = input('');
     readonly correctionRoundsEnabled = input<number>();
     readonly assessableCorrectionRounds = input<number[]>();
+    readonly ownedCorrectionRounds = input<number[]>();
     readonly isTestRun = input(false);
     readonly examMode = computed(() => !!this.exercise().exerciseGroup);
     readonly newManualResultAllowed = computed(() => areManualResultsAllowed(this.exercise()) && (!isPracticeMode(this.participation()) || this.examMode()));
@@ -49,11 +50,13 @@ export class ManageAssessmentButtonsComponent {
         this.correctionRoundIndices().flatMap((correctionRound) => {
             const result = this.resultForRound(correctionRound);
             const action = this.assessmentAction(correctionRound);
+            const canManageDraft = this.exercise().isAtLeastInstructor || this.ownedCorrectionRounds() === undefined || this.ownedCorrectionRounds()!.includes(correctionRound);
             if (
                 !this.participation().submissions?.[0]?.id ||
                 (correctionRound > 0 && !this.resultForRound(correctionRound - 1)?.completionDate) ||
                 (!this.newManualResultAllowed() &&
                     (!result?.assessmentType || result.assessmentType === AssessmentType.AUTOMATIC || result.assessmentType === AssessmentType.AUTOMATIC_ATHENA)) ||
+                (action === 'continue' && !canManageDraft) ||
                 (action === 'assess' && this.assessableCorrectionRounds() !== undefined && !this.assessableCorrectionRounds()!.includes(correctionRound))
             ) {
                 return [];
@@ -67,7 +70,8 @@ export class ManageAssessmentButtonsComponent {
                     labelKey: this.assessmentLabelKey(correctionRound),
                     link: this.getAssessmentLink(correctionRound),
                     targetRound: this.getCorrectionRoundForAssessmentLink(correctionRound),
-                    canCancel: this.newManualResultAllowed() && !!result?.assessmentType && !result.completionDate && result.assessmentType !== AssessmentType.AUTOMATIC,
+                    canCancel:
+                        canManageDraft && this.newManualResultAllowed() && !!result?.assessmentType && !result.completionDate && result.assessmentType !== AssessmentType.AUTOMATIC,
                 },
             ];
         }),

@@ -95,6 +95,31 @@ describe('AssessmentQueueComponent', () => {
         expect(comp.isLoading()).toBe(false);
     });
 
+    it.each([
+        [false, false, false],
+        [true, false, true],
+        [false, true, true],
+        [undefined, false, false],
+    ])('shows draft actions for owner %s and instructor %s: %s', async (ownedByCurrentUser, isAtLeastInstructor, visible) => {
+        fixture.componentRef.setInput('exercise', { ...exercise, type: ExerciseType.TEXT, teamMode: false, isAtLeastInstructor });
+        vi.spyOn(participationService, 'searchAssessmentQueue').mockReturnValue(
+            of({
+                content: [
+                    {
+                        ...teamRow,
+                        correctionRoundResults: [{ resultId: 21, correctionRound: 0, assessmentType: AssessmentType.MANUAL, ownedByCurrentUser }],
+                    },
+                ],
+                totalElements: 1,
+            }),
+        );
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(!!fixture.nativeElement.querySelector('[data-assessment-action="continue"]')).toBe(visible);
+        expect(!!fixture.nativeElement.querySelector('[data-testid="manage-assessment-cancel"]')).toBe(visible);
+    });
+
     it('renders a row per team with its assessment state', async () => {
         const searchSpy = vi
             .spyOn(participationService, 'searchAssessmentQueue')

@@ -206,6 +206,10 @@ export class AssessmentQueueComponent {
         return (dto.teamStudents ?? []).map((student) => student.name ?? student.login).join(', ');
     }
 
+    ownedCorrectionRounds(dto: ParticipationScoreDTO): number[] {
+        return (dto.correctionRoundResults ?? []).filter((result) => result.ownedByCurrentUser).map((result) => result.correctionRound ?? 0);
+    }
+
     toParticipation(dto: ParticipationScoreDTO) {
         return scoreDtoToParticipation(dto, this.exercise());
     }
