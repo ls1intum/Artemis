@@ -358,7 +358,9 @@ public class TutorialGroupResource {
         TutorialGroupSchedule newSchedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(tutorialGroupScheduleDTO);
         tutorialGroupScheduleService.updateScheduleAndSessionsIfChanged(course, tutorialGroup, Optional.ofNullable(oldSchedule), Optional.ofNullable(newSchedule));
 
-        tutorialGroupChannelManagementService.updateNameOfTutorialGroupChannelIfItExists(tutorialGroup);
+        if (titleChanges) {
+            tutorialGroupChannelManagementService.updateNameOfTutorialGroupChannelIfItExists(tutorialGroup);
+        }
 
         return ResponseEntity.noContent().build();
     }

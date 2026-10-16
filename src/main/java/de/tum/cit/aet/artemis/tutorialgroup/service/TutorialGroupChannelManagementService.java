@@ -107,7 +107,7 @@ public class TutorialGroupChannelManagementService {
      */
     public void updateNameOfTutorialGroupChannelIfItExists(TutorialGroup tutorialGroup) {
         getTutorialGroupChannel(tutorialGroup).ifPresentOrElse(channel -> {
-            channel.setName(determineUniqueTutorialGroupChannelName(tutorialGroup));
+            channel.setName(determineUniqueTutorialGroupChannelName(tutorialGroup, channel));
             channelRepository.save(channel);
             log.debug("Updated title of channel with id {} of tutorial group with id {}", channel.getId(), tutorialGroup.getId());
         }, () -> log.debug("Channel for tutorial group with id {} does not exist, cannot update title", tutorialGroup.getId()));
@@ -233,7 +233,7 @@ public class TutorialGroupChannelManagementService {
      */
     private Channel createTutorialGroupChannel(TutorialGroup tutorialGroup) {
         var tutorialGroupChannel = new Channel();
-        tutorialGroupChannel.setName(determineUniqueTutorialGroupChannelName(tutorialGroup));
+        tutorialGroupChannel.setName(determineUniqueTutorialGroupChannelName(tutorialGroup, tutorialGroupChannel));
         tutorialGroupChannel.setIsPublic(true);
         tutorialGroupChannel.setIsAnnouncementChannel(false);
         var persistedChannel = channelService.createChannel(tutorialGroup.getCourse(), tutorialGroupChannel, Optional.empty());
@@ -248,17 +248,18 @@ public class TutorialGroupChannelManagementService {
     /**
      * Determines a unique channel name for the given tutorial group based on the tutorial group title.
      *
-     * @param tutorialGroup the tutorial group for which the channel name should be determined
+     * @param tutorialGroup        the tutorial group for which the channel name should be determined
+     * @param tutorialGroupChannel the existing channel, or a new channel without a name during creation
      * @return a unique channel name for the given tutorial group
      * @throws IllegalStateException if a unique channel name could not be determined
      */
-    private String determineUniqueTutorialGroupChannelName(TutorialGroup tutorialGroup) {
+    private String determineUniqueTutorialGroupChannelName(TutorialGroup tutorialGroup, Channel tutorialGroupChannel) {
         Course course = tutorialGroup.getCourse();
         String cleanedGroupTitle = WHITESPACE.matcher(tutorialGroup.getTitle()).replaceAll("-").toLowerCase(Locale.ROOT);
         String channelName = "tutorgroup-" + cleanedGroupTitle.substring(0, Math.min(cleanedGroupTitle.length(), 18));
 
-        if (!channelRepository.existsChannelByNameAndCourseId(channelName, course.getId())) {
-            // No channel with this name exists in the course yet, so it can be used.
+        if (channelName.equals(tutorialGroupChannel.getName()) || !channelRepository.existsChannelByNameAndCourseId(channelName, course.getId())) {
+            // The channel already owns this name, or it is not used in the course yet.
             return channelName;
         }
 
@@ -271,7 +272,7 @@ public class TutorialGroupChannelManagementService {
         do {
             channelName += ThreadLocalRandom.current().nextInt(0, 10);
         }
-        while (channelRepository.existsChannelByNameAndCourseId(channelName, course.getId()) && channelName.length() <= 30);
+        while (!channelName.equals(tutorialGroupChannel.getName()) && channelRepository.existsChannelByNameAndCourseId(channelName, course.getId()) && channelName.length() <= 30);
 
         if (channelName.length() > 30) {
             // very unlikely to happen
