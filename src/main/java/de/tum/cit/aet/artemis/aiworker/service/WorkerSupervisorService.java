@@ -308,17 +308,20 @@ public class WorkerSupervisorService implements AutoCloseable {
         flushTerminal();
     }
 
-    /** Retries an undelivered terminal event and expires work only when core stops renewing its exact assignment. */
+    /** Expires assignments independently of provider I/O so blocked publication cannot delay cancellation. */
+    @Scheduled(fixedDelayString = "${artemis.aiworker.heartbeat-interval:PT10S}")
+    public synchronized void expireExecutions() {
+        for (ActiveExecution execution : active.values()) {
+            if (nanoTime.getAsLong() - execution.renewedAt > settings.connectionGrace().toNanos()) {
+                cancel(execution);
+            }
+        }
+        admitted.values().removeIf(deadline -> !deadline.isAfter(Instant.now()));
+    }
+
+    /** Retries undelivered events before publishing current capacity. */
     @Scheduled(fixedDelayString = "${artemis.aiworker.heartbeat-interval:PT10S}")
     public void heartbeat() {
-        synchronized (this) {
-            for (ActiveExecution execution : active.values()) {
-                if (nanoTime.getAsLong() - execution.renewedAt > settings.connectionGrace().toNanos()) {
-                    cancel(execution);
-                }
-            }
-            admitted.values().removeIf(deadline -> !deadline.isAfter(Instant.now()));
-        }
         flushTerminal();
         publishBestEffort(event(WorkerEventType.HEARTBEAT, currentIdentity(), null, null));
     }

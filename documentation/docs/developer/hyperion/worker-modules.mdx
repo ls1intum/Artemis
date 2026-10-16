@@ -9,14 +9,14 @@ source tree, like Build Agent and LocalCI. They are not Gradle subprojects.
 
 ## Package ownership
 
-| Package                                             | Responsibility                                                                   |
-| --------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `aiworker.api`, `aiworker.dto`, `aiworker.domain`   | Provider-neutral execution contracts, identities, capabilities and wire messages |
-| `aiworker.config`, `aiworker.service`               | Provider transport, sandbox, supervisor, and core-side coordination                   |
-| `aiworker.web.admin`                                | Infrastructure status for administrators                                         |
-| `hyperion.config.worker`, `hyperion.service.worker` | Conditional Hyperion workload and typed translation                              |
-| `hyperion.service.worker.toolchain.javagradle`      | Java/Gradle authoring and independent verification                               |
-| Other `hyperion` packages                           | Instructor access, exercise state, persistence and review                        |
+| Package                                           | Responsibility                                                                   |
+| ------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `aiworker.api`, `aiworker.dto`, `aiworker.domain` | Provider-neutral execution contracts, identities, capabilities and wire messages |
+| `aiworker.config`, `aiworker.service`             | Provider transport, sandbox, supervisor, and core-side coordination              |
+| `aiworker.web.admin`                              | Infrastructure status for administrators                                         |
+| `hyperion.service.worker`                         | Conditional Hyperion workload and typed translation                              |
+| `hyperion.service.worker.toolchain.javagradle`    | Java/Gradle authoring and independent verification                               |
+| Other `hyperion` packages                         | Instructor access, exercise state, persistence and review                        |
 
 `aiworker` must not import Hyperion. Its portable contracts must not import Spring
 services, Docker, the database or distributed state. A workload may use `SandboxApi`
@@ -26,8 +26,10 @@ Hyperion uses the `AiWorkerApi` facade to claim work and receive results.
 ## One artifact, two process roles
 
 The normal `ArtemisApp` entry point starts either process role. With only
-`prod,aiworker`, it scans AI Worker services and the selected workload, starts no
-HTTP server, and excludes database auto-configuration. It rejects a combined
+`prod,aiworker`, it uses the normal application component scan and profile
+conditions to load AI Worker services and the selected workload. Worker-only
+conditions keep server modules disabled, including when their feature flags are
+inherited. It starts no HTTP server and excludes database auto-configuration. It rejects a combined
 core/LocalCI/LocalVC/Build Agent profile and HTTP override. The worker VM must
 also block access to core database and repository services. The selected Hazelcast
 or Redis client still starts through the shared distributed-data provider.
