@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming;
 
 import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
@@ -1181,6 +1183,25 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingExercise.setAssessmentType(assessmentType);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         return participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void lockSubmission_secondCorrectionValidatesLatestCommitSubmission(boolean alreadyAssessedByCurrentTutor) {
+        var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
+        var requestedSubmission = programmingExerciseUtilService.createProgrammingSubmission(participation, true, "old-commit");
+        participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1), requestedSubmission, TEST_PREFIX + "tutor2", List.of());
+        var latestCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
+        var latestSubmission = programmingExerciseUtilService.createProgrammingSubmission(participation, true, latestCommitHash);
+        if (alreadyAssessedByCurrentTutor) {
+            participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1), latestSubmission, TEST_PREFIX + "tutor1", List.of());
+        }
+
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> programmingSubmissionService.lockSubmission(requestedSubmission, 1));
+
+        var storedSubmission = programmingSubmissionRepository.findByIdWithResultsFeedbacksAssessor(latestSubmission.getId());
+        assertThat(storedSubmission.getResultForCorrectionRound(1)).isNull();
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {

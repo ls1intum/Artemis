@@ -147,6 +147,11 @@ public class JGitConfig {
                 }
 
                 @Override
+                public void save() {
+                    // Runtime file-system metadata stays in memory; there is no machine configuration file to write.
+                }
+
+                @Override
                 public boolean isOutdated() {
                     // A file that does not exist cannot go out of date. The inherited implementation would stat it.
                     return false;

@@ -56,7 +56,8 @@ class SearchableEntityWeaviateServiceTest {
 
     private static SearchableEntityWeaviateService createService(WeaviateService weaviateService, SearchableEntityEmbeddingClient embeddingClient) {
         return new SearchableEntityWeaviateService(weaviateService, mock(WeaviateOutboxRepository.class), mock(SearchableEntityResolver.class), JsonObjectMapper.get(),
-                new SearchableEntityContentHasher(JsonObjectMapper.get()), mock(ApplicationEventPublisher.class), mock(SearchableEntityVectorWriter.class), embeddingClient);
+                new SearchableEntityContentHasher(JsonObjectMapper.get()), mock(ApplicationEventPublisher.class), mock(SearchableEntityVectorWriter.class), embeddingClient,
+                Runnable::run);
     }
 
     private static SearchableEntityEmbeddingClient embeddingClient(boolean enabled) {
