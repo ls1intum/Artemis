@@ -1,0 +1,70 @@
+---
+id: worker-modules
+title: AI Worker and Hyperion Boundaries
+sidebar_label: AI Worker Boundaries
+---
+
+Artemis builds **one WAR**. AI Worker and Hyperion are feature packages in the main
+source tree, like Build Agent and LocalCI. They are not Gradle subprojects.
+
+## Package ownership
+
+| Package                                             | Responsibility                                                                   |
+| --------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `aiworker.api`, `aiworker.dto`, `aiworker.domain`   | Provider-neutral execution contracts, identities, capabilities and wire messages |
+| `aiworker.config`, `aiworker.service`               | Provider transport, sandbox, supervisor, and core-side coordination                   |
+| `aiworker.web.admin`                                | Infrastructure status for administrators                                         |
+| `hyperion.config.worker`, `hyperion.service.worker` | Conditional Hyperion workload and typed translation                              |
+| `hyperion.service.worker.toolchain.javagradle`      | Java/Gradle authoring and independent verification                               |
+| Other `hyperion` packages                           | Instructor access, exercise state, persistence and review                        |
+
+`aiworker` must not import Hyperion. Its portable contracts must not import Spring
+services, Docker, the database or distributed state. A workload may use `SandboxApi`
+and `WorkloadApi`; it must not reach into the generic worker supervisor. Core-side
+Hyperion uses the `AiWorkerApi` facade to claim work and receive results.
+
+## One artifact, two process roles
+
+The normal `ArtemisApp` entry point starts either process role. With only
+`prod,aiworker`, it scans AI Worker services and the selected workload, starts no
+HTTP server, and excludes database auto-configuration. It rejects a combined
+core/LocalCI/LocalVC/Build Agent profile and HTTP override. The worker VM must
+also block access to core database and repository services. The selected Hazelcast
+or Redis client still starts through the shared distributed-data provider.
+
+The worker runs a workload only when `artemis.aiworker.workload` selects it. Hyperion
+selects `hyperion-generation`; other values do not activate its authoring services.
+Each worker identity advertises one versioned workload capability and one qualified
+sandbox image. The worker and core use separate provider credentials. A heartbeat reaches the
+shared `DistributedDataProvider`, so any core node can see
+capacity. A job stays fenced to its claimed worker incarnation and execution UUID.
+The worker calls the configured LLM provider directly; core does not proxy those calls.
+
+## Add a workload
+
+1. Define bounded typed input and output in the owning feature. Set a schema version.
+2. Implement `WorkloadApi` in that feature. Validate the assignment and keep domain
+   data out of the generic worker envelope.
+3. Gate its services on `aiworker` and the selected workload. Register its worker
+   configuration in Spring Boot auto-configuration imports.
+4. Keep authorization and durable writes on core. Use `AiWorkerApi` for claims and
+   results; use `SandboxApi` for isolated execution.
+5. Test codec bounds, cancellation, duplicate delivery, lost renewals, stale results,
+   and startup with core services absent. Qualify the exact sandbox image with a real
+   build before enabling it.
+
+Only the Java/Gradle Hyperion toolchain is qualified. A fake adapter in tests does
+not establish support for another language.
+
+## Checks
+
+```bash
+./gradlew compileJava compileTestJava spotlessCheck checkstyleMain checkstyleTest -x webapp
+./gradlew test -PincludeArchitectureTests --tests '*ArchitectureTest' -x webapp
+./gradlew test --tests 'de.tum.cit.aet.artemis.aiworker.*' --tests 'de.tum.cit.aet.artemis.hyperion.service.worker.*' -x webapp
+```
+
+The architecture tests enforce package ownership, root-project conventions and
+portable contracts. Docker-backed tests require a qualified immutable image; a
+skipped test does not qualify an image. See [AI Worker operations](/admin/aiworker)
+for deployment and recovery.

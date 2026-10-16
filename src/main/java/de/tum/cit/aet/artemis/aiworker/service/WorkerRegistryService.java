@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.aiworker.service;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.jspecify.annotations.Nullable;
@@ -55,6 +57,16 @@ public class WorkerRegistryService {
             if (event != null) {
                 recordPresence(workerId, event);
             }
+        }
+    }
+
+    /** Collects abandoned delivery using actual lease UUIDs; provider read failures defer cleanup. */
+    @Scheduled(fixedDelay = 5_000)
+    public void pruneUnclaimedDeliveries() {
+        for (String workerId : properties.ids()) {
+            Map<UUID, Boolean> claimed = new HashMap<>();
+            transport.pruneUnclaimed(workerId, executionId -> claimed.computeIfAbsent(executionId,
+                    id -> java.util.stream.IntStream.range(0, 16).anyMatch(slot -> id.equals(leases.get(slotKey(workerId, slot))))));
         }
     }
 

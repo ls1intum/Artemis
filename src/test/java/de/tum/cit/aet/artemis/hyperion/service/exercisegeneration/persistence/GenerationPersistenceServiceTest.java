@@ -1044,6 +1044,37 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
+    void preservationChecksPersistWithZeroCreditAndTheirPreviousGradingCanBeRestored() {
+        ProgrammingExerciseTestCase assessed = new ProgrammingExerciseTestCase().testName("acceptsFraction").weight(1.0).visibility(Visibility.ALWAYS).active(true);
+        ProgrammingExerciseTestCase preservation = new ProgrammingExerciseTestCase().testName("preservesGuard").weight(2.0).bonusPoints(2.0).visibility(Visibility.AFTER_DUE_DATE)
+                .active(true);
+        when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(assessed, preservation));
+        String plan = """
+                {"tests":[
+                  {"name":"acceptsFraction","seam":"S1","seamWeightTier":3,"visibility":"ALWAYS"},
+                  {"name":"preservesGuard","purpose":"PRESERVATION","seamWeightTier":0,"visibility":"ALWAYS"}
+                ]}
+                """;
+
+        GenerationPersistenceService.PersistResult saved = service.persist(exercise, user, outcomeWithPlan(Map.of(), Map.of(), Map.of(), "", plan));
+
+        assertThat(assessed.getWeight()).isEqualTo(3.0);
+        assertThat(preservation.getWeight()).isZero();
+        assertThat(preservation.getBonusPoints()).isZero();
+        assertThat(new de.tum.cit.aet.artemis.programming.service.TestCasePointsService(testCaseRepository).calculatePointsForTestCase(preservation, Set.of(assessed, preservation),
+                exercise, 3.0, false)).isZero();
+        preservation.setBonusPoints(1.0);
+        assertThat(service.canRestoreGrading(1L, saved.previousGrading(), saved.savedGrading())).isFalse();
+        preservation.setBonusPoints(0.0);
+        assertThat(preservation.getVisibility()).isEqualTo(Visibility.ALWAYS);
+        assertThat(service.resyncAfterRevertWithSignal(exercise, user, null, null, null, null, null, Map.of(), saved.previousGrading(), saved.savedGrading(), () -> true)).isTrue();
+        assertThat(assessed.getWeight()).isEqualTo(1.0);
+        assertThat(preservation.getWeight()).isEqualTo(2.0);
+        assertThat(preservation.getBonusPoints()).isEqualTo(2.0);
+        assertThat(preservation.getVisibility()).isEqualTo(Visibility.AFTER_DUE_DATE);
+    }
+
+    @Test
     void persist_appliesVerifiedPlanEvenWhenTheTestsRepositoryHasNoNewCommit() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("hash-template", "hash-solution", null);

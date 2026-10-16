@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
@@ -18,8 +19,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-
-import jakarta.annotation.PreDestroy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -217,34 +216,6 @@ public class HazelcastConfiguration {
         System.setProperty("hazelcast.phone.home.enabled", "false");
     }
 
-    /**
-     * Gracefully shuts down all Hazelcast instances when the Spring context is destroyed.
-     *
-     * <p>
-     * <strong>Shutdown Order:</strong> Both cluster members and clients are shut down.
-     * This method is called during application shutdown (triggered by {@code @PreDestroy}).
-     *
-     * <p>
-     * <strong>Graceful Shutdown:</strong> Hazelcast's shutdown process:
-     * <ol>
-     * <li>Notifies other cluster members of departure</li>
-     * <li>Migrates owned partitions to remaining members (for cluster members)</li>
-     * <li>Closes network connections</li>
-     * <li>Releases resources</li>
-     * </ol>
-     *
-     * <p>
-     * <strong>Why Both shutdownAll() Calls:</strong> Depending on the deployment mode,
-     * this application may have created either a cluster member instance or a client
-     * instance. Calling both shutdown methods ensures cleanup regardless of mode.
-     */
-    @PreDestroy
-    public void destroy() {
-        log.info("Shutting down Hazelcast");
-        Hazelcast.shutdownAll();
-        HazelcastClient.shutdownAll();
-    }
-
     // ==================== Metrics ====================
 
     /**
@@ -328,7 +299,7 @@ public class HazelcastConfiguration {
      *                              (TTL, backup count, etc.)
      * @return the configured HazelcastInstance appropriate for the deployment context
      */
-    @Bean(name = "hazelcastInstance")
+    @Bean(name = "hazelcastInstance", destroyMethod = "shutdown")
     public HazelcastInstance hazelcastInstance(ArtemisProperties artemisProperties) {
         if (isTestEnvironment()) {
             return createTestHazelcastInstance(artemisProperties);
@@ -381,7 +352,8 @@ public class HazelcastConfiguration {
      */
     private boolean shouldRunAsHazelcastClient() {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        return activeProfiles.contains(PROFILE_BUILDAGENT) && !activeProfiles.contains(PROFILE_CORE) && !activeProfiles.contains(PROFILE_TEST_BUILDAGENT);
+        return (activeProfiles.contains(PROFILE_BUILDAGENT) || activeProfiles.contains(PROFILE_AIWORKER)) && !activeProfiles.contains(PROFILE_CORE)
+                && !activeProfiles.contains(PROFILE_TEST_BUILDAGENT);
     }
 
     // ==================== Test Instance Configuration ====================
