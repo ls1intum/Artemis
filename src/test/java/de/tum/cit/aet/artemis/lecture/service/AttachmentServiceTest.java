@@ -50,8 +50,9 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         testAttachment1 = testAttachmentVideoUnit1.getAttachment();
         // Store an existing student version to verify it gets removed. It has to be stored, not only set on the entity: the reference is removed only while the database
         // still holds it.
+        assertThat(attachmentRepository.updateStudentVersionIfUnchangedSince(testAttachment1.getId(), "example.pdf", testAttachment1.getVersion(), testAttachment1.getSha256Hash(),
+                null)).isEqualTo(1);
         testAttachment1.setStudentVersion("example.pdf");
-        testAttachment1 = attachmentRepository.save(testAttachment1);
 
         // AttachmentVideoUnit with hidden slides
         AttachmentVideoUnit testAttachmentVideoUnit2 = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture, 5, true);
@@ -107,6 +108,23 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
         attachmentService.regenerateStudentVersion(attachmentWithoutUnit);
 
         // No assertions needed as we're testing that no exception occurs
+    }
+
+    @Test
+    void savingALoadedAttachmentKeepsAStudentVersionPublishedMeanwhile() {
+        // A metadata update loads the attachment while it points at example.pdf ...
+        Attachment loaded = attachmentRepository.findById(testAttachment1.getId()).orElseThrow();
+        // ... a regeneration publishes a replacement meanwhile ...
+        assertThat(
+                attachmentRepository.updateStudentVersionIfUnchangedSince(testAttachment1.getId(), "replacement.pdf", loaded.getVersion(), loaded.getSha256Hash(), "example.pdf"))
+                .isEqualTo(1);
+        // ... and the metadata update saves its loaded attachment afterwards
+        loaded.setName("Renamed");
+        attachmentRepository.saveAndFlush(loaded);
+
+        var stored = attachmentRepository.findStudentVersionStateById(testAttachment1.getId()).orElseThrow();
+        assertThat(stored.studentVersion()).isEqualTo("replacement.pdf");
+        assertThat(attachmentRepository.findById(testAttachment1.getId()).orElseThrow().getName()).isEqualTo("Renamed");
     }
 
     @Test

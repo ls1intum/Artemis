@@ -224,12 +224,24 @@ public class AttachmentService {
     /**
      * Removes the student version of an attachment, for example because its file was replaced or no slide is hidden any more.
      * <p>
-     * The reference is removed with a statement that only matches while the attachment still points at the same file, and the file is deleted only when it did.
+     * The reference to remove is read from the database, not taken from the given entity: a saved entity can still hold a reference that a concurrent regeneration has
+     * replaced meanwhile. It is removed with a statement that only matches while the attachment still points at that file, and the file is deleted only when it did.
      *
      * @param attachment the attachment whose student version should be removed
      */
     public void removeStudentVersionFile(Attachment attachment) {
-        removeStudentVersionIfUnchanged(attachment, FileSystemLocation.storedFilename(attachment.getStudentVersion()));
+        if (attachment.getId() == null) {
+            return;
+        }
+        String stored;
+        try {
+            stored = findStoredStudentVersion(attachment.getId());
+        }
+        catch (RuntimeException exception) {
+            log.error("Failed to read the student version reference of attachment {}: {}", attachment.getId(), exception.getMessage(), exception);
+            return;
+        }
+        removeStudentVersionIfUnchanged(attachment, FileSystemLocation.storedFilename(stored));
     }
 
     private void removeStudentVersionIfUnchanged(Attachment attachment, String expectedStudentVersion) {
@@ -247,9 +259,8 @@ public class AttachmentService {
             log.error("Failed to remove the student version reference of attachment {}: {}", attachment.getId(), exception.getMessage(), exception);
             return;
         }
-        if (Objects.equals(FileSystemLocation.storedFilename(attachment.getStudentVersion()), expectedStudentVersion)) {
-            attachment.setStudentVersion(null);
-        }
+        // The database holds no reference now, whatever the given entity still held
+        attachment.setStudentVersion(null);
         deleteStudentVersionFile(attachmentVideoUnit.getId(), expectedStudentVersion);
     }
 

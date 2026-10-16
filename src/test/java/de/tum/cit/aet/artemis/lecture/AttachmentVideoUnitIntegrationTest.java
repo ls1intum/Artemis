@@ -669,8 +669,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         // The student version leaves out the hidden slides, so a change of the details must keep it.
         Attachment storedAttachment = attachmentRepository.findById(splitUnit.getAttachment().getId()).orElseThrow();
         storedAttachment.setReleaseDate(nextWeek);
-        storedAttachment.setStudentVersion("student-version.pdf");
         attachmentRepository.save(storedAttachment);
+        assertThat(attachmentRepository.updateStudentVersionIfUnchangedSince(storedAttachment.getId(), "student-version.pdf", storedAttachment.getVersion(),
+                storedAttachment.getSha256Hash(), null)).isEqualTo(1);
         var created = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + splitUnit.getId(), HttpStatus.OK, AttachmentVideoUnitDTO.class);
         String studentVersion = attachmentRepository.findById(created.attachment().id()).orElseThrow().getStudentVersion();
         assertThat(studentVersion).endsWith("student-version.pdf");

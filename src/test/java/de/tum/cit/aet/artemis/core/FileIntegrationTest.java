@@ -328,8 +328,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         slide.setSlideImagePath("attachments/attachment-unit/" + unit.getId() + "/slide/1.png");
         slide.setHidden(ZonedDateTime.now().plusDays(1));
         slideRepository.save(slide);
-        unit.getAttachment().setStudentVersion(null);
-        attachmentRepo.save(unit.getAttachment());
+        clearStoredStudentVersion(unit.getAttachment());
 
         userUtilService.changeUser(TEST_PREFIX + "student1");
 
@@ -645,9 +644,19 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private AttachmentVideoUnit createAttachmentVideoUnitWithoutStudentVersion(byte[] content) throws IOException {
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(content);
-        attachmentVideoUnit.getAttachment().setStudentVersion(null);
-        attachmentRepo.save(attachmentVideoUnit.getAttachment());
+        clearStoredStudentVersion(attachmentVideoUnit.getAttachment());
         return attachmentVideoUnit;
+    }
+
+    /**
+     * Removes the stored student version. The reference is not updatable through the entity, so it is cleared with the conditional statement the application uses.
+     */
+    private void clearStoredStudentVersion(Attachment attachment) {
+        String stored = attachmentRepo.findStudentVersionStateById(attachment.getId()).orElseThrow().studentVersion();
+        if (stored != null) {
+            assertThat(attachmentRepo.clearStudentVersionIfUnchanged(attachment.getId(), stored)).isEqualTo(1);
+        }
+        attachment.setStudentVersion(null);
     }
 
     private void saveSlide(AttachmentVideoUnit attachmentVideoUnit, int slideNumber, ZonedDateTime hidden, boolean superseded) {
