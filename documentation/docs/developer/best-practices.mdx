@@ -64,17 +64,46 @@ attestations for the two executions even when their artifact hashes match.
 Use the optional release-build mode for this check:
 
 ```sh
+test ! -d build/webapp-dist
+pnpm exec ng cache clean
 ./gradlew clean bootWar -Pprod -Pwar -Psbom -Preproducible -x test --no-build-cache --rerun-tasks
 sha256sum build/libs/Artemis-*.war
 ```
 
-Copy the first WAR outside `build/` before repeating the command. Use the same source, lockfiles,
+Install the frozen dependencies before starting. Require `build/webapp-dist` to be absent before
+Gradle starts: its presence selects the prebuilt-client path during configuration instead of compiling
+the client. Copy the first WAR outside `build/` before repeating every command above. Explicitly clean
+Angular's disk cache before each run, including caches it shares with the main checkout when using
+linked Git worktrees. The configured cache normally lives under `build/angular/` and is already
+removed by `clean` in a regular checkout.
+
+Use the same source, lockfiles,
 JDK, Node, pnpm, Gradle, operating system, and environment for both runs. This mode retains revision
 information and dependency details while omitting volatile builder identity, build clocks, and SBOM
 generation commentary. The service-worker manifest uses `SOURCE_DATE_EPOCH` (seconds since the Unix
 epoch), or the latest Git commit time when it is unset, instead of the build clock. Release provenance
 must still record each actual execution separately. Tests remain a separate required release check;
 `-x test` here isolates artifact generation after those tests have passed.
+
+#### Verified build pair
+
+On 2026-10-16, two complete builds of
+[`efdb52e01c3565a12f3d9bf2816466e6b4cea5eb`](https://github.com/ls1intum/Artemis/commit/efdb52e01c3565a12f3d9bf2816466e6b4cea5eb)
+used the procedure above in the same clean checkout. Both executed all fifteen Gradle tasks and
+regenerated the client, server, and bundled SBOMs. The controlled environment was macOS 27.0.1 on
+arm64, Homebrew OpenJDK 25.0.4.1, Gradle 9.8.1, Gradle-managed Node 24.21.0, and pnpm 12.11.2.
+`SOURCE_DATE_EPOCH` was unset; the service-worker source epoch was the commit time, 1792179000 seconds.
+
+Both complete `Artemis-10.4.war` files had SHA-256:
+
+```text
+f0f91909df8831a0bfe7f5ce8a6595eed3db3ac5edabef9bce73c27da2c2547e
+```
+
+A byte comparison also found no difference. This establishes the controlled-environment Silver
+criterion for the recorded source. It does not establish Gold's independent reproducibility
+requirement or promise the same hash for a different revision or build environment. Repeat the check
+when changing the build process.
 
 ### Maintainer continuity and reporter credit
 

@@ -5,7 +5,6 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executor;
@@ -16,6 +15,7 @@ import java.util.function.Consumer;
 
 import jakarta.annotation.PostConstruct;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -679,12 +679,12 @@ public class GenerationJobService {
         }
     }
 
-    private static WedgedSlotKind slotKind(JobInfo job) {
-        Objects.requireNonNull(job, "A reservation is required to determine its kind");
+    private static WedgedSlotKind slotKind(@NonNull JobInfo job) {
+        String jobId = job.jobId();
         if (GenerationRecoverySlots.isPending(job)) {
             return WedgedSlotKind.REVERT_RECOVERY;
         }
-        return job.jobId().startsWith(REVERT_JOB_PREFIX) ? WedgedSlotKind.REVERT : WedgedSlotKind.GENERATION;
+        return jobId.startsWith(REVERT_JOB_PREFIX) ? WedgedSlotKind.REVERT : WedgedSlotKind.GENERATION;
     }
 
     /**
