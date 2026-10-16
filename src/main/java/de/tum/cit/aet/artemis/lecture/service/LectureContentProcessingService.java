@@ -423,6 +423,26 @@ public class LectureContentProcessingService {
     }
 
     /**
+     * Whether the unit links a video Iris can transcribe, decided from the URL alone.
+     *
+     * @param unit the unit to check
+     * @return true if the unit's video source is supported
+     */
+    public boolean hasSupportedVideo(AttachmentVideoUnit unit) {
+        return videoSourceResolver.isSupportedSource(unit.getVideoSource());
+    }
+
+    /**
+     * The marker value of the unit's current video source, as the processing state stores it in {@code videoSourceHash}.
+     *
+     * @param unit the unit
+     * @return the hash of its video source, empty when it has none
+     */
+    public String videoSourceHashOf(AttachmentVideoUnit unit) {
+        return computeHash(unit.getVideoSource());
+    }
+
+    /**
      * Whether the unit's video source differs from the one its processing state last recorded: added, removed or
      * replaced, by the same rule {@link #handleContentChanges} applies. When it does, a stored transcript belongs to the
      * previous video, so a repair must go through the content-change path, which deletes it, rather than a plain requeue.

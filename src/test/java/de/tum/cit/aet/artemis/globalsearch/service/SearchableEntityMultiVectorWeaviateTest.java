@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.globalsearch.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
@@ -112,12 +113,12 @@ class SearchableEntityMultiVectorWeaviateTest {
         weaviateService = new WeaviateService(Optional.of(client), properties(model), new MockEnvironment());
         var vectorWriter = new SearchableEntityVectorWriter(weaviateService, embeddingClient);
         searchService = new SearchableEntityWeaviateService(weaviateService, mock(WeaviateOutboxRepository.class), resolver, JsonObjectMapper.get(),
-                new SearchableEntityContentHasher(JsonObjectMapper.get()), mock(ApplicationEventPublisher.class), vectorWriter, embeddingClient);
+                new SearchableEntityContentHasher(JsonObjectMapper.get()), mock(ApplicationEventPublisher.class), vectorWriter, embeddingClient, Runnable::run);
     }
 
     private SearchableEntityIndexRebuildService rebuildService(String model) {
         return new SearchableEntityIndexRebuildService(Optional.of(client), properties(model), new MockEnvironment(), weaviateService, syncStateRepository,
-                reconcileStateRepository);
+                reconcileStateRepository, mock(WeaviateOutboxRepository.class));
     }
 
     /**
@@ -193,6 +194,38 @@ class SearchableEntityMultiVectorWeaviateTest {
     private record StoredRow(Map<String, Object> properties, float[][] vectors) {
     }
 
+    /**
+     * The startup backfill finds every channel row without a visibility date across several pages and leaves dated rows
+     * alone; it pages by channel id, so no Weaviate offset limit can stop it.
+     */
+    @Test
+    void theChannelBackfillQueuesEveryRowWithoutADateAcrossPages() throws Exception {
+        var collection = weaviateService.getCollection(SearchableEntitySchema.COLLECTION_NAME);
+        for (long channelId : List.of(5L, 1L, 3L, 2L, 4L)) {
+            Map<String, Object> row = new HashMap<>();
+            row.put(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.CHANNEL);
+            row.put(SearchableEntitySchema.Properties.ENTITY_ID, channelId);
+            row.put(SearchableEntitySchema.Properties.COURSE_ID, COURSE_ID);
+            row.put(SearchableEntitySchema.Properties.TITLE, "channel-" + channelId);
+            if (channelId == 4L) {
+                row.put(SearchableEntitySchema.Properties.RELEASE_DATE, "2026-01-01T00:00:00Z");
+            }
+            collection.data.insert(row, object -> object.uuid(WeaviateUuidUtil.deterministicUuid(SearchableEntitySchema.TypeValues.CHANNEL, channelId)));
+        }
+        WeaviateOutboxRepository outboxRepository = mock(WeaviateOutboxRepository.class);
+        var rebuild = new SearchableEntityIndexRebuildService(Optional.of(client), properties("model-a"), new MockEnvironment(), weaviateService, syncStateRepository,
+                reconcileStateRepository, outboxRepository);
+
+        assertThat(rebuild.queueChannelRowsWithoutVisibilityDate(2)).isEqualTo(4);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<WeaviateOutboxEntry>> saved = ArgumentCaptor.forClass(List.class);
+        verify(outboxRepository).saveAll(saved.capture());
+        assertThat(saved.getValue()).extracting(WeaviateOutboxEntry::getEntityType, WeaviateOutboxEntry::getEntityId).containsExactly(
+                tuple(SearchableEntitySchema.TypeValues.CHANNEL, 1L), tuple(SearchableEntitySchema.TypeValues.CHANNEL, 2L), tuple(SearchableEntitySchema.TypeValues.CHANNEL, 3L),
+                tuple(SearchableEntitySchema.TypeValues.CHANNEL, 5L));
+    }
+
     @Test
     void theIndexIsCreatedWithTheSignatureAndRebuiltOnlyWhenTheModelChanges() throws Exception {
         assertThat(client.collections.exists(PREFIX + SearchableEntitySchema.COLLECTION_NAME)).isTrue();
@@ -231,8 +264,8 @@ class SearchableEntityMultiVectorWeaviateTest {
         dropCollections();
         client = WeaviateClient.connectToLocal(config -> config.host(weaviate.getHost()).port(weaviate.getMappedPort(8080)).grpcPort(weaviate.getMappedPort(50051)));
         var keywordService = new WeaviateService(Optional.of(client), keywordOnly, new MockEnvironment());
-        assertThat(new SearchableEntityIndexRebuildService(Optional.of(client), keywordOnly, new MockEnvironment(), keywordService, syncStateRepository, reconcileStateRepository)
-                .ensureIndexMatchesConfiguration()).isTrue();
+        assertThat(new SearchableEntityIndexRebuildService(Optional.of(client), keywordOnly, new MockEnvironment(), keywordService, syncStateRepository, reconcileStateRepository,
+                mock(WeaviateOutboxRepository.class)).ensureIndexMatchesConfiguration()).isTrue();
 
         useModel("model-a");
         assertThat(rebuildService("model-a").ensureIndexMatchesConfiguration()).isTrue();
@@ -289,8 +322,8 @@ class SearchableEntityMultiVectorWeaviateTest {
                 config -> config.vectorConfig(io.weaviate.client6.v1.api.collections.VectorConfig.text2vecOpenAi()));
         var keywordService = new WeaviateService(Optional.of(client), keywordOnly, new MockEnvironment());
 
-        assertThat(new SearchableEntityIndexRebuildService(Optional.of(client), keywordOnly, new MockEnvironment(), keywordService, syncStateRepository, reconcileStateRepository)
-                .ensureIndexMatchesConfiguration()).isTrue();
+        assertThat(new SearchableEntityIndexRebuildService(Optional.of(client), keywordOnly, new MockEnvironment(), keywordService, syncStateRepository, reconcileStateRepository,
+                mock(WeaviateOutboxRepository.class)).ensureIndexMatchesConfiguration()).isTrue();
 
         var vectors = client.collections.getConfig(PREFIX + SearchableEntitySchema.COLLECTION_NAME).orElseThrow().vectors().values();
         assertThat(vectors).as("the collection was recreated with vectors provided by Artemis")

@@ -34,9 +34,9 @@
                 autocomplete="off"
                 role="combobox"
                 aria-autocomplete="list"
-                [attr.aria-expanded]="menuVisible()"
-                [attr.aria-controls]="menuVisible() ? listboxId : null"
-                [attr.aria-activedescendant]="menuVisible() ? activeOptionId() : null"
+                [attr.aria-expanded]="menuVisible() || !!resultsListboxId()"
+                [attr.aria-controls]="menuVisible() ? listboxId : (resultsListboxId() ?? null)"
+                [attr.aria-activedescendant]="menuVisible() ? activeOptionId() : (activeResultId() ?? null)"
             />
         </div>
         <!-- Always rendered: a live region only announces changes once it is in the DOM. -->

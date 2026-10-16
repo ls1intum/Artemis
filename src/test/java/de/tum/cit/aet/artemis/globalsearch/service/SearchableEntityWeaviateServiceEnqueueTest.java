@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -12,8 +13,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,7 +71,99 @@ class SearchableEntityWeaviateServiceEnqueueTest {
     @BeforeEach
     void setUp() {
         service = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
-                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class));
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), Runnable::run);
+    }
+
+    @Test
+    void testAnUpsertOfAReconciledTypeIsWrittenOnTheExecutorAndNotOnTheCallingThread() {
+        List<Runnable> queued = new ArrayList<>();
+        var queueingService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), queued::add);
+        when(resolver.findChannelIdOf(SearchableEntitySchema.TypeValues.EXERCISE, 9L)).thenReturn(Optional.of(77L));
+
+        queueingService.upsertExerciseAsync(exerciseDto(9L));
+
+        // The request returned without a round trip: nothing has been looked up or written yet.
+        verifyNoInteractions(outboxRepository, resolver);
+        assertThat(queued).hasSize(1);
+
+        queued.forEach(Runnable::run);
+
+        ArgumentCaptor<WeaviateOutboxEntry> captor = ArgumentCaptor.forClass(WeaviateOutboxEntry.class);
+        verify(outboxRepository, times(2)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(WeaviateOutboxEntry::getOperation, WeaviateOutboxEntry::getEntityId).containsExactly(tuple(WeaviateOutboxOperation.UPSERT, 9L),
+                tuple(WeaviateOutboxOperation.UPSERT, 77L));
+    }
+
+    /**
+     * A delete that is lost leaves removed data searchable, and nothing would put it back: the reconcile passes skip posts and answer posts by default and a node
+     * that stops takes what is queued in memory with it. So deletes, and the upserts of the types the passes skip, are written before the request returns.
+     */
+    @Test
+    void testUpsertsOfUnreconciledTypesAreWrittenOnTheCallingThread() {
+        List<Runnable> queued = new ArrayList<>();
+        var queueingService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), queued::add);
+
+        queueingService.upsertPostAsync(new PostSearchableEntityDTO(7L, 10L, 30L, "t", "content"));
+        queueingService.upsertAnswerPostAsync(new AnswerPostSearchableEntityDTO(8L, 7L, 10L, 30L, "reply"));
+
+        assertThat(queued).isEmpty();
+        ArgumentCaptor<WeaviateOutboxEntry> captor = ArgumentCaptor.forClass(WeaviateOutboxEntry.class);
+        verify(outboxRepository, times(2)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(WeaviateOutboxEntry::getEntityType).containsExactly(SearchableEntitySchema.TypeValues.POST,
+                SearchableEntitySchema.TypeValues.ANSWER_POST);
+    }
+
+    @Test
+    void testDeletesAreWrittenBeforeTheRequestReturns() {
+        service.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXERCISE, 5L);
+        service.deleteAllPostsForChannelAsync(4L);
+        service.deleteAllPostsForCourseAsync(3L);
+        service.deleteAllAnswerPostsForPostAsync(7L);
+        service.deleteAllForCourseAsync(3L);
+        ArgumentCaptor<WeaviateOutboxEntry> captor = ArgumentCaptor.forClass(WeaviateOutboxEntry.class);
+        verify(outboxRepository, times(5)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(WeaviateOutboxEntry::getOperation).containsExactly(WeaviateOutboxOperation.DELETE_ENTITY,
+                WeaviateOutboxOperation.DELETE_POSTS_FOR_CHANNEL, WeaviateOutboxOperation.DELETE_POSTS_FOR_COURSE, WeaviateOutboxOperation.DELETE_ANSWER_POSTS_FOR_POST,
+                WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE);
+    }
+
+    @Test
+    void testARejectedDeleteFailsInsteadOfOvertakingQueuedUpserts() {
+        var rejectingService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), task -> {
+                    throw new RejectedExecutionException("executor stopped");
+                });
+
+        assertThatThrownBy(() -> rejectingService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, 7L)).isInstanceOf(RejectedExecutionException.class);
+        assertThatThrownBy(() -> rejectingService.deleteAllForCourseAsync(10L)).isInstanceOf(RejectedExecutionException.class);
+        verifyNoInteractions(outboxRepository);
+    }
+
+    @Test
+    void testAReconcileRowIsStillWrittenOnTheCallingThread() {
+        List<Runnable> queued = new ArrayList<>();
+        var queueingService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), queued::add);
+
+        queueingService.enqueueUpsert(SearchableEntitySchema.TypeValues.COURSE, 1L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+
+        // A reconcile pass relies on the exception of a failed write to retry the entity, which a queued write could not give it.
+        assertThat(queued).isEmpty();
+        verify(outboxRepository).save(any(WeaviateOutboxEntry.class));
+    }
+
+    @Test
+    void testAFailingWriteDoesNotEndTheThreadThatWritesTheRowsOfOtherRequests() {
+        doThrow(new DataAccessResourceFailureException("database down")).when(outboxRepository).save(any(WeaviateOutboxEntry.class));
+        List<Runnable> queued = new ArrayList<>();
+        var queueingService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), queued::add);
+
+        queueingService.upsertCourseAsync(new CourseSearchableEntityDTO(1L, "c", null, null));
+
+        assertThatCode(() -> queued.forEach(Runnable::run)).doesNotThrowAnyException();
     }
 
     @Test
@@ -95,7 +191,7 @@ class SearchableEntityWeaviateServiceEnqueueTest {
         service.upsertLectureUnitAsync(new LectureUnitSearchableEntityDTO(3L, 10L, 20L, null, "u", null, "text", null));
         service.upsertExamAsync(new ExamSearchableEntityDTO(4L, 10L, "e", null, null, null, null, false));
         service.upsertFaqAsync(new FaqSearchableEntityDTO(5L, 10L, "q", "a", "ACCEPTED"));
-        service.upsertChannelAsync(new ChannelSearchableEntityDTO(6L, 10L, "ch", null, false, true));
+        service.upsertChannelAsync(new ChannelSearchableEntityDTO(6L, 10L, "ch", null, false, true, null));
         service.upsertPostAsync(new PostSearchableEntityDTO(7L, 10L, 30L, "t", "content"));
         service.upsertAnswerPostAsync(new AnswerPostSearchableEntityDTO(8L, 7L, 10L, 30L, "reply"));
         service.upsertExerciseAsync(exerciseDto(9L));
@@ -109,6 +205,34 @@ class SearchableEntityWeaviateServiceEnqueueTest {
                 tuple(SearchableEntitySchema.TypeValues.LECTURE, 2L), tuple(SearchableEntitySchema.TypeValues.LECTURE_UNIT, 3L), tuple(SearchableEntitySchema.TypeValues.EXAM, 4L),
                 tuple(SearchableEntitySchema.TypeValues.FAQ, 5L), tuple(SearchableEntitySchema.TypeValues.CHANNEL, 6L), tuple(SearchableEntitySchema.TypeValues.POST, 7L),
                 tuple(SearchableEntitySchema.TypeValues.ANSWER_POST, 8L), tuple(SearchableEntitySchema.TypeValues.EXERCISE, 9L));
+    }
+
+    @Test
+    void testUpsertExerciseAndExam_alsoRewriteTheirChannelRows() {
+        // The channel row carries the date from which students may see the channel, which follows the item's dates.
+        when(resolver.findChannelIdOf(SearchableEntitySchema.TypeValues.EXERCISE, 9L)).thenReturn(Optional.of(77L));
+        when(resolver.findChannelIdOf(SearchableEntitySchema.TypeValues.EXAM, 4L)).thenReturn(Optional.of(78L));
+
+        service.upsertExerciseAsync(exerciseDto(9L));
+        service.upsertExamAsync(new ExamSearchableEntityDTO(4L, 10L, "e", null, null, null, null, false));
+
+        ArgumentCaptor<WeaviateOutboxEntry> captor = ArgumentCaptor.forClass(WeaviateOutboxEntry.class);
+        verify(outboxRepository, times(4)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(WeaviateOutboxEntry::getEntityType, WeaviateOutboxEntry::getEntityId).containsExactly(
+                tuple(SearchableEntitySchema.TypeValues.EXERCISE, 9L), tuple(SearchableEntitySchema.TypeValues.CHANNEL, 77L), tuple(SearchableEntitySchema.TypeValues.EXAM, 4L),
+                tuple(SearchableEntitySchema.TypeValues.CHANNEL, 78L));
+    }
+
+    @Test
+    void testUpsertExam_keepsGoingWhenTheChannelLookupFails() {
+        // The exam is already saved when it is indexed; a failing lookup must not turn the update into an error.
+        when(resolver.findChannelIdOf(SearchableEntitySchema.TypeValues.EXAM, 4L)).thenThrow(new DataAccessResourceFailureException("database down"));
+
+        assertThatCode(() -> service.upsertExamAsync(new ExamSearchableEntityDTO(4L, 10L, "e", null, null, null, null, false))).doesNotThrowAnyException();
+
+        ArgumentCaptor<WeaviateOutboxEntry> captor = ArgumentCaptor.forClass(WeaviateOutboxEntry.class);
+        verify(outboxRepository).save(captor.capture());
+        assertThat(captor.getValue().getEntityType()).isEqualTo(SearchableEntitySchema.TypeValues.EXAM);
     }
 
     @Test

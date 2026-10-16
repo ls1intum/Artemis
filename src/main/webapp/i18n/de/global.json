@@ -49,6 +49,7 @@
             "contentHitsRow": "Folien & Videos: {{ count }} Treffer in {{ lectures }}",
             "contentHitsRowAction": "Anzeigen",
             "showMoreResults": "Mehr Ergebnisse anzeigen",
+            "resultsLabel": "Suchergebnisse",
             "noResultsFound": "Keine Ergebnisse gefunden",
             "searchPlaceholder": "Suche...",
             "tooShortQueryHint": "Bitte gib einen längeren Suchbegriff ein.",
@@ -73,8 +74,8 @@
                 "lecturesDescription": "Vorlesungen und Einheiten nach Titel durchsuchen",
                 "slidesAndVideosTitle": "Folien & Videos",
                 "slidesAndVideosDescription": "Vorlesungsfolien und Videotranskripte durchsuchen",
-                "communicationTitle": "Kommunikation",
-                "communicationDescription": "Kanäle und Nachrichten durchsuchen",
+                "channelsTitle": "Kanäle",
+                "channelsDescription": "Kurskanäle nach Name und Beschreibung durchsuchen",
                 "faqsTitle": "FAQs",
                 "faqsDescription": "Häufig gestellte Fragen durchsuchen",
                 "examsTitle": "Klausuren",
@@ -172,6 +173,8 @@
             "irisAnswerRetry": "Erneut versuchen",
             "irisCollapseSources": "Weniger Quellen anzeigen",
             "irisAiBadge": "KI",
+            "irisHandoffFollowUp": "Noch Fragen? Chatte mit mir weiter über",
+            "irisHandoffOpenChat": "Chat öffnen",
             "entityType": {
                 "exercise": "Aufgabe",
                 "lecture": "Vorlesung",
@@ -425,7 +428,7 @@
             "rowsPerPage": "Einträge pro Seite"
         },
         "datePicker": {
-            "placeholder": "DD.MM.YYYY HH:mm",
+            "placeholder": "TT.MM.JJJJ HH:mm",
             "open": "Kalender öffnen",
             "dialog": "Datum und Uhrzeit auswählen",
             "previousMonth": "Vorheriger Monat: {{ month }}",
@@ -446,7 +449,7 @@
             "timePlaceholder": "HH:mm",
             "dateDialog": "Datum auswählen",
             "invalidDate": "Bitte ein gültiges Datum eingeben.",
-            "datePlaceholder": "DD.MM.YYYY"
+            "datePlaceholder": "TT.MM.JJJJ"
         },
         "imageCropper": {
             "sourceImage": "Bild zum Zuschneiden"

@@ -113,7 +113,7 @@ envProperties.each { key, value ->
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "10.3"
+version = "10.4"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -227,6 +227,19 @@ gitProperties {
 //         GHSA-gcx9-497g-6cp6, GHSA-9xv2-5v5q-p794, GHSA-h3x4-894j-xpx5
 ext["thymeleaf.version"] = "3.1.5.RELEASE"
 ext["tomcat.version"] = "11.0.26"
+// To compute Maven exclusions, io.spring.dependency-management resolves detached copies of the configurations. One of
+// them declares every BOM-managed dependency at its managed version, and none of them has the
+// configurations.configureEach excludes below. The GitHub dependency graph reports those resolutions although no
+// classpath contains them, so a vulnerable managed version raises an alert even when the dependency is pinned higher
+// in the dependencies block. Both artifacts below are declared explicitly, so these two overrides only change what
+// the graph sees.
+// hazelcast: GHSA-6v25-8wq6-xq4j, GHSA-w294-6q5q-53p8 (the Boot BOM manages 5.5.0; 5.6.0 is affected too and
+//         5.7.0 is the first patched release on Maven Central)
+// testcontainers-redis: 2.2.4 imports spring-boot-dependencies 3.4.2, which reaches artemis-project 2.37.0
+//         (GHSA-pm4j-p7pm-fpvx) in the GitHub dependency graph. 3.0.0 imports spring-boot-dependencies 4.1.1, the BOM
+//         this build uses today; after a Spring Boot bump the graph walks 4.1.1's imports as well.
+ext["hazelcast.version"] = hazelcast_version
+ext["testcontainers-redis-module.version"] = testcontainers_redis_version
 
 // Pin the entire Jackson 2.x and 3.x families to releases outside every known jackson-databind vulnerable
 // range. Spring Boot / Spring AI manage older jackson BOMs as dependency-management constraints, which beat
@@ -342,6 +355,27 @@ configurations.configureEach {
 }
 
 dependencies {
+    // commons-configuration 1.10 and commons-lang 2.6, which only it brings in, have no patched release
+    // (GHSA-pvp8-3xj6-8c6x, GHSA-j288-q9x7-2f5v). The excludes above keep both off every classpath, but not out of the
+    // copies that io.spring.dependency-management resolves (see the note above the ext overrides), so the declaration
+    // is removed from the two modules that make it: eureka-client and archaius-core, which eureka-client pulls in.
+    // The application has always run without the library because of the excludes above.
+    components {
+        withModule("com.netflix.eureka:eureka-client") {
+            allVariants {
+                withDependencies {
+                    removeAll { it.group == "commons-configuration" }
+                }
+            }
+        }
+        withModule("com.netflix.archaius:archaius-core") {
+            allVariants {
+                withDependencies {
+                    removeAll { it.group == "commons-configuration" }
+                }
+            }
+        }
+    }
 
     // Required by Sharing Platform
     implementation "org.codeability:SharingPluginPlatformAPI:1.2.1"
@@ -726,7 +760,7 @@ dependencies {
     testImplementation "org.gradle:gradle-tooling-api:9.8.1"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.6.0"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
-    testImplementation "com.redis:testcontainers-redis:2.2.4"
+    testImplementation "com.redis:testcontainers-redis:${testcontainers_redis_version}"
     testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
     testImplementation "com.icegreen:greenmail-junit5:2.1.14"
     testImplementation "com.tngtech.archunit:archunit:1.5.1"

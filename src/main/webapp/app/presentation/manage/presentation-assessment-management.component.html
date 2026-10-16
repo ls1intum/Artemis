@@ -59,11 +59,17 @@
                                     </div>
                                 </header>
 
-                                <div class="presentation-summary text-(--text-body-secondary)">{{ presentationAssessment.description || '-' }}</div>
+                                @if (presentationAssessment.description) {
+                                    <div class="presentation-summary text-(--text-body-secondary)">{{ presentationAssessment.description }}</div>
+                                }
 
                                 <div class="presentation-grading-toolbar">
+                                    <label for="selected-presentation-student-search-input" class="sr-only">{{
+                                        'artemisApp.presentationAssessment.searchStudent' | artemisTranslate
+                                    }}</label>
                                     <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
                                         <input
+                                            id="selected-presentation-student-search-input"
                                             tumAetUiInput
                                             tumAetUiInputSize="small"
                                             type="search"
@@ -136,7 +142,7 @@
                                                                 [value]="row.instance!.resultPoints + ' / ' + presentationAssessment.maxPoints"
                                                             />
                                                         } @else {
-                                                            <span class="text-muted-color">-</span>
+                                                            -
                                                         }
                                                     </td>
                                                     <td>{{ row.instance.presentationDate ? (row.instance.presentationDate | artemisDate) : '-' }}</td>
@@ -233,8 +239,10 @@
                             </div>
 
                             <div class="presentation-overall-toolbar border-y border-(--border-color)">
+                                <label for="presentation-overview-search-input" class="sr-only">{{ 'artemisApp.presentationAssessment.searchOverview' | artemisTranslate }}</label>
                                 <tumaet-ui-icon-field class="student-search" [icon]="faSearch">
                                     <input
+                                        id="presentation-overview-search-input"
                                         tumAetUiInput
                                         tumAetUiInputSize="small"
                                         type="search"
@@ -387,7 +395,7 @@
                                                             [value]="row.instance.resultPoints + ' / ' + row.presentationAssessment.maxPoints"
                                                         />
                                                     } @else {
-                                                        <span class="text-muted-color">—</span>
+                                                        -
                                                     }
                                                 </td>
                                                 <td>

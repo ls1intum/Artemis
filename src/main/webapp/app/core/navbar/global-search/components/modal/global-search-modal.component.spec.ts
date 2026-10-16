@@ -19,6 +19,7 @@ import { GlobalSearchResult } from 'app/openapi/model/global-search-result';
 import { GlobalSearchApi } from 'app/openapi/api/global-search-api';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseStorageService } from 'app/course/manage/services/course-storage.service';
+import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { GlobalSearchNavigationViewComponent } from '../views/navigation-view/global-search-navigation-view.component';
@@ -85,6 +86,19 @@ describe('GlobalSearchModalComponent', () => {
         isMac: vi.fn(() => true),
     };
 
+    const noTabs = {
+        lectures: false,
+        exams: false,
+        competencies: false,
+        tutorialGroups: false,
+        iris: false,
+        faq: false,
+        learningPaths: false,
+        communication: false,
+        training: false,
+    };
+    const mockCourseManagementService = { getCourseAvailableTabs: vi.fn(() => of(noTabs)) };
+
     const mockSearchService = {
         globalSearch: vi.fn(() => of<GlobalSearchResult[]>([])),
     };
@@ -113,6 +127,7 @@ describe('GlobalSearchModalComponent', () => {
                 { provide: GlobalSearchApi, useValue: mockSearchService },
                 { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
                 { provide: CourseStorageService, useValue: mockCourseStorageService },
+                { provide: CourseManagementService, useValue: mockCourseManagementService },
             ],
         });
 
@@ -1142,6 +1157,77 @@ describe('GlobalSearchModalComponent', () => {
             expect((component as any).selectedIndex()).toBe(-1);
         });
 
+        it('gives the focus back to the element the palette was opened from when it closes without navigating', () => {
+            mockSearchOverlayService.isOpen.set(false);
+            TestBed.tick();
+            const trigger = document.createElement('button');
+            document.body.appendChild(trigger);
+            trigger.focus();
+            mockSearchOverlayService.isOpen.set(true);
+            TestBed.tick();
+            (fixture.nativeElement.querySelector('.search-input') as HTMLInputElement | null)?.focus();
+
+            (component as any).onDialogHide();
+
+            expect(mockSearchOverlayService.close).toHaveBeenCalled();
+            expect(document.activeElement).toBe(trigger);
+            trigger.remove();
+        });
+
+        it('points the input at the selected result for screen readers', () => {
+            vi.useFakeTimers();
+            mockSearchService.globalSearch.mockReturnValue(
+                of([{ id: '1', type: 'exercise', title: 'A' } as GlobalSearchResult, { id: '2', type: 'lecture', title: 'B' } as GlobalSearchResult]),
+            );
+            component['onSearchInput']('query');
+            vi.advanceTimersByTime(300);
+            component['selectedIndex'].set(1);
+            fixture.detectChanges();
+
+            const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            const activeId = input.getAttribute('aria-activedescendant')!;
+            const option = fixture.nativeElement.querySelector(`#${activeId}`) as HTMLElement;
+            expect(input.getAttribute('aria-expanded')).toBe('true');
+            expect(option.getAttribute('role')).toBe('option');
+            expect(option.textContent).toContain('B');
+            expect(option.closest('[role="listbox"]')?.id).toBe(input.getAttribute('aria-controls'));
+            vi.useRealTimers();
+        });
+
+        it('points the input at no result while skeletons replace the rows', () => {
+            (component as any).results.set([{ id: '1', type: 'exercise', title: 'A' }]);
+            (component as any).isLoading.set(true);
+            (component as any).selectedIndex.set(0);
+            fixture.detectChanges();
+
+            const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            expect(input.getAttribute('aria-activedescendant')).toBeNull();
+            expect(fixture.nativeElement.querySelector('[role="listbox"]#global-search-results')).toBeNull();
+        });
+
+        it('puts letters typed before the input has focus into the search box', () => {
+            vi.useFakeTimers();
+            (document.activeElement as HTMLElement | null)?.blur();
+
+            component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 'g', cancelable: true }));
+            component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 'i', cancelable: true }));
+            component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 't', cancelable: true }));
+
+            expect((component as any).searchQuery()).toBe('git');
+            vi.useRealTimers();
+        });
+
+        it('leaves letters alone once the input has focus', () => {
+            const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+            input.focus();
+            const event = new KeyboardEvent('keydown', { key: 'g', cancelable: true });
+
+            component.handleKeyboardEvent(event);
+
+            expect(event.defaultPrevented).toBe(false);
+            expect((component as any).searchQuery()).toBe('');
+        });
+
         it('should call preventDefault on arrow keys', () => {
             const downEvent = new KeyboardEvent('keydown', { key: 'ArrowDown' });
             const downPreventDefaultSpy = vi.spyOn(downEvent, 'preventDefault');
@@ -1180,7 +1266,7 @@ describe('GlobalSearchModalComponent', () => {
                 { facet: 'type', value: 'exercise' },
                 { facet: 'course', value: '5' },
             ]);
-            (component as any).highlightChip(1);
+            (component as any).onBackspaceAtStart(new KeyboardEvent('keydown', { key: 'Backspace', cancelable: true }));
 
             component.handleKeyboardEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
 
@@ -1333,13 +1419,23 @@ describe('GlobalSearchModalComponent', () => {
                 expect((component as any).searchQuery()).toBe('');
             });
 
-            it('still removes a chip highlighted with ArrowDown on Delete', () => {
+            it('goes from the input straight to the results on ArrowDown, past the chips', () => {
+                (component as any).results.set([{ id: '1', type: 'exercise', title: 'A' }]);
+                fixture.detectChanges();
+
                 searchInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
-                expect((component as any).selectedChip()).toBe(0);
+
+                expect((component as any).selectedChip()).toBe(-1);
+                expect((component as any).selectedIndex()).toBe(0);
+            });
+
+            it('still removes a chip highlighted with Backspace on Delete', () => {
+                pressBackspace();
+                expect((component as any).selectedChip()).toBe(1);
 
                 searchInput().dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }));
 
-                expect((component as any).tokens()).toEqual([{ facet: 'course', value: '5' }]);
+                expect((component as any).tokens()).toEqual([{ facet: 'type', value: 'exercise' }]);
             });
         });
     });
@@ -1402,56 +1498,16 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['chips']().find((chip) => chip.family === 'course')?.label).toBe('Intro to CS');
         });
 
-        it('should apply course and type filter when modal opens on exercises tab', () => {
+        it.each(['exercises', 'lectures', 'communication', 'exams', 'faq'])('should apply only the course filter when modal opens on the %s tab', (tab) => {
             mockCourseStorageService.getCourse.mockReturnValue({ id: 10, title: 'Algorithms' });
-            Object.defineProperty(router, 'url', { get: () => '/courses/10/exercises', configurable: true });
+            Object.defineProperty(router, 'url', { get: () => `/courses/10/${tab}`, configurable: true });
 
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
             expect(component['courseIdsParam']()[0]).toBe(10);
             expect(component['chips']().find((chip) => chip.family === 'course')?.label).toBe('Algorithms');
-            expect(component['activeFilters']()).toEqual(['exercise']);
-        });
-
-        it('should apply lecture filter when on lectures tab', () => {
-            mockCourseStorageService.getCourse.mockReturnValue({ id: 5, title: 'SE' });
-            Object.defineProperty(router, 'url', { get: () => '/courses/5/lectures', configurable: true });
-
-            mockSearchOverlayService.isOpen.set(true);
-            fixture.detectChanges();
-
-            expect(component['activeFilters']()).toEqual(['lecture', 'lecture_unit']);
-        });
-
-        it('should apply communication filters when on communication tab', () => {
-            mockCourseStorageService.getCourse.mockReturnValue({ id: 5, title: 'SE' });
-            Object.defineProperty(router, 'url', { get: () => '/courses/5/communication', configurable: true });
-
-            mockSearchOverlayService.isOpen.set(true);
-            fixture.detectChanges();
-
-            expect(component['activeFilters']()).toEqual(['channel', 'post', 'answer_post']);
-        });
-
-        it('should apply exam filter when on exams tab', () => {
-            mockCourseStorageService.getCourse.mockReturnValue({ id: 5, title: 'SE' });
-            Object.defineProperty(router, 'url', { get: () => '/courses/5/exams', configurable: true });
-
-            mockSearchOverlayService.isOpen.set(true);
-            fixture.detectChanges();
-
-            expect(component['activeFilters']()).toEqual(['exam']);
-        });
-
-        it('should apply faq filter when on faq tab', () => {
-            mockCourseStorageService.getCourse.mockReturnValue({ id: 5, title: 'SE' });
-            Object.defineProperty(router, 'url', { get: () => '/courses/5/faq', configurable: true });
-
-            mockSearchOverlayService.isOpen.set(true);
-            fixture.detectChanges();
-
-            expect(component['activeFilters']()).toEqual(['faq']);
+            expect(component['activeFilters']()).toEqual([]);
         });
 
         it('should not apply any filter when on course overview (no specific course)', () => {
@@ -1497,7 +1553,7 @@ describe('GlobalSearchModalComponent', () => {
             component['onSearchInput']('test');
             vi.advanceTimersByTime(300);
 
-            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', 'exercise', undefined, [42], undefined, 10);
+            expect(mockSearchService.globalSearch).toHaveBeenCalledWith('test', undefined, undefined, [42], undefined, 10);
         });
 
         it('offers a matching page of the one course in scope before the results', () => {
@@ -1512,6 +1568,67 @@ describe('GlobalSearchModalComponent', () => {
 
             expect(component['results']().map((result) => result.type)).toEqual(['course_page', 'exercise']);
             expect(component['results']()[0].metadata?.['link']).toBe('/courses/42/statistics');
+        });
+
+        it('offers a guarded course page only when the course has that tab', () => {
+            mockCourseManagementService.getCourseAvailableTabs.mockReturnValue(of({ ...noTabs, lectures: true }));
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 42, title: 'Intro to CS' });
+            Object.defineProperty(router, 'url', { get: () => '/courses/42', configurable: true });
+            mockSearchService.globalSearch.mockReturnValue(of([]));
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            component['onSearchInput']('vorlesungen');
+            vi.advanceTimersByTime(300);
+            expect(component['results']().map((result) => result.metadata?.['link'])).toEqual(['/courses/42/lectures']);
+
+            component['onSearchInput']('faq');
+            vi.advanceTimersByTime(300);
+            expect(component['results']()).toEqual([]);
+        });
+
+        it('adds the guarded pages when the course tabs arrive after the search results', () => {
+            const tabs = new Subject<typeof noTabs>();
+            mockCourseManagementService.getCourseAvailableTabs.mockReturnValue(tabs);
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 42, title: 'Intro to CS' });
+            Object.defineProperty(router, 'url', { get: () => '/courses/42', configurable: true });
+            mockSearchService.globalSearch.mockReturnValue(
+                of([{ id: '1', type: 'exercise', title: 'Vorlesungen planen' } as GlobalSearchResult, { id: '1', type: 'lecture', title: 'Vorlesung 1' } as GlobalSearchResult]),
+            );
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            component['onSearchInput']('vorlesungen');
+            vi.advanceTimersByTime(300);
+            expect(component['results']().map((result) => result.type)).toEqual(['exercise', 'lecture']);
+            // The lecture shares its ID with the exercise before it; the selection must stay on the lecture.
+            component['selectedIndex'].set(1);
+
+            tabs.next({ ...noTabs, lectures: true });
+
+            expect(component['results']().map((result) => result.type)).toEqual(['course_page', 'exercise', 'lecture']);
+            expect(component['selectedIndex']()).toBe(2);
+        });
+
+        it('reads the course tabs again when the palette is opened again', () => {
+            mockCourseManagementService.getCourseAvailableTabs.mockClear();
+            mockCourseManagementService.getCourseAvailableTabs.mockReturnValue(of(noTabs));
+            mockCourseStorageService.getCourse.mockReturnValue({ id: 42, title: 'Intro to CS' });
+            Object.defineProperty(router, 'url', { get: () => '/courses/42', configurable: true });
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+
+            mockSearchOverlayService.isOpen.set(false);
+            fixture.detectChanges();
+            mockCourseManagementService.getCourseAvailableTabs.mockReturnValue(of({ ...noTabs, exams: true }));
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+            mockSearchService.globalSearch.mockReturnValue(of([]));
+            component['onSearchInput']('klausuren');
+            vi.advanceTimersByTime(300);
+
+            expect(mockCourseManagementService.getCourseAvailableTabs).toHaveBeenCalledTimes(2);
+            expect(component['results']().map((result) => result.metadata?.['link'])).toEqual(['/courses/42/exams']);
         });
 
         it('offers no course page without a single course in scope', () => {
@@ -1557,12 +1674,10 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
 
             expect(component['courseIdsParam']()[0]).toBe(42);
-            expect(component['activeFilters']()).toEqual(['exercise']);
 
             // Backspace over the empty input only selects a filter; removing it takes a second press.
             component['onBackspaceAtStart'](new KeyboardEvent('keydown', { key: 'Backspace' }));
 
-            expect(component['activeFilters']()).toEqual(['exercise']);
             expect(component['courseIdsParam']()[0]).toBe(42);
         });
 
@@ -1594,7 +1709,6 @@ describe('GlobalSearchModalComponent', () => {
             fixture.detectChanges();
 
             expect(component['courseIdsParam']()[0]).toBe(42);
-            expect(component['activeFilters']()).toEqual(['exercise']);
 
             // Close modal
             mockSearchOverlayService.isOpen.set(false);
@@ -1617,55 +1731,15 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['activeFilters']()).toEqual([]);
         });
 
-        it('should apply exercise filter when on instructor exercises tab', () => {
+        it.each(['exercises', 'lectures', 'exams', 'communication', 'faqs'])('should apply only the course filter on the instructor %s tab', (tab) => {
             mockCourseStorageService.getCourse.mockReturnValue({ id: 6, title: 'SE' });
-            Object.defineProperty(router, 'url', { get: () => '/course-management/6/exercises', configurable: true });
+            Object.defineProperty(router, 'url', { get: () => `/course-management/6/${tab}`, configurable: true });
 
             mockSearchOverlayService.isOpen.set(true);
             fixture.detectChanges();
 
             expect(component['courseIdsParam']()[0]).toBe(6);
-            expect(component['activeFilters']()).toEqual(['exercise']);
-        });
-
-        it('should apply lecture filter when on instructor lectures tab', () => {
-            mockCourseStorageService.getCourse.mockReturnValue({ id: 6, title: 'SE' });
-            Object.defineProperty(router, 'url', { get: () => '/course-management/6/lectures', configurable: true });
-
-            mockSearchOverlayService.isOpen.set(true);
-            fixture.detectChanges();
-
-            expect(component['activeFilters']()).toEqual(['lecture', 'lecture_unit']);
-        });
-
-        it('should apply exam filter when on instructor exams tab', () => {
-            mockCourseStorageService.getCourse.mockReturnValue({ id: 6, title: 'SE' });
-            Object.defineProperty(router, 'url', { get: () => '/course-management/6/exams', configurable: true });
-
-            mockSearchOverlayService.isOpen.set(true);
-            fixture.detectChanges();
-
-            expect(component['activeFilters']()).toEqual(['exam']);
-        });
-
-        it('should apply communication filters when on instructor communication tab', () => {
-            mockCourseStorageService.getCourse.mockReturnValue({ id: 6, title: 'SE' });
-            Object.defineProperty(router, 'url', { get: () => '/course-management/6/communication', configurable: true });
-
-            mockSearchOverlayService.isOpen.set(true);
-            fixture.detectChanges();
-
-            expect(component['activeFilters']()).toEqual(['channel', 'post', 'answer_post']);
-        });
-
-        it('should apply faq filter when on instructor faqs tab', () => {
-            mockCourseStorageService.getCourse.mockReturnValue({ id: 6, title: 'SE' });
-            Object.defineProperty(router, 'url', { get: () => '/course-management/6/faqs', configurable: true });
-
-            mockSearchOverlayService.isOpen.set(true);
-            fixture.detectChanges();
-
-            expect(component['activeFilters']()).toEqual(['faq']);
+            expect(component['activeFilters']()).toEqual([]);
         });
 
         it('should not apply filter for non-mapped instructor tabs', () => {

@@ -108,6 +108,46 @@ class SearchableEntityChunkerTest {
     }
 
     @Test
+    void linkTextIsKeptAndItsTargetWithOneLevelOfParenthesesIsRemoved() {
+        assertThat(SearchableEntityChunker.clean("See [the docs](https://example.org/a_(b)) and [more](other.md) now.")).isEqualTo("See the docs and more now.");
+        // A target that is never closed is not a link.
+        assertThat(SearchableEntityChunker.clean("Keep [this](unclosed target")).isEqualTo("Keep [this](unclosed target");
+    }
+
+    @Test
+    void veryLongLinkTargetIsCleanedWithoutOverflowingTheStack() {
+        // The target is matched by a repeated group, which the regex engine runs recursively unless the repetition is possessive.
+        String target = "x".repeat(2_000_000);
+
+        assertThat(SearchableEntityChunker.clean("[text](" + target + ")")).isEqualTo("text");
+    }
+
+    @Test
+    void runsOfWhitespaceWithTwoLineBreaksBecomeOneBlankLine() {
+        assertThat(SearchableEntityChunker.clean("first \n \n \n second")).isEqualTo("first\n\nsecond");
+        // Python's whitespace beyond blanks and tabs, and a line break that is not preceded by blanks, belong to the run as well.
+        String exoticWhitespace = "first\r\n" + (char) 0x00A0 + "\n" + (char) 0x2028 + "\nsecond";
+        assertThat(SearchableEntityChunker.clean(exoticWhitespace)).isEqualTo("first\n\nsecond");
+        // A single line break stays a single line break.
+        assertThat(SearchableEntityChunker.clean("first \n second")).isEqualTo("first\nsecond");
+        // Text whose paragraphs are already separated by one blank line is not changed.
+        String paragraphs = "first\n\n".repeat(100_000) + "last";
+        assertThat(SearchableEntityChunker.clean(paragraphs)).isEqualTo(paragraphs);
+    }
+
+    @Test
+    void longRunOfWhitespaceWithoutLineBreaksIsCleanedInLinearTime() {
+        // A run of no-break spaces survives the blank rule, and a match attempt from each of its characters used to take quadratic time.
+        String text = "a" + String.valueOf((char) 0x00A0).repeat(40_000) + "x";
+
+        long start = System.nanoTime();
+        String cleaned = SearchableEntityChunker.clean(text);
+
+        assertThat(Duration.ofNanos(System.nanoTime() - start)).isLessThan(Duration.ofSeconds(5));
+        assertThat(cleaned).isEqualTo(text);
+    }
+
+    @Test
     void entityWithoutDescriptionIsItsHeader() {
         Map<String, Object> properties = Map.of(SearchableEntitySchema.Properties.TYPE, SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.Properties.TITLE,
                 "random");

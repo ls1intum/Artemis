@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.Searchabl
  * <li>The same item in several semesters of a course (same type and title in courses whose titles only differ in the
  * semester) is shown once, from the best-ranked course. Lecture units are never merged: their names, such as "Slides",
  * repeat across lectures, and a row does not name its lecture.</li>
+ * <li>With a query, the channel Artemis creates for an exercise, lecture or exam is placed directly behind that item.</li>
  * </ul>
  */
 public final class GlobalSearchResultRanker {
@@ -41,9 +43,19 @@ public final class GlobalSearchResultRanker {
 
     /** Semester markers in course titles, such as "WS23/24", "SS 2024", "WiSe 2023/24" or "Summer 2024", and bare years. */
     private static final Pattern SEMESTER = Pattern.compile(
-            "\\b(?:ws|ss|wise|sose|winter(?:semester)?|summer(?:semester)?|sommer(?:semester)?|wintersemester|sommersemester)\\s*\\d{2,4}(?:\\s*/\\s*\\d{2,4})?\\b|\\b(?:19|20)\\d{2}(?:\\s*/\\s*\\d{2,4})?\\b");
+            "\\b(?:ws|ss|wise|sose|winter(?:semester)?|summer(?:semester)?|sommer(?:semester)?)\\s*\\d{2,4}(?:\\s*/\\s*\\d{2,4})?\\b|\\b(?:19|20)\\d{2}(?:\\s*/\\s*\\d{2,4})?\\b");
 
     private static final Pattern NON_ALPHANUMERIC = Pattern.compile("[^\\p{L}\\p{N}]+");
+
+    /** Channel names hold only lowercase ASCII letters, digits and separators; Artemis replaces every other character. */
+    private static final Pattern NOT_IN_CHANNEL_NAMES = Pattern.compile("[^a-z0-9]+");
+
+    /** Item types for which Artemis creates a channel named after the item. */
+    private static final List<String> DEFAULT_CHANNEL_TYPES = List.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.LECTURE,
+            SearchableEntitySchema.TypeValues.EXAM);
+
+    /** A shorter channel name is too unspecific to tie the channel to one item. */
+    private static final int MIN_DEFAULT_CHANNEL_TITLE_LENGTH = 3;
 
     private GlobalSearchResultRanker() {
         // utility class
@@ -65,10 +77,20 @@ public final class GlobalSearchResultRanker {
             return rows;
         }
         List<Ranked> ranked = new ArrayList<>(rows.size());
+        // Semester copies of one item usually have the same text, so Weaviate gives them the same relevance and orders
+        // them at random. A run of adjacent copies therefore shares the rank of its first row, and only the course factor
+        // decides between them: otherwise the copy of the running course loses to an ended one just for coming last.
+        String previousTwinKey = null;
+        int sharedRank = 0;
         for (int index = 0; index < rows.size(); index++) {
             Map<String, Object> row = rows.get(index);
             Course course = coursesById.get(courseId(row));
-            ranked.add(new Ranked(row, course, (1.0 / (RANK_OFFSET + index)) * courseFactor(course, now), index));
+            String twinKey = twinKey(row, course);
+            if (twinKey == null || !twinKey.equals(previousTwinKey)) {
+                sharedRank = index;
+            }
+            previousTwinKey = twinKey;
+            ranked.add(new Ranked(row, course, (1.0 / (RANK_OFFSET + sharedRank)) * courseFactor(course, now), index));
         }
         ranked.sort(Comparator.comparingDouble(Ranked::score).reversed().thenComparingInt(Ranked::position));
 
@@ -78,7 +100,7 @@ public final class GlobalSearchResultRanker {
         Map<String, Long> courseOfKeptCopy = new HashMap<>();
         List<Map<String, Object>> result = new ArrayList<>(ranked.size());
         for (Ranked entry : ranked) {
-            String twinKey = twinKey(entry);
+            String twinKey = twinKey(entry.row(), entry.course());
             if (twinKey != null) {
                 long courseId = entry.course().getId();
                 Long keptCourseId = courseOfKeptCopy.putIfAbsent(twinKey, courseId);
@@ -88,7 +110,53 @@ public final class GlobalSearchResultRanker {
             }
             result.add(entry.row());
         }
+        return placeDefaultChannelsAfterTheirItem(result);
+    }
+
+    /**
+     * Moves the channel Artemis creates for an exercise, lecture or exam (named "exercise-", "lecture-" or "exam-" and
+     * the start of the item's title) directly behind that item when both are in the list. The channel name repeats the
+     * title, so it matches as well as the item itself and would otherwise often come first, although the reader looks
+     * for the item.
+     */
+    private static List<Map<String, Object>> placeDefaultChannelsAfterTheirItem(List<Map<String, Object>> rows) {
+        List<Map<String, Object>> result = new ArrayList<>(rows);
+        for (Map<String, Object> channel : rows) {
+            Map<String, Object> item = defaultChannelItem(channel, result);
+            if (item == null || result.indexOf(channel) == result.indexOf(item) + 1) {
+                continue;
+            }
+            result.remove(channel);
+            result.add(result.indexOf(item) + 1, channel);
+        }
         return result;
+    }
+
+    /**
+     * The exercise, lecture or exam a default channel row belongs to, or null. A name that fits several items of the
+     * course is left alone: the channel name holds only the start of the title, which cannot tell such items apart.
+     */
+    private static @Nullable Map<String, Object> defaultChannelItem(Map<String, Object> channel, List<Map<String, Object>> rows) {
+        if (!SearchableEntitySchema.TypeValues.CHANNEL.equals(channel.get(SearchableEntitySchema.Properties.TYPE))) {
+            return null;
+        }
+        String name = normalizeCase(titleOf(channel));
+        for (String type : DEFAULT_CHANNEL_TYPES) {
+            String prefix = type + "-";
+            String titleStart = name.startsWith(prefix) ? compact(name.substring(prefix.length())) : "";
+            if (titleStart.length() < MIN_DEFAULT_CHANNEL_TITLE_LENGTH) {
+                continue;
+            }
+            List<Map<String, Object>> matches = rows.stream().filter(row -> type.equals(row.get(SearchableEntitySchema.Properties.TYPE))
+                    && Objects.equals(courseId(row), courseId(channel)) && compact(normalizeCase(titleOf(row))).startsWith(titleStart)).toList();
+            return matches.size() == 1 ? matches.getFirst() : null;
+        }
+        return null;
+    }
+
+    /** Keeps only the characters a channel name can hold, so a title such as "Einführung" matches its channel "einf-hrung". */
+    private static String compact(String text) {
+        return NOT_IN_CHANNEL_NAMES.matcher(text).replaceAll("");
     }
 
     /**
@@ -109,13 +177,13 @@ public final class GlobalSearchResultRanker {
      * The key under which semester copies of an item collapse, or null when the row is never merged: a row without a
      * course, a course row (each course is its own result) and a lecture unit row (see the class description).
      */
-    private static @Nullable String twinKey(Ranked entry) {
-        String type = entry.row().get(SearchableEntitySchema.Properties.TYPE) instanceof String value ? value : null;
-        if (entry.course() == null || type == null || SearchableEntitySchema.TypeValues.COURSE.equals(type) || SearchableEntitySchema.TypeValues.LECTURE_UNIT.equals(type)) {
+    private static @Nullable String twinKey(Map<String, Object> row, @Nullable Course course) {
+        String type = row.get(SearchableEntitySchema.Properties.TYPE) instanceof String value ? value : null;
+        if (course == null || type == null || SearchableEntitySchema.TypeValues.COURSE.equals(type) || SearchableEntitySchema.TypeValues.LECTURE_UNIT.equals(type)) {
             return null;
         }
-        String courseTitle = normalize(SEMESTER.matcher(normalizeCase(entry.course().getTitle())).replaceAll(" "));
-        String title = normalize(normalizeCase(titleOf(entry.row())));
+        String courseTitle = normalize(SEMESTER.matcher(normalizeCase(course.getTitle())).replaceAll(" "));
+        String title = normalize(normalizeCase(titleOf(row)));
         if (courseTitle.isEmpty() || title.isEmpty()) {
             return null;
         }

@@ -1,16 +1,22 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -23,6 +29,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnqueueExecutorConfiguration;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOperation;
@@ -58,14 +65,21 @@ import io.weaviate.client6.v1.api.collections.query.NearVector;
  * <p>
  * <b>Durability.</b> Metadata writes are never issued to Weaviate directly from the request path.
  * Each public {@code upsert*Async} / {@code delete*Async} method records the intent as a durable
- * {@link WeaviateOutboxEntry} row (a plain repository save that joins any ambient transaction) and returns.
+ * {@link WeaviateOutboxEntry} row (a plain repository save that joins any ambient transaction) and returns. An upsert
+ * of a type that the reconcile passes cover is written on the {@code weaviateOutboxEnqueueExecutor} thread, not on the
+ * request thread, so nobody who edits an entity waits for the index bookkeeping. The executor has one thread, which
+ * keeps the rows of a node in the order the changes were made, and a request that finds its queue full waits for room
+ * instead of overtaking what is queued. An upsert that is still queued when the node dies is lost like a failed write
+ * is, and the reconcile passes repair both. Deletes, and the upserts of posts and answer posts, which the passes do
+ * not cover, are written before the request returns, because nothing would put them back if they were lost: a delete
+ * that is lost leaves removed data searchable. Live deletes use the same executor as live upserts and wait for their
+ * outbox write to finish, so an older queued upsert cannot receive a newer outbox id and restore deleted content.
  * The single-writer {@code WeaviateOutboxDispatcher} on the scheduling node later claims the row and calls
  * {@link #applyOutboxEntry(WeaviateOutboxEntry)}, which performs the actual Weaviate write with retry. A
  * Weaviate outage or node death therefore no longer loses a write.
  * <p>
- * The {@code Async} method-name suffix is retained so the ~40 call sites stay byte-for-byte unchanged; the
- * methods are now synchronous enqueues, so the suffix is a documented slight misnomer (a rename is a trivial
- * follow-up). Enqueue only happens when this bean exists, i.e. when {@link WeaviateEnabled} is true, which
+ * The {@code Async} method-name suffix is retained so the ~40 call sites stay byte-for-byte unchanged. Enqueue only happens when this bean exists, i.e. when
+ * {@link WeaviateEnabled} is true, which
  * preserves the previous feature gating.
  */
 @Lazy
@@ -99,6 +113,14 @@ public class SearchableEntityWeaviateService {
 
     private static final long KEYWORD_FALLBACK_WARNING_INTERVAL_MILLIS = 60_000;
 
+    /**
+     * The types whose upserts of a request are written on the enqueue executor: the ones the reconcile passes cover by default, so an upsert that is lost with a node
+     * that stops is repaired by them. Posts and answer posts are left out because the passes skip them, so their rows are written before the request returns.
+     */
+    private static final Set<String> ASYNC_UPSERT_TYPES = Set.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.EXAM,
+            SearchableEntitySchema.TypeValues.LECTURE, SearchableEntitySchema.TypeValues.LECTURE_UNIT, SearchableEntitySchema.TypeValues.FAQ,
+            SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.TypeValues.COURSE);
+
     private final WeaviateService weaviateService;
 
     private final WeaviateOutboxRepository outboxRepository;
@@ -115,11 +137,13 @@ public class SearchableEntityWeaviateService {
 
     private final SearchableEntityEmbeddingClient embeddingClient;
 
+    private final Executor enqueueExecutor;
+
     private final AtomicLong lastKeywordFallbackWarning = new AtomicLong();
 
     public SearchableEntityWeaviateService(WeaviateService weaviateService, WeaviateOutboxRepository outboxRepository, SearchableEntityResolver resolver, JsonMapper objectMapper,
             SearchableEntityContentHasher contentHasher, ApplicationEventPublisher eventPublisher, SearchableEntityVectorWriter vectorWriter,
-            SearchableEntityEmbeddingClient embeddingClient) {
+            SearchableEntityEmbeddingClient embeddingClient, @Qualifier(WeaviateEnqueueExecutorConfiguration.EXECUTOR_NAME) Executor enqueueExecutor) {
         this.weaviateService = weaviateService;
         this.outboxRepository = outboxRepository;
         this.resolver = resolver;
@@ -128,6 +152,7 @@ public class SearchableEntityWeaviateService {
         this.eventPublisher = eventPublisher;
         this.vectorWriter = vectorWriter;
         this.embeddingClient = embeddingClient;
+        this.enqueueExecutor = enqueueExecutor;
     }
 
     // ----- Search path -----
@@ -319,7 +344,11 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert exercise without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), WeaviateOutboxOrigin.LIVE);
+        long exerciseId = dto.exerciseId();
+        enqueueLive(() -> {
+            saveUpsertAndSignal(SearchableEntitySchema.TypeValues.EXERCISE, exerciseId, WeaviateOutboxOrigin.LIVE);
+            enqueueChannelOf(SearchableEntitySchema.TypeValues.EXERCISE, exerciseId);
+        });
     }
 
     /**
@@ -332,20 +361,29 @@ public class SearchableEntityWeaviateService {
         if (dtos == null || dtos.isEmpty()) {
             return;
         }
-        int enqueued = 0;
+        List<Long> exerciseIds = new ArrayList<>(dtos.size());
         for (ExerciseSearchableEntityDTO dto : dtos) {
             if (dto == null || dto.exerciseId() == null) {
                 log.warn("Cannot upsert exercise without an ID for exam {}", examId);
                 continue;
             }
-            if (saveUpsert(SearchableEntitySchema.TypeValues.EXERCISE, dto.exerciseId(), WeaviateOutboxOrigin.LIVE)) {
-                enqueued++;
+            exerciseIds.add(dto.exerciseId());
+        }
+        if (exerciseIds.isEmpty()) {
+            return;
+        }
+        enqueueLive(() -> {
+            int enqueued = 0;
+            for (Long exerciseId : exerciseIds) {
+                if (saveUpsert(SearchableEntitySchema.TypeValues.EXERCISE, exerciseId, WeaviateOutboxOrigin.LIVE)) {
+                    enqueued++;
+                }
             }
-        }
-        if (enqueued > 0) {
-            log.debug("Enqueued upserts for {} exercises of exam {}", enqueued, examId);
-            signalEnqueued();
-        }
+            if (enqueued > 0) {
+                log.debug("Enqueued upserts for {} exercises of exam {}", enqueued, examId);
+                signalEnqueued();
+            }
+        });
     }
 
     // ----- Lecture sync -----
@@ -401,7 +439,29 @@ public class SearchableEntityWeaviateService {
             log.warn("Cannot upsert exam without an ID");
             return;
         }
-        enqueueUpsert(SearchableEntitySchema.TypeValues.EXAM, dto.examId(), WeaviateOutboxOrigin.LIVE);
+        long examId = dto.examId();
+        enqueueLive(() -> {
+            saveUpsertAndSignal(SearchableEntitySchema.TypeValues.EXAM, examId, WeaviateOutboxOrigin.LIVE);
+            enqueueChannelOf(SearchableEntitySchema.TypeValues.EXAM, examId);
+        });
+    }
+
+    /**
+     * Rewrites the channel row of an exercise or exam with it: the row holds the date from which students may see the
+     * channel, which follows the item's release or visible date. Like {@link #save}, a failure is logged and not thrown:
+     * the item's change is already saved and must not turn into an error for the user. The drift sweep repairs the row.
+     */
+    private void enqueueChannelOf(String type, long entityId) {
+        Optional<Long> channelId;
+        try {
+            channelId = resolver.findChannelIdOf(type, entityId);
+        }
+        catch (RuntimeException e) {
+            log.error("Failed to look up the channel of {} {}; its search row keeps its old visibility date until a reconcile pass repairs it: {}", type, entityId, e.getMessage(),
+                    e);
+            return;
+        }
+        channelId.ifPresent(id -> saveUpsertAndSignal(SearchableEntitySchema.TypeValues.CHANNEL, id, WeaviateOutboxOrigin.LIVE));
     }
 
     // ----- FAQ sync -----
@@ -579,11 +639,50 @@ public class SearchableEntityWeaviateService {
      * @param origin   which path is asking
      */
     public void enqueueUpsert(String type, Long entityId, WeaviateOutboxOrigin origin) {
+        if (origin == WeaviateOutboxOrigin.LIVE && ASYNC_UPSERT_TYPES.contains(type)) {
+            enqueueLive(() -> saveUpsertAndSignal(type, entityId, origin));
+        }
+        else {
+            saveUpsertAndSignal(type, entityId, origin);
+        }
+    }
+
+    /**
+     * Persists an upsert before waking the dispatcher. A failed write is logged by {@link #saveUpsert} and must not
+     * publish a wake-up for work that does not exist. Live callers run this on the enqueue executor.
+     *
+     * @param type     the searchable entity discriminator
+     * @param entityId the source entity id
+     * @param origin   the request or reconciliation path that requested the update
+     */
+    private void saveUpsertAndSignal(String type, Long entityId, WeaviateOutboxOrigin origin) {
         if (!saveUpsert(type, entityId, origin)) {
             return;
         }
         log.debug("Enqueued upsert for {} {} ({})", type, entityId, origin);
         signalEnqueued();
+    }
+
+    /**
+     * Writes outbox rows of a request on the enqueue executor instead of the request thread. A row of a request that fails is logged and never thrown (see
+     * {@link #save}), and a task that nevertheless throws must not end the thread that writes the rows of the other requests.
+     */
+    private void enqueueLive(Runnable enqueue) {
+        try {
+            enqueueExecutor.execute(() -> {
+                try {
+                    enqueue.run();
+                }
+                catch (RuntimeException e) {
+                    log.error("Failed to enqueue a search index update; the index stays stale for it until it is written again or a reconcile pass repairs it: {}", e.getMessage(),
+                            e);
+                }
+            });
+        }
+        catch (RejectedExecutionException e) {
+            // The executor is shutting down, or the wait for room in its queue was interrupted.
+            log.error("Could not queue a search index update; the index stays stale for it until it is written again or a reconcile pass repairs it: {}", e.getMessage(), e);
+        }
     }
 
     /**
@@ -597,6 +696,34 @@ public class SearchableEntityWeaviateService {
      * @param origin   which path is asking
      */
     public void enqueueDeleteEntity(String type, long entityId, WeaviateOutboxOrigin origin) {
+        if (origin == WeaviateOutboxOrigin.LIVE) {
+            enqueueDeleteAndWait(() -> saveDeleteEntityAndSignal(type, entityId, origin));
+        }
+        else {
+            saveDeleteEntityAndSignal(type, entityId, origin);
+        }
+    }
+
+    /**
+     * Serializes a live deletion behind previously queued upserts and waits until its outbox write finishes. Source cleanup may keep the entity readable after
+     * the delete is enqueued, so letting an older upsert receive a newer outbox id would allow it to restore the removed search hit.
+     * A rejected submission must fail the call instead of writing directly and overtaking pending upserts.
+     *
+     * @param enqueue the deletion's outbox write and dispatcher signal
+     */
+    private void enqueueDeleteAndWait(Runnable enqueue) {
+        CompletableFuture.runAsync(enqueue, enqueueExecutor).join();
+    }
+
+    /**
+     * Persists a deletion before waking the dispatcher. Live callers wait for this outbox write on the enqueue executor;
+     * reconciliation writes on its calling thread so a failed save still reaches the pass that retries it.
+     *
+     * @param type     the searchable entity discriminator
+     * @param entityId the source entity id
+     * @param origin   the request or reconciliation path that requested the deletion
+     */
+    private void saveDeleteEntityAndSignal(String type, long entityId, WeaviateOutboxOrigin origin) {
         if (!save(WeaviateOutboxEntry.forDeleteEntity(type, entityId, origin))) {
             return;
         }
@@ -605,12 +732,14 @@ public class SearchableEntityWeaviateService {
     }
 
     private void enqueueBulkDelete(WeaviateOutboxOperation operation, Map<String, Object> params) {
-        // Only the request path issues bulk deletes; a reconcile pass works entity by entity.
-        if (!save(WeaviateOutboxEntry.forBulkDelete(operation, serializeMap(params), WeaviateOutboxOrigin.LIVE))) {
-            return;
-        }
-        log.debug("Enqueued {} with params {}", operation, params);
-        signalEnqueued();
+        // Bulk deletes share the upserts' queue and finish their write before source cleanup continues, just like a live single-entity delete.
+        enqueueDeleteAndWait(() -> {
+            if (!save(WeaviateOutboxEntry.forBulkDelete(operation, serializeMap(params), WeaviateOutboxOrigin.LIVE))) {
+                return;
+            }
+            log.debug("Enqueued {} with params {}", operation, params);
+            signalEnqueued();
+        });
     }
 
     /**

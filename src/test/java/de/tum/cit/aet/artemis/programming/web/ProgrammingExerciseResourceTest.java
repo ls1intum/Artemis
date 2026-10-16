@@ -1310,7 +1310,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         var updateDTO = UpdateProgrammingExerciseDTO.of(programmingExercise, programmingExerciseUtilService.buildConfigOf(programmingExercise));
 
         assertThatDb(() -> request.putWithResponseBody("/api/programming/programming-exercises", updateDTO, ProgrammingExerciseResponseDTO.class, HttpStatus.OK))
-                .hasBeenCalledAtMostTimes(70);
+                .hasBeenCalledAtMostTimes(49);
     }
 
     /**

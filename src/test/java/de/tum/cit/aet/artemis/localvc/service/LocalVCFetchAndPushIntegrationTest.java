@@ -642,9 +642,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 testPushReturnsForbidden(git, student1.getLogin(), projectKey, student1RepoSlug);
             }
 
-            // Tutors should be able to fetch but NOT push
+            // Tutors can neither fetch nor push: another student's repository is not readable for them once participants are anonymous (after the due date of a manually assessed
+            // exercise, and in exams)
             try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), projectKey, student1RepoSlug);
+                testFetchReturnsForbidden(git, tutor1.getLogin(), projectKey, student1RepoSlug);
                 testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, student1RepoSlug);
             }
 
@@ -896,9 +897,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 testPushReturnsForbidden(git, student1.getLogin(), projectKey, teamRepoSlug);
             }
 
-            // Tutors should be able to fetch but NOT push
+            // Tutors can neither fetch nor push: another student's repository is not readable for them once participants are anonymous (after the due date of a manually assessed
+            // exercise, and in exams)
             try (Git git = cloneRepository(student1.getLogin(), projectKey, teamRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), projectKey, teamRepoSlug);
+                testFetchReturnsForbidden(git, tutor1.getLogin(), projectKey, teamRepoSlug);
                 testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, teamRepoSlug);
             }
 
@@ -1021,9 +1023,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 testPushReturnsForbidden(git, student2.getLogin(), projectKey, practiceRepoSlug);
             }
 
-            // TAs should be able to fetch but NOT push
+            // Tutors can neither fetch nor push: another student's repository is not readable for them once participants are anonymous (after the due date of a manually assessed
+            // exercise, and in exams)
             try (Git git = cloneRepository(student1.getLogin(), projectKey, practiceRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
+                testFetchReturnsForbidden(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
                 testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
             }
 
@@ -1065,9 +1068,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 testPushReturnsForbidden(git, student2.getLogin(), projectKey, practiceRepoSlug);
             }
 
-            // tutors can fetch but not push
+            // Tutors can neither fetch nor push: another student's repository is not readable for them once participants are anonymous (after the due date of a manually assessed
+            // exercise, and in exams)
             try (Git git = cloneRepository(student1.getLogin(), projectKey, practiceRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
+                testFetchReturnsForbidden(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
                 testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
             }
 
@@ -1150,9 +1154,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 testPushReturnsForbidden(git, student1.getLogin(), projectKey, practiceRepoSlug);
             }
 
-            // TAs should be able to fetch but NOT push
+            // Tutors can neither fetch nor push: another student's repository is not readable for them once participants are anonymous (after the due date of a manually assessed
+            // exercise, and in exams)
             try (Git git = cloneRepository(instructor1.getLogin(), projectKey, practiceRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
+                testFetchReturnsForbidden(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
                 testPushReturnsForbidden(git, tutor1.getLogin(), projectKey, practiceRepoSlug);
             }
 
@@ -1291,9 +1296,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 testPushReturnsForbidden(git, student2.getLogin(), examProjectKey, student1RepoSlug);
             }
 
-            // Tutors should be able to fetch but NOT push
+            // Tutors can neither fetch nor push: another student's repository is not readable for them once participants are anonymous (after the due date of a manually assessed
+            // exercise, and in exams)
             try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
+                testFetchReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
                 testPushReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
@@ -1363,9 +1369,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 testPushReturnsForbidden(git, student1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
-            // Tutors should be able to fetch but NOT push
+            // Tutors can neither fetch nor push: another student's repository is not readable for them once participants are anonymous (after the due date of a manually assessed
+            // exercise, and in exams)
             try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
+                testFetchReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
                 testPushReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
@@ -1399,9 +1406,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 testPushReturnsForbidden(git, student1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
-            // Tutors should be able to fetch but NOT push
+            // Tutors can neither fetch nor push: another student's repository is not readable for them once participants are anonymous (after the due date of a manually assessed
+            // exercise, and in exams)
             try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
+                testFetchReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
                 testPushReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
@@ -1452,9 +1460,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 testPushSuccessful(git, student1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
-            // Tutors should be able to fetch but NOT push
+            // Tutors can neither fetch nor push: another student's repository is not readable for them once participants are anonymous (after the due date of a manually assessed
+            // exercise, and in exams)
             try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
+                testFetchReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
                 testPushReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
@@ -1490,9 +1499,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 testPushReturnsForbidden(git, student1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
-            // Tutors should be able to fetch but NOT push
+            // Tutors can neither fetch nor push: another student's repository is not readable for them once participants are anonymous (after the due date of a manually assessed
+            // exercise, and in exams)
             try (Git git = cloneRepository(student1.getLogin(), examProjectKey, student1RepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
+                testFetchReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
                 testPushReturnsForbidden(git, tutor1.getLogin(), examProjectKey, student1RepoSlug);
             }
 
@@ -1539,9 +1549,10 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 testPushReturnsForbidden(git, student1.getLogin(), examProjectKey, instructorRepoSlug);
             }
 
-            // Tutors should be able to fetch but NOT push (not their participation)
+            // Tutors can neither fetch nor push: another student's repository is not readable for them once participants are anonymous (after the due date of a manually assessed
+            // exercise, and in exams)
             try (Git git = cloneRepository(instructor1.getLogin(), examProjectKey, instructorRepoSlug)) {
-                testFetchSuccessful(git, tutor1.getLogin(), examProjectKey, instructorRepoSlug);
+                testFetchReturnsForbidden(git, tutor1.getLogin(), examProjectKey, instructorRepoSlug);
                 testPushReturnsForbidden(git, tutor1.getLogin(), examProjectKey, instructorRepoSlug);
             }
 

@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -173,6 +174,10 @@ class IrisGlobalSearchResourceTest {
         verify(searchableEntityPrefetchApi).prefetchCandidates(any(), eq(requestDTO.query()), anyInt(), eq(List.of(12L)), eq(List.of()));
         verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(requestDTO.query(), requestDTO.limit(), requestDTO.runId().toString(), AiSelectionDecision.CLOUD_AI,
                 accessContext, List.of(), List.of(12L), null, false);
+        // The material the answer may cite is captured for the narrowed scope before Pyris is asked, so a handoff pins its citations to it.
+        var order = inOrder(pyrisJobService, pyrisConnectorService);
+        order.verify(pyrisJobService).captureGlobalSearchMaterialVersions(principal.getName(), requestDTO.runId().toString(), List.of(12L));
+        order.verify(pyrisConnectorService).executeGlobalSearchIrisAnswer(any(), anyInt(), any(), any(), any(), any(), any(), any(), anyBoolean());
     }
 
     @Test

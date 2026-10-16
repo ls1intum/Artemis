@@ -77,7 +77,7 @@ describe('search menu builders', () => {
 
         it('never offers the last remaining type in exclude mode', () => {
             // Slides and videos are not excludable, so the exclude menu counts down from the six metadata types.
-            const excludedFive = ['course', 'exercise', 'lecture', 'communication', 'faq'].map((value) => type(value, true));
+            const excludedFive = ['course', 'exercise', 'lecture', 'channel', 'faq'].map((value) => type(value, true));
             expect(buildFilterMenuOptions({ ...base, operator: typeOp('', true), tokens: excludedFive })).toEqual([]);
         });
 
@@ -89,13 +89,19 @@ describe('search menu builders', () => {
             expect(options[1].label).toBe('global.search.showAllTypes');
         });
 
+        it('treats the retired communication value as unknown rather than as an alias for channels', () => {
+            // Filter tokens live only in memory, so no stored search can still carry it: a typed value is a dead end like any other.
+            const options = buildFilterMenuOptions({ ...base, operator: typeOp('communication'), searchQuery: 'type:communication' });
+            expect(options.map((option) => option.action.kind)).toEqual(['literal', 'clearValue']);
+        });
+
         it('names the recovery row after the facet, so "type" is made concrete rather than assumed', () => {
             const options = buildFilterMenuOptions({ ...base, operator: courseOp('candle'), searchQuery: 'course:candle' });
             expect(options[1].label).toBe('global.search.showYourCourses');
         });
 
         it('offers no literal row for an exhausted list, which is an empty menu rather than a wrong word', () => {
-            const excludedFive = ['course', 'exercise', 'lecture', 'communication', 'faq'].map((value) => type(value, true));
+            const excludedFive = ['course', 'exercise', 'lecture', 'channel', 'faq'].map((value) => type(value, true));
             expect(buildFilterMenuOptions({ ...base, operator: typeOp('', true), tokens: excludedFive, searchQuery: '-type:' })).toEqual([]);
         });
 

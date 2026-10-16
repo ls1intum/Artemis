@@ -38,6 +38,7 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
@@ -581,6 +582,11 @@ public class GitService extends AbstractGitService {
             log.debug("Pull ignore conflicts {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pullCommand(git).call();
+        }
+        catch (WrongRepositoryStateException ex) {
+            // A merge that stopped on conflicts leaves the repository in MERGING or MERGING_RESOLVED until the repository is reset, e.g. via the code editor.
+            // Pulling cannot succeed before then and every further attempt fails the same way, so this is reported as the repository's state, not as an unexpected error.
+            log.warn("Cannot pull the repo {}: {}", repo.getLocalPath(), ex.getMessage());
         }
         catch (GitAPIException ex) {
             log.error("Cannot pull the repo {}", repo.getLocalPath(), ex);

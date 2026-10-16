@@ -7,10 +7,11 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertPo
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.awaitIndexing;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryPostProperties;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doNothing;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -43,6 +45,7 @@ import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
+import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.AnswerPostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
@@ -99,7 +102,7 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = programmingExerciseUtilService.addEnrolledCourseWithOneProgrammingExercise(TEST_PREFIX);
         instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
-        doNothing().when(pyrisFaqApi).deleteFaq(any());
+        doNothing().when(pyrisFaqApi).deleteFaq(anyLong(), anyLong());
     }
 
     private Channel createPublicChannel(String name) {
@@ -410,6 +413,53 @@ class PostWeaviateIntegrationTest extends AbstractProgrammingIntegrationLocalCIL
 
             // Assert the group chat post was NOT indexed
             assertThat(queryPostProperties(weaviateService, gcPost.id())).isNull();
+        }
+    }
+
+    /**
+     * Posts and answer posts stay indexed but are not searchable: the reconcile passes do not manage them, so their rows
+     * drift from the database. The palette must never return them, whatever types the request names.
+     */
+    @Nested
+    class SearchExclusionTests {
+
+        private static final String SEARCH_TOKEN = "hiddenpostprobe";
+
+        private List<GlobalSearchResultDTO> search(String query) throws Exception {
+            return request.getList("/api/search?" + query, HttpStatus.OK, GlobalSearchResultDTO.class);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testSearchNeverReturnsIndexedPostsOrReplies() throws Exception {
+            Channel channel = createPublicChannel(SEARCH_TOKEN + "-channel");
+            Post post = ConversationFactory.createBasicPost(0, instructor);
+            post.setContent(SEARCH_TOKEN + " message");
+            post.setConversation(channel);
+            post = postRepository.save(post);
+            AnswerPost answer = createAndSaveAnswerPost(post);
+            searchableEntityWeaviateService.upsertPostAsync(PostSearchableEntityDTO.fromPost(post, channel));
+            searchableEntityWeaviateService.upsertAnswerPostAsync(AnswerPostSearchableEntityDTO.fromAnswerPost(answer, channel));
+
+            // Both message rows are in the index, so their absence below is the search's doing and not a missing document.
+            assertPostExistsInWeaviate(weaviateService, post.getId());
+            assertAnswerPostExistsInWeaviate(weaviateService, answer.getId());
+
+            String scope = "&courseIds=" + course.getId();
+            var securityContext = SecurityContextHolder.getContext();
+            awaitIndexing(() -> {
+                SecurityContextHolder.setContext(securityContext);
+                assertThat(search("q=" + SEARCH_TOKEN + scope)).extracting(GlobalSearchResultDTO::type).contains(SearchableEntitySchema.TypeValues.CHANNEL);
+            });
+
+            assertThat(search("q=" + SEARCH_TOKEN + scope)).extracting(GlobalSearchResultDTO::type).doesNotContain(SearchableEntitySchema.TypeValues.POST,
+                    SearchableEntitySchema.TypeValues.ANSWER_POST);
+            assertThat(search("q=" + SEARCH_TOKEN)).as("unscoped").extracting(GlobalSearchResultDTO::type).doesNotContain(SearchableEntitySchema.TypeValues.POST,
+                    SearchableEntitySchema.TypeValues.ANSWER_POST);
+            // Naming them is accepted rather than rejected, so a client built while they were searchable keeps its channels.
+            assertThat(search("q=" + SEARCH_TOKEN + "&types=post,answer_post" + scope)).isEmpty();
+            assertThat(search("q=" + SEARCH_TOKEN + "&types=channel,post,answer_post" + scope)).isNotEmpty().extracting(GlobalSearchResultDTO::type)
+                    .containsOnly(SearchableEntitySchema.TypeValues.CHANNEL);
         }
     }
 
