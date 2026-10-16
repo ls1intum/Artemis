@@ -1146,4 +1146,17 @@ describe('UnifiedFeedbackComponent', () => {
 
         expect(component.correctionStatusLabel()).toBeUndefined();
     });
+
+    it('should show the points pill of a non-graded feedback suggestion, such as preliminary feedback, in read-only mode', () => {
+        fixture.componentRef.setInput('feedback', {
+            type: FeedbackType.AUTOMATIC,
+            text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}Consider extracting a helper method`,
+            credits: 0,
+        } as Feedback);
+        fixture.detectChanges();
+
+        const pill = fixture.nativeElement.querySelector('.unified-feedback-points') as HTMLElement;
+        expect(pill).not.toBeNull();
+        expect(pill.textContent?.trim()).toBe('0');
+    });
 });

@@ -17,7 +17,8 @@
     >
         <ng-template #panel>
             @if (leftPanel()) {
-                <div class="d-flex flex-column w-100 h-100 overflow-hidden rounded-3 module-bg">
+                <!-- A flush panel frames its content itself (the editors have rounded panels of their own), so a white card behind it would show in their corners -->
+                <div class="d-flex flex-column w-100 h-100 overflow-hidden rounded-3" [class.module-bg]="!flushLeftPanel()">
                     <!-- cdkScrollable registers the panel with the CDK ScrollDispatcher so drag-and-drop auto-scrolls it (#13187) -->
                     <div class="flex-grow-1 overflow-y-auto" [class.p-2]="!flushLeftPanel()" cdkScrollable>
                         <ng-container [ngTemplateOutlet]="leftPanel()!.templateRef" />
@@ -73,7 +74,6 @@
                             type="button"
                             class="collapsed-right-panel-tab"
                             data-testid="collapsed-panel-tab"
-                            [class.active]="activeRightIndex() === i"
                             (click)="expandRightPanel(i)"
                             [attr.aria-label]="panel.label() | artemisTranslate"
                         >

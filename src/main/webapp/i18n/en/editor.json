@@ -31,6 +31,7 @@
             "submitDescription": "Stage, commit, push, build and test your changes.",
             "buildOutput": "Build Output",
             "buildOutputAndFeedback": "Build output and general feedback",
+            "toggleBuildOutput": "Show or hide the build output",
             "toggleBuildOutputAndFeedback": "Show or hide the build output and general feedback",
             "building": "Building and testing...",
             "queued": "Queued...",
@@ -65,6 +66,7 @@
             },
             "fileBrowser": {
                 "fileBrowser": "File browser",
+                "collapse": "Collapse the file browser",
                 "deleteFileTitle": "Delete file",
                 "deleteFolderTitle": "Delete folder",
                 "deleteFileConfirm": "Are you sure you want to delete the file <strong>{{filename}}</strong>?",

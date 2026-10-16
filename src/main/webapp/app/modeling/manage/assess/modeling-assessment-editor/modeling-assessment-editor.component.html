@@ -26,7 +26,16 @@
         (useAsExampleSubmission)="useStudentSubmissionAsExampleSubmission()"
     >
         @if (submission()) {
-            <jhi-assessment-workspace class="modeling-assessment-page__workspace" storageKey="modeling-submission-assessment-split" [customDetailsHeader]="true">
+            <jhi-assessment-workspace
+                class="modeling-assessment-page__workspace"
+                storageKey="modeling-submission-assessment-split"
+                [customDetailsHeader]="true"
+                [customInstructionsHeader]="true"
+                [instructionsRailItems]="instructions()?.railItems()"
+                (instructionsItemSelected)="instructions()?.selectTab($event)"
+                [detailsRailItems]="detailsRailItems()"
+                (detailsItemSelected)="selectDetailsTab($event)"
+            >
                 <div assessmentWorkspaceCanvas class="modeling-assessment-page__canvas">
                     <jhi-assessment-submission-panel [score]="scoreSummary()" [maxPoints]="getTotalMaxPoints(modelingExercise())" [scrollContent]="false">
                         <jhi-modeling-assessment
@@ -55,9 +64,21 @@
                     </jhi-assessment-submission-panel>
                 </div>
 
+                <div assessmentWorkspaceInstructionsHeader class="assessment-workspace-instructions-header">
+                    @if (instructions(); as instructionsRef) {
+                        <jhi-assessment-instructions-tabs [instructions]="instructionsRef" />
+                    }
+                </div>
+
                 <div assessmentWorkspaceInstructions>
                     @if (modelingExercise()) {
-                        <jhi-assessment-instructions [readOnly]="readOnly" [exercise]="modelingExercise()!" [showAssessmentInstructions]="true" [embeddedInEditorChrome]="true" />
+                        <jhi-assessment-instructions
+                            [readOnly]="readOnly"
+                            [exercise]="modelingExercise()!"
+                            [showAssessmentInstructions]="true"
+                            [embeddedInEditorChrome]="true"
+                            [tabbed]="true"
+                        />
                     }
                 </div>
 

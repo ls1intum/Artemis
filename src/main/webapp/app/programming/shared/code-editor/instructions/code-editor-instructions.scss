@@ -15,3 +15,41 @@ Instructions
         height: 100%;
     }
 }
+
+/* A header the page fills itself, with tabs: they run down to the line below the header, which they lay their indicator over */
+.code-editor-panel-header--custom {
+    align-items: stretch;
+    padding-block: 0;
+    padding-inline: 0.25rem 0;
+}
+
+/* The wrappers the pages project the tabs in (they are the pages', hence ng-deep) stretch down to that line as well, or the indicator stops short of it */
+:host ::ng-deep .code-editor-panel-header--custom .code-editor-instructions-header,
+:host ::ng-deep .code-editor-panel-header--custom .programming-assessment-instructions-header {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    align-items: stretch;
+}
+
+/* Like the collapse button of the right panel of the exercise details: the height of the header, at its right edge */
+.code-editor-panel-header__collapse {
+    display: flex;
+    width: 2.5rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    margin-left: auto;
+    padding: 0;
+    color: var(--bs-body-color);
+    background: transparent;
+    border: 0;
+    border-left: var(--bs-border-width) solid var(--bs-border-color);
+
+    &:hover,
+    &:focus-visible {
+        color: var(--bs-primary);
+        background: var(--hover-slightly-darker-body-bg);
+    }
+}

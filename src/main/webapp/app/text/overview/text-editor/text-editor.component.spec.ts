@@ -522,12 +522,50 @@ describe('TextEditorComponent', () => {
 
     it('should render the textarea when there is an Athena result and isExamSummary is false', () => {
         comp.textExercise.set(textExercise);
+        // writing stays open until the due date
+        textExercise.dueDate = dayjs().add(1, 'days');
         comp.result.set({ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA } as Result);
         fixture.componentRef.setInput('isExamSummary', false);
         fixture.changeDetectorRef.detectChanges();
 
         const textarea = fixture.debugElement.query(By.css('#text-editor'));
         expect(textarea).toBeTruthy();
+    });
+
+    it('should still show the box to write in before the due date, whatever result exists', () => {
+        textExercise.dueDate = dayjs().add(1, 'days');
+        comp.textExercise.set(textExercise);
+        comp.result.set({ id: 1, assessmentType: AssessmentType.SEMI_AUTOMATIC } as Result);
+        fixture.componentRef.setInput('isExamSummary', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('#text-editor'))).toBeTruthy();
+        expect(fixture.debugElement.query(By.css('[data-testid="assessment-pending"]')).nativeElement.hidden).toBe(true);
+    });
+
+    it('should lock the latest submission, not the one of the latest result, once the due date has passed', () => {
+        textExercise.dueDate = dayjs().subtract(1, 'days');
+        comp.textExercise.set(textExercise);
+        const latest = { id: 2, text: 'the latest text' } as TextSubmission;
+        comp.submission.set(latest);
+        comp.answer.set('the latest text');
+        comp.result.set({ id: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, submission: { id: 1, text: 'an older text' } } as Result);
+        fixture.componentRef.setInput('isExamSummary', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        const locked = fixture.debugElement.query(By.css('[data-testid="text-locked-submission"]')).nativeElement as HTMLElement;
+        expect(locked.textContent).toContain('the latest text');
+        expect(locked.textContent).not.toContain('an older text');
+    });
+
+    it('should show the submission read-only with the pending tag once the due date has passed', () => {
+        textExercise.dueDate = dayjs().subtract(1, 'days');
+        comp.textExercise.set(textExercise);
+        fixture.componentRef.setInput('isExamSummary', false);
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('#text-editor'))).toBeFalsy();
+        expect(fixture.debugElement.query(By.css('[data-testid="assessment-pending"]')).nativeElement.hidden).toBe(false);
     });
 
     describe('team collaboration', () => {
@@ -587,12 +625,13 @@ describe('TextEditorComponent', () => {
     describe('card layout', () => {
         const getLeftBody = (): HTMLElement => fixture.nativeElement.querySelector('[left-body]');
 
-        it('should keep the left padding of the left body on the participation page', () => {
+        it('should let the submission panel fill the left body on the participation page', () => {
             comp.textExercise.set(textExercise);
             fixture.componentRef.setInput('isExamSummary', false);
             fixture.changeDetectorRef.detectChanges();
 
-            expect(getLeftBody().classList).toContain('ps-2');
+            expect(getLeftBody().classList).not.toContain('ps-2');
+            expect(getLeftBody().querySelector('jhi-assessment-submission-panel')).not.toBeNull();
         });
     });
 

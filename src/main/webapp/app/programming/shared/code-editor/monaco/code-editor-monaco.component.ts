@@ -665,7 +665,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 for (const line of this.newFeedbackLines()) {
                     const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
                     // Above its first line, like stored feedback (0-based `line` is the 1-based Monaco line above it)
-                    this.editor().addLineWidget(line, 'feedback-new-' + line, feedbackNode);
+                    this.editor().addLineWidget(line, 'feedback-new-' + line, feedbackNode, true);
                 }
 
                 // Mark the lines each feedback refers to, a single one or a range, as its widget sits above them. Only the
@@ -991,7 +991,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         const afterLine = range.start;
         // Monaco stacks the widgets of one line in the order they are added. The index keeps the widget ids unique, also for
         // feedback that is not saved yet and therefore has no id.
-        this.editor().addLineWidget(afterLine, `feedback-${index}-line-${afterLine}`, feedbackNode);
+        this.editor().addLineWidget(afterLine, `feedback-${index}-line-${afterLine}`, feedbackNode, true);
     }
 
     /**

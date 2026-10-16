@@ -40,7 +40,12 @@ import { breakCircularResultBackReferences } from 'app/exercise/result/result.ut
 import { faCircleInfo, faClockRotateLeft, faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
-import { AssessmentDetailsHeaderComponent, AssessmentDetailsTab } from 'app/assessment/manage/assessment-details-header/assessment-details-header.component';
+import {
+    AssessmentDetailsHeaderComponent,
+    AssessmentDetailsTab,
+    assessmentDetailsRailItems,
+    isAssessmentDetailsTab,
+} from 'app/assessment/manage/assessment-details-header/assessment-details-header.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { AssessmentScoreTagsComponent } from 'app/assessment/manage/assessment-score-tags/assessment-score-tags.component';
 import { AssessmentScore } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
@@ -49,6 +54,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../repo-export/export-button/programming-assessment-repo-export-button.component';
+import { AssessmentInstructionsTabsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions-tabs/assessment-instructions-tabs.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 import { AssessmentNotPossibleYetState, alertIfAssessmentNotPossibleYet, getAssessmentNotPossibleYetState } from 'app/assessment/shared/util/assessment-availability.util';
@@ -71,6 +77,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
         ProgrammingAssessmentRepoExportButtonComponent,
         ResultComponent,
         AssessmentInstructionsComponent,
+        AssessmentInstructionsTabsComponent,
         UnreferencedFeedbackComponent,
         FeedbackSuggestionsBannerComponent,
         ArtemisDatePipe,
@@ -177,6 +184,17 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     readonly unreferencedFeedback = signal<Feedback[]>([]);
     /** The open tab of the build output, general feedback, notes and complaint panel below the instructions. */
     readonly detailsTab = signal<AssessmentDetailsTab>('feedback');
+    /** The instructions, whose tabs the header of the instructions panel shows. */
+    protected readonly instructions = viewChild(AssessmentInstructionsComponent);
+    /** The icons of the collapsed panel under the editor: one for each of its tabs. */
+    readonly assessmentRailItems = computed(() => assessmentDetailsRailItems({ showBuildOutput: true, complaintType: this.complaint()?.complaintType }));
+
+    /** Opens the details tab whose icon was clicked in the collapsed panel. */
+    selectDetailsTab(id: string): void {
+        if (isAssessmentDetailsTab(id)) {
+            this.detailsTab.set(id);
+        }
+    }
     /** The complaint whose tab was already opened for the assessor, so it is not opened again on every change. */
     private complaintTabOpenedFor?: number;
     private readonly unreferencedFeedbackList = viewChild(UnreferencedFeedbackComponent);

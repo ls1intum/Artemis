@@ -318,6 +318,13 @@
     &:focus-visible {
         background: var(--card-bg);
     }
+
+    // The same solid ring on every page and theme, in the text colour: black on a light theme, and still visible on a dark one
+    &:focus-visible {
+        outline: 2px solid var(--body-color);
+        // Drawn inside the box: the header around the title hides what overflows it, which cut the ring on three sides
+        outline-offset: -2px;
+    }
 }
 
 .unified-feedback-points-input-wrapper {
@@ -437,6 +444,12 @@
     &:focus,
     &:focus-visible {
         background: var(--card-bg);
+    }
+
+    // The same solid ring on every page and theme, in the text colour: black on a light theme, and still visible on a dark one
+    &:focus-visible {
+        outline: 2px solid var(--body-color);
+        outline-offset: 0;
     }
 
     &.unified-feedback-detail-input-missing {

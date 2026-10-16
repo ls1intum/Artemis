@@ -38,32 +38,12 @@
     }
 }
 
-// The build output, general feedback, notes and complaint panel below the instructions. It is framed like the instructions
-// card above it, and only its content scrolls, so the tabs stay in reach.
-.programming-assessment-details {
+// The build output, general feedback, notes and complaint panel under the file browser and the editor. The shared feedback panel of the
+// code editor frames it, puts its header on the line and scrolls its content, so the tabs stay in reach.
+.programming-assessment-details__header {
     display: flex;
-    height: 100%;
-    min-height: 0;
-    flex-direction: column;
-    overflow: hidden;
-    border: 1px solid var(--border-color);
-    border-radius: 0.375rem;
-    background: var(--module-bg);
-
-    &__header {
-        display: flex;
-        min-height: 42px;
-        flex: none;
-        align-items: center;
-        padding: 0 0.5rem;
-        border-bottom: 1px solid var(--code-editor-panel-header-border);
-        background-color: var(--code-editor-panel-header-background);
-    }
-
-    &__content {
-        min-height: 0;
-        flex: 1 1 auto;
-        padding: 0.75rem;
-        overflow-y: auto;
-    }
+    min-width: 0;
+    flex: 1 1 auto;
+    // The tabs run down to the line below the header, so the indicator of the selected tab sits on it
+    align-items: stretch;
 }

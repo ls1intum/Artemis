@@ -45,6 +45,8 @@ export class StructuredGradingInstructionsAssessmentLayoutComponent implements O
 
     public readonly criteria = input.required<GradingCriterion[]>();
     readonly readonly = input<boolean>();
+    /** How many of the instructions are applied, and how many exist; shown at the end of the toolbar of Expand All and Collapse All. */
+    readonly appliedCount = input<{ applied: number; total: number }>();
     readonly allowDrop = signal<boolean>(undefined!);
     // Icons
     faInfoCircle = faInfoCircle;

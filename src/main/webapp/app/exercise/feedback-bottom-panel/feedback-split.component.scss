@@ -1,6 +1,7 @@
 // Fills the space the page gives it, so the splitter has a height to divide.
 :host {
     display: block;
+    width: 100%;
     height: 100%;
     min-width: 0;
     min-height: 0;
@@ -30,14 +31,34 @@
 }
 
 // Collapsed, the lower panel keeps just its header and the line between them is not there to drag. The panels' inline sizes come
-// from PrimeNG, hence the !important.
+// from PrimeNG, hence the !important. Those sizes leave room for the line, which is not there now, so the panels would share that
+// room and the lower one would grow past its header: the upper panel takes it all, and the lower one is as tall as its content.
+// The splitter's root has the colour of the gutters; rounded, its corners would show what lies behind it, e.g. the white card of a page
+:host ::ng-deep .feedback-split {
+    border-radius: 0;
+}
+
 :host ::ng-deep .feedback-split--collapsed {
+    // The gap where the line was is grey, as the line itself is drawn when the panel is open. The splitter's root has an inline
+    // background from its pass-through, hence the !important.
+    background-color: var(--bs-body-bg) !important;
+
+    // On an assessment page the gap is white like its panels
+    &.feedback-split--panel-gutter {
+        background-color: var(--module-bg) !important;
+    }
+
     > [data-pc-section='gutter'] {
         display: none !important;
     }
 
+    > [data-pc-section='panel']:first-of-type {
+        flex: 1 1 auto !important;
+    }
+
     > [data-pc-section='panel']:last-of-type {
         min-height: min-content !important;
+        flex: 0 0 auto !important;
         margin-top: 0.5rem;
     }
 }

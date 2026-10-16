@@ -1,4 +1,4 @@
-<div [class.h-full]="showsAssessedSubmission" [id]="'exercise-' + textExercise()?.id">
+<div [class.h-full]="fillsPanel" [id]="'exercise-' + textExercise()?.id">
     <!--resizable container-->
     @if (textExercise()) {
         <jhi-resizeable-container
@@ -8,13 +8,7 @@
             [showRightPanel]="examMode()"
         >
             <!--region Left Panel-->
-            <div
-                left-body
-                class="text-editor-grid w-100"
-                [class.ps-2]="!showsAssessedSubmission"
-                [class.pb-2]="!showsAssessedSubmission"
-                [class.text-editor-grid--fill]="showsAssessedSubmission"
-            >
+            <div left-body class="text-editor-grid w-100" [class.text-editor-grid--fill]="fillsPanel">
                 @if (teamCollaborationEnabled() && isActive) {
                     <div class="grid-area-team-info pb-6! ps-md-2">
                         <jhi-team-participate-info-box
@@ -29,86 +23,81 @@
                      directly in the grid when there is nothing to divide. -->
                 <ng-template #mainArea>
                     <div class="grid-area-main">
-                        <!-- An assessed submission shows its counts in the header of its panel instead -->
-                        @if (!showsAssessedSubmission) {
-                            <div>
-                                <span
-                                    class="badge bg-primary mb-2"
-                                    data-testid="word-count"
-                                    [hidden]="submission() && !submission().submitted && isExamSummary()"
-                                    jhiTranslate="artemisApp.textExercise.wordCount"
-                                    [translateValues]="{ count: wordCount }"
-                                >
-                                </span>
-                                <span
-                                    class="badge bg-primary mb-2"
+                        @if (showsAssessedSubmission) {
+                            <!-- Framed like the submission panel of the assessment page, with the counts in its header. The points
+                         stay where the student already reads them: the exercise header and the exercise details. -->
+                            <jhi-assessment-submission-panel
+                                titleKey="artemisApp.assessment.assessmentOfSubmission"
+                                [flush]="!isExamSummary()"
+                                data-testid="text-assessed-submission"
+                            >
+                                <tumaet-ui-tag submissionPanelMeta severity="info" data-testid="word-count">
+                                    <span jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount }"></span>
+                                </tumaet-ui-tag>
+                                <tumaet-ui-tag submissionPanelMeta severity="info" data-testid="character-count">
+                                    <span jhiTranslate="artemisApp.textExercise.characterCount" [translateValues]="{ count: characterCount }"></span>
+                                </tumaet-ui-tag>
+                                <jhi-text-result [result]="result()" [course]="course()" />
+                                <!-- In a course the general feedback sits in the panel below the submission; an exam summary is one long page. -->
+                                @if (!showsGeneralFeedbackPanel) {
+                                    <jhi-general-feedback [feedbacks]="unreferencedFeedback" [course]="course()" [separated]="true" />
+                                }
+                                <!-- In a course the exercise details panel asks for the rating; an exam summary has no such panel. -->
+                                @if (isOwnerOfParticipation() && isExamSummary()) {
+                                    <jhi-rating class="d-block mt-2 alert alert-info" [result]="result()" [participation]="participation()" />
+                                }
+                            </jhi-assessment-submission-panel>
+                        } @else {
+                            <!-- Writing and waiting for the assessment are framed like the assessed submission, with the counts in the same place -->
+                            <jhi-assessment-submission-panel
+                                titleKey="artemisApp.result.submission"
+                                [flush]="!isExamSummary()"
+                                [scrollContent]="!isEditing"
+                                data-testid="text-submission"
+                            >
+                                <tumaet-ui-tag submissionPanelMeta severity="info" data-testid="word-count" [hidden]="submission() && !submission().submitted && isExamSummary()">
+                                    <span jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount }"></span>
+                                </tumaet-ui-tag>
+                                <tumaet-ui-tag
+                                    submissionPanelMeta
+                                    severity="info"
                                     data-testid="character-count"
                                     [hidden]="submission() && !submission().submitted && isExamSummary()"
-                                    jhiTranslate="artemisApp.textExercise.characterCount"
-                                    [translateValues]="{ count: characterCount }"
                                 >
-                                </span>
-                            </div>
-                        }
-                        @if (!((result() && (!isAutomaticResult || isExamSummary())) || isReadOnlyWithShowResult())) {
-                            <textarea
-                                [attr.aria-label]="'artemisApp.exam.yourSolution' | artemisTranslate"
-                                id="text-editor"
-                                #textEditor
-                                class="text-editor-textarea"
-                                [maxLength]="MAX_CHARACTER_COUNT"
-                                [ngModel]="answer()"
-                                (ngModelChange)="answer.set($event)"
-                                [readOnly]="!isActive || !submission() || !isOwnerOfParticipation() || isReadOnlyWithShowResult()"
-                                [disabled]="!isActive || !submission() || !isOwnerOfParticipation()"
-                                (keydown.tab)="onTextEditorTab(textEditor, $event)"
-                                (input)="onTextEditorInput($event)"
-                                [hidden]="submission() && !submission().submitted && isExamSummary()"
-                            ></textarea>
-                            @if (teamCollaborationEnabled()) {
-                                <jhi-team-submission-sync
-                                    [exerciseType]="textExercise().type!"
-                                    [submissionObservable]="submissionObservable"
-                                    [participation]="participation()"
-                                    (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
-                                />
-                            }
-                        } @else {
-                            @if (!result()?.feedbacks?.length) {
-                                <div class="row">
-                                    <div class="col-12">
-                                        <b class="text-base font-semibold!" [jhiTranslate]="'artemisApp.textExercise.submission'">Submission:</b>
-                                        <hr />
-                                        <jhi-text-result [result]="result()" [course]="course()" />
-                                        <hr />
-                                        <i [jhiTranslate]="'artemisApp.textExercise.assessmentPending'">Assessment pending</i>
-                                    </div>
-                                </div>
-                            } @else {
-                                <!-- Framed like the submission panel of the assessment page, with the counts in its header. The points
-                                 stay where the student already reads them: the exercise header and the exercise details. -->
-                                <jhi-assessment-submission-panel
-                                    titleKey="artemisApp.assessment.assessmentOfSubmission"
-                                    [flush]="!isExamSummary()"
-                                    data-testid="text-assessed-submission"
-                                >
-                                    <tumaet-ui-tag submissionPanelMeta severity="info" data-testid="word-count">
-                                        <span jhiTranslate="artemisApp.textExercise.wordCount" [translateValues]="{ count: wordCount }"></span>
-                                    </tumaet-ui-tag>
-                                    <tumaet-ui-tag submissionPanelMeta severity="info" data-testid="character-count">
-                                        <span jhiTranslate="artemisApp.textExercise.characterCount" [translateValues]="{ count: characterCount }"></span>
-                                    </tumaet-ui-tag>
-                                    <jhi-text-result [result]="result()" [course]="course()" />
-                                    <!-- In a course the general feedback sits in the panel below the submission; an exam summary is one long page. -->
-                                    @if (!showsGeneralFeedbackPanel) {
-                                        <jhi-general-feedback [feedbacks]="unreferencedFeedback" [course]="course()" [separated]="true" />
+                                    <span jhiTranslate="artemisApp.textExercise.characterCount" [translateValues]="{ count: characterCount }"></span>
+                                </tumaet-ui-tag>
+                                <!-- Hidden rather than conditional: a conditional tag would not be projected into the meta slot of the panel -->
+                                <tumaet-ui-tag submissionPanelMeta severity="warn" data-testid="assessment-pending" [hidden]="isEditing">
+                                    <span jhiTranslate="artemisApp.textExercise.assessmentPending"></span>
+                                </tumaet-ui-tag>
+                                @if (isEditing) {
+                                    <textarea
+                                        [attr.aria-label]="'artemisApp.exam.yourSolution' | artemisTranslate"
+                                        id="text-editor"
+                                        #textEditor
+                                        class="text-editor-textarea"
+                                        [maxLength]="MAX_CHARACTER_COUNT"
+                                        [ngModel]="answer()"
+                                        (ngModelChange)="answer.set($event)"
+                                        [readOnly]="!canWrite || !submission() || !isOwnerOfParticipation()"
+                                        [disabled]="!canWrite || !submission() || !isOwnerOfParticipation()"
+                                        (keydown.tab)="onTextEditorTab(textEditor, $event)"
+                                        (input)="onTextEditorInput($event)"
+                                        [hidden]="submission() && !submission().submitted && isExamSummary()"
+                                    ></textarea>
+                                    @if (teamCollaborationEnabled()) {
+                                        <jhi-team-submission-sync
+                                            [exerciseType]="textExercise().type!"
+                                            [submissionObservable]="submissionObservable"
+                                            [participation]="participation()"
+                                            (receiveSubmission)="onReceiveSubmissionFromTeam($event)"
+                                        />
                                     }
-                                    <!-- In a course the exercise details panel asks for the rating; an exam summary has no such panel. -->
-                                    @if (isOwnerOfParticipation() && isExamSummary()) {
-                                        <jhi-rating class="d-block mt-2 alert alert-info" [result]="result()" [participation]="participation()" />
-                                    }
-                                </jhi-assessment-submission-panel>
-                            }
+                                } @else {
+                                    <!-- The latest submission, not the one the latest result belongs to: that may be an older one -->
+                                    <div class="text-editor-locked-text" data-testid="text-locked-submission">{{ answer() }}</div>
+                                }
+                            </jhi-assessment-submission-panel>
                         }
                     </div>
                 </ng-template>
@@ -130,6 +119,8 @@
                         [hasBottom]="showsGeneralFeedbackPanel"
                         [bottomTemplate]="generalFeedbackPanel"
                         [expanded]="generalFeedbackExpanded()"
+                        [minSizes]="[30, 8]"
+                        [collapseSnapPercent]="15"
                         (collapseRequested)="generalFeedbackExpanded.set(false)"
                     >
                         <div feedbackSplitTop class="text-editor-split__top"><ng-container [ngTemplateOutlet]="mainArea" /></div>

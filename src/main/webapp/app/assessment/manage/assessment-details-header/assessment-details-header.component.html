@@ -39,17 +39,14 @@
     </tumaet-ui-tabs>
     <!-- Only general feedback is added: the private tutor note is a single text box, open in its tab. -->
     @if (activeTab() === 'feedback') {
+        <!-- A cell at the end of the header, set off by a border like the collapse button of the panel beside it -->
         <button
             type="button"
-            tumAetUiButton
-            severity="secondary"
-            variant="outlined"
-            size="small"
             class="assessment-details-header__add"
             data-testid="assessment-details-add"
             [disabled]="disabled()"
             [attr.aria-label]="'artemisApp.assessment.detail.addGeneralFeedback' | artemisTranslate"
-            [tumAetUiTooltip]="'artemisApp.assessment.detail.addGeneralFeedback' | artemisTranslate"
+            [attr.title]="'artemisApp.assessment.detail.addGeneralFeedback' | artemisTranslate"
             (click)="addGeneralFeedback.emit()"
         >
             <fa-icon [icon]="faPlus" />

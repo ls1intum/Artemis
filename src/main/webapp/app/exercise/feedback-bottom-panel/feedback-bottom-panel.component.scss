@@ -8,6 +8,12 @@
     flex-direction: column;
 }
 
+// The rail of the collapsed panel lies inside the panel's own frame, so it draws none of its own
+jhi-collapsed-panel-rail {
+    --collapsed-panel-rail-border: 0;
+    --collapsed-panel-rail-radius: 0;
+}
+
 :host(.fill) {
     height: 100%;
 }
@@ -29,7 +35,7 @@
         height: 100%;
     }
 
-    // Collapsed, only the header remains
+    // Collapsed, only the icon rail remains
     &--collapsed {
         height: auto;
     }
@@ -41,14 +47,13 @@
     flex: none;
     // A page whose header holds tabs lets them run down to the line below the header, so their indicator sits on it
     align-items: var(--feedback-panel-header-align, center);
-    padding: var(--feedback-panel-header-padding-block, 0.3rem) 0.75rem;
-    border-bottom: 1px solid var(--feedback-panel-header-border, var(--border-color));
+    padding: var(--feedback-panel-header-padding-block, 0.3rem) 0 var(--feedback-panel-header-padding-block, 0.3rem) var(--feedback-panel-header-padding-start, 0.75rem);
+    border-bottom: var(--feedback-panel-header-border-width, 1px) solid var(--feedback-panel-header-border, var(--border-color));
+    // A page whose tabs run down to the line draws the line inside the header instead (border width 0, line width 1px): the tabs are then
+    // above it by paint order, with no negative margin whose result depends on how the sizes round
+    box-shadow: inset 0 calc(-1 * var(--feedback-panel-header-line-width, 0px)) 0 var(--feedback-panel-header-border, var(--border-color));
     background-color: var(--feedback-panel-header-background, var(--hover-slightly-darker-body-bg));
     color: inherit;
-}
-
-.feedback-bottom-panel--collapsed .feedback-bottom-panel__header {
-    border-bottom-color: transparent;
 }
 
 .feedback-bottom-panel__title {
@@ -57,15 +62,14 @@
     flex: 1 1 auto;
     align-items: var(--feedback-panel-header-align, center);
     gap: 0.5rem;
-    // A page with tabs in the header lays their indicator over the line below it, by a negative margin of that line's width
-    margin-bottom: var(--feedback-panel-title-overlap, 0);
 }
 
 .feedback-bottom-panel__heading {
     margin: 0;
-    font-size: 0.875rem;
-    font-weight: 650;
-    line-height: 1.3;
+    // Like the tabs of the exercise details beside it: the kit's small tab, which is 14px and 600 on a 20px line
+    font-size: var(--tumaet-ui-font-size-sm);
+    font-weight: 600;
+    line-height: var(--tumaet-ui-line-height-sm);
 }
 
 // The same pill as the count on the general feedback tab of the programming exercise and on the file browser's files
@@ -73,27 +77,35 @@
     @include mixins.count-pill;
 }
 
+// At the far end of the header, set off by a border, like the collapse button of the right panel of the exercise details. It runs the
+// height of the header: the negative margin takes back the header's padding above and below it.
 .feedback-bottom-panel__collapse {
+    display: flex;
+    width: 2.5rem;
     flex-shrink: 0;
-    align-self: center;
+    align-items: center;
+    justify-content: center;
+    align-self: stretch;
+    margin-block: calc(-1 * var(--feedback-panel-header-padding-block, 0.3rem));
+    padding: 0;
     color: inherit;
+    border: 0;
+    border-left: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: 0;
+
+    &:hover,
+    &:focus-visible {
+        color: var(--bs-primary);
+        background: var(--hover-slightly-darker-body-bg);
+    }
 }
 
-// The icon element is inline, to which a transform does not apply, so the chevron would stay pointing down when collapsed
-.feedback-bottom-panel__collapse fa-icon {
-    display: inline-block;
-}
-
-.feedback-bottom-panel__chevron--collapsed {
-    transform: rotate(180deg);
-}
-
-// Only the content scrolls, so the header stays in reach. It is grey, so the cards in it stand out and the room below short
-// content does not read as a gap in a white panel.
+// Only the content scrolls, so the header stays in reach. It has the colour of the panels around it, so the room below short
+// content does not read as a gap, and the cards in it are told apart by their borders.
 .feedback-bottom-panel__content {
     min-height: 0;
     flex: 1 1 auto;
     padding: 0.75rem;
     overflow-y: auto;
-    background-color: var(--feedback-panel-content-background, var(--hover-slightly-darker-body-bg));
+    background-color: var(--feedback-panel-content-background, var(--module-bg));
 }

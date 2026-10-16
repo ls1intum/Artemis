@@ -1,22 +1,29 @@
 <div data-testid="cardBuildOutput" class="card border build-output" [class.build-output--embedded]="!showHeader()">
     <!-- A tab that already names the build output shows it without its own header -->
-    @if (showHeader()) {
-        <div
-            [class]="secondaryHeader() ? 'card-second-header' : 'card-header code-editor-panel-header d-flex'"
-            (click)="toggleEditorCollapse($event)"
-            [attr.aria-expanded]="!collapsed()"
-            #keyboardAction2
-            role="button"
-            tabindex="0"
-            (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
-            (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-            (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
-        >
+    @if (showHeader() && collapsed()) {
+        <jhi-collapsed-panel-rail
+            [icon]="faTerminal"
+            labelKey="artemisApp.editor.buildOutput"
+            orientation="horizontal"
+            testId="collapsed-build-output"
+            (expand)="toggleEditorCollapse($event)"
+        />
+    } @else if (showHeader()) {
+        <div [class]="secondaryHeader() ? 'card-second-header' : 'card-header code-editor-panel-header d-flex'">
             <h3 class="card-title">
                 <fa-icon [icon]="faTerminal" />
                 <span jhiTranslate="artemisApp.editor.buildOutput"></span>
             </h3>
-            <fa-icon class="ms-auto clickable" [icon]="faChevronDown" />
+            <!-- Only the arrow collapses the panel; a click elsewhere in the header does nothing -->
+            <button
+                type="button"
+                class="ms-auto build-output__chevron"
+                (click)="toggleEditorCollapse($event)"
+                [attr.aria-expanded]="!collapsed()"
+                [attr.aria-label]="'artemisApp.editor.toggleBuildOutput' | artemisTranslate"
+            >
+                <fa-icon [icon]="faChevronDown" />
+            </button>
         </div>
     }
     @if (!isBuilding() && !rawBuildLogs().length) {

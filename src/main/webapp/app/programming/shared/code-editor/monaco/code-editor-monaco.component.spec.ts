@@ -803,8 +803,8 @@ describe('CodeEditorMonacoComponent', () => {
         // not asserted: the rendering is driven by both an effect and a requestAnimationFrame
         // pass, which legitimately fire multiple times in the test harness without affecting
         // production correctness.
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 1, `feedback-0-line-1`, document.createElement('div'));
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 2, `feedback-1-line-2`, document.createElement('div'));
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 1, `feedback-0-line-1`, document.createElement('div'), true);
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 2, `feedback-1-line-2`, document.createElement('div'), true);
         expect(selectFileInEditorStub).toHaveBeenCalled();
         consoleErrorSpy.mockRestore();
         rafSpy.mockRestore();
@@ -825,8 +825,8 @@ describe('CodeEditorMonacoComponent', () => {
         comp['addLineWidgetWithFeedback'](first, 0);
         comp['addLineWidgetWithFeedback'](second, 1);
 
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 6, 'feedback-0-line-6', nodes.get(first));
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 6, 'feedback-1-line-6', nodes.get(second));
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 6, 'feedback-0-line-6', nodes.get(first), true);
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 6, 'feedback-1-line-6', nodes.get(second), true);
     });
 
     it('should place every feedback above the first line it refers to', () => {
@@ -840,8 +840,8 @@ describe('CodeEditorMonacoComponent', () => {
         comp['addLineWidgetWithFeedback'](single, 1);
 
         // Editor lines are 1-based: both start at line 7, so both sit after line 6
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 6, 'feedback-0-line-6', expect.any(HTMLElement));
-        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 6, 'feedback-1-line-6', expect.any(HTMLElement));
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(1, 6, 'feedback-0-line-6', expect.any(HTMLElement), true);
+        expect(addLineWidgetStub).toHaveBeenNthCalledWith(2, 6, 'feedback-1-line-6', expect.any(HTMLElement), true);
     });
 
     describe('inline feedback placement', () => {
@@ -874,8 +874,8 @@ describe('CodeEditorMonacoComponent', () => {
             await settle();
 
             expect(renderedInlineFeedbackLines()).toEqual([0, 4]);
-            expect(addLineWidgetStub).toHaveBeenCalledWith(0, 'feedback-0-line-0', expect.any(HTMLElement));
-            expect(addLineWidgetStub).toHaveBeenCalledWith(4, 'feedback-1-line-4', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(0, 'feedback-0-line-0', expect.any(HTMLElement), true);
+            expect(addLineWidgetStub).toHaveBeenCalledWith(4, 'feedback-1-line-4', expect.any(HTMLElement), true);
         });
 
         it('should render feedback on the first line after switching to the file it belongs to', async () => {
@@ -888,7 +888,7 @@ describe('CodeEditorMonacoComponent', () => {
             await settle();
 
             expect(renderedInlineFeedbackLines()).toEqual([0]);
-            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(0, 'feedback-0-line-0', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(0, 'feedback-0-line-0', expect.any(HTMLElement), true);
         });
 
         it('should render feedback on the first line when it arrives after the file was opened', async () => {
@@ -900,8 +900,8 @@ describe('CodeEditorMonacoComponent', () => {
             await settle();
 
             expect(renderedInlineFeedbackLines()).toEqual([0, 4]);
-            expect(addLineWidgetStub).toHaveBeenCalledWith(0, 'feedback-0-line-0', expect.any(HTMLElement));
-            expect(addLineWidgetStub).toHaveBeenCalledWith(4, 'feedback-1-line-4', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(0, 'feedback-0-line-0', expect.any(HTMLElement), true);
+            expect(addLineWidgetStub).toHaveBeenCalledWith(4, 'feedback-1-line-4', expect.any(HTMLElement), true);
         });
 
         it('should turn a new feedback on the first line into a stored feedback', async () => {
@@ -916,7 +916,7 @@ describe('CodeEditorMonacoComponent', () => {
 
             expect(comp.newFeedbackLines()).toEqual([]);
             expect(renderedInlineFeedbackLines()).toEqual([0]);
-            expect(addLineWidgetStub).toHaveBeenCalledWith(0, expect.stringMatching(/^feedback-.*-line-0$/), expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(0, expect.stringMatching(/^feedback-.*-line-0$/), expect.any(HTMLElement), true);
         });
 
         it('should not let a feedback whose line cannot be resolved hide the other feedback of the file', async () => {
@@ -927,7 +927,7 @@ describe('CodeEditorMonacoComponent', () => {
 
             expect(comp.feedbackForSelectedFile()).toEqual([laterFeedback]);
             expect(renderedInlineFeedbackLines()).toEqual([4]);
-            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(4, 'feedback-0-line-4', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(4, 'feedback-0-line-4', expect.any(HTMLElement), true);
         });
     });
 

@@ -59,6 +59,8 @@
                                                 [hasBottom]="showsGeneralFeedbackPanel"
                                                 [bottomTemplate]="generalFeedbackPanel"
                                                 [expanded]="generalFeedbackExpanded()"
+                                                [minSizes]="[30, 8]"
+                                                [collapseSnapPercent]="15"
                                                 (collapseRequested)="generalFeedbackExpanded.set(false)"
                                             >
                                                 <div feedbackSplitTop class="modeling-submission-assessment-layout__canvas">

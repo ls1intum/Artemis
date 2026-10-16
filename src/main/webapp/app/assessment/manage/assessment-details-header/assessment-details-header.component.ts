@@ -1,12 +1,41 @@
 import { Component, input, model, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCommentDots, faFlag, faLock, faPlus, faTerminal } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonDirective, TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent, TumAetUiTabsSurface, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent, TumAetUiTabsSurface } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
+import { CollapsedPanelRailItem } from 'app/shared-ui/components/collapsed-panel-rail/collapsed-panel-rail.component';
 
 /** The tabs of an assessment's general feedback and notes panel. */
 export type AssessmentDetailsTab = 'buildOutput' | 'feedback' | 'notes' | 'complaint';
+
+export function isAssessmentDetailsTab(value: string): value is AssessmentDetailsTab {
+    return value === 'buildOutput' || value === 'feedback' || value === 'notes' || value === 'complaint';
+}
+
+/**
+ * The icons of a collapsed general feedback and notes panel: one for each tab the panel has, with the icon of the tab, so the rail
+ * shows what the panel holds and a click opens the panel at that tab (the id is the tab's value).
+ */
+export function assessmentDetailsRailItems(options: { showBuildOutput?: boolean; complaintType?: ComplaintType } = {}): CollapsedPanelRailItem[] {
+    return [
+        ...(options.showBuildOutput ? [{ id: 'buildOutput', icon: faTerminal, labelKey: 'artemisApp.editor.buildOutput' }] : []),
+        { id: 'feedback', icon: faCommentDots, labelKey: 'artemisApp.assessment.generalFeedback' },
+        { id: 'notes', icon: faLock, labelKey: 'artemisApp.assessment.detail.notesTab' },
+        ...(options.complaintType
+            ? [
+                  {
+                      id: 'complaint',
+                      icon: faFlag,
+                      labelKey:
+                          options.complaintType === ComplaintType.MORE_FEEDBACK
+                              ? 'artemisApp.assessment.detail.studentRequestTab'
+                              : 'artemisApp.assessment.detail.studentComplaintTab',
+                  },
+              ]
+            : []),
+    ];
+}
 
 /**
  * The header of an assessment's general feedback and notes panel: a tab for the build output of a programming submission,
@@ -17,7 +46,7 @@ export type AssessmentDetailsTab = 'buildOutput' | 'feedback' | 'notes' | 'compl
     selector: 'jhi-assessment-details-header',
     templateUrl: './assessment-details-header.component.html',
     styleUrls: ['./assessment-details-header.component.scss'],
-    imports: [FaIconComponent, TumAetUiButtonDirective, TumAetUiTabsComponent, TumAetUiTabListComponent, TumAetUiTabComponent, TumAetUiTooltipDirective, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TumAetUiTabsComponent, TumAetUiTabListComponent, TumAetUiTabComponent, ArtemisTranslatePipe],
 })
 export class AssessmentDetailsHeaderComponent {
     readonly activeTab = model<AssessmentDetailsTab>('feedback');

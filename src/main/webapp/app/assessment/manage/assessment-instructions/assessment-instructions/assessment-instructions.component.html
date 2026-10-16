@@ -1,33 +1,18 @@
 @let gradingCriteriaValue = this.gradingCriteria();
 @let gradingInstructionsValue = this.gradingInstructions();
-@if (showAssessmentInstructions() && (gradingInstructionsValue || (gradingCriteriaValue && gradingCriteriaValue.length > 0))) {
-    <div [class]="embeddedInEditorChrome() ? '' : 'border p-2'">
-        @if (gradingInstructionsValue) {
-            <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions">
-                <p class="markdown-preview" [innerHTML]="gradingInstructionsValue"></p>
-            </jhi-expandable-section>
-        }
-        @if (gradingCriteriaValue && gradingCriteriaValue.length > 0) {
-            <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.structuredGradingInstructions">
-                <ng-container expandableSectionHeaderActions>
-                    @if (selectable()) {
-                        <tumaet-ui-tag
-                            severity="secondary"
-                            styleClass="applied-count-tag"
-                            [value]="'artemisApp.assessmentInstructions.appliedCount' | artemisTranslate: appliedInstructionCount()"
-                        />
-                    }
-                </ng-container>
-                <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly()" [criteria]="gradingCriteriaValue" />
-            </jhi-expandable-section>
-        }
-    </div>
-}
 
-@if (!embeddedInEditorChrome()) {
-    <h3>{{ exercise().title }}</h3>
-}
-<jhi-expandable-section headerKey="artemisApp.assessmentInstructions.problemStatement">
+<!-- What each section shows, declared once for the sections below and for the tabs -->
+<ng-template #assessmentNoteBody>
+    <p class="markdown-preview" [innerHTML]="gradingInstructionsValue"></p>
+</ng-template>
+<ng-template #criteriaBody>
+    <jhi-structured-grading-instructions-assessment-layout
+        [readonly]="readOnly()"
+        [criteria]="gradingCriteriaValue ?? []"
+        [appliedCount]="tabbed() && selectable() ? appliedInstructionCount() : undefined"
+    />
+</ng-template>
+<ng-template #problemStatementBody>
     @switch (exercise().type) {
         @case (ExerciseType.PROGRAMMING) {
             @let programmingParticipationValue = this.programmingParticipation();
@@ -42,8 +27,8 @@
             <p class="markdown-preview" [innerHTML]="problemStatement()"></p>
         }
     }
-</jhi-expandable-section>
-<jhi-expandable-section headerKey="artemisApp.assessmentInstructions.sampleSolution">
+</ng-template>
+<ng-template #sampleSolutionBody>
     @switch (exercise().type) {
         @case (ExerciseType.PROGRAMMING) {
             @let programmingExerciseValue = this.programmingExercise();
@@ -64,9 +49,77 @@
             }
         }
     }
-</jhi-expandable-section>
-@if (isAssessmentTraining()) {
-    <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.trainingEvaluationCriteria.title">
-        <p jhiTranslate="artemisApp.assessmentInstructions.trainingEvaluationCriteria.description"></p>
+</ng-template>
+<ng-template #trainingBody>
+    <p jhiTranslate="artemisApp.assessmentInstructions.trainingEvaluationCriteria.description"></p>
+</ng-template>
+<ng-template #appliedCountTag>
+    @if (selectable()) {
+        <tumaet-ui-tag
+            severity="secondary"
+            styleClass="applied-count-tag"
+            [value]="'artemisApp.assessmentInstructions.appliedCount' | artemisTranslate: appliedInstructionCount()"
+        />
+    }
+</ng-template>
+
+@if (tabbed()) {
+    <!-- One panel for each section; the tabs that open them are drawn by the page in the header of its panel (jhi-assessment-instructions-tabs).
+         Every section stays rendered and the others are hidden, so what a section holds (the ticked instructions, the tasks of a programming
+         exercise) is not lost when the tab changes. -->
+    @for (tab of tabs(); track tab.id) {
+        <div class="assessment-instructions__panel" [hidden]="selectedTab() !== tab.id" [attr.data-testid]="'assessment-instructions-panel-' + tab.id">
+            @switch (tab.id) {
+                @case ('assessmentNote') {
+                    <ng-container [ngTemplateOutlet]="assessmentNoteBody" />
+                }
+                @case ('criteria') {
+                    <ng-container [ngTemplateOutlet]="criteriaBody" />
+                }
+                @case ('problemStatement') {
+                    <ng-container [ngTemplateOutlet]="problemStatementBody" />
+                }
+                @case ('sampleSolution') {
+                    <ng-container [ngTemplateOutlet]="sampleSolutionBody" />
+                }
+                @case ('training') {
+                    <ng-container [ngTemplateOutlet]="trainingBody" />
+                }
+                @default {}
+            }
+        </div>
+    }
+} @else {
+    @if (showAssessmentInstructions() && (gradingInstructionsValue || (gradingCriteriaValue && gradingCriteriaValue.length > 0))) {
+        <div [class]="embeddedInEditorChrome() ? '' : 'border p-2'">
+            @if (gradingInstructionsValue) {
+                <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions">
+                    <ng-container [ngTemplateOutlet]="assessmentNoteBody" />
+                </jhi-expandable-section>
+            }
+            @if (gradingCriteriaValue && gradingCriteriaValue.length > 0) {
+                <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.structuredGradingInstructions">
+                    <ng-container expandableSectionHeaderActions>
+                        <ng-container [ngTemplateOutlet]="appliedCountTag" />
+                    </ng-container>
+                    <ng-container [ngTemplateOutlet]="criteriaBody" />
+                </jhi-expandable-section>
+            }
+        </div>
+    }
+
+    @if (!embeddedInEditorChrome()) {
+        <h3>{{ exercise().title }}</h3>
+    }
+    <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.problemStatement">
+        <ng-container [ngTemplateOutlet]="problemStatementBody" />
     </jhi-expandable-section>
+    <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.sampleSolution">
+        <ng-container [ngTemplateOutlet]="sampleSolutionBody" />
+    </jhi-expandable-section>
+    @if (isAssessmentTraining()) {
+        <jhi-expandable-section headerKey="artemisApp.assessmentInstructions.trainingEvaluationCriteria.title">
+            <ng-container [ngTemplateOutlet]="trainingBody" />
+        </jhi-expandable-section>
+    }
 }

@@ -205,4 +205,68 @@ describe('AssessmentInstructionsComponent', () => {
             expect(comp.selectable()).toBe(false);
         });
     });
+
+    describe('tabs', () => {
+        const criteria = [{ id: 1, title: 'Documentation', structuredGradingInstructions: [{ id: 1, credits: 4 }] }] as GradingCriterion[];
+        const ids = () => comp.tabs().map((tab) => tab.id);
+
+        it('should have a tab for each section the exercise has, in the order of the sections', () => {
+            vi.spyOn(markdownService, 'safeHtmlForMarkdown').mockReturnValue('converted');
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT, gradingInstructions: 'note', gradingCriteria: criteria } as TextExercise);
+            fixture.detectChanges();
+
+            expect(ids()).toEqual(['assessmentNote', 'criteria', 'problemStatement', 'sampleSolution']);
+        });
+
+        it('should leave out the tabs of the note and the criteria when the exercise has none, or they are not to be shown', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as TextExercise);
+            fixture.detectChanges();
+            expect(ids()).toEqual(['problemStatement', 'sampleSolution']);
+
+            vi.spyOn(markdownService, 'safeHtmlForMarkdown').mockReturnValue('converted');
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT, gradingInstructions: 'note', gradingCriteria: criteria } as TextExercise);
+            fixture.componentRef.setInput('showAssessmentInstructions', false);
+            fixture.detectChanges();
+            expect(ids()).toEqual(['problemStatement', 'sampleSolution']);
+        });
+
+        it('should add the tab of the training criteria only in a training', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as TextExercise);
+            fixture.componentRef.setInput('isAssessmentTraining', true);
+            fixture.detectChanges();
+
+            expect(ids()).toEqual(['problemStatement', 'sampleSolution', 'training']);
+        });
+
+        it('should open the criteria first, else the first tab, and keep the tab the tutor chose', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT, gradingCriteria: criteria } as TextExercise);
+            fixture.detectChanges();
+            expect(comp.selectedTab()).toBe('criteria');
+
+            comp.selectTab('problemStatement');
+            expect(comp.selectedTab()).toBe('problemStatement');
+
+            // A value that is no tab of this exercise changes nothing
+            comp.selectTab('unknown');
+            expect(comp.selectedTab()).toBe('problemStatement');
+
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT } as TextExercise);
+            fixture.detectChanges();
+            expect(comp.selectedTab()).toBe('problemStatement');
+        });
+
+        it('should render every section while tabbed, and hide all but the open one', () => {
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.TEXT, gradingCriteria: criteria } as TextExercise);
+            fixture.componentRef.setInput('tabbed', true);
+            fixture.detectChanges();
+
+            const panels = Array.from(fixture.nativeElement.querySelectorAll('[data-testid^="assessment-instructions-panel-"]')) as HTMLElement[];
+            expect(panels.map((panel) => panel.dataset['testid'])).toEqual([
+                'assessment-instructions-panel-criteria',
+                'assessment-instructions-panel-problemStatement',
+                'assessment-instructions-panel-sampleSolution',
+            ]);
+            expect(panels.filter((panel) => !panel.hidden).map((panel) => panel.dataset['testid'])).toEqual(['assessment-instructions-panel-criteria']);
+        });
+    });
 });

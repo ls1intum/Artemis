@@ -27,6 +27,10 @@
     // Collapsed state: the splitter stays mounted (so the left panel survives), but the right panel shrinks to the
     // icon rail and the gutter is hidden. !important overrides PrimeNG's inline flex-basis from panelSizes.
     &.right-collapsed {
+        // The rail keeps the width of the divider as a margin, which shows the splitter's own background: the grey of the shell,
+        // like the divider it stands in for, not the colour of the panels. The root's inline background needs the !important.
+        background-color: var(--bs-body-bg) !important;
+
         > .p-splitterpanel:first-child {
             flex: 1 1 auto !important;
         }
@@ -50,7 +54,8 @@
 // draws the line below the tabs, and the tabs run down to it, so the indicator of the selected tab sits on that line.
 .right-panel-header {
     background-color: var(--hover-slightly-darker-body-bg);
-    border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+    // Inside the header, not a border: the tabs lie over it by paint order, so the indicator covers it at every zoom
+    box-shadow: inset 0 calc(-1 * var(--bs-border-width)) 0 var(--bs-border-color);
 }
 
 .right-panel-collapse-button {
@@ -68,15 +73,13 @@
     &:hover,
     &:focus-visible {
         color: var(--bs-primary);
-        background: var(--bs-tertiary-bg);
+        background: var(--hover-slightly-darker-body-bg);
     }
 }
 
 .right-panel-tabs {
     min-width: 0;
 
-    // The header's line is below the tabs; the indicator of the selected tab lies over it
-    margin-bottom: calc(-1 * var(--bs-border-width));
 
     tumaet-ui-tab-list {
         flex: 1 1 auto;
@@ -92,6 +95,13 @@
     border: var(--bs-border-width) solid var(--bs-border-color);
 }
 
+// The rail that stands for the collapsed panel is grey like a header, so it recedes instead of reading as one more white card.
+// It is also a `module-bg` element, whose class has the same weight as this rule without the second class.
+.collapsed-right-panel.module-bg {
+    // The colour of the headers of the code editor (the file tab above its editor), so every rail is the colour of a collapsed header
+    background: var(--code-editor-file-browser-header-background);
+}
+
 .collapsed-right-panel-tab {
     display: flex;
     align-items: center;
@@ -105,9 +115,8 @@
     border-bottom: var(--bs-border-width) solid var(--bs-border-color);
 
     &:hover,
-    &:focus-visible,
-    &.active {
+    &:focus-visible {
         color: var(--bs-primary);
-        background: var(--bs-tertiary-bg);
+        background: var(--hover-slightly-darker-body-bg);
     }
 }

@@ -5,11 +5,12 @@
     <p-splitter
         class="feedback-split"
         [class.feedback-split--collapsed]="!expanded()"
+        [class.feedback-split--panel-gutter]="gutterStyle() === 'panel'"
         layout="vertical"
         [panelSizes]="sizes()"
         [minSizes]="minSizes()"
         [gutterSize]="gutterSize"
-        [pt]="passThrough"
+        [pt]="passThrough()"
         [stateKey]="storageKey()"
         stateStorage="local"
         (onResizeEnd)="onResizeEnd($event)"

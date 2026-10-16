@@ -21,7 +21,8 @@
     @if (!loadingParticipation() && !participationCouldNotBeFetched()) {
         <jhi-code-editor-container
             [isProblemStatementVisible]="false"
-            [editable]="!repositoryIsLocked()"
+            [editable]="!repositoryIsLocked() && viewedResultId() === undefined"
+            [commitId]="viewedCommitHash()"
             [participation]="participation()"
             [showEditorInstructions]="!lightweight() && showEditorInstructions"
             [isTutorAssessment]="hasTutorAssessment()"

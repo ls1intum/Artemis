@@ -1,8 +1,21 @@
 <ng-template #instructionsSection>
     <section class="assessment-workspace__section">
-        <header class="assessment-workspace__section-header">
-            <fa-icon [icon]="faInstructions" aria-hidden="true" />
-            <h2 jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></h2>
+        <header class="assessment-workspace__section-header" [class.assessment-workspace__section-header--custom]="customInstructionsHeader()">
+            @if (customInstructionsHeader()) {
+                <ng-content select="[assessmentWorkspaceInstructionsHeader]" />
+            } @else {
+                <fa-icon [icon]="faInstructions" aria-hidden="true" />
+                <h2 jhiTranslate="artemisApp.assessmentInstructions.instructions.instructions"></h2>
+            }
+            <button
+                type="button"
+                class="assessment-workspace__collapse"
+                data-testid="assessment-workspace-collapse-instructions"
+                (click)="instructionsCollapsed.set(true)"
+                [attr.aria-label]="'artemisApp.courseOverview.exerciseDetails.collapsePanel' | artemisTranslate"
+            >
+                <fa-icon [icon]="faChevronRight" />
+            </button>
         </header>
         <div class="assessment-workspace__section-content" cdkScrollable>
             <ng-content select="[assessmentWorkspaceInstructions]" />
@@ -10,57 +23,88 @@
     </section>
 </ng-template>
 
+<!-- The general feedback and notes panel, as the general feedback panel under the work of a student. A page that brings the tabs of its own
+     header puts them into the header of the panel; a conditional block would not reliably project into that slot, so the panel is declared
+     once for each case, and what the page projects into it is declared once. -->
+<ng-template #detailsContent><ng-content select="[assessmentWorkspaceDetails]" /></ng-template>
+<ng-template #detailsHeaderContent><ng-content select="[assessmentWorkspaceDetailsHeader]" /></ng-template>
+<ng-template #detailsPanel>
+    @if (customDetailsHeader()) {
+        <jhi-feedback-bottom-panel
+            class="assessment-workspace__details"
+            testId="assessment-workspace-details"
+            [fill]="true"
+            [titleKey]="detailsLabelKey()"
+            [collapsedItems]="detailsRailItems()"
+            [expanded]="detailsExpanded()"
+            (collapsedItemSelected)="detailsItemSelected.emit($event)"
+            (toggled)="detailsExpanded.set(!detailsExpanded())"
+        >
+            <div panelHeader class="assessment-workspace__details-header"><ng-container [ngTemplateOutlet]="detailsHeaderContent" /></div>
+            <ng-container [ngTemplateOutlet]="detailsContent" />
+        </jhi-feedback-bottom-panel>
+    } @else {
+        <jhi-feedback-bottom-panel
+            class="assessment-workspace__details"
+            testId="assessment-workspace-details"
+            [fill]="true"
+            [titleKey]="detailsLabelKey()"
+            [collapsedItems]="detailsRailItems()"
+            [expanded]="detailsExpanded()"
+            (collapsedItemSelected)="detailsItemSelected.emit($event)"
+            (toggled)="detailsExpanded.set(!detailsExpanded())"
+        >
+            <ng-container [ngTemplateOutlet]="detailsContent" />
+        </jhi-feedback-bottom-panel>
+    }
+</ng-template>
+
 <p-splitter
     class="assessment-workspace assessment-workspace__primary-split"
     [class.assessment-workspace__split--vertical]="primaryVertical()"
+    [class.assessment-workspace__primary-split--collapsed]="instructionsCollapsed()"
     [layout]="primaryLayout()"
     [panelSizes]="primarySizes()"
-    [minSizes]="[36, 24]"
+    [minSizes]="primaryMinSizes()"
     [gutterSize]="gutterSize"
     [pt]="primaryPassThrough()"
     [stateKey]="storageKey()"
     stateStorage="local"
+    (onResizeStart)="onResizeStart($event)"
+    (onResizeEnd)="onResizeEnd($event)"
 >
     <ng-template #panel>
-        <div class="assessment-workspace__canvas">
-            <ng-content select="[assessmentWorkspaceCanvas]" />
-        </div>
+        <jhi-feedback-split
+            class="assessment-workspace__area"
+            gutterStyle="panel"
+            [storageKey]="detailsStorageKey()"
+            [hasBottom]="showDetails()"
+            [bottomTemplate]="detailsPanel"
+            [expanded]="detailsExpanded()"
+            [minSizes]="[30, 8]"
+            [collapseSnapPercent]="15"
+            (collapseRequested)="detailsExpanded.set(false)"
+        >
+            <div feedbackSplitTop class="assessment-workspace__canvas">
+                <ng-content select="[assessmentWorkspaceCanvas]" />
+            </div>
+        </jhi-feedback-split>
     </ng-template>
 
     <ng-template #panel>
-        @if (showDetails()) {
-            <p-splitter
-                class="assessment-workspace__support-split"
-                [class.assessment-workspace__split--horizontal]="supportHorizontal()"
-                [layout]="supportLayout()"
-                [panelSizes]="[52, 48]"
-                [minSizes]="[24, 24]"
-                [gutterSize]="gutterSize"
-                [pt]="supportPassThrough()"
-                [stateKey]="sidebarStorageKey()"
-                stateStorage="local"
-            >
-                <ng-template #panel>
-                    <ng-container [ngTemplateOutlet]="instructionsSection" />
-                </ng-template>
-                <ng-template #panel>
-                    <section class="assessment-workspace__section">
-                        <header class="assessment-workspace__section-header" [class.assessment-workspace__section-header--custom]="customDetailsHeader()">
-                            @if (customDetailsHeader()) {
-                                <ng-content select="[assessmentWorkspaceDetailsHeader]" />
-                            } @else {
-                                <fa-icon [icon]="faDetails" aria-hidden="true" />
-                                <h2 [jhiTranslate]="detailsLabelKey()"></h2>
-                            }
-                        </header>
-                        <div class="assessment-workspace__section-content" cdkScrollable>
-                            <ng-content select="[assessmentWorkspaceDetails]" />
-                        </div>
-                    </section>
-                </ng-template>
-            </p-splitter>
-        } @else {
-            <ng-container [ngTemplateOutlet]="instructionsSection" />
+        @if (instructionsCollapsed()) {
+            <jhi-collapsed-panel-rail
+                [icon]="faInstructions"
+                labelKey="artemisApp.assessmentInstructions.instructions.instructions"
+                [items]="instructionsRailItems()"
+                (itemSelected)="instructionsItemSelected.emit($event)"
+                [orientation]="railOrientation()"
+                testId="collapsed-assessment-instructions"
+                (expand)="instructionsCollapsed.set(false)"
+            />
         }
+        <div class="assessment-workspace__panel-body" [class.d-none]="instructionsCollapsed()">
+            <ng-container [ngTemplateOutlet]="instructionsSection" />
+        </div>
     </ng-template>
 </p-splitter>

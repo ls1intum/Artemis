@@ -807,9 +807,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param lineNumber The line after which the widget should be rendered.
      * @param id The ID to use for the widget.
      * @param domNode The content to display in the editor.
+     * @param alignWithCode Whether the widget starts where the code does, leaving the line numbers uncovered. By default it spans the editor.
      */
-    addLineWidget(lineNumber: number, id: string, domNode: HTMLElement) {
-        const lineWidget = new MonacoEditorLineWidget(this.getActiveEditor(), id, domNode, lineNumber);
+    addLineWidget(lineNumber: number, id: string, domNode: HTMLElement, alignWithCode = false) {
+        const lineWidget = new MonacoEditorLineWidget(this.getActiveEditor(), id, domNode, lineNumber, alignWithCode);
         lineWidget.addToEditor();
         this.lineWidgets.push(lineWidget);
     }

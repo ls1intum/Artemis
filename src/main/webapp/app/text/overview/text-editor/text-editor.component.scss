@@ -33,15 +33,19 @@
     }
 }
 
+// A text box inside the submission panel: it spans the panel with a margin around it, and the text starts at its left edge
 .text-editor-textarea {
-    width: 100%;
-    max-width: 750px;
-    height: 50vh;
+    width: calc(100% - 1.5rem);
+    min-height: 12rem;
+    margin: 0.75rem;
+    flex: 1 1 auto;
+    resize: none;
     padding: 10px 12px;
     border: 1px solid var(--text-editor-border-color);
     border-radius: 2px;
     background-color: var(--text-editor-background);
     color: var(--text-editor-color);
+    text-align: left;
 
     &:focus {
         outline: none;
@@ -49,6 +53,12 @@
         background-color: var(--text-editor-focus-background);
         box-shadow: 0 0 20px rgba(0, 0, 200, 0.04);
     }
+}
+
+// The locked submission: the text as it was written, line breaks kept
+.text-editor-locked-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
 }
 
 div {

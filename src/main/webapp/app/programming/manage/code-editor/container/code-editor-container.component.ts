@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnDestroy
 import { NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCommentDots, faTerminal } from '@fortawesome/free-solid-svg-icons';
+import { CollapsedPanelRailItem } from 'app/shared-ui/components/collapsed-panel-rail/collapsed-panel-rail.component';
 import { TumAetUiTabComponent, TumAetUiTabListComponent, TumAetUiTabsComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { FeedbackBottomPanelComponent } from 'app/exercise/feedback-bottom-panel/feedback-bottom-panel.component';
-import { FeedbackSplitComponent } from 'app/exercise/feedback-bottom-panel/feedback-split.component';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -71,7 +71,6 @@ export enum CollapsableCodeEditorElement {
         TumAetUiTabComponent,
         ArtemisTranslatePipe,
         FeedbackBottomPanelComponent,
-        FeedbackSplitComponent,
     ],
 })
 export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnDestroy {
@@ -85,8 +84,15 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
     readonly CollapsableCodeEditorElement = CollapsableCodeEditorElement;
     protected readonly faTerminal = faTerminal;
     protected readonly faCommentDots = faCommentDots;
+    /** The collapsed bottom panel shows an icon for each of its tabs, and opens at the one that was clicked. */
+    protected readonly bottomPanelRailItems: CollapsedPanelRailItem[] = [
+        { id: 'buildOutput', icon: faTerminal, labelKey: 'artemisApp.editor.buildOutput' },
+        { id: 'feedback', icon: faCommentDots, labelKey: 'artemisApp.assessment.generalFeedback' },
+    ];
     // grid is the root layout element and is always rendered, so it is required and safe to dereference.
     readonly grid = viewChild.required(CodeEditorGridComponent);
+    // The instructions beside the editor, which collapse when their column is dragged shut; behind the assessment's split template
+    protected readonly sidebarInstructions = viewChild<CodeEditorInstructionsComponent>('sidebarInstructions');
     // fileBrowser, actions, buildOutput and monacoEditor are optional viewChildren:
     // - actions is behind `@if (!isTutorAssessment() || commitState === CommitState.CONFLICT)`
     // - buildOutput is behind `@if (buildable())`
@@ -117,6 +123,14 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * tutor's feedback read-only set {@link isTutorAssessment} alone and keep the editor's own layout.
      */
     readonly assessmentWorkspace = input<boolean>(false);
+    /** One icon for each tab of an assessment's instructions, which the grid shows once its right column is collapsed. */
+    readonly assessmentInstructionsRailItems = input<CollapsedPanelRailItem[]>();
+    /** The id of the instructions tab whose icon opened the collapsed column. */
+    readonly assessmentInstructionsItemSelected = output<string>();
+    /** The icons of an assessment's collapsed panel under the editor: one for each of its tabs. */
+    readonly assessmentRailItems = input<CollapsedPanelRailItem[]>();
+    /** The id of the icon of the collapsed panel that was clicked. */
+    readonly assessmentRailItemSelected = output<string>();
     /**
      * The full hash of the commit to show, read-only and independent of the working copy on the server. Set it where a specific submission is shown, e.g. in the manual
      * assessment; leave it unset to show the repository as it currently is, e.g. in the online editor.

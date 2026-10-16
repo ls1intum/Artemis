@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, TemplateRef, computed, inpu
 import { NgTemplateOutlet } from '@angular/common';
 import { SplitterModule } from 'primeng/splitter';
 import type { SplitterResizeEndEvent } from 'primeng/types/splitter';
-import { SPLITTER_GUTTER_SIZE, splitterPassThrough } from 'app/assessment/manage/assessment-workspace/splitter-pass-through';
+import { SPLITTER_GUTTER_SIZE, SplitterGutterStyle, splitterPassThrough } from 'app/assessment/manage/assessment-workspace/splitter-pass-through';
 import { parseJson } from 'app/foundation/util/json.util';
 
 /** The share of the height the upper content and the panel start with, in percent. */
@@ -25,8 +25,8 @@ const COLLAPSED_SIZES = [99.99, 0.01];
  * The page owns whether the panel is collapsed and passes it as `[expanded]`. A collapsed panel keeps only its header and the
  * line cannot be dragged; expanding restores the height the user had chosen.
  *
- * Dragging the line until the panel is no taller than `[collapseSnapPercent]` asks the page to collapse it (`collapseRequested`),
- * the way the right panel of the exercise details snaps shut when it is dragged narrow. The page answers by setting `[expanded]`
+ * Dragging the line until the panel is no taller than `[collapseSnapPercent]` asks the page to collapse it (`collapseRequested`), if the
+ * page sets one: by default the height is only limited, and the panel collapses from its button. The page answers by setting `[expanded]`
  * to false; the height the user had before the drag is what the panel reopens with.
  */
 @Component({
@@ -42,16 +42,19 @@ export class FeedbackSplitComponent implements OnInit {
     /** The split (percent) the content and the panel start with when the user has not dragged it yet. */
     readonly defaultSizes = input<number[]>(DEFAULT_SIZES);
     /** The smallest share (percent) the content and the panel may be dragged to. */
-    readonly minSizes = input<number[]>([30, 8]);
+    readonly minSizes = input<number[]>([30, 15]);
     /** What the lower panel shows, usually a `jhi-feedback-bottom-panel`. */
     readonly bottomTemplate = input<TemplateRef<unknown>>();
     /** Whether the panel shows its content. */
     readonly expanded = input(true);
     /**
      * The share (percent) of the height at or below which dragging the panel smaller collapses it. Must stay above the panel's
-     * smallest share in `[minSizes]`, which the drag cannot go below. 0 turns the drag-to-collapse off.
+     * smallest share in `[minSizes]`, which the drag cannot go below. 0, the default, turns the drag-to-collapse off: the panel is
+     * only limited in height, and collapses from its button. Dragging it shut is for panels that are sized along the width.
      */
-    readonly collapseSnapPercent = input(15);
+    readonly collapseSnapPercent = input(0);
+    /** The colour of the line between the content and the panel: the shell's grey, or the panels' own colour on an assessment page. */
+    readonly gutterStyle = input<SplitterGutterStyle>('shell');
     /** Where the chosen split is remembered between visits. */
     readonly storageKey = input.required<string>();
 
@@ -66,7 +69,7 @@ export class FeedbackSplitComponent implements OnInit {
     // A copy: the splitter adopts the bound array and changes it in place on every drag, which must not reach the remembered split
     protected readonly sizes = computed(() => [...(this.expanded() ? this.draggedSizes() : COLLAPSED_SIZES)]);
     protected readonly gutterSize = SPLITTER_GUTTER_SIZE;
-    protected readonly passThrough = splitterPassThrough('vertical');
+    protected readonly passThrough = computed(() => splitterPassThrough('vertical', {}, this.gutterStyle()));
 
     ngOnInit(): void {
         // PrimeNG restores the saved split on its own and fails on a value it cannot parse, so one that is no usable split is

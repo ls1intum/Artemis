@@ -11,7 +11,14 @@ const STORAGE_KEY = 'feedback-split-spec';
     imports: [FeedbackSplitComponent],
     template: `
         <ng-template #panel><div data-testid="bottom">Panel</div></ng-template>
-        <jhi-feedback-split [storageKey]="storageKey" [hasBottom]="hasBottom()" [bottomTemplate]="panel" [expanded]="expanded()" (collapseRequested)="collapseRequests = collapseRequests + 1">
+        <jhi-feedback-split
+            [storageKey]="storageKey"
+            [hasBottom]="hasBottom()"
+            [bottomTemplate]="panel"
+            [expanded]="expanded()"
+            (collapseRequested)="collapseRequests = collapseRequests + 1"
+            [collapseSnapPercent]="snapPercent()"
+        >
             <div feedbackSplitTop data-testid="top">Content</div>
         </jhi-feedback-split>
     `,
@@ -20,6 +27,7 @@ class HostComponent {
     readonly storageKey = STORAGE_KEY;
     readonly hasBottom = input(true);
     readonly expanded = input(true);
+    readonly snapPercent = input(15);
     collapseRequests = 0;
 }
 
@@ -152,5 +160,14 @@ describe('FeedbackSplitComponent', () => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify([50, 0]));
         create();
         expect(splitter().componentInstance.panelSizes).toEqual([68, 32]);
+    });
+
+    it('should only limit the height, and never ask for a collapse, when dragging it shut is off', () => {
+        create();
+        fixture.componentRef.setInput('snapPercent', 0);
+        fixture.detectChanges();
+        splitter().triggerEventHandler('onResizeEnd', { originalEvent: new MouseEvent('mouseup'), sizes: [92, 8] });
+
+        expect(fixture.componentInstance.collapseRequests).toBe(0);
     });
 });

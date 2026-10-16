@@ -2,12 +2,14 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronDown, faCommentDots } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { CollapsedPanelRailComponent, CollapsedPanelRailItem } from 'app/shared-ui/components/collapsed-panel-rail/collapsed-panel-rail.component';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 /**
  * The panel at the bottom of an exercise page that holds the general feedback of an assessment, shared by the programming,
  * text and modeling pages so it looks and behaves alike on all of them.
  *
- * The header names the panel and shows a collapse button; a page that needs more than a title puts its own content there
+ * The header names the panel and shows a collapse button; collapsed, the panel is only an icon that opens it again; a page that needs more than a title puts its own content there
  * through `[panelHeader]` (the programming page shows tabs next to the build output). The content is always rendered and only
  * hidden while the panel is collapsed, so what a page keeps in it (e.g. the build output) stays alive.
  *
@@ -23,7 +25,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     styleUrls: ['./feedback-bottom-panel.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     host: { '[class.fill]': 'fill()' },
-    imports: [FaIconComponent, ArtemisTranslatePipe],
+    imports: [FaIconComponent, ArtemisTranslatePipe, CollapsedPanelRailComponent],
 })
 export class FeedbackBottomPanelComponent {
     /** Whether the content is shown; the header always is. */
@@ -34,6 +36,10 @@ export class FeedbackBottomPanelComponent {
     readonly count = input<number>();
     /** The accessible name of the collapse button. */
     readonly toggleLabelKey = input('artemisApp.assessment.toggleGeneralFeedback');
+    /** The icon that stands for the panel once it is collapsed. */
+    readonly collapsedIcon = input<IconProp>(faCommentDots);
+    /** One icon for each part of a panel that holds several (the build output and the general feedback); replaces `[collapsedIcon]`. */
+    readonly collapsedItems = input<CollapsedPanelRailItem[]>();
     /** Whether the panel fills the height it is given (the programming grid sizes its bottom area) instead of fitting its content. */
     readonly fill = input(false);
     /** Identifies the panel in tests. */
@@ -41,6 +47,8 @@ export class FeedbackBottomPanelComponent {
 
     /** The user clicked the collapse button. */
     readonly toggled = output<MouseEvent>();
+    /** The id of the part whose icon opened the collapsed panel, sent before `toggled`. */
+    readonly collapsedItemSelected = output<string>();
 
     protected readonly faChevronDown = faChevronDown;
     protected readonly faCommentDots = faCommentDots;

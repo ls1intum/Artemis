@@ -376,12 +376,6 @@ export class UnifiedFeedbackComponent {
         return this.feedback()?.correctionStatus === 'CORRECT';
     }
 
-    /** A non-graded feedback suggestion (an Athena hint with no credits) has no points pill in read-only mode. */
-    readonly showPoints = computed(() => {
-        const feedback = this.feedback();
-        return !feedback || !Feedback.isNonGradedFeedbackSuggestion(feedback);
-    });
-
     /** Usage-limit-excess feedback whose credits are excluded from the total score, e.g. a subsequent SCA finding beyond the configured limit. */
     readonly isSubsequentFeedback = computed(() => !!this.feedback()?.isSubsequent);
 

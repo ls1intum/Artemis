@@ -21,11 +21,17 @@
 
     /* A collapsed side panel keeps the divider next to it, like the collapsed panel of the course exercise page. */
     .collapsed--horizontal {
-        width: calc(50px + var(--code-editor-divider)) !important;
+        width: calc(3rem + var(--code-editor-divider)) !important;
     }
 
     .collapsed--vertical {
-        height: 42px !important;
+        height: 2.75rem !important;
+
+        /* The student's editor has no navbar, so the panel shows the shorter secondary header, and the fixed height would leave
+           the card's white background below it. The header alone is the collapsed panel then. */
+        &:has(.card-second-header) {
+            height: auto !important;
+        }
     }
 
     .editor-statusbar {
@@ -191,55 +197,17 @@
    Collapsible styling
    ========================================================================== */
 
-/* File browser */
+/* File browser: a collapsed one is only the rail (jhi-collapsed-panel-rail) that opens it again */
 .editor-sidebar-left.collapsed--horizontal {
     flex: none !important;
-
-    .card-header {
-        height: 100%;
-        width: 100%;
-
-        > fa-icon {
-            display: none;
-        }
-    }
 
     .card-body,
     .card-second-header {
         display: none !important;
     }
 
-    .collapsed-file-browser {
-        width: 50px;
-        cursor: pointer;
-
-        .header {
-            writing-mode: vertical-lr;
-            transform: rotate(180deg);
-            position: absolute;
-            top: 27%;
-            left: 25%;
-        }
-
-        fa-icon {
-            position: absolute;
-            left: 15px;
-        }
-
-        .top-icon {
-            top: 15px;
-        }
-
-        #panel-symbol {
-            position: absolute;
-            top: 66%;
-            left: 25%;
-            padding-right: 0 !important;
-        }
-
-        .bottom-icon {
-            bottom: 15px;
-        }
+    jhi-collapsed-panel-rail {
+        flex: 1 1 auto;
     }
 }
 
@@ -273,72 +241,40 @@
     }
 }
 
-/* Instructions (right pane) */
+/* Instructions (right pane): a collapsed one is only the rail that opens it again */
 .editor-sidebar-right.collapsed--horizontal {
     flex: none !important;
 
-    .card-header {
-        height: 100%;
-        width: 100%;
-
-        > fa-icon {
-            display: none;
-        }
-    }
-
-    .instructions-wrapper__content {
-        height: auto !important;
-
-        .editable-instruction-container__save,
-        .editable-instruction-container__editor {
-            display: none;
-        }
-    }
-
-    .card-second-header {
-        display: none !important;
-    }
-
-    .collapsed-instructions-card {
-        width: 50px;
-        cursor: pointer;
-
-        .header {
-            writing-mode: vertical-lr;
-            position: absolute;
-            top: 29%;
-            left: 25%;
-        }
-
-        fa-icon {
-            position: absolute;
-            right: 15px;
-        }
-
-        .top-icon {
-            top: 15px;
-        }
-
-        #panel-symbol {
-            position: absolute;
-            top: 18%;
-            left: 40%;
-            padding-right: 0 !important;
-        }
-
-        .bottom-icon {
-            bottom: 15px;
-        }
-    }
-
-    /* Hide status area when collapsed */
+    .instructions-wrapper__content,
+    .card-second-header,
     .editable-instruction-container__status {
         display: none !important;
     }
 
-    .instructions__content {
-        height: auto;
+    jhi-collapsed-panel-rail {
+        flex: 1 1 auto;
     }
+}
+
+/* The headers of an assessment's panels share the grey of the general feedback panel's header, and so do the rails of its collapsed panels */
+.editor-wrapper.assessment-workspace {
+    --code-editor-panel-header-background: var(--code-editor-file-browser-header-background);
+    --code-editor-panel-header-border: var(--code-editor-file-browser-header-border);
+    --collapsed-panel-rail-background: var(--code-editor-file-browser-header-background);
+    --collapsed-panel-rail-border: 1px solid var(--border-color);
+    --collapsed-panel-rail-radius: 0.375rem;
+}
+
+/* A rail inside a panel that is framed already (the file browser's card, the general feedback panel) would draw a second border over its frame */
+.editor-wrapper.assessment-workspace .card > jhi-collapsed-panel-rail,
+.editor-wrapper.assessment-workspace .feedback-bottom-panel > jhi-collapsed-panel-rail {
+    --collapsed-panel-rail-border: 0;
+    --collapsed-panel-rail-radius: 0;
+}
+
+/* An assessment's collapsed column is its rail alone, whatever the page projects into it */
+.editor-wrapper.assessment-workspace .editor-sidebar-right.collapsed--horizontal > :not(jhi-collapsed-panel-rail) {
+    display: none !important;
 }
 
 /* Build output */
@@ -434,9 +370,9 @@
    Assessment: laid out like the text and modeling assessments
    ========================================================================== */
 
-/* The assessment fills the page's height, so the page itself never scrolls: the file browser and the editor run to the
-   bottom, and the instructions share their column with the feedback panel below them, which shows the build output as a
-   tab. Each panel scrolls on its own. */
+/* The assessment fills the page's height, so the page itself never scrolls: the instructions run the whole height beside the rest,
+   and under the file browser and the editor is the feedback panel, which shows the build output as a tab. Each panel scrolls on its
+   own. */
 .programming-assessment-page__editor > jhi-code-editor-grid {
     display: block;
     height: 100%;
@@ -449,65 +385,14 @@
     flex-direction: column;
     row-gap: 0;
 
-    .editor-main {
-        display: flex;
-        min-height: 0;
-        height: auto;
-        flex: 1 1 0;
-        flex-direction: column;
-        margin-bottom: 0;
-    }
-
-    .editor-main__content {
-        min-height: 0;
-        height: auto;
-        flex: 1 1 0;
-    }
-
-    /* Sized like the workspace's [65, 35] split with minimums of 36% and 24%: the instructions column starts at 35% of the
-       width and may be dragged to between 24% and 64%, leaving the file browser and the editor at least 36% */
-    .editor-sidebar-right {
-        width: 35%;
-        min-width: 24%;
-        max-width: 64%;
-
-        /* Its share is bounded already; the file browser and the editor give way instead */
-        flex-shrink: 0;
-    }
-
-    /* The build output is a tab of the feedback panel, so neither its row nor the grip above it is shown */
-    .editor-bottom,
-    .editor-main > .rg-main-bottom {
-        display: none;
-    }
-}
-
-/* The instructions on top, the feedback panel below, divided by a splitter like the workspace of the text and modeling assessments */
-.code-editor-assessment-sidebar {
-    display: flex;
-    height: 100%;
-    min-width: 0;
-    min-height: 0;
-    flex-direction: column;
-
-    > jhi-feedback-split {
-        min-height: 0;
-        flex: 1 1 auto;
-    }
-
-    /* The instructions fill the panel above the splitter: the card inside runs to its bottom edge and scrolls its own content */
-    &__instructions {
-        display: flex;
+    /* The area of the file browser and the editor, and the feedback panel under it, fill the panel they sit in */
+    .editor-split {
         height: 100%;
-        min-height: 0;
-        flex-direction: column;
     }
 
-    &__instructions > jhi-code-editor-instructions {
-        display: flex;
+    .editor-sidebars--inner {
         min-height: 0;
         flex: 1 1 auto;
-        flex-direction: column;
     }
 }
 
@@ -569,7 +454,6 @@
     bottom: -4px;
     left: 0;
 }
-
 
 /* ==========================================================================
    Problem Statement (center) – keep content inside the card and allow shrink
@@ -638,17 +522,60 @@
     }
 }
 
+/* The editor keeps a share of the width; the splitter cannot limit it (see sidebarMinSizes), so it is limited here. The panels around it shrink
+   to make room, as when the splitter's own limit holds. In an assessment the editor is the second panel of the inner splitter, and the
+   area it sits in keeps a share beside the instructions, like the text and modeling assessment workspace. */
+.editor-wrapper .editor-sidebars:not(.editor-sidebars--inner, .editor-sidebars--outer) > [data-pc-section='panel']:nth-child(3) {
+    min-width: 30%;
+}
+
+.editor-wrapper .editor-sidebars--inner > [data-pc-section='panel']:nth-child(3) {
+    min-width: 36%;
+}
+
+.editor-wrapper .editor-sidebars--outer > [data-pc-section='panel']:first-child {
+    min-width: 36%;
+}
+
 /* The splitter's children alternate panel, gutter, panel, gutter, panel, so its gutters are the 2nd and the 2nd to last child.
    A collapsed side keeps only its header strip and its divider cannot be dragged. */
 .editor-sidebars--left-collapsed > [data-pc-section='panel']:first-of-type,
 .editor-sidebars--right-collapsed > [data-pc-section='panel']:last-of-type {
-    min-width: 50px !important;
-    flex: 0 0 50px !important;
+    min-width: 3rem !important;
+    flex: 0 0 3rem !important;
 }
 
 .editor-sidebars--left-collapsed > [data-pc-section='gutter']:nth-child(2),
 .editor-sidebars--right-collapsed > [data-pc-section='gutter']:nth-last-child(2) {
     pointer-events: none;
+
+    /* The divider only keeps the space beside the strip: a grip on it would offer a drag that does nothing, and the strip
+       itself opens the panel again. The grip is hidden, not removed, because it is what gives the divider its width. */
+    [data-pc-section='gutterhandle'] {
+        visibility: hidden;
+    }
+}
+
+/* A collapsed side is a strip that stands for the panel. On the exercise page it is grey like a collapsed header, so it recedes
+   behind the editor; in an assessment it stays white like the panels around it, and so does the space beside it. */
+.editor-wrapper:not(.assessment-workspace) {
+    .editor-sidebars--left-collapsed .editor-sidebar-left .card,
+    .editor-sidebars--right-collapsed .editor-sidebar-right .card {
+        background-color: var(--hover-slightly-darker-body-bg);
+    }
+}
+
+.editor-wrapper.assessment-workspace {
+    .editor-sidebars--left-collapsed .editor-sidebar-left .card,
+    .editor-sidebars--right-collapsed .editor-sidebar-right .card {
+        background-color: var(--module-bg);
+    }
+
+    /* The divider's own background is an inline style of the splitter's pass-through, hence the !important */
+    .editor-sidebars--left-collapsed > [data-pc-section='gutter']:nth-child(2),
+    .editor-sidebars--right-collapsed > [data-pc-section='gutter']:nth-last-child(2) {
+        background: var(--module-bg) !important;
+    }
 }
 
 /* Without instructions the panel and the divider in front of it are not there, and the editor takes their room */

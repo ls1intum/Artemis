@@ -12,9 +12,20 @@
 .code-editor-bottom-panel {
     --feedback-panel-header-padding-block: 0;
     --feedback-panel-header-align: stretch;
-    --feedback-panel-title-overlap: -1px;
+    --feedback-panel-header-border-width: 0px;
+    --feedback-panel-header-line-width: 1px;
+    // The tabs start at the edge of the panel, as the tabs of the right panel of the exercise details do
+    --feedback-panel-header-padding-start: 0;
     --feedback-panel-header-border: var(--code-editor-file-browser-header-border);
     --feedback-panel-header-background: var(--code-editor-file-browser-header-background);
+
+    // What the page of an assessment puts into the header: its tabs, which run down to the header's line like the tabs below
+    &__header-slot {
+        display: flex;
+        min-width: 0;
+        flex: 1 1 auto;
+        align-items: stretch;
+    }
 
     &__tabs {
         min-width: 0;

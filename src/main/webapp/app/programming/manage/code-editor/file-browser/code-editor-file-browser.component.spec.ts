@@ -111,6 +111,17 @@ describe('CodeEditorFileBrowserComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('collapses once, and leaves a collapsed file browser as it is', () => {
+        const toggles: boolean[] = [];
+        comp.onToggleCollapse.subscribe(() => toggles.push(comp.collapsed()));
+
+        comp.collapse();
+        comp.collapse();
+
+        expect(comp.collapsed()).toBe(true);
+        expect(toggles).toEqual([true]);
+    });
+
     it('uncompresses the tree when toggling from true → false', () => {
         comp.repositoryFiles.set({ a: FileType.FILE });
         comp.compressFolders.set(true);

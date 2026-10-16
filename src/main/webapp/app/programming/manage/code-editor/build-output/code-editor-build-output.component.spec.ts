@@ -110,28 +110,59 @@ describe('CodeEditorBuildOutputComponent', () => {
     it('drops its header in a tab of the assessment that names it already', () => {
         fixture.componentRef.setInput('participation', {});
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[role="button"]')).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('.build-output__chevron')).not.toBeNull();
 
         fixture.componentRef.setInput('showHeader', false);
         fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('[role="button"]')).toBeNull();
+        expect(fixture.nativeElement.querySelector('.build-output__chevron')).toBeNull();
         expect(fixture.nativeElement.querySelector('.build-output--embedded')).not.toBeNull();
+    });
+
+    it('shows only the icon rail, which opens it again, while it is collapsed', () => {
+        fixture.componentRef.setInput('participation', {});
+        fixture.detectChanges();
+        const rail = () => fixture.nativeElement.querySelector('[data-testid="collapsed-build-output"]') as HTMLButtonElement | null;
+        expect(rail()).toBeNull();
+        expect(fixture.nativeElement.querySelector('.build-output__chevron')).not.toBeNull();
+
+        fixture.componentRef.setInput('collapsed', true);
+        fixture.detectChanges();
+        expect(rail()).not.toBeNull();
+        expect(fixture.nativeElement.querySelector('.build-output__chevron')).toBeNull();
+
+        const toggled = vi.fn();
+        fixture.componentInstance.onToggleCollapse.subscribe(toggled);
+        rail()!.click();
+        expect(toggled).toHaveBeenCalledOnce();
+    });
+
+    it('collapses only from the arrow, not from a click elsewhere in the header', () => {
+        fixture.componentRef.setInput('participation', {});
+        fixture.detectChanges();
+        const toggle = vi.spyOn(comp.onToggleCollapse, 'emit');
+
+        (fixture.nativeElement.querySelector('.card-header .card-title') as HTMLElement).click();
+        expect(toggle).not.toHaveBeenCalled();
+
+        (fixture.nativeElement.querySelector('.build-output__chevron') as HTMLElement).click();
+        expect(toggle).toHaveBeenCalledOnce();
     });
 
     it('announces the owning grid collapse state after keyboard activation', () => {
         fixture.componentRef.setInput('participation', {});
         fixture.detectChanges();
-        const header = fixture.nativeElement.querySelector('[role="button"]') as HTMLElement;
+        const header = fixture.nativeElement.querySelector('.build-output__chevron') as HTMLElement;
         const toggle = vi.spyOn(comp.onToggleCollapse, 'emit');
         expect(header.getAttribute('aria-expanded')).toBe('true');
-        header.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+        header.click();
         expect(toggle).toHaveBeenCalledOnce();
         fixture.componentRef.setInput('collapsed', true);
         fixture.detectChanges();
-        expect(header.getAttribute('aria-expanded')).toBe('false');
+        // A collapsed panel is only its rail, which announces itself as closed
+        expect(fixture.nativeElement.querySelector('[data-testid="collapsed-build-output"]').getAttribute('aria-expanded')).toBe('false');
         fixture.componentRef.setInput('collapsed', false);
         fixture.detectChanges();
-        expect(header.getAttribute('aria-expanded')).toBe('true');
+        expect((fixture.nativeElement.querySelector('.build-output__chevron') as HTMLElement).getAttribute('aria-expanded')).toBe('true');
     });
 
     it('should setup result websocket, fetch result details and build logs on participation change', () => {

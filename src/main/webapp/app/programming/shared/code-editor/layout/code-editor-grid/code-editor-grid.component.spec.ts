@@ -4,6 +4,8 @@ import { By } from '@angular/platform-browser';
 import { CodeEditorGridComponent } from 'app/programming/shared/code-editor/layout/code-editor-grid/code-editor-grid.component';
 import { InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { CollapsableCodeEditorElement } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ResizeType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 const fileBrowserWindowName = 'FileBrowser';
@@ -17,7 +19,7 @@ describe('CodeEditorGridComponent', () => {
     let fixture: ComponentFixture<CodeEditorGridComponent>;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({})
+        TestBed.configureTestingModule({ providers: [{ provide: TranslateService, useClass: MockTranslateService }] })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CodeEditorGridComponent);
@@ -67,6 +69,154 @@ describe('CodeEditorGridComponent', () => {
             expect(fixture.nativeElement.querySelector('.rg-sidebar-left, .rg-sidebar-right')).toBeNull();
         });
 
+        describe('dragging the file browser narrow', () => {
+            const splitter = () => fixture.debugElement.query(By.css('.editor-sidebars'));
+            const startDrag = (sizes: number[]) => splitter().triggerEventHandler('onResizeStart', { sizes });
+            const endDrag = (sizes: number[]) => splitter().triggerEventHandler('onResizeEnd', { sizes });
+            const dragTo = (before: number[], after: number[]) => {
+                startDrag(before);
+                endDrag(after);
+            };
+            /** The page gives the splitter this width (px); its two dividers take 24 px of it. */
+            const setSplitterWidth = (width: number) => {
+                vi.spyOn(splitter().nativeElement as HTMLElement, 'getBoundingClientRect').mockReturnValue({ width } as DOMRect);
+            };
+            let requests: unknown[];
+
+            beforeEach(() => {
+                localStorage.removeItem('code-editor-sidebars');
+                fixture.detectChanges();
+                requests = [];
+                comp.collapseFileBrowserRequest.subscribe(() => requests.push(true));
+                setSplitterWidth(1024);
+            });
+
+            afterEach(() => localStorage.removeItem('code-editor-sidebars'));
+
+            it('asks for the file browser to collapse once it is dragged to at most 140px, also on the very first drag', () => {
+                // 10% of the 1000px the panels share
+                dragTo([30, 40, 30], [10, 60, 30]);
+
+                expect(requests).toHaveLength(1);
+            });
+
+            it('collapses at the same width on a wide page as on a narrow one', () => {
+                setSplitterWidth(1824);
+                // 1800px to share: 7% is 126px, 9% is 162px
+                dragTo([20, 45, 35], [9, 56, 35]);
+                expect(requests).toHaveLength(0);
+
+                dragTo([20, 45, 35], [7, 58, 35]);
+                expect(requests).toHaveLength(1);
+            });
+
+            it('reopens the file browser at the width it had before the drag, also after a reload', () => {
+                comp.collapseFileBrowserRequest.subscribe(() => collapse(CollapsableCodeEditorElement.FileBrowser));
+
+                dragTo([30, 40, 30], [10, 60, 30]);
+
+                expect(JSON.parse(localStorage.getItem('code-editor-sidebars')!)).toEqual([30, 40, 30]);
+                const panels = fixture.nativeElement.querySelectorAll('.editor-sidebars > [data-pc-section="panel"]') as NodeListOf<HTMLElement>;
+                expect(panels[0].style.flexBasis).toContain('30%');
+            });
+
+            it('leaves a file browser that is wide enough, and one that is collapsed already, as it is', () => {
+                dragTo([30, 40, 30], [20, 45, 35]);
+                expect(requests).toHaveLength(0);
+
+                collapse(CollapsableCodeEditorElement.FileBrowser);
+                dragTo([20, 45, 35], [10, 60, 30]);
+                expect(requests).toHaveLength(0);
+            });
+
+            it('does not ask for a collapse when the divider beside the instructions moved', () => {
+                dragTo([10, 55, 35], [10, 70, 20]);
+
+                expect(requests).toHaveLength(0);
+            });
+
+            describe('dragging the instructions narrow', () => {
+                let instructionsRequests: unknown[];
+
+                beforeEach(() => {
+                    instructionsRequests = [];
+                    comp.collapseInstructionsRequest.subscribe(() => instructionsRequests.push(true));
+                });
+
+                it('asks for the instructions to collapse once they are dragged to at most 140px, and keeps the width they had', () => {
+                    // 5% of the 1000px the panels share is 50px
+                    dragTo([24, 46, 30], [24, 71, 5]);
+
+                    expect(instructionsRequests).toHaveLength(1);
+                    expect(requests).toHaveLength(0);
+                    expect(JSON.parse(localStorage.getItem('code-editor-sidebars')!)).toEqual([24, 46, 30]);
+                });
+
+                it('leaves instructions that are wide enough, and ones that are collapsed already, as they are', () => {
+                    dragTo([24, 46, 30], [24, 56, 20]);
+                    expect(instructionsRequests).toHaveLength(0);
+
+                    collapse(CollapsableCodeEditorElement.Instructions);
+                    dragTo([24, 56, 20], [24, 71, 5]);
+                    expect(instructionsRequests).toHaveLength(0);
+                });
+
+                describe('in an assessment', () => {
+                    const outer = () => fixture.debugElement.query(By.css('.editor-sidebars--outer'));
+                    const inner = () => fixture.debugElement.query(By.css('.editor-sidebars--inner'));
+
+                    beforeEach(() => {
+                        fixture.componentRef.setInput('assessmentWorkspace', true);
+                        fixture.detectChanges();
+                        // The page gives the splitters this width (px); a divider takes 12 px of it
+                        vi.spyOn(outer().nativeElement as HTMLElement, 'getBoundingClientRect').mockReturnValue({ width: 1012 } as DOMRect);
+                        vi.spyOn(inner().nativeElement as HTMLElement, 'getBoundingClientRect').mockReturnValue({ width: 712 } as DOMRect);
+                    });
+
+                    it('puts the bottom area under the file browser and the editor, and the instructions beside them', () => {
+                        const bottom = fixture.nativeElement.querySelector('.editor-bottom') as HTMLElement;
+                        const outerPanels = fixture.nativeElement.querySelectorAll('.editor-sidebars--outer > [data-pc-section="panel"]');
+
+                        expect(outerPanels).toHaveLength(2);
+                        expect(outerPanels[0].contains(bottom)).toBe(true);
+                        expect(outerPanels[0].contains(fixture.nativeElement.querySelector('.editor-sidebar-left'))).toBe(true);
+                        expect(outerPanels[0].contains(fixture.nativeElement.querySelector('.editor-center'))).toBe(true);
+                        expect(outerPanels[1].querySelector('.editor-sidebar-right')).not.toBeNull();
+                        expect(outerPanels[1].contains(bottom)).toBe(false);
+                    });
+
+                    it('collapses the column of the instructions to its rail when it is dragged to at most 140px, and opens it again from the rail', () => {
+                        outer().triggerEventHandler('onResizeStart', { sizes: [65, 35] });
+                        // 5% of the 1000px the panels share is 50px
+                        outer().triggerEventHandler('onResizeEnd', { sizes: [95, 5] });
+                        fixture.detectChanges();
+
+                        // The grid collapses the column itself, the page has nothing to do
+                        expect(instructionsRequests).toHaveLength(0);
+                        expect(comp.rightPanelIsCollapsed()).toBe(true);
+                        expect(JSON.parse(localStorage.getItem('code-editor-assessment-outer')!)).toEqual([65, 35]);
+                        const rail = fixture.nativeElement.querySelector('.editor-sidebar-right jhi-collapsed-panel-rail') as HTMLElement;
+                        expect(rail.querySelectorAll('button')).toHaveLength(1);
+
+                        rail.querySelector('button')!.click();
+                        fixture.detectChanges();
+
+                        expect(comp.rightPanelIsCollapsed()).toBe(false);
+                        expect(fixture.nativeElement.querySelector('.editor-sidebar-right jhi-collapsed-panel-rail')).toBeNull();
+                    });
+
+                    it('asks for the file browser to collapse once it is dragged to at most 140px', () => {
+                        inner().triggerEventHandler('onResizeStart', { sizes: [30, 70] });
+                        // 10% of the 700px the panels share is 70px
+                        inner().triggerEventHandler('onResizeEnd', { sizes: [10, 90] });
+
+                        expect(requests).toHaveLength(1);
+                        expect(JSON.parse(localStorage.getItem('code-editor-assessment-inner')!)).toEqual([30, 70]);
+                    });
+                });
+            });
+        });
+
         it('shrinks a collapsed file browser to its header strip and keeps its divider in place', () => {
             fixture.detectChanges();
             const sidebars = fixture.nativeElement.querySelector('.editor-sidebars') as HTMLElement;
@@ -104,15 +254,12 @@ describe('CodeEditorGridComponent', () => {
             expect(sidebars.classList).toContain('editor-sidebars--right-hidden');
         });
 
-        it('keeps the file browser and the editor at 36% or more in an assessment, like the assessment workspace', () => {
+        it('lets every panel shrink to the same least share, which PrimeNG applies to the panels around the dragged divider', () => {
             fixture.detectChanges();
-            expect(comp['sidebarMinSizes']()).toEqual([10, 30, 10]);
-
-            fixture.componentRef.setInput('assessmentWorkspace', true);
-            fixture.detectChanges();
-
-            expect(comp['sidebarMinSizes']()).toEqual([10, 36, 24]);
-            expect(comp['sidebarSizes']()).toEqual([20, 45, 35]);
+            // PrimeNG applies only the first two to them, so a larger second one would stop the instructions from shrinking
+            expect(comp['sidebarMinSizes']).toEqual([5, 5, 5]);
+            expect(comp['assessmentMinSizes']).toEqual([5, 5]);
+            expect(comp['sidebarSizes']).toEqual([24, 46, 30]);
         });
 
         it('reports which divider moved when the splitter finishes a drag', () => {
@@ -120,6 +267,8 @@ describe('CodeEditorGridComponent', () => {
             const resized: unknown[] = [];
             comp.onResize.subscribe((type) => resized.push(type));
             const splitter = fixture.debugElement.query(By.css('.editor-sidebars'));
+            // A page that is wide enough for the file browser never to be narrow enough to collapse
+            vi.spyOn(splitter.nativeElement as HTMLElement, 'getBoundingClientRect').mockReturnValue({ width: 1024 } as DOMRect);
 
             // The first drag has nothing to compare with and counts as the instructions' divider; then the file browser's share changes
             splitter.triggerEventHandler('onResizeEnd', { originalEvent: new MouseEvent('mouseup'), sizes: [24, 46, 30] });

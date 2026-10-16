@@ -87,6 +87,10 @@
                 [showEditorInstructions]="showEditorInstructions"
                 [isTutorAssessment]="true"
                 [assessmentWorkspace]="true"
+                [assessmentRailItems]="assessmentRailItems()"
+                [assessmentInstructionsRailItems]="instructions()?.railItems()"
+                (assessmentInstructionsItemSelected)="instructions()?.selectTab($event)"
+                (assessmentRailItemSelected)="selectDetailsTab($event)"
                 [buildable]="false"
                 [commitId]="submission()?.commitHash"
                 [highlightFileChanges]="true"
@@ -98,25 +102,30 @@
             >
                 <div editorTitle *ngTemplateOutlet="editorTitle"></div>
                 <div editorToolbar *ngTemplateOutlet="editorToolbar"></div>
+                <div editorSidebarHeader class="programming-assessment-instructions-header">
+                    @if (instructions(); as instructionsRef) {
+                        <jhi-assessment-instructions-tabs [instructions]="instructionsRef" />
+                    }
+                </div>
                 <ng-container editorSidebar *ngTemplateOutlet="editorSidebar" />
-                <!-- Below the instructions: the build output, the general feedback, the private note and the student's complaint,
-                     as in the text and modeling assessments. All tabs stay rendered: the general feedback list must stay registered
+                <!-- Under the file browser and the editor: the build output, the general feedback, the private note and the student's
+                     complaint, as the general feedback panel under the editor of a student. All tabs stay rendered: the general feedback list must stay registered
                      for the instruction checkboxes, and the build output marks compilation errors and code analysis issues in the
                      editor. -->
+                <div editorSidebarPanelHeader class="programming-assessment-details__header">
+                    <jhi-assessment-details-header
+                        [(activeTab)]="detailsTab"
+                        [feedbackCount]="unreferencedFeedback().length"
+                        [hasNote]="hasTutorNote()"
+                        [showBuildOutput]="true"
+                        surface="muted"
+                        [disabled]="readOnly() || !manualResult()?.id"
+                        [complaintType]="complaint()?.complaintType"
+                        [complaintAwaitsResponse]="complaint()?.accepted === undefined"
+                        (addGeneralFeedback)="addGeneralFeedback()"
+                    />
+                </div>
                 <section editorSidebarPanel class="programming-assessment-details">
-                    <div class="programming-assessment-details__header">
-                        <jhi-assessment-details-header
-                            [(activeTab)]="detailsTab"
-                            [feedbackCount]="unreferencedFeedback().length"
-                            [hasNote]="hasTutorNote()"
-                            [showBuildOutput]="true"
-                            surface="content"
-                            [disabled]="readOnly() || !manualResult()?.id"
-                            [complaintType]="complaint()?.complaintType"
-                            [complaintAwaitsResponse]="complaint()?.accepted === undefined"
-                            (addGeneralFeedback)="addGeneralFeedback()"
-                        />
-                    </div>
                     <div class="programming-assessment-details__content">
                         <div class="programming-assessment-details__build-output" [hidden]="detailsTab() !== 'buildOutput'">
                             <jhi-code-editor-build-output
@@ -223,6 +232,7 @@
                     [exercise]="exercise()!"
                     [programmingParticipation]="participation()"
                     [gradingCriteria]="exercise().gradingCriteria"
+                    [tabbed]="true"
                 />
             }
         </ng-template>

@@ -31,6 +31,7 @@
             "submitDescription": "Staged, committed, pushed, kompiliert und testet Deine Änderungen.",
             "buildOutput": "Build Ergebnisse",
             "buildOutputAndFeedback": "Build-Ergebnisse und allgemeines Feedback",
+            "toggleBuildOutput": "Build-Ergebnisse ein- oder ausblenden",
             "toggleBuildOutputAndFeedback": "Build-Ergebnisse und allgemeines Feedback ein- oder ausblenden",
             "building": "Build und Tests werden ausgeführt...",
             "queued": "In Warteschlange...",
@@ -65,6 +66,7 @@
             },
             "fileBrowser": {
                 "fileBrowser": "Dateibrowser",
+                "collapse": "Dateibrowser einklappen",
                 "deleteFileTitle": "Datei löschen",
                 "deleteFolderTitle": "Verzeichnis löschen",
                 "deleteFileConfirm": "Bist Du sicher, dass Du die Datei <strong>{{filename}}</strong> löschen willst?",

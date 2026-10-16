@@ -1,4 +1,4 @@
-import { Component, Injector, OnDestroy, OnInit, afterNextRender, effect, inject, signal, viewChild } from '@angular/core';
+import { Component, Injector, OnDestroy, OnInit, afterNextRender, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -39,13 +39,19 @@ import { Subscription } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
-import { AssessmentDetailsHeaderComponent, AssessmentDetailsTab } from 'app/assessment/manage/assessment-details-header/assessment-details-header.component';
+import {
+    AssessmentDetailsHeaderComponent,
+    AssessmentDetailsTab,
+    assessmentDetailsRailItems,
+    isAssessmentDetailsTab,
+} from 'app/assessment/manage/assessment-details-header/assessment-details-header.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { AssessmentScore } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { AssessmentSubmissionPanelComponent } from 'app/assessment/manage/assessment-submission-panel/assessment-submission-panel.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { AssessmentInstructionsTabsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions-tabs/assessment-instructions-tabs.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { FeedbackSuggestionsBannerComponent } from 'app/assessment/manage/feedback-suggestions-banner/feedback-suggestions-banner.component';
 import { AssessmentNotPossibleYetComponent } from 'app/assessment/shared/assessment-not-possible-yet/assessment-not-possible-yet.component';
@@ -69,6 +75,7 @@ const NO_SCORE: AssessmentScore = { awarded: 0, deducted: 0, total: 0 };
         TumAetUiTagComponent,
         TranslateDirective,
         AssessmentInstructionsComponent,
+        AssessmentInstructionsTabsComponent,
         UnreferencedFeedbackComponent,
         AssessmentNotPossibleYetComponent,
         RouterLink,
@@ -124,10 +131,21 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
     readonly highlightDifferences = signal(false);
     /** The open tab of the general feedback and notes panel. */
     readonly detailsTab = signal<AssessmentDetailsTab>('feedback');
+    /** The icons of the collapsed details panel: one for each of its tabs. */
+    readonly detailsRailItems = computed(() => assessmentDetailsRailItems({ complaintType: this.complaint()?.complaintType }));
+
+    /** Opens the details tab whose icon was clicked in the collapsed panel. */
+    selectDetailsTab(id: string): void {
+        if (isAssessmentDetailsTab(id)) {
+            this.detailsTab.set(id);
+        }
+    }
     /** The complaint whose tab was already opened for the assessor, so it is not opened again on every change. */
     private complaintTabOpenedFor?: number;
 
     private readonly unreferencedFeedbackList = viewChild(UnreferencedFeedbackComponent);
+    /** The instructions, whose tabs the header of the instructions panel shows. */
+    protected readonly instructions = viewChild(AssessmentInstructionsComponent);
 
     /*
      * Non-reset properties:

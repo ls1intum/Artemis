@@ -49,9 +49,15 @@ import { ModelingAssessmentTopLeftDirective } from 'app/modeling/manage/assess/m
 import { ModelingAssessmentTopRightDirective } from 'app/modeling/manage/assess/modeling-assessment-top-right.directive';
 import { ModelingAssessmentLegendComponent, ModelingAssessmentLegendHighlight } from 'app/modeling/manage/assess/modeling-assessment-legend/modeling-assessment-legend.component';
 import { AssessmentWorkspaceComponent } from 'app/assessment/manage/assessment-workspace/assessment-workspace.component';
+import { AssessmentInstructionsTabsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions-tabs/assessment-instructions-tabs.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { AssessmentNoteComponent } from 'app/assessment/manage/assessment-note/assessment-note.component';
-import { AssessmentDetailsHeaderComponent, AssessmentDetailsTab } from 'app/assessment/manage/assessment-details-header/assessment-details-header.component';
+import {
+    AssessmentDetailsHeaderComponent,
+    AssessmentDetailsTab,
+    assessmentDetailsRailItems,
+    isAssessmentDetailsTab,
+} from 'app/assessment/manage/assessment-details-header/assessment-details-header.component';
 import { AssessmentNote } from 'app/assessment/shared/entities/assessment-note.model';
 import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 
@@ -66,6 +72,7 @@ import { TumAetUiButtonDirective, TumAetUiMessageComponent } from '@tumaet/ui-an
         ModelingAssessmentComponent,
         AssessmentWorkspaceComponent,
         AssessmentInstructionsComponent,
+        AssessmentInstructionsTabsComponent,
         AssessmentNoteComponent,
         AssessmentDetailsHeaderComponent,
         AssessmentSubmissionPanelComponent,
@@ -153,10 +160,21 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     isApollonModelLoaded = false;
     /** The open tab of the general feedback and notes panel. */
     readonly detailsTab = signal<AssessmentDetailsTab>('feedback');
+    /** The icons of the collapsed details panel: one for each of its tabs. */
+    readonly detailsRailItems = computed(() => assessmentDetailsRailItems({ complaintType: this.complaint()?.complaintType }));
+
+    /** Opens the details tab whose icon was clicked in the collapsed panel. */
+    selectDetailsTab(id: string): void {
+        if (isAssessmentDetailsTab(id)) {
+            this.detailsTab.set(id);
+        }
+    }
     /** The complaint whose tab was already opened for the assessor, so it is not opened again on every change. */
     private complaintTabOpenedFor?: number;
 
     private readonly unreferencedFeedbackList = viewChild(UnreferencedFeedbackComponent);
+    /** The instructions, whose tabs the header of the instructions panel shows. */
+    protected readonly instructions = viewChild(AssessmentInstructionsComponent);
 
     private cancelConfirmationText!: string;
 

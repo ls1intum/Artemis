@@ -56,7 +56,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     styleUrls: ['./text-editor.component.scss'],
     // The page gives its panel no padding, so the editor adds it, unless the assessed submission panel fills the panel to its
     // edges; an exam summary has its own frame.
-    host: { class: 'block', '[class.text-editor--fill]': 'showsAssessedSubmission', '[class.p-2]': '!isExamSummary() && !showsAssessedSubmission' },
+    host: {
+        class: 'block',
+        '[class.text-editor--fill]': 'fillsPanel',
+    },
     imports: [
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,
@@ -387,15 +390,17 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     get isAutomaticResult(): boolean {
         return this.result()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     }
-    /**
-     * True, if the due date is after the current date, or there is no due date, or the participation is a practice run
-     */
-    get isActive(): boolean {
+    /** True, if the due date is after the current date, or there is no due date, or the participation is a practice run */
+    get isBeforeDueDate(): boolean {
         return (
             !this.examMode() &&
-            (!this.result() || this.isAutomaticResult) &&
-            (!!this.participation()?.testRun || (this.textExercise() && (!this.textExercise().dueDate || !hasExerciseDueDatePassed(this.textExercise(), this.participation()))))
+            (!!this.participation()?.testRun || (!!this.textExercise() && (!this.textExercise().dueDate || !hasExerciseDueDatePassed(this.textExercise(), this.participation()))))
         );
+    }
+
+    /** True, if the student may still change the submission: before the due date, and while no assessor has started on it */
+    get isActive(): boolean {
+        return this.isBeforeDueDate && (!this.result() || this.isAutomaticResult);
     }
 
     /**
@@ -415,6 +420,28 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     toggleGeneralFeedback(): void {
         this.generalFeedbackExpanded.update((expanded) => !expanded);
+    }
+
+    /**
+     * Whether the page shows the box to write in rather than the submission read-only. The submission is saved with the submit button, not
+     * automatically, and stays open until the due date, whatever result may exist; after that it is locked and waits for its assessment.
+     * An assessed submission (feedback to show) is read-only with its feedback.
+     */
+    get isEditing(): boolean {
+        if (this.isReadOnlyWithShowResult() || this.showsAssessedSubmission) {
+            return false;
+        }
+        return this.isExamSummary() ? !this.result() : this.isBeforeDueDate || this.isAllowedToSubmitAfterDueDate();
+    }
+
+    /** Whether the box to write in accepts input: not in an exam summary, which only shows what was handed in. */
+    get canWrite(): boolean {
+        return this.isEditing && !this.isExamSummary();
+    }
+
+    /** Whether the page fills its panel to the edges: an assessed submission does, and so does the editor of a student who is still writing. */
+    get fillsPanel(): boolean {
+        return this.showsAssessedSubmission || !this.isExamSummary();
     }
 
     /** Whether the student reads an assessed submission, which the submission panel of the assessment page then frames. */

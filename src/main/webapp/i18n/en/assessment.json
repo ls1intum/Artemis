@@ -57,7 +57,7 @@
                 "studentComplaintTab": "Student Complaint",
                 "studentRequestTab": "Student Request",
                 "addGeneralFeedback": "Add general feedback",
-                "generalFeedbackAddHint": "Use the + button above to add general feedback, or drag an assessment instruction and drop it here.",
+                "generalFeedbackAddHint": "Use the + button in the tab bar to add general feedback, or drag an assessment instruction and drop it here.",
                 "assessmentNoteInfo": "Only tutors can see these notes. They are never shared with the student.",
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Assessment for",
