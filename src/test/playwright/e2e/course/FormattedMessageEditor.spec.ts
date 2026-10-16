@@ -1,0 +1,608 @@
+import { expect, type Locator, type Page } from '@playwright/test';
+import { test as artemisTest } from '../../support/fixtures';
+import { admin, studentOne } from '../../support/users';
+import { generateUUID, readResponseJson } from '../../support/utils';
+import { Course } from 'app/course/shared/entities/course.model';
+import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+
+interface Composer {
+    course: Course;
+    channel: Channel;
+    editor: Locator;
+    route: string;
+}
+
+// Every test owns its course and conversations. Browser editing never depends on seed message IDs,
+// another worker's messages, or direct DOM content assignment that bypasses beforeinput/input.
+const test = artemisTest.extend<{ composer: Composer }>({
+    composer: async ({ page, login, courseManagementAPIRequests, communicationAPIRequests }, use) => {
+        await login(admin);
+        const course = await courseManagementAPIRequests.createCourse({ courseName: `Formatted editor ${generateUUID()}` });
+        try {
+            await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+            const channel = await communicationAPIRequests.createCourseMessageChannel(course, `editor-${generateUUID().slice(0, 8)}`, 'Native editing regressions', false, true);
+            expect(channel.id).toBeDefined();
+            await communicationAPIRequests.joinUserIntoChannel(course, channel.id!, studentOne);
+            await login(studentOne);
+            await communicationAPIRequests.acceptCodeOfConduct(course);
+            const route = `/courses/${course.id}/communication?conversationId=${channel.id}`;
+            await page.goto(route);
+            const editor = page.getByTestId('formatted-message-input');
+            await expect(editor).toBeVisible();
+            await expect(editor).toHaveAttribute('contenteditable', 'true');
+            await use({ course, channel, editor, route });
+        } finally {
+            await courseManagementAPIRequests.deleteCourse(course, admin);
+        }
+    },
+});
+
+/** Set a real browser selection, including across formatting elements, without changing its DOM. */
+async function selectText(editor: Locator, start: number, end: number, expectedText = '') {
+    await editor.evaluate(
+        (element, offsets) => {
+            const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+            const points: { node: Node; start: number; end: number }[] = [];
+            let length = 0;
+            while (walker.nextNode()) {
+                const node = walker.currentNode;
+                points.push({ node, start: length, end: length + (node.textContent?.length ?? 0) });
+                length += node.textContent?.length ?? 0;
+            }
+            const locate = (offset: number) => {
+                const point = points.find((candidate) => candidate.end >= offset);
+                if (!point) throw new Error(`Selection offset ${offset} exceeds editor length ${length}`);
+                return { node: point.node, offset: offset - point.start };
+            };
+            const from = locate(offsets.start);
+            const to = locate(offsets.end);
+            const range = document.createRange();
+            range.setStart(from.node, from.offset);
+            range.setEnd(to.node, to.offset);
+            (element as HTMLElement).focus();
+            const selection = window.getSelection()!;
+            selection.removeAllRanges();
+            selection.addRange(range);
+        },
+        { start, end },
+    );
+    // Range text follows the text-node offsets above; Selection text adds rendered paragraph breaks
+    // in Chromium even when those breaks are not part of the selected document text nodes.
+    await expect
+        .poll(() =>
+            editor.evaluate(() => {
+                const selection = window.getSelection();
+                return selection?.rangeCount ? selection.getRangeAt(0).toString() : undefined;
+            }),
+        )
+        .toBe(expectedText);
+}
+
+async function expectCaret(editor: Locator, offset: number) {
+    await expect
+        .poll(() =>
+            editor.evaluate((element) => {
+                const selection = window.getSelection();
+                if (!selection?.isCollapsed || !selection.anchorNode || !element.contains(selection.anchorNode)) return -1;
+                const before = document.createRange();
+                before.selectNodeContents(element);
+                before.setEnd(selection.anchorNode, selection.anchorOffset);
+                return before.toString().replace(/\u200b/g, '').length;
+            }),
+        )
+        .toBe(offset);
+    await expect(editor).toBeFocused();
+}
+
+async function expectText(editor: Locator, text: string) {
+    await expect.poll(() => editor.evaluate((element) => element.textContent?.replace(/\u200b/g, ''))).toBe(text);
+}
+
+async function send(page: Page, composer: Composer): Promise<Post> {
+    const responsePromise = page.waitForResponse(
+        (response) => response.url().endsWith(`/api/communication/courses/${composer.course.id}/messages`) && response.request().method() === 'POST',
+    );
+    await expect(page.getByTestId('send-formatted-message')).toBeEnabled();
+    await page.getByTestId('send-formatted-message').click();
+    const response = await responsePromise;
+    expect(response.status()).toBe(201);
+    const saved = await readResponseJson<Post>(response);
+    expect(saved.id).toBeDefined();
+    expect(saved.conversation?.id).toBe(composer.channel.id);
+    expect(response.request().postDataJSON().content).toBe(saved.content);
+    await expect(page.locator(`#item-${saved.id}`)).toBeVisible();
+    await expectText(composer.editor, '');
+    await expect(page.getByTestId('send-formatted-message')).toBeDisabled();
+    return saved;
+}
+
+function postContent(page: Page, id: number) {
+    return page.locator(`#item-${id}`).locator('jhi-posting-content');
+}
+
+async function reopen(page: Page, post: Post) {
+    const posting = page.locator(`#item-${post.id}`);
+    await posting.hover();
+    await posting.getByTestId('posting-reaction-edit').click();
+    const editor = posting.getByTestId('formatted-message-input');
+    await expect(editor).toBeVisible();
+    return { posting, editor };
+}
+
+async function saveEdited(page: Page, composer: Composer, posting: Locator, original: Post): Promise<Post> {
+    const responsePromise = page.waitForResponse(
+        (response) => response.request().method() === 'PUT' && response.url().endsWith(`/api/communication/courses/${composer.course.id}/messages/${original.id}`),
+    );
+    await expect(posting.locator('#save')).toBeEnabled();
+    await posting.locator('#save').click();
+    const response = await responsePromise;
+    expect(response.status()).toBe(200);
+    const saved = await readResponseJson<Post>(response);
+    expect(saved.id).toBe(original.id);
+    expect(response.request().postDataJSON().content).toBe(saved.content);
+    await expect(posting.getByTestId('formatted-message-input')).toBeHidden();
+    await expect(postContent(page, saved.id!)).toBeVisible();
+    return saved;
+}
+
+test.describe('Formatted message editor native editing', { tag: '@fast' }, () => {
+    for (const mark of [
+        { tag: 'strong', markdown: '**marked**' },
+        { tag: 'em', markdown: '*marked*' },
+        { tag: 'ins', markdown: '<ins>marked</ins>' },
+        { tag: 's', markdown: '~~marked~~' },
+        { tag: 'code', markdown: '`marked`' },
+    ]) {
+        test(`typing can enter and leave ${mark.tag} formatting at a collapsed caret`, async ({ page, composer }) => {
+            const { editor } = composer;
+            await editor.pressSequentially('plain ');
+            await page.getByTestId(`message-format-${mark.tag}`).click();
+            await expectCaret(editor, 6);
+            await page.keyboard.type('marked');
+            await expect(editor.locator(mark.tag)).toHaveText('marked');
+            await expectCaret(editor, 12);
+            await page.getByTestId(`message-format-${mark.tag}`).click();
+            await page.keyboard.type(' tail');
+            await expectText(editor, 'plain marked tail');
+            await expect(editor.locator(mark.tag)).toHaveText('marked');
+            await expectCaret(editor, 17);
+
+            const saved = await send(page, composer);
+            expect(saved.content).toBe(`plain ${mark.markdown} tail`);
+            await expect(postContent(page, saved.id!).locator(mark.tag === 's' ? 's, del' : mark.tag)).toHaveText('marked');
+            await expect(postContent(page, saved.id!)).toContainText('plain marked tail');
+        });
+    }
+
+    test('native IME composition commits one bold text run and typing can resume without formatting', async ({ page, context, browserName, composer }) => {
+        test.skip(browserName !== 'chromium', 'Native IME protocol available in Chromium');
+        const { editor } = composer;
+        const sentRequests: string[] = [];
+        page.on('request', (request) => {
+            if (request.method() === 'POST' && request.url().endsWith(`/api/communication/courses/${composer.course.id}/messages`)) sentRequests.push(request.url());
+        });
+        await editor.pressSequentially('plain ');
+        await page.getByTestId('message-format-strong').click();
+        await expectCaret(editor, 6);
+        const session = await context.newCDPSession(page);
+        try {
+            await session.send('Input.imeSetComposition', { text: '漢字', selectionStart: 2, selectionEnd: 2 });
+            await expect(editor).toContainText('漢字');
+            expect(sentRequests).toHaveLength(0);
+            await session.send('Input.insertText', { text: '漢字' });
+            await expectText(editor, 'plain 漢字');
+            await expect(editor.locator('strong')).toHaveText('漢字');
+            await expectCaret(editor, 8);
+            expect(sentRequests).toHaveLength(0);
+            await page.keyboard.press('ControlOrMeta+z');
+            await expectText(editor, 'plain ');
+            await expectCaret(editor, 6);
+            await page.keyboard.press('ControlOrMeta+Shift+z');
+            await expectText(editor, 'plain 漢字');
+            await expect(editor.locator('strong')).toHaveText('漢字');
+            await expectCaret(editor, 8);
+            await page.getByTestId('message-format-strong').click();
+            await page.keyboard.type(' tail');
+            await expectText(editor, 'plain 漢字 tail');
+            await expect(editor.locator('strong')).toHaveText('漢字');
+            await expectCaret(editor, 13);
+            const saved = await send(page, composer);
+            expect(saved.content).toBe('plain **漢字** tail');
+            expect(sentRequests).toHaveLength(1);
+            await expect(postContent(page, saved.id!).locator('strong')).toHaveText('漢字');
+        } finally {
+            await session.detach();
+        }
+    });
+
+    test('partial removal across mixed marks keeps italic text and native replacement at the selection', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('alpha beta gamma');
+        await selectText(editor, 0, 10, 'alpha beta');
+        await page.getByTestId('message-format-strong').click();
+        await expect(editor.locator('strong')).toHaveText('alpha beta');
+        await selectText(editor, 6, 16, 'beta gamma');
+        await page.getByTestId('message-format-em').click();
+        await expectText(editor, 'alpha beta gamma');
+        await expect.poll(async () => (await editor.locator('em').allTextContents()).join('')).toBe('beta gamma');
+        await selectText(editor, 6, 10, 'beta');
+        await page.getByTestId('message-format-strong').click();
+        await expect(editor.locator('strong')).toHaveText('alpha ');
+        await expect.poll(async () => (await editor.locator('em').allTextContents()).join('')).toBe('beta gamma');
+        await selectText(editor, 7, 10, 'eta');
+        await page.keyboard.insertText('ETA');
+        await expectText(editor, 'alpha bETA gamma');
+        await expectCaret(editor, 10);
+        await expect.poll(async () => (await editor.locator('em').allTextContents()).join('')).toBe('bETA gamma');
+
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('**alpha** *bETA gamma*');
+        await expect(postContent(page, saved.id!).locator('strong')).toHaveText('alpha');
+        await expect(postContent(page, saved.id!).locator('em')).toHaveText('bETA gamma');
+    });
+
+    test('native replacement across paragraphs merges them and persists one paragraph', async ({ page, composer, communicationAPIRequests }) => {
+        const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', 'First paragraph\n\nSecond paragraph');
+        const { posting, editor } = await reopen(page, original);
+        await expect(editor.locator(':scope > p')).toHaveText(['First paragraph', 'Second paragraph']);
+        await selectText(editor, 6, 21, 'paragraphSecond');
+        await page.keyboard.insertText('new');
+        await expect(editor.locator(':scope > p')).toHaveCount(1);
+        await expectText(editor, 'First new paragraph');
+        await expectCaret(editor, 9);
+        const saved = await saveEdited(page, composer, posting, original);
+        expect(saved.content).toBe('First new paragraph');
+        await expect(postContent(page, saved.id!)).toContainText('First new paragraph');
+        const reopened = await reopen(page, saved);
+        await expect(reopened.editor.locator(':scope > p')).toHaveText(['First new paragraph']);
+        await expectText(reopened.editor, 'First new paragraph');
+    });
+
+    test('keyboard undo and redo restore formatting, replacement text and the native selection', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('alpha beta');
+        await selectText(editor, 6, 10, 'beta');
+        await page.keyboard.press('ControlOrMeta+b');
+        await expect(editor.locator('strong')).toHaveText('beta');
+        await page.keyboard.press('ControlOrMeta+z');
+        await expect(editor.locator('strong')).toHaveCount(0);
+        await expectText(editor, 'alpha beta');
+        await page.keyboard.press('ControlOrMeta+Shift+z');
+        await expect(editor.locator('strong')).toHaveText('beta');
+        await expect.poll(() => editor.evaluate(() => window.getSelection()?.toString())).toBe('beta');
+        await page.keyboard.insertText('BETA');
+        await expectText(editor, 'alpha BETA');
+        await expectCaret(editor, 10);
+        await page.keyboard.press('ControlOrMeta+z');
+        await expectText(editor, 'alpha beta');
+        await expect(editor.locator('strong')).toHaveText('beta');
+        await page.keyboard.press('ControlOrMeta+Shift+z');
+        await expectText(editor, 'alpha BETA');
+        await expect(editor.locator('strong')).toHaveText('BETA');
+        await expectCaret(editor, 10);
+        expect((await send(page, composer)).content).toBe('alpha **BETA**');
+    });
+
+    for (const list of ['ul', 'ol']) {
+        test(`native Enter continues ${list} items and exits an empty item without sending`, async ({ page, composer }) => {
+            const { editor } = composer;
+            const sentRequests: string[] = [];
+            page.on('request', (request) => {
+                if (request.method() === 'POST' && request.url().endsWith(`/api/communication/courses/${composer.course.id}/messages`)) sentRequests.push(request.url());
+            });
+            await editor.pressSequentially('first');
+            await page.getByTestId(`message-block-${list}`).click();
+            await expect(editor.locator(`${list} > li`)).toHaveText(['first']);
+            await page.keyboard.press('Enter');
+            await page.keyboard.type('second');
+            await expect(editor.locator(`${list} > li`)).toHaveText(['first', 'second']);
+            await page.keyboard.press('Enter');
+            await page.keyboard.press('Enter');
+            await page.keyboard.type('outside');
+            await expect(editor.locator(`${list} > li`)).toHaveText(['first', 'second']);
+            await expectText(editor, 'firstsecondoutside');
+            expect(sentRequests).toHaveLength(0);
+            await expectCaret(editor, 18);
+            const saved = await send(page, composer);
+            expect(saved.content).toBe(list === 'ul' ? '- first\n- second\n\noutside' : '1. first\n2. second\n\noutside');
+            await expect(postContent(page, saved.id!).locator(`${list} > li`)).toHaveText(['first', 'second']);
+            await expect(postContent(page, saved.id!)).toContainText('outside');
+        });
+    }
+
+    test('code Enter and Shift+Enter preserve literal lines when returning to a paragraph', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('const answer = 42;');
+        await page.getByTestId('message-block-pre').click();
+        await page.keyboard.press('Enter');
+        await page.keyboard.type('console.log(answer);');
+        await page.keyboard.press('Shift+Enter');
+        await page.keyboard.type('// done');
+        await expect(editor.locator('pre code')).toHaveCount(1);
+        await expect
+            .poll(() => editor.locator('pre code').evaluate((code) => (code as HTMLElement).innerText.replace(/\u200b/g, '')))
+            .toBe('const answer = 42;\nconsole.log(answer);\n// done');
+        await page.getByTestId('message-block-pre').click();
+        await expect(editor.locator('pre')).toHaveCount(0);
+        await page.keyboard.type(' tail');
+        await expectText(editor, 'const answer = 42;console.log(answer);// done tail');
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('const answer = 42;\nconsole.log(answer);\n// done tail');
+        await expect(postContent(page, saved.id!)).toContainText('// done tail');
+    });
+
+    test('changing quote formatting retains a native soft line break and typed suffix', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('quoted');
+        await page.getByTestId('message-block-blockquote').click();
+        await page.keyboard.press('Shift+Enter');
+        await page.keyboard.type('second line');
+        await expect(editor.locator('blockquote')).toContainText('second line');
+        await page.getByTestId('message-block-blockquote').click();
+        await expect(editor.locator('blockquote')).toHaveCount(0);
+        await page.keyboard.type(' tail');
+        await expectText(editor, 'quotedsecond line tail');
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('quoted\nsecond line tail');
+        await expect(postContent(page, saved.id!)).toContainText('second line tail');
+    });
+
+    test('link toolbar keeps the selection while rejecting an unsafe URL and applying a valid link', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('Read guide today');
+        await selectText(editor, 5, 10, 'guide');
+        await page.getByTestId('message-link-button').click();
+        await expect(page.getByTestId('message-link-text')).toHaveValue('guide');
+        await page.getByTestId('message-link-url').fill('javascript:alert(1)');
+        await page.getByTestId('apply-message-link').click();
+        await expect(page.getByTestId('message-link-url')).toHaveAttribute('aria-invalid', 'true');
+        await expect(editor.locator('a')).toHaveCount(0);
+        await expectText(editor, 'Read guide today');
+        await page.getByTestId('message-link-url').fill('https://example.com/guide?section=2');
+        await page.getByTestId('apply-message-link').click();
+        await expect(page.getByTestId('message-link-url')).toBeHidden();
+        await expect(editor.locator('a')).toHaveAttribute('href', 'https://example.com/guide?section=2');
+        await expect(editor.locator('a')).toHaveText('guide');
+        await expectText(editor, 'Read guide today');
+        await expectCaret(editor, 10);
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('Read [guide](https://example.com/guide?section=2) today');
+        await expect(postContent(page, saved.id!).getByRole('link', { name: 'guide', exact: true })).toHaveAttribute('href', 'https://example.com/guide?section=2');
+    });
+
+    test('native multiline code is persisted literally and reopened as one editable code block', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('<b>literal</b>');
+        await page.getByTestId('message-block-pre').click();
+        await page.keyboard.press('Enter');
+        await page.keyboard.type('**not bold**');
+        await expect(editor.locator('pre code')).toHaveCount(1);
+        await expect(editor.locator('strong, b')).toHaveCount(0);
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('```\n<b>literal</b>\n**not bold**\n```');
+        await expect(postContent(page, saved.id!).locator('pre code')).toHaveText('<b>literal</b>\n**not bold**');
+        const reopened = await reopen(page, saved);
+        await expect(reopened.editor.locator('pre code')).toHaveCount(1);
+        await expect(reopened.editor.locator('strong, b')).toHaveCount(0);
+        await expect(reopened.editor.locator('pre code')).toContainText('**not bold**');
+        await expect(reopened.editor.locator('pre code')).toContainText('<b>literal</b>');
+    });
+
+    test('link and channel reference survive partial formatting, save and a second edit', async ({ page, composer, communicationAPIRequests }) => {
+        const reference = `[channel]${composer.channel.name}(${composer.channel.id})[/channel]`;
+        const original = await communicationAPIRequests.createCourseMessage(
+            composer.course,
+            composer.channel.id!,
+            'channel',
+            `Read [guide](https://example.com/guide) and ${reference} today`,
+        );
+        await expect(postContent(page, original.id!)).toContainText('guide');
+        const { posting, editor } = await reopen(page, original);
+        await expect(editor.locator('a')).toHaveAttribute('href', 'https://example.com/guide');
+        await expect(editor.locator('[data-message-reference]')).toHaveAttribute('data-message-reference', reference);
+        await selectText(editor, 5, 10, 'guide');
+        await posting.getByTestId('message-format-strong').click();
+        await expect(editor.locator('a')).toHaveText('guide');
+        await expect(editor.locator('a strong, strong a')).toHaveText('guide');
+        const length = (await editor.textContent())!.length;
+        await selectText(editor, length, length);
+        await expectCaret(editor, length);
+        await page.keyboard.type('!');
+        const updatedResponse = page.waitForResponse((response) => response.request().method() === 'PUT' && response.url().endsWith(`/messages/${original.id}`));
+        await posting.locator('#save').click();
+        const response = await updatedResponse;
+        expect(response.ok()).toBe(true);
+        expect(response.request().postDataJSON().content).toContain(reference);
+        expect(response.request().postDataJSON().content).toContain('https://example.com/guide');
+        expect(response.request().postDataJSON().content).toContain('today!');
+        await expect(editor).toBeHidden();
+        const reopened = await reopen(page, original);
+        await expect(reopened.editor.locator('a')).toHaveAttribute('href', 'https://example.com/guide');
+        await expect(reopened.editor.locator('a strong, strong a')).toHaveText('guide');
+        await expect(reopened.editor.locator('[data-message-reference]')).toHaveAttribute('data-message-reference', reference);
+        await expect(reopened.editor.locator('[data-message-reference]')).toHaveAttribute('contenteditable', 'false');
+        await expect(reopened.editor).toContainText('today!');
+    });
+
+    test('editing a bold italic link URL keeps its label marks and resumes native typing outside the link', async ({ page, composer, communicationAPIRequests }) => {
+        const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', 'Read [***guide***](https://example.com/old) today');
+        const { posting, editor } = await reopen(page, original);
+        const link = editor.getByRole('link', { name: 'guide', exact: true });
+        await expect(link.locator('strong em, em strong')).toHaveText('guide');
+        await link.click();
+        await expect(posting.getByTestId('message-link-text')).toHaveValue('guide');
+        await expect(posting.getByTestId('message-link-url')).toHaveValue('https://example.com/old');
+        await posting.getByTestId('message-link-url').fill('https://example.com/new?chapter=2');
+        await posting.getByTestId('apply-message-link').click();
+        await expect(link).toHaveAttribute('href', 'https://example.com/new?chapter=2');
+        await expect(link.locator('strong em, em strong')).toHaveText('guide');
+        await expectCaret(editor, 10);
+        await page.keyboard.type('!');
+        await expectText(editor, 'Read guide! today');
+        await expectCaret(editor, 11);
+        await expect(link).toHaveText('guide');
+        await expect(link.locator('strong em, em strong')).toHaveText('guide');
+        const saved = await saveEdited(page, composer, posting, original);
+        expect(saved.content).toBe('Read [***guide***](https://example.com/new?chapter=2)! today');
+        await expect(postContent(page, saved.id!).getByRole('link', { name: 'guide', exact: true })).toHaveAttribute('href', 'https://example.com/new?chapter=2');
+        const reopened = await reopen(page, saved);
+        await expect(reopened.editor.locator('a strong em, a em strong')).toHaveText('guide');
+        await expectText(reopened.editor, 'Read guide! today');
+    });
+
+    test('unlinking keeps the bold italic label and places the caret after it for native typing', async ({ page, composer, communicationAPIRequests }) => {
+        const original = await communicationAPIRequests.createCourseMessage(
+            composer.course,
+            composer.channel.id!,
+            'channel',
+            'Read [***guide***](https://example.com/guide) today',
+        );
+        const { posting, editor } = await reopen(page, original);
+        await editor.getByRole('link', { name: 'guide', exact: true }).click();
+        await posting.getByTestId('remove-message-link').click();
+        await expect(editor.locator('a')).toHaveCount(0);
+        await expect(editor.locator('strong em, em strong')).toHaveText('guide');
+        await expectText(editor, 'Read guide today');
+        await expectCaret(editor, 10);
+        await page.keyboard.type('!');
+        await expectText(editor, 'Read guide! today');
+        await expectCaret(editor, 11);
+        const saved = await saveEdited(page, composer, posting, original);
+        expect(saved.content).not.toContain('https://example.com/guide');
+        expect(saved.content).not.toContain('[');
+        const reopened = await reopen(page, saved);
+        await expect(reopened.editor.locator('a')).toHaveCount(0);
+        await expectText(reopened.editor, 'Read guide! today');
+        await expect(reopened.editor.locator('strong')).toContainText('guide');
+        await expect(reopened.editor.locator('em')).toContainText('guide');
+    });
+
+    for (const kind of ['link', 'channel'] as const) {
+        test(`Backspace selects the complete atomic ${kind} before deleting it and undo restores its wire payload`, async ({ page, composer, communicationAPIRequests }) => {
+            const payload = kind === 'link' ? '[guide](https://example.com/guide)' : `[channel]${composer.channel.name}(${composer.channel.id})[/channel]`;
+            const label = kind === 'link' ? 'guide' : `#${composer.channel.name}`;
+            const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', `Before ${payload} after`);
+            const { posting, editor } = await reopen(page, original);
+            const item = editor.locator(kind === 'link' ? 'a' : '[data-message-reference]');
+            await expectText(editor, `Before ${label} after`);
+            // Completion-style caret: one separator after the item. The separator is consumed with it.
+            await selectText(editor, 7 + label.length + 1, 7 + label.length + 1);
+            await page.keyboard.press('Backspace');
+            await expectText(editor, `Before ${label} after`);
+            await expect(item).toHaveAttribute('data-message-selected', '');
+            await expect(editor.locator('[data-message-selected]')).toHaveCount(1);
+            await expect.poll(() => editor.evaluate(() => window.getSelection()?.toString())).toBe(label);
+            await page.keyboard.press('Backspace');
+            await expect(item).toHaveCount(0);
+            await expectText(editor, 'Before after');
+            await expectCaret(editor, 7);
+            await page.keyboard.press('ControlOrMeta+z');
+            await expect(item).toHaveText(label);
+            await expectText(editor, `Before ${label} after`);
+            if (kind === 'link') {
+                await expect(item).toHaveAttribute('href', 'https://example.com/guide');
+            } else {
+                await expect(item).toHaveAttribute('data-message-reference', payload);
+                await expect(item).toHaveAttribute('contenteditable', 'false');
+            }
+            const length = (await editor.textContent())!.length;
+            await selectText(editor, length, length);
+            await page.keyboard.type('!');
+            const saved = await saveEdited(page, composer, posting, original);
+            expect(saved.content).toBe(`Before ${payload} after!`);
+            await expect(postContent(page, saved.id!)).toContainText('Before');
+            await expect(postContent(page, saved.id!)).toContainText('after!');
+            const reopened = await reopen(page, saved);
+            await expectText(reopened.editor, `Before ${label} after!`);
+            await expect(reopened.editor.locator(kind === 'link' ? 'a' : '[data-message-reference]')).toHaveText(label);
+        });
+    }
+
+    test('repeated overlapping mark toggles and partial removal roundtrip without nested duplicates or lost text', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('alpha beta gamma');
+        await selectText(editor, 0, 16, 'alpha beta gamma');
+        for (const mark of ['strong', 'em', 'strong', 'strong', 'em']) {
+            await page.getByTestId(`message-format-${mark}`).click();
+            await expectText(editor, 'alpha beta gamma');
+            await expect.poll(() => editor.evaluate(() => window.getSelection()?.toString())).toBe('alpha beta gamma');
+            await expect(editor.locator('strong strong, em em')).toHaveCount(0);
+        }
+        await expect(editor.locator('strong')).toHaveText('alpha beta gamma');
+        await expect(editor.locator('em')).toHaveCount(0);
+        await selectText(editor, 6, 10, 'beta');
+        await page.getByTestId('message-format-strong').click();
+        await expect.poll(async () => (await editor.locator('strong').allTextContents()).join('')).toBe('alpha  gamma');
+        for (const mark of ['ins', 's', 's']) {
+            await page.getByTestId(`message-format-${mark}`).click();
+        }
+        await expect(editor.locator('s, del')).toHaveCount(0);
+        await expect(editor.locator('ins')).toHaveText('beta');
+        await page.keyboard.insertText('BETA');
+        await expectText(editor, 'alpha BETA gamma');
+        await expectCaret(editor, 10);
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('**alpha** <ins>BETA</ins> **gamma**');
+        const reopened = await reopen(page, saved);
+        await expect(reopened.editor.locator('strong')).toHaveText(['alpha', 'gamma']);
+        await expect(reopened.editor.locator('ins')).toHaveText('BETA');
+        await expect(reopened.editor.locator('strong strong, em, s, del')).toHaveCount(0);
+        await expectText(reopened.editor, 'alpha BETA gamma');
+    });
+
+    test('colon emoji keyboard acceptance replaces only the shortcode and does not submit the message', async ({ page, composer }) => {
+        const { editor } = composer;
+        const sentRequests: string[] = [];
+        page.on('request', (request) => {
+            if (request.method() === 'POST' && request.url().endsWith(`/api/communication/courses/${composer.course.id}/messages`)) sentRequests.push(request.url());
+        });
+        await editor.pressSequentially('Nice :jo');
+        const suggestions = page.getByRole('listbox');
+        await expect(suggestions).toBeVisible();
+        const selected = suggestions.getByRole('option', { selected: true });
+        await expect(selected).toHaveCount(1);
+        const selectedLabel = (await selected.textContent())!;
+        const shortcode = /:([a-zA-Z0-9_+-]+):/.exec(selectedLabel);
+        expect(shortcode).not.toBeNull();
+        const glyph = selectedLabel.slice(0, selectedLabel.indexOf(':')).trim();
+        expect(glyph.length).toBeGreaterThan(0);
+        await page.keyboard.press('Enter');
+        await expect(suggestions).toBeHidden();
+        await expectText(editor, `Nice ${glyph} `);
+        await expectCaret(editor, 6 + glyph.length);
+        expect(sentRequests).toHaveLength(0);
+        await page.keyboard.type('thanks');
+        await expectText(editor, `Nice ${glyph} thanks`);
+        const saved = await send(page, composer);
+        expect(saved.content).toBe(`Nice ${glyph} thanks`);
+        expect(saved.content).not.toContain(':jo');
+        expect(sentRequests).toHaveLength(1);
+        await expect(postContent(page, saved.id!)).toContainText(`Nice ${glyph} thanks`);
+    });
+
+    test('formatted draft reload keeps marks and selection editing sends the restored content once', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('draft text');
+        await selectText(editor, 0, 5, 'draft');
+        await page.getByTestId('message-format-strong').click();
+        await expect(page.getByTestId('send-formatted-message')).toBeEnabled();
+        await expect
+            .poll(() => page.evaluate(() => Object.entries(localStorage).some(([key, value]) => key.includes('message_draft_') && value.includes('**draft** text'))))
+            .toBe(true);
+        await page.goto(composer.route);
+        await expect(editor.locator('strong')).toHaveText('draft');
+        await expectText(editor, 'draft text');
+        await selectText(editor, 6, 10, 'text');
+        await page.keyboard.insertText('restored');
+        await expectText(editor, 'draft restored');
+        await expectCaret(editor, 14);
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('**draft** restored');
+        await expect(postContent(page, saved.id!).locator('strong')).toHaveText('draft');
+        await page.goto(composer.route);
+        await expect(editor).toBeVisible();
+        await expectText(editor, '');
+        await expect(postContent(page, saved.id!)).toContainText('draft restored');
+    });
+});

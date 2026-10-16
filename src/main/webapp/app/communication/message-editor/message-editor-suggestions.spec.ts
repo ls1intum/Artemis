@@ -8,8 +8,11 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { MessageEditorSuggestions } from './message-editor-suggestions';
+import { EmojiSearch } from '@ctrl/ngx-emoji-mart';
+import { EMOTICON_TO_EMOJI } from 'app/editor/monaco-editor/model/emoticon-emoji.util';
 
 describe('Message editor suggestions', () => {
+    const emojis = { search: vi.fn() };
     const members = { searchMembersForUserMentions: vi.fn() };
     const channels = { getPublicChannelsOfCourse: vi.fn() };
     const exercises = { getTitlesForCourse: vi.fn() };
@@ -18,6 +21,10 @@ describe('Message editor suggestions', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        emojis.search.mockReturnValue([
+            { id: 'joy', native: '😂' },
+            { id: 'joy_cat', native: '😹' },
+        ]);
         members.searchMembersForUserMentions.mockReturnValue(of(new HttpResponse({ body: [{ name: 'Anna', login: 'anna' }] })));
         channels.getPublicChannelsOfCourse.mockReturnValue(of(new HttpResponse({ body: [{ id: 2, name: 'general' }] })));
         exercises.getTitlesForCourse.mockReturnValue(of([{ id: 3, title: 'Exercise', type: 'programming' }]));
@@ -25,6 +32,7 @@ describe('Message editor suggestions', () => {
         TestBed.configureTestingModule({
             providers: [
                 MessageEditorSuggestions,
+                { provide: EmojiSearch, useValue: emojis },
                 { provide: CourseManagementService, useValue: members },
                 { provide: ChannelService, useValue: channels },
                 { provide: ExerciseService, useValue: exercises },
@@ -32,6 +40,48 @@ describe('Message editor suggestions', () => {
             ],
         });
         suggestions = TestBed.inject(MessageEditorSuggestions);
+    });
+
+    it('completes emoji shortcodes as native glyphs without loading course references', async () => {
+        await expect(suggestions.search(':', 'jo', 1)).resolves.toEqual([
+            { label: '😂 :joy:', kind: 'emoji', markdown: '😂' },
+            { label: '😹 :joy_cat:', kind: 'emoji', markdown: '😹' },
+        ]);
+        expect(emojis.search).toHaveBeenCalledExactlyOnceWith('jo', undefined, 30);
+        expect(members.searchMembersForUserMentions).not.toHaveBeenCalled();
+        expect(channels.getPublicChannelsOfCourse).not.toHaveBeenCalled();
+        expect(exercises.getTitlesForCourse).not.toHaveBeenCalled();
+        expect(lectures.findAllByCourseIdForOverview).not.toHaveBeenCalled();
+    });
+
+    it('keeps emoji relevance order and skips missing native glyphs before limiting results', async () => {
+        const valid = Array.from({ length: 8 }, (_, index) => ({ id: `emoji${index}`, native: `😀${index}` }));
+        emojis.search.mockReturnValue([{ id: 'custom' }, ...valid.slice(0, 3), { id: 'empty', native: '' }, ...valid.slice(3)]);
+        const result = await suggestions.search(':', 'emoji', 1);
+        expect(result).toHaveLength(5);
+        expect(result.map((item) => item.markdown)).toEqual(valid.slice(0, 5).map((emoji) => emoji.native));
+        expect(result.map((item) => item.label)).toEqual(valid.slice(0, 5).map((emoji) => `${emoji.native} :${emoji.id}:`));
+    });
+
+    it.each(['', ' joy', 'jo y', 'jo!', 'jo.', 'jo:', '(jo', '/path'])('does not search for invalid or empty shortcode term "%s"', async (query) => {
+        await expect(suggestions.search(':', query, 1)).resolves.toEqual([]);
+        expect(emojis.search).not.toHaveBeenCalled();
+        expect(channels.getPublicChannelsOfCourse).not.toHaveBeenCalled();
+    });
+
+    it.each(Object.keys(EMOTICON_TO_EMOJI))('does not compete with the existing emoticon %s', async (emoticon) => {
+        await expect(suggestions.search(':', emoticon.slice(1), 1)).resolves.toEqual([]);
+        expect(emojis.search).not.toHaveBeenCalled();
+    });
+
+    it.each(['+1', '-1', 'rolling_on_the_floor_laughing', 'party'])('searches aliases and compound emoji shortcodes "%s"', async (query) => {
+        await suggestions.search(':', query, 1);
+        expect(emojis.search).toHaveBeenCalledExactlyOnceWith(query, undefined, 30);
+    });
+
+    it.each([undefined, null, []])('handles an empty emoji search result (%s)', async (result) => {
+        emojis.search.mockReturnValue(result);
+        await expect(suggestions.search(':', 'unmatched', 1)).resolves.toEqual([]);
     });
 
     it('combines channel, exercise, and lecture references without changing their wire format', async () => {

@@ -239,6 +239,7 @@
                 "choose": "Use the arrow keys and Enter to insert. Escape closes this list.",
                 "suggestions": "Message references",
                 "kind": {
+                    "emoji": "Emoji",
                     "user": "Person",
                     "channel": "Channel",
                     "exercise": "Exercise",

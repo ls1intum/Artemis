@@ -239,6 +239,7 @@
                 "choose": "Mit den Pfeiltasten auswählen und mit Enter einfügen. Escape schließt die Liste.",
                 "suggestions": "Nachrichtenverweise",
                 "kind": {
+                    "emoji": "Emoji",
                     "user": "Person",
                     "channel": "Kanal",
                     "exercise": "Aufgabe",

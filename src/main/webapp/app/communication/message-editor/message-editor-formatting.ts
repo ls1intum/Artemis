@@ -1,3 +1,5 @@
+import { preserveMessageSelection } from './message-editor-selection';
+
 const inlineTags = new Set(['STRONG', 'B', 'EM', 'I', 'INS', 'U', 'S', 'DEL', 'CODE', 'A']);
 const aliases: Record<string, string> = { B: 'STRONG', I: 'EM', U: 'INS', DEL: 'S' };
 
@@ -7,8 +9,14 @@ function canonical(tag: string): string {
 
 /** Merges equivalent neighboring marks so serialization does not create adjacent Markdown delimiters. */
 function append(parent: Node, node: Node): void {
-    const previous = parent.lastChild;
+    let previous = parent.lastChild;
+    const boundaries: Node[] = [];
+    while (previous instanceof HTMLElement && previous.hasAttribute('data-message-selection-boundary')) {
+        boundaries.unshift(previous);
+        previous = previous.previousSibling;
+    }
     if (previous instanceof HTMLElement && node instanceof HTMLElement && inlineTags.has(node.tagName) && previous.cloneNode(false).isEqualNode(node.cloneNode(false))) {
+        previous.append(...boundaries);
         for (const child of Array.from(node.childNodes)) {
             append(previous, child);
         }
@@ -26,7 +34,7 @@ export function messageSelectionOffset(root: HTMLElement, container: Node, offse
 }
 
 /** Restores selection boundaries in the rebuilt inline runs, including boundaries between marked and plain text. */
-export function restoreMessageSelection(root: HTMLElement, start: number, end: number): Range {
+export function restoreMessageSelection(root: HTMLElement, start: number, end: number, preferNext = true): Range {
     const point = (offset: number, preferNext: boolean): { node: Node; offset: number } => {
         const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
         let node = walker.nextNode();
@@ -42,8 +50,8 @@ export function restoreMessageSelection(root: HTMLElement, start: number, end: n
         }
         return { node: root, offset: root.childNodes.length };
     };
-    const first = point(start, true);
-    const last = point(end, false);
+    const first = point(start, preferNext);
+    const last = start === end ? first : point(end, false);
     const range = root.ownerDocument.createRange();
     range.setStart(first.node, first.offset);
     range.setEnd(last.node, last.offset);
@@ -55,9 +63,19 @@ export function restoreMessageSelection(root: HTMLElement, start: number, end: n
  * Protected references and code blocks remain intact. DOM rebuilding happens only for an explicit formatting action.
  */
 export function formatMessageSelection(root: HTMLElement, range: Range, tag: string): Range {
+    return changeMessageMarks(root, range, tag);
+}
+
+/** Applies the chosen typing marks to just the newly inserted text, retaining enclosing link targets. */
+export function setMessageSelectionMarks(root: HTMLElement, range: Range, marks: string[]): Range {
+    return changeMessageMarks(root, range, undefined, marks);
+}
+
+function changeMessageMarks(root: HTMLElement, range: Range, tag?: string, desired?: string[]): Range {
     const start = messageSelectionOffset(root, range.startContainer, range.startOffset);
     const end = messageSelectionOffset(root, range.endContainer, range.endOffset);
-    const target = tag.toUpperCase();
+    const target = tag?.toUpperCase();
+    const restore = preserveMessageSelection(root, range);
     const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     let text = walker.nextNode();
     let remove = true;
@@ -93,10 +111,14 @@ export function formatMessageSelection(root: HTMLElement, range: Range, tag: str
             const value = node.textContent ?? '';
             const from = Math.max(0, Math.min(value.length, start - position));
             const to = Math.max(from, Math.min(value.length, end - position));
-            const selectedMarks = marks.filter((mark) => canonical(mark.tagName) !== target);
-            if (!remove) {
+            const selectedMarks = desired
+                ? [...marks.filter((mark) => mark.tagName === 'A'), ...desired.map((name) => root.ownerDocument.createElement(name))]
+                : marks.filter((mark) => canonical(mark.tagName) !== target);
+            if (!desired && !remove && tag) {
                 selectedMarks.unshift(root.ownerDocument.createElement(tag));
             }
+            // Markdown cannot represent emphasis inside inline code; keep code innermost for a faithful round trip.
+            selectedMarks.sort((first, second) => Number(first.tagName === 'CODE') - Number(second.tagName === 'CODE'));
             for (const [part, activeMarks] of [
                 [value.slice(0, from), marks],
                 [value.slice(from, to), selectedMarks],
@@ -128,5 +150,5 @@ export function formatMessageSelection(root: HTMLElement, range: Range, tag: str
         render(node, fragment, []);
     }
     root.replaceChildren(fragment);
-    return restoreMessageSelection(root, start, end);
+    return restore();
 }
