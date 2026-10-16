@@ -91,11 +91,6 @@
     padding-left: 2.25rem;
 }
 
-.presentation-detail-row > td {
-    padding: 1rem 1.5rem;
-    background: var(--module-bg);
-}
-
 .presentation-overview {
     display: flex;
     height: 100%;
@@ -140,16 +135,6 @@
     flex: 1 1 auto;
     overflow: auto;
     padding: 0 1rem;
-}
-
-.presentation-student-details-button {
-    display: inline-flex;
-    align-items: center;
-    border: 0;
-    padding: 0;
-    color: inherit;
-    background: transparent;
-    text-align: left;
 }
 
 .presentation-paginator {
