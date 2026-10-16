@@ -122,6 +122,71 @@ describe('Formatted message composer', () => {
         expect(editable.querySelector('a')!.getAttribute('href')).toBe('https://example.org/new');
     });
 
+    it('edits and unlinks an existing code-formatted link from its keyboard caret', () => {
+        fixture.componentRef.setInput('content', 'Read [`List`](https://example.org/old) next');
+        fixture.detectChanges();
+        const range = document.createRange();
+        range.setStart(editable.querySelector('a code')!.firstChild!, 2);
+        range.collapse(true);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        editable.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        fixture.detectChanges();
+        const button = fixture.nativeElement.querySelector('[data-testid="message-link-button"]') as HTMLButtonElement;
+        expect(button.disabled).toBe(false);
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+        expect(component.linkOpen()).toBe(true);
+        expect(component.linkText()).toBe('List');
+        expect(component.linkUrl()).toBe('https://example.org/old');
+        component.linkUrl.set('https://example.org/new');
+        (fixture.nativeElement.querySelector('[data-testid="apply-message-link"]') as HTMLButtonElement).click();
+        const link = editable.querySelector('a')!;
+        expect(link.getAttribute('href')).toBe('https://example.org/new');
+        expect(link.querySelector('code')!.textContent).toBe('List');
+        link.click();
+        fixture.detectChanges();
+        (fixture.nativeElement.querySelector('[data-testid="remove-message-link"]') as HTMLButtonElement).click();
+        expect(editable.querySelector('a')).toBeNull();
+        expect(editable.querySelector('code')!.textContent).toBe('List');
+    });
+
+    it('dismisses the link form when a click moves the caret to another word', () => {
+        caretAtEnd();
+        (fixture.nativeElement.querySelector('[data-testid="message-link-button"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(component.linkOpen()).toBe(true);
+        const range = document.createRange();
+        range.setStart(editable.querySelector('p')!.firstChild!, 1);
+        range.collapse(true);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        editable.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        expect(component.linkOpen()).toBe(false);
+    });
+
+    it('retains the link form while its inputs are focused but dismisses it after keyboard caret navigation', () => {
+        editable.focus();
+        caretAtEnd();
+        (fixture.nativeElement.querySelector('[data-testid="message-link-button"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        const input = fixture.nativeElement.querySelector('[data-testid="message-link-url"]') as HTMLInputElement;
+        input.focus();
+        document.dispatchEvent(new Event('selectionchange'));
+        expect(component.linkOpen()).toBe(true);
+        input.value = 'https://example.org';
+        input.dispatchEvent(new InputEvent('input', { bubbles: true }));
+        expect(component.linkUrl()).toBe('https://example.org');
+        editable.focus();
+        const range = document.createRange();
+        range.setStart(editable.querySelector('p')!.firstChild!, 2);
+        range.collapse(true);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        document.dispatchEvent(new Event('selectionchange'));
+        expect(component.linkOpen()).toBe(false);
+    });
+
     it('disables the link action inside code and ignores its keyboard shortcut', () => {
         fixture.componentRef.setInput('content', '`literal`');
         fixture.detectChanges();

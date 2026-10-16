@@ -83,6 +83,7 @@ export class MessageEditorComponent {
     private searchTimer?: ReturnType<typeof setTimeout>;
     private composing = false;
     private existingLink?: HTMLAnchorElement;
+    private linkSelection?: Range;
 
     constructor() {
         afterRenderEffect(() => {
@@ -391,6 +392,7 @@ export class MessageEditorComponent {
 
     protected selectionChanged(): void {
         this.dismissSuggestions();
+        this.linkOpen.set(false);
         this.editor?.rememberSelection();
         this.refreshFormatState();
         this.scheduleSuggestions();
@@ -409,18 +411,20 @@ export class MessageEditorComponent {
     }
 
     protected openLink(link?: HTMLAnchorElement): void {
-        if (!this.editor?.canLinkSelection()) return;
+        const target = link ?? this.editor?.linkAtSelection();
+        if (!this.editor?.canLinkSelection(target)) return;
         if (!link && this.linkOpen()) {
             this.closeLink();
             return;
         }
         this.editor?.rememberSelection();
         this.dismissSuggestions();
-        link ??= this.editor?.linkAtSelection();
-        this.existingLink = link;
-        this.editingLink.set(!!link);
-        this.linkText.set(link?.textContent ?? window.getSelection()?.toString() ?? '');
-        this.linkUrl.set(link?.getAttribute('href') ?? '');
+        const selection = this.editable()?.nativeElement.ownerDocument.getSelection();
+        this.linkSelection = selection?.rangeCount ? selection.getRangeAt(0).cloneRange() : undefined;
+        this.existingLink = target;
+        this.editingLink.set(!!target);
+        this.linkText.set(target?.textContent ?? selection?.toString() ?? '');
+        this.linkUrl.set(target?.getAttribute('href') ?? '');
         this.linkInvalid.set(false);
         this.linkOpen.set(true);
     }
@@ -461,8 +465,22 @@ export class MessageEditorComponent {
     }
 
     protected updateSelectionState(): void {
-        const selection = this.editable()?.nativeElement.ownerDocument.getSelection();
-        if (selection?.anchorNode && this.editable()?.nativeElement.contains(selection.anchorNode)) this.refreshFormatState();
+        const element = this.editable()?.nativeElement;
+        const selection = element?.ownerDocument.getSelection();
+        if (selection?.anchorNode && element?.contains(selection.anchorNode)) {
+            if (this.linkOpen() && element.ownerDocument.activeElement === element && this.linkSelection && selection.rangeCount) {
+                const range = selection.getRangeAt(0);
+                if (
+                    range.startContainer !== this.linkSelection.startContainer ||
+                    range.startOffset !== this.linkSelection.startOffset ||
+                    range.endContainer !== this.linkSelection.endContainer ||
+                    range.endOffset !== this.linkSelection.endOffset
+                ) {
+                    this.linkOpen.set(false);
+                }
+            }
+            this.refreshFormatState();
+        }
     }
 
     private refreshFormatState(): void {

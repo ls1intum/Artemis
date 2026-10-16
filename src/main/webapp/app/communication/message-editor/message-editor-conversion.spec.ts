@@ -59,6 +59,14 @@ describe('Message editor conversion', () => {
         expect(element.textContent).toBe(source);
     });
 
+    it('leaves a long sequence of unmatched opening brackets as literal text', () => {
+        const source = '['.repeat(65536);
+        const element = document.createElement('div');
+        element.innerHTML = messageToEditorHtml(source);
+        expect(element.querySelector('[data-message-reference]')).toBeNull();
+        expect(element.textContent).toBe(source);
+    });
+
     it('does not consume a following valid reference while recovering from a malformed reference on the preceding line', () => {
         const source = '[user]Anna(' + '('.repeat(1024) + '\n[attachment]Slides(lecture/intro_(1).pdf)[/attachment]';
         const element = document.createElement('div');
@@ -66,6 +74,35 @@ describe('Message editor conversion', () => {
         expect(element.querySelectorAll('[data-message-reference]')).toHaveLength(1);
         expect(element.querySelector('[data-message-reference]')!.textContent).toBe('Slides');
         expect(element.querySelector('[data-message-reference]')!.getAttribute('data-message-reference')).toBe('[attachment]Slides(lecture/intro_(1).pdf)[/attachment]');
+    });
+
+    it('keeps closing parentheses and other reference closing tags inside a reference payload', () => {
+        const source = '[attachment]Slides(lecture/(draft)/intro).pdf?note=)[/slide])[/attachment]';
+        const element = document.createElement('div');
+        element.innerHTML = messageToEditorHtml(source);
+        expect(element.querySelectorAll('[data-message-reference]')).toHaveLength(1);
+        expect(element.querySelector('[data-message-reference]')!.getAttribute('data-message-reference')).toBe(source);
+        expect(editorToMessage(element)).toBe(source);
+    });
+
+    it('ends a reference at its first matching typed closing delimiter', () => {
+        const reference = '[attachment]Slides(lecture/intro.pdf)[/attachment]';
+        const suffix = 'extra)[/attachment]';
+        const element = document.createElement('div');
+        element.innerHTML = messageToEditorHtml(reference + suffix);
+        expect(element.querySelectorAll('[data-message-reference]')).toHaveLength(1);
+        expect(element.querySelector('[data-message-reference]')!.getAttribute('data-message-reference')).toBe(reference);
+        expect(element.textContent).toBe('Slides' + suffix);
+    });
+
+    it('does not consume across a newline when several malformed references precede a valid reference', () => {
+        const malformed = '[user]Anna(anna [channel]general(42 [attachment]Slides(';
+        const reference = '[attachment]Valid(lecture/intro.pdf)[/attachment]';
+        const element = document.createElement('div');
+        element.innerHTML = messageToEditorHtml(malformed + '\n' + reference);
+        expect(element.querySelectorAll('[data-message-reference]')).toHaveLength(1);
+        expect(element.querySelector('[data-message-reference]')!.getAttribute('data-message-reference')).toBe(reference);
+        expect(element.firstElementChild!.textContent).toBe(malformed + 'Valid');
     });
 
     it('does not turn code examples into mention items', () => {
@@ -153,6 +190,26 @@ describe('Message editor conversion', () => {
         expect(reopened.textContent).toBe(text);
         expect(reopened.querySelector('ins, del, s, strong, a, string')).toBeNull();
         expect(editorToMessage(reopened)).toBe(expected);
+    });
+
+    it.each([
+        '~~~literal~~~',
+        '~~~~literal~~~~',
+        String.raw`\<ins>literal\</ins> \&copy; \~~literal~~`,
+        String.raw`\\<script>alert(1)</script> \\&amp; \\~~~literal~~~`,
+        String.raw`\\\<&~ **stars** [brackets] _emphasis_`,
+    ])('keeps backslashes and adjacent Markdown, HTML, and entity syntax literal: %s', (text) => {
+        const element = document.createElement('div');
+        const paragraph = document.createElement('p');
+        paragraph.textContent = text;
+        element.append(paragraph);
+
+        const message = editorToMessage(element);
+        const reopened = document.createElement('div');
+        reopened.innerHTML = messageToEditorHtml(message);
+        expect(reopened.textContent).toBe(text);
+        expect(reopened.querySelector('ins, del, s, strong, em, a, script, pre')).toBeNull();
+        expect(editorToMessage(reopened)).toBe(message);
     });
 
     it('accepts supported formatting and literal code containing HTML', () => {

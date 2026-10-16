@@ -2,21 +2,37 @@ import MarkdownIt, { type RendererRule } from 'markdown-it';
 import DOMPurify from 'dompurify';
 import TurndownService from 'turndown';
 
-// The label ends at the first opening parenthesis; excluding it prevents overlapping label/payload backtracking.
-const referencePattern = /^\[(user|channel|programming|modeling|quiz|text|file-upload|lecture|lecture-unit|attachment|slide|faq)]([^\n(]*)\(([^\n]*?)\)\[\/\1]/;
+const referenceTypes = ['user', 'channel', 'programming', 'modeling', 'quiz', 'text', 'file-upload', 'lecture', 'lecture-unit', 'attachment', 'slide', 'faq'];
 const markdown = MarkdownIt({ html: true, breaks: true, linkify: true });
 
 markdown.inline.ruler.before('html_inline', 'message_reference', (state, silent) => {
-    const match = referencePattern.exec(state.src.slice(state.pos));
-    if (!match) {
+    if (state.src[state.pos] !== '[') {
         return false;
     }
+    const type = referenceTypes.find((candidate) => state.src.startsWith(`[${candidate}]`, state.pos));
+    if (!type) {
+        return false;
+    }
+    const typeEnd = state.pos + type.length + 1;
+    // A label ends at its first opening parenthesis. Payloads may contain parentheses and
+    // other reference tags; only the matching typed closing delimiter ends the reference.
+    const labelEnd = state.src.indexOf('(', typeEnd + 1);
+    if (labelEnd === -1) {
+        return false;
+    }
+    const closing = `)[/${type}]`;
+    const payloadEnd = state.src.indexOf(closing, labelEnd + 1);
+    const lineEnd = state.src.indexOf('\n', typeEnd + 1);
+    if (payloadEnd === -1 || (lineEnd !== -1 && payloadEnd >= lineEnd)) {
+        return false;
+    }
+    const end = payloadEnd + closing.length;
     if (!silent) {
         const token = state.push('message_reference', '', 0);
-        const prefix = match[1] === 'user' ? '@' : match[1] === 'channel' ? '#' : '';
-        token.content = referenceHtml(match[0], prefix + match[2], match[1]);
+        const prefix = type === 'user' ? '@' : type === 'channel' ? '#' : '';
+        token.content = referenceHtml(state.src.slice(state.pos, end), prefix + state.src.slice(typeEnd + 1, labelEnd), type);
     }
-    state.pos += match[0].length;
+    state.pos = end;
     return true;
 });
 markdown.renderer.rules.message_reference = (tokens, index) => tokens[index].content;
@@ -41,8 +57,9 @@ markdown.renderer.rules.image = (tokens, index) => {
 
 const serializer = new TurndownService({ bulletListMarker: '-', codeBlockStyle: 'fenced', emDelimiter: '*', strongDelimiter: '**' });
 const escapeMarkdown = serializer.escape.bind(serializer);
-// Turndown's defaults omit HTML, entities, and the strikethrough syntax supported by our renderer.
-serializer.escape = (text) => escapeMarkdown(text).replace(/[<&~]/g, '\\$&');
+// Turndown first escapes backslashes and Markdown syntax. Keep those escape pairs intact while
+// adding the HTML, entity, and strikethrough escapes that its defaults omit.
+serializer.escape = (text) => escapeMarkdown(text).replace(/\\.|[<&~]/gs, (token) => (token.length === 2 ? token : '\\' + token));
 serializer.addRule('message-reference', {
     filter: (node) => node.hasAttribute('data-message-reference'),
     replacement: (_content, node) => node.getAttribute('data-message-reference') ?? '',
