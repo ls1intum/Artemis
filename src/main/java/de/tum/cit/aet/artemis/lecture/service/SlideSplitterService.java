@@ -218,6 +218,7 @@ public class SlideSplitterService {
                 slideEntity.setSlideImagePath(savePath.getFileName().toString());
                 slideEntity.setSlideNumber(slideNumber);
                 slideEntity.setAttachmentVideoUnit(attachmentVideoUnit);
+                stampRevision(slideEntity, attachmentVideoUnit);
                 operation.save(slideEntity);
             }
 
@@ -303,6 +304,15 @@ public class SlideSplitterService {
     }
 
     /**
+     * Records on a slide that it now belongs to the attachment's stored file. A split job only runs while the attachment still has the file revision it was scheduled for,
+     * so this is the revision the slide images are rendered from.
+     */
+    private static void stampRevision(Slide slide, AttachmentVideoUnit attachmentVideoUnit) {
+        var attachment = attachmentVideoUnit.getAttachment();
+        slide.setAttachmentRevision(attachment.getVersion(), attachment.getSha256Hash());
+    }
+
+    /**
      * Process a single slide in the page order.
      */
     private void processSlide(SlideOperation operation, SlideOrderDTO page, AttachmentVideoUnit attachmentVideoUnit, Map<String, Slide> existingSlidesMap,
@@ -327,6 +337,7 @@ public class SlideSplitterService {
         // before the new order overwrites it.
         int numberTheImageWasWrittenUnder = slideEntity.getSlideNumber();
         slideEntity.setSlideNumber(order);
+        stampRevision(slideEntity, attachmentVideoUnit);
         ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slideEntity, hiddenPagesMap, slideId);
 
         if (isNewSlide) {

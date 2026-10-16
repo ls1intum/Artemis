@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -61,6 +62,64 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
                 AND s.superseded = FALSE
             """)
     List<SlideUnhideDTO> findHiddenSlidesProjection();
+
+    /**
+     * Checks whether a current slide of an attachment video unit was split from another file revision than the given one, so the slides do not belong to that file.
+     * Missing values compare as equal; an empty deck has no such slide.
+     *
+     * @param attachmentVideoUnitId the id of the attachment video unit
+     * @param version               the version of the attachment file
+     * @param sha256Hash            the hash of the attachment file
+     * @return whether at least one current slide belongs to another file revision
+     */
+    @Query("""
+            SELECT COUNT(s) > 0
+            FROM Slide s
+            WHERE s.attachmentVideoUnit.id = :attachmentVideoUnitId
+                AND s.superseded = FALSE
+                AND (COALESCE(s.attachmentVersion, -1) <> COALESCE(:version, -1) OR COALESCE(s.attachmentSha256Hash, '') <> COALESCE(:sha256Hash, ''))
+            """)
+    boolean existsCurrentSlideOfOtherRevision(@Param("attachmentVideoUnitId") long attachmentVideoUnitId, @Param("version") Integer version,
+            @Param("sha256Hash") String sha256Hash);
+
+    /**
+     * Finds, among the given attachment video units, those whose current slides do not all belong to the unit's stored attachment file.
+     *
+     * @param attachmentVideoUnitIds the ids of the attachment video units to check
+     * @return the ids of the units with at least one current slide of another file revision
+     */
+    @Query("""
+            SELECT DISTINCT s.attachmentVideoUnit.id
+            FROM Slide s
+                JOIN s.attachmentVideoUnit unit
+                JOIN unit.attachment attachment
+            WHERE unit.id IN :attachmentVideoUnitIds
+                AND s.superseded = FALSE
+                AND (COALESCE(s.attachmentVersion, -1) <> COALESCE(attachment.version, -1)
+                    OR COALESCE(s.attachmentSha256Hash, '') <> COALESCE(attachment.sha256Hash, ''))
+            """)
+    Set<Long> findAttachmentVideoUnitIdsWithSlidesOfOtherRevision(@Param("attachmentVideoUnitIds") Collection<Long> attachmentVideoUnitIds);
+
+    /**
+     * Records the hash of the attachment file on the current slides that were split from it before its hash was known: same version, no hash yet. Used when an upload of
+     * the same bytes fills in the hash of an older attachment without a new split.
+     *
+     * @param attachmentVideoUnitId the id of the attachment video unit
+     * @param version               the version of the attachment file
+     * @param sha256Hash            the hash that was filled in
+     * @return the number of slides updated
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Slide s
+            SET s.attachmentSha256Hash = :sha256Hash
+            WHERE s.attachmentVideoUnit.id = :attachmentVideoUnitId
+                AND s.superseded = FALSE
+                AND COALESCE(s.attachmentVersion, -1) = COALESCE(:version, -1)
+                AND s.attachmentSha256Hash IS NULL
+            """)
+    int stampHashOnCurrentSlidesWithoutHash(@Param("attachmentVideoUnitId") long attachmentVideoUnitId, @Param("version") Integer version, @Param("sha256Hash") String sha256Hash);
 
     /**
      * Finds the attachment video units whose current slide deck hides slides while their attachment has no student version. Downloads of such an attachment fail closed

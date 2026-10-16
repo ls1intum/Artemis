@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.hasSize;
@@ -835,15 +836,23 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
 
         await().untilAsserted(() -> assertThat(slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId())).hasSize(SLIDE_COUNT));
 
+        // An attachment from before hashes were recorded, with slides split from it then
         jdbcTemplate.update("UPDATE attachment SET sha256_hash = NULL WHERE id = ?", persistedAttachment.getId());
+        jdbcTemplate.update("UPDATE slide SET attachment_sha256_hash = NULL WHERE attachment_unit_id = ?", persistedAttachmentVideoUnit.getId());
         persistedAttachment.setSha256Hash(null);
+        Set<Long> slideIdsBefore = slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId()).stream().map(Slide::getId).collect(Collectors.toSet());
 
         var identicalStoredFile = createAttachmentVideoUnitPdfFromStoredAttachment(persistedAttachmentVideoUnit, persistedAttachment);
         var updatedAttachmentVideoUnit = updateAttachmentVideoUnitWithFile(persistedAttachmentVideoUnit, persistedAttachment, identicalStoredFile);
 
         assertThat(updatedAttachmentVideoUnit.getAttachment().getVersion()).isEqualTo(originalVersion);
         assertThat(updatedAttachmentVideoUnit.getAttachment().getLink()).isEqualTo(originalLink);
-        assertThat(attachmentRepository.findById(persistedAttachment.getId()).orElseThrow().getSha256Hash()).hasSize(64);
+        String filledInHash = attachmentRepository.findById(persistedAttachment.getId()).orElseThrow().getSha256Hash();
+        assertThat(filledInHash).hasSize(64);
+        // The slides keep belonging to the file: they get the filled-in hash, and nothing is split again
+        List<Slide> slidesAfter = slideRepository.findAllByAttachmentVideoUnitId(persistedAttachmentVideoUnit.getId());
+        assertThat(slidesAfter).extracting(Slide::getId).containsExactlyInAnyOrderElementsOf(slideIdsBefore);
+        assertThat(slidesAfter).extracting(Slide::getAttachmentVersion, Slide::getAttachmentSha256Hash).containsOnly(tuple(originalVersion, filledInHash));
     }
 
     @Test
@@ -1317,10 +1326,11 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void handleStudentVersionFile_shouldUpdateAttachmentStudentVersion() throws Exception {
-        // Create an attachment video unit first
-        attachmentVideoUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentVideoUnit, 1)));
-        var result = request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated()).andReturn();
-        var persistedAttachmentVideoUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentVideoUnitDTO.class);
+        // A unit whose slides are already split: creating one through the endpoint starts an asynchronous split, and the student version regeneration after it would race
+        // the uploads below
+        AttachmentVideoUnit splitUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(lecture1, 1, true);
+        var persistedAttachmentVideoUnit = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + splitUnit.getId(), HttpStatus.OK,
+                AttachmentVideoUnitDTO.class);
         assertThat(persistedAttachmentVideoUnit.id()).isNotNull();
         var persistedAttachment = persistedAttachmentVideoUnit.attachment();
         assertThat(persistedAttachment.id()).isNotNull();

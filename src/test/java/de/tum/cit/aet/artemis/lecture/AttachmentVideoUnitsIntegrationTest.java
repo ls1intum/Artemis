@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.apache.pdfbox.Loader;
@@ -297,7 +298,8 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         assertThat(slideRepository.findAll()).hasSize(18); // 18 slides should be created for 2 attachment video units (1 break slide is removed and 1 solution slide is removed)
 
         List<Long> attachmentVideoUnitIds = attachmentVideoUnits.stream().map(AttachmentVideoUnitDTO::id).toList();
-        List<AttachmentVideoUnit> attachmentVideoUnitList = attachmentVideoUnitRepository.findAllById(attachmentVideoUnitIds);
+        List<AttachmentVideoUnit> attachmentVideoUnitList = attachmentVideoUnitRepository.findAllById(attachmentVideoUnitIds).stream()
+                .sorted(Comparator.comparing(AttachmentVideoUnit::getId)).toList(); // findAllById does not keep an order; the first unit was created first
 
         assertThat(attachmentVideoUnitList).hasSize(2);
         assertThat(attachmentVideoUnitList).extracting(AttachmentVideoUnit::getId).containsExactlyInAnyOrderElementsOf(attachmentVideoUnitIds);

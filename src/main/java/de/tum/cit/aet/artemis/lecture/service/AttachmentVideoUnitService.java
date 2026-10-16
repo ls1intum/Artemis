@@ -221,11 +221,16 @@ public class AttachmentVideoUnitService {
                 Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
                 savedAttachmentVideoUnit.setAttachment(savedAttachment);
                 evictCache(updateFile, savedAttachmentVideoUnit);
+                if (hasUploadedFile && !fileUpdateResult.fileBytesChanged() && savedAttachment.getSha256Hash() != null) {
+                    // An upload of the same bytes may have filled in the hash of an older attachment. Its slides were split from this file before the hash was known; record
+                    // it on them too, after the attachment is saved, so they still belong to the file.
+                    slideRepository.stampHashOnCurrentSlidesWithoutHash(savedAttachmentVideoUnit.getId(), savedAttachment.getVersion(), savedAttachment.getSha256Hash());
+                }
 
                 boolean isPdfUpload = hasUploadedFile && "pdf".equalsIgnoreCase(FilenameUtils.getExtension(updateFile.getOriginalFilename()));
                 // The same bytes again need no new slides, unless the saved deck does not match them: a split that failed after a re-upload leaves an empty deck, or the
                 // previous deck after an editor change, and uploading the file again is how an instructor retries it.
-                boolean splitsSlides = isPdfUpload && (fileUpdateResult.fileBytesChanged() || !currentDeckMatches(savedAttachmentVideoUnit.getId(), pageOrder));
+                boolean splitsSlides = isPdfUpload && (fileUpdateResult.fileBytesChanged() || !currentDeckMatches(savedAttachmentVideoUnit.getId(), savedAttachment, pageOrder));
                 // A submitted student version is only used when the slides are split again: the split runs asynchronously, so the server cannot derive the student
                 // version from them yet. Otherwise the server regenerates it from the saved slides, so it always matches them.
                 usesSubmittedStudentVersion = hasStudentVersionFile && splitsSlides;
@@ -278,12 +283,17 @@ public class AttachmentVideoUnitService {
      * Checks whether the saved current deck already is the one the request describes, so the stored file needs no new split.
      *
      * @param attachmentVideoUnitId the id of the attachment video unit
+     * @param attachment            the saved attachment, whose file revision the slides must belong to
      * @param pageOrder             the submitted page order, or null when the request describes none
-     * @return whether the unit has current slides and, if a page order was submitted, exactly those slides in that order
+     * @return whether the unit has current slides of the attachment's file revision and, if a page order was submitted, exactly those slides in that order
      */
-    private boolean currentDeckMatches(long attachmentVideoUnitId, List<SlideOrderDTO> pageOrder) {
+    private boolean currentDeckMatches(long attachmentVideoUnitId, Attachment attachment, List<SlideOrderDTO> pageOrder) {
         List<Slide> currentSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnitId);
         if (currentSlides.isEmpty()) {
+            return false;
+        }
+        // Slides restored after a failed split, or split before the file was replaced, belong to another file even when their ids and order match the request.
+        if (!currentSlides.stream().allMatch(slide -> slide.belongsToRevision(attachment.getVersion(), attachment.getSha256Hash()))) {
             return false;
         }
         if (pageOrder == null) {

@@ -152,7 +152,8 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
 
     /**
      * Stores a regenerated student version, but only while everything it was generated from is unchanged: the attachment still has the same file version and student
-     * version reference, and the current slide deck hides exactly the given slides. The check and the write are one statement, so a regeneration that ran on an older state
+     * version reference, the current slide deck hides exactly the given slides, and every current slide was split from that file. The check and the write are one statement, so a
+     * regeneration that ran on an older state
      * does not replace a newer student version or show a slide hidden in the meantime; the caller discards its file and starts over instead.
      *
      * @param attachmentId             the id of the attachment
@@ -188,6 +189,14 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
                         AND s.hidden IS NOT NULL
                         AND s.superseded = FALSE
                         AND s.id NOT IN :expectedHiddenSlideIds
+                )
+                AND NOT EXISTS (
+                    SELECT s.id
+                    FROM Slide s
+                    WHERE s.attachmentVideoUnit.id = :attachmentVideoUnitId
+                        AND s.superseded = FALSE
+                        AND (COALESCE(s.attachmentVersion, -1) <> COALESCE(:expectedVersion, -1)
+                            OR COALESCE(s.attachmentSha256Hash, '') <> COALESCE(:expectedSha256Hash, ''))
                 )
             """)
     int publishStudentVersionIfUnchanged(@Param("attachmentId") long attachmentId, @Param("attachmentVideoUnitId") long attachmentVideoUnitId,

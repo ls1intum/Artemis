@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 
@@ -167,6 +168,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
         slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(unit, null, null)).join();
 
+        // Every new slide records the file it was split from
+        assertThat(slideRepository.findAllByAttachmentVideoUnitId(unitId)).isNotEmpty()
+                .allMatch(slide -> slide.belongsToRevision(unit.getAttachment().getVersion(), unit.getAttachment().getSha256Hash()));
         // The new slides hide nothing, so the regeneration after the split removes it
         await().untilAsserted(() -> assertThat(attachmentRepository.findById(unit.getAttachment().getId()).orElseThrow().getStudentVersion()).isNull());
     }
@@ -262,6 +266,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         assertThat(firstSlide.getHidden()).isNotNull();
         assertThat(firstSlide.getExercise()).isNotNull();
         assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
+        // Reordered existing slides and new ones alike now belong to the stored file
+        assertThat(slides).extracting(Slide::getAttachmentVersion, Slide::getAttachmentSha256Hash)
+                .containsOnly(tuple(testAttachmentVideoUnit.getAttachment().getVersion(), testAttachmentVideoUnit.getAttachment().getSha256Hash()));
     }
 
     @Test

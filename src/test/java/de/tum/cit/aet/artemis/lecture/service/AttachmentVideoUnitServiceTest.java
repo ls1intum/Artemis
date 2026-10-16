@@ -314,6 +314,44 @@ class AttachmentVideoUnitServiceTest {
     }
 
     @Test
+    void identicalUploadRecordsAFilledInHashOnTheSlidesAndKeepsTheDeck() {
+        var attachment = attachment();
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.FILE_UPLOAD);
+        var uploadedFile = pdfUpload("same content");
+        when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", HASH));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(slide(21L, 1, null)));
+
+        service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, null, false, null, null, Set.of());
+
+        var order = inOrder(attachmentRepository, slideRepository);
+        order.verify(attachmentRepository).saveAndFlush(attachment);
+        order.verify(slideRepository).stampHashOnCurrentSlidesWithoutHash(LECTURE_UNIT_ID, 3, HASH);
+        verify(slideSplitterService, never()).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
+    }
+
+    /**
+     * After a failed split, the restored slides belong to the previous file. An upload of the stored file must split it again; that is how an instructor gets out of it.
+     */
+    @Test
+    void identicalUploadSplitsWhenTheSlidesBelongToAnotherFile() {
+        var attachment = attachment();
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.FILE_UPLOAD);
+        var uploadedFile = pdfUpload("same content");
+        var restoredSlide = slide(21L, 1, null);
+        restoredSlide.setAttachmentRevision(2, NEW_HASH);
+        when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", HASH));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(restoredSlide));
+
+        service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, null, false, null, null, Set.of());
+
+        verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
+    }
+
+    @Test
     void identicalUploadRebuildsAMissingDeck() {
         var attachment = attachment();
         var unit = attachmentVideoUnit("Unit", attachment);
@@ -577,6 +615,8 @@ class AttachmentVideoUnitServiceTest {
         slide.setId(id);
         slide.setSlideNumber(slideNumber);
         slide.setHidden(hidden);
+        // Split from the file attachment() describes
+        slide.setAttachmentRevision(3, HASH);
         return slide;
     }
 }

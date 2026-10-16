@@ -110,6 +110,59 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
+    void regenerationFailsClosedWhileTheSlidesBelongToAnotherFile() {
+        long unitId = testAttachment2.getAttachmentVideoUnit().getId();
+        markSlidesAsSplitFromAnotherFile(unitId);
+        var state = attachmentRepository.findStudentVersionStateById(testAttachment2.getId()).orElseThrow();
+        assertThat(attachmentRepository.updateStudentVersionIfFileUnchanged(testAttachment2.getId(), "submitted.pdf", state.version(), state.sha256Hash())).isEqualTo(1);
+        testAttachment2.setStudentVersion("submitted.pdf");
+
+        assertThat(attachmentService.regenerateStudentVersionOrRemoveOutdated(testAttachment2)).isTrue();
+
+        // Nothing is generated from page numbers of another file; the downloads close instead
+        assertThat(attachmentRepository.findStudentVersionStateById(testAttachment2.getId()).orElseThrow().studentVersion()).isNull();
+        attachmentService.generateMissingStudentVersion(testAttachment2);
+        assertThat(attachmentRepository.findStudentVersionStateById(testAttachment2.getId()).orElseThrow().studentVersion()).isNull();
+    }
+
+    @Test
+    void publishingMatchesNothingWhileTheSlidesBelongToAnotherFile() {
+        long unitId = testAttachment2.getAttachmentVideoUnit().getId();
+        List<Long> hiddenSlideIds = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(unitId).stream().map(Slide::getId).toList();
+        markSlidesAsSplitFromAnotherFile(unitId);
+        var state = attachmentRepository.findStudentVersionStateById(testAttachment2.getId()).orElseThrow();
+
+        assertThat(attachmentRepository.publishStudentVersionIfUnchanged(testAttachment2.getId(), unitId, "stale.pdf", state.version(), state.sha256Hash(), state.studentVersion(),
+                hiddenSlideIds, hiddenSlideIds.size())).isZero();
+    }
+
+    @Test
+    void publishingAndStampingTreatMissingVersionAndHashAsEqual() {
+        long unitId = testAttachment2.getAttachmentVideoUnit().getId();
+        Attachment stored = attachmentRepository.findById(testAttachment2.getId()).orElseThrow();
+        stored.setVersion(null);
+        stored.setSha256Hash(null);
+        attachmentRepository.saveAndFlush(stored);
+        List<Slide> current = slideRepository.findAllByAttachmentVideoUnitId(unitId);
+        current.forEach(slide -> slide.setAttachmentRevision(null, null));
+        slideRepository.saveAll(current);
+        List<Long> hiddenSlideIds = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(unitId).stream().map(Slide::getId).toList();
+
+        assertThat(slideRepository.existsCurrentSlideOfOtherRevision(unitId, null, null)).isFalse();
+        assertThat(attachmentRepository.publishStudentVersionIfUnchanged(testAttachment2.getId(), unitId, "current.pdf", null, null, null, hiddenSlideIds, hiddenSlideIds.size()))
+                .isEqualTo(1);
+        // An upload of the same bytes later fills in the hash; the slides split from that file get it too
+        assertThat(slideRepository.stampHashOnCurrentSlidesWithoutHash(unitId, null, "filled-in-hash")).isEqualTo(current.size());
+        assertThat(slideRepository.existsCurrentSlideOfOtherRevision(unitId, null, "filled-in-hash")).isFalse();
+    }
+
+    private void markSlidesAsSplitFromAnotherFile(long unitId) {
+        List<Slide> current = slideRepository.findAllByAttachmentVideoUnitId(unitId);
+        current.forEach(slide -> slide.setAttachmentRevision(-7, "slides-of-the-previous-file"));
+        slideRepository.saveAll(current);
+    }
+
+    @Test
     void publishingMatchesNothingOnceTheHiddenSlidesChanged() {
         long unitId = testAttachment2.getAttachmentVideoUnit().getId();
         List<Long> hiddenSlideIds = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(unitId).stream().map(Slide::getId).toList();

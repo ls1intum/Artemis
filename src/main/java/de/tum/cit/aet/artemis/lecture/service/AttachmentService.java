@@ -78,8 +78,9 @@ public class AttachmentService {
      * The reference is stored only while the file version, the previous reference and the hidden slides are still those the PDF was generated from (see
      * {@link AttachmentRepository#publishStudentVersionIfUnchanged}). If one of them changed, for example because an overlapping update hid another slide and published its own
      * student version, the new file is discarded and the student version is generated again from the new state, so an older regeneration does not publish over a newer one.
-     * One rare case is not covered: a regeneration that starts after a new file was stored but before its asynchronous split replaced the slides uses the page numbers of the
-     * previous slides.
+     * <p>
+     * Slides record the file revision they were split from. While they belong to another revision than the stored file, for example during the split of a new file or after
+     * that split failed, nothing is generated: the student version this attempt read is removed, so downloads fail closed until a split makes the slides match again.
      *
      * @param attachment The attachment whose student version needs to be regenerated
      */
@@ -119,6 +120,16 @@ public class AttachmentService {
                 return;
             }
             String startedFromStudentVersion = state.get().studentVersion();
+            // Before anything else, including removing the student version for a deck that hides nothing: slide numbers only mean something for the file they were split
+            // from. While the split of a new file runs, or after it failed and the previous slides were restored, they belong to another file, and removing them by number
+            // would remove the wrong pages. Close the downloads instead; the regeneration after the next successful split builds the student version.
+            if (slideRepository.existsCurrentSlideOfOtherRevision(attachmentVideoUnit.getId(), state.get().version(), state.get().sha256Hash())) {
+                if (!onlyIfMissing) {
+                    removeStudentVersionIfUnchanged(attachment, FileSystemLocation.storedFilename(startedFromStudentVersion));
+                }
+                log.debug("The slides of attachment {} do not belong to its stored file, so its student version is not regenerated until they do", attachment.getId());
+                return;
+            }
             List<Slide> hiddenSlides = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(attachmentVideoUnit.getId());
 
             // If no slides are marked as hidden, remove student version if it exists

@@ -58,23 +58,25 @@ public class LectureAttachmentApi extends AbstractLectureApi {
 
     /**
      * Fails closed for an attachment video unit without a student version: if its current deck hides any slide, the full file must not be served to students. This is the
-     * case while a student version is being regenerated or after its regeneration failed.
+     * case while a student version is being regenerated or after its regeneration failed. The same holds while the current slides belong to another file than the stored
+     * one, during the split of a new file or after that split failed: which pages of the stored file are hidden is then unknown, even when the slides hide nothing.
      *
      * @param attachmentVideoUnitId the id of the attachment video unit whose attachment has no student version
-     * @throws EntityNotFoundException if the current deck of the unit hides at least one slide
+     * @throws EntityNotFoundException if the current deck of the unit hides at least one slide or belongs to another file
      */
     public void ensureStudentVersionAvailable(long attachmentVideoUnitId) {
-        if (slideRepository.existsByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(attachmentVideoUnitId)) {
+        if (slideRepository.existsByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(attachmentVideoUnitId)
+                || !slideRepository.findAttachmentVideoUnitIdsWithSlidesOfOtherRevision(Set.of(attachmentVideoUnitId)).isEmpty()) {
             throw new EntityNotFoundException("Student version", attachmentVideoUnitId);
         }
     }
 
     /**
-     * Fails closed for a set of attachment video units: if any of them has no student version but hides slides of its current deck, none of their files may be merged for
-     * students. See {@link #ensureStudentVersionAvailable(long)}.
+     * Fails closed for a set of attachment video units: if any of them has no student version but hides slides of its current deck, or its current slides belong to another
+     * file, none of their files may be merged for students. See {@link #ensureStudentVersionAvailable(long)}.
      *
      * @param attachmentVideoUnits the attachment video units whose files are about to be served
-     * @throws EntityNotFoundException if a unit without student version hides at least one slide of its current deck
+     * @throws EntityNotFoundException if a unit without student version hides at least one slide of its current deck or its current slides belong to another file
      */
     public void ensureStudentVersionsAvailable(Collection<AttachmentVideoUnit> attachmentVideoUnits) {
         Set<Long> unitIdsWithoutStudentVersion = attachmentVideoUnits.stream().filter(unit -> unit.getAttachment() != null && unit.getAttachment().getStudentVersion() == null)
@@ -83,6 +85,9 @@ public class LectureAttachmentApi extends AbstractLectureApi {
             return;
         }
         slideRepository.findAttachmentVideoUnitIdsWithHiddenSlides(unitIdsWithoutStudentVersion).stream().findFirst().ifPresent(unitId -> {
+            throw new EntityNotFoundException("Student version", unitId);
+        });
+        slideRepository.findAttachmentVideoUnitIdsWithSlidesOfOtherRevision(unitIdsWithoutStudentVersion).stream().findFirst().ifPresent(unitId -> {
             throw new EntityNotFoundException("Student version", unitId);
         });
     }

@@ -618,6 +618,21 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(result.getResponse().getContentAsByteArray()).isEqualTo(content);
     }
 
+    /**
+     * After a failed editor split the previous slides are restored while the new file stays stored. Which pages of that file are hidden is then unknown, even when the
+     * restored slides hide nothing, so the full file must not be served.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetAttachmentVideoUnitStudentVersionFailsClosedWhileTheSlidesBelongToAnotherFile() throws Exception {
+        AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithoutStudentVersion("new file with pages hidden by the instructor".getBytes());
+        saveSlide(attachmentVideoUnit, 1, null, false, -7, "slides-of-the-previous-file");
+        String url = "/api/core/files/attachments/attachment-video-units/" + attachmentVideoUnit.getId() + "/student/dummy.pdf";
+
+        mockMvc.perform(get(url)).andExpect(status().isNotFound());
+        request.get("/api/core/files/attachments/lectures/" + attachmentVideoUnit.getLecture().getId() + "/merge-pdf", HttpStatus.NOT_FOUND, byte[].class);
+    }
+
     private AttachmentVideoUnit createAttachmentVideoUnitWithoutStudentVersion(byte[] content) throws IOException {
         AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnitWithStoredFile(content);
         attachmentVideoUnit.getAttachment().setStudentVersion(null);
@@ -626,7 +641,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void saveSlide(AttachmentVideoUnit attachmentVideoUnit, int slideNumber, ZonedDateTime hidden, boolean superseded) {
+        saveSlide(attachmentVideoUnit, slideNumber, hidden, superseded, attachmentVideoUnit.getAttachment().getVersion(), attachmentVideoUnit.getAttachment().getSha256Hash());
+    }
+
+    private void saveSlide(AttachmentVideoUnit attachmentVideoUnit, int slideNumber, ZonedDateTime hidden, boolean superseded, Integer splitFromVersion, String splitFromHash) {
         var slide = new Slide();
+        slide.setAttachmentRevision(splitFromVersion, splitFromHash);
         slide.setAttachmentVideoUnit(attachmentVideoUnit);
         slide.setSlideNumber(slideNumber);
         slide.setSlideImagePath("attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/slide/" + slideNumber + ".png");
