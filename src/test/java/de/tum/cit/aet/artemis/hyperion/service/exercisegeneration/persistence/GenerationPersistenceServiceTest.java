@@ -1330,16 +1330,34 @@ class GenerationPersistenceServiceTest {
 
     @Test
     void generateDeletesStaleBinaryFromTheClearedSourceRoot(@org.junit.jupiter.api.io.TempDir Path workingTree) throws Exception {
+        byte[] oldBytes = { 0, 1, 2, 3 };
+        byte[] wrapperBytes = { 0, 4, 5, 6 };
         Path staleBinary = workingTree.resolve("src/main/resources/old-solution.bin");
-        FileUtils.writeByteArrayToFile(staleBinary.toFile(), new byte[] { 0, 1, 2, 3 });
+        Path wrapperPath = workingTree.resolve("gradle/wrapper/gradle-wrapper.jar");
+        FileUtils.writeByteArrayToFile(staleBinary.toFile(), oldBytes);
+        FileUtils.writeByteArrayToFile(wrapperPath.toFile(), wrapperBytes);
+        var oldFile = new WorkspaceFile("solution/src/main/resources/old-solution.bin", oldBytes, false);
+        var wrapper = new WorkspaceFile("solution/gradle/wrapper/gradle-wrapper.jar", wrapperBytes, false);
+        var seed = new GenerationSeedService.Seed(new WorkspaceSnapshot(List.of(oldFile, wrapper)).forMode(de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief.Mode.GENERATE),
+                Map.of(), new GradingContext(false, Set.of()));
+        var source = new WorkspaceFile("solution/src/Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8), false);
+        var candidate = new WorkspaceSnapshot(List.of(wrapper, source));
+        var output = new GenerationOutput(candidate, new VerificationResult(true, true, true, 1, List.of()), candidate.sha256(), SpecFidelityReport.empty(), "CONVERGED", null,
+                GenerationOutput.AccountingState.INCOMPLETE, "default");
+        GenerationOutcome outcome = ReflectionTestUtils.invokeMethod(GenerationOutcome.class, "received", output, seed, false);
         stubSuccessfulCheckoutAndCommits();
+        when(gitService.getLocalHeadHash(repository)).thenReturn("pre-solution");
+        when(gitService.commitStagedChanges(any(), anyString(), any())).thenReturn("hash-solution");
         when(repository.getLocalPath()).thenReturn(workingTree);
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
-        when(repositoryService.getFiles(any())).thenReturn(Map.of("src/Main.java", FileType.FILE, "src/main/resources/old-solution.bin", FileType.FILE), Map.of(), Map.of());
+        when(repositoryService.getFiles(repository)).thenReturn(Map.of("src/main/resources/old-solution.bin", FileType.FILE, "gradle/wrapper/gradle-wrapper.jar", FileType.FILE));
 
-        service.persist(exercise, user, outcomeWith(Map.of("src/Main.java", "class Main {}"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), ""));
+        service.persist(exercise, user, outcome);
 
+        assertThat(outcome.candidatePaths(RepositoryType.SOLUTION)).containsExactlyInAnyOrder("src/Main.java", "gradle/wrapper/gradle-wrapper.jar");
         verify(repositoryService).deleteFile(repository, "src/main/resources/old-solution.bin");
+        verify(repositoryService, never()).deleteFile(repository, "gradle/wrapper/gradle-wrapper.jar");
+        assertThat(FileUtils.readFileToByteArray(wrapperPath.toFile())).containsExactly(wrapperBytes);
     }
 
     @Test

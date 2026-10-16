@@ -113,6 +113,7 @@ public class GenerationWorkspace {
      */
     public WorkspaceSeed seedWorkspace(InteractiveSandbox sandbox, String sessionId, GenerationInput exercise, Mode mode, WorkspaceSnapshot snapshot,
             boolean statementAuthoritative) {
+        WorkspaceSnapshot canonicalSeed = snapshot.forMode(mode);
         Map<RepositoryRole, RepositorySeedMetadata> metadata = new LinkedHashMap<>();
         Map<RepositoryRole, Map<String, String>> texts = new LinkedHashMap<>();
         Map<RepositoryRole, Map<String, BinarySeedFile>> binaries = new LinkedHashMap<>();
@@ -122,14 +123,11 @@ public class GenerationWorkspace {
             Map<String, BinarySeedFile> repositoryBinaries = new LinkedHashMap<>();
             Map<String, String> digests = new LinkedHashMap<>();
             Set<String> executableFiles = new LinkedHashSet<>();
-            for (var file : snapshot.files()) {
+            for (var file : canonicalSeed.files()) {
                 if (!file.path().startsWith(prefix)) {
                     continue;
                 }
                 String relative = file.path().substring(prefix.length());
-                if (mode == Mode.GENERATE && isAuthoredSource(role, relative)) {
-                    continue;
-                }
                 byte[] content = file.content();
                 if (BinaryContent.isBinary(content)) {
                     repositoryBinaries.put(relative, new BinarySeedFile(content));
@@ -149,10 +147,6 @@ public class GenerationWorkspace {
         materializeRepositoryFiles(sandbox, sessionId, exercise, mode, texts, metadata, binaries,
                 !statementAuthoritative || exercise.problemStatement() == null ? "" : exercise.problemStatement(), null, null);
         return new WorkspaceSeed(texts.get(RepositoryRole.TESTS), Map.copyOf(metadata), Map.copyOf(texts), Map.copyOf(binaries));
-    }
-
-    static boolean isAuthoredSource(RepositoryRole role, String path) {
-        return role == RepositoryRole.TESTS ? path.startsWith("test/") || path.startsWith("behavior/test/") || path.startsWith("structural/test/") : path.startsWith("src/");
     }
 
     public record WorkspaceSeed(Map<String, String> testsSeedSnapshot, Map<RepositoryRole, RepositorySeedMetadata> repositoryMetadata,

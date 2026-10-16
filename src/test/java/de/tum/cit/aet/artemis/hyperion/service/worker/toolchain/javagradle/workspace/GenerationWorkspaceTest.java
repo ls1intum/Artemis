@@ -56,7 +56,10 @@ class GenerationWorkspaceTest {
         var snapshot = new WorkspaceSnapshot(List.of(text("solution/src/de/test/Old.java", "old solution", false), text("template/src/de/test/Old.java", "old template", false),
                 text("tests/test/de/test/OldTest.java", "old test", false), text("tests/behavior/test/OldTest.java", "old behavior", false),
                 text("tests/structural/test/OldTest.java", "old structural", false), text("tests/build.gradle", "canonical harness", false),
-                text("tests/gradlew", "#!/bin/sh\nexec gradle \"$@\"", true), new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", wrapper, false)));
+                new WorkspaceFile("solution/src/old.class", new byte[] { 0, 1 }, true), new WorkspaceFile("template/src/old.class", new byte[] { 0, 2 }, false),
+                new WorkspaceFile("tests/test/old.bin", new byte[] { 0, 3 }, false), new WorkspaceFile("tests/behavior/test/old.bin", new byte[] { 0, 4 }, false),
+                new WorkspaceFile("tests/structural/test/old.bin", new byte[] { 0, 5 }, false), text("tests/gradlew", "#!/bin/sh\nexec gradle \"$@\"", true),
+                new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", wrapper, false)));
 
         var seed = service.seedWorkspace(sandbox, "session", exercise, Mode.GENERATE, snapshot, false);
 
@@ -65,7 +68,9 @@ class GenerationWorkspaceTest {
         assertThat(seed.testsSeedSnapshot()).containsOnlyKeys("build.gradle", "gradlew");
         assertThat(seed.repositoryBinaryFiles().get(RepositoryRole.TESTS).get("gradle/wrapper/gradle-wrapper.jar").content()).isEqualTo(wrapper);
         assertThat(seed.repositoryMetadata().get(RepositoryRole.TESTS).executableFiles()).containsExactly("gradlew");
-        assertThat(sandbox.contents.binaryDigests()).containsEntry("tests/gradle/wrapper/gradle-wrapper.jar", WorkspaceArchive.sha256(wrapper));
+        assertThat(sandbox.contents.binaryDigests()).containsExactlyEntriesOf(Map.of("tests/gradle/wrapper/gradle-wrapper.jar", WorkspaceArchive.sha256(wrapper)));
+        assertThat(seed.repositoryBinaryFiles().get(RepositoryRole.SOLUTION)).isEmpty();
+        assertThat(seed.repositoryBinaryFiles().get(RepositoryRole.TEMPLATE)).isEmpty();
         assertThat(sandbox.contents.executableFiles()).containsExactly("tests/gradlew");
         assertThat(sandbox.contents.textFiles()).containsEntry("tests/build.gradle", "canonical harness").containsEntry("problem-statement.md", "")
                 .doesNotContainKeys("solution/src/de/test/Old.java", "template/src/de/test/Old.java", "tests/test/de/test/OldTest.java");

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.ExecutionIdentity;
 import de.tum.cit.aet.artemis.hyperion.protocol.ExerciseBrief;
@@ -30,12 +33,18 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.Worke
 class GenerationOutputCaptureTest {
 
     private static GenerationAssignment assignment() {
+        return assignment(ExerciseBrief.Mode.GENERATE);
+    }
+
+    private static GenerationAssignment assignment(ExerciseBrief.Mode mode) {
         var identity = new ExecutionIdentity("job", 1, UUID.randomUUID(), "worker", UUID.randomUUID());
-        var brief = new ExerciseBrief("Stack", "stack", "de.example", null, "Create a stack", ExerciseBrief.Mode.GENERATE);
+        var brief = new ExerciseBrief("Stack", "stack", "de.example", null, "Create a stack", mode);
         var parameters = new GenerationParameters("standard", 10, 100_000, Duration.ofMinutes(5), 128_000, null, null, null, null, null, true, "CONTINUOUS");
         var seed = new WorkspaceSnapshot(List.of(new WorkspaceFile("tests/gradlew", "old".getBytes(StandardCharsets.UTF_8), true),
                 new WorkspaceFile("tests/gradle/wrapper/gradle-wrapper.jar", new byte[] { 0, 1, 2 }, false),
-                new WorkspaceFile("tests/deleted.java", "removed".getBytes(StandardCharsets.UTF_8), false)));
+                new WorkspaceFile("tests/deleted.java", "removed".getBytes(StandardCharsets.UTF_8), false), new WorkspaceFile("solution/src/old.class", new byte[] { 0, 3 }, false),
+                new WorkspaceFile("template/src/old.class", new byte[] { 0, 4 }, false), new WorkspaceFile("tests/test/old.bin", new byte[] { 0, 5 }, false),
+                new WorkspaceFile("tests/behavior/test/old.bin", new byte[] { 0, 6 }, false), new WorkspaceFile("tests/structural/test/old.bin", new byte[] { 0, 7 }, false)));
         return new GenerationAssignment(identity, brief, parameters, seed, Instant.now().plusSeconds(300), "sha256:" + "a".repeat(64), new GradingContext(false, Set.of()));
     }
 
@@ -44,8 +53,9 @@ class GenerationOutputCaptureTest {
         });
     }
 
-    @Test
-    void sealsCapturedTextBinaryAndExecutableMetadataRatherThanTheMutableWorkspace() {
+    @ParameterizedTest
+    @EnumSource(ExerciseBrief.Mode.class)
+    void sealsCapturedTextBinaryAndExecutableMetadataRatherThanTheMutableWorkspace(ExerciseBrief.Mode mode) {
         var tests = new HashMap<>(Map.of("gradlew", "new wrapper", "test/StackTest.java", "test source"));
         var files = new HashMap<RepositoryRole, Map<String, String>>();
         files.put(RepositoryRole.TESTS, tests);
@@ -56,11 +66,15 @@ class GenerationOutputCaptureTest {
         tests.put("gradlew", "changed after capture");
         files.clear();
 
-        var output = GenerationOutputCapture.capture(assignment(), outcome, usage(), false);
+        var output = GenerationOutputCapture.capture(assignment(mode), outcome, usage(), false);
 
         assertThat(output.verifiedDigest()).isEqualTo(output.candidate().sha256());
-        assertThat(output.candidate().files()).extracting(WorkspaceFile::path).containsExactlyInAnyOrder("tests/gradlew", "tests/test/StackTest.java",
-                "tests/gradle/wrapper/gradle-wrapper.jar", "solution/src/Stack.java", "template/src/Stack.java", "problem-statement.md", "SPEC.md", "test-plan.json");
+        var expectedPaths = new ArrayList<>(List.of("tests/gradlew", "tests/test/StackTest.java", "tests/gradle/wrapper/gradle-wrapper.jar", "solution/src/Stack.java",
+                "template/src/Stack.java", "problem-statement.md", "SPEC.md", "test-plan.json"));
+        if (mode == ExerciseBrief.Mode.ADAPT) {
+            expectedPaths.addAll(List.of("solution/src/old.class", "template/src/old.class", "tests/test/old.bin", "tests/behavior/test/old.bin", "tests/structural/test/old.bin"));
+        }
+        assertThat(output.candidate().files()).extracting(WorkspaceFile::path).containsExactlyInAnyOrderElementsOf(expectedPaths);
         assertThat(output.candidate().files()).filteredOn(file -> file.path().equals("tests/gradlew")).singleElement().satisfies(file -> {
             assertThat(file.content()).isEqualTo("new wrapper".getBytes(StandardCharsets.UTF_8));
             assertThat(file.executable()).isTrue();

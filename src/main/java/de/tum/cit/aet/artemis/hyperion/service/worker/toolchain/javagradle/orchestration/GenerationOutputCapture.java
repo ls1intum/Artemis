@@ -16,14 +16,14 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.Worke
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.BinaryContent;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
 
-/** Seals the exact verified text and original binary/mode metadata before returning a candidate to core. */
+/** Seals the exact verified text and canonical binary/mode metadata before returning a candidate to core. */
 final class GenerationOutputCapture {
 
     private GenerationOutputCapture() {
     }
 
     static GenerationOutput capture(GenerationAssignment assignment, GenerationOutcome outcome, WorkerUsageRecorder usage, boolean checkpoint) {
-        Map<String, WorkspaceFile> seed = assignment.seed().files().stream().collect(Collectors.toMap(WorkspaceFile::path, Function.identity()));
+        Map<String, WorkspaceFile> seed = assignment.seed().forMode(assignment.brief().mode()).files().stream().collect(Collectors.toMap(WorkspaceFile::path, Function.identity()));
         List<WorkspaceFile> files = new ArrayList<>();
         outcome.capturedProducedFiles().forEach((role, textFiles) -> {
             String prefix = GenerationWorkspace.directoryFor(role) + "/";
