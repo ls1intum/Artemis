@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.RejectedExecutionException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -99,25 +100,45 @@ class SearchableEntityWeaviateServiceEnqueueTest {
      * that stops takes what is queued in memory with it. So deletes, and the upserts of the types the passes skip, are written before the request returns.
      */
     @Test
-    void testDeletesAndTheUpsertsOfUnreconciledTypesAreWrittenBeforeTheRequestReturns() {
+    void testUpsertsOfUnreconciledTypesAreWrittenOnTheCallingThread() {
         List<Runnable> queued = new ArrayList<>();
         var queueingService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
                 mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), queued::add);
 
         queueingService.upsertPostAsync(new PostSearchableEntityDTO(7L, 10L, 30L, "t", "content"));
         queueingService.upsertAnswerPostAsync(new AnswerPostSearchableEntityDTO(8L, 7L, 10L, 30L, "reply"));
-        queueingService.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXERCISE, 5L);
-        queueingService.deleteAllPostsForChannelAsync(4L);
-        queueingService.deleteAllPostsForCourseAsync(3L);
-        queueingService.deleteAllAnswerPostsForPostAsync(7L);
-        queueingService.deleteAllForCourseAsync(3L);
 
         assertThat(queued).isEmpty();
         ArgumentCaptor<WeaviateOutboxEntry> captor = ArgumentCaptor.forClass(WeaviateOutboxEntry.class);
-        verify(outboxRepository, times(7)).save(captor.capture());
-        assertThat(captor.getAllValues()).extracting(WeaviateOutboxEntry::getOperation).containsExactly(WeaviateOutboxOperation.UPSERT, WeaviateOutboxOperation.UPSERT,
-                WeaviateOutboxOperation.DELETE_ENTITY, WeaviateOutboxOperation.DELETE_POSTS_FOR_CHANNEL, WeaviateOutboxOperation.DELETE_POSTS_FOR_COURSE,
-                WeaviateOutboxOperation.DELETE_ANSWER_POSTS_FOR_POST, WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE);
+        verify(outboxRepository, times(2)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(WeaviateOutboxEntry::getEntityType).containsExactly(SearchableEntitySchema.TypeValues.POST,
+                SearchableEntitySchema.TypeValues.ANSWER_POST);
+    }
+
+    @Test
+    void testDeletesAreWrittenBeforeTheRequestReturns() {
+        service.deleteEntityAsync(SearchableEntitySchema.TypeValues.EXERCISE, 5L);
+        service.deleteAllPostsForChannelAsync(4L);
+        service.deleteAllPostsForCourseAsync(3L);
+        service.deleteAllAnswerPostsForPostAsync(7L);
+        service.deleteAllForCourseAsync(3L);
+        ArgumentCaptor<WeaviateOutboxEntry> captor = ArgumentCaptor.forClass(WeaviateOutboxEntry.class);
+        verify(outboxRepository, times(5)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(WeaviateOutboxEntry::getOperation).containsExactly(WeaviateOutboxOperation.DELETE_ENTITY,
+                WeaviateOutboxOperation.DELETE_POSTS_FOR_CHANNEL, WeaviateOutboxOperation.DELETE_POSTS_FOR_COURSE, WeaviateOutboxOperation.DELETE_ANSWER_POSTS_FOR_POST,
+                WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE);
+    }
+
+    @Test
+    void testARejectedDeleteFailsInsteadOfOvertakingQueuedUpserts() {
+        var rejectingService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, objectMapper, contentHasher, eventPublisher,
+                mock(SearchableEntityVectorWriter.class), mock(SearchableEntityEmbeddingClient.class), task -> {
+                    throw new RejectedExecutionException("executor stopped");
+                });
+
+        assertThatThrownBy(() -> rejectingService.deleteEntityAsync(SearchableEntitySchema.TypeValues.CHANNEL, 7L)).isInstanceOf(RejectedExecutionException.class);
+        assertThatThrownBy(() -> rejectingService.deleteAllForCourseAsync(10L)).isInstanceOf(RejectedExecutionException.class);
+        verifyNoInteractions(outboxRepository);
     }
 
     @Test

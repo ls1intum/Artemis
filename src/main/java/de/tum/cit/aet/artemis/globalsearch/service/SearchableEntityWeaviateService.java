@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -71,7 +72,8 @@ import io.weaviate.client6.v1.api.collections.query.NearVector;
  * instead of overtaking what is queued. An upsert that is still queued when the node dies is lost like a failed write
  * is, and the reconcile passes repair both. Deletes, and the upserts of posts and answer posts, which the passes do
  * not cover, are written before the request returns, because nothing would put them back if they were lost: a delete
- * that is lost leaves removed data searchable.
+ * that is lost leaves removed data searchable. Live deletes use the same executor as live upserts and wait for their
+ * outbox write to finish, so an older queued upsert cannot receive a newer outbox id and restore deleted content.
  * The single-writer {@code WeaviateOutboxDispatcher} on the scheduling node later claims the row and calls
  * {@link #applyOutboxEntry(WeaviateOutboxEntry)}, which performs the actual Weaviate write with retry. A
  * Weaviate outage or node death therefore no longer loses a write.
@@ -694,13 +696,28 @@ public class SearchableEntityWeaviateService {
      * @param origin   which path is asking
      */
     public void enqueueDeleteEntity(String type, long entityId, WeaviateOutboxOrigin origin) {
-        // A delete is written before the request returns, see the class documentation.
-        saveDeleteEntityAndSignal(type, entityId, origin);
+        if (origin == WeaviateOutboxOrigin.LIVE) {
+            enqueueDeleteAndWait(() -> saveDeleteEntityAndSignal(type, entityId, origin));
+        }
+        else {
+            saveDeleteEntityAndSignal(type, entityId, origin);
+        }
     }
 
     /**
-     * Persists a deletion before waking the dispatcher. Unlike asynchronous live upserts, deletions finish their
-     * outbox write on the request thread so removed content is queued for removal before the request returns.
+     * Serializes a live deletion behind previously queued upserts and waits until its outbox write finishes. Source cleanup may keep the entity readable after
+     * the delete is enqueued, so letting an older upsert receive a newer outbox id would allow it to restore the removed search hit.
+     * A rejected submission must fail the call instead of writing directly and overtaking pending upserts.
+     *
+     * @param enqueue the deletion's outbox write and dispatcher signal
+     */
+    private void enqueueDeleteAndWait(Runnable enqueue) {
+        CompletableFuture.runAsync(enqueue, enqueueExecutor).join();
+    }
+
+    /**
+     * Persists a deletion before waking the dispatcher. Live callers wait for this outbox write on the enqueue executor;
+     * reconciliation writes on its calling thread so a failed save still reaches the pass that retries it.
      *
      * @param type     the searchable entity discriminator
      * @param entityId the source entity id
@@ -715,12 +732,14 @@ public class SearchableEntityWeaviateService {
     }
 
     private void enqueueBulkDelete(WeaviateOutboxOperation operation, Map<String, Object> params) {
-        // Only the request path issues bulk deletes; a reconcile pass works entity by entity. Like every delete, it is written before the request returns.
-        if (!save(WeaviateOutboxEntry.forBulkDelete(operation, serializeMap(params), WeaviateOutboxOrigin.LIVE))) {
-            return;
-        }
-        log.debug("Enqueued {} with params {}", operation, params);
-        signalEnqueued();
+        // Bulk deletes share the upserts' queue and finish their write before source cleanup continues, just like a live single-entity delete.
+        enqueueDeleteAndWait(() -> {
+            if (!save(WeaviateOutboxEntry.forBulkDelete(operation, serializeMap(params), WeaviateOutboxOrigin.LIVE))) {
+                return;
+            }
+            log.debug("Enqueued {} with params {}", operation, params);
+            signalEnqueued();
+        });
     }
 
     /**
