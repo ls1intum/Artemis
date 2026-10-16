@@ -54,6 +54,7 @@ class FaqImportResourceTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(response.getHeaders().getLocation()).isEqualTo(URI.create("/api/communication/courses/42/faqs"));
         assertThat(response.getBody()).extracting(FaqDTO::id).containsExactly(31L);
+        verify(faqService).autoIngestFaqIntoPyris(31L);
         verify(searchIndex).upsertFaqAsync(new FaqSearchableEntityDTO(31L, 42L, "Copied question", "Copied answer", "ACCEPTED"));
     }
 }

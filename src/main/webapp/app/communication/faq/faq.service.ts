@@ -1,5 +1,5 @@
 import { Service, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CreateFaqDTO, Faq, FaqImportSearchResult, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
