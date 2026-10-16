@@ -24,6 +24,8 @@ import studentRoleImg from "../assets/communication/user-authorities/student-rol
 
 import messageReferencesImg from "../assets/communication/references.png";
 import formattedMessageEditorImg from "../assets/communication/formatted-message-editor.png";
+import compactMessageToolbarImg from "../assets/communication/formatted-message-toolbar-collapsed.png";
+import expandedMessageToolbarImg from "../assets/communication/formatted-message-toolbar-expanded.png";
 import slideMenuImg from "../assets/communication/slide-menu-view.png";
 import slidePreviewImg from "../assets/communication/slide-preview-message.png";
 import slideViewImg from "../assets/communication/slide-open.png";
@@ -314,6 +316,14 @@ The ➕ emoji serves as the up-voting reaction, which influences the display ord
 ### Formatted Message Editor
 
 In the web app, messages and replies open with their formatting visible.
+The compact toolbar shows bold, italic, links, person mentions and course references.
+Select **More options** to show the remaining formats, attachments, slides, FAQs and emojis; **Fewer options** hides them again.
+Keyboard shortcuts and pasting or dropping files also work while these options are hidden.
+
+<Image src={compactMessageToolbarImg} alt={"The compact message toolbar with basic formatting, links, mentions, references and More options"} size={ImageSize.large} />
+
+<Image src={expandedMessageToolbarImg} alt={"The expanded message toolbar showing additional formatting and resource controls; Fewer options collapses the second row"} size={ImageSize.large} />
+
 Use the toolbar to format selected text or add a link. Select the link toolbar button again to close its popup. Select an existing link to change its text or destination.
 **Remove link** keeps the text and removes its destination.
 Select text to change its formatting, or choose a format at the cursor to apply it to the text you type next.

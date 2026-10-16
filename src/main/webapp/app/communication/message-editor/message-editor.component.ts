@@ -1,7 +1,22 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, ViewEncapsulation, afterRenderEffect, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { CdkConnectedOverlay, ConnectedPosition } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faAt, faBold, faCode, faHashtag, faItalic, faLink, faListOl, faListUl, faQuoteLeft, faStrikethrough, faUnderline, faXmark } from '@fortawesome/free-solid-svg-icons';
+import {
+    faAt,
+    faBold,
+    faChevronUp,
+    faCode,
+    faEllipsis,
+    faHashtag,
+    faItalic,
+    faLink,
+    faListOl,
+    faListUl,
+    faQuoteLeft,
+    faStrikethrough,
+    faUnderline,
+    faXmark,
+} from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiInputDirective } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -33,7 +48,7 @@ export class MessageEditorComponent {
     readonly contentChange = output<string>();
     readonly uploadingChange = output<boolean>();
     private readonly editable = viewChild<ElementRef<HTMLElement>>('editable');
-    private readonly tools = viewChild(MessageEditorToolsComponent);
+    protected readonly tools = viewChild(MessageEditorToolsComponent);
     private readonly completionOverlay = viewChild(CdkConnectedOverlay);
     protected readonly uploading = signal(false);
     protected readonly editorRevision = signal(0);
@@ -53,10 +68,13 @@ export class MessageEditorComponent {
     readonly linkAllowed = signal(true);
     protected readonly completionOrigin = signal({ x: 0, y: 0, width: 0, height: 0 });
 
-    protected readonly icons = { faLink, faAt, faHashtag, faXmark };
-    protected readonly formats = [
+    protected readonly toolbarExpanded = signal(false);
+    protected readonly icons = { faLink, faAt, faHashtag, faXmark, faEllipsis, faChevronUp };
+    protected readonly basicFormats = [
         { tag: 'strong' as const, icon: faBold, label: 'bold' },
         { tag: 'em' as const, icon: faItalic, label: 'italic' },
+    ];
+    protected readonly advancedFormats = [
         { tag: 'ins' as const, icon: faUnderline, label: 'underline' },
         { tag: 's' as const, icon: faStrikethrough, label: 'strikethrough' },
         { tag: 'code' as const, icon: faCode, label: 'inlineCode' },
@@ -74,6 +92,7 @@ export class MessageEditorComponent {
     private static nextId = 0;
     readonly listId = `message-completions-${MessageEditorComponent.nextId++}`;
     readonly hintId = `${this.listId}-hint`;
+    protected readonly advancedToolbarId = `${this.listId}-advanced-toolbar`;
 
     private editor?: MessageEditorDom;
     private lastValue?: string;
@@ -106,6 +125,7 @@ export class MessageEditorComponent {
             const changedContext = context !== this.lastContext;
             if (changedContext) {
                 this.lastContext = context;
+                this.toolbarExpanded.set(false);
                 this.dismissSuggestions();
             }
             if (element) {
@@ -138,6 +158,12 @@ export class MessageEditorComponent {
     protected remember(event: MouseEvent): void {
         event.preventDefault();
         this.editor?.rememberSelection();
+    }
+
+    protected toggleToolbar(): void {
+        this.toolbarExpanded.update((expanded) => !expanded);
+        if (!this.toolbarExpanded()) this.tools()?.close(false);
+        this.dismissSuggestions();
     }
 
     protected applyFormat(tag: 'strong' | 'em' | 'ins' | 's' | 'code'): void {

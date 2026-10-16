@@ -213,6 +213,8 @@
                 "previewUnavailable": "Slide preview is unavailable.",
                 "unsupported": "This message uses formatting that is currently only editable in Markdown.",
                 "formatting": "Message formatting",
+                "moreOptions": "More options",
+                "fewerOptions": "Fewer options",
                 "bold": "Bold (Ctrl/Cmd+B)",
                 "italic": "Italic (Ctrl/Cmd+I)",
                 "underline": "Underline (Ctrl/Cmd+U)",

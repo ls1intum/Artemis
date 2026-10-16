@@ -1,72 +1,74 @@
 <div class="flex flex-wrap items-center gap-1" cdkOverlayOrigin #origin="cdkOverlayOrigin">
-    <button
-        type="button"
-        tumAetUiButton
-        variant="text"
-        severity="secondary"
-        size="small"
-        data-testid="message-attachment-button"
-        [disabled]="uploading()"
-        [title]="'artemisApp.communication.formattedEditor.attachments' | artemisTranslate"
-        [attr.aria-label]="'artemisApp.communication.formattedEditor.attachments' | artemisTranslate"
-        (mousedown)="remember($event)"
-        (click)="openFiles()"
-    >
-        <fa-icon [icon]="icons.faFileArrowUp" />
-    </button>
-    <button
-        type="button"
-        tumAetUiButton
-        variant="text"
-        severity="secondary"
-        size="small"
-        data-testid="message-slides-button"
-        [title]="'artemisApp.communication.formattedEditor.slides' | artemisTranslate"
-        [attr.aria-label]="'artemisApp.communication.formattedEditor.slides' | artemisTranslate"
-        (mousedown)="remember($event)"
-        (click)="open('slides')"
-    >
-        <fa-icon [icon]="icons.faFilePowerpoint" />
-    </button>
-    <button
-        type="button"
-        tumAetUiButton
-        variant="text"
-        severity="secondary"
-        size="small"
-        data-testid="message-faq-button"
-        [title]="'artemisApp.communication.formattedEditor.faq' | artemisTranslate"
-        [attr.aria-label]="'artemisApp.communication.formattedEditor.faq' | artemisTranslate"
-        (mousedown)="remember($event)"
-        (click)="open('faq')"
-    >
-        <fa-icon [icon]="icons.faFileCircleQuestion" />
-    </button>
-    <button
-        type="button"
-        tumAetUiButton
-        variant="text"
-        severity="secondary"
-        size="small"
-        data-testid="message-emoji-button"
-        [title]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
-        [attr.aria-label]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
-        (mousedown)="remember($event)"
-        (click)="open('emoji')"
-    >
-        <fa-icon [icon]="icons.faFaceSmile" />
-    </button>
-    <input
-        #fileInput
-        [attr.aria-label]="'artemisApp.communication.formattedEditor.attachments' | artemisTranslate"
-        type="file"
-        class="hidden"
-        tabindex="-1"
-        multiple
-        [accept]="acceptedFiles"
-        (change)="filesSelected($event)"
-        data-testid="message-file-input"
-    />
+    <div class="message-resource-controls flex flex-wrap items-center gap-1" [hidden]="!controlsVisible()">
+        <button
+            type="button"
+            tumAetUiButton
+            variant="text"
+            severity="secondary"
+            size="small"
+            data-testid="message-attachment-button"
+            [disabled]="uploading()"
+            [title]="'artemisApp.communication.formattedEditor.attachments' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.attachments' | artemisTranslate"
+            (mousedown)="remember($event)"
+            (click)="openFiles()"
+        >
+            <fa-icon [icon]="icons.faFileArrowUp" />
+        </button>
+        <button
+            type="button"
+            tumAetUiButton
+            variant="text"
+            severity="secondary"
+            size="small"
+            data-testid="message-slides-button"
+            [title]="'artemisApp.communication.formattedEditor.slides' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.slides' | artemisTranslate"
+            (mousedown)="remember($event)"
+            (click)="open('slides')"
+        >
+            <fa-icon [icon]="icons.faFilePowerpoint" />
+        </button>
+        <button
+            type="button"
+            tumAetUiButton
+            variant="text"
+            severity="secondary"
+            size="small"
+            data-testid="message-faq-button"
+            [title]="'artemisApp.communication.formattedEditor.faq' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.faq' | artemisTranslate"
+            (mousedown)="remember($event)"
+            (click)="open('faq')"
+        >
+            <fa-icon [icon]="icons.faFileCircleQuestion" />
+        </button>
+        <button
+            type="button"
+            tumAetUiButton
+            variant="text"
+            severity="secondary"
+            size="small"
+            data-testid="message-emoji-button"
+            [title]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.emoji' | artemisTranslate"
+            (mousedown)="remember($event)"
+            (click)="open('emoji')"
+        >
+            <fa-icon [icon]="icons.faFaceSmile" />
+        </button>
+        <input
+            #fileInput
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.attachments' | artemisTranslate"
+            type="file"
+            class="hidden"
+            tabindex="-1"
+            multiple
+            [accept]="acceptedFiles"
+            (change)="filesSelected($event)"
+            data-testid="message-file-input"
+        />
+    </div>
     @if (uploading()) {
         <span role="status" class="message-editor-muted text-xs">{{ 'artemisApp.communication.formattedEditor.uploading' | artemisTranslate }}</span>
     }
