@@ -7,6 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
+
+import jakarta.validation.Validator;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +24,7 @@ import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.dto.CreateFaqDTO;
 import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
 import de.tum.cit.aet.artemis.communication.dto.FaqImportCandidateDTO;
+import de.tum.cit.aet.artemis.communication.dto.ImportFaqsDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdateFaqDTO;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
@@ -39,6 +44,9 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private IrisRequestMockProvider irisRequestMockProvider;
+
+    @Autowired
+    private Validator validator;
 
     private Course course1;
 
@@ -318,6 +326,21 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void importSelectedFaqs_rejectsEmptyAndSameCourseSelections() throws Exception {
         request.postWithoutResponseBody("/api/communication/courses/" + course2.getId() + "/faqs/import", Map.of("faqIds", List.of()), HttpStatus.BAD_REQUEST);
         request.postWithoutResponseBody("/api/communication/courses/" + course1.getId() + "/faqs/import", Map.of("faqIds", List.of(faq.getId())), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importSelectedFaqs_limitsSelectionBeforeLoadingOrSaving() throws Exception {
+        var maximumSelection = LongStream.rangeClosed(1, 500).boxed().collect(Collectors.toSet());
+        assertThat(validator.validate(new ImportFaqsDTO(maximumSelection))).isEmpty();
+        var oversizedSelection = LongStream.rangeClosed(1, 501).map(id -> Long.MAX_VALUE - id).boxed().collect(Collectors.toSet());
+        assertThat(validator.validate(new ImportFaqsDTO(oversizedSelection))).singleElement()
+                .satisfies(violation -> assertThat(violation.getPropertyPath().toString()).isEqualTo("faqIds"));
+
+        request.postWithoutResponseBody("/api/communication/courses/" + course2.getId() + "/faqs/import", Map.of("faqIds", oversizedSelection), HttpStatus.BAD_REQUEST);
+
+        assertThat(faqRepository.countByCourseId(course2.getId())).isZero();
+        assertThat(faqRepository.findById(faq.getId())).isPresent();
     }
 
     @Test

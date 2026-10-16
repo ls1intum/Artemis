@@ -163,7 +163,7 @@ export class FaqComponent implements OnInit, OnDestroy {
                 next: (res: Faq[]) => {
                     this.faqs = res;
                     this.hasFaqs.set(res.length > 0);
-                    this.applyFilters();
+                    this.refreshFaqList(this.searchInput.getValue());
                     this.sortRows();
                     this.loaded.set(true);
                 },
@@ -176,6 +176,8 @@ export class FaqComponent implements OnInit, OnDestroy {
             this.existingCategories.set(existingCategories);
             this.hasCategories.set(existingCategories.length > 0);
             this.checkAppliedFilter(this.activeFilters(), this.existingCategories());
+            this.refreshFaqList(this.searchInput.getValue());
+            this.sortRows();
         });
     }
 
@@ -187,7 +189,6 @@ export class FaqComponent implements OnInit, OnDestroy {
             }
         });
         this.activeFilters.set(updatedFilters);
-        this.applyFilters();
     }
 
     private applySearch(searchTerm: string) {
