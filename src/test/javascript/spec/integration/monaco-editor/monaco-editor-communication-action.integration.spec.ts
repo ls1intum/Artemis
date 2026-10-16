@@ -36,7 +36,11 @@ import { FaqReferenceAction } from 'app/editor/monaco-editor/model/actions/commu
 import { Faq } from 'app/communication/shared/entities/faq.model';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/foundation/service/file.service';
-import { ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ChannelDTO, ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import enCommunication from 'src/main/webapp/i18n/en/communication.json';
+import deCommunication from 'src/main/webapp/i18n/de/communication.json';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('MonacoEditorCommunicationActionIntegration', () => {
@@ -257,6 +261,183 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             comp.registerAction(channelReferenceAction);
             channelReferenceAction.executeInCurrentEditor();
             expect(comp.getText()).toBe('#');
+        });
+    });
+
+    describe('UserMentionAction @all suggestion', () => {
+        let users: User[];
+
+        const suggestMentions = async (text: string, action: UserMentionAction = userMentionAction) => {
+            comp.setText(text);
+            registerActionWithCompletionProvider(action, '@');
+            const providerResult = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, text.length + 1), {} as any, {} as any);
+            expect(providerResult).toBeDefined();
+            return providerResult!.suggestions;
+        };
+
+        beforeEach(() => {
+            fixture.detectChanges();
+            comp.changeModel('initial', '');
+            users = [communicationUser1, communicationUser2, communicationTutor];
+            vi.spyOn(courseManagementService, 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: users, status: 200 })));
+        });
+
+        it('should suggest @all as the first suggestion in a group chat', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+
+            const suggestions = await suggestMentions('@');
+
+            expect(suggestions).toHaveLength(users.length + 1);
+            expect(suggestions[0].label).toBe('@all');
+            expect(suggestions[0].insertText).toBe('@all ');
+            expect(suggestions[0].sortText! < suggestions[1].label.toString()).toBe(true);
+            // the suggestion explains what it does, shows the user icon and replaces the typed @ like the suggestions of the users
+            expect(suggestions[0].detail).toBe('artemisApp.communication.editor.allMembers');
+            expect(suggestions[0].kind).toBe(monaco.languages.CompletionItemKind.User);
+            expect(suggestions[0].range).toEqual(suggestions[1].range);
+            // the users follow the synthetic suggestion and are inserted as user mentions
+            suggestions.slice(1).forEach((suggestion, index) => {
+                expect(suggestion.label).toBe(`@${users[index].name}`);
+                expect(suggestion.insertText).toBe(`[user]${users[index].name}(${users[index].login})[/user]`);
+                expect(suggestion.detail).toBe(userMentionAction.label);
+                expect(suggestion.sortText).toBeUndefined();
+            });
+        });
+
+        it('should search the members for the text that follows the @ and still suggest @all first', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            const searchSpy = vi.spyOn(courseManagementService, 'searchMembersForUserMentions');
+
+            const suggestions = await suggestMentions('@bo');
+
+            // the filtering by the typed text is left to the editor, so the synthetic suggestion is part of the list whatever is typed
+            expect(searchSpy).toHaveBeenCalledExactlyOnceWith(communicationService.getCourse().id, 'bo');
+            expect(suggestions.map((suggestion) => suggestion.label)).toEqual(['@all', ...users.map((user) => `@${user.name}`)]);
+        });
+
+        it('should follow the conversation and the edit state while the editor stays open', async () => {
+            let conversation: ChannelDTO | GroupChatDTO | undefined = new GroupChatDTO();
+            let isEditing = false;
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(undefined);
+            const action = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => isEditing,
+                () => conversation,
+            );
+            await suggestMentions('@', action);
+            const labelsOfTheSuggestions = async () => {
+                const result = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, 2), {} as any, {} as any);
+                return result!.suggestions.map((suggestion) => suggestion.label);
+            };
+            const labelsOfTheUsers = users.map((user) => `@${user.name}`);
+
+            expect(await labelsOfTheSuggestions()).toEqual(['@all', ...labelsOfTheUsers]);
+
+            conversation = new ChannelDTO();
+            expect(await labelsOfTheSuggestions()).toEqual(labelsOfTheUsers);
+
+            conversation = new GroupChatDTO();
+            isEditing = true;
+            expect(await labelsOfTheSuggestions()).toEqual(labelsOfTheUsers);
+
+            isEditing = false;
+            expect(await labelsOfTheSuggestions()).toEqual(['@all', ...labelsOfTheUsers]);
+        });
+
+        it('should explain the @all suggestion in English and German', () => {
+            expect(enCommunication.artemisApp.communication.editor.allMembers).toBe('Notify all members of this group chat');
+            expect(deCommunication.artemisApp.communication.editor.allMembers).toBe('Alle Mitglieder dieses Gruppenchats benachrichtigen');
+        });
+
+        it('should suggest @all for a partially typed token in a group chat', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+
+            const suggestions = await suggestMentions('@al');
+
+            expect(suggestions[0].label).toBe('@all');
+            expect(suggestions[0].insertText).toBe('@all ');
+        });
+
+        it('should not suggest @all while editing a posting, because editing notifies nobody', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            const editingAction = new UserMentionAction(courseManagementService, communicationService, () => true);
+
+            const suggestions = await suggestMentions('@', editingAction);
+
+            expect(suggestions).toHaveLength(users.length);
+            expect(suggestions.map((suggestion) => suggestion.label)).not.toContain('@all');
+        });
+
+        it('should prefer the conversation of the posting over the current conversation', async () => {
+            // e.g. a thread opened from the view with all messages, where the current conversation is not the one of the posting
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new ChannelDTO());
+            const replyAction = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => false,
+                () => new GroupChatDTO(),
+            );
+
+            const suggestions = await suggestMentions('@', replyAction);
+
+            expect(suggestions).toHaveLength(users.length + 1);
+            expect(suggestions[0].label).toBe('@all');
+        });
+
+        it('should not suggest @all if the conversation of the posting is no group chat, although the current conversation is one', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            const replyAction = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => false,
+                () => new ChannelDTO(),
+            );
+
+            const suggestions = await suggestMentions('@', replyAction);
+
+            expect(suggestions).toHaveLength(users.length);
+            expect(suggestions.map((suggestion) => suggestion.label)).not.toContain('@all');
+        });
+
+        it('should fall back to the current conversation if the posting has no conversation', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            const replyAction = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => false,
+                () => undefined,
+            );
+
+            const suggestions = await suggestMentions('@', replyAction);
+
+            expect(suggestions[0].label).toBe('@all');
+        });
+
+        it('should not suggest @all while editing a posting of a group chat, even if the posting provides its conversation', async () => {
+            const editingAction = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => true,
+                () => new GroupChatDTO(),
+            );
+
+            const suggestions = await suggestMentions('@', editingAction);
+
+            expect(suggestions.map((suggestion) => suggestion.label)).not.toContain('@all');
+        });
+
+        it.each([
+            { description: 'a channel', conversation: new ChannelDTO() },
+            { description: 'a one-to-one chat', conversation: new OneToOneChatDTO() },
+            { description: 'no conversation', conversation: undefined },
+        ])('should not suggest @all in $description', async ({ conversation }) => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(conversation);
+
+            const suggestions = await suggestMentions('@');
+
+            expect(suggestions).toHaveLength(users.length);
+            expect(suggestions.map((suggestion) => suggestion.label)).not.toContain('@all');
         });
     });
 

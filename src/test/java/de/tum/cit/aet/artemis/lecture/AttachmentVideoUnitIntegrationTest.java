@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.lecture;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
@@ -49,8 +51,11 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.ExpectedCount;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -70,6 +75,7 @@ import de.tum.cit.aet.artemis.lecture.domain.IrisLectureUnitSyncState;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.domain.event.LectureUnitContentChangedEvent;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentDTO;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentVideoUnitDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
@@ -83,6 +89,7 @@ import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentBatchTest;
 
+@RecordApplicationEvents
 class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest {
 
     private static final String TEST_PREFIX = "attachmentunit"; // only lower case is supported
@@ -90,6 +97,12 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     private static final String OTHER_PREFIX = TEST_PREFIX + "other";
 
     private static final int SLIDE_COUNT = 3;
+
+    /** The attachment changed notifications in a page of course notifications, as a JSON path filter. */
+    private static final String ATTACHMENT_CHANGED_NOTIFICATIONS = "$.content[?(@.notificationType == 'attachmentChangedNotification')]";
+
+    @Autowired
+    private ApplicationEvents applicationEvents;
 
     @Autowired
     private AttachmentRepository attachmentRepository;
@@ -132,8 +145,6 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     @BeforeEach
     void initTestCase() {
         irisRequestMockProvider.enableMockingOfRequests();
-        irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
-        }, ExpectedCount.manyTimes());
         irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> {
         }, ExpectedCount.manyTimes());
         irisRequestMockProvider.mockLectureUnitMetadataWebhookRunResponse(dto -> {
@@ -471,9 +482,85 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withNotificationText_deliversTheTextToStudents() throws Exception {
+        updateAttachmentVideoUnitWithNotificationText("  Please re-download, slide 4 was corrected  ");
+
+        // What a student's client reads: the stored notification, rebuilt from its parameter rows. The editor's text is
+        // trimmed, and it is in the flat parameters too, which is what the released iOS app reads.
+        performGetAttachmentChangedNotificationsAsStudent().andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS, hasSize(1)))
+                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".payload.notificationText", contains("Please re-download, slide 4 was corrected")))
+                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".parameters.notificationText", contains("Please re-download, slide 4 was corrected"))).andExpect(
+                        jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".relativeWebAppUrl", contains("/courses/" + lecture1.getCourse().getId() + "/lectures/" + lecture1.getId())));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_withEmptyNotificationText_notifiesStudentsWithoutText() throws Exception {
+        // The in-place lecture editor asks for a notification without a text by sending an empty one: students are
+        // notified, and the notification carries no text, so the client shows its generic message.
+        updateAttachmentVideoUnitWithNotificationText("");
+
+        performGetAttachmentChangedNotificationsAsStudent().andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS, hasSize(1)))
+                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".payload.notificationText").doesNotExist())
+                .andExpect(jsonPath(ATTACHMENT_CHANGED_NOTIFICATIONS + ".parameters.notificationText").doesNotExist());
+    }
+
+    /**
+     * Updates the attachment of a released attachment video unit with the given notification text.
+     * <p>
+     * The unit is stored directly rather than created through the REST endpoint: creating one splits its file into slides
+     * in the background, and that work would outlive the test and reach the Iris mock of the next one.
+     */
+    private void updateAttachmentVideoUnitWithNotificationText(String notificationText) throws Exception {
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(unit));
+        MockMultipartHttpServletRequestBuilder updateBuilder = buildUpdateAttachmentVideoUnit(unit, unit.getAttachment(), null);
+        updateBuilder.contentType(MediaType.MULTIPART_FORM_DATA_VALUE).param("notificationText", notificationText);
+        request.performMvcRequest(updateBuilder).andExpect(status().isOk());
+    }
+
+    private ResultActions performGetAttachmentChangedNotificationsAsStudent() throws Exception {
+        var result = request.performMvcRequest(
+                MockMvcRequestBuilders.get("/api/notification/courses/" + lecture1.getCourse().getId() + "?page=0&size=20").with(user(TEST_PREFIX + "student1").roles("USER")))
+                .andExpect(status().isOk());
+        request.restoreSecurityContext();
+        return result;
+    }
+
+    @Test
     @WithMockUser(username = OTHER_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createAttachmentVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_withDescription_publishesContentChangedEvent() throws Exception {
+        // The unit carries a non-blank description ("Lorem Ipsum" from setUp), so a content-changed event must fire.
+        request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isCreated());
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_changedDescription_publishesContentChangedEvent() throws Exception {
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(unit));
+        unit.setDescription("Genuinely changed description");
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(unit, unit.getAttachment(), null)).andExpect(status().isOk());
+        // The resource snapshots the pre-update description before the service applies the DTO, so a real edit publishes exactly once.
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentVideoUnit_unchangedDescription_doesNotPublishEvent() throws Exception {
+        AttachmentVideoUnit unit = lectureUtilService.createAttachmentVideoUnit(lecture1, true);
+        lectureUtilService.addLectureUnitsToLecture(lecture1, List.of(unit));
+        // PUT the unit back with its description unchanged — no content-bearing field changed, so no event fires.
+        request.performMvcRequest(buildUpdateAttachmentVideoUnit(unit, unit.getAttachment(), null)).andExpect(status().isOk());
+        assertThat(applicationEvents.stream(LectureUnitContentChangedEvent.class)).isEmpty();
     }
 
     @Test
@@ -488,6 +575,22 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
     void createAttachmentVideoUnit_withAttachmentId_shouldReturnBadRequest() throws Exception {
         attachment.setId(99L);
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isBadRequest());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "This is plain text, not a PDF document", "" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_withCorruptedOrEmptyPdf_shouldReturnBadRequestAndCreateNoUnit(String content) throws Exception {
+        long unitCountBefore = attachmentVideoUnitRepository.count();
+        var corruptedPdf = new MockMultipartFile("file", "slides.pdf", MediaType.APPLICATION_PDF_VALUE, content.getBytes());
+        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnit).getBytes());
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units").file(attachmentVideoUnitPart)
+                .file(attachmentPart).file(corruptedPdf).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("invalidPdf"));
+
+        assertThat(attachmentVideoUnitRepository.count()).isEqualTo(unitCountBefore);
     }
 
     @Test

@@ -1,0 +1,24 @@
+package de.tum.cit.aet.artemis.aiworker.config.telemetry;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
+
+import tools.jackson.databind.json.JsonMapper;
+
+/** Content export is an explicit worker-side opt-in, independent of the core server. */
+@Configuration(proxyBeanMethods = false)
+@Profile(PROFILE_AIWORKER)
+@Lazy
+public class WorkerTelemetryConfiguration {
+
+    @Bean
+    ChatModelContentObservationFilter chatModelContentObservationFilter(JsonMapper jsonMapper, @Value("${artemis.telemetry.gen-ai.capture-content:false}") boolean captureContent,
+            @Value("${artemis.telemetry.gen-ai.max-attribute-bytes:2000000}") int maxAttributeBytes) {
+        return new ChatModelContentObservationFilter(jsonMapper, captureContent, maxAttributeBytes);
+    }
+}

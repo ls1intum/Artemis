@@ -7,12 +7,16 @@
  * Only classes that are UNAMBIGUOUSLY Bootstrap-only are banned — i.e. they do not collide with a valid
  * Tailwind v4 utility of the same name. In particular the spacing scale (`mb-3`, `me-1`, `p-3`, `gap-2`)
  * and logical-margin utilities (`ms-*`, `me-*`) are NOT banned: Bootstrap and Tailwind share the same class
- * NAMES (the Tailwind value applies after migration), so they are legitimate Tailwind utilities. Color application is governed separately
+ * NAMES (the Tailwind value applies after migration), so they are legitimate Tailwind utilities. Their values 3 to 5
+ * differ between the two, though, so `no-ambiguous-spacing-utility` handles the spacing scale in the folders that
+ * eslint.config.mjs scopes it to. Color application is governed separately
  * by `no-raw-tailwind-color-palette` (templates) and the stylelint hex/`--bs-` ban (SCSS).
  *
  * Scope: static `class="..."`, `[class.<bootstrap-class>]`, and the bound source of `[class]` / `[ngClass]`.
  * See documentation/docs/developer/guidelines/client-development.mdx (### Styling).
  */
+
+import { classTokens, classTokensInBindingExpression, isClassListAttribute } from './class-list.mjs';
 
 // Each entry matches a single, whole class token (anchored). Grouped by Bootstrap concept with its
 // PrimeNG / Tailwind replacement noted for the reviewer.
@@ -103,60 +107,19 @@ export function isBanned(token) {
 }
 
 function scanClassList(text, node, context) {
-    if (typeof text !== 'string') {
-        return;
-    }
-    for (const token of text.split(/\s+/)) {
-        if (token && isBanned(token)) {
+    for (const { token } of classTokens(text)) {
+        if (isBanned(token)) {
             context.report({ node, messageId: 'bootstrapClass', data: { cls: token } });
         }
     }
 }
 
-// Matches single- or double-quoted string literals (e.g. the keys of `[ngClass]="{ 'btn': x }"` or the
-// segments of `[class]="'d-flex ' + x"`).
-const STRING_LITERAL = /'([^']*)'|"([^"]*)"/g;
-
-// Matches an UNQUOTED object-literal key, e.g. the `btn` of `[ngClass]="{ btn: active }"`. Prettier rewrites a
-// quoted `{ 'btn': x }` to this unquoted form, so without this the simplest Bootstrap key bypasses the rule after
-// formatting. A key is an identifier directly after `{` or `,` and before `:`; hyphenated class names (`btn-lg`)
-// are not valid unquoted identifiers, so they stay quoted and are covered by STRING_LITERAL.
-const UNQUOTED_OBJECT_KEY = /[{,]\s*([A-Za-z_$][\w$]*)\s*:/g;
-
-// Matches a backtick template literal, e.g. the `` `btn ${extra}` `` of `[class]="`btn ${extra}`"`. Only its static
-// chunks carry literal class names; the `${…}` interpolations are dynamic expressions (string literals inside them
-// are already covered by STRING_LITERAL), so they are stripped before scanning.
-const TEMPLATE_LITERAL = /`([^`]*)`/g;
-
-// The bound source of `[class]` / `[ngClass]` is an Angular expression, not a class list. Class names live in string
-// literals (`'btn'`), unquoted object keys (`{ btn: x }`), or the static chunks of a template literal (`` `btn ${x}` ``).
-// Returns the banned tokens found — pure (no ESLint context) so tools like
-// supporting_scripts/migration/migrate.mjs reuse the exact same binding extraction.
+// Returns the banned tokens found in the bound source of a `[class]` / `[ngClass]` binding. Pure (no ESLint context)
+// so tools like supporting_scripts/migration/migrate.mjs reuse the exact same binding extraction.
 export function bannedClassesInBindingExpression(source) {
-    if (typeof source !== 'string') {
-        return [];
-    }
-    const found = [];
-    const collect = (text) => {
-        for (const token of text.split(/\s+/)) {
-            if (token && isBanned(token)) {
-                found.push(token);
-            }
-        }
-    };
-    for (const re of [STRING_LITERAL, UNQUOTED_OBJECT_KEY]) {
-        re.lastIndex = 0;
-        let match;
-        while ((match = re.exec(source)) !== null) {
-            collect(match[1] ?? match[2]);
-        }
-    }
-    TEMPLATE_LITERAL.lastIndex = 0;
-    let templateMatch;
-    while ((templateMatch = TEMPLATE_LITERAL.exec(source)) !== null) {
-        collect(templateMatch[1].replace(/\$\{[^}]*\}/g, ' '));
-    }
-    return found;
+    return classTokensInBindingExpression(source)
+        .map(({ token }) => token)
+        .filter(isBanned);
 }
 
 function scanBindingExpression(source, node, context) {
@@ -178,18 +141,15 @@ export default {
         schema: [],
     },
     create(context) {
-        // `class` plus PrimeNG class inputs (`styleClass` and component-specific `*StyleClass` like
-        // `contentStyleClass`), which render their classes onto the host at runtime — so Bootstrap in them must be
-        // caught too. These hold a raw class list (scanned like `class`); `[ngClass]` holds an expression.
-        const isClassListAttr = (name) => name === 'class' || name === 'styleClass' || name.endsWith('StyleClass');
+        // PrimeNG class inputs render their classes onto the host at runtime, so Bootstrap in them must be caught too.
         return {
             TextAttribute(node) {
-                if (isClassListAttr(node.name)) {
+                if (isClassListAttribute(node.name)) {
                     scanClassList(node.value, node, context);
                 }
             },
             BoundAttribute(node) {
-                if (isClassListAttr(node.name) || node.name === 'ngClass') {
+                if (isClassListAttribute(node.name) || node.name === 'ngClass') {
                     // `[class]`/`[ngClass]`/`[styleClass]` bind an expression (object map or string concat), not a
                     // raw class list — scan the string literals inside it.
                     scanBindingExpression(node.value?.source, node, context);

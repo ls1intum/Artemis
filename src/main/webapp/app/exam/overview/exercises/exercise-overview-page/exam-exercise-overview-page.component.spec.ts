@@ -79,6 +79,13 @@ describe('ExamExerciseOverviewPageComponent', () => {
         expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
     });
 
+    it('should set the table as wide as the title above it, without an inset of its own', () => {
+        const table: HTMLElement = fixture.nativeElement.querySelector('[data-testid="exercise-table"]');
+        const container = table.parentElement!.parentElement!;
+        expect(container.classList).not.toContain('px-6!');
+        expect(container.classList).not.toContain('px-4!');
+    });
+
     it('should list every exercise as a row of the exercise table with a link that opens it', () => {
         vi.spyOn(comp.onPageChanged, 'emit');
         const rows = fixture.debugElement.queryAll(By.css('[data-testid="exercise-table"] tbody tr'));

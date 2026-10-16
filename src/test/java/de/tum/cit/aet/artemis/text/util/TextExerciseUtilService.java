@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -65,6 +66,9 @@ public class TextExerciseUtilService {
     private static final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(1);
 
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
+
+    @Autowired
+    private ExerciseConfigurationService exerciseConfigurationService;
 
     @Autowired
     private ExerciseTestRepository exerciseRepository;
@@ -124,6 +128,7 @@ public class TextExerciseUtilService {
         textExercise.setGradingInstructions("Grading instructions");
         textExercise.setProblemStatement("Problem statement");
         textExercise = textExerciseRepository.save(textExercise);
+        exerciseConfigurationService.initialize(textExercise);
         return textExercise;
     }
 
@@ -179,7 +184,9 @@ public class TextExerciseUtilService {
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        return exerciseRepository.save(textExercise);
+        var savedExercise = exerciseRepository.save(textExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -196,7 +203,9 @@ public class TextExerciseUtilService {
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, startDate, dueDate, assessmentDueDate, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        return exerciseRepository.save(textExercise);
+        var savedExercise = exerciseRepository.save(textExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -213,7 +222,9 @@ public class TextExerciseUtilService {
         teamTextExercise.setMaxPoints(10.0);
         teamTextExercise.setBonusPoints(0.0);
         teamTextExercise.setMode(ExerciseMode.TEAM);
-        return exerciseRepository.save(teamTextExercise);
+        var savedExercise = exerciseRepository.save(teamTextExercise);
+        exerciseConfigurationService.initialize(savedExercise);
+        return savedExercise;
     }
 
     /**
@@ -240,8 +251,9 @@ public class TextExerciseUtilService {
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setTitle(title);
         course.addExercises(textExercise);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         textExercise = exerciseRepository.save(textExercise);
+        exerciseConfigurationService.initialize(textExercise);
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(textExercise);
         assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
@@ -257,6 +269,7 @@ public class TextExerciseUtilService {
     public void renameTextExercise(TextExercise textExercise, String title) {
         textExercise.setTitle(title);
         textExerciseRepository.save(textExercise);
+        exerciseConfigurationService.initialize(textExercise);
 
     }
 
@@ -532,8 +545,9 @@ public class TextExerciseUtilService {
         TextExercise finishedTextExercise = TextExerciseFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(12), pastTimestamp.plusHours(24), course);
         finishedTextExercise.setTitle("Finished");
         course.addExercises(finishedTextExercise);
-        course = courseRepo.save(course);
+        course = courseRepo.saveWithDefaultConfigurations(course);
         exerciseRepository.save(finishedTextExercise);
+        exerciseConfigurationService.initialize(finishedTextExercise);
         return course;
     }
 
@@ -546,6 +560,7 @@ public class TextExerciseUtilService {
     public TextExercise createTextExerciseForExam(ExerciseGroup exerciseGroup) {
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
         textExerciseRepository.save(textExercise);
+        exerciseConfigurationService.initialize(textExercise);
         return textExercise;
     }
 

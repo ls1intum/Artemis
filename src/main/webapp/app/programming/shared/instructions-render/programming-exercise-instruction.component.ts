@@ -47,6 +47,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { setInputs } from 'app/foundation/util/set-inputs.util';
 
 @Component({
     selector: 'jhi-programming-exercise-instructions',
@@ -56,6 +57,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestroy {
+    private static nextInstanceId = 0;
+
     private viewContainerRef = inject(ViewContainerRef);
     private resultService = inject(ResultService);
     private participationWebsocketService = inject(ParticipationWebsocketService);
@@ -68,6 +71,9 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
     private appRef = inject(ApplicationRef);
     private injector = inject(EnvironmentInjector);
     private themeService = inject(ThemeService);
+
+    // Distinguishes this component from others that show the same exercise at the same time (e.g. exercise details and online editor sidebar).
+    private readonly instanceId = ProgrammingExerciseInstructionComponent.nextInstanceId++;
 
     readonly exercise = input<ProgrammingExercise | undefined>(undefined);
     readonly participation = input<Participation | undefined>(undefined);
@@ -318,7 +324,9 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
         this.taskIndex = 0;
         // Set the exercise ID so PlantUML container IDs are scoped per exercise.
         // This prevents cross-contamination when multiple exercises are on the same page (e.g. in exams).
+        // The instance ID additionally keeps components that show the same exercise apart.
         this.programmingExercisePlantUmlWrapper.setExerciseId(exercise?.id);
+        this.programmingExercisePlantUmlWrapper.setInstanceId(this.instanceId);
         // make sure that always the correct result is set, before updating markdown
         // looks weird, but in setter of latestResult are setters of sub components invoked
         this.latestResult = this.latestResultValue();
@@ -537,11 +545,13 @@ export class ProgrammingExerciseInstructionComponent implements OnInit, OnDestro
             hostElement: taskHtmlContainer,
             environmentInjector: this.injector,
         });
-        componentRef.setInput('exercise', this.exercise());
-        componentRef.setInput('participation', this.participation());
-        componentRef.setInput('taskName', taskName);
-        componentRef.setInput('latestResult', this.latestResult);
-        componentRef.setInput('testIds', testIds);
+        setInputs(componentRef, {
+            exercise: this.exercise(),
+            participation: this.participation(),
+            taskName,
+            latestResult: this.latestResult,
+            testIds,
+        });
         // Track component ref for cleanup
         this.taskComponentRefs.push(componentRef);
         this.appRef.attachView(componentRef.hostView);

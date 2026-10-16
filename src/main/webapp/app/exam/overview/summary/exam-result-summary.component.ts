@@ -31,7 +31,7 @@ import { ExamResultOverviewComponent } from './result-overview/exam-result-overv
 import { CollapsibleCardComponent } from './collapsible-card/collapsible-card.component';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/overview/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
-import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiMessageComponent, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { TextExamSummaryComponent } from 'app/exam/overview/summary/exercises/text-exam-summary/text-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/overview/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
 import { QuizExamSummaryComponent } from 'app/exam/overview/summary/exercises/quiz-exam-summary/quiz-exam-summary.component';
@@ -40,9 +40,9 @@ import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complain
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ExampleSolutionComponent } from 'app/exercise/example-solution/example-solution.component';
-import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamRequestAiFeedbackButtonComponent } from 'app/exam/overview/summary/exam-request-ai-feedback-button/exam-request-ai-feedback-button.component';
 import { CourseSidebarToggleButtonComponent } from 'app/course/shared/course-sidebar-toggle-button/course-sidebar-toggle-button.component';
+import { ExamExerciseHeaderComponent } from 'app/exam/overview/exercises/exam-exercise-header/exam-exercise-header.component';
 import { cloneWith, deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type ResultSummaryExerciseInfo = {
@@ -80,6 +80,7 @@ type StateBeforeResetting = {
         ProgrammingExerciseExampleSolutionRepoDownloadComponent,
         TumAetUiButtonDirective,
         TumAetUiMessageComponent,
+        TumAetUiTagComponent,
         TumAetUiTooltipDirective,
         ExampleSolutionComponent,
         TextExamSummaryComponent,
@@ -89,9 +90,9 @@ type StateBeforeResetting = {
         ComplaintsStudentViewComponent,
         ProgrammingExamSummaryComponent,
         ArtemisTranslatePipe,
-        TestRunRibbonComponent,
         ExamRequestAiFeedbackButtonComponent,
         CourseSidebarToggleButtonComponent,
+        ExamExerciseHeaderComponent,
     ],
 })
 export class ExamResultSummaryComponent implements OnInit {

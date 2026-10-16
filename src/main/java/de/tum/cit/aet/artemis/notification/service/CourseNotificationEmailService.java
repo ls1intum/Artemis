@@ -30,6 +30,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.notification.dto.CourseNotificationRecipientDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailPriority;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomLinkRendererService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MarkdownCustomReferenceRendererService;
@@ -82,7 +83,7 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
     private static final String NOTIFICATION_URL_KEY = "notificationUrl";
 
     // In case a parameter includes markdown, add the key here to make sure the system renders it properly.
-    private static final List<String> MARKDOWN_PARAMETERS = List.of("postMarkdownContent");
+    private static final List<String> MARKDOWN_PARAMETERS = List.of("postMarkdownContent", "changesMarkdown");
 
     public CourseNotificationEmailService(MessageSource messageSource, SpringTemplateEngine templateEngine, MailSendingService mailSendingService,
             MarkdownCustomLinkRendererService markdownCustomLinkRendererService, MarkdownCustomReferenceRendererService markdownCustomReferenceRendererService) {
@@ -125,6 +126,7 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
             Locale locale = Locale.forLanguageTag(localeKey);
             Context context = new Context(locale);
             context.setVariable(SERVER_URL_KEY, artemisServerUrl);
+            context.setVariable("baseUrl", artemisServerUrl);
             context.setVariable(TYPE_KEY, courseNotification.notificationType());
             context.setVariable(RECIPIENT_KEY, recipient);
             context.setVariable(COURSE_ID_KEY, courseNotification.courseId());
@@ -167,10 +169,15 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
                 return;
             }
 
-            var mailRecipient = new MailRecipientDTO(recipient.email(), recipient.langKey(), recipient.login(), recipient.firstName(), recipient.lastName());
-            if (!mailSendingService.sendEmailSync(mailRecipient, subject, content, false, true)) {
-                // Mail not configured for this deployment, or the message could not be built or sent. Either way this
-                // recipient did not get their notification, which is what the channel's error rate has to reflect.
+            // The flag has to reach the mail layer: it is what suppresses the e-mail of a test user that did not opt in, as a safety net behind the settings.
+            var mailRecipient = new MailRecipientDTO(recipient.email(), recipient.langKey(), recipient.login(), recipient.firstName(), recipient.lastName(), null, null,
+                    recipient.testUser());
+            // Bulk: a mail the SMTP server does not accept now waits in the retry queue behind the transactional mails, so an
+            // announcement that meets an exhausted quota is delivered later instead of being lost for every student.
+            if (!mailSendingService.sendEmailSync(mailRecipient, subject, content, false, true, MailPriority.BULK)) {
+                // Mail not configured for this deployment, or the message could not be built or sent for good. Either way
+                // this recipient did not get their notification, which is what the channel's error rate has to reflect. A
+                // mail that waits for another attempt is not counted here: it is not lost.
                 skippedRecipients.incrementAndGet();
             }
         });

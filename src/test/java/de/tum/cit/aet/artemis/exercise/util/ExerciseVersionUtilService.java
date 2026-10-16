@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.PlagiarismDetectionConfigRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionCommitHashResolver;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -85,6 +87,12 @@ public class ExerciseVersionUtilService {
     private ChannelRepository channelRepository;
 
     @Autowired
+    private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
+    @Autowired
+    private PlagiarismDetectionConfigRepository plagiarismDetectionConfigRepository;
+
+    @Autowired
     private GitService gitService;
 
     /**
@@ -131,6 +139,9 @@ public class ExerciseVersionUtilService {
             case FILE_UPLOAD -> fileUploadExerciseRepository.findForVersioningById(exerciseId).orElse(null);
         };
         if (fetchedExercise != null) {
+            // The snapshot records the configurations, which an exercise does not carry by itself.
+            teamAssignmentConfigRepository.attachTo(fetchedExercise);
+            plagiarismDetectionConfigRepository.attachTo(fetchedExercise);
             var channel = channelRepository.findChannelByExerciseId(fetchedExercise.getId());
             if (channel != null) {
                 fetchedExercise.setChannelName(channel.getName());

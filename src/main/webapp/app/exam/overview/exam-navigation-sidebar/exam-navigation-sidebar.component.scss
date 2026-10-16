@@ -1,42 +1,35 @@
-@import '../../../../content/scss/artemis-mixins';
 $sidebar-width-open: 235px;
 $sidebar-width-closed: 80px;
 
-$management-header-height: 127px;
-$exam-sidebar-margin: 62px;
-
-.scrollable-item-content {
-    --management-header-height: #{$management-header-height};
-    --exam-sidebar-margin: #{$exam-sidebar-margin};
-
-    height: calc(100vh - var(--exam-sidebar-margin) - var(--exam-height-offset));
-    overflow-y: auto;
-
-    &.sidebar-height-testRun {
-        @include dynamic-content-height(--management-header-height, --exam-sidebar-margin);
-    }
+/* The sidebar is a flex item of the exam body: it is as tall as the exam region lets it be, and its cards scroll inside it. */
+:host {
+    display: block;
+    flex: none;
+    height: 100%;
+    min-height: 0;
 }
 
 .sidebar {
-    background-color: var(--module-bg);
-    height: calc(100vh - var(--exam-height-offset));
     width: $sidebar-width-open;
-    transition:
-        width 0.2s ease-in-out,
-        padding 0.2s ease-in-out !important;
+    height: 100%;
+    transition: width 0.2s ease-in-out;
 
     &.collapsed {
-        width: $sidebar-width-closed !important;
-
-        .scrollable-column {
-            padding: 0 0.25rem;
-        }
+        width: $sidebar-width-closed;
     }
+}
 
-    &.sidebar-height-testRun {
-        --management-header-height: #{$management-header-height};
-        @include dynamic-content-height(--management-header-height);
+.scrollable-column {
+    padding: var(--spacing-divider) calc(var(--spacing-divider) + 0.25rem);
+
+    &.collapsed {
+        padding-inline: var(--spacing-divider);
     }
+}
+
+.sidebar-footer {
+    flex: none;
+    height: var(--exam-footer-height, 2.25rem);
 }
 
 @media screen and (max-width: 800px) {
@@ -45,16 +38,12 @@ $exam-sidebar-margin: 62px;
     }
 
     .scrollable-column {
-        padding: 0 0.25rem !important;
+        padding-inline: var(--spacing-divider) !important;
     }
 
     .auto-collapse {
         display: none !important;
     }
-}
-
-.scrollable-column {
-    padding: 0 1rem;
 }
 
 .notSynced {
@@ -67,27 +56,4 @@ $exam-sidebar-margin: 62px;
     --fa-secondary-color: var(--tumaet-ui-text-color);
     --fa-secondary-opacity: 1;
     --fa-primary-color: var(--success);
-}
-
-.double-arrow.menu-collapsed {
-    transform: translate(24px);
-}
-
-.double-arrow {
-    transform: translate(187px);
-    transition: transform ease 0.3s;
-    cursor: pointer;
-    width: 30px;
-    align-items: center;
-    justify-content: center;
-    display: flex;
-}
-
-.menu-collapsed .double-arrow-icon {
-    transform: rotate(0deg);
-}
-
-.double-arrow-icon {
-    transform: rotate(180deg);
-    transition: transform ease 0.3s 0.3s;
 }
