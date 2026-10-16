@@ -124,10 +124,7 @@ public class LectureIngestionReconcileService {
      * Every other failure (the generic {@code processingFailed} that vector-store, audit, timeout,
      * and unknown failures collapse to) is treated as transient and eligible for revival.
      */
-    private static final Set<String> PERMANENT_ERROR_KEYS = Set.of("artemisApp.attachmentVideoUnit.processing.error.youtubePrivate",
-            "artemisApp.attachmentVideoUnit.processing.error.youtubeLive", "artemisApp.attachmentVideoUnit.processing.error.youtubeTooLong",
-            "artemisApp.attachmentVideoUnit.processing.error.youtubeUnavailable", "artemisApp.attachmentVideoUnit.processing.error.invalidUnitType",
-            "artemisApp.attachmentVideoUnit.processing.error.attachmentUnreadable", "artemisApp.attachmentVideoUnit.processing.error.noIngestibleContent");
+    private static final Set<String> PERMANENT_ERROR_KEYS = LectureIngestionFailureClassifier.PERMANENT_ERROR_KEYS;
 
     /**
      * How many times a FAILED unit is revived without an intervening successful completion before it is left
@@ -144,6 +141,20 @@ public class LectureIngestionReconcileService {
      * only to clean up their index rows. Uploads and edits are processed through the normal pipeline regardless of the course's age.
      */
     private final Duration courseWindow;
+
+    /**
+     * How long a unit that was ingested without its video (the video could not be resolved: a TUM Live stream that is not public, has no recording yet,
+     * or a TUM Live that was down) waits before the walk tries the video again. Measured from {@code lastUpdated}, which for a DONE row is the end of
+     * its last run.
+     */
+    private final Duration videoPendingRecheck;
+
+    /**
+     * The window of the outage pause: background intake stops while at least {@link #maxBacklog} units failed in this window for reasons that may
+     * mean Iris is down, and no unit was ingested successfully in it. Units that fail for their own reasons (see
+     * {@link LectureIngestionFailureClassifier#UNIT_SPECIFIC_ERROR_KEYS}) never count, so they cannot stop the intake of healthy work.
+     */
+    private final Duration outagePauseWindow;
 
     /**
      * The courses of the active pass, newest first ({@link AttachmentVideoUnitRepository#findReconcileCourseIdsNewestFirst}), read once
@@ -195,7 +206,9 @@ public class LectureIngestionReconcileService {
             @Value("${artemis.iris.ingestion.reconcile.max-backlog:3}") int maxBacklog, @Value("${artemis.iris.ingestion.reconcile.quality-threshold:0.8}") double qualityThreshold,
             @Value("${artemis.iris.ingestion.reconcile.failed-revival-cooldown:PT1H}") Duration failedRevivalCooldown,
             @Value("${artemis.iris.ingestion.reconcile.max-revivals:10}") int maxRevivals, LectureTranscriptionRepository transcriptionRepository,
-            @Value("${artemis.iris.ingestion.course-window:P730D}") Duration courseWindow) {
+            @Value("${artemis.iris.ingestion.course-window:P730D}") Duration courseWindow,
+            @Value("${artemis.iris.ingestion.reconcile.video-pending-recheck:PT6H}") Duration videoPendingRecheck,
+            @Value("${artemis.iris.ingestion.reconcile.outage-pause-window:PT30M}") Duration outagePauseWindow) {
         this.processingStateRepository = processingStateRepository;
         this.reconcileStateRepository = reconcileStateRepository;
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
@@ -209,6 +222,8 @@ public class LectureIngestionReconcileService {
         this.maxRevivals = maxRevivals;
         this.transcriptionRepository = transcriptionRepository;
         this.courseWindow = courseWindow;
+        this.videoPendingRecheck = videoPendingRecheck;
+        this.outagePauseWindow = outagePauseWindow;
     }
 
     /**
@@ -245,7 +260,22 @@ public class LectureIngestionReconcileService {
      * @return the free room, at most the configured bound; zero or less when the backlog is full
      */
     int backlogBudget() {
-        return maxBacklog - (int) processingStateRepository.countOpenBackgroundUnits(LectureContentProcessingService.BACKLOG_DISPATCH_PRIORITY);
+        return maxBacklog - (int) processingStateRepository.countOpenBackgroundUnits(LectureContentProcessingService.BACKLOG_DISPATCH_PRIORITY, ZonedDateTime.now());
+    }
+
+    /**
+     * Whether Iris looks down: at least {@link #maxBacklog} units failed within {@link #outagePauseWindow} for reasons that are not specific to the unit,
+     * and no unit was ingested successfully in that window. Failed units wait for their retry without holding backlog room, so without this pause an
+     * outage would let the walk fail its way through every course.
+     *
+     * @return true if background intake should pause
+     */
+    boolean isOutagePauseActive() {
+        ZonedDateTime cutoff = ZonedDateTime.now().minus(outagePauseWindow);
+        if (processingStateRepository.countRecentOutageFailures(cutoff, LectureIngestionFailureClassifier.UNIT_SPECIFIC_ERROR_KEYS) < maxBacklog) {
+            return false;
+        }
+        return processingStateRepository.countRecentSuccessfulIngestions(cutoff) == 0;
     }
 
     /**
@@ -265,6 +295,10 @@ public class LectureIngestionReconcileService {
             int budget = backlogBudget();
             if (budget <= 0) {
                 log.debug("Background ingestion work paused: the backlog of {} open units is full", maxBacklog);
+                return 0;
+            }
+            if (isOutagePauseActive()) {
+                log.info("Background ingestion work paused: units keep failing and none succeeded within {}", outagePauseWindow);
                 return 0;
             }
             return spend.applyAsInt(budget);
@@ -452,13 +486,15 @@ public class LectureIngestionReconcileService {
     }
 
     /**
-     * Reconcile a DONE unit against its current content and the index reality.
+     * Reconcile a DONE unit against its current content and the index reality. In this order: a changed video source goes to the content-change path;
+     * a mismatch of the confirmed fingerprint is requeued; then the index is checked against the expected fingerprint; and a unit that was ingested
+     * without its video gets its video tried again after {@link #videoPendingRecheck}.
      */
     private int reconcileDoneUnit(AttachmentVideoUnit unit, LectureUnitProcessingState state, @Nullable IngestionCensusDTO census, @Nullable IngestionCensusUnitDTO censusEntry,
             boolean transcriptUnindexed) {
-        String currentFingerprint;
+        LectureUnitContentFingerprintService.ContentFingerprints fingerprints;
         try {
-            currentFingerprint = contentFingerprintService.computeFingerprint(unit);
+            fingerprints = contentFingerprintService.computeFingerprints(unit);
         }
         catch (RuntimeException e) {
             // An unreadable attachment surfaces as IllegalStateException; a malformed link surfaces
@@ -467,19 +503,18 @@ public class LectureIngestionReconcileService {
             log.warn("Reconcile: cannot compute fingerprint for unit {}, skipping: {}", unit.getId(), e.getMessage());
             return 0;
         }
+        String currentFingerprint = fingerprints.full();
 
         // Snapshot the confirmed fingerprint before any decision so requeueForReconcile can detect a
         // concurrent completion that re-confirmed the unit between the batch read and the write.
         String observedFingerprint = state.getConfirmedFingerprint();
-        if (observedFingerprint == null || !observedFingerprint.equals(currentFingerprint)) {
-            if (processingService.hasVideoSourceChanged(unit, state)) {
-                // The video changed without the update path firing, so the stored transcript belongs to the previous
-                // video. A plain requeue would dispatch straight to INGESTING with it; the content-change path deletes it
-                // and cleans up Iris before requeueing, exactly as an edit of the unit would.
-                log.info("Reconcile: video source of unit {} changed without the update path, handing it to the content-change path", unit.getId());
-                processingService.triggerProcessingAsBacklog(unit);
-                return 1;
-            }
+        boolean confirmedAsCurrent = currentFingerprint.equals(observedFingerprint);
+        if (handleVideoSourceChange(unit, state, confirmedAsCurrent)) {
+            return 1;
+        }
+
+        boolean videoPending = isVideoPending(unit, observedFingerprint, fingerprints);
+        if (!confirmedAsCurrent && !videoPending) {
             if (observedFingerprint == null) {
                 // Legacy row that predates verification: the pipeline's skip-check decides whether a re-run has anything to do.
                 return requeueForReconcile(state, null, "no confirmed fingerprint for the current content", ReconcileIntent.plain()) ? 1 : 0;
@@ -488,9 +523,11 @@ public class LectureIngestionReconcileService {
             // forced rebuild is certain to replace what the index holds.
             return requeueForReconcile(state, observedFingerprint, "the content changed since its fingerprint was confirmed", ReconcileIntent.forcingRebuild()) ? 1 : 0;
         }
+        // What the index must be stamped with: the content without the video for a unit ingested without it.
+        String expectedFingerprint = videoPending ? fingerprints.withoutVideo() : currentFingerprint;
         // A truncated entry undercounts this unit's rows, so none of the census checks below can be trusted for it.
         if (census != null && (censusEntry == null || !censusEntry.truncated())) {
-            if (censusEntry == null || censusEntry.unitRowCount() == 0 || !currentFingerprint.equals(censusEntry.contentFingerprint())) {
+            if (censusEntry == null || censusEntry.unitRowCount() == 0 || !expectedFingerprint.equals(censusEntry.contentFingerprint())) {
                 // The run was confirmed, but the index no longer holds a matching stamp: the data was lost
                 // or replaced after the fact (backup restore, collection recreate, raced delete). Force a
                 // full re-ingest so the run rewrites the unit instead of the skip-check treating it as done.
@@ -518,7 +555,54 @@ public class LectureIngestionReconcileService {
                         ReconcileIntent.forQuality(census.currentPipelineVersion())) ? 1 : 0;
             }
         }
+        if (videoPending && state.getLastUpdated() != null && state.getLastUpdated().isBefore(ZonedDateTime.now().minus(videoPendingRecheck))) {
+            // A plain run: the PDF is unchanged, so Iris skips its pages; if the video resolves now, the run adds it and confirms the full fingerprint.
+            return requeueForReconcile(state, observedFingerprint, "its video could not be resolved when it was ingested, trying the video again", ReconcileIntent.plain()) ? 1 : 0;
+        }
         return 0;
+    }
+
+    /**
+     * Hand a unit whose video source changed to the content-change path, which deletes the transcript of the previous video and cleans up Iris before
+     * requeueing. With a recorded marker the marker decides. Without one, a confirmation of the current content including its video proves the source is
+     * unchanged, so the missing marker is recorded instead; any other unit with a video and no marker keeps the conservative path, as a changed source.
+     *
+     * @return true if the unit was handed to the content-change path
+     */
+    private boolean handleVideoSourceChange(AttachmentVideoUnit unit, LectureUnitProcessingState state, boolean confirmedAsCurrent) {
+        boolean markerKnown = state.getVideoSourceHash() != null && !state.getVideoSourceHash().isBlank();
+        boolean hasVideo = unit.getVideoSource() != null && !unit.getVideoSource().isBlank();
+        if (!markerKnown && hasVideo && confirmedAsCurrent) {
+            if (reconcileStateRepository.recordMissingVideoSourceHash(state.getId(), processingService.videoSourceHashOf(unit), state.getConfirmedFingerprint()) > 0) {
+                log.info("Reconcile: recorded the missing video source marker of unit {}", unit.getId());
+            }
+            return false;
+        }
+        if ((markerKnown || !confirmedAsCurrent) && processingService.hasVideoSourceChanged(unit, state)) {
+            // The video changed without the update path firing, so the stored transcript belongs to the previous
+            // video. A plain requeue would dispatch straight to INGESTING with it; the content-change path deletes it
+            // and cleans up Iris before requeueing, exactly as an edit of the unit would.
+            log.info("Reconcile: video source of unit {} changed without the update path, handing it to the content-change path", unit.getId());
+            processingService.triggerProcessingAsBacklog(unit);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Whether the unit was ingested without its video because the video could not be resolved: its confirmed fingerprint is the one of its content
+     * without the video, while it has a supported video, a stored PDF, and no completed transcript (a completed transcript already holds what the video
+     * adds, so such a unit is confirmed with its full fingerprint).
+     */
+    private boolean isVideoPending(AttachmentVideoUnit unit, @Nullable String observedFingerprint, LectureUnitContentFingerprintService.ContentFingerprints fingerprints) {
+        if (observedFingerprint == null || !observedFingerprint.equals(fingerprints.withoutVideo()) || observedFingerprint.equals(fingerprints.full())) {
+            return false;
+        }
+        if (!processingService.hasSupportedVideo(unit) || !(unit.getAttachment() != null && unit.getAttachment().isStoredPdf())) {
+            return false;
+        }
+        return transcriptionRepository.findByLectureUnit_Id(unit.getId()).map(transcription -> transcription.getTranscriptionStatus() != TranscriptionStatus.COMPLETED)
+                .orElse(true);
     }
 
     /**
@@ -641,6 +725,16 @@ public class LectureIngestionReconcileService {
         if (state.getErrorKey() != null && PERMANENT_ERROR_KEYS.contains(state.getErrorKey())) {
             return 0;
         }
+        if (LectureIngestionFailureClassifier.VIDEO_SOURCE_UNAVAILABLE_KEY.equals(state.getErrorKey())) {
+            // The unit's only content is a video that could not be loaded, typically a recording that is not uploaded or released yet. That can take
+            // weeks, so the unit is tried again on the slow video recheck interval without a revival limit; its wait holds no backlog room.
+            if (state.getLastUpdated() == null || state.getLastUpdated().isAfter(ZonedDateTime.now().minus(videoPendingRecheck))) {
+                return 0;
+            }
+            // Not charged to the revival budget: weeks of waiting for a recording must not use up the budget that later protects the unit's
+            // recovery from an Iris outage once the recording is there.
+            return reviveFailedUnit(state, "its video could not be loaded, trying the video again", false) ? 1 : 0;
+        }
         if (state.getRevivalCount() >= maxRevivals) {
             // Exhausted its revival budget without ever succeeding: treat a generic error that keeps
             // recurring as effectively permanent and leave it FAILED for manual attention rather than
@@ -650,7 +744,7 @@ public class LectureIngestionReconcileService {
         if (state.getLastUpdated() == null || state.getLastUpdated().isAfter(ZonedDateTime.now().minus(failedRevivalCooldown))) {
             return 0;
         }
-        return reviveFailedUnit(state, "transient failure cooled down, reviving for another attempt") ? 1 : 0;
+        return reviveFailedUnit(state, "transient failure cooled down, reviving for another attempt", true) ? 1 : 0;
     }
 
     /**
@@ -696,16 +790,17 @@ public class LectureIngestionReconcileService {
      *         since the batch read, in which case nothing was written and the caller's budget must not be
      *         charged for this unit
      */
-    private boolean reviveFailedUnit(LectureUnitProcessingState state, String reason) {
+    private boolean reviveFailedUnit(LectureUnitProcessingState state, String reason, boolean chargesRevivalBudget) {
         long unitId = state.getLectureUnit().getId();
-        int updated = reconcileStateRepository.reviveFailedIfUnchanged(state.getId(), state.getErrorKey(), state.getLastUpdated(), state.getRevivalCount(),
+        int revivalIncrement = chargesRevivalBudget ? 1 : 0;
+        int updated = reconcileStateRepository.reviveFailedIfUnchanged(state.getId(), state.getErrorKey(), state.getLastUpdated(), state.getRevivalCount(), revivalIncrement,
                 RECONCILE_DISPATCH_PRIORITY, ZonedDateTime.now());
         if (updated == 0) {
             log.debug("Reconcile: skipping revival of unit {} — its state changed since the batch read", unitId);
             return false;
         }
         // Mirror the committed outcome onto the batch-read snapshot, field for field with the statement above.
-        state.setRevivalCount(state.getRevivalCount() + 1);
+        state.setRevivalCount(state.getRevivalCount() + revivalIncrement);
         state.resetRetryCount();
         state.requeue();
         state.setDispatchPriority(RECONCILE_DISPATCH_PRIORITY);

@@ -92,6 +92,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportResultDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -1256,8 +1257,8 @@ public class ProgrammingExerciseTestService {
         // Import the exam
         targetExam.setChannelName("testchannel-imported");
         // The import response carries only the imported exam's id/title; re-fetch the persisted exam graph to assert it.
-        Long importedExamId = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", targetExam, ExamImportResultDTO.class, HttpStatus.CREATED).exam()
-                .id();
+        Long importedExamId = request.postWithResponseBody("/api/exam/courses/" + course.getId() + "/exam-import", ExamImportDTO.of(targetExam, course.getId()),
+                ExamImportResultDTO.class, HttpStatus.CREATED).exam().id();
         final Exam received = examTestRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(importedExamId);
 
         // Extract the programming exercise from the exam

@@ -64,6 +64,7 @@ describe('PostingsMarkdownEditor', () => {
     const mockOverlayRef = {
         attach: vi.fn().mockReturnValue({ location: { nativeElement: document.createElement('div') } }),
         backdropClick: vi.fn(() => backdropClickSubject.asObservable()),
+        overlayElement: document.createElement('div'),
         detach: vi.fn(),
         dispose: vi.fn(),
         scrollStrategies: { reposition: vi.fn() },
@@ -97,12 +98,14 @@ describe('PostingsMarkdownEditor', () => {
     };
 
     const mockPositionStrategy = {
-        left: vi.fn().mockReturnThis(),
-        top: vi.fn().mockReturnThis(),
+        withPositions: vi.fn().mockReturnThis(),
+        withViewportMargin: vi.fn().mockReturnThis(),
+        withFlexibleDimensions: vi.fn().mockReturnThis(),
+        withPush: vi.fn().mockReturnThis(),
     };
 
     const overlayPositionBuilderMock = {
-        global: vi.fn().mockReturnValue(mockPositionStrategy),
+        flexibleConnectedTo: vi.fn().mockReturnValue(mockPositionStrategy),
     };
 
     afterEach(() => {
@@ -399,26 +402,16 @@ describe('PostingsMarkdownEditor', () => {
         const emojiAction = component.defaultActions().find((action) => action instanceof EmojiAction) as EmojiAction;
         emojiAction.setPoint({ x: 100, y: 200 });
 
-        const localMockPositionStrategy = {
-            left: vi.fn().mockReturnThis(),
-            top: vi.fn().mockReturnThis(),
-        };
-
-        mockOverlay.create.mockReturnValue(mockOverlayRef);
-        overlayPositionBuilderMock.global.mockReturnValue(localMockPositionStrategy);
-
         emojiAction.run(mockEditor as unknown as TextEditor);
 
-        expect(mockOverlay.create).toHaveBeenCalledWith({
-            positionStrategy: localMockPositionStrategy,
-            hasBackdrop: true,
-            backdropClass: 'cdk-overlay-transparent-backdrop',
-            scrollStrategy: mockOverlay.scrollStrategies.reposition(),
-            width: '0',
-        });
-
-        expect(localMockPositionStrategy.left).toHaveBeenCalledWith(`85px`);
-        expect(localMockPositionStrategy.top).toHaveBeenCalledWith(`185px`);
+        expect(overlayPositionBuilderMock.flexibleConnectedTo).toHaveBeenCalledWith({ x: 100, y: 200 });
+        expect(mockPositionStrategy.withPositions).toHaveBeenCalledWith(
+            expect.arrayContaining([expect.objectContaining({ overlayY: 'bottom' }), expect.objectContaining({ overlayY: 'top' })]),
+        );
+        expect(mockPositionStrategy.withViewportMargin).toHaveBeenCalledWith(8);
+        expect(mockPositionStrategy.withPush).toHaveBeenCalledWith(true);
+        expect(mockOverlay.create).toHaveBeenCalledWith(expect.objectContaining({ maxHeight: 'calc(100dvh - 16px)', maxWidth: 'calc(100vw - 16px)' }));
+        expect(mockOverlayRef.overlayElement.style.overflow).toBe('auto');
     });
 
     it('should detach overlay and close EmojiPickerComponent on backdrop click', () => {
