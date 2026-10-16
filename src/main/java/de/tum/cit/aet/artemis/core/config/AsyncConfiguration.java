@@ -64,6 +64,27 @@ public class AsyncConfiguration implements AsyncConfigurer {
     }
 
     /**
+     * Serialize FAQ synchronization on a bounded worker pool. Saturation must never run a Pyris call on the request
+     * thread or reject a successful local save: reconciliation recovers tasks that do not fit in the queue.
+     * Under the test profile, run synchronously to keep shared Iris request mocks isolated between tests.
+     *
+     * @return the FAQ executor, synchronous only under the test profile
+     */
+    @Bean("faqTaskExecutor")
+    public Executor faqTaskExecutor() {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(1000);
+        executor.setThreadNamePrefix("faq-sync-");
+        executor.setRejectedExecutionHandler((task, pool) -> log.warn("FAQ synchronization queue is full or shutting down; reconciliation will retry"));
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
      * Dedicated executor for Deimos batch runs to isolate long-running LLM workloads from the shared async infrastructure.
      *
      * @param corePoolSize  minimum number of threads kept in the Deimos executor

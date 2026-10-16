@@ -29,10 +29,6 @@ public class PyrisFaqApi extends AbstractIrisApi {
         pyrisWebhookService.addFaq(faq);
     }
 
-    public void deleteFaq(Faq faq) {
-        pyrisWebhookService.deleteFaq(faq);
-    }
-
     /**
      * Delete an FAQ from Pyris by its ids alone, for an FAQ that no longer exists in Artemis or is not accepted anymore.
      *
@@ -53,7 +49,4 @@ public class PyrisFaqApi extends AbstractIrisApi {
         return pyrisConnectorService.getFaqCensus();
     }
 
-    public void autoUpdateFaqInPyris(Faq faq) {
-        pyrisWebhookService.autoUpdateFaqInPyris(faq);
-    }
 }
