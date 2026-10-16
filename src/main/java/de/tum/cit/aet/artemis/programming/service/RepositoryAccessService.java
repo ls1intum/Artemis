@@ -279,7 +279,8 @@ public class RepositoryAccessService {
     }
 
     /**
-     * Checks if the user has access to the plagiarism submission of the given programming participation.
+     * Checks access to the live repository used by the plagiarism view. Staff must also have live repository read access;
+     * anonymous assessment reads use the separately authorized submitted-commit endpoints.
      *
      * @param programmingParticipation The participation for which the plagiarism submission should be accessed.
      * @param user                     The user who wants to access the plagiarism submission.
@@ -292,6 +293,7 @@ public class RepositoryAccessService {
             boolean isAtLeastTeachingAssistant = authorizationCheckService.isAtLeastTeachingAssistantInCourse(getCourseOrThrow(programmingParticipation.getProgrammingExercise()),
                     user);
             if (isAtLeastTeachingAssistant) {
+                checkAccessRepositoryElseThrow(programmingParticipation, user, programmingParticipation.getProgrammingExercise(), RepositoryActionType.READ);
                 return;
             }
             if (plagiarismAccessApi.isEmpty()

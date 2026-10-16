@@ -149,6 +149,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly course = signal<Course | undefined>(undefined);
     readonly exercise = signal<Exercise | undefined>(undefined);
     readonly hideParticipantInformation = computed(() => this.privacyService.isParticipantInformationHidden(this.exercise()));
+    /** Editors retain live repository access even when participant identities are masked. */
+    readonly canAccessLiveRepository = computed(() => !!this.exercise()?.isAtLeastEditor || !!this.exercise()?.isAtLeastInstructor || !this.hideParticipantInformation());
     readonly isAdmin = signal(false);
     readonly participations = signal<ParticipationScoreDTO[]>([]);
     readonly totalRows = signal(0);

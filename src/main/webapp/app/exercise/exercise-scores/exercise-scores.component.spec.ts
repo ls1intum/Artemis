@@ -139,6 +139,32 @@ describe('Exercise Scores Component', () => {
         });
     });
 
+    describe('Live repository actions', () => {
+        it('hides the online editor for tutors after the manual deadline and in exams', () => {
+            component.exercise.set({ ...exercise, isAtLeastTutor: true, assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().subtract(1, 'hour') });
+            expect(component.canAccessLiveRepository()).toBe(false);
+            component.exercise.set({ ...exercise, isAtLeastTutor: true, exerciseGroup: { id: 1 } });
+            expect(component.canAccessLiveRepository()).toBe(false);
+        });
+
+        it('keeps the online editor for automatic assessment and tutors before the manual deadline', () => {
+            component.exercise.set({ ...exercise, isAtLeastTutor: true, assessmentType: AssessmentType.AUTOMATIC, dueDate: dayjs().subtract(1, 'hour') });
+            expect(component.canAccessLiveRepository()).toBe(true);
+            component.exercise.set({ ...exercise, isAtLeastTutor: true, assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().add(1, 'hour') });
+            expect(component.canAccessLiveRepository()).toBe(true);
+        });
+
+        it('preserves editor and instructor access while identities are masked', () => {
+            component.exercise.set({ ...exercise, isAtLeastEditor: true, assessmentType: AssessmentType.SEMI_AUTOMATIC, dueDate: dayjs().subtract(1, 'hour') });
+            expect(component.hideParticipantInformation()).toBe(true);
+            expect(component.canAccessLiveRepository()).toBe(true);
+            component.exercise.set({ ...exercise, isAtLeastEditor: true, exerciseGroup: { id: 1 } });
+            expect(component.canAccessLiveRepository()).toBe(true);
+            component.exercise.set({ ...exercise, isAtLeastInstructor: true, exerciseGroup: { id: 1 } });
+            expect(component.canAccessLiveRepository()).toBe(true);
+        });
+    });
+
     describe('Repository column', () => {
         it('shows a named repository column beside the participant identity while support access is available', () => {
             component.exercise.set({ ...exercise, isAtLeastTutor: true, isAtLeastInstructor: false, assessmentType: AssessmentType.AUTOMATIC });
