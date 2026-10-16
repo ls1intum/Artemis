@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,6 +25,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.criti
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SemanticMutantOutcome.Disposition;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.SandboxBuildCommands;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.WorkspaceArchive;
 
 class SemanticMutantExecutionTest {
 
@@ -44,6 +47,11 @@ class SemanticMutantExecutionTest {
             class SchedulerTest {
                 @Test void existing() { assertEquals(1, new Scheduler().choose(), "existing behavior"); }
             }
+            """, "SecurityPolicy.yaml", """
+            regardingTheSupervisedCode:
+              theFollowingClassesAreTestClasses:
+                - "example.SchedulerTest"
+              theFollowingResourceAccessesArePermitted: { }
             """);
 
     @Test
@@ -222,6 +230,17 @@ class SemanticMutantExecutionTest {
         InteractiveSandbox sandbox = mock(InteractiveSandbox.class);
         when(sandbox.exec(anyString(), any(), any(String[].class))).thenReturn(new SandboxExecResultDTO(0, "", "", false));
         when(sandbox.copyOut(anyString(), anyString())).thenReturn(first, remaining);
+        doAnswer(invocation -> {
+            try (var archive = new TarArchiveInputStream(invocation.getArgument(2, InputStream.class))) {
+                Map<String, String> overlay = WorkspaceArchive.readTar(archive, "");
+                if (overlay.containsKey("tests/test/example/HyperionContractWitnessProbeTest.java")) {
+                    assertThat(overlay).containsKey("tests/SecurityPolicy.yaml");
+                    assertThat(overlay.get("tests/SecurityPolicy.yaml")).contains("    - \"example.HyperionContractWitnessProbeTest\"");
+                    assertThat(AresSecurityPolicy.onlyTestClassesChanged(TESTS.get("SecurityPolicy.yaml"), overlay.get("tests/SecurityPolicy.yaml"))).isTrue();
+                }
+            }
+            return null;
+        }).when(sandbox).copyIn(anyString(), anyString(), any());
         return sandbox;
     }
 

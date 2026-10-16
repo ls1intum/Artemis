@@ -19,7 +19,7 @@ final class SemanticMutantExecution {
     @FunctionalInterface
     interface ProbeRunner {
 
-        BuildSummary run(@Nullable SemanticMutant mutant, Map.@Nullable Entry<String, String> counterexample);
+        BuildSummary run(@Nullable SemanticMutant mutant, @Nullable Map<String, String> counterexample);
     }
 
     private SemanticMutantExecution() {
@@ -57,7 +57,8 @@ final class SemanticMutantExecution {
                 outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
                 continue;
             }
-            BuildSummary pristine = runner.run(null, Map.entry(probePath, source));
+            Map<String, String> overlay = ContractWitnessProbe.workspaceOverlay(testFiles, probePath, source);
+            BuildSummary pristine = runner.run(null, overlay);
             if (ContractWitnessProbe.executed(mutant.counterexample(), pristine.testNames()) && ContractWitnessProbe.failed(mutant.counterexample(), pristine.testFailedNames())
                     && !pristine.timedOut()) {
                 outcomes.add(new SemanticMutantOutcome(mutant, Disposition.REFERENCE_TEST_FAILED, ContractWitnessProbe.failureDiagnostic(mutant.counterexample(), pristine)));
@@ -67,7 +68,7 @@ final class SemanticMutantExecution {
                 outcomes.add(new SemanticMutantOutcome(mutant, Disposition.INCONCLUSIVE));
                 continue;
             }
-            BuildSummary mutated = runner.run(mutant, Map.entry(probePath, source));
+            BuildSummary mutated = runner.run(mutant, overlay);
             if (!ContractWitnessProbe.discriminating(List.of(mutant.counterexample()), mutated.testNames(), mutated.testFailedNames()).isEmpty()) {
                 outcomes.add(new SemanticMutantOutcome(mutant, killedByExistingSuite ? Disposition.KILLED_BY_GRADED_SUITE : Disposition.SURVIVED_GRADED_SUITE));
             }
