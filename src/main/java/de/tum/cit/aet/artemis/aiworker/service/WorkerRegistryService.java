@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.aiworker.domain.WorkerEventType;
 import de.tum.cit.aet.artemis.aiworker.domain.WorkerState;
 import de.tum.cit.aet.artemis.aiworker.dto.ExecutionClaimDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.ExecutionIdentityDTO;
+import de.tum.cit.aet.artemis.aiworker.dto.WorkerCapacityDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerEventDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerExecutionDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerStatusDTO;
@@ -66,7 +67,7 @@ public class WorkerRegistryService {
         for (String workerId : properties.ids()) {
             Map<UUID, Boolean> claimed = new HashMap<>();
             transport.pruneUnclaimed(workerId, executionId -> claimed.computeIfAbsent(executionId,
-                    id -> java.util.stream.IntStream.range(0, 16).anyMatch(slot -> id.equals(leases.get(slotKey(workerId, slot))))));
+                    id -> java.util.stream.IntStream.range(0, WorkerCapacityDTO.MAX_SLOTS).anyMatch(slot -> id.equals(leases.get(slotKey(workerId, slot))))));
         }
     }
 
@@ -210,7 +211,7 @@ public class WorkerRegistryService {
         Instant now = Instant.now();
         return properties.ids().stream().map(worker -> {
             Presence live = presence.get(worker);
-            boolean leaseHeld = java.util.stream.IntStream.range(0, 16).anyMatch(slot -> leases.get(slotKey(worker, slot)) != null);
+            boolean leaseHeld = java.util.stream.IntStream.range(0, WorkerCapacityDTO.MAX_SLOTS).anyMatch(slot -> leases.get(slotKey(worker, slot)) != null);
             if (live == null || !live.receivedAt().plus(properties.presenceTtl()).isAfter(now)) {
                 return new WorkerStatusDTO(worker, WorkerState.OFFLINE, null, null, null, null, leaseHeld, 0, 0, List.of(), null);
             }
