@@ -234,7 +234,13 @@ public class GenerationLiveSaveService {
         }
     }
 
-    /** Publishes the exact build pair whose asynchronous test discovery may join the current save. */
+    /**
+     * Publishes the exact build pair whose asynchronous test discovery may join the current save.
+     *
+     * @param exerciseId     protected exercise
+     * @param solutionCommit expected solution revision
+     * @param testsCommit    expected tests revision
+     */
     public void expectTestCaseSynchronization(long exerciseId, String solutionCommit, String testsCommit) {
         if (!enabled) {
             return;
@@ -258,7 +264,15 @@ public class GenerationLiveSaveService {
         }
     }
 
-    /** Runs canonical test discovery under a reader, or the exact save synchronization permit. */
+    /**
+     * Runs canonical test discovery under a reader, or the exact save synchronization permit.
+     *
+     * @param exerciseId     protected exercise
+     * @param solutionCommit result solution revision
+     * @param testsCommit    result tests revision
+     * @param callback       guarded canonical discovery, returning whether both current revisions match
+     * @return whether canonical discovery accepted this result
+     */
     public boolean synchronizeTestCases(long exerciseId, String solutionCommit, String testsCommit, BooleanSupplier callback) {
         if (!enabled) {
             return callback.getAsBoolean();
@@ -306,7 +320,14 @@ public class GenerationLiveSaveService {
         }
     }
 
-    /** Reports completion only after canonical test discovery has returned successfully. */
+    /**
+     * Reports completion only after canonical test discovery has returned successfully.
+     *
+     * @param exerciseId     protected exercise
+     * @param solutionCommit expected solution revision
+     * @param testsCommit    expected tests revision
+     * @return whether the expected canonical discovery completed
+     */
     public boolean testCaseSynchronizationCompleted(long exerciseId, String solutionCommit, String testsCommit) {
         if (!enabled) {
             return true;
