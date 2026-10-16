@@ -1,5 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { EmojiSearch } from '@ctrl/ngx-emoji-mart';
+import { EMOTICON_TO_EMOJI } from 'app/editor/monaco-editor/model/emoticon-emoji.util';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -9,7 +11,7 @@ import { sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.ut
 
 export interface MessageSuggestion {
     label: string;
-    kind: 'user' | 'channel' | 'exercise' | 'lecture' | 'message' | 'faq' | 'slide' | 'lecture-unit';
+    kind: 'emoji' | 'user' | 'channel' | 'exercise' | 'lecture' | 'message' | 'faq' | 'slide' | 'lecture-unit';
     markdown: string;
     resourceLabel?: string;
     slideNumber?: number;
@@ -19,6 +21,7 @@ export interface MessageSuggestion {
 /** Loads course-scoped completion data only when requested. Each composer owns its cache. */
 @Injectable()
 export class MessageEditorSuggestions {
+    private readonly emojis = inject(EmojiSearch);
     private readonly members = inject(CourseManagementService);
     private readonly channels = inject(ChannelService);
     private readonly exercises = inject(ExerciseService);
@@ -26,7 +29,16 @@ export class MessageEditorSuggestions {
 
     private readonly content = new Map<number, Promise<MessageSuggestion[]>>();
 
-    async search(trigger: '@' | '#', query: string, courseId: number, conversation?: ConversationDTO, editing = false): Promise<MessageSuggestion[]> {
+    async search(trigger: '@' | '#' | ':', query: string, courseId: number, conversation?: ConversationDTO, editing = false): Promise<MessageSuggestion[]> {
+        if (trigger === ':') {
+            if (!query || !/^[A-Za-z0-9_+-]+$/.test(query) || EMOTICON_TO_EMOJI[`:${query}`] !== undefined) {
+                return [];
+            }
+            return (this.emojis.search(query, undefined, 30) ?? [])
+                .filter((emoji) => !!emoji.native)
+                .slice(0, 5)
+                .map((emoji) => ({ label: `${emoji.native} :${emoji.id}:`, kind: 'emoji', markdown: emoji.native! }));
+        }
         if (trigger === '@') {
             const response = await firstValueFrom(this.members.searchMembersForUserMentions(courseId, query));
             const items: MessageSuggestion[] = (response.body ?? []).map((user) => ({

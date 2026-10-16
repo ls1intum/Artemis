@@ -90,6 +90,7 @@ export class MessageEditorComponent {
             }
             if (element) {
                 this.editor ??= new MessageEditorDom(element, (value) => {
+                    this.linkOpen.set(false);
                     this.lastValue = value;
                     this.contentChange.emit(value);
                 });
@@ -115,12 +116,14 @@ export class MessageEditorComponent {
 
     protected applyFormat(tag: 'strong' | 'em' | 'ins' | 's' | 'code'): void {
         this.dismissSuggestions();
+        this.linkOpen.set(false);
         this.editor?.format(tag);
         this.focus();
     }
 
     protected applyBlock(tag: 'ul' | 'ol' | 'blockquote' | 'pre'): void {
         this.dismissSuggestions();
+        this.linkOpen.set(false);
         this.editor?.block(tag);
         this.focus();
     }
@@ -140,6 +143,7 @@ export class MessageEditorComponent {
             // WebKit can normalize a valid caret to before the preceding line break during native insertion.
             event.preventDefault();
             this.editor.insertText(event.data);
+            this.scheduleSuggestions();
         } else if (!this.composing) {
             this.editor?.beforeInput();
         }
@@ -153,14 +157,14 @@ export class MessageEditorComponent {
     }
 
     protected compositionStart(): void {
-        this.editor?.beforeInput();
+        this.editor?.beginComposition();
         this.composing = true;
         this.dismissSuggestions();
     }
 
     protected compositionEnd(): void {
         this.composing = false;
-        this.editor?.afterInput();
+        this.editor?.endComposition();
         this.scheduleSuggestions();
     }
 
@@ -177,6 +181,7 @@ export class MessageEditorComponent {
             event.preventDefault();
             event.stopPropagation();
             this.dismissSuggestions();
+            if (event.key.toLowerCase() !== 'k') this.linkOpen.set(false);
             switch (event.key.toLowerCase()) {
                 case 'z':
                     if (event.shiftKey) {
@@ -244,6 +249,9 @@ export class MessageEditorComponent {
                 event.preventDefault();
                 event.stopPropagation();
                 this.editor?.insertText('\n');
+            } else if (this.editor?.exitEmptyList()) {
+                event.preventDefault();
+                event.stopPropagation();
             } else if (parent?.closest('li, blockquote') || !this.suppressNewlineOnEnter()) {
                 event.stopPropagation();
             } else {

@@ -65,6 +65,26 @@ describe('Formatted message composer', () => {
         expect(document.activeElement).toBe(editable);
     });
 
+    it('dismisses an existing link form before a formatting rebuild can detach its target', () => {
+        fixture.componentRef.setInput('content', 'Read [guide](https://example.org) next');
+        fixture.detectChanges();
+        const link = editable.querySelector('a')!;
+        const range = document.createRange();
+        range.setStart(link.firstChild!, 2);
+        range.collapse(true);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        (fixture.nativeElement.querySelector('[data-testid="message-link-button"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(component.linkOpen()).toBe(true);
+        (fixture.nativeElement.querySelector('[data-testid="message-block-blockquote"]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(component.linkOpen()).toBe(false);
+        expect(editable.querySelectorAll('a')).toHaveLength(1);
+        expect(editable.querySelector('a')!.textContent).toBe('guide');
+        expect(editable.querySelector('blockquote a')!.getAttribute('href')).toBe('https://example.org');
+    });
+
     it('immediately emits the current message without debounce', () => {
         const emit = vi.spyOn(component.contentChange, 'emit');
         editable.innerHTML = '<p>Hello <strong>world</strong></p>';
@@ -104,6 +124,25 @@ describe('Formatted message composer', () => {
         expect(drop.defaultPrevented).toBe(true);
     });
 
+    it.each(['漢字', 'かな', '🙂'])('applies pending bold to committed composition %s and preserves undo', (text) => {
+        caretAtEnd();
+        (fixture.nativeElement.querySelector('[data-testid="message-format-strong"]') as HTMLButtonElement).click();
+        const emit = vi.spyOn(component.contentChange, 'emit');
+        editable.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+        const original = editable.querySelector('p')!.firstChild!;
+        original.textContent += text;
+        caretAtEnd();
+        editable.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertCompositionText', data: text, isComposing: true }));
+        expect(emit).not.toHaveBeenCalled();
+        editable.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true, data: text }));
+        expect(editable.querySelector('strong')?.textContent).toBe(text);
+        expect(editable.textContent).toBe(`Hello${text}`);
+        expect(emit).toHaveBeenLastCalledWith(`Hello**${text}**`);
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true }));
+        expect(editable.textContent).toBe('Hello');
+        expect(editable.querySelector('strong')).toBeNull();
+    });
+
     it('handles composition and Shift+Enter without bubbling a send shortcut', () => {
         const composing = new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true, cancelable: true });
         const bubbled = vi.fn();
@@ -113,6 +152,20 @@ describe('Formatted message composer', () => {
         caretAtEnd();
         editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true, cancelable: true }));
         expect(bubbled).not.toHaveBeenCalled();
+    });
+
+    it('still schedules mention completion while typing with a pending format', async () => {
+        caretAtEnd();
+        (fixture.nativeElement.querySelector('[data-testid="message-format-strong"]') as HTMLButtonElement).click();
+        vi.useFakeTimers();
+        const input = new InputEvent('beforeinput', { inputType: 'insertText', data: ' @ann', bubbles: true, cancelable: true });
+        editable.dispatchEvent(input);
+        expect(input.defaultPrevented).toBe(true);
+        expect(editable.querySelector('strong')?.textContent).toBe(' @ann');
+        await vi.advanceTimersByTimeAsync(150);
+        expect(search).toHaveBeenCalledWith('@', 'ann', 1, undefined, false);
+        expect(component.suggestionsOpen()).toBe(true);
+        expect(component.suggestions()[0].label).toBe('@Anna');
     });
 
     it('uses Enter to accept a completion without sending', async () => {
@@ -176,16 +229,21 @@ describe('Formatted message composer', () => {
         expect(component.linkUrl()).toBe('https://example.org');
     });
 
-    it('preserves the selection when applying toolbar formatting and block styles', () => {
-        caretAtEnd();
+    it('preserves the selected words when applying toolbar formatting and block styles', () => {
+        const range = document.createRange();
+        range.selectNodeContents(editable.querySelector('p')!);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
         const button = fixture.nativeElement.querySelector('[data-testid="message-format-strong"]') as HTMLButtonElement;
         const down = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
         button.dispatchEvent(down);
         expect(down.defaultPrevented).toBe(true);
         button.click();
-        expect(editable.querySelector('strong')).not.toBeNull();
+        expect(editable.querySelector('strong')!.textContent).toBe('Hello');
+        expect(window.getSelection()!.toString()).toBe('Hello');
         (fixture.nativeElement.querySelector('[data-testid="message-block-ul"]') as HTMLButtonElement).click();
-        expect(editable.querySelector('ul')).not.toBeNull();
+        expect(editable.querySelector('ul > li strong')!.textContent).toBe('Hello');
+        expect(window.getSelection()!.toString()).toBe('Hello');
     });
 
     it.each(['b', 'i', 'u', 'k'])('handles the Ctrl/Cmd+%s shortcut inside the composer', (key) => {
@@ -196,13 +254,20 @@ describe('Formatted message composer', () => {
         if (key === 'k') {
             expect(component.linkOpen()).toBe(true);
         } else {
-            expect(editable.querySelector(key === 'b' ? 'strong' : key === 'i' ? 'em' : 'ins')).not.toBeNull();
+            const typing = new InputEvent('beforeinput', { inputType: 'insertText', data: ' world', bubbles: true, cancelable: true });
+            editable.dispatchEvent(typing);
+            expect(typing.defaultPrevented).toBe(true);
+            expect(editable.querySelector(key === 'b' ? 'strong' : key === 'i' ? 'em' : 'ins')!.textContent).toBe(' world');
+            expect(editable.textContent).toBe('Hello world');
         }
     });
 
     it('provides keyboard and browser-event undo and redo', () => {
         const emit = vi.spyOn(component.contentChange, 'emit');
-        caretAtEnd();
+        const selected = document.createRange();
+        selected.selectNodeContents(editable.querySelector('p')!);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(selected);
         editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'b', ctrlKey: true, bubbles: true, cancelable: true }));
         editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true }));
         expect(editable.querySelector('strong')).toBeNull();

@@ -53,6 +53,30 @@ describe('Message editor editing transactions', () => {
         expect(editor.completion()).toBeUndefined();
     });
 
+    it('replaces a colon emoji query without consuming the surrounding text and can undo it', () => {
+        editor.load('Keep :smile suffix');
+        select(root.querySelector('p')!.firstChild!, 11);
+        const completion = editor.completion()!;
+        expect(completion.trigger).toBe(':');
+        expect(completion.query).toBe('smile');
+        expect(completion.range.toString()).toBe(':smile');
+        editor.insertMarkdown('😄 ', completion.range);
+        expect(root.textContent).toBe('Keep 😄  suffix');
+        editor.undo();
+        expect(root.textContent).toBe('Keep :smile suffix');
+        const prefix = document.createRange();
+        prefix.selectNodeContents(root);
+        prefix.setEnd(window.getSelection()!.anchorNode!, window.getSelection()!.anchorOffset);
+        expect(prefix.toString()).toBe('Keep :smile');
+    });
+
+    it.each(['At 10:30', 'https:', ':', ':D', ':-D', ':p', ':)', ':-)', '` :smile`'])('does not intercept typing or Enter for %s', (message) => {
+        editor.load(message);
+        const node = root.querySelector('code')?.firstChild ?? root.querySelector('p')!.lastChild!;
+        select(node, node.textContent!.length);
+        expect(editor.completion()).toBeUndefined();
+    });
+
     it('selects a complete mention before deleting it and restores it on undo', () => {
         editor.load('Hello [user]Anna(anna)[/user]');
         const paragraph = root.querySelector('p')!;
@@ -328,6 +352,26 @@ describe('Message editor editing transactions', () => {
         expect(root.querySelector('strong em')).not.toBeNull();
         expect(root.querySelector('a')!.getAttribute('href')).toBe('https://example.org');
         expect(root.querySelector('[data-message-reference]')!.getAttribute('data-message-reference')).toBe('[user]Anna(anna)[/user]');
+    });
+
+    it('keeps native cross-paragraph typing and merges paragraph boundaries when pasting plain text', () => {
+        editor.load('First paragraph\n\nSecond paragraph');
+        const paragraphs = root.querySelectorAll('p');
+        const range = document.createRange();
+        range.setStart(paragraphs[0].firstChild!, 6);
+        range.setEnd(paragraphs[1].firstChild!, 6);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        expect(editor.needsManagedTextInsertion()).toBe(false);
+        editor.insertText('new');
+        expect(root.querySelectorAll('p')).toHaveLength(1);
+        expect(root.textContent).toBe('First new paragraph');
+        expect(changed).toHaveBeenLastCalledWith('First new paragraph');
+        editor.undo();
+        expect(root.querySelectorAll('p')).toHaveLength(2);
+        expect(window.getSelection()!.toString()).toBe('paragraphSecond');
+        editor.redo();
+        expect(root.textContent).toBe('First new paragraph');
     });
 
     it('leaves ordinary character deletion and unsafe links to their respective handlers', () => {

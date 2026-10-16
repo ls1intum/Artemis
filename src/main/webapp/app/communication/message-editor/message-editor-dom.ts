@@ -1,6 +1,12 @@
-import { editorCodeText, editorToMessage, isMessageLinkSafe, messageToEditorHtml } from './message-editor-conversion';
-import { formatMessageSelection, messageSelectionOffset, restoreMessageSelection } from './message-editor-formatting';
+import { captureMessageBookmark, messageBookmarkText, restoreMessageBookmark } from './message-editor-bookmarks';
+import { preserveMessageSelection, restoreMessageSelectionBoundaries } from './message-editor-selection';
+import { formatMessageBlocks } from './message-editor-blocks';
+import { editorToMessage, isMessageLinkSafe, messageToEditorHtml } from './message-editor-conversion';
+import { formatMessageSelection, messageSelectionOffset, restoreMessageSelection, setMessageSelectionMarks } from './message-editor-formatting';
+import { EMOTICON_TO_EMOJI } from 'app/editor/monaco-editor/model/emoticon-emoji.util';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
+
+const inlineMarks = ['strong', 'em', 'ins', 's', 'code'] as const;
 
 interface SelectionPoint {
     path: number[];
@@ -9,12 +15,12 @@ interface SelectionPoint {
 
 interface EditorSnapshot {
     html: string;
-    start?: SelectionPoint;
-    end?: SelectionPoint;
+    selectionHtml: string;
+    typingMarks?: string[];
 }
 
 export interface MessageCompletion {
-    trigger: '@' | '#';
+    trigger: '@' | '#' | ':';
     query: string;
     range: Range;
 }
@@ -25,6 +31,9 @@ export class MessageEditorDom {
     private historyIndex = -1;
     private savedRange?: Range;
     private revision = 0;
+    private typingMarks?: string[];
+    private typingCaret?: Range;
+    private composition?: { start: number; marks?: string[] };
     private readonly entitySelections = new WeakMap<Range, { revision: number; start: number; end: number; text: string }>();
     private readonly diff = new DiffMatchPatch();
 
@@ -38,6 +47,9 @@ export class MessageEditorDom {
         this.element.innerHTML = messageToEditorHtml(message);
         this.ensureCaret();
         this.savedRange = undefined;
+        this.typingMarks = undefined;
+        this.typingCaret = undefined;
+        this.composition = undefined;
         this.history = [this.snapshot()];
         this.historyIndex = 0;
     }
@@ -56,11 +68,12 @@ export class MessageEditorDom {
             return undefined;
         }
         const captured = range.cloneRange();
+        const bookmark = captureMessageBookmark(this.element, range);
         this.entitySelections.set(captured, {
             revision: this.revision,
-            start: messageSelectionOffset(this.element, range.startContainer, range.startOffset),
-            end: messageSelectionOffset(this.element, range.endContainer, range.endOffset),
-            text: this.element.textContent ?? '',
+            start: bookmark.start,
+            end: bookmark.end,
+            text: bookmark.text,
         });
         return captured;
     }
@@ -72,8 +85,8 @@ export class MessageEditorDom {
             return undefined;
         }
         if (bookmark.revision !== this.revision) {
-            const changes = this.diff.diff_main(bookmark.text, this.element.textContent ?? '');
-            range = restoreMessageSelection(this.element, this.diff.diff_xIndex(changes, bookmark.start), this.diff.diff_xIndex(changes, bookmark.end));
+            const changes = this.diff.diff_main(bookmark.text, messageBookmarkText(this.element));
+            range = restoreMessageBookmark(this.element, this.diff.diff_xIndex(changes, bookmark.start), this.diff.diff_xIndex(changes, bookmark.end));
             const collapsed = range.collapsed;
             const startItem = this.parentElement(range.startContainer)?.closest('[data-message-reference]');
             const endItem = this.parentElement(range.endContainer)?.closest('[data-message-reference]');
@@ -103,15 +116,29 @@ export class MessageEditorDom {
 
     needsManagedTextInsertion(): boolean {
         const range = this.range();
+        if (!range.collapsed) {
+            const nodes = this.selectedTextNodes(range);
+            const block = (node: Node) => this.parentElement(node)?.closest('p, li, pre') ?? this.element;
+            return nodes.length > 0 && nodes.every((node) => block(node) === block(nodes[0]));
+        }
         return (
-            !!this.parentElement(range.startContainer)?.closest('pre') || (range.collapsed && this.adjacent(range.startContainer, range.startOffset, true) instanceof HTMLBRElement)
+            this.typingMarks !== undefined ||
+            !!this.parentElement(range.startContainer)?.closest('pre') ||
+            (range.collapsed &&
+                (this.adjacent(range.startContainer, range.startOffset, true) instanceof HTMLBRElement ||
+                    (!this.parentElement(range.startContainer)?.closest('a') && this.adjacent(range.startContainer, range.startOffset, true) instanceof HTMLAnchorElement)))
         );
     }
 
     private range(): Range {
         const selection = this.element.ownerDocument.getSelection();
         if (selection?.rangeCount && this.element.contains(selection.getRangeAt(0).commonAncestorContainer)) {
-            return selection.getRangeAt(0);
+            const range = selection.getRangeAt(0);
+            if (this.typingCaret && (range.startContainer !== this.typingCaret.startContainer || range.startOffset !== this.typingCaret.startOffset || !range.collapsed)) {
+                this.typingMarks = undefined;
+                this.typingCaret = undefined;
+            }
+            return range;
         }
         if (this.savedRange && this.element.contains(this.savedRange.commonAncestorContainer)) {
             return this.savedRange;
@@ -128,6 +155,9 @@ export class MessageEditorDom {
         selection?.addRange(range);
         this.highlightItem(range);
         this.savedRange = range.cloneRange();
+        if (this.typingMarks) {
+            this.typingCaret = range.cloneRange();
+        }
     }
 
     /** Removes presentation-only selection state when navigation or pointer input moves the caret. */
@@ -156,6 +186,32 @@ export class MessageEditorDom {
         if (this.historyIndex >= 0) {
             this.history[this.historyIndex] = this.snapshot();
         }
+    }
+
+    /** Native IME owns the DOM until composition commits; remember the chosen typing marks without inserting placeholders. */
+    beginComposition(): void {
+        const range = this.range();
+        this.composition = {
+            start: messageSelectionOffset(this.element, range.startContainer, range.startOffset),
+            marks: this.typingMarks ?? (!range.collapsed ? this.selectionMarks(range) : undefined),
+        };
+        this.beforeInput();
+    }
+
+    endComposition(): void {
+        const composition = this.composition;
+        this.composition = undefined;
+        const caret = this.range();
+        const end = messageSelectionOffset(this.element, caret.endContainer, caret.endOffset);
+        if (composition?.marks && end > composition.start) {
+            const inserted = restoreMessageSelection(this.element, composition.start, end);
+            this.revision++;
+            const restored = setMessageSelectionMarks(this.element, inserted, composition.marks);
+            restored.collapse(false);
+            this.typingMarks = composition.marks;
+            this.select(restored);
+        }
+        this.afterInput();
     }
 
     /** Commits a browser edit without replacing its DOM or interrupting composition. */
@@ -211,11 +267,27 @@ export class MessageEditorDom {
                 }
                 fragment.append(this.element.ownerDocument.createTextNode(line));
             });
+            const range = this.range();
+            const marks = this.typingMarks ?? (!range.collapsed ? this.selectionMarks(range) : undefined);
+            const first = fragment.firstChild;
+            const last = fragment.lastChild;
             this.replace(fragment);
+            if (marks && first && last) {
+                const inserted = this.element.ownerDocument.createRange();
+                inserted.setStartBefore(first);
+                inserted.setEndAfter(last);
+                this.revision++;
+                const caret = setMessageSelectionMarks(this.element, inserted, marks);
+                caret.collapse(false);
+                this.typingMarks = marks;
+                this.select(caret);
+            }
         });
     }
 
     insertMarkdown(message: string, range?: Range): void {
+        this.typingMarks = undefined;
+        this.typingCaret = undefined;
         this.transact(() => {
             if (range) {
                 this.select(range);
@@ -241,9 +313,20 @@ export class MessageEditorDom {
 
     private replace(node: Node): void {
         const range = this.range();
+        const firstParagraph = this.parentElement(range.startContainer)?.closest('p');
+        const lastParagraph = this.parentElement(range.endContainer)?.closest('p');
+        const mergeParagraphs = firstParagraph && lastParagraph && firstParagraph !== lastParagraph && firstParagraph.parentNode === lastParagraph.parentNode;
         range.deleteContents();
+        if (mergeParagraphs) {
+            range.setStart(firstParagraph, firstParagraph.childNodes.length);
+            range.collapse(true);
+        }
         const last = node instanceof DocumentFragment ? node.lastChild : node;
         range.insertNode(node);
+        if (mergeParagraphs) {
+            firstParagraph.append(...Array.from(lastParagraph.childNodes));
+            lastParagraph.remove();
+        }
         if (last) {
             if (last.nodeType === Node.TEXT_NODE) {
                 if (last.textContent) {
@@ -260,114 +343,95 @@ export class MessageEditorDom {
         this.select(range);
     }
 
+    private selectedTextNodes(range: Range): Node[] {
+        const start = messageSelectionOffset(this.element, range.startContainer, range.startOffset);
+        const end = messageSelectionOffset(this.element, range.endContainer, range.endOffset);
+        const walker = this.element.ownerDocument.createTreeWalker(this.element, NodeFilter.SHOW_TEXT);
+        const selected: Node[] = [];
+        let position = 0;
+        let node: Node | null;
+        while ((node = walker.nextNode())) {
+            const length = node.textContent?.length ?? 0;
+            if (position < end && position + length > start) selected.push(node);
+            position += length;
+        }
+        return selected;
+    }
+
+    /** Native browsers differ when replacement starts outside a mark; retain only formats covering the entire selected text. */
+    private selectionMarks(range: Range): string[] {
+        const selected = this.selectedTextNodes(range);
+        return selected.length
+            ? inlineMarks.filter((mark) => selected.every((node) => this.parentElement(node)?.closest(mark) && !this.parentElement(node)?.closest('pre, [data-message-reference]')))
+            : [];
+    }
+
     format(tag: 'strong' | 'em' | 'ins' | 's' | 'code'): void {
+        const range = this.range();
+        if (this.parentElement(range.startContainer)?.closest('pre')) {
+            return;
+        }
+        if (range.collapsed) {
+            const marks = this.typingMarks ?? inlineMarks.filter((mark) => this.parentElement(range.startContainer)?.closest(mark));
+            this.typingMarks = marks.includes(tag) ? marks.filter((mark) => mark !== tag) : [...marks, tag];
+            this.typingCaret = range.cloneRange();
+            return;
+        }
+        this.typingMarks = undefined;
+        this.typingCaret = undefined;
         this.transact(() => {
-            const range = this.range();
-            if (!range.collapsed) {
-                this.revision++;
-                this.select(formatMessageSelection(this.element, range, tag));
-                return;
-            }
-            const ancestor = this.parentElement(range.commonAncestorContainer)?.closest(tag);
-            if (ancestor && this.element.contains(ancestor)) {
-                // Selection-based removal is supported; do not change unselected text at a collapsed caret.
-                return;
-            }
-            const wrapper = this.element.ownerDocument.createElement(tag);
-            wrapper.append(range.extractContents());
-            range.insertNode(wrapper);
-            range.selectNodeContents(wrapper);
-            this.select(range);
+            this.revision++;
+            this.select(formatMessageSelection(this.element, range, tag));
         });
     }
 
-    /** Applies a block style to the current paragraph without changing reference payloads. */
+    /** Changes only the selected blocks while preserving the exact caret and unselected list items. */
     block(tag: 'ul' | 'ol' | 'blockquote' | 'pre'): void {
+        this.typingMarks = undefined;
+        this.typingCaret = undefined;
         this.transact(() => {
             this.revision++;
-            const range = this.range();
-            const parent = this.parentElement(range.startContainer);
-            const existing = parent?.closest(tag);
-            if (existing && this.element.contains(existing)) {
-                const replacement = this.element.ownerDocument.createDocumentFragment();
-                if (tag === 'ul' || tag === 'ol') {
-                    for (const item of Array.from(existing.children)) {
-                        const paragraph = this.element.ownerDocument.createElement('p');
-                        paragraph.append(...Array.from(item.childNodes));
-                        replacement.append(paragraph);
-                    }
-                } else if (tag === 'pre') {
-                    const paragraph = this.element.ownerDocument.createElement('p');
-                    editorCodeText(existing)
-                        .split('\n')
-                        .forEach((line, index) => {
-                            if (index) {
-                                paragraph.append(this.element.ownerDocument.createElement('br'));
-                            }
-                            paragraph.append(this.element.ownerDocument.createTextNode(line));
-                        });
-                    replacement.append(paragraph);
-                } else {
-                    replacement.append(...Array.from(existing.childNodes));
-                }
-                const last = replacement.lastChild;
-                existing.replaceWith(replacement);
-                if (last) {
-                    range.selectNodeContents(last);
-                    range.collapse(false);
-                    this.select(range);
-                }
-                return;
-            }
-            const paragraph = parent?.closest('p, div, li, pre');
-            const block = this.element.ownerDocument.createElement(tag);
-            const child = this.element.ownerDocument.createElement(tag === 'pre' ? 'code' : tag === 'blockquote' ? 'p' : 'li');
-            if (paragraph && paragraph !== this.element) {
-                child.append(...Array.from(paragraph.childNodes));
-                block.append(child);
-                if (paragraph.tagName === 'LI') {
-                    paragraph.append(block);
-                } else {
-                    paragraph.replaceWith(block);
-                }
-            } else {
-                block.append(child);
-                // A freshly typed contenteditable line can consist of bare inline nodes without a paragraph.
-                let first: Node = range.startContainer;
-                while (first.parentNode && first.parentNode !== this.element) {
-                    first = first.parentNode;
-                }
-                const isBlock = (node: Node) => node instanceof HTMLElement && node.matches('p, div, ul, ol, blockquote, pre');
-                if (first !== this.element && !isBlock(first)) {
-                    while (first.previousSibling && !isBlock(first.previousSibling)) {
-                        first = first.previousSibling;
-                    }
-                    this.element.insertBefore(block, first);
-                    let next: Node | null = first;
-                    while (next && !isBlock(next)) {
-                        const following: Node | null = next.nextSibling;
-                        child.append(next);
-                        next = following;
-                    }
-                } else {
-                    child.append(range.extractContents());
-                    this.replace(block);
-                }
-            }
-            range.selectNodeContents(child);
-            range.collapse(false);
-            this.select(range);
+            this.select(formatMessageBlocks(this.element, this.range(), tag));
         });
+    }
+
+    /** A second Enter on a blank list item returns to normal text consistently across browsers. */
+    exitEmptyList(): boolean {
+        const range = this.range();
+        const item = this.parentElement(range.startContainer)?.closest('li');
+        const list = item?.parentElement;
+        if (
+            !range.collapsed ||
+            !item ||
+            !list?.matches('ul, ol') ||
+            item.textContent?.replace(/\u200b/g, '').trim() ||
+            item.querySelector('img, [data-message-reference], ul, ol')
+        ) {
+            return false;
+        }
+        this.block(list.tagName.toLowerCase() as 'ul' | 'ol');
+        return true;
     }
 
     setLink(label: string, url: string, existing?: HTMLAnchorElement): void {
-        if (!isMessageLinkSafe(url)) {
+        if (!isMessageLinkSafe(url) || (existing && !this.element.contains(existing))) {
             return;
         }
         this.transact(() => {
             if (existing && this.element.contains(existing)) {
-                existing.textContent = label || url;
+                if (existing.textContent !== (label || url)) {
+                    // Preserve uniform marks when renaming; URL-only changes retain even mixed label formatting.
+                    let content: HTMLElement = existing;
+                    while (content.childNodes.length === 1 && content.firstElementChild?.matches('strong, em, ins, s, code')) {
+                        content = content.firstElementChild as HTMLElement;
+                    }
+                    content.textContent = label || url;
+                }
                 existing.setAttribute('href', url);
+                const caret = this.element.ownerDocument.createRange();
+                caret.setStartAfter(existing);
+                caret.collapse(true);
+                this.select(caret);
             } else {
                 const link = this.element.ownerDocument.createElement('a');
                 link.textContent = label || url;
@@ -379,7 +443,15 @@ export class MessageEditorDom {
 
     unlink(link: HTMLAnchorElement): void {
         if (this.element.contains(link)) {
-            this.transact(() => link.replaceWith(...Array.from(link.childNodes)));
+            this.transact(() => {
+                const last = link.lastChild;
+                const caret = this.element.ownerDocument.createRange();
+                caret.setStartBefore(link);
+                link.replaceWith(...Array.from(link.childNodes));
+                if (last) caret.setStartAfter(last);
+                caret.collapse(true);
+                this.select(caret);
+            });
         }
     }
 
@@ -462,18 +534,26 @@ export class MessageEditorDom {
 
     completion(): MessageCompletion | undefined {
         const range = this.range();
-        const node = range.startContainer;
-        if (!range.collapsed || node.nodeType !== Node.TEXT_NODE || this.parentElement(node)?.closest('code, pre, a, [data-message-reference]')) {
+        let node: Node | undefined = range.startContainer;
+        let offset = range.startOffset;
+        if (node.nodeType !== Node.TEXT_NODE) {
+            node = node.childNodes[offset - 1];
+            while (node?.nodeType === Node.TEXT_NODE && !node.textContent) node = node.previousSibling ?? undefined;
+            while (node?.lastChild && !(node instanceof HTMLElement && node.matches('a, code, pre, [data-message-reference]'))) node = node.lastChild;
+            offset = node?.textContent?.length ?? 0;
+        }
+        if (!range.collapsed || node?.nodeType !== Node.TEXT_NODE || this.parentElement(node)?.closest('code, pre, a, [data-message-reference]')) {
             return undefined;
         }
-        const before = node.textContent!.slice(0, range.startOffset);
-        const match = /(?:^|[\s(])([@#])([^\s@#]*)$/.exec(before);
-        if (!match) {
+        const before = node.textContent!.slice(0, offset);
+        const match = /(?:^|[\s(])([@#:])([^\s@#:]*)$/.exec(before);
+        if (!match || (match[1] === ':' && (!/^[A-Za-z0-9_+-]+$/.test(match[2]) || EMOTICON_TO_EMOJI[`:${match[2]}`]))) {
             return undefined;
         }
         const replacement = range.cloneRange();
-        replacement.setStart(node, range.startOffset - match[2].length - 1);
-        return { trigger: match[1] as '@' | '#', query: match[2], range: replacement };
+        replacement.setStart(node, offset - match[2].length - 1);
+        replacement.setEnd(node, offset);
+        return { trigger: match[1] as '@' | '#' | ':', query: match[2], range: replacement };
     }
 
     private parentElement(node: Node): HTMLElement | undefined {
@@ -503,23 +583,23 @@ export class MessageEditorDom {
 
     private snapshot(): EditorSnapshot {
         const range = this.range();
-        return { html: this.element.innerHTML, start: this.point(range.startContainer, range.startOffset), end: this.point(range.endContainer, range.endOffset) };
+        const clone = this.element.cloneNode(true) as HTMLElement;
+        const resolve = (point: SelectionPoint) => point.path.reduce<Node>((node, index) => node.childNodes[index], clone);
+        const first = this.point(range.startContainer, range.startOffset);
+        const last = this.point(range.endContainer, range.endOffset);
+        const selection = clone.ownerDocument.createRange();
+        selection.setStart(resolve(first), first.offset);
+        selection.setEnd(resolve(last), last.offset);
+        preserveMessageSelection(clone, selection);
+        return { html: this.element.innerHTML, selectionHtml: clone.innerHTML, typingMarks: this.typingMarks };
     }
 
     private restore(snapshot: EditorSnapshot): void {
         this.revision++;
-        this.element.innerHTML = snapshot.html;
-        const resolve = (point: SelectionPoint) => point.path.reduce<Node | undefined>((node, index) => node?.childNodes[index], this.element);
-        if (snapshot.start && snapshot.end) {
-            const start = resolve(snapshot.start);
-            const end = resolve(snapshot.end);
-            if (start && end) {
-                const range = this.element.ownerDocument.createRange();
-                range.setStart(start, snapshot.start.offset);
-                range.setEnd(end, snapshot.end.offset);
-                this.select(range);
-            }
-        }
+        this.element.innerHTML = snapshot.selectionHtml;
+        this.typingMarks = snapshot.typingMarks;
+        this.typingCaret = undefined;
+        this.select(restoreMessageSelectionBoundaries(this.element));
         this.changed(editorToMessage(this.element));
     }
 }
