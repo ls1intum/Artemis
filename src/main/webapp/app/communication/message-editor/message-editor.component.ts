@@ -129,8 +129,8 @@ export class MessageEditorComponent {
             } else {
                 this.editor?.redo();
             }
-        } else if (!this.composing && event.inputType === 'insertText' && event.data !== null && event.cancelable && this.editor?.isInCodeBlock()) {
-            // WebKit can normalize a valid caret to before the preceding code line break during native insertion.
+        } else if (!this.composing && event.inputType === 'insertText' && event.data !== null && event.cancelable && this.editor?.needsManagedTextInsertion()) {
+            // WebKit can normalize a valid caret to before the preceding line break during native insertion.
             event.preventDefault();
             this.editor.insertText(event.data);
         } else if (!this.composing) {

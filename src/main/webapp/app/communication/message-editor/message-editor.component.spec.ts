@@ -186,6 +186,16 @@ describe('Formatted message composer', () => {
         expect(emit).toHaveBeenLastCalledWith('```\nHello\nsecond\n```');
     });
 
+    it('owns the first typed text after Shift+Enter so WebKit keeps it on the new line', () => {
+        caretAtEnd();
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true, bubbles: true, cancelable: true }));
+        const emit = vi.spyOn(component.contentChange, 'emit');
+        const input = new InputEvent('beforeinput', { inputType: 'insertText', data: 'second', bubbles: true, cancelable: true });
+        editable.dispatchEvent(input);
+        expect(input.defaultPrevented).toBe(true);
+        expect(emit).toHaveBeenLastCalledWith('Hello\nsecond');
+    });
+
     it('inserts trigger characters through the toolbar', () => {
         caretAtEnd();
         (fixture.nativeElement.querySelector('[data-testid="message-reference-button"]') as HTMLButtonElement).click();

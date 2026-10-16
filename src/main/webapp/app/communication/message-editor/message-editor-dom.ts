@@ -31,7 +31,7 @@ export class MessageEditorDom {
 
     load(message: string): void {
         this.element.innerHTML = messageToEditorHtml(message);
-        this.ensureCodeCaret();
+        this.ensureCaret();
         this.savedRange = undefined;
         this.history = [this.snapshot()];
         this.historyIndex = 0;
@@ -50,8 +50,11 @@ export class MessageEditorDom {
         this.select(range);
     }
 
-    isInCodeBlock(): boolean {
-        return !!this.parentElement(this.range().startContainer)?.closest('pre');
+    needsManagedTextInsertion(): boolean {
+        const range = this.range();
+        return (
+            !!this.parentElement(range.startContainer)?.closest('pre') || (range.collapsed && this.adjacent(range.startContainer, range.startOffset, true) instanceof HTMLBRElement)
+        );
     }
 
     private range(): Range {
@@ -84,7 +87,7 @@ export class MessageEditorDom {
 
     /** Commits a browser edit without replacing its DOM or interrupting composition. */
     afterInput(): void {
-        this.ensureCodeCaret();
+        this.ensureCaret();
         const snapshot = this.snapshot();
         if (snapshot.html !== this.history[this.historyIndex]?.html) {
             this.history.splice(this.historyIndex + 1);
@@ -98,10 +101,13 @@ export class MessageEditorDom {
         this.changed(editorToMessage(this.element));
     }
 
-    private ensureCodeCaret(): void {
-        for (const code of this.element.querySelectorAll('pre > code')) {
-            const placeholder = code.querySelector('br[data-message-placeholder]');
-            let last = placeholder?.previousSibling ?? code.lastChild;
+    private ensureCaret(): void {
+        // Browsers need a second, invisible break to keep typing after a trailing line break.
+        // Include inline parents too: Shift+Enter can be inserted inside a formatted run.
+        const containers = new Set([...this.element.querySelectorAll('pre > code'), ...Array.from(this.element.querySelectorAll('br'), (lineBreak) => lineBreak.parentElement!)]);
+        for (const container of containers) {
+            const placeholder = container.querySelector(':scope > br[data-message-placeholder]');
+            let last = placeholder?.previousSibling ?? container.lastChild;
             while (last?.nodeType === Node.TEXT_NODE && !last.textContent) {
                 last = last.previousSibling;
             }
@@ -109,7 +115,7 @@ export class MessageEditorDom {
                 if (!placeholder) {
                     const end = this.element.ownerDocument.createElement('br');
                     end.setAttribute('data-message-placeholder', '');
-                    code.append(end);
+                    container.append(end);
                 }
             } else {
                 placeholder?.remove();
