@@ -998,6 +998,12 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
         assertThat(storedLinks).hasSize(1);
         assertThat(storedLinks.getFirst().getCompetency().getId()).isEqualTo(competency.getId());
         assertThat(storedLinks.getFirst().getWeight()).isEqualTo(1);
+        assertThat(storedLinks.getFirst().isGeneratedByAi()).isFalse();
+        assertThat(created.competencyLinks()).singleElement().satisfies(link -> {
+            assertThat(link.competency().id()).isEqualTo(competency.getId());
+            assertThat(link.weight()).isEqualTo(1);
+            assertThat(link.generatedByAi()).isFalse();
+        });
     }
 
     @Test
