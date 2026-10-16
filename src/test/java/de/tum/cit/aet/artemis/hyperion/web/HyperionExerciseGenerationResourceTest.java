@@ -317,6 +317,8 @@ class HyperionExerciseGenerationResourceTest {
         ResponseEntity<ExerciseGenerationRevertResultDTO> response = resource.revertExerciseGeneration(1L, "adapt-job");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isNull();
+        verify(jobService, never()).discardRetainedRun(anyLong(), any());
         if (recovering) {
             verify(jobService, never()).clearRevertSlot(1L, "revert-slot");
             verify(jobService).retainRevertRecoverySlot(1L, "revert-slot");

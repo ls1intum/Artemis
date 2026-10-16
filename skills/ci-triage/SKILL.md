@@ -27,6 +27,9 @@ Use `reference/known-failure-patterns.md` to distinguish timeouts, architecture 
 missing workflow runs, and known harness failures from application defects. A single failure
 is not evidence of flakiness; compare logs and execution conditions.
 
+A latest PR run that is pending with no jobs can be waiting for an obsolete run to release its
+concurrency slot. Follow the cancellation entry in the reference before rerunning or cancelling jobs.
+
 ## Re-run when justified
 
 - **Server Tests: never use `gh run rerun --failed`.** The suite's sharding and reporting mean a
@@ -36,6 +39,43 @@ is not evidence of flakiness; compare logs and execution conditions.
   "dropped event" entries in the reference file.
 - **A workflow file changed in the branch**: classic PATs need the `workflow` scope to push it.
   Check the triggering event and checked-out revision when identifying the workflow version.
+
+## Check SonarQube Cloud before merging
+
+Required CI and Sonar have separate results. The Sonar workflow is advisory; a skipped job,
+missing analysis, or green aggregate does not prove that Sonar found no reliability bugs.
+Same-repository PRs are analysed after successful tests. Fork PRs do not receive the analysis
+token. Never use `pull_request_target` to run their code with secrets.
+
+Public Artemis results can be read without a token:
+
+```bash
+curl --fail --silent --show-error --get 'https://sonarcloud.io/api/project_pull_requests/list' \
+  --data-urlencode 'project=ls1intum_Artemis'
+curl --fail --silent --show-error --get 'https://sonarcloud.io/api/qualitygates/project_status' \
+  --data-urlencode 'projectKey=ls1intum_Artemis' --data-urlencode 'pullRequest=<pr-number>'
+curl --fail --silent --show-error --get 'https://sonarcloud.io/api/issues/search' \
+  --data-urlencode 'componentKeys=ls1intum_Artemis' --data-urlencode 'pullRequest=<pr-number>' \
+  --data-urlencode 'types=BUG' --data-urlencode 'issueStatuses=OPEN,CONFIRMED' \
+  --data-urlencode 'ps=500' --data-urlencode 'p=1'
+```
+
+First confirm that the PR appears in the analysis list and that the GitHub Sonar check belongs
+to its current head SHA. A missing PR can return zero issues; report that as **not analysed**.
+Follow issue pagination until all results are read. Also query `impactSoftwareQualities=RELIABILITY`
+without `types=BUG`: the newer quality model can assign reliability impact to issues with
+other legacy types. Omit `pullRequest` to inspect the main branch; its results are not the PR's results. Keep issue links and the analysed revision in
+the review. The [Web API guide](https://docs.sonarsource.com/sonarqube-cloud/appendices/web-api)
+describes the public endpoints and authentication for restricted projects.
+
+An on-demand branch analysis is also available with `gh workflow run ci-sonar.yml --ref <branch>`.
+Wait for that commit's CI to finish first so the analysis can import its exact coverage reports.
+This is a branch analysis, not a substitute for a missing PR analysis.
+
+Fix confirmed issues with regression tests. Do not remove necessary error handling, change a
+valid HTTP contract, add rule suppressions, or weaken the quality gate to improve the rating.
+For a proved false positive, retain the failing mutation test and report the issue for normal
+Sonar classification. Do not claim the rating is restored before a fresh analysis confirms it.
 
 ## Investigate Scorecard findings
 

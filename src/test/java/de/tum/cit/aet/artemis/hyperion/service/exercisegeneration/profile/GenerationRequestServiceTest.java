@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -61,6 +63,17 @@ class GenerationRequestServiceTest {
         // A course-only release field cannot make an exam eligible.
         exercise.setReleaseDate(java.time.ZonedDateTime.now().minusDays(1));
         assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isTrue();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "Pacific/Kiritimati", "America/Los_Angeles" })
+    void releaseEligibilityComparesInstantsAcrossTimeZones(String zone) {
+        var exercise = exercise();
+        ZonedDateTime now = ZonedDateTime.now(ZoneId.of(zone));
+        exercise.setReleaseDate(now.minusMinutes(5));
+        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isTrue();
+        exercise.setReleaseDate(now.plusMinutes(5));
+        assertThat(GenerationRequestService.hasReleaseDateInThePast(exercise)).isFalse();
     }
 
     @ParameterizedTest

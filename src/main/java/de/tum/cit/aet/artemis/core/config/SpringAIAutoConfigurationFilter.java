@@ -40,7 +40,7 @@ public class SpringAIAutoConfigurationFilter implements AutoConfigurationImportF
         boolean hyperionEnabled = env.acceptsProfiles(Profiles.of(Constants.PROFILE_CORE)) && env.getProperty(Constants.HYPERION_ENABLED_PROPERTY_NAME, Boolean.class, false);
         boolean atlasEnabled = env.getProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, Boolean.class, false);
         boolean hyperionWorker = env.acceptsProfiles(Profiles.of(Constants.PROFILE_AIWORKER)) && "hyperion-generation".equals(env.getProperty("artemis.aiworker.workload"));
-        boolean springAIEnabled = hyperionEnabled || atlasEnabled || hyperionWorker;
+        boolean springAIEnabled = env.acceptsProfiles(Profiles.of(Constants.PROFILE_AIWORKER)) ? hyperionWorker : hyperionEnabled || atlasEnabled;
 
         boolean[] matches = new boolean[autoConfigurationClasses.length];
         for (int i = 0; i < autoConfigurationClasses.length; i++) {

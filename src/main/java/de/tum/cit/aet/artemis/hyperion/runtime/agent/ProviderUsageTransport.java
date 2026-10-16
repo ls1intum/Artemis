@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.runtime.agent;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
 import org.springframework.ai.chat.metadata.EmptyUsage;
@@ -33,7 +34,7 @@ public final class ProviderUsageTransport {
         if (usage.getPromptTokens() == null || usage.getCompletionTokens() == null) {
             throw new IllegalArgumentException("Provider response contains incomplete token counts");
         }
-        return new ProviderUsageUpdate.Call(metadata.getModel() == null ? "" : metadata.getModel(), metadata.getId(), usage.getPromptTokens(), usage.getCompletionTokens(),
+        return new ProviderUsageUpdate.Call(Objects.requireNonNullElse(metadata.getModel(), ""), metadata.getId(), usage.getPromptTokens(), usage.getCompletionTokens(),
                 usage.getCacheReadInputTokens());
     }
 
