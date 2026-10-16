@@ -63,6 +63,23 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
     List<SlideUnhideDTO> findHiddenSlidesProjection();
 
     /**
+     * Finds the attachment video units whose current slide deck hides slides while their attachment has no student version. Downloads of such an attachment fail closed
+     * until a student version is generated, for example after a regeneration failed.
+     *
+     * @return the ids of the attachment video units that need a student version
+     */
+    @Query("""
+            SELECT DISTINCT s.attachmentVideoUnit.id
+            FROM Slide s
+                JOIN s.attachmentVideoUnit unit
+                JOIN unit.attachment attachment
+            WHERE s.hidden IS NOT NULL
+                AND s.superseded = FALSE
+                AND attachment.studentVersion IS NULL
+            """)
+    List<Long> findAttachmentVideoUnitIdsWithHiddenSlidesAndWithoutStudentVersion();
+
+    /**
      * Find slides for a specific attachment video unit where the hidden field is not null
      * (these are the hidden slides)
      *

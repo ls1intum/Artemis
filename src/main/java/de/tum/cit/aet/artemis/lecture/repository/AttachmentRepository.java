@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -15,6 +17,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileLocationDTO;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentStudentVersionStateDTO;
 
 /**
  * Spring Data repository for the Attachment entity.
@@ -100,6 +103,61 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
             WHERE a.id = :attachmentId
             """)
     int updateStudentVersion(@Param("attachmentId") long attachmentId, @Param("studentVersionFilename") String studentVersionFilename);
+
+    /**
+     * Reads the stored student version reference and the file version of an attachment.
+     *
+     * @param attachmentId the id of the attachment
+     * @return the state, or empty if the attachment does not exist
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.AttachmentStudentVersionStateDTO(a.studentVersion, a.version)
+            FROM Attachment a
+            WHERE a.id = :attachmentId
+            """)
+    Optional<AttachmentStudentVersionStateDTO> findStudentVersionStateById(@Param("attachmentId") long attachmentId);
+
+    /**
+     * Stores a regenerated student version, but only while everything it was generated from is unchanged: the attachment still has the same file version and student
+     * version reference, and the current slide deck hides exactly the given slides. The check and the write are one statement, so a regeneration that ran on an older state
+     * does not replace a newer student version or show a slide hidden in the meantime; the caller discards its file and starts over instead.
+     *
+     * @param attachmentId             the id of the attachment
+     * @param attachmentVideoUnitId    the id of its attachment video unit
+     * @param newStudentVersion        the stored filename of the regenerated student version
+     * @param expectedVersion          the file version the student version was generated from
+     * @param expectedStudentVersion   the stored student version value the regeneration started from, or null if there was none
+     * @param expectedHiddenSlideIds   the ids of the hidden slides that were left out; never empty
+     * @param expectedHiddenSlideCount the number of those slides
+     * @return 1 when stored, 0 when something changed
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Attachment a
+            SET a.studentVersion = :newStudentVersion
+            WHERE a.id = :attachmentId
+                AND (a.version = :expectedVersion OR (:expectedVersion IS NULL AND a.version IS NULL))
+                AND (a.studentVersion = :expectedStudentVersion OR (:expectedStudentVersion IS NULL AND a.studentVersion IS NULL))
+                AND (
+                    SELECT COUNT(s.id)
+                    FROM Slide s
+                    WHERE s.attachmentVideoUnit.id = :attachmentVideoUnitId
+                        AND s.hidden IS NOT NULL
+                        AND s.superseded = FALSE
+                ) = :expectedHiddenSlideCount
+                AND NOT EXISTS (
+                    SELECT s.id
+                    FROM Slide s
+                    WHERE s.attachmentVideoUnit.id = :attachmentVideoUnitId
+                        AND s.hidden IS NOT NULL
+                        AND s.superseded = FALSE
+                        AND s.id NOT IN :expectedHiddenSlideIds
+                )
+            """)
+    int publishStudentVersionIfUnchanged(@Param("attachmentId") long attachmentId, @Param("attachmentVideoUnitId") long attachmentVideoUnitId,
+            @Param("newStudentVersion") String newStudentVersion, @Param("expectedVersion") Integer expectedVersion, @Param("expectedStudentVersion") String expectedStudentVersion,
+            @Param("expectedHiddenSlideIds") Collection<Long> expectedHiddenSlideIds, @Param("expectedHiddenSlideCount") long expectedHiddenSlideCount);
 
     /**
      * Removes the student version reference, but only if the attachment still points at the given file.

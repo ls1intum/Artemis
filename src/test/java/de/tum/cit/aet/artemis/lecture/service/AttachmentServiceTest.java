@@ -110,6 +110,37 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
+    void publishingMatchesNothingOnceTheHiddenSlidesChanged() {
+        long unitId = testAttachment2.getAttachmentVideoUnit().getId();
+        List<Long> hiddenSlideIds = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(unitId).stream().map(Slide::getId).toList();
+        var state = attachmentRepository.findStudentVersionStateById(testAttachment2.getId()).orElseThrow();
+
+        // Generated while only the first of the two hidden slides was hidden
+        assertThat(attachmentRepository.publishStudentVersionIfUnchanged(testAttachment2.getId(), unitId, "stale.pdf", state.version(), state.studentVersion(),
+                List.of(hiddenSlideIds.getFirst()), 1)).isZero();
+        // Generated from a different student version reference
+        assertThat(attachmentRepository.publishStudentVersionIfUnchanged(testAttachment2.getId(), unitId, "stale.pdf", state.version(), "other.pdf", hiddenSlideIds,
+                hiddenSlideIds.size())).isZero();
+        assertThat(attachmentRepository.findStudentVersionStateById(testAttachment2.getId()).orElseThrow().studentVersion()).isNull();
+
+        assertThat(attachmentRepository.publishStudentVersionIfUnchanged(testAttachment2.getId(), unitId, "current.pdf", state.version(), state.studentVersion(), hiddenSlideIds,
+                hiddenSlideIds.size())).isEqualTo(1);
+        assertThat(attachmentRepository.findStudentVersionStateById(testAttachment2.getId()).orElseThrow().studentVersion()).isEqualTo("current.pdf");
+    }
+
+    @Test
+    void findsUnitsThatHideSlidesWithoutAStudentVersion() {
+        long unitWithHiddenSlides = testAttachment2.getAttachmentVideoUnit().getId();
+        long unitWithoutHiddenSlides = testAttachment1.getAttachmentVideoUnit().getId();
+
+        assertThat(slideRepository.findAttachmentVideoUnitIdsWithHiddenSlidesAndWithoutStudentVersion()).contains(unitWithHiddenSlides).doesNotContain(unitWithoutHiddenSlides);
+
+        attachmentService.regenerateStudentVersion(testAttachment2);
+
+        assertThat(slideRepository.findAttachmentVideoUnitIdsWithHiddenSlidesAndWithoutStudentVersion()).doesNotContain(unitWithHiddenSlides);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testGenerateStudentVersionPdf() throws Exception {
         // Get hidden slides

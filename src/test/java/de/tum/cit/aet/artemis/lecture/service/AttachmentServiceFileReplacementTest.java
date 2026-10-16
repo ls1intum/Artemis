@@ -3,19 +3,26 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +33,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -33,6 +41,7 @@ import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentStudentVersionStateDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 
@@ -81,6 +90,9 @@ class AttachmentServiceFileReplacementTest {
         attachment.setLink("missing.pdf");
         attachment.setAttachmentVideoUnit(attachmentVideoUnit);
         attachment.setStudentVersion(OLD_STUDENT_VERSION);
+        attachment.setVersion(1);
+        // Lenient: the tests that never regenerate do not read it.
+        lenient().when(attachmentRepository.findStudentVersionStateById(ATTACHMENT_ID)).thenReturn(Optional.of(new AttachmentStudentVersionStateDTO(OLD_STUDENT_VERSION, 1)));
     }
 
     @Test
@@ -191,6 +203,81 @@ class AttachmentServiceFileReplacementTest {
         attachmentService.regenerateStudentVersion(attachment);
 
         verify(fileService, never()).schedulePathForDeletion(any(Path.class), anyLong());
+    }
+
+    @Test
+    void regenerationStartsOverWhenTheAttachmentChangedBeforeItsPdfIsPublished() throws IOException {
+        var spiedService = spy(attachmentService);
+        List<Slide> firstState = List.of(slide(1L, 1));
+        List<Slide> laterState = List.of(slide(1L, 1), slide(2L, 2));
+        when(slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(ATTACHMENT_VIDEO_UNIT_ID)).thenReturn(firstState, laterState);
+        doReturn(new byte[] { 1 }).when(spiedService).generateStudentVersionPdf(any(File.class), anyList());
+        // An overlapping update hid slide 2 before the first PDF was published, so publishing it matches nothing.
+        when(attachmentRepository.publishStudentVersionIfUnchanged(eq(ATTACHMENT_ID), eq(ATTACHMENT_VIDEO_UNIT_ID), anyString(), eq(1), eq(OLD_STUDENT_VERSION), eq(List.of(1L)),
+                eq(1L))).thenReturn(0);
+        when(attachmentRepository.publishStudentVersionIfUnchanged(eq(ATTACHMENT_ID), eq(ATTACHMENT_VIDEO_UNIT_ID), anyString(), eq(1), eq(OLD_STUDENT_VERSION),
+                eq(List.of(1L, 2L)), eq(2L))).thenReturn(1);
+
+        spiedService.regenerateStudentVersion(attachment);
+
+        var writtenPaths = ArgumentCaptor.forClass(Path.class);
+        verify(tempFileUtilService, times(2)).replaceFileAtomically(any(Path.class), writtenPaths.capture(), any(byte[].class));
+        Path discarded = writtenPaths.getAllValues().getFirst();
+        Path published = writtenPaths.getAllValues().getLast();
+        verify(spiedService).generateStudentVersionPdf(any(File.class), eq(laterState));
+        verify(fileService).schedulePathForDeletion(discarded, 0);
+        verify(fileService, never()).schedulePathForDeletion(published, 0);
+        verify(fileService).schedulePathForDeletion(oldStudentVersionPath(), 0);
+        assertThat(FileSystemLocation.storedFilename(attachment.getStudentVersion())).isEqualTo(published.getFileName().toString());
+    }
+
+    @Test
+    void regenerationFailsClosedWhenTheAttachmentKeepsChanging() throws IOException {
+        var spiedService = spy(attachmentService);
+        when(slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(ATTACHMENT_VIDEO_UNIT_ID)).thenReturn(List.of(slide(1L, 1)));
+        doReturn(new byte[] { 1 }).when(spiedService).generateStudentVersionPdf(any(File.class), anyList());
+        when(attachmentRepository.publishStudentVersionIfUnchanged(anyLong(), anyLong(), anyString(), any(), any(), anyList(), anyLong())).thenReturn(0);
+
+        assertThatThrownBy(() -> spiedService.regenerateStudentVersion(attachment)).isInstanceOf(InternalServerErrorException.class);
+
+        verify(spiedService, times(3)).generateStudentVersionPdf(any(File.class), anyList());
+        verify(fileService, times(3)).schedulePathForDeletion(any(Path.class), eq(0L));
+        verify(fileService, never()).schedulePathForDeletion(oldStudentVersionPath(), 0);
+        assertThat(FileSystemLocation.storedFilename(attachment.getStudentVersion())).isEqualTo(OLD_STUDENT_VERSION);
+    }
+
+    @Test
+    void regenerationStopsWhenTheFileWasReplacedInTheMeantime() throws IOException {
+        var spiedService = spy(attachmentService);
+        when(slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(ATTACHMENT_VIDEO_UNIT_ID)).thenReturn(List.of(slide(1L, 1)));
+        doReturn(new byte[] { 1 }).when(spiedService).generateStudentVersionPdf(any(File.class), anyList());
+        // An editor stored a new file with its own student version before the first PDF was published.
+        when(attachmentRepository.findStudentVersionStateById(ATTACHMENT_ID)).thenReturn(Optional.of(new AttachmentStudentVersionStateDTO(OLD_STUDENT_VERSION, 1)),
+                Optional.of(new AttachmentStudentVersionStateDTO("editor.pdf", 2)));
+        when(attachmentRepository.publishStudentVersionIfUnchanged(anyLong(), anyLong(), anyString(), any(), any(), anyList(), anyLong())).thenReturn(0);
+
+        spiedService.regenerateStudentVersion(attachment);
+
+        verify(spiedService, times(1)).generateStudentVersionPdf(any(File.class), anyList());
+        verify(attachmentRepository, times(1)).publishStudentVersionIfUnchanged(anyLong(), anyLong(), anyString(), any(), any(), anyList(), anyLong());
+    }
+
+    @Test
+    void missingStudentVersionIsNotGeneratedOnceOneWasStoredInTheMeantime() throws IOException {
+        var spiedService = spy(attachmentService);
+
+        spiedService.generateMissingStudentVersion(attachment);
+
+        verify(spiedService, never()).generateStudentVersionPdf(any(File.class), anyList());
+        verify(attachmentRepository, never()).publishStudentVersionIfUnchanged(anyLong(), anyLong(), anyString(), any(), any(), anyList(), anyLong());
+    }
+
+    private static Slide slide(long id, int slideNumber) {
+        var slide = new Slide();
+        slide.setId(id);
+        slide.setSlideNumber(slideNumber);
+        slide.setHidden(ZonedDateTime.now().plusDays(1));
+        return slide;
     }
 
     private static Slide hiddenSlide() {

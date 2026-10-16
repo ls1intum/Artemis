@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentStudentVersionStateDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
@@ -46,6 +47,9 @@ public class AttachmentService {
      * file system.
      */
     private static final String STUDENT_VERSION_FILENAME_TEMPLATE = "student_version.pdf";
+
+    /** How often a regeneration starts over because the attachment changed while it ran, before it gives up and fails closed. */
+    private static final int MAX_REGENERATION_ATTEMPTS = 3;
 
     private final AttachmentRepository attachmentRepository;
 
@@ -68,40 +72,97 @@ public class AttachmentService {
      * <p>
      * A new student version is written under a fresh filename, its reference is stored, and only then is the previous file deleted. A failure therefore never deletes a file
      * the database still references.
+     * <p>
+     * The reference is stored only while the file version, the previous reference and the hidden slides are still those the PDF was generated from (see
+     * {@link AttachmentRepository#publishStudentVersionIfUnchanged}). If one of them changed, for example because an overlapping update hid another slide and published its own
+     * student version, the new file is discarded and the student version is generated again from the new state, so an older regeneration does not publish over a newer one.
+     * One rare case is not covered: a regeneration that starts after a new file was stored but before its asynchronous split replaced the slides uses the page numbers of the
+     * previous slides.
      *
      * @param attachment The attachment whose student version needs to be regenerated
      */
     public void regenerateStudentVersion(Attachment attachment) {
+        regenerate(attachment, false);
+    }
+
+    /**
+     * Generates the student version of an attachment that hides slides but has none, for example because an earlier regeneration failed. Unlike
+     * {@link #regenerateStudentVersion}, it never replaces a student version: one stored in the meantime, such as one an instructor submitted with a new file, is kept.
+     *
+     * @param attachment the attachment whose missing student version should be generated
+     */
+    public void generateMissingStudentVersion(Attachment attachment) {
+        regenerate(attachment, true);
+    }
+
+    private void regenerate(Attachment attachment, boolean onlyIfMissing) {
         AttachmentVideoUnit attachmentVideoUnit = attachment.getAttachmentVideoUnit();
-        if (attachmentVideoUnit == null) {
+        if (attachmentVideoUnit == null || attachment.getId() == null) {
             return;
         }
 
-        List<Slide> hiddenSlides = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(attachmentVideoUnit.getId());
+        for (int attempt = 1;; attempt++) {
+            Optional<AttachmentStudentVersionStateDTO> state = attachmentRepository.findStudentVersionStateById(attachment.getId());
+            if (state.isEmpty() || (onlyIfMissing && state.get().studentVersion() != null)) {
+                return;
+            }
+            if (!Objects.equals(state.get().version(), attachment.getVersion())) {
+                // The file was replaced after the caller loaded the attachment, so its file location is outdated. Whoever replaced the file takes care of the student version:
+                // an editor change submits one, and a plain upload removes the old one.
+                log.debug("Attachment {} has a newer file than the one to regenerate the student version from; leaving the student version to that change", attachment.getId());
+                return;
+            }
+            String startedFromStudentVersion = state.get().studentVersion();
+            List<Slide> hiddenSlides = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNullAndSupersededIsFalse(attachmentVideoUnit.getId());
 
-        // If no slides are marked as hidden, remove student version if it exists
-        if (hiddenSlides.isEmpty()) {
-            removeStudentVersionFile(attachment);
-            return;
-        }
+            // If no slides are marked as hidden, remove student version if it exists
+            if (hiddenSlides.isEmpty()) {
+                removeStudentVersionIfUnchanged(attachment, FileSystemLocation.storedFilename(startedFromStudentVersion));
+                return;
+            }
 
-        // The attachment says where its file is; a unit created for an attachment that used to hang off a lecture still has it under that lecture's directory. An attachment
-        // that links to a document hosted elsewhere has no file here to redact, and slides are only ever split out of a stored PDF, so hidden slides on such an attachment are
-        // a data inconsistency rather than something to regenerate from.
-        Optional<FileSystemLocation> fileLocation = attachment.fileLocation();
-        if (fileLocation.isEmpty()) {
-            log.warn("Attachment {} links to a document this application does not store, so no student version can be regenerated for its {} hidden slide(s).", attachment.getId(),
-                    hiddenSlides.size());
-            return;
-        }
+            // The attachment says where its file is; a unit created for an attachment that used to hang off a lecture still has it under that lecture's directory. An
+            // attachment that links to a document hosted elsewhere has no file here to redact, and slides are only ever split out of a stored PDF, so hidden slides on such an
+            // attachment are a data inconsistency rather than something to regenerate from.
+            Optional<FileSystemLocation> fileLocation = attachment.fileLocation();
+            if (fileLocation.isEmpty()) {
+                log.warn("Attachment {} links to a document this application does not store, so no student version can be regenerated for its {} hidden slide(s).",
+                        attachment.getId(), hiddenSlides.size());
+                return;
+            }
 
-        try {
-            Path pdfPath = fileLocation.get().path();
-            byte[] studentVersionPdf = generateStudentVersionPdf(pdfPath.toFile(), hiddenSlides);
-            replaceStudentVersionFile(studentVersionPdf, attachment, attachmentVideoUnit.getId());
-        }
-        catch (Exception e) {
-            throw new InternalServerErrorException("Failed to regenerate student version: " + e.getMessage(), e);
+            String filename = newStudentVersionFilename();
+            try {
+                writeStudentVersionFile(generateStudentVersionPdf(fileLocation.get().path().toFile(), hiddenSlides), attachmentVideoUnit.getId(), filename);
+            }
+            catch (Exception e) {
+                throw new InternalServerErrorException("Failed to regenerate student version: " + e.getMessage(), e);
+            }
+
+            List<Long> hiddenSlideIds = hiddenSlides.stream().map(Slide::getId).toList();
+            int published;
+            try {
+                published = attachmentRepository.publishStudentVersionIfUnchanged(attachment.getId(), attachmentVideoUnit.getId(), filename, state.get().version(),
+                        startedFromStudentVersion, hiddenSlideIds, hiddenSlideIds.size());
+            }
+            catch (RuntimeException exception) {
+                deleteStudentVersionFile(attachmentVideoUnit.getId(), filename);
+                throw exception;
+            }
+            if (published == 1) {
+                attachment.setStudentVersion(filename);
+                String oldStudentVersion = FileSystemLocation.storedFilename(startedFromStudentVersion);
+                if (oldStudentVersion != null && !oldStudentVersion.equals(filename)) {
+                    deleteStudentVersionFile(attachmentVideoUnit.getId(), oldStudentVersion);
+                }
+                return;
+            }
+
+            deleteStudentVersionFile(attachmentVideoUnit.getId(), filename);
+            if (attempt >= MAX_REGENERATION_ATTEMPTS) {
+                throw new InternalServerErrorException("Failed to regenerate student version: attachment " + attachment.getId() + " kept changing while it was generated");
+            }
+            log.debug("Attachment {} changed while its student version was generated; generating it again", attachment.getId());
         }
     }
 
@@ -205,18 +266,6 @@ public class AttachmentService {
     }
 
     /**
-     * Stores a generated student version of an attachment and replaces the previous one.
-     *
-     * @param pdfData               The PDF data as byte array
-     * @param attachment            The existing attachment
-     * @param attachmentVideoUnitId The id of the attachment video unit
-     * @throws IOException If there's an error handling the file
-     */
-    private void replaceStudentVersionFile(byte[] pdfData, Attachment attachment, long attachmentVideoUnitId) throws IOException {
-        persistStudentVersionFile(pdfData, attachment, attachmentVideoUnitId, newStudentVersionFilename());
-    }
-
-    /**
      * Stores a student version uploaded by an instructor and replaces the previous one.
      *
      * @param pdfData               the uploaded PDF bytes
@@ -259,14 +308,6 @@ public class AttachmentService {
      */
     public void discardStagedStudentVersionFile(long attachmentVideoUnitId, String studentVersionFilename) {
         deleteStudentVersionFile(attachmentVideoUnitId, studentVersionFilename);
-    }
-
-    /**
-     * Writes the new student version and publishes it. See {@link #publishStudentVersionFile}.
-     */
-    private void persistStudentVersionFile(byte[] pdfData, Attachment attachment, long attachmentVideoUnitId, String filename) throws IOException {
-        writeStudentVersionFile(pdfData, attachmentVideoUnitId, filename);
-        publishStudentVersionFile(attachment, attachmentVideoUnitId, filename);
     }
 
     private static String newStudentVersionFilename() {
