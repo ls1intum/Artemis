@@ -217,6 +217,9 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(attachmentRepository.updateStudentVersionIfFileUnchanged(attachmentId, "other-file.pdf", storedAttachment.getVersion(), "another-hash")).isZero();
         assertThat(attachmentRepository.updateStudentVersionIfFileUnchanged(attachmentId, "current.pdf", storedAttachment.getVersion(), storedAttachment.getSha256Hash()))
                 .isEqualTo(1);
+        // A submitted student version from a request that started before current.pdf was published
+        assertThat(attachmentRepository.updateStudentVersionIfUnchangedSince(attachmentId, "submitted.pdf", storedAttachment.getVersion(), storedAttachment.getSha256Hash(), null))
+                .isZero();
 
         assertThat(attachmentRepository.clearStudentVersionIfUnchanged(attachmentId, "older.pdf")).isZero();
         assertThat(attachmentRepository.findById(attachmentId).orElseThrow().getStudentVersion()).endsWith("current.pdf");

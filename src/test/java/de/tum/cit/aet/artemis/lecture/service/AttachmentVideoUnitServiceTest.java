@@ -257,6 +257,7 @@ class AttachmentVideoUnitServiceTest {
         when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", NEW_HASH));
         when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
         when(attachmentService.stageUploadedStudentVersionFile(any(), eq(LECTURE_UNIT_ID), eq("unit_student.pdf"))).thenReturn("staged.pdf");
+        when(attachmentService.findStoredStudentVersion(attachment.getId())).thenReturn("student.pdf");
 
         service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, studentVersionFile, false, hiddenPages, pageOrder, Set.of());
 
@@ -264,7 +265,7 @@ class AttachmentVideoUnitServiceTest {
         order.verify(attachmentService).stageUploadedStudentVersionFile(any(), eq(LECTURE_UNIT_ID), eq("unit_student.pdf"));
         order.verify(attachmentRepository).saveAndFlush(attachment);
         order.verify(slideSplitterService).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
-        order.verify(attachmentService).publishStudentVersionFile(attachment, LECTURE_UNIT_ID, "staged.pdf");
+        order.verify(attachmentService).publishSubmittedStudentVersionFile(attachment, LECTURE_UNIT_ID, "staged.pdf", "student.pdf");
         verify(attachmentService, never()).discardStagedStudentVersionFile(anyLong(), anyString());
         verify(attachmentService, never()).removeStudentVersionFile(any());
         verify(slideRepository, never()).supersedeCurrentSlidesIfAttachmentRevisionMatches(anyLong(), anyLong(), any(), anyString());
@@ -381,7 +382,7 @@ class AttachmentVideoUnitServiceTest {
 
         verify(slideSplitterService).updateSlideVisibility(unit, hiddenPages);
         verify(attachmentService).regenerateStudentVersionOrRemoveOutdated(attachment);
-        verify(attachmentService, never()).publishStudentVersionFile(any(), anyLong(), anyString());
+        verify(attachmentService, never()).publishSubmittedStudentVersionFile(any(), anyLong(), anyString(), any());
         verify(attachmentService).discardStagedStudentVersionFile(LECTURE_UNIT_ID, "staged.pdf");
         verify(attachmentService, never()).removeStudentVersionFile(any());
     }
@@ -403,8 +404,26 @@ class AttachmentVideoUnitServiceTest {
 
         verify(slideSplitterService, never()).splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class));
         verify(attachmentService).regenerateStudentVersionOrRemoveOutdated(attachment);
-        verify(attachmentService, never()).publishStudentVersionFile(any(), anyLong(), anyString());
+        verify(attachmentService, never()).publishSubmittedStudentVersionFile(any(), anyLong(), anyString(), any());
         verify(attachmentService).discardStagedStudentVersionFile(LECTURE_UNIT_ID, "staged.pdf");
+    }
+
+    @Test
+    void visibilityOnlyUpdateRegeneratesTheStudentVersionEvenWhenTellingIrisFails() {
+        var attachment = attachment();
+        attachment.setStudentVersion("student.pdf");
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.NO_FILE_CHANGE);
+        ZonedDateTime hiddenUntil = ZonedDateTime.parse("2026-07-10T12:00:00Z");
+        var hiddenPages = List.of(new HiddenPageInfoDTO("21", hiddenUntil, null));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        when(slideRepository.findAllByAttachmentVideoUnitId(LECTURE_UNIT_ID)).thenReturn(List.of(slide(21L, 1, null))).thenReturn(List.of(slide(21L, 1, hiddenUntil)));
+        doThrow(new IllegalStateException("database unavailable")).when(irisLectureUnitSyncService).markVisibilityDirty(any(LectureContentUpdateSnapshot.class));
+
+        assertThatCode(() -> service.updateAttachmentVideoUnit(unit, dto, attachment, null, null, false, hiddenPages, null, Set.of())).isInstanceOf(IllegalStateException.class);
+
+        // The slide is hidden now, so the previous student version must not stay as it is
+        verify(attachmentService).regenerateStudentVersionOrRemoveOutdated(attachment);
     }
 
     @Test
@@ -423,7 +442,7 @@ class AttachmentVideoUnitServiceTest {
                 .isInstanceOf(IllegalStateException.class);
 
         verify(attachmentService).discardStagedStudentVersionFile(LECTURE_UNIT_ID, "staged.pdf");
-        verify(attachmentService, never()).publishStudentVersionFile(any(), anyLong(), anyString());
+        verify(attachmentService, never()).publishSubmittedStudentVersionFile(any(), anyLong(), anyString(), any());
     }
 
     @Test
@@ -438,7 +457,7 @@ class AttachmentVideoUnitServiceTest {
         when(attachmentService.stageUploadedStudentVersionFile(any(), eq(LECTURE_UNIT_ID), eq("unit_student.pdf"))).thenReturn("staged.pdf");
         when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", NEW_HASH));
         when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
-        doThrow(new IllegalStateException("database unavailable")).when(attachmentService).publishStudentVersionFile(attachment, LECTURE_UNIT_ID, "staged.pdf");
+        doThrow(new IllegalStateException("database unavailable")).when(attachmentService).publishSubmittedStudentVersionFile(attachment, LECTURE_UNIT_ID, "staged.pdf", null);
 
         assertThatCode(() -> service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, studentVersionFile, false, List.of(), pageOrder, Set.of()))
                 .isInstanceOf(IllegalStateException.class);

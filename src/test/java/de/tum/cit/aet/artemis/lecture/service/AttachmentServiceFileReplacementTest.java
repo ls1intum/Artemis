@@ -226,6 +226,19 @@ class AttachmentServiceFileReplacementTest {
     }
 
     @Test
+    void submittedStudentVersionIsDiscardedWhenANewerOneWasPublishedMeanwhile() throws IOException {
+        // The split finished and its regeneration published a student version after this request read old.pdf.
+        when(attachmentRepository.updateStudentVersionIfUnchangedSince(eq(ATTACHMENT_ID), anyString(), eq(1), eq("hash-1"), eq(OLD_STUDENT_VERSION))).thenReturn(0);
+        String staged = attachmentService.stageUploadedStudentVersionFile(new byte[] { 1 }, ATTACHMENT_VIDEO_UNIT_ID, "student.pdf");
+
+        attachmentService.publishSubmittedStudentVersionFile(attachment, ATTACHMENT_VIDEO_UNIT_ID, staged, OLD_STUDENT_VERSION);
+
+        verify(fileService).schedulePathForDeletion(new FileSystemLocation.StudentVersionSlides(ATTACHMENT_VIDEO_UNIT_ID, staged).path(), 0);
+        verify(fileService, never()).schedulePathForDeletion(oldStudentVersionPath(), 0);
+        assertThat(FileSystemLocation.storedFilename(attachment.getStudentVersion())).isEqualTo(OLD_STUDENT_VERSION);
+    }
+
+    @Test
     void failedRegenerationRemovesTheReferenceItReadNotTheCallersOlderOne() {
         // The caller loaded the attachment while it pointed at old.pdf; a regeneration in between published fresh.pdf. This regeneration reads fresh.pdf and then fails
         // (the stored file does not exist), so fresh.pdf no longer matches the slides and must stop being served.

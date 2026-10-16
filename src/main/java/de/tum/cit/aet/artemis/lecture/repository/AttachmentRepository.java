@@ -112,6 +112,32 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
             @Param("expectedVersion") Integer expectedVersion, @Param("expectedSha256Hash") String expectedSha256Hash);
 
     /**
+     * Stores the filename of a student version submitted together with an editor change, but only while nothing changed since the request started: the attachment still has
+     * the file the request stored and the student version reference it read at its start. A student version published in the meantime, for example one regenerated after
+     * the split or after another visibility change, is newer and stays.
+     *
+     * @param attachmentId           the id of the attachment
+     * @param studentVersionFilename the stored filename of the submitted student version
+     * @param expectedVersion        the version of the file the request stored
+     * @param expectedSha256Hash     the hash of that file
+     * @param expectedStudentVersion the stored student version value the request read at its start, or null if there was none
+     * @return 1 when stored, 0 when something changed in the meantime
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Attachment a
+            SET a.studentVersion = :studentVersionFilename
+            WHERE a.id = :attachmentId
+                AND (a.version = :expectedVersion OR (:expectedVersion IS NULL AND a.version IS NULL))
+                AND (a.sha256Hash = :expectedSha256Hash OR (:expectedSha256Hash IS NULL AND a.sha256Hash IS NULL))
+                AND (a.studentVersion = :expectedStudentVersion OR (:expectedStudentVersion IS NULL AND a.studentVersion IS NULL))
+            """)
+    int updateStudentVersionIfUnchangedSince(@Param("attachmentId") long attachmentId, @Param("studentVersionFilename") String studentVersionFilename,
+            @Param("expectedVersion") Integer expectedVersion, @Param("expectedSha256Hash") String expectedSha256Hash,
+            @Param("expectedStudentVersion") String expectedStudentVersion);
+
+    /**
      * Reads the stored student version reference and the file version of an attachment.
      *
      * @param attachmentId the id of the attachment

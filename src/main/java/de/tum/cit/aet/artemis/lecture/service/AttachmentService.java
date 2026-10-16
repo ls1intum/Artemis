@@ -9,10 +9,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.IntSupplier;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -341,25 +343,55 @@ public class AttachmentService {
 
     /**
      * Stores the reference to a written student version, and only then deletes the previous file. The reference is stored only while the attachment still has the file
-     * version the student version was made for; if a newer file replaced it in the meantime, the written file is deleted and the newer state stays. If storing the reference
-     * fails, the new file is deleted and the previous one stays referenced. Once the reference is stored, nothing here deletes or clears it again.
+     * version and hash the student version was made for; if another file replaced it in the meantime, the written file is deleted and the newer state stays. If storing the
+     * reference fails, the new file is deleted and the previous one stays referenced. Once the reference is stored, nothing here deletes or clears it again.
      *
-     * @param attachment            the attachment the student version belongs to, with the file version it was made for
+     * @param attachment            the attachment the student version belongs to, with the file version and hash it was made for
      * @param attachmentVideoUnitId the id of the attachment video unit
      * @param filename              the stored filename of the written student version
      */
     public void publishStudentVersionFile(Attachment attachment, long attachmentVideoUnitId, String filename) {
+        publish(attachment, attachmentVideoUnitId, filename,
+                () -> attachmentRepository.updateStudentVersionIfFileUnchanged(attachment.getId(), filename, attachment.getVersion(), attachment.getSha256Hash()));
+    }
+
+    /**
+     * Like {@link #publishStudentVersionFile}, for a student version submitted together with an editor change: it is stored only while the student version reference is
+     * still the one the request read at its start. A student version published in the meantime, such as one regenerated after the split, is newer and stays.
+     *
+     * @param attachment             the attachment the student version belongs to, with the file version and hash the request stored
+     * @param attachmentVideoUnitId  the id of the attachment video unit
+     * @param filename               the stored filename of the written student version
+     * @param expectedStudentVersion the stored student version value the request read at its start, or null if there was none
+     */
+    public void publishSubmittedStudentVersionFile(Attachment attachment, long attachmentVideoUnitId, String filename, @Nullable String expectedStudentVersion) {
+        publish(attachment, attachmentVideoUnitId, filename, () -> attachmentRepository.updateStudentVersionIfUnchangedSince(attachment.getId(), filename, attachment.getVersion(),
+                attachment.getSha256Hash(), expectedStudentVersion));
+    }
+
+    /**
+     * Reads the stored student version value of an attachment, as the conditional publications compare it.
+     *
+     * @param attachmentId the id of the attachment
+     * @return the stored value, or null if the attachment has no student version or does not exist
+     */
+    @Nullable
+    public String findStoredStudentVersion(long attachmentId) {
+        return attachmentRepository.findStudentVersionStateById(attachmentId).map(AttachmentStudentVersionStateDTO::studentVersion).orElse(null);
+    }
+
+    private void publish(Attachment attachment, long attachmentVideoUnitId, String filename, IntSupplier conditionalUpdate) {
         String oldStudentVersion = FileSystemLocation.storedFilename(attachment.getStudentVersion());
         int updated;
         try {
-            updated = attachmentRepository.updateStudentVersionIfFileUnchanged(attachment.getId(), filename, attachment.getVersion(), attachment.getSha256Hash());
+            updated = conditionalUpdate.getAsInt();
         }
         catch (RuntimeException exception) {
             deleteStudentVersionFile(attachmentVideoUnitId, filename);
             throw exception;
         }
         if (updated == 0) {
-            log.info("A newer file replaced the file of attachment {} before its student version was stored, so that student version is discarded", attachment.getId());
+            log.info("Attachment {} changed before its student version was stored, so that student version is discarded and the newer state stays", attachment.getId());
             deleteStudentVersionFile(attachmentVideoUnitId, filename);
             return;
         }

@@ -137,6 +137,8 @@ public class AttachmentVideoUnitService {
         // Written before anything else changes, so an invalid or unwritable student version fails the request without side effects. It is only referenced at the end.
         boolean acceptsStudentVersion = studentVersionFile != null && !studentVersionFile.isEmpty() && existingAttachmentVideoUnit.getAttachment() != null
                 && updateAttachment != null;
+        // Read before anything changes, so publishing the submitted student version can tell whether a newer one was published while this request ran.
+        String studentVersionAtStart = acceptsStudentVersion ? attachmentService.findStoredStudentVersion(existingAttachmentVideoUnit.getAttachment().getId()) : null;
         String stagedStudentVersion = acceptsStudentVersion ? stageStudentVersionFile(studentVersionFile, existingAttachmentVideoUnit.getId()) : null;
         boolean stagedStudentVersionHandedOver = false;
         try {
@@ -146,7 +148,7 @@ public class AttachmentVideoUnitService {
             // A submitted student version the update did not use is discarded below; the server regenerated the student version from the saved slides instead.
             if (stagedStudentVersion != null && appliedUpdate.usesSubmittedStudentVersion()) {
                 stagedStudentVersionHandedOver = true;
-                publishStagedStudentVersion(savedAttachmentVideoUnit, stagedStudentVersion);
+                publishStagedStudentVersion(savedAttachmentVideoUnit, stagedStudentVersion, studentVersionAtStart);
             }
             prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);
             return savedAttachmentVideoUnit;
@@ -259,11 +261,15 @@ public class AttachmentVideoUnitService {
 
         LectureContentUpdateSnapshot afterSnapshot = buildSnapshot(savedAttachmentVideoUnit, projectedSlideHiddenUntilBySlideNumber);
         var updateKinds = lectureContentUpdateClassifierService.classifyAll(beforeSnapshot, afterSnapshot, fileUpdateResult);
-        triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds, visibilitySyncDeferredToSlideSplit);
-        // Only after Iris was told about the new visibility: a failure here must not leave Iris with the old one. It cannot fail the request either, because the slide
-        // visibility is already saved.
-        if (regenerateStudentVersion) {
-            attachmentService.regenerateStudentVersionOrRemoveOutdated(savedAttachmentVideoUnit.getAttachment());
+        try {
+            triggerContentProcessingForUpdateKinds(savedAttachmentVideoUnit, afterSnapshot, updateKinds, visibilitySyncDeferredToSlideSplit);
+        }
+        finally {
+            // Only after Iris was told about the new visibility: a failure here must not leave Iris with the old one. It cannot fail the request either, because the slide
+            // visibility is already saved. It also runs when telling Iris failed, since the previous student version may show a slide that is hidden now.
+            if (regenerateStudentVersion) {
+                attachmentService.regenerateStudentVersionOrRemoveOutdated(savedAttachmentVideoUnit.getAttachment());
+            }
         }
         return new AppliedUpdate(savedAttachmentVideoUnit, usesSubmittedStudentVersion);
     }
@@ -300,10 +306,10 @@ public class AttachmentVideoUnitService {
      * References the student version staged at the start of the request. Everything else the request changes is already done, so a failure here only concerns the student
      * version: a previous student version of a replaced file no longer matches it and is removed, so downloads fail closed rather than serve it.
      */
-    private void publishStagedStudentVersion(AttachmentVideoUnit savedAttachmentVideoUnit, String stagedStudentVersion) {
+    private void publishStagedStudentVersion(AttachmentVideoUnit savedAttachmentVideoUnit, String stagedStudentVersion, String studentVersionAtStart) {
         Attachment attachment = savedAttachmentVideoUnit.getAttachment();
         try {
-            attachmentService.publishStudentVersionFile(attachment, savedAttachmentVideoUnit.getId(), stagedStudentVersion);
+            attachmentService.publishSubmittedStudentVersionFile(attachment, savedAttachmentVideoUnit.getId(), stagedStudentVersion, studentVersionAtStart);
         }
         catch (RuntimeException exception) {
             attachmentService.removeStudentVersionFile(attachment);
