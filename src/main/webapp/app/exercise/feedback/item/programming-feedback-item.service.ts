@@ -1,9 +1,6 @@
 import { FeedbackItemService } from 'app/exercise/feedback/item/feedback-item-service';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import {
-    FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER,
-    FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER,
-    FEEDBACK_SUGGESTION_IDENTIFIER,
     Feedback,
     FeedbackType,
     NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
@@ -18,7 +15,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingFeedbackItemService implements FeedbackItemService {
     private translateService = inject(TranslateService);
 
@@ -111,20 +108,18 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      */
     private createFeedbackSuggestionItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         // A feedback suggestion should look like a manual feedback
-        let titleWithoutIdentifier = feedback.text ?? '';
-        // Remove prefix if it exists
-        for (const prefix of [FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER]) {
-            if (titleWithoutIdentifier.startsWith(prefix)) {
-                titleWithoutIdentifier = titleWithoutIdentifier.substring(prefix.length);
-                break;
-            }
-        }
+        const titleWithoutIdentifier = Feedback.stripSuggestionPrefix(feedback.text ?? '');
         const codeReference = this.getAiFeedbackCodeReference(feedback);
+        // Athena may have matched the suggestion to a structured grading instruction; its own feedback text is the
+        // criterion's canned wording and must be shown alongside Athena's free-text detail, exactly like a manually
+        // linked grading instruction (see createGradingInstructionFeedbackItem).
+        const gradingInstructionText = feedback.gradingInstruction?.feedback;
+        const text = gradingInstructionText ? gradingInstructionText + (feedback.detailText ? `\n${feedback.detailText}` : '') : feedback.detailText;
         return {
             type: 'Reviewer', // Treat it like normal feedback from the TA
             name: showTestDetails ? this.translateService.instant('artemisApp.course.reviewer') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: titleWithoutIdentifier,
-            text: feedback.detailText,
+            text,
             positive: feedback.positive,
             credits: feedback.credits,
             feedbackReference: feedback,
@@ -237,7 +232,9 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     private getAiFeedbackCodeReference(feedback: Feedback): FeedbackItemCodeReference | undefined {
         const filePath = Feedback.getReferenceFilePath(feedback);
         const lineRange = Feedback.getReferenceLineRange(feedback);
-        if (!filePath || !lineRange) {
+        // AI feedback numbers its lines from 1 (the server and the Athena service only create references with a line above 0),
+        // unlike the 0-based inline feedback of the code editor, so line 0 is no line of an AI feedback
+        if (!filePath || !lineRange || lineRange.start < 1) {
             return undefined;
         }
         const legacyLineEnd = Feedback.isNonGradedFeedbackSuggestion(feedback) ? this.getLegacyAiFeedbackLineEnd(feedback, filePath, lineRange.start) : undefined;

@@ -69,7 +69,11 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
 
     readonly getCourseFromExercise = getCourseFromExercise;
 
-    async ngOnInit() {
+    ngOnInit() {
+        void this.initializeTextAssessmentBaseComponent();
+    }
+
+    protected async initializeTextAssessmentBaseComponent(): Promise<void> {
         // Used to check if the assessor is the current user
         const identity = await this.accountService.identity();
         this.userId = identity?.id;

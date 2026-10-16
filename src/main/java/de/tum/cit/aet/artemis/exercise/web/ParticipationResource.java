@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -71,7 +72,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/participations")
+@FeatureUsage(UserFeature.EXERCISE_PARTICIPATION)
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationResource {
@@ -198,7 +199,13 @@ public class ParticipationResource {
         log.debug("REST request to practice Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        Optional<StudentParticipation> optionalGradedStudentParticipation = participationService.findOneGradedByExerciseAndParticipant(exercise, user);
+        // A team exercise is practiced individually and always from the template: the graded participation belongs to the team, so it is neither the baseline of the practice
+        // repository nor changed by it. It is only consulted for its individual due date, so that practice does not start while an extension of the team is running.
+        boolean teamExercise = exercise.isTeamMode();
+        Optional<StudentParticipation> optionalGradedStudentParticipation = teamExercise ? Optional.empty()
+                : participationService.findOneGradedByExerciseAndParticipant(exercise, user);
+        Optional<StudentParticipation> optionalParticipationDefiningDueDate = teamExercise ? participationService.findOneByExerciseAndStudentAnyState(exercise, user)
+                : optionalGradedStudentParticipation;
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         if (exercise.isExamExercise()) {
@@ -206,9 +213,6 @@ public class ParticipationResource {
         }
         if (exercise instanceof FileUploadExercise) {
             throw new NotImplementedAlertException("Unsupported exercise type", "participation", "dueDateOver.unsupportedExerciseType");
-        }
-        if (exercise.isTeamMode()) {
-            throw new NotImplementedAlertException("The practice mode is not yet supported for team exercises", ENTITY_NAME, "dueDateOver.notSupportedForTeams");
         }
         if (exercise instanceof ProgrammingExercise && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
             throw new ServiceUnavailableAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "dueDateOver.programmingExercisesDisabled");
@@ -218,7 +222,7 @@ public class ParticipationResource {
                     "dueDateOver.athenaNotEnabled");
         }
         if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate())
-                || (optionalGradedStudentParticipation.isPresent() && exerciseDateService.isBeforeDueDate(optionalGradedStudentParticipation.get()))) {
+                || (optionalParticipationDefiningDueDate.isPresent() && exerciseDateService.isBeforeDueDate(optionalParticipationDefiningDueDate.get()))) {
             throw new AccessForbiddenException("The practice mode can only be started after the due date");
         }
         if (useGradedParticipation && optionalGradedStudentParticipation.isEmpty()) {
@@ -282,6 +286,7 @@ public class ParticipationResource {
      * @param participationId of the participation for which feedback is requested
      * @return ResponseEntity with status 200 (OK) and the updated participation as body
      */
+    @FeatureUsage(UserFeature.AI_FEEDBACK_REQUEST)
     @PutMapping("exercises/{exerciseId}/participations/{participationId}/request-feedback")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipationDTO> requestFeedback(@PathVariable Long exerciseId, @PathVariable Long participationId) {
@@ -364,7 +369,7 @@ public class ParticipationResource {
         // 1) Don't allow student to start before the start and release date
         ZonedDateTime releaseOrStartDate = exercise.getParticipationStartDate();
         if (releaseOrStartDate != null && releaseOrStartDate.isAfter(now())) {
-            if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow(), user)) {
                 throw new AccessForbiddenException("Students cannot start an exercise before the release date");
             }
         }

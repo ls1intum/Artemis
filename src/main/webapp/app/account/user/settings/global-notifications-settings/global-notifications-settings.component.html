@@ -1,11 +1,11 @@
 <h2 jhiTranslate="artemisApp.userSettings.globalNotificationSettings.title"></h2>
 <p class="text-muted-color" jhiTranslate="artemisApp.userSettings.globalNotificationSettings.description"></p>
 @if (notificationSettings(); as notificationSettings) {
-    <tum-ui-list [ariaLabel]="'artemisApp.userSettings.globalNotificationSettings.title' | artemisTranslate">
+    <tumaet-ui-list [ariaLabel]="'artemisApp.userSettings.globalNotificationSettings.title' | artemisTranslate">
         @for (type of filteredNotificationTypes(); track type) {
-            <li tumUiListItem inline>
+            <li tumAetUiListItem inline>
                 <div class="flex items-center gap-2">
-                    <tum-ui-toggle-switch [inputId]="'notification-' + type" [ngModel]="notificationSettings[type]" (ngModelChange)="updateSetting(type, $event)" />
+                    <tumaet-ui-toggle-switch [inputId]="'notification-' + type" [ngModel]="notificationSettings[type]" (ngModelChange)="updateSetting(type, $event)" />
                     <label [for]="'notification-' + type" jhiTranslate="{{ notificationLabels()[type] }}"></label>
                 </div>
                 @for (link of notificationTypeLinks; track link.type) {
@@ -17,7 +17,7 @@
                 }
             </li>
         }
-    </tum-ui-list>
+    </tumaet-ui-list>
 } @else {
     <div class="flex justify-center">
         <fa-icon [icon]="faSpinner" animation="spin" />

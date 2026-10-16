@@ -9,11 +9,12 @@
  * bug: a component statically importing another component it ALSO declares as a lazy route
  * silently pulls that component's whole subtree into the eager chunk graph.
  *
- * Input is an esbuild metafile (angular.json "statsJson": true build option), which has the
- * shape { inputs: {...}, outputs: { [chunkFile]: { bytes, entryPoint?, imports: [{path, kind}] } } }.
+ * Input is the esbuild metafile of the browser bundle (`browser-stats.json`, written by the
+ * angular.json "statsJson": true build option), which has the shape
+ * { inputs: {...}, outputs: { [chunkFile]: { bytes, entryPoint?, imports: [{path, kind}] } } }.
  *
  * Usage:
- *   node analyze_eager_chunks.mjs <path-to-stats.json> [--out <report.json>]
+ *   node analyze_eager_chunks.mjs <path-to-browser-stats.json> [--out <report.json>]
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -193,7 +194,7 @@ function resolveMeta() {
 function main() {
     const { statsPath, outPath } = parseArgs(process.argv);
     if (!statsPath) {
-        console.error('Usage: node analyze_eager_chunks.mjs <path-to-stats.json> [--out <report.json>]');
+        console.error('Usage: node analyze_eager_chunks.mjs <path-to-browser-stats.json> [--out <report.json>]');
         process.exit(1);
     }
 

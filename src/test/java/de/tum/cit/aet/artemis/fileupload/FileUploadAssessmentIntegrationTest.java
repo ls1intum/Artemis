@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.fileupload;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.notNull;
@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.GradingInstructionDTO;
-import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -101,6 +100,27 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         var unchangedResult = resultRepository.findByIdWithEagerFeedbacksElseThrow(originalResult.getId());
         assertThat(unchangedResult.getFeedbacks()).extracting(Feedback::getId).containsExactlyInAnyOrderElementsOf(originalFeedbackIds);
         assertThat(unchangedResult.getScore()).isEqualTo(originalResult.getScore());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void saveFirstAssessmentRejectsForeignFeedbackWithoutCreatingResult() throws Exception {
+        // a submission that has not been assessed yet, so the save would create a new result
+        var submission = fileUploadExerciseUtilService.addFileUploadSubmission(afterReleaseFileUploadExercise, ParticipationFactory.generateFileUploadSubmission(true),
+                TEST_PREFIX + "student1");
+        // a feedback stored on the result of another submission
+        var otherSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessor(afterReleaseFileUploadExercise,
+                ParticipationFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student2", TEST_PREFIX + "tutor1");
+        var otherFeedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("detail of the other result");
+        participationUtilService.addFeedbackToResult(otherFeedback, otherSubmission.getLatestResult());
+
+        var foreignFeedback = new Feedback().credits(1.0).type(FeedbackType.MANUAL_UNREFERENCED).detailText("changed");
+        foreignFeedback.setId(otherFeedback.getId());
+        request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submission.getId() + "/feedback", assessmentInput(List.of(foreignFeedback), "note"),
+                FileUploadResultDTO.class, HttpStatus.BAD_REQUEST, new LinkedMultiValueMap<>());
+
+        assertThat(submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId()).getResults())
+                .as("the refused first assessment leaves no result on the submission").isEmpty();
     }
 
     @Test
@@ -621,7 +641,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
-        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(ResultDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(notNull(), userTopic("/topic/newResults"), isA(ResultDTO.class));
     }
 
     @Test

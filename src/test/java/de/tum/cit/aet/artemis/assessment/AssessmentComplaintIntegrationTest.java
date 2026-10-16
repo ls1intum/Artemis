@@ -218,6 +218,24 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
+    void submitComplaintAboutAutomaticResult_turnsItIntoTheManualResultOfTheFirstCorrectionRound() throws Exception {
+        exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
+        exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
+        // an automatic result belongs to no correction round
+        modelingAssessment.setAssessmentType(AssessmentType.AUTOMATIC);
+        modelingAssessment.setCorrectionRound(null);
+        resultRepository.save(modelingAssessment);
+
+        request.post("/api/assessment/complaints", complaintRequest, HttpStatus.CREATED);
+
+        // a tutor opens the complaint through the result of round 0, a manual result without a round would be found by nobody
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(modelingAssessment.getId()).orElseThrow();
+        assertThat(storedResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(storedResult.getCorrectionRound()).isZero();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
         complaintUtilService.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getSubmission(), 3, ComplaintType.COMPLAINT);
 
@@ -1073,6 +1091,21 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         var examExerciseComplaint = new ComplaintRequestDTO(latestResult.getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.empty());
         // The complaint is about an exam exercise, but the REST-Call for course exercises is used
         request.post("/api/assessment/complaints", examExerciseComplaint, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void submitComplaintForExamExerciseWithMismatchedExamId_badRequest() throws Exception {
+        final TextExercise examExercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        final long otherExamId = examUtilService.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise().getExerciseGroup().getExam().getId();
+        final TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        final TextSubmission savedSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1",
+                TEST_PREFIX + "tutor1");
+        final var examExerciseComplaint = new ComplaintRequestDTO(savedSubmission.getLatestResult().getId(), "This is not fair", ComplaintType.COMPLAINT, Optional.of(otherExamId));
+
+        request.post("/api/assessment/complaints", examExerciseComplaint, HttpStatus.BAD_REQUEST);
+
+        assertThat(complaintRepo.findByResultId(savedSubmission.getLatestResult().getId())).as("no complaint is stored outside the review period of the exam").isEmpty();
     }
 
     @Test

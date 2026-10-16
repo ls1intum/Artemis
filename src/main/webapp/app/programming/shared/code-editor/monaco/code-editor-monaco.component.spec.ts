@@ -20,7 +20,8 @@ import {
     RenameFileChange,
     RepositoryType,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { IKeyboardEvent } from 'monaco-editor';
@@ -465,13 +466,26 @@ describe('CodeEditorMonacoComponent', () => {
         await comp.selectFileInEditor(fileToLoad.fileName);
         fixture.componentRef.setInput('selectedFile', presentFileName);
         await comp.selectFileInEditor(presentFileName);
-        expect(loadFileFromRepositoryStub).toHaveBeenCalledExactlyOnceWith(fileToLoad.fileName);
+        expect(loadFileFromRepositoryStub).toHaveBeenCalledExactlyOnceWith(fileToLoad.fileName, undefined, undefined);
         expect(comp.fileSession()).toEqual({
             ...presentFileSession,
             [fileToLoad.fileName]: { code: fileToLoad.fileContent, cursor: { column: 0, lineNumber: 0 }, scrollTop: 0, loadingError: false },
         });
         expect(setPositionStub).toHaveBeenCalledTimes(2);
         expect(changeModelStub).toHaveBeenCalledTimes(2);
+    });
+
+    it('should load a selected file from the given commit', async () => {
+        const commitId = '0123456789abcdef0123456789abcdef01234567';
+        loadFileFromRepositoryStub.mockReturnValue(of({ fileContent: 'submitted code' }));
+        vi.spyOn(comp.editor(), 'changeModel').mockImplementation(() => {});
+        fixture.componentRef.setInput('commitId', commitId);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('selectedFile', 'file-to-load');
+        await comp.selectFileInEditor('file-to-load');
+
+        expect(loadFileFromRepositoryStub).toHaveBeenCalledExactlyOnceWith('file-to-load', undefined, commitId);
+        expect(comp.fileSession()['file-to-load'].code).toBe('submitted code');
     });
 
     it('should load a selected file after a loading error', async () => {
@@ -538,12 +552,12 @@ describe('CodeEditorMonacoComponent', () => {
 
             await comp.selectFileInEditor(fileName);
 
-            expect(getFileAsBlobSpy).toHaveBeenCalledWith(fileName);
+            expect(getFileAsBlobSpy).toHaveBeenCalledWith(fileName, undefined, undefined);
             expect(createObjectURLMock).toHaveBeenCalledOnce();
             expect(comp.imagePreviewUrl()).toBe('blob:mock-url');
             expect(comp.imagePreviewError()).toBe(false);
             expect(comp.binaryFileSelected()).toBe(false);
-            expect(loadFileFromRepositoryStub).not.toHaveBeenCalledWith(fileName);
+            expect(loadFileFromRepositoryStub).not.toHaveBeenCalledWith(fileName, undefined, undefined);
             expect(changeModelSpy).not.toHaveBeenCalled();
         });
 
@@ -797,6 +811,92 @@ describe('CodeEditorMonacoComponent', () => {
         cancelRafSpy.mockRestore();
     });
 
+    describe('inline feedback placement', () => {
+        // The editor stores the line of an inline feedback 0-based: `_line:0` is the first line, shown as editor line 1
+        const firstLineFeedback: Feedback = { id: 10, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:0', text: 'File file1.java at line 1', detailText: 'first' };
+        const laterFeedback: Feedback = { id: 11, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:4', text: 'File file1.java at line 5', detailText: 'later' };
+        const otherFileFeedback: Feedback = { id: 12, type: FeedbackType.MANUAL, reference: 'file:file2.java_line:0', text: 'File file2.java at line 1', detailText: 'other' };
+
+        let addLineWidgetStub: ReturnType<typeof vi.spyOn>;
+
+        const settle = async () => {
+            fixture.changeDetectorRef.detectChanges();
+            await new Promise(process.nextTick);
+            await fixture.whenStable();
+        };
+
+        const renderedInlineFeedbackLines = () =>
+            fixture.debugElement.queryAll(By.directive(CodeEditorTutorAssessmentInlineFeedbackComponent)).map((element) => element.componentInstance.codeLine());
+
+        beforeEach(() => {
+            addLineWidgetStub = vi.spyOn(comp.editor(), 'addLineWidget').mockImplementation(() => {});
+            vi.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+            fixture.componentRef.setInput('readOnlyManualFeedback', true);
+        });
+
+        it('should render feedback on the first line at editor line 1 without hiding the other feedback of the file', async () => {
+            fixture.componentRef.setInput('selectedFile', 'file1.java');
+            fixture.componentRef.setInput('feedbacks', [firstLineFeedback, laterFeedback, otherFileFeedback]);
+            await settle();
+
+            expect(renderedInlineFeedbackLines()).toEqual([0, 4]);
+            expect(addLineWidgetStub).toHaveBeenCalledWith(1, 'feedback-10-line-1', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(5, 'feedback-11-line-5', expect.any(HTMLElement));
+        });
+
+        it('should render feedback on the first line after switching to the file it belongs to', async () => {
+            fixture.componentRef.setInput('selectedFile', 'file1.java');
+            fixture.componentRef.setInput('feedbacks', [firstLineFeedback, laterFeedback, otherFileFeedback]);
+            await settle();
+            addLineWidgetStub.mockClear();
+
+            fixture.componentRef.setInput('selectedFile', 'file2.java');
+            await settle();
+
+            expect(renderedInlineFeedbackLines()).toEqual([0]);
+            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(1, 'feedback-12-line-1', expect.any(HTMLElement));
+        });
+
+        it('should render feedback on the first line when it arrives after the file was opened', async () => {
+            fixture.componentRef.setInput('selectedFile', 'file1.java');
+            await settle();
+            expect(addLineWidgetStub).not.toHaveBeenCalled();
+
+            fixture.componentRef.setInput('feedbacks', [firstLineFeedback, laterFeedback]);
+            await settle();
+
+            expect(renderedInlineFeedbackLines()).toEqual([0, 4]);
+            expect(addLineWidgetStub).toHaveBeenCalledWith(1, 'feedback-10-line-1', expect.any(HTMLElement));
+            expect(addLineWidgetStub).toHaveBeenCalledWith(5, 'feedback-11-line-5', expect.any(HTMLElement));
+        });
+
+        it('should turn a new feedback on the first line into a stored feedback', async () => {
+            fixture.componentRef.setInput('isTutorAssessment', true);
+            fixture.componentRef.setInput('readOnlyManualFeedback', false);
+            fixture.componentRef.setInput('selectedFile', 'file1.java');
+            await settle();
+            comp.newFeedbackLines.set([0]);
+
+            comp.updateFeedback({ type: FeedbackType.MANUAL, reference: 'file:file1.java_line:0', text: 'File file1.java at line 1', detailText: 'new', credits: -1 });
+            await settle();
+
+            expect(comp.newFeedbackLines()).toEqual([]);
+            expect(renderedInlineFeedbackLines()).toEqual([0]);
+            expect(addLineWidgetStub).toHaveBeenCalledWith(1, expect.stringMatching(/^feedback-.*-line-1$/), expect.any(HTMLElement));
+        });
+
+        it('should not let a feedback whose line cannot be resolved hide the other feedback of the file', async () => {
+            const malformedFeedback: Feedback = { id: 20, type: FeedbackType.MANUAL, reference: 'file:file1.java_line:abc', text: 'malformed' };
+            fixture.componentRef.setInput('selectedFile', 'file1.java');
+            fixture.componentRef.setInput('feedbacks', [malformedFeedback, laterFeedback]);
+            await settle();
+
+            expect(comp.feedbackForSelectedFile()).toEqual([laterFeedback]);
+            expect(renderedInlineFeedbackLines()).toEqual([4]);
+            expect(addLineWidgetStub).toHaveBeenCalledExactlyOnceWith(5, 'feedback-11-line-5', expect.any(HTMLElement));
+        });
+    });
+
     it('should add a new feedback widget', async () => {
         vi.useFakeTimers();
         // Feedback is stored as 0-based line numbers, but the editor requires 1-based line numbers.
@@ -918,30 +1018,6 @@ describe('CodeEditorMonacoComponent', () => {
         // The feedback has been saved -> no longer new
         expect(comp.newFeedbackLines()).toHaveLength(0);
         expect(updateFeedbackCallbackStub).toHaveBeenCalledExactlyOnceWith(expectedFeedbacks);
-    });
-
-    it('should correctly accept a feedback suggestion and notify', () => {
-        const updateFeedbackStub = vi.spyOn(comp, 'updateFeedback').mockImplementation(() => {});
-        const acceptSuggestionCallbackStub = vi.fn();
-        const suggestionToAccept: Feedback = exampleFeedbacks[0];
-        fixture.componentRef.setInput('feedbackSuggestions', [suggestionToAccept]);
-        comp.onAcceptSuggestion.subscribe(acceptSuggestionCallbackStub);
-        fixture.changeDetectorRef.detectChanges();
-        comp.acceptSuggestion(suggestionToAccept);
-        expect(comp.feedbackSuggestionsInternal()).toHaveLength(0);
-        expect(updateFeedbackStub).toHaveBeenCalledExactlyOnceWith(suggestionToAccept);
-        expect(acceptSuggestionCallbackStub).toHaveBeenCalledExactlyOnceWith(suggestionToAccept);
-    });
-
-    it('should correctly discard a suggestion and notify', () => {
-        const discardSuggestionCallbackStub = vi.fn();
-        const suggestionToDiscard = exampleFeedbacks[0];
-        fixture.componentRef.setInput('feedbackSuggestions', [suggestionToDiscard]);
-        comp.onDiscardSuggestion.subscribe(discardSuggestionCallbackStub);
-        fixture.changeDetectorRef.detectChanges();
-        comp.discardSuggestion(suggestionToDiscard);
-        expect(comp.feedbackSuggestionsInternal()).toHaveLength(0);
-        expect(discardSuggestionCallbackStub).toHaveBeenCalledExactlyOnceWith(suggestionToDiscard);
     });
 
     it('should update file session when a file is renamed', async () => {

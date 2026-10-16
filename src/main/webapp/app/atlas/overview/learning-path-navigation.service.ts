@@ -1,10 +1,10 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Service, computed, inject, signal } from '@angular/core';
 import { LearningPathNavigationDTO, LearningPathNavigationObjectDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { getErrorMessage } from 'app/foundation/util/global.utils';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class LearningPathNavigationService {
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);

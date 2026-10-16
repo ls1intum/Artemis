@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
@@ -8,6 +8,7 @@ import { McqResponseData } from 'app/iris/shared/entities/iris-content-type.mode
 import dayjs from 'dayjs/esm';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
+import { IrisGlobalSearchHandoffDTO } from 'app/iris/shared/entities/iris-global-search-handoff-dto.model';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { randomInt } from 'app/foundation/util/utils';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
@@ -18,7 +19,7 @@ export type Response<T> = Observable<HttpResponse<T>>;
 /**
  * Provides a set of methods to perform CRUD operations on messages
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class IrisChatHttpService {
     protected httpClient = inject(HttpClient);
 
@@ -129,6 +130,15 @@ export class IrisChatHttpService {
      */
     createCourseSession(courseId: number): Response<IrisSession> {
         return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions`, null, { observe: 'response', params: { courseId } });
+    }
+
+    /**
+     * Continues a global search answer in a new course chat that already holds the question and the answer.
+     * @param handoff the course, the optional lecture or exercise, and the question and answer to carry over
+     * @return the new session, already on the requested lecture or exercise
+     */
+    createSessionFromGlobalSearch(handoff: IrisGlobalSearchHandoffDTO): Observable<IrisSession> {
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/sessions/global-search-handoff`, handoff);
     }
 
     getChatSessions(courseId: number): Observable<IrisSessionDTO[]> {

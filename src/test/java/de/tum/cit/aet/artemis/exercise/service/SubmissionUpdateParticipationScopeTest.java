@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -438,7 +438,7 @@ class SubmissionUpdateParticipationScopeTest extends AbstractSpringIntegrationIn
         assertThat(textSubmissionRepository.findById(submissionId)).isEmpty();
         assertThat(studentParticipationRepository.findByIdElseThrow(participationId).getInitializationState()).isEqualTo(InitializationState.INITIALIZED);
         assertThat(submissionVersionRepository.count()).isEqualTo(versionCount);
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/participations/" + participationId + "/team/text-submissions"), any(Object.class));
+        verify(websocketMessagingService, never()).sendMessage(topic("/topic/participations/" + participationId + "/team/text-submissions"), any(Object.class));
     }
 
     @Test

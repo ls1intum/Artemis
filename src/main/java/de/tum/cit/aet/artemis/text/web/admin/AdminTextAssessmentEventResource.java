@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventDTO;
@@ -23,7 +24,7 @@ import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventDTO;
 @Conditional(TextEnabled.class)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("assessment/assessment-analytics")
+@FeatureUsage(UserFeature.TUTOR_EFFORT)
 @RestController
 @RequestMapping("api/text/admin/")
 public class AdminTextAssessmentEventResource {

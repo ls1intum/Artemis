@@ -24,13 +24,13 @@ export interface CompetencyGraphModalData {
     styleUrl: './competency-graph-modal.component.scss',
 })
 export class CompetencyGraphModalComponent {
-    protected readonly closeIcon = faXmark;
-
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
     private readonly scienceService = inject(ScienceService);
     private readonly dialogRef = inject(DynamicDialogRef);
     private readonly dialogConfig = inject(DynamicDialogConfig);
+
+    protected readonly closeIcon = faXmark;
 
     readonly name = signal<string | undefined>((this.dialogConfig.data as CompetencyGraphModalData).name);
     readonly learningPathId = signal<number>((this.dialogConfig.data as CompetencyGraphModalData).learningPathId);

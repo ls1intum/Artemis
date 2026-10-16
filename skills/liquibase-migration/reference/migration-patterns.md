@@ -9,8 +9,12 @@ The problem: `addNotNullConstraint` fails if a single row still holds a null, an
 changeset stops the application from starting. On a production database you cannot know in advance
 that no such row exists.
 
-The pattern is two changesets per column: one that clears the rows without a parent, and one that
-adds the constraint behind a precondition.
+For a required invariant, backfill or remove invalid rows in a reviewed changeset, then verify
+that no `NULL` values remain before adding the constraint. Use `onFail="HALT"` so an unresolved
+violation cannot leave the application running with a weaker schema. If the application can
+correctly operate with a nullable column, a guarded `onFail="CONTINUE"` changeset can defer the
+constraint; state that choice and its follow-up in the changeset comment. The example below
+shows this optional case, not a default for required constraints.
 
 The snippet below is **abridged to show the shape**. Do not copy it as a template: the real
 changeset also clears `long_feedback_text`, `text_block`, `result_rating`, `assessment_note`,
@@ -38,9 +42,10 @@ your own table, and read the complete changeset cited below.
 
 Three things about this are deliberate and easy to get wrong.
 
-**`onFail="CONTINUE"`, never `MARK_RAN`.** `CONTINUE` skips the changeset without recording it in
+**For an optional constraint, `CONTINUE`, never `MARK_RAN`.** `CONTINUE` skips the changeset without recording it in
 `databasechangelog`, so the server starts, a warning is logged, and the constraint is attempted
-again on the next startup. Once the offending rows are gone the column constrains itself.
+again on the next startup. Once the offending rows are gone the column constrains itself. Do not rely on that future
+constraint for current application correctness.
 `MARK_RAN` would record the changeset as done, and that installation would keep a nullable column
 for good, fixable only by a new changelog.
 

@@ -51,6 +51,11 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
 
     private authSubscription?: Subscription;
 
+    /** Counts the notification lists received over the websocket, so that an older REST response does not replace a newer one. */
+    private websocketUpdateCount = 0;
+    /** The REST request currently in flight; a newer request cancels it, so that an older response cannot complete last. */
+    private loadSubscription?: Subscription;
+
     ngOnInit() {
         this.closedIds = this.localStorageService.retrieve<number[]>(CLOSED_NOTIFICATION_IDS_STORAGE_KEY) ?? [];
         this.loadActiveNotification();
@@ -58,11 +63,21 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
             if (user) {
                 clearTimeout(this.websocketDelayTimeout);
                 this.websocketDelayTimeout = setTimeout(() => {
+                    this.subscribeSocket();
+                    // The websocket service restores the subscription itself after a reconnect. Subscribing again on every reconnect
+                    // would only send redundant UNSUBSCRIBE and SUBSCRIBE frames, so just reload what may have changed meanwhile.
                     this.websocketStatusSubscription?.unsubscribe();
-                    this.websocketStatusSubscription = this.websocketService.connectionState.pipe(filter((status) => status.connected)).subscribe(() => this.subscribeSocket());
+                    // Every connected state after the current one is a reconnect: a short interruption does not emit a disconnected state in between,
+                    // as the websocket service hides it from consumers. The current state is a reconnect only if a connection existed before, e.g. when
+                    // the connection was re-established during the delay above.
+                    this.websocketStatusSubscription = this.websocketService.connectionState
+                        .pipe(filter((status, index) => status.connected && (index > 0 || status.wasEverConnectedBefore)))
+                        .subscribe(() => this.loadActiveNotification());
                 }, 500);
             } else {
+                clearTimeout(this.websocketDelayTimeout);
                 this.websocketStatusSubscription?.unsubscribe();
+                this.systemNotificationSubscription?.unsubscribe();
             }
         });
     }
@@ -77,13 +92,20 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
         }
         clearTimeout(this.websocketDelayTimeout);
         this.authSubscription?.unsubscribe();
+        this.loadSubscription?.unsubscribe();
         this.websocketStatusSubscription?.unsubscribe();
         this.systemNotificationSubscription?.unsubscribe();
         this.renderer.setStyle(this.document.documentElement, '--system-notification-height', '0px', RendererStyleFlags2.DashCase);
     }
 
     private loadActiveNotification() {
-        this.systemNotificationService.getActiveNotifications().subscribe((notifications: SystemNotification[]) => {
+        this.loadSubscription?.unsubscribe();
+        const websocketUpdateCountAtRequest = this.websocketUpdateCount;
+        this.loadSubscription = this.systemNotificationService.getActiveNotifications().subscribe((notifications: SystemNotification[]) => {
+            if (this.websocketUpdateCount !== websocketUpdateCountAtRequest) {
+                // A newer list arrived over the websocket while the request was in flight
+                return;
+            }
             this.notifications = notifications;
             this.selectVisibleNotificationsAndScheduleUpdate();
         });
@@ -96,6 +118,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
     private subscribeSocket() {
         this.systemNotificationSubscription?.unsubscribe();
         this.systemNotificationSubscription = this.websocketService.subscribe<SystemNotification[]>(WEBSOCKET_CHANNEL).subscribe((notifications: SystemNotification[]) => {
+            this.websocketUpdateCount++;
             notifications.forEach((notification) => {
                 notification.notificationDate = convertDateFromServer(notification.notificationDate);
                 notification.expireDate = convertDateFromServer(notification.expireDate);

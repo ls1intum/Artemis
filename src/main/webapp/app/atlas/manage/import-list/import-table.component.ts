@@ -33,15 +33,15 @@ export type Column<T extends BaseEntity> = {
     styleUrl: './import-table.component.scss',
 })
 export class ImportTableComponent<T extends BaseEntity> {
+    private readonly alertService = inject(AlertService);
+    private readonly pagingService = inject(PagingService);
+
     protected readonly SortingOrder = SortingOrder;
 
     protected readonly faSort = faSort;
     protected readonly faSortUp = faSortUp;
     protected readonly faSortDown = faSortDown;
     protected readonly faSpinner = faSpinner;
-
-    private readonly alertService = inject(AlertService);
-    private readonly pagingService = inject(PagingService);
 
     columns = input.required<Column<T>[]>();
     readonly columnBaseTranslationKey = input.required<string>();

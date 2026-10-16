@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.FINISHED;
 import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState.RUNNING;
 import static de.tum.cit.aet.artemis.iris.util.IrisChatWebsocketMatchers.messageDTO;
@@ -82,6 +83,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisJsonMessageContentDTO;
@@ -146,6 +148,9 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Autowired
     private IrisChatSessionService irisChatSessionService;
+
+    @Autowired
+    private PyrisJobService pyrisJobService;
 
     private AtomicBoolean pipelineDone;
 
@@ -283,7 +288,7 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         // (2) one RUNNING run-state status update emitted when the run is dispatched (PyrisPipelineService#executePipeline),
         // (3) the final LLM answer message (AbstractIrisChatSessionService#handleResultStatusUpdate).
         // Three sends per run, six for the two messages this test drives.
-        verify(websocketMessagingService, times(6)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + session.getId()), any());
+        verify(websocketMessagingService, times(6)).sendMessageToUser(eq(TEST_PREFIX + "student1"), userTopic("/topic/iris/" + session.getId()), any());
         assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages()).hasSize(4);
     }
 
@@ -318,6 +323,24 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
         var messages = request.getList(messagesUrl(session), HttpStatus.OK, IrisMessageResponseDTO.class);
 
         assertThat(messages).extracting(IrisMessageResponseDTO::id).containsExactlyInAnyOrder(m1.getId(), m2.getId(), m3.getId(), m4.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getMessages_leavesOutConversationSummaries() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage question = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+        IrisMessage answer = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.LLM);
+        IrisMessage summary = new IrisMessage();
+        IrisJsonMessageContent summaryContent = new IrisJsonMessageContent();
+        summaryContent.setJsonContent("{\"summary\":\"The student asked a question.\",\"coversThroughMessageId\":" + answer.getId() + "}");
+        summary.addContent(summaryContent);
+        irisMessageService.saveMessage(summary, session, IrisMessageSender.SUMMARY);
+        IrisMessage followUp = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+
+        var messages = request.getList(messagesUrl(session), HttpStatus.OK, IrisMessageResponseDTO.class);
+
+        assertThat(messages).extracting(IrisMessageResponseDTO::id).containsExactly(question.getId(), answer.getId(), followUp.getId());
     }
 
     @Test
@@ -602,6 +625,40 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resendMessage_allowsATrailingConversationSummary() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
+        // A run whose answer failed can still report a finished compaction, which is stored after the unanswered user message.
+        IrisMessage summary = new IrisMessage();
+        IrisJsonMessageContent summaryContent = new IrisJsonMessageContent();
+        summaryContent.setJsonContent("{\"summary\":\"The student asked a question.\",\"coversThroughMessageId\":" + userMessage.getId() + "}");
+        summary.addContent(summaryContent);
+        irisMessageService.saveMessage(summary, session, IrisMessageSender.SUMMARY);
+
+        mockChatResponse(dto -> {
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", FINISHED, null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody(messagesUrl(session) + "/" + userMessage.getId() + "/resend", null, HttpStatus.OK);
+        await().until(() -> irisSessionRepository.findByIdWithMessagesElseThrow(session.getId()).getMessages().size() == 3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void resendMessage_rejectsAMessageOfAnotherSessionForAnEmptySession() throws Exception {
+        IrisChatSession emptySession = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        IrisChatSession otherUsersSession = createSessionForUser(IrisChatMode.COURSE_CHAT, "student2");
+        IrisMessage otherUsersMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(otherUsersSession), otherUsersSession,
+                IrisMessageSender.USER);
+
+        request.postWithoutResponseBody(messagesUrl(emptySession) + "/" + otherUsersMessage.getId() + "/resend", null, HttpStatus.BAD_REQUEST);
+
+        assertThat(irisSessionRepository.findByIdWithMessagesElseThrow(emptySession.getId()).getMessages()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void resendMessage_rejectsOversizedClientId() throws Exception {
         IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
         IrisMessage userMessage = irisMessageService.saveMessage(IrisMessageFactory.createIrisMessageForSessionWithContent(session), session, IrisMessageSender.USER);
@@ -695,6 +752,36 @@ class IrisChatMessageIntegrationTest extends AbstractIrisChatSessionTest {
 
         assertThat(irisChatSessionRepository.findById(session.getId())).isEmpty();
         assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = PyrisRunState.class, names = { "RUNNING", "FINISHED" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void statusUpdateForDeletedSession_isDroppedAndRemovesJob(PyrisRunState runState) throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        String jobId = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+        irisChatSessionRepository.deleteById(session.getId());
+
+        // a result on the terminal update, none on the intermediate one, so both session loads are covered
+        String result = runState == FINISHED ? "Hello World" : null;
+        sendStatus(jobId, result, runState, null, null);
+
+        assertThat(pyrisJobService.getJob(jobId)).isNull();
+        assertThat(irisMessageRepository.findAllBySessionIdOrderBySentAtAscIdAsc(session.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void partialStatusUpdateForDeletedSession_isDroppedAndRemovesJob() throws Exception {
+        IrisChatSession session = createSessionForUser(IrisChatMode.COURSE_CHAT, "student1");
+        String jobId = pyrisJobService.addChatJob(course.getId(), session.getId(), null, null, null);
+        irisChatSessionRepository.deleteById(session.getId());
+
+        var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of(HttpHeaders.AUTHORIZATION, List.of(Constants.BEARER_PREFIX + jobId))));
+        request.postWithoutResponseBody("/api/iris/internal/pipelines/chat/runs/" + jobId + "/status",
+                new PyrisChatStatusUpdateDTO(null, RUNNING, null, null, null, null, null, null, "partial", 1, null, null), HttpStatus.OK, headers);
+
+        assertThat(pyrisJobService.getJob(jobId)).isNull();
     }
 
     // =========================================================================

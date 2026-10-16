@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,6 +27,7 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.account.service.UserAiPreferenceService;
 import de.tum.cit.aet.artemis.admin.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
@@ -32,6 +35,8 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
@@ -41,6 +46,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionCountDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisGlobalSearchHandoffDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
@@ -54,7 +60,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
  */
 @Conditional(IrisEnabled.class)
 @Lazy
-@FeatureUsage("chat/chat-sessions")
+@FeatureUsage(UserFeature.IRIS_CHAT)
 @RestController
 @RequestMapping("api/iris/chat/")
 public class IrisChatSessionResource {
@@ -110,6 +116,7 @@ public class IrisChatSessionResource {
      * @param entityId exerciseId for exercise modes, lectureId for LECTURE_CHAT, courseId for COURSE_CHAT
      * @return the current or newly created session
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @PostMapping("sessions/current")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -135,6 +142,25 @@ public class IrisChatSessionResource {
     public ResponseEntity<IrisChatSessionResponseDTO> createCourseSession(@RequestParam long courseId) throws URISyntaxException {
         var user = userRepository.getUserWithAuthorities();
         var session = irisChatSessionService.findOrCreateEmptySession(courseId, user);
+        var uriString = "/api/iris/chat/courses/" + session.getCourseId() + "/sessions/" + session.getId();
+        return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
+    }
+
+    /**
+     * POST api/iris/chat/sessions/global-search-handoff: Continue a global search answer in the course chat.
+     * <p>
+     * Creates the session like "New Chat", moves it to the requested lecture or exercise like choosing a chat topic, and appends the question and the answer the
+     * student saw, so the chat opens with both already in it. Authorization is the same as for those two actions (LLM opt-in, role in the course, Iris enabled, and a
+     * lecture or exercise of that course).
+     *
+     * @param handoff the course, the optional lecture or exercise, and the question and answer to carry over
+     * @return the new session, already on the requested context
+     */
+    @PostMapping("sessions/global-search-handoff")
+    @EnforceAtLeastStudent
+    public ResponseEntity<IrisChatSessionResponseDTO> createSessionFromGlobalSearch(@RequestBody @Valid IrisGlobalSearchHandoffDTO handoff) throws URISyntaxException {
+        var user = userRepository.getUserWithAuthorities();
+        var session = irisChatSessionService.createSessionFromGlobalSearch(handoff, user);
         var uriString = "/api/iris/chat/courses/" + session.getCourseId() + "/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
@@ -183,6 +209,7 @@ public class IrisChatSessionResource {
      * @param courseId of the course
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of session DTOs
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping({ "courses/{courseId}/sessions/overview", "{courseId}/sessions/overview" })
     @EnforceAtLeastStudentInCourse
     @AllowedTools(ToolTokenType.SCORPIO)

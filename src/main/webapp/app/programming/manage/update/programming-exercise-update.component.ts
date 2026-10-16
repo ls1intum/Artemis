@@ -524,7 +524,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.programmingExercise.projectType = type;
         }
 
-        this.resetBuildOptionSelections();
+        // The imported build options belong to the imported repositories and are locked, so they must survive setting the imported project type
+        if (!(this.isImportFromFile || this.isImportFromSharing)) {
+            this.resetBuildOptionSelections();
+        }
     }
 
     /**
@@ -618,7 +621,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                                 this.isExamMode.set(false);
                                 this.courseService.find(this.courseId()).subscribe((res) => {
                                     this.programmingExercise.course = res.body!;
-                                    if (!params['exerciseId'] && this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                    if (
+                                        !params['exerciseId'] &&
+                                        this.programmingExercise.course?.defaultProgrammingLanguage &&
+                                        !this.isImportFromFile &&
+                                        !this.isImportFromSharing
+                                    ) {
                                         this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
                                     }
                                     this.exerciseCategories = this.programmingExercise.categories || [];
@@ -854,6 +862,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         onReEvaluated: (reference: Awaited<ReturnType<ExerciseUpdateWarningService['checkExerciseBeforeUpdate']>>) => void = () => onConfirmed(),
     ) {
         if (this.isSaving() || this.isGeneratingWithAi()) {
+            return;
+        }
+        // Flush before isSaving / modal so pending Monaco text is on the DTO even if the user confirms
+        // immediately. A rejected parse aborts: the model still holds the previous grading criteria.
+        if (this.exerciseGradingComponent()?.prepareForSave() === false) {
             return;
         }
         const preUpdateModalRef = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode());
@@ -1175,6 +1188,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.localStorageService.store<boolean>(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, this.isSimpleMode());
     };
 
+    /** Lets the form footer check the form again when the reasons it displays block a click. */
+    readonly revalidate = (): ValidationReason[] => this.getInvalidReasons();
+
     /**
      * Change the selected programming language for the current exercise. If there are unsaved changes, the user
      * will see a confirmation dialog about switching to a new template
@@ -1400,6 +1416,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private validateExerciseBonusPoints(validationErrorReasons: ValidationReason[]) {
+        // The input is hidden and the value reset on save unless the score includes the bonus, so a stale value is not the user's to fix.
+        if (this.programmingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            return;
+        }
         if (this.programmingExercise.bonusPoints === undefined || typeof this.programmingExercise.bonusPoints !== 'number') {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.bonusPoints.undefined',
@@ -1604,7 +1624,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.programmingExerciseLanguageForAi.set(this.programmingExercise.programmingLanguage);
         // we need to get it from the history object as setting the programming language
         // sets the project type of the programming exercise to the default value for the programming language.
-        this.selectedProjectType = history.state.programmingExerciseForImportFromFile.projectType;
+        const importedProjectType: ProjectType | undefined = history.state.programmingExerciseForImportFromFile.projectType;
+        // The project type setter derives MAVEN_MAVEN and GRADLE_GRADLE from the dependency flag, so it has to match the imported type
+        this.withDependenciesValue = importedProjectType === ProjectType.MAVEN_MAVEN || importedProjectType === ProjectType.GRADLE_GRADLE;
+        this.selectedProjectType = importedProjectType!;
     }
 
     private createProgrammingExerciseForImportFromSharing() {

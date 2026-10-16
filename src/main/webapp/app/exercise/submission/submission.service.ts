@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { createRequestOption } from 'app/foundation/util/request.util';
@@ -30,7 +30,7 @@ interface SubmissionWithComplaintResponseDTO {
     complaint: ComplaintDTO;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SubmissionService {
     private http = inject(HttpClient);
     private complaintService = inject(ComplaintService);

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -49,7 +49,7 @@ export type ProgrammingExerciseResetOptions = {
     recreateBuildPlans: boolean;
 };
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseService {
     private http = inject(HttpClient);
     private exerciseService = inject(ExerciseService);
@@ -68,7 +68,7 @@ export class ProgrammingExerciseService {
         let copy = this.convertDataFromClient(programmingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         ExerciseService.stringifyExerciseCategories(copy);
-        const params = new HttpParams().set('emptyRepositories', String(emptyRepositories));
+        const params = this.addHyperionChecklistProvenanceParams(new HttpParams().set('emptyRepositories', String(emptyRepositories)), programmingExercise);
         return this.http
             .post<ProgrammingExercise>(this.resourceUrl + '/setup', copy, { observe: 'response', params })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
@@ -167,11 +167,27 @@ export class ProgrammingExerciseService {
      * @param req optional request options
      */
     update(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
-        const options = createRequestOption(req);
+        const options = this.addHyperionChecklistProvenanceParams(createRequestOption(req), programmingExercise);
         const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
             .put<ProgrammingExercise>(this.resourceUrl, dto, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
+    }
+
+    /**
+     * Adds Hyperion-inferred competency IDs to the exercise save itself so the server persists links and provenance together.
+     */
+    private addHyperionChecklistProvenanceParams(params: HttpParams, exercise: ProgrammingExercise): HttpParams {
+        const competencyIds = new Set(
+            (exercise.competencyLinks ?? [])
+                .filter((link) => link.generatedByAi)
+                .map((link) => link.competency?.id)
+                .filter((id): id is number => id !== undefined),
+        );
+        for (const competencyId of competencyIds) {
+            params = params.append('hyperionCompetencyId', competencyId);
+        }
+        return params;
     }
 
     /**
@@ -487,7 +503,7 @@ export class ProgrammingExerciseService {
      * @param req optional request options
      */
     reevaluateAndUpdate(programmingExercise: ProgrammingExercise, req?: Parameters<typeof createRequestOption>[0]): Observable<EntityResponseType> {
-        const options = createRequestOption(req);
+        const options = this.addHyperionChecklistProvenanceParams(createRequestOption(req), programmingExercise);
         const dto = toUpdateProgrammingExerciseDTO(programmingExercise);
         return this.http
             .put<ProgrammingExercise>(`${this.resourceUrl}/${programmingExercise.id}/re-evaluate`, dto, {
@@ -552,8 +568,9 @@ export class ProgrammingExerciseService {
         const exerciseBlob = new Blob([JSON.stringify(copy)], { type: 'application/json' });
         formData.append('programmingExercise', exerciseBlob);
         const url = `api/programming/courses/${courseId}/programming-exercises/import-from-file`;
+        const params = this.addHyperionChecklistProvenanceParams(new HttpParams(), exercise);
         return this.http
-            .post<ProgrammingExercise>(url, formData, { observe: 'response' })
+            .post<ProgrammingExercise>(url, formData, { observe: 'response', params })
             .pipe(map((res: EntityResponseType) => this.processProgrammingExerciseEntityResponse(res)));
     }
 

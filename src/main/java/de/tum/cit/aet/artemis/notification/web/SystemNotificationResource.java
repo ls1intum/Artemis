@@ -23,6 +23,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 import de.tum.cit.aet.artemis.notification.domain.notification.SystemNotification;
@@ -34,7 +35,7 @@ import de.tum.cit.aet.artemis.notification.repository.SystemNotificationReposito
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("system-notifications/system-notifications")
+@FeatureUsage(UserFeature.SYSTEM_NOTIFICATIONS)
 @RestController
 @RequestMapping("api/notification/")
 public class SystemNotificationResource {

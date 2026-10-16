@@ -7,14 +7,14 @@ import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { LearnerProfileDTO } from 'app/account/user/settings/learner-profile/dto/learner-profile-dto.model';
-import { TumUiButtonComponent, TumUiSelectButtonComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiSelectButtonComponent } from '@tumaet/ui-angular';
 import { FeedbackOnboardingModalComponent } from 'app/account/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-onboarding-modal.component';
 
 @Component({
     selector: 'jhi-feedback-learner-profile',
     templateUrl: './feedback-learner-profile.component.html',
     styleUrls: ['../learner-profile.component.scss'],
-    imports: [TranslateDirective, FormsModule, TumUiButtonComponent, TumUiSelectButtonComponent, FeedbackOnboardingModalComponent],
+    imports: [TranslateDirective, FormsModule, TumAetUiButtonComponent, TumAetUiSelectButtonComponent, FeedbackOnboardingModalComponent],
 })
 export class FeedbackLearnerProfileComponent implements OnInit {
     private alertService = inject(AlertService);
@@ -65,7 +65,11 @@ export class FeedbackLearnerProfileComponent implements OnInit {
     /** Icon for save button */
     protected readonly faSave = faSave;
 
-    async ngOnInit(): Promise<void> {
+    ngOnInit(): void {
+        void this.initializeFeedbackLearnerProfileComponent();
+    }
+
+    private async initializeFeedbackLearnerProfileComponent(): Promise<void> {
         await this.loadProfile();
     }
 

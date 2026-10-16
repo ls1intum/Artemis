@@ -9,7 +9,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 
 import java.util.regex.Matcher;
 
+import org.jspecify.annotations.Nullable;
+
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.DateUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 
 /**
@@ -180,6 +183,19 @@ public final class CourseValidator {
         }
         if (course.getSemester().length() > Course.SEMESTER_MAX_LENGTH) {
             throw new BadRequestAlertException("The semester must not be longer than " + Course.SEMESTER_MAX_LENGTH + " characters", Course.ENTITY_NAME, "semesterTooLong", true);
+        }
+    }
+
+    /**
+     * Validates that a time zone, if one is given, is one the server can interpret. Tutorial group sessions and free
+     * periods are interpreted in the course's time zone, so an unknown one would only fail there, long after it was saved.
+     *
+     * @param timeZone the time zone to validate, or {@code null} for a course without one
+     * @throws BadRequestAlertException if the time zone is not one of {@link DateUtil#SUPPORTED_TIME_ZONES}
+     */
+    public static void validateTimeZone(@Nullable String timeZone) {
+        if (timeZone != null && !DateUtil.isSupportedTimeZone(timeZone)) {
+            throw new BadRequestAlertException("The time zone " + timeZone + " is not supported", Course.ENTITY_NAME, "timeZoneInvalid", true);
         }
     }
 

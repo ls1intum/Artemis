@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.eclipse.jgit.lib.ObjectId;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -42,6 +43,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
@@ -73,7 +75,7 @@ import de.tum.cit.aet.artemis.programming.service.RepositoryService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/online-editor")
+@FeatureUsage(UserFeature.PROGRAMMING_ONLINE_EDITOR)
 @RestController
 @RequestMapping("api/programming/")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
@@ -199,6 +201,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param participationId the participationId of the repository we want to get the files from
      * @return a map with the file path as key and the file type as value
      */
+    @FeatureUsage(UserFeature.PLAGIARISM_CHECKS)
     @GetMapping(value = "participations/{participationId}/repository/files-plagiarism-view", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, FileType>> getFilesForPlagiarismView(@PathVariable Long participationId) {
@@ -221,6 +224,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param repositoryType  the type of the repository (template, solution, tests); requires at least editor rights for the exercise
      * @return a map with the file path as key and the file content as value
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_REPOSITORY_HISTORY)
     @GetMapping(value = "repository-files-content", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<Map<String, String>> getFilesAtCommit(@RequestParam(name = "commitId") String commitId, @RequestParam(required = false) Long participationId,
@@ -249,6 +253,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param participationId participation of the student
      * @return the ResponseEntity with status 200 (OK) and a map of files with the information if they were changed/are new.
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping(value = "participations/{participationId}/repository/files-change", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
@@ -261,6 +266,85 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             var filesWithInformationAboutChange = super.repositoryService.getFilesWithInformationAboutChange(repository, templateRepository);
             return new ResponseEntity<>(filesWithInformationAboutChange, HttpStatus.OK);
         });
+    }
+
+    /**
+     * GET /participations/{participationId}/repository/commits/{commitId}/files : Gets the files of the repository exactly as they are in the given commit.
+     * <p>
+     * In contrast to {@link #getFiles(Long)}, this neither checks out nor pulls the server-side working copy, which the online editor shares with the student and which can contain
+     * uncommitted or locally committed edits. It is meant for views that must show a submitted commit and nothing else, e.g. the manual assessment.
+     *
+     * @param participationId the participationId of the repository we want to get the files from
+     * @param commitId        the full hash of the commit
+     * @return a map with the file path as key and the file type as value
+     */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @GetMapping(value = "participations/{participationId}/repository/commits/{commitId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    public ResponseEntity<Map<String, FileType>> getFilesAtCommitOfParticipation(@PathVariable Long participationId, @PathVariable String commitId) {
+        log.debug("REST request to files for domainId {} at commitId {}", participationId, commitId);
+        var participation = getParticipationForCommitRead(participationId, commitId);
+        return executeAndCheckForExceptions(() -> ResponseEntity.ok(repositoryService.getFilesAtCommit(participation, commitId)));
+    }
+
+    /**
+     * GET /participations/{participationId}/repository/commits/{commitId}/file : Gets one file of the repository exactly as it is in the given commit, see
+     * {@link #getFilesAtCommitOfParticipation}.
+     *
+     * @param participationId the participationId of the repository we want to get the file from
+     * @param commitId        the full hash of the commit
+     * @param filename        the name of the file to retrieve
+     * @return the file with the given filename
+     */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @GetMapping(value = "participations/{participationId}/repository/commits/{commitId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getFileAtCommitOfParticipation(@PathVariable Long participationId, @PathVariable String commitId, @RequestParam("file") String filename) {
+        log.debug("REST request to file {} for domainId {} at commitId {}", filename, participationId, commitId);
+        var participation = getParticipationForCommitRead(participationId, commitId);
+        return executeAndCheckForExceptions(() -> repositoryService.getFileAtCommit(participation, commitId, filename));
+    }
+
+    /**
+     * GET /participations/{participationId}/repository/commits/{commitId}/files-change : Like {@link #getFilesWithInformationAboutChange(Long)}, but for the files as they are in
+     * the given commit, see {@link #getFilesAtCommitOfParticipation}.
+     *
+     * @param participationId participation of the student
+     * @param commitId        the full hash of the commit
+     * @return the ResponseEntity with status 200 (OK) and a map of files with the information if they were changed/are new.
+     */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
+    @GetMapping(value = "participations/{participationId}/repository/commits/{commitId}/files-change", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastTutor
+    public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChangeAtCommit(@PathVariable Long participationId, @PathVariable String commitId) {
+        var participation = getParticipationForCommitRead(participationId, commitId);
+        return executeAndCheckForExceptions(() -> {
+            var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(participation.getExercise().getId());
+            return ResponseEntity.ok(repositoryService.getFilesWithInformationAboutChangeAtCommit(participation, commitId, exercise.getTemplateParticipation()));
+        });
+    }
+
+    /**
+     * Loads the participation and checks that the user may read its repository.
+     *
+     * @param participationId the id of the participation
+     * @param commitId        the commit hash taken from the request path, which must be a full object id
+     * @return the participation
+     */
+    private ProgrammingExerciseParticipation getParticipationForCommitRead(Long participationId, String commitId) {
+        if (!ObjectId.isId(commitId)) {
+            throw new BadRequestAlertException("The commit must be given as a full commit hash", "repository", "commitIdInvalid");
+        }
+        var participation = getProgrammingExerciseParticipation(participationId);
+        var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
+        var user = userRepository.getUserWithAuthorities();
+        if (programmingSubmissionRepository.existsByParticipationIdAndCommitHash(participationId, commitId)) {
+            repositoryAccessService.checkAccessRepositoryForAssessmentElseThrow(participation, user, programmingExercise);
+        }
+        else {
+            repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, programmingExercise, RepositoryActionType.READ);
+        }
+        return participation;
     }
 
     @Override
@@ -277,6 +361,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      * @param filename        the name of the file to retrieve
      * @return the file with the given filename
      */
+    @FeatureUsage(UserFeature.PLAGIARISM_CHECKS)
     @GetMapping(value = "participations/{participationId}/repository/file-plagiarism-view", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getFileForPlagiarismView(@PathVariable Long participationId, @RequestParam("file") String filename) {
@@ -433,6 +518,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
      *                            used.
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
     @GetMapping(value = "participations/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -459,13 +545,15 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             return ResponseEntity.ok(List.of());
         }
 
-        // Empty build logs are returned if the submission is not build failed
-        if (!programmingSubmission.isBuildFailed()) {
+        // Without a specific result, the submission's current build state decides whether latest failed-build logs are relevant. A result-specific request must not use that
+        // flag: a later successful rebuild sets it to false while the deliberately retained logs of an earlier failed result remain available.
+        if (resultId.isEmpty() && !programmingSubmission.isBuildFailed()) {
             return ResponseEntity.ok(List.of());
         }
 
-        // Load the logs from the database
-        List<BuildLogEntry> buildLogs = buildLogService.getLatestBuildLogs(programmingSubmission);
+        ProgrammingSubmission selectedSubmission = programmingSubmission;
+        List<BuildLogEntry> buildLogs = resultId.map(id -> buildLogService.getBuildLogs(selectedSubmission, id))
+                .orElseGet(() -> buildLogService.getLatestBuildLogs(selectedSubmission));
         return ResponseEntity.ok(buildLogs.stream().map(BuildLogEntryDTO::of).toList());
     }
 }

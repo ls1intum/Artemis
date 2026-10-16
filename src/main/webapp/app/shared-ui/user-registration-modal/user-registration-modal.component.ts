@@ -36,10 +36,9 @@ import { UserForRegistration, UserSearchResult } from 'app/shared-ui/user-regist
 })
 export class UserRegistrationModalComponent {
     private static readonly SEARCH_DEBOUNCE_MS = 300;
+    private readonly alertService = inject(AlertService);
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
-
-    private readonly alertService = inject(AlertService);
 
     private debounceTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -133,7 +132,8 @@ export class UserRegistrationModalComponent {
         this.debounceTimer = setTimeout(() => {
             this.isLoading.set(true);
             this.hasSearched.set(true);
-            this.tableViewRef()?.reload();
+            // A new search term always starts from page 0 — reload() defaults to the current page, which would be wrong here.
+            this.tableViewRef()?.reload(0);
         }, UserRegistrationModalComponent.SEARCH_DEBOUNCE_MS);
     }
 

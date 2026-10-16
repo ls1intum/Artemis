@@ -16,6 +16,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.exercise.domain.Submission_;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
@@ -52,7 +53,7 @@ public class ProgrammingSubmissionWithoutResultScheduleService {
         ZonedDateTime twoHoursAgo = now.minusHours(2);
         ZonedDateTime twoDaysAgo = now.minusDays(2);
 
-        Pageable pageable = PageRequest.of(0, 50, Sort.by("submissionDate").ascending());
+        Pageable pageable = PageRequest.of(0, 50, Sort.by(Submission_.SUBMISSION_DATE).ascending());
         int processedCount = 0;
         Slice<ProgrammingSubmission> slice;
         do {

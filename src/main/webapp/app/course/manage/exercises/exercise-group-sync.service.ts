@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { Exercise, ExerciseType, ExerciseVariantGroupReference } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -12,7 +12,7 @@ import { ExerciseVariantGroupDTO, toCourseExerciseGroup } from 'app/course/manag
  * the server, mirroring the server-side group timeline propagation so member dates and quiz badges update without a
  * full page reload. Pure state mapping only — the HTTP calls stay with the callers.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseGroupSyncService {
     private readonly quizExerciseService = inject(QuizExerciseService);
 

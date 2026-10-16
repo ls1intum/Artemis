@@ -10,9 +10,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCAuthException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.localvc.exception.LocalVCInternalException;
@@ -54,6 +57,17 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
                 log.warn("LocalVC fetch rejected for {} -> HTTP {} ({}: {})", servletRequest.getRequestURI(), status, e.getClass().getSimpleName(), e.getMessage());
             }
             servletResponse.setStatus(status);
+            return;
+        }
+        catch (RateLimitExceededException e) {
+            // The git servlet runs outside Spring MVC, so the ExceptionTranslator never sees this exception: answered
+            // here, or it leaves the servlet uncaught and the client gets a generic error instead of 429. The rate limit
+            // service has already logged the rejection with the client address.
+            log.debug("LocalVC fetch rate limited for {}, retry after {} seconds", servletRequest.getRequestURI(), e.getRetryAfterSeconds());
+            servletResponse.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
+            if (e.getRetryAfterSeconds() > 0) {
+                servletResponse.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(e.getRetryAfterSeconds()));
+            }
             return;
         }
         catch (AuthenticationException e) {

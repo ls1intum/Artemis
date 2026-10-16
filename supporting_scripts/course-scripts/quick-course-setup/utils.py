@@ -105,9 +105,12 @@ def get_user_details_by_index(user_index: int) -> Dict[str, Any]:
         "firstName": username,
         "lastName": username,
         "langKey": "en",
+        # Artemis sends no e-mail to a test user until it enables one, so a script that touches many of them stays off the SMTP quota
+        "isTestUser": True,
 
         "groups": groups,
-        "password": password
+        "password": password,
+        "internal": True,
     }
 
 def get_student_details_by_index(user_index: int) -> Dict[str, Any]:
@@ -127,5 +130,6 @@ def get_student_details_by_index(user_index: int) -> Dict[str, Any]:
         "lastName": f"User{user_index}",
         "langKey": "en",
         "groups": groups,
-        "password": password
+        "password": password,
+        "internal": True,
     }

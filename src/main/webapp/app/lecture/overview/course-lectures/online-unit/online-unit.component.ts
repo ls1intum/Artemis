@@ -12,9 +12,9 @@ import { ScienceEventType } from 'app/foundation/science/science.model';
     templateUrl: './online-unit.component.html',
 })
 export class OnlineUnitComponent extends LectureUnitDirective<OnlineUnit> {
-    protected readonly faUpRightFromSquare = faUpRightFromSquare;
-
     private readonly scienceService = inject(ScienceService);
+
+    protected readonly faUpRightFromSquare = faUpRightFromSquare;
 
     handleIsolatedView() {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);

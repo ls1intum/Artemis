@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -16,7 +16,7 @@ export interface IProgrammingExerciseParticipationService {
     checkIfParticipationHasResult: (participationId: number) => Observable<boolean>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExerciseParticipationService implements IProgrammingExerciseParticipationService {
     private http = inject(HttpClient);
     private entityTitleService = inject(EntityTitleService);

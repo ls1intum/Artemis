@@ -241,7 +241,12 @@
             },
             "citation": {
                 "unitLabel": "Unit:",
-                "lectureLabel": "Lecture:"
+                "lectureLabel": "Lecture:",
+                "outdated": {
+                    "stale": "The cited material has changed since this answer was written, so the exact page or timestamp is not opened.",
+                    "gone": "The cited material no longer exists, so the exact page or timestamp cannot be opened.",
+                    "unverified": "The cited material cannot be checked right now, so the exact page or timestamp is not opened as a precaution."
+                }
             },
             "contextSelection": {
                 "label": "Select chat context",
@@ -308,9 +313,7 @@
                 "lectureSuccess": "Lecture processing in Iris has started",
                 "lectureError": "Error while sending lecture to Iris",
                 "allLecturesSuccess": "All Lectures are now being processed",
-                "allFaqsSuccess": "All Faq processing in Iris started successfully",
                 "allLecturesError": "Error while sending all lectures to Iris",
-                "allFaqsError": "Error while sending all Faqs to Iris",
                 "lectureNotFound": "Could not send lecture to Iris, no lecture found with the provided id.",
                 "pyrisUnavailable": "Iris is currently unavailable.",
                 "pyrisError": "An error occurred while getting processing status from Iris.",
@@ -320,6 +323,11 @@
                 "tooltip": "Enable or disable Iris for your course. To configure custom instructions, click the configure button."
             },
             "pointOut": {
+                "outdated": {
+                    "stale": "The material Iris pointed to has changed, so the exact page or timestamp is not opened.",
+                    "gone": "The material Iris pointed to no longer exists, so the exact page or timestamp cannot be opened.",
+                    "unverified": "The material Iris pointed to cannot be checked right now, so the exact page or timestamp is not opened as a precaution."
+                },
                 "label": "Navigated to {{target}} in lecture unit {{unit}}",
                 "labelNoUnit": "Navigated to {{target}}",
                 "page": "page {{page}}",

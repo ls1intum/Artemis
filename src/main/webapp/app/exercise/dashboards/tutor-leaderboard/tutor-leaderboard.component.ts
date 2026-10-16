@@ -9,12 +9,12 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-tutor-leaderboard',
     templateUrl: './tutor-leaderboard.component.html',
-    imports: [TumUiTableDirective, TumUiTableSortableColumnComponent, TumUiTooltipDirective, TranslateDirective, FaIconComponent, RouterLink, ArtemisTranslatePipe],
+    imports: [TumAetUiTableDirective, TumAetUiTableSortableColumnComponent, TumAetUiTooltipDirective, TranslateDirective, FaIconComponent, RouterLink, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorLeaderboardComponent {
@@ -47,9 +47,26 @@ export class TutorLeaderboardComponent {
      */
     readonly sortedTutorsData = computed<TutorLeaderboardElement[]>(() => this.sortService.sortByProperty([...this.tutorsData()], this.sortPredicate(), this.reverseOrder()));
 
+    /**
+     * Rank of each tutor by points (standard competition ranking), keyed by user id: tutors with the same points share a rank
+     * and the following rank is skipped accordingly. The rank does not depend on the displayed sort order.
+     */
+    readonly ranks = computed<Map<number, number>>(() => {
+        const byPointsDescending = [...this.tutorsData()].sort((a, b) => b.points - a.points);
+        const ranks = new Map<number, number>();
+        let rank = 0;
+        byPointsDescending.forEach((tutor, index) => {
+            if (index === 0 || tutor.points !== byPointsDescending[index - 1].points) {
+                rank = index + 1;
+            }
+            ranks.set(tutor.userId, rank);
+        });
+        return ranks;
+    });
+
     readonly faExclamationTriangle = faExclamationTriangle;
 
-    onSortChange(event: TumUiTableSortEvent): void {
+    onSortChange(event: TumAetUiTableSortEvent): void {
         this.sortPredicate.set(event.field);
         this.reverseOrder.set(event.order > 0);
     }

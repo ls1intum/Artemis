@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { SidebarItem } from 'app/course/shared/course-sidebar/course-sidebar.component';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import {
@@ -13,6 +13,7 @@ import {
     faFileAlt,
     faList,
     faNetworkWired,
+    faPersonChalkboard,
     faPuzzlePiece,
     faQuestion,
     faRobot,
@@ -25,9 +26,7 @@ import {
 /**
  * Service for creating common sidebar items used in both course overview and course management components
  */
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class CourseSidebarItemService {
     getManagementDefaultItems(courseId: number): SidebarItem[] {
         return [
@@ -247,6 +246,18 @@ export class CourseSidebarItemService {
             icon: faUserCheck,
             title: 'Assessment Dashboard',
             translation: 'entity.action.assessmentDashboard',
+            hidden: false,
+        };
+    }
+
+    getPresentationAssessmentsItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/presentations`,
+            icon: faPersonChalkboard,
+            iconColor: 'var(--primary)',
+            title: 'Presentations',
+            translation: 'artemisApp.presentationAssessment.home.title',
+            testId: 'presentations',
             hidden: false,
         };
     }

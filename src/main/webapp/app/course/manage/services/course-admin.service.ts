@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -9,7 +9,7 @@ import { CourseOperationProgressDTO } from 'app/course/shared/entities/course-op
 import { convertDateFromServer } from 'app/foundation/util/date.utils';
 import { toCourseCreateDTO } from 'app/course/shared/entities/course-update-dto.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CourseAdminService {
     private http = inject(HttpClient);
 

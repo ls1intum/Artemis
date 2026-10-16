@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.dto.CourseAssessmentDashboardDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseExerciseDueDateDTO;
@@ -54,6 +55,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamAssignmentConfigRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 
 /**
@@ -61,7 +63,7 @@ import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/course-management")
+@FeatureUsage(UserFeature.COURSE_MANAGEMENT_OVERVIEW)
 @RestController
 @RequestMapping("api/course/")
 public class CourseManagementResource {
@@ -86,6 +88,8 @@ public class CourseManagementResource {
 
     private final CourseRepository courseRepository;
 
+    private final TeamAssignmentConfigRepository teamAssignmentConfigRepository;
+
     private final TutorParticipationRepository tutorParticipationRepository;
 
     private final ExerciseRepository exerciseRepository;
@@ -93,7 +97,8 @@ public class CourseManagementResource {
     public CourseManagementResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, AssessmentDashboardService assessmentDashboardService,
             ExerciseRepository exerciseRepository, CourseForUserGroupService courseForUserGroupService, CourseOverviewService courseOverviewService,
-            CourseLoadService courseLoadService) {
+            CourseLoadService courseLoadService, TeamAssignmentConfigRepository teamAssignmentConfigRepository) {
+        this.teamAssignmentConfigRepository = teamAssignmentConfigRepository;
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -128,6 +133,7 @@ public class CourseManagementResource {
      * @param search The pageable search containing the page size, page number and query string
      * @return the ResponseEntity with status 200 (OK) and with body the desired page
      */
+    @FeatureUsage(UserFeature.COURSE_MATERIAL_IMPORT)
     @GetMapping("courses/for-import")
     @EnforceAtLeastInstructor
     public ResponseEntity<SearchResultPageDTO<CourseForImportDTO>> getCoursesForImport(SearchTermPageableSearchDTO<String> search) {
@@ -174,6 +180,7 @@ public class CourseManagementResource {
      * @param courseId the id of the course to retrieve
      * @return data about a course including all exercises, plus some data for the tutor as tutor status for assessment
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/for-assessment-dashboard")
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<CourseAssessmentDashboardDTO> getCourseForAssessmentDashboard(@PathVariable long courseId) {
@@ -201,6 +208,9 @@ public class CourseManagementResource {
         log.debug("REST request to get course {} for tutors", courseId);
         Course course = courseRepository.findWithEagerExercisesById(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        // The exercises report their team assignment configuration, which an exercise does not carry by itself: one query
+        // for all of them.
+        teamAssignmentConfigRepository.attachTo(course.getExercises());
         return ResponseEntity.ok(CourseWithExercisesDTO.of(course));
     }
 
@@ -238,6 +248,7 @@ public class CourseManagementResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.ASSESSMENT_DASHBOARD)
     @GetMapping("courses/{courseId}/locked-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<LockedCourseSubmissionDTO>> getLockedSubmissionsForCourse(@PathVariable Long courseId) {

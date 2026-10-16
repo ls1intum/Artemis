@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
@@ -15,7 +15,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExampleSubmissionService {
     private http = inject(HttpClient);
     private stringCountService = inject(StringCountService);

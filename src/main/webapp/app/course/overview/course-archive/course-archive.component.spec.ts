@@ -110,8 +110,13 @@ describe('CourseArchiveComponent', () => {
             expect(component.archiveGroups().at(-1)).toBe('testCourses');
 
             fixture.changeDetectorRef.detectChanges();
-            const testCourseGroup = fixture.debugElement.nativeElement.querySelector('#semester-group-5');
+            const testCourseGroup: HTMLButtonElement = fixture.debugElement.nativeElement.querySelector('#semester-group-5');
+            expect(testCourseGroup.tagName).toBe('BUTTON');
+            expect(testCourseGroup.type).toBe('button');
+            expect(testCourseGroup.getAttribute('aria-expanded')).toBe('true');
             testCourseGroup.click();
+            fixture.detectChanges();
+            expect(testCourseGroup.getAttribute('aria-expanded')).toBe('false');
 
             expect(component.semesterCollapsed().testCourses).toBe(true);
         });

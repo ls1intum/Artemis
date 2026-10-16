@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { HttpResponse } from '@angular/common/http';
 import { firstValueFrom, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { MockCommunicationService } from 'test/helpers/mocks/service/mock-communication.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -14,7 +14,14 @@ import { ChannelReferenceAction } from 'app/editor/monaco-editor/model/actions/c
 import { UserMentionAction } from 'app/editor/monaco-editor/model/actions/communication/user-mention.action';
 import { ExerciseReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/exercise-reference.action';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisTutor, metisUser1, metisUser2 } from 'test/helpers/sample/metis-sample-data';
+import {
+    communicationExamChannelDTO,
+    communicationExerciseChannelDTO,
+    communicationGeneralChannelDTO,
+    communicationTutor,
+    communicationUser1,
+    communicationUser2,
+} from 'test/helpers/sample/communication-sample-data';
 import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorComponent } from 'app/editor/monaco-editor/monaco-editor.component';
@@ -23,19 +30,23 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureAttachmentReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { ReferenceType } from 'app/communication/metis.util';
+import { ReferenceType } from 'app/communication/communication.util';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { FaqReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/faq-reference.action';
 import { Faq } from 'app/communication/shared/entities/faq.model';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/foundation/service/file.service';
-import { ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ChannelDTO, ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import enCommunication from 'src/main/webapp/i18n/en/communication.json';
+import deCommunication from 'src/main/webapp/i18n/de/communication.json';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('MonacoEditorCommunicationActionIntegration', () => {
     let comp: MonacoEditorComponent;
     let fixture: ComponentFixture<MonacoEditorComponent>;
-    let metisService: MetisService;
+    let communicationService: CommunicationService;
     let fileService: FileService;
     let courseManagementService: CourseManagementService;
     let channelService: ChannelService;
@@ -53,7 +64,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         await TestBed.configureTestingModule({
             imports: [MonacoEditorComponent],
             providers: [
-                { provide: MetisService, useClass: MockMetisService },
+                { provide: CommunicationService, useClass: MockCommunicationService },
                 { provide: FileService, useClass: MockFileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(LectureService),
@@ -66,20 +77,20 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
         fixture = TestBed.createComponent(MonacoEditorComponent);
         comp = fixture.componentInstance;
-        metisService = TestBed.inject(MetisService);
+        communicationService = TestBed.inject(CommunicationService);
         fileService = TestBed.inject(FileService);
         courseManagementService = TestBed.inject(CourseManagementService);
         lectureService = TestBed.inject(LectureService);
         channelService = TestBed.inject(ChannelService);
-        channelReferenceAction = new ChannelReferenceAction(metisService, channelService);
-        userMentionAction = new UserMentionAction(courseManagementService, metisService);
+        channelReferenceAction = new ChannelReferenceAction(communicationService, channelService);
+        userMentionAction = new UserMentionAction(courseManagementService, communicationService);
         exerciseService = TestBed.inject(ExerciseService);
         // The action asks for the exercise titles instead of reading them off the course, which no longer carries them
         vi.spyOn(exerciseService, 'getTitlesForCourse').mockReturnValue(
-            of((metisService.getCourse().exercises ?? []).map((exercise) => ({ id: exercise.id!, title: exercise.title, type: exercise.type }))),
+            of((communicationService.getCourse().exercises ?? []).map((exercise) => ({ id: exercise.id!, title: exercise.title, type: exercise.type }))),
         );
-        exerciseReferenceAction = new ExerciseReferenceAction(metisService, exerciseService);
-        faqReferenceAction = new FaqReferenceAction(metisService);
+        exerciseReferenceAction = new ExerciseReferenceAction(communicationService, exerciseService);
+        faqReferenceAction = new FaqReferenceAction(communicationService);
     });
 
     afterEach(() => {
@@ -113,12 +124,12 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         beforeEach(async () => {
             fixture.detectChanges();
             comp.changeModel('initial', '');
-            channels = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
+            channels = [communicationGeneralChannelDTO, communicationExamChannelDTO, communicationExerciseChannelDTO];
             channelReferenceAction.cachedChannels = channels;
-            users = [metisUser1, metisUser2, metisTutor];
+            users = [communicationUser1, communicationUser2, communicationTutor];
             vi.spyOn(courseManagementService, 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: users, status: 200 })));
-            exercises = metisService.getCourse().exercises!;
-            faqs = await firstValueFrom(metisService.getFaqs());
+            exercises = communicationService.getCourse().exercises!;
+            faqs = await firstValueFrom(communicationService.getFaqs());
 
             switch (actionId) {
                 case ChannelReferenceAction.ID:
@@ -183,7 +194,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             suggestions.forEach((suggestion, index) => {
                 expect(suggestion.label).toBe(`/exercise ${exercises[index].title}`);
                 expect(suggestion.insertText).toBe(
-                    `[${exercises[index].type}]${exercises[index].title}(${metisService.getLinkForExercise(exercises[index].id!.toString())})[/${exercises[index].type}]`,
+                    `[${exercises[index].type}]${exercises[index].title}(${communicationService.getLinkForExercise(exercises[index].id!.toString())})[/${exercises[index].type}]`,
                 );
                 expect(suggestion.detail).toBe(exercises[index].type);
             });
@@ -193,7 +204,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             expect(suggestions).toHaveLength(faqs.length);
             suggestions.forEach((suggestion, index) => {
                 expect(suggestion.label).toBe(`/faq ${faqs[index].questionTitle}`);
-                expect(suggestion.insertText).toBe(`[faq]${faqs[index].questionTitle}(${metisService.getLinkForFaq()}?faqId=${faqs[index].id})[/faq]`);
+                expect(suggestion.insertText).toBe(`[faq]${faqs[index].questionTitle}(${communicationService.getLinkForFaq()}?faqId=${faqs[index].id})[/faq]`);
                 expect(suggestion.detail).toBe('faq');
             });
         };
@@ -226,7 +237,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
     describe('ChannelReferenceAction', () => {
         it('should use cached channels if available', async () => {
-            const channels: ChannelIdAndNameDTO[] = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
+            const channels: ChannelIdAndNameDTO[] = [communicationGeneralChannelDTO, communicationExamChannelDTO, communicationExerciseChannelDTO];
             channelReferenceAction.cachedChannels = channels;
             const getChannelsSpy = vi.spyOn(channelService, 'getPublicChannelsOfCourse');
             fixture.detectChanges();
@@ -236,12 +247,12 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         });
 
         it('should load and cache channels if none are cached', async () => {
-            const channels: ChannelIdAndNameDTO[] = [metisGeneralChannelDTO, metisExamChannelDTO, metisExerciseChannelDTO];
+            const channels: ChannelIdAndNameDTO[] = [communicationGeneralChannelDTO, communicationExamChannelDTO, communicationExerciseChannelDTO];
             const getChannelsStub = vi.spyOn(channelService, 'getPublicChannelsOfCourse').mockReturnValue(of(new HttpResponse({ body: channels, status: 200 })));
             fixture.detectChanges();
             comp.registerAction(channelReferenceAction);
             expect(await channelReferenceAction.fetchChannels()).toBe(channels);
-            expect(getChannelsStub).toHaveBeenCalledExactlyOnceWith(metisService.getCourse().id!);
+            expect(getChannelsStub).toHaveBeenCalledExactlyOnceWith(communicationService.getCourse().id!);
             expect(channelReferenceAction.cachedChannels).toBe(channels);
         });
 
@@ -253,10 +264,187 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         });
     });
 
+    describe('UserMentionAction @all suggestion', () => {
+        let users: User[];
+
+        const suggestMentions = async (text: string, action: UserMentionAction = userMentionAction) => {
+            comp.setText(text);
+            registerActionWithCompletionProvider(action, '@');
+            const providerResult = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, text.length + 1), {} as any, {} as any);
+            expect(providerResult).toBeDefined();
+            return providerResult!.suggestions;
+        };
+
+        beforeEach(() => {
+            fixture.detectChanges();
+            comp.changeModel('initial', '');
+            users = [communicationUser1, communicationUser2, communicationTutor];
+            vi.spyOn(courseManagementService, 'searchMembersForUserMentions').mockReturnValue(of(new HttpResponse({ body: users, status: 200 })));
+        });
+
+        it('should suggest @all as the first suggestion in a group chat', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+
+            const suggestions = await suggestMentions('@');
+
+            expect(suggestions).toHaveLength(users.length + 1);
+            expect(suggestions[0].label).toBe('@all');
+            expect(suggestions[0].insertText).toBe('@all ');
+            expect(suggestions[0].sortText! < suggestions[1].label.toString()).toBe(true);
+            // the suggestion explains what it does, shows the user icon and replaces the typed @ like the suggestions of the users
+            expect(suggestions[0].detail).toBe('artemisApp.communication.editor.allMembers');
+            expect(suggestions[0].kind).toBe(monaco.languages.CompletionItemKind.User);
+            expect(suggestions[0].range).toEqual(suggestions[1].range);
+            // the users follow the synthetic suggestion and are inserted as user mentions
+            suggestions.slice(1).forEach((suggestion, index) => {
+                expect(suggestion.label).toBe(`@${users[index].name}`);
+                expect(suggestion.insertText).toBe(`[user]${users[index].name}(${users[index].login})[/user]`);
+                expect(suggestion.detail).toBe(userMentionAction.label);
+                expect(suggestion.sortText).toBeUndefined();
+            });
+        });
+
+        it('should search the members for the text that follows the @ and still suggest @all first', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            const searchSpy = vi.spyOn(courseManagementService, 'searchMembersForUserMentions');
+
+            const suggestions = await suggestMentions('@bo');
+
+            // the filtering by the typed text is left to the editor, so the synthetic suggestion is part of the list whatever is typed
+            expect(searchSpy).toHaveBeenCalledExactlyOnceWith(communicationService.getCourse().id, 'bo');
+            expect(suggestions.map((suggestion) => suggestion.label)).toEqual(['@all', ...users.map((user) => `@${user.name}`)]);
+        });
+
+        it('should follow the conversation and the edit state while the editor stays open', async () => {
+            let conversation: ChannelDTO | GroupChatDTO | undefined = new GroupChatDTO();
+            let isEditing = false;
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(undefined);
+            const action = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => isEditing,
+                () => conversation,
+            );
+            await suggestMentions('@', action);
+            const labelsOfTheSuggestions = async () => {
+                const result = await provider.provideCompletionItems(comp.models[0], new monaco.Position(1, 2), {} as any, {} as any);
+                return result!.suggestions.map((suggestion) => suggestion.label);
+            };
+            const labelsOfTheUsers = users.map((user) => `@${user.name}`);
+
+            expect(await labelsOfTheSuggestions()).toEqual(['@all', ...labelsOfTheUsers]);
+
+            conversation = new ChannelDTO();
+            expect(await labelsOfTheSuggestions()).toEqual(labelsOfTheUsers);
+
+            conversation = new GroupChatDTO();
+            isEditing = true;
+            expect(await labelsOfTheSuggestions()).toEqual(labelsOfTheUsers);
+
+            isEditing = false;
+            expect(await labelsOfTheSuggestions()).toEqual(['@all', ...labelsOfTheUsers]);
+        });
+
+        it('should explain the @all suggestion in English and German', () => {
+            expect(enCommunication.artemisApp.communication.editor.allMembers).toBe('Notify all members of this group chat');
+            expect(deCommunication.artemisApp.communication.editor.allMembers).toBe('Alle Mitglieder dieses Gruppenchats benachrichtigen');
+        });
+
+        it('should suggest @all for a partially typed token in a group chat', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+
+            const suggestions = await suggestMentions('@al');
+
+            expect(suggestions[0].label).toBe('@all');
+            expect(suggestions[0].insertText).toBe('@all ');
+        });
+
+        it('should not suggest @all while editing a posting, because editing notifies nobody', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            const editingAction = new UserMentionAction(courseManagementService, communicationService, () => true);
+
+            const suggestions = await suggestMentions('@', editingAction);
+
+            expect(suggestions).toHaveLength(users.length);
+            expect(suggestions.map((suggestion) => suggestion.label)).not.toContain('@all');
+        });
+
+        it('should prefer the conversation of the posting over the current conversation', async () => {
+            // e.g. a thread opened from the view with all messages, where the current conversation is not the one of the posting
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new ChannelDTO());
+            const replyAction = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => false,
+                () => new GroupChatDTO(),
+            );
+
+            const suggestions = await suggestMentions('@', replyAction);
+
+            expect(suggestions).toHaveLength(users.length + 1);
+            expect(suggestions[0].label).toBe('@all');
+        });
+
+        it('should not suggest @all if the conversation of the posting is no group chat, although the current conversation is one', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            const replyAction = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => false,
+                () => new ChannelDTO(),
+            );
+
+            const suggestions = await suggestMentions('@', replyAction);
+
+            expect(suggestions).toHaveLength(users.length);
+            expect(suggestions.map((suggestion) => suggestion.label)).not.toContain('@all');
+        });
+
+        it('should fall back to the current conversation if the posting has no conversation', async () => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(new GroupChatDTO());
+            const replyAction = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => false,
+                () => undefined,
+            );
+
+            const suggestions = await suggestMentions('@', replyAction);
+
+            expect(suggestions[0].label).toBe('@all');
+        });
+
+        it('should not suggest @all while editing a posting of a group chat, even if the posting provides its conversation', async () => {
+            const editingAction = new UserMentionAction(
+                courseManagementService,
+                communicationService,
+                () => true,
+                () => new GroupChatDTO(),
+            );
+
+            const suggestions = await suggestMentions('@', editingAction);
+
+            expect(suggestions.map((suggestion) => suggestion.label)).not.toContain('@all');
+        });
+
+        it.each([
+            { description: 'a channel', conversation: new ChannelDTO() },
+            { description: 'a one-to-one chat', conversation: new OneToOneChatDTO() },
+            { description: 'no conversation', conversation: undefined },
+        ])('should not suggest @all in $description', async ({ conversation }) => {
+            vi.spyOn(communicationService, 'getCurrentConversation').mockReturnValue(conversation);
+
+            const suggestions = await suggestMentions('@');
+
+            expect(suggestions).toHaveLength(users.length);
+            expect(suggestions.map((suggestion) => suggestion.label)).not.toContain('@all');
+        });
+    });
+
     describe('ExerciseReferenceAction (edge cases)', () => {
         it('should initialize with empty values if no exercise titles are available', async () => {
             vi.spyOn(exerciseService, 'getTitlesForCourse').mockReturnValue(of([]));
-            const actionWithoutExercises = new ExerciseReferenceAction(metisService, exerciseService);
+            const actionWithoutExercises = new ExerciseReferenceAction(communicationService, exerciseService);
             await firstValueFrom(exerciseService.getTitlesForCourse(1));
             fixture.detectChanges();
             comp.registerAction(actionWithoutExercises);
@@ -273,7 +461,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
     describe('FaqReferenceAction', () => {
         it('should initialize with empty values if faqs are not available', () => {
-            vi.spyOn(metisService, 'getFaqs').mockReturnValue(of([]));
+            vi.spyOn(communicationService, 'getFaqs').mockReturnValue(of([]));
 
             fixture.detectChanges();
             comp.registerAction(faqReferenceAction);
@@ -286,7 +474,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
             const faq: Faq = { id: 99, questionTitle: 'Loaded FAQ', questionAnswer: 'Answer' };
             // Simulate REST-loaded FAQs arriving via the observable
-            metisService.setFaqs([faq]);
+            communicationService.setFaqs([faq]);
 
             expect(faqReferenceAction.getValues()).toEqual([{ id: faq.id!.toString(), value: faq.questionTitle!, type: 'faq' }]);
         });
@@ -297,9 +485,9 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
         let lectureAttachmentReferenceAction: LectureAttachmentReferenceAction;
 
         beforeEach(() => {
-            lectures = metisService.getCourse().lectures!;
+            lectures = communicationService.getCourse().lectures!;
             vi.spyOn(lectureService, 'findAllByCourseIdWithSlides').mockReturnValue(of(new HttpResponse({ body: lectures, status: 200 })));
-            lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(metisService, lectureService, fileService);
+            lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(communicationService, lectureService, fileService);
         });
 
         afterEach(() => {
@@ -332,7 +520,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[0];
             lectureAttachmentReferenceAction.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture });
-            expect(comp.getText()).toBe(`[lecture]${lecture.title}(${metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
+            expect(comp.getText()).toBe(`[lecture]${lecture.title}(${communicationService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
         });
 
         it('should reference a lecture without brackets', () => {
@@ -347,7 +535,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             lecture.title = lectureNameWithBrackets;
             lectureAttachmentReferenceAction.executeInCurrentEditor({ reference: ReferenceType.LECTURE, lecture });
             lecture.title = previousTitle;
-            expect(comp.getText()).toBe(`[lecture]${lectureNameWithoutBrackets}(${metisService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
+            expect(comp.getText()).toBe(`[lecture]${lectureNameWithoutBrackets}(${communicationService.getLinkForLecture(lecture.id.toString())})[/lecture]`);
         });
 
         it('should reference an attachment video unit without brackets', () => {
@@ -361,15 +549,15 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const attachmentVideoUnit = lecture.attachmentVideoUnits![0];
 
             attachmentVideoUnit.attachment = {
-                link: 'attachments/lectures/1/Metis-Attachment.pdf',
-                studentVersion: 'attachments/attachment-video-units/1/student/Metis-Attachment.pdf',
-                name: 'Metis-Attachment.pdf',
+                link: 'attachments/lectures/1/Communication-Attachment.pdf',
+                studentVersion: 'attachments/attachment-video-units/1/student/Communication-Attachment.pdf',
+                name: 'Communication-Attachment.pdf',
             } as Attachment;
 
             const previousName = attachmentVideoUnit.name;
             attachmentVideoUnit.name = attachmentVideoUnitNameWithBrackets;
 
-            const attachmentVideoUnitFileName = 'attachment-video-units/1/student/Metis-Attachment.pdf';
+            const attachmentVideoUnitFileName = 'attachment-video-units/1/student/Communication-Attachment.pdf';
 
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
@@ -388,13 +576,13 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const attachmentVideoUnit = lecture.attachmentVideoUnits![0];
 
             attachmentVideoUnit.attachment = {
-                link: '/api/files/attachments/Metis-Attachment.pdf',
-                studentVersion: 'attachments/Metis-Attachment.pdf',
-                name: 'Metis-Attachment.pdf',
+                link: '/api/files/attachments/Communication-Attachment.pdf',
+                studentVersion: 'attachments/Communication-Attachment.pdf',
+                name: 'Communication-Attachment.pdf',
                 version: 2,
             } as Attachment;
 
-            const attachmentVideoUnitFileName = 'Metis-Attachment.pdf?version=2';
+            const attachmentVideoUnitFileName = 'Communication-Attachment.pdf?version=2';
 
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
@@ -411,11 +599,11 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const attachmentVideoUnit = lecture.attachmentVideoUnits![0];
 
             attachmentVideoUnit.attachment = {
-                link: 'attachments/attachment-video-units/123/Metis-Attachment.pdf',
-                name: 'Metis-Attachment.pdf',
+                link: 'attachments/attachment-video-units/123/Communication-Attachment.pdf',
+                name: 'Communication-Attachment.pdf',
                 version: 3,
             } as Attachment;
-            vi.spyOn(fileService, 'createStudentLink').mockReturnValue('attachments/attachment-video-units/123/student/Metis-Attachment.pdf');
+            vi.spyOn(fileService, 'createStudentLink').mockReturnValue('attachments/attachment-video-units/123/student/Communication-Attachment.pdf');
 
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
@@ -423,7 +611,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 attachmentVideoUnit,
             });
 
-            expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnit.name}(attachment-video-units/123/student/Metis-Attachment.pdf?version=3)[/lecture-unit]`);
+            expect(comp.getText()).toBe(`[lecture-unit]${attachmentVideoUnit.name}(attachment-video-units/123/student/Communication-Attachment.pdf?version=3)[/lecture-unit]`);
         });
 
         it('should error when trying to reference a nonexistent attachment video unit', () => {

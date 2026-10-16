@@ -5,17 +5,17 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { merge } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { faGear, faPlus, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
+import { faGear, faPlus, faUmbrellaBeach, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     CellTemplateRef,
     ColumnDef,
-    TumUiButtonDirective,
-    TumUiMessageComponent,
-    TumUiSearchFieldComponent,
-    TumUiTableComponent,
-    TumUiTableQueryEvent,
-    TumUiTooltipDirective,
+    TumAetUiButtonDirective,
+    TumAetUiEmptyStateComponent,
+    TumAetUiSearchFieldComponent,
+    TumAetUiTableComponent,
+    TumAetUiTableQueryEvent,
+    TumAetUiTooltipDirective,
 } from '@tumaet/ui-angular';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
@@ -127,11 +127,11 @@ function compareRows(a: TutorialGroupRow, b: TutorialGroupRow, field: SortableFi
         ArtemisTranslatePipe,
         MeetingPatternPipe,
         CourseTitleBarActionsDirective,
-        TumUiTableComponent,
-        TumUiButtonDirective,
-        TumUiMessageComponent,
-        TumUiSearchFieldComponent,
-        TumUiTooltipDirective,
+        TumAetUiTableComponent,
+        TumAetUiButtonDirective,
+        TumAetUiEmptyStateComponent,
+        TumAetUiSearchFieldComponent,
+        TumAetUiTooltipDirective,
         TutorialGroupsImportButtonComponent,
         TutorialGroupsExportButtonComponent,
         TutorialGroupRowButtonsComponent,
@@ -155,8 +155,8 @@ export class TutorialGroupsManagementComponent {
     readonly tutorialGroups = signal<TutorialGroup[]>([]);
     readonly searchTerm = signal('');
 
-    private readonly table = viewChild(TumUiTableComponent<TutorialGroupRow>);
-    private readonly query = signal<TumUiTableQueryEvent | undefined>(undefined);
+    private readonly table = viewChild(TumAetUiTableComponent<TutorialGroupRow>);
+    private readonly query = signal<TumAetUiTableQueryEvent | undefined>(undefined);
 
     private readonly titleColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('titleColumn');
     private readonly tutorColumn = viewChild<CellTemplateRef<TutorialGroupRow>>('tutorColumn');
@@ -240,9 +240,17 @@ export class TutorialGroupsManagementComponent {
     // TutorialGroup.id is optional, and two rows sharing an undefined key would be NG0955 plus lost row reuse.
     protected readonly trackByRow: TrackByFunction<TutorialGroupRow> = (index, row) => row.group.id ?? index;
 
-    protected readonly isOwnGroup = (row: TutorialGroupRow) => row.group.isUserTutor === true;
+    // The list shows every group in the course, so highlighting the ones the user tutors helps pick them out -
+    // but only when that distinguishes some rows. When the user tutors all of them the tint would cover the whole
+    // table and just hide the striping, so skip it then.
+    private readonly userTutorsEveryGroup = computed(() => {
+        const groups = this.tutorialGroups();
+        return groups.length > 0 && groups.every((group) => group.isUserTutor === true);
+    });
+    protected readonly isOwnGroup = (row: TutorialGroupRow) => !this.userTutorsEveryGroup() && row.group.isUserTutor === true;
 
     protected readonly faPlus = faPlus;
+    protected readonly faUsers = faUsers;
     protected readonly faGear = faGear;
     protected readonly faUmbrellaBeach = faUmbrellaBeach;
 
@@ -280,7 +288,7 @@ export class TutorialGroupsManagementComponent {
         this.table()?.resetPage();
     }
 
-    protected onDataRequest(event: TumUiTableQueryEvent): void {
+    protected onDataRequest(event: TumAetUiTableQueryEvent): void {
         this.query.set(event);
     }
 }

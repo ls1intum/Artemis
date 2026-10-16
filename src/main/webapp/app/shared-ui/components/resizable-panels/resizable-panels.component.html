@@ -13,7 +13,7 @@
         [gutterSize]="gutterSize"
         [stateKey]="storageKey() ?? null"
         stateStorage="local"
-        (onResizeEnd)="onResizeEnd($any($event.sizes))"
+        (onResizeEnd)="onResizeEnd($event.sizes)"
     >
         <ng-template #panel>
             @if (leftPanel()) {

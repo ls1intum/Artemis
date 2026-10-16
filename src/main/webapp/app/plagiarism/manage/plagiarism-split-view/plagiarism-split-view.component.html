@@ -50,6 +50,7 @@
     @if (!collapsedSide()) {
         <div class="split-pane-header-color" [style.left.px]="gutterCenterPx()">
             <button
+                type="button"
                 class="btn btn-sm"
                 (click)="toggleLockFiles()"
                 [class.active]="isLockFilesEnabled()"

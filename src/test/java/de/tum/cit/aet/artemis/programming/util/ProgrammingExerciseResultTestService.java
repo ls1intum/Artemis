@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.programming.util;
 
 import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
-import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_TOPIC;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -443,7 +443,7 @@ public class ProgrammingExerciseResultTestService {
         postResult(resultNotification);
 
         // ensure that hidden feedback got filtered out (test2 is not active, test3 is hidden -> only 1 feedback visible)
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC), argThat(arg -> {
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), userTopic("/topic/newResults"), argThat(arg -> {
             if (!(arg instanceof ResultDTO resultDTO)) {
                 return false;
             }
@@ -483,7 +483,7 @@ public class ProgrammingExerciseResultTestService {
         postResult(resultNotification);
 
         // ensure that the test case is set but the name does not get send to the student
-        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), eq(NEW_RESULT_TOPIC),
+        verify(websocketMessagingService, timeout(2000)).sendMessageToUser(eq(userPrefix + "student1"), userTopic("/topic/newResults"),
                 argThat(arg -> arg instanceof ResultDTO resultDTO && resultDTO.feedbacks().size() == 1 && resultDTO.feedbacks().getFirst().testCase().testName() == null));
     }
 

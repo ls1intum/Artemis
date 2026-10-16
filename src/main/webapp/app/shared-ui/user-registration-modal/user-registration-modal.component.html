@@ -82,7 +82,7 @@
 
     <ng-template #footer>
         <button pButton type="button" severity="secondary" size="small" (click)="close()" jhiTranslate="entity.action.cancel"></button>
-        <button pButton type="button" severity="primary" size="small" [disabled]="isRegisterDisabled()" (click)="register()">
+        <button pButton type="button" data-testid="user-registration-confirm-button" severity="primary" size="small" [disabled]="isRegisterDisabled()" (click)="register()">
             <span>{{ 'userRegistrationModal.registerButton' | artemisTranslate: { count: selectedCount() } }}</span>
         </button>
     </ng-template>
@@ -108,7 +108,11 @@
                 <i class="pi pi-check-circle text-state-success shrink-0"></i>
             }
         </div>
-        <span class="user-login text-muted-color" [innerHTML]="cell.data.login | highlightMatch: searchTerm()"></span>
+        <span
+            class="user-login text-muted-color"
+            [attr.data-testid]="'user-registration-login-' + cell.data.login"
+            [innerHTML]="cell.data.login | highlightMatch: searchTerm()"
+        ></span>
     </div>
 </ng-template>
 

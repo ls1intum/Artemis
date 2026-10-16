@@ -146,7 +146,23 @@
 
     & .course-notification-popup-overlay-collapse {
         opacity: 1;
-        pointer-events: all;
         transition: opacity 0.4s 0.5s ease-in-out;
+
+        button {
+            pointer-events: auto;
+        }
+    }
+}
+
+.course-notification-popup-overlay.is-expandable:not(.is-expanded) .course-notification-popup-overlay-collapse {
+    bottom: 8rem;
+    opacity: 1;
+
+    button {
+        pointer-events: auto;
+    }
+
+    .notification-popup-clear {
+        display: none;
     }
 }

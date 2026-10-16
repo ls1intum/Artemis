@@ -17,10 +17,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.localci.config.LocalCILegacyRestPaths;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
@@ -29,7 +32,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 
 @Profile(PROFILE_JENKINS)
 @Lazy
-@FeatureUsage("build-system/build-plans")
+@FeatureUsage(UserFeature.PROGRAMMING_BUILD_CONFIGURATION)
 @RestController
 @RequestMapping({ "api/localci/public/", LocalCILegacyRestPaths.PROGRAMMING_PUBLIC_PREFIX })
 public class PublicBuildPlanResource {
@@ -52,6 +55,7 @@ public class PublicBuildPlanResource {
      * @param secret     the secret to authenticate the request
      * @return the build plan stored in the database
      */
+    @UsageInteraction(FeatureInteraction.SYSTEM)
     @GetMapping("programming-exercises/{exerciseId}/build-plan")
     @EnforceNothing
     public ResponseEntity<String> getBuildPlan(@PathVariable Long exerciseId, @RequestParam("secret") String secret) {

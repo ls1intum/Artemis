@@ -1,9 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ExercisePagingService } from 'app/exercise/services/exercise-paging.service';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExercisePagingService extends ExercisePagingService<ProgrammingExercise> {
     public static readonly RESOURCE_URL = 'api/programming/programming-exercises';
 

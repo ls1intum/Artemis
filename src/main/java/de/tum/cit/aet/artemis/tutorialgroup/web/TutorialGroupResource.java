@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -46,6 +47,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.TutorialGroupAssignedNotification;
@@ -75,7 +78,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
-@FeatureUsage("management/tutorial-groups")
+@FeatureUsage(UserFeature.TUTORIAL_GROUP_MANAGEMENT)
 @RestController
 @RequestMapping("api/tutorialgroup/")
 public class TutorialGroupResource {
@@ -132,6 +135,8 @@ public class TutorialGroupResource {
      * @param tutorialGroupId the id of the tutorial group
      * @return ResponseEntity with status 200 (OK) and with body containing the title of the tutorial group
      */
+    @FeatureUsage(UserFeature.TUTORIAL_GROUPS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("tutorial-groups/{tutorialGroupId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getTitle(@PathVariable Long tutorialGroupId) {
@@ -160,6 +165,7 @@ public class TutorialGroupResource {
      * @param courseId the id of the course to which the tutorial groups belong to
      * @return the ResponseEntity with status 200 (OK) and with body containing the tutorial groups of the course
      */
+    @FeatureUsage(UserFeature.TUTORIAL_GROUPS)
     @GetMapping("courses/{courseId}/tutorial-groups")
     @EnforceAtLeastStudent
     public ResponseEntity<List<TutorialGroupSummaryDTO>> getTutorialGroupsForCourse(@PathVariable Long courseId) {
@@ -183,6 +189,7 @@ public class TutorialGroupResource {
      * @throws AccessForbiddenException     {@code 403 (Forbidden)} if the requesting user is not part of the course
      * @throws InternalServerErrorException {@code 500 (Internal Server Error)} if no time zone is set for the course
      */
+    @FeatureUsage(UserFeature.TUTORIAL_GROUPS)
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<TutorialGroupDetailDataDTO> getTutorialGroup(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
@@ -312,8 +319,9 @@ public class TutorialGroupResource {
             throw new BadRequestException("The course has no time zone");
         }
 
-        boolean titleChanges = !tutorialGroup.getTitle().equals(updateTutorialGroupRequestDTO.title());
-        if (titleChanges && tutorialGroupRepository.existsByTitleAndCourse(updateTutorialGroupRequestDTO.title(), course)) {
+        String updatedTitle = updateTutorialGroupRequestDTO.title().trim();
+        boolean titleChanges = !tutorialGroup.getTitle().equals(updatedTitle);
+        if (titleChanges && tutorialGroupRepository.existsByTitleAndCourse(updatedTitle, course)) {
             throw new BadRequestException("A tutorial group with this title already exists in the course.");
         }
 
@@ -338,7 +346,7 @@ public class TutorialGroupResource {
             }
         }
 
-        tutorialGroup.setTitle(updateTutorialGroupRequestDTO.title().trim());
+        tutorialGroup.setTitle(updatedTitle);
         tutorialGroup.setTeachingAssistant(newTutor);
         tutorialGroup.setAdditionalInformation(updateTutorialGroupRequestDTO.additionalInformation());
         tutorialGroup.setCapacity(updateTutorialGroupRequestDTO.capacity());
@@ -351,7 +359,9 @@ public class TutorialGroupResource {
         TutorialGroupSchedule newSchedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(tutorialGroupScheduleDTO);
         tutorialGroupScheduleService.updateScheduleAndSessionsIfChanged(course, tutorialGroup, Optional.ofNullable(oldSchedule), Optional.ofNullable(newSchedule));
 
-        tutorialGroupChannelManagementService.updateNameOfTutorialGroupChannelIfItExists(tutorialGroup);
+        if (titleChanges) {
+            tutorialGroupChannelManagementService.updateNameOfTutorialGroupChannelIfItExists(tutorialGroup);
+        }
 
         return ResponseEntity.noContent().build();
     }
@@ -515,7 +525,7 @@ public class TutorialGroupResource {
      * @return the list of registrations with information about the success of the import sorted by tutorial group title
      */
     @PostMapping("courses/{courseId}/tutorial-groups/import")
-    @EnforceAtLeastInstructorInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<TutorialGroupImportDataDTO>> importTutorialGroupsWithRegistrations(@PathVariable Long courseId,
             @RequestBody @Valid Set<TutorialGroupImportDataDTO> importDTOs) {
         log.debug("REST request to import registrations {} to course {}", importDTOs, courseId);

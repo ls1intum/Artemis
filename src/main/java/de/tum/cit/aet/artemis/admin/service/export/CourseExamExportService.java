@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.admin.service.export;
 
+import static de.tum.cit.aet.artemis.admin.web.ExportWebsocketTopics.COURSE_ARCHIVE;
+import static de.tum.cit.aet.artemis.admin.web.ExportWebsocketTopics.EXAM_ARCHIVE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.course.service.CourseArchiveService.TOTAL_ARCHIVE_STEPS;
 
@@ -33,6 +35,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
@@ -163,7 +166,7 @@ public class CourseExamExportService {
         int stepsCompleted = 0;
 
         // Used for sending export progress notifications to instructors
-        var notificationTopic = "/topic/courses/" + course.getId() + "/export-course";
+        var notificationTopic = COURSE_ARCHIVE.at(course.getId());
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."), null);
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
@@ -254,7 +257,7 @@ public class CourseExamExportService {
         return (double) stepsCompleted / TOTAL_ARCHIVE_STEPS * 100.0;
     }
 
-    private Optional<Path> zipExportedExercises(Path outputDir, List<String> exportErrors, String notificationTopic, Path tmpDir) {
+    private Optional<Path> zipExportedExercises(Path outputDir, List<String> exportErrors, WebsocketDestination notificationTopic, Path tmpDir) {
         // Zip all exported exercises into a single zip file.
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Done exporting exercises. Creating course zip..."), null);
         Path courseZip = outputDir.resolve(tmpDir.getFileName() + ".zip");
@@ -284,7 +287,7 @@ public class CourseExamExportService {
         ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
 
         // Used for sending export progress notifications to instructors
-        var notificationTopic = "/topic/exams/" + exam.getId() + "/export";
+        var notificationTopic = EXAM_ARCHIVE.at(exam.getId());
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Creating temporary directories..."), null);
 
         var timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-Hmss"));
@@ -335,7 +338,8 @@ public class CourseExamExportService {
      * @param reportData        list of all exercises and their statistics
      * @return list of zip files
      */
-    private List<Path> exportCourseAndExamExercises(String notificationTopic, Course course, String outputDir, List<String> exportErrors, List<ArchivalReportEntry> reportData) {
+    private List<Path> exportCourseAndExamExercises(WebsocketDestination notificationTopic, Course course, String outputDir, List<String> exportErrors,
+            List<ArchivalReportEntry> reportData) {
         ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
 
         notifyUserAboutExerciseExportState(notificationTopic, CourseExamExportState.RUNNING, List.of("Preparing to export course exercises and exams..."), null);
@@ -381,8 +385,8 @@ public class CourseExamExportService {
      * @param reportData         List of all exercises and their statistics
      * @return List of paths for the exported exercises
      */
-    private List<Path> exportCourseExercises(String notificationTopic, Course course, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
-            List<ArchivalReportEntry> reportData) {
+    private List<Path> exportCourseExercises(WebsocketDestination notificationTopic, Course course, String outputDir, int progress, int totalExerciseCount,
+            List<String> exportErrors, List<ArchivalReportEntry> reportData) {
         log.info("Exporting course exercises for course {} and title {}", course.getId(), course.getTitle());
 
         Path exercisesDir = Path.of(outputDir, "course-exercises");
@@ -409,7 +413,7 @@ public class CourseExamExportService {
      * @param reportData         list of all exercises and their statistics
      * @return List of paths
      */
-    private List<Path> exportExams(String notificationTopic, List<Exam> exams, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
+    private List<Path> exportExams(WebsocketDestination notificationTopic, List<Exam> exams, String outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
             List<ArchivalReportEntry> reportData) {
         ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
 
@@ -458,7 +462,7 @@ public class CourseExamExportService {
      * @param reportData         List of all exercises and their statistics
      * @return List of paths
      */
-    private List<Path> exportExam(String notificationTopic, Exam exam, Set<Exercise> examExercises, String outputDir, int progress, int totalExerciseCount,
+    private List<Path> exportExam(WebsocketDestination notificationTopic, Exam exam, Set<Exercise> examExercises, String outputDir, int progress, int totalExerciseCount,
             List<String> exportErrors, List<ArchivalReportEntry> reportData) {
         log.info("Export course exam {}", exam.getId());
 
@@ -492,8 +496,8 @@ public class CourseExamExportService {
      * @param reportData         List of all exercises and their statistics
      * @return List of paths of the exported exercises
      */
-    private List<Path> exportExercises(String notificationTopic, Set<Exercise> exercises, Path outputDir, int progress, int totalExerciseCount, List<String> exportErrors,
-            List<ArchivalReportEntry> reportData) {
+    private List<Path> exportExercises(WebsocketDestination notificationTopic, Set<Exercise> exercises, Path outputDir, int progress, int totalExerciseCount,
+            List<String> exportErrors, List<ArchivalReportEntry> reportData) {
         List<Path> exportedExercises = new ArrayList<>();
         int currentProgress = progress;
 
@@ -585,7 +589,7 @@ public class CourseExamExportService {
      * @param exportState The export state
      * @param messages    optional messages to send
      */
-    private void notifyUserAboutExerciseExportState(String topic, CourseExamExportState exportState, List<String> messages, String subMessage) {
+    private void notifyUserAboutExerciseExportState(WebsocketDestination topic, CourseExamExportState exportState, List<String> messages, String subMessage) {
         Map<String, String> payload = new HashMap<>();
         payload.put("exportState", exportState.toString());
         payload.put("message", String.join("\n", messages));

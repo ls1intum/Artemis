@@ -390,6 +390,40 @@ public class ProgrammingExercise extends Exercise {
         this.projectKey = WHITESPACE_RUN.matcher((course.getShortName() + this.getShortName()).toUpperCase(Locale.ROOT)).replaceAll("");
     }
 
+    /**
+     * Copies the settings that an import caller has to carry itself from the exercise being imported onto this skeleton.
+     * <p>
+     * The import form of the client submits these with its request, but a server-side caller (the import of course material, of an exam or of a variant) builds
+     * its skeleton from nothing, and the programming import service only copies the build configuration and the entities that hang off the exercise. A setting that is
+     * missing here fails the import, or silently falls back to a default.
+     * <p>
+     * Everything the callers decide differently stays with them: title, short name, points, dates, mode, the problem statement and the competency links. The
+     * {@code ProgrammingExerciseImportSettingsTest} lists every field this method does not copy, so a new field has to be copied here or excluded there with a reason.
+     *
+     * @param source the exercise being imported
+     */
+    public void copyImportSettingsFrom(ProgrammingExercise source) {
+        setProgrammingLanguage(source.getProgrammingLanguage());
+        setProjectType(source.getProjectType());
+        setPackageName(source.getPackageName());
+        setAllowOnlineEditor(source.isAllowOnlineEditor());
+        setAllowOfflineIde(source.isAllowOfflineIde());
+        setAllowOnlineIde(source.isAllowOnlineIde());
+        setStaticCodeAnalysisEnabled(source.isStaticCodeAnalysisEnabled());
+        setMaxStaticCodeAnalysisPenalty(source.getMaxStaticCodeAnalysisPenalty());
+        setShowTestNamesToStudents(source.getShowTestNamesToStudents());
+        setReleaseTestsWithExampleSolution(source.isReleaseTestsWithExampleSolution());
+        // The fields below belong to Exercise. They stay here because the programming import service copies none of them either.
+        setAssessmentType(source.getAssessmentType());
+        setDifficulty(source.getDifficulty());
+        setGradingInstructions(source.getGradingInstructions());
+        setCategories(new HashSet<>(source.getCategories()));
+        setIncludedInOverallScore(source.getIncludedInOverallScore());
+        setPresentationScoreEnabled(source.getPresentationScoreEnabled());
+        setSecondCorrectionEnabled(source.getSecondCorrectionEnabled());
+        setAllowComplaintsForAutomaticAssessments(source.getAllowComplaintsForAutomaticAssessments());
+    }
+
     @Override
     public ExerciseType getExerciseType() {
         return PROGRAMMING;
@@ -532,7 +566,11 @@ public class ProgrammingExercise extends Exercise {
     @JsonIgnore
     public String getProjectName() {
         // this is the name used for VC service and CI service
-        return getCourseViaExerciseGroupOrCourseMember().getShortName() + " " + this.getTitle();
+        var course = getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            throw new IllegalStateException("Cannot determine the project name of programming exercise " + getId() + " because its course cannot be resolved");
+        }
+        return course.getShortName() + " " + this.getTitle();
     }
 
     @JsonIgnore

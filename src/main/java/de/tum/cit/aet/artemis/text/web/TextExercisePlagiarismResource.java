@@ -16,12 +16,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.jplag.exceptions.ExitException;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismDetectionApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
@@ -37,7 +40,7 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
  */
 @Conditional(TextEnabled.class)
 @Lazy
-@FeatureUsage("integrity/plagiarism")
+@FeatureUsage(UserFeature.PLAGIARISM_CHECKS)
 @RestController
 @RequestMapping("api/text/")
 public class TextExercisePlagiarismResource {
@@ -94,6 +97,7 @@ public class TextExercisePlagiarismResource {
      * @param minimumSize         consider only submissions whose size is greater or equal to this value
      * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
      */
+    @UsageInteraction(FeatureInteraction.ACTION)
     @GetMapping("text-exercises/{exerciseId}/check-plagiarism")
     @FeatureToggle(Feature.PlagiarismChecks)
     @EnforceAtLeastEditor

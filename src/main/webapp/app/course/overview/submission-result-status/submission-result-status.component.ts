@@ -44,6 +44,7 @@ export class SubmissionResultStatusComponent {
     readonly showCompletion = input(true);
     readonly short = input(true);
     readonly triggerLastGraded = input(true);
+    readonly showTriggerBuildButton = input(true);
     readonly showProgressBar = input(false);
     readonly quizLiveStatusOverride = input<LiveQuizParticipationStatus>();
     readonly isPractice = input(false);

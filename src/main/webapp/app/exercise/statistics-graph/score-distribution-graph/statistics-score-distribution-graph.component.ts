@@ -4,16 +4,16 @@ import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { axisTickFormattingWithPercentageSign } from 'app/exercise/statistics-graph/util/statistics-graph.utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
+import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiBarChartComponent, TumUiBarChartConfig, TumUiChartSelectEvent } from '@tumaet/ui-angular';
+import { TumAetUiBarChartComponent, TumAetUiBarChartConfig, TumAetUiChartSelectEvent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-statistics-score-distribution-graph',
     templateUrl: './statistics-score-distribution-graph.component.html',
-    imports: [TranslateDirective, TumUiBarChartComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, TumAetUiBarChartComponent, ArtemisTranslatePipe],
 })
 export class StatisticsScoreDistributionGraphComponent implements OnInit {
     private navigationService = inject(ArtemisNavigationUtilService);
@@ -28,7 +28,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
     readonly chartEntries = signal<ChartSeriesEntry[]>([]);
 
     readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), [GraphColors.DARK_BLUE]));
-    readonly chartConfig = computed<TumUiBarChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiBarChartConfig>(() => ({
         yAxis: { max: 100, tickFormatter: (value) => axisTickFormattingWithPercentageSign(String(value)) },
         tooltip: {
             label: (item) => `${this.lookUpAbsoluteValue(item.label)}`,
@@ -72,7 +72,7 @@ export class StatisticsScoreDistributionGraphComponent implements OnInit {
      * Handles the event if a user clicks on a certain chart bar
      * @param event identifies the clicked bar
      */
-    selectChartBar(event: TumUiChartSelectEvent): void {
+    selectChartBar(event: TumAetUiChartSelectEvent): void {
         const route = [`/course-management/${this.courseId()}/${this.exerciseType()}-exercises/${this.exerciseId()}/scores`];
         this.navigationService.routeInNewTab(route, { queryParams: { scoreRangeFilter: event.index } });
     }

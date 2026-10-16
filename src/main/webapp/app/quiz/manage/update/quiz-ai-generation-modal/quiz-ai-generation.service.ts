@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
@@ -17,7 +17,7 @@ import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class QuizAiGenerationService {
     private hyperionQuizQuestionGenerationApiService = inject(HyperionQuizQuestionGenerationApi);
     private translateService = inject(TranslateService);

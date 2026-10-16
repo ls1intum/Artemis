@@ -208,11 +208,77 @@ client does not read the configuration leaves it out instead of spending a query
 
 Writing follows the key as well: the parent is saved first, then the configuration that names it.
 
+`TutorialGroupsConfiguration` and `OnlineCourseConfiguration` follow the same shape: they hold the course's key, `Course`
+carries no association to either, and the course management endpoints read them through
+`TutorialGroupsConfigurationRepository.findByCourseId` and `OnlineCourseConfigurationRepository.findByCourseId`, reached
+from the course module through `TutorialGroupApi` and `LtiApi`. Because the configuration's `course` is lazy, a query that
+returns a configuration whose course the caller reads has to fetch it (`JOIN FETCH t.course`); with open-in-view disabled,
+an unfetched proxy fails with a `LazyInitializationException` rather than loading quietly.
+
+`TeamAssignmentConfig` has the same shape for `Exercise`: `Exercise` keeps a `@Transient` slot, nothing fills it by itself, and a flow that needs it reads it through `TeamAssignmentConfigRepository`, attaching a single exercise with `attachTo(Exercise)` or a list of them in one query with `attachTo(Collection)`. `ExerciseConfigurationLoadProfileTest` pins that reading an exercise never reads the table.
+
+`PlagiarismDetectionConfig` follows the same shape, through `PlagiarismDetectionConfigRepository`, and `ExercisePlagiarismDetectionConfigLoadProfileTest` pins it. Because the configuration is not part of the exercise, saving an exercise never stores it and a copy returned by a second save does not carry it: a flow that only reports the configuration attaches it first. The scheduled continuous plagiarism control filters on the configuration with a join from the configuration's side and attaches the configurations of all the exercises it found in one query.
+
+`CourseConfiguration` and `CourseAthenaConfig` have the same shape. `Course` keeps a `@Transient` slot for each so that code which already asks the course keeps working, but nothing ever fills the slot: a flow reads the configuration through `CourseConfigurationRepository` or `CourseAthenaConfigRepository` and attaches it with `attachTo`, and a flow that looks at many courses attaches them in one query with `CourseConfigurationRepository.attachTo(Collection)`. An empty slot reads as the defaults, so a flow that forgets to attach reports a course as grade-relevant with Athena switched off rather than failing; `CourseConfigurationLoadProfileTest` pins which statements a course read may and may not contain.
+
+#### Permanent configuration rows
+
+Course and exercise settings belong to the lifetime of their owner. Create default rows when the owner is created,
+including settings for optional modules that are disabled on that server. Backfill missing rows for existing owners in
+a migration, preserving their existing settings. Do not insert or delete configurations when enabling or disabling a
+feature: update its flag and keep its settings for the next time it is enabled.
+
+Create courses through `CourseRepository.saveWithDefaultConfigurations`. It stores the course and then inserts the
+default settings with plain statements, without a transaction around them, so no lock is held across the statements. A
+failure between two of them leaves the course without the settings not yet inserted, and the caller sees the exception.
+Every later save through `saveWithDefaultConfigurations` and every course update adds the missing rows
+(`CourseRepository.ensureDefaultConfigurations`), so the course repairs itself without being deleted. A row that
+already exists is never replaced, and a concurrent save that inserts the same row first is tolerated. Course edits and
+feature toggles do not use a course-row lock or a transaction spanning multiple settings operations. Online-course settings are active only while `Course.onlineCourse`
+is true. Tutorial-group settings remain inactive until both tutorial-period dates are configured; configure those defaults
+through the configuration repository's modifying query.
+
+Every exercise, whatever its type and whether or not it is a team exercise, owns one `TeamAssignmentConfig` and one
+`PlagiarismDetectionConfig` row. Both hold the key to the exercise, so they can only be inserted once the exercise is
+stored: every path that stores a new exercise (creation, every kind of import, copies) calls
+`ExerciseConfigurationService.initialize` right after the first save, which checks for each row with a plain read, inserts
+the missing one with a plain `INSERT ... VALUES` (never an `INSERT ... SELECT ... WHERE NOT EXISTS`, which locks an index
+range on MySQL) through the `insertDefaultsFor` statements of the two repositories, and then applies the settings the request carried with their `applyTo`. No callback
+and no lazy fill creates a row for a new exercise, so a new creation path has to call the service itself. No
+transaction spans these statements, so a failure between them leaves the exercise without the rows not yet inserted;
+the caller sees the exception, and the next save repairs it, because `applyTo` adds a missing default row
+(`ensureExistsFor`, a plain read and a plain insert that tolerates a concurrent insert of the same row) before it updates
+the row in place. Updates only change the stored
+row in place with a modifying query, so its id survives and nothing is inserted or deleted when a setting changes, and
+team settings are exposed only for team-mode exercises (`Exercise.getTeamAssignmentConfig`). Programming creation and
+import persist the build settings after the exercise exists through
+`ProgrammingExerciseBuildConfigRepository.saveForExercise`.
+
 #### Turning an existing association lazy
 
 `open-in-view` is disabled, so the persistence context is already closed when a response is serialized. An association the query did not fetch reads as **absent** - which surfaces either as a `LazyInitializationException` or, where the getter guards with `Hibernate.isInitialized`, as a silently wrong value.
 
 Making `Course.athenaConfig` lazy was the second kind: its getters answer `false` when it was not loaded, so every response whose query did not resolve it would have reported Athena as switched off and quietly removed the feature from the client. Find every place that reads it, give each an explicit read, and pin the result - `AthenaConfigWireContractTest` does that for the endpoints the webapp reads those two flags from.
+
+### A long text column is text, not a LOB
+
+Never annotate a field `@Lob`. `ArchitectureTest.testNoLobAnnotation` fails the build for any that is.
+
+A CLOB on PostgreSQL is a **large object**: Hibernate writes the value into `pg_largeobject` and stores the object's id in the column, then reads the column back as that id. The long text columns in Artemis are declared `longtext` in Liquibase, and `tool_activity` is declared `clob`; both become `text` on PostgreSQL, so the column holds text and the mapping expects an object id. The two agree only as long as the same mapping wrote the row: a row holding the text itself - as MySQL writes it, and as every row written before the move to PostgreSQL is stored - fails the read with `Bad value for type long` and takes the whole query with it, not just the one column. On `IrisMessage.toolActivity` that meant one unreadable message made every Iris session load for that user fail.
+
+The large objects are also never reclaimed. Nothing unlinks them when the message is deleted, so they accumulate outside the table and are invisible to a table-size check.
+
+A `String`, or an attribute converted to one, needs no annotation at all: bound and extracted as text it round-trips on both databases whatever its length, since a length in the mapping only ever shapes generated DDL and Artemis generates none. `Exercise.problemStatement` is the pattern - a plain `@Column` over a `longtext`.
+
+```java
+// IrisMessage - a converted list in a clob column, mapped as the text it is
+@Nullable
+@Convert(converter = IrisMessageToolActivityConverter.class)
+@Column(name = "tool_activity")
+private List<PyrisActivityDTO> toolActivity;
+```
+
+Where the value is structured rather than free text, `@JdbcTypeCode(SqlTypes.JSON)` over a `json` column is the other option - `IrisMessage.accessedMemories` uses it. It costs the column its equality operator on PostgreSQL, which is why a query fetching such an entity cannot use `DISTINCT`; `IrisChatSessionRepository.findAllWithMessagesByCourseId` returns a `Set` and deduplicates in Java for exactly that reason.
 
 ## Relationships
 
@@ -722,6 +788,100 @@ public int hashCode() {
 <Callout variant={CalloutVariant.info}>
     Apply the constant <code>hashCode()</code> override <em>only</em> on entities that are the child side of a <code>Set</code>-mapped <code>@OneToMany</code> and may be constructed transient by application code (importers, DTO mappers, factories). Entities used as keys in large <code>HashMap</code>s or caches should keep the id-based default, since the linear-scan degradation matters at scale.
 </Callout>
+
+## Queries That Behave Differently on MySQL and PostgreSQL
+
+Artemis runs on both MySQL and PostgreSQL. A query can work on one and fail on the other, or, worse, return
+different rows without any error. Integration tests run against PostgreSQL only, so a MySQL-only difference
+never shows up locally, and a difference that changes the result rather than raising an error shows up in
+neither.
+
+### Compare Case Explicitly
+
+MySQL compares with the `utf8mb4_unicode_ci` collation, which ignores case, so `LIKE '%max%'` matches
+`Max Mustermann`. PostgreSQL compares case sensitively and the same pattern matches nothing. A search written
+without this in mind therefore returns an empty list rather than an error, and nothing in the log says so.
+
+Lower case both sides rather than relying on a collation. In JPQL, keep it inside the query so that no caller
+can defeat it:
+
+```java
+@Query("""
+        SELECT user
+        FROM User user
+        WHERE LOWER(user.login) LIKE CONCAT(LOWER(CAST(:loginOrName AS string)), '%')
+            OR LOWER(CONCAT(user.firstName, ' ', user.lastName)) LIKE CONCAT('%', LOWER(CAST(:loginOrName AS string)), '%')
+        """)
+Page<User> searchAllByLoginOrName(Pageable pageable, @Param("loginOrName") String loginOrName);
+```
+
+The `CAST` is what makes the parameter a string for the database rather than only for Java. Without it, a
+parameter that arrives as `null`, which an optional filter does on every request that leaves it out, is sent
+untyped, PostgreSQL reads it as `bytea`, and the query fails with
+`function lower(bytea) does not exist` rather than returning nothing. A parameter that is never null works
+without the cast, so the failure appears the first time somebody makes the filter optional.
+
+With the Criteria API, wrap the path in `lower` and lower case the pattern in Java with an explicit locale:
+
+```java
+String pattern = "%" + searchTerm.toLowerCase(Locale.ROOT) + "%";
+Predicate titleMatches = criteriaBuilder.like(criteriaBuilder.lower(root.get(Exercise_.TITLE)), pattern);
+```
+
+<Callout variant={CalloutVariant.warning}>
+  Lower casing one side only is the worst of the three, because it hides itself: <code>LOWER(column) LIKE '%Max%'</code> still matches on MySQL, whose collation ignores case anyway, and matches nothing on PostgreSQL. Whenever the column is wrapped, the parameter has to be wrapped with it.
+</Callout>
+
+A comparison wrapped in `LOWER` cannot use a plain index on the column. Where a search runs against a large
+table, add a functional index for it. The two databases spell it differently, so a changelog needs one
+changeset per database type:
+
+```sql
+-- PostgreSQL
+CREATE INDEX user_login_lower ON jhi_user (LOWER(login));
+-- MySQL, which needs the expression in its own parentheses
+CREATE INDEX user_login_lower ON jhi_user ((LOWER(login)));
+```
+
+A pattern with a leading wildcard cannot use an index on either database, so a full-text search is the answer
+where that becomes the bottleneck.
+
+### ORDER BY With SELECT DISTINCT
+
+PostgreSQL requires every `ORDER BY` expression of a `SELECT DISTINCT` to appear in the select list, and
+rejects the query with `for SELECT DISTINCT, ORDER BY expressions must appear in select list`. The
+combination is easy to miss, because a repository method that selects an id can receive the order from a
+`Pageable` the caller builds, so neither the query nor the call site shows it.
+
+Duplicates usually come from a join that only filters. Replace it with `EXISTS`: the `DISTINCT` is then
+unnecessary, and the caller's order stays legal.
+
+```java
+@Query("""
+        SELECT user.id
+        FROM User user
+        WHERE EXISTS (
+                SELECT 1
+                FROM UserCourseRole ucr
+                WHERE ucr.user.id = user.id AND ucr.course.id = :courseId
+            )
+        """)
+List<Long> findUserIdsInCourse(@Param("courseId") long courseId, Pageable pageable);
+```
+
+### Order Pages Totally
+
+A page window only means something if the order is total. Rows an order cannot tell apart are free to change
+places between two queries, so one of them can appear on two pages and another on none. Append the id to
+whatever order the caller asked for rather than replacing it, so that the requested order still decides the
+page.
+
+### Name Every Grouped Column
+
+Both databases reject a selected column that is neither aggregated nor grouped, but they draw the line in
+different places: MySQL applies `ONLY_FULL_GROUP_BY`, which is on by default and recognises some functional
+dependencies, and PostgreSQL accepts columns that are functionally dependent on a grouped primary key. Name
+every non-aggregated column of the select list in the `GROUP BY` and the query means the same thing on both.
 
 ## Solutions for Known Issues
 

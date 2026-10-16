@@ -17,7 +17,7 @@ import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-p
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MetisService } from 'app/communication/service/metis.service';
+import { CommunicationService } from 'app/communication/service/communication.service';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 
 describe('ForwardMessageDialogComponent', () => {
@@ -47,8 +47,8 @@ describe('ForwardMessageDialogComponent', () => {
                 add: { imports: [MockComponent(PostingContentComponent)] },
             })
             .overrideComponent(ForwardMessageDialogComponent, {
-                remove: { providers: [MetisService] },
-                add: { providers: [MockProvider(MetisService)] },
+                remove: { providers: [CommunicationService] },
+                add: { providers: [MockProvider(CommunicationService)] },
             });
 
         global.ResizeObserver = class extends MockResizeObserver {
@@ -187,12 +187,26 @@ describe('ForwardMessageDialogComponent', () => {
         expect(() => component.focusInput()).not.toThrow();
     });
 
-    it('should open dropdown when input is focused and close when clicked outside', () => {
+    it('should not open the dropdown when the input is focused automatically while the dialog opens', () => {
+        fixture.detectChanges();
         const inputElement = fixture.debugElement.query(By.css('input.tag-input')).nativeElement;
 
         inputElement.dispatchEvent(new Event('focus'));
         fixture.detectChanges();
+
+        expect(component.showDropdown()).toBe(false);
+        expect(fixture.debugElement.query(By.css('[data-testid="forward-destination-option"]'))).toBeNull();
+    });
+
+    it('should open dropdown when the input is clicked and close when clicked outside', () => {
+        fixture.detectChanges();
+        const inputElement = fixture.debugElement.query(By.css('input.tag-input')).nativeElement;
+
+        inputElement.dispatchEvent(new Event('focus'));
+        inputElement.click();
+        fixture.detectChanges();
         expect(component.showDropdown()).toBe(true);
+        expect(fixture.debugElement.query(By.css('[data-testid="forward-destination-option"]'))).not.toBeNull();
 
         document.body.click();
         fixture.detectChanges();

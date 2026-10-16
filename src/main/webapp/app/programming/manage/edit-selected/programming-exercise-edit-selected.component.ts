@@ -11,13 +11,13 @@ import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseTimelineComponent } from '../../shared/programming-exercise-update-timeline/programming-exercise-timeline.component';
 import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-selected',
     templateUrl: './programming-exercise-edit-selected.component.html',
-    imports: [TranslateDirective, ArtemisTranslatePipe, FormsModule, ProgrammingExerciseTimelineComponent, ButtonComponent, FaIconComponent, TumUiDialogComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, FormsModule, ProgrammingExerciseTimelineComponent, ButtonComponent, FaIconComponent, TumAetUiDialogComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProgrammingExerciseEditSelectedComponent {

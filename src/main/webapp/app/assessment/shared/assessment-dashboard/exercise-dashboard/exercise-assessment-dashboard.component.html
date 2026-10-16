@@ -34,23 +34,12 @@
                     <p>
                         {{ 'artemisApp.exerciseAssessmentDashboard.tutorParticipationStatus.description.' + tutorParticipation().status!.toString() | artemisTranslate }}
                     </p>
-
-                    @if (exercise().isAtLeastInstructor && exam()?.numberOfCorrectionRoundsInExam && exam()?.numberOfCorrectionRoundsInExam! > 1 && isExamMode() && !isTestRun()) {
-                        <div class="d-inline-block">
-                            <jhi-second-correction-enable-button
-                                data-testid="toggle-second-correction"
-                                (ngModelChange)="toggleSecondCorrection()"
-                                [secondCorrectionEnabled]="secondCorrectionEnabled()"
-                                [togglingSecondCorrectionButton]="togglingSecondCorrectionButton()"
-                            />
-                        </div>
-                    }
                 </div>
 
                 @if (numberOfSubmissions().total > 0) {
                     <div class="col-12 col-md-5 col-xl-4 d-flex justify-content-center justify-content-lg-end chart-col">
                         <div class="chart overflow-hidden">
-                            <tum-ui-doughnut-chart
+                            <tumaet-ui-doughnut-chart
                                 class="h-[150px] w-[330px]"
                                 [labels]="chartData().labels"
                                 [series]="chartData().series"
@@ -144,13 +133,13 @@
                             <div class="col-5">{{ ratingsDashboardInfo().total }} | {{ ratingsDashboardInfo().tutor }}</div>
                         </div>
                         <div class="mt-1 grid gap-2" [class.grid-cols-2]="complaintsEnabled()">
-                            <a tumUiButton severity="secondary" size="small" [routerLink]="exerciseDetailsLink()" id="exercise-details">
+                            <a tumAetUiButton severity="secondary" size="small" [routerLink]="exerciseDetailsLink()" id="exercise-details">
                                 <fa-icon [icon]="faListAlt" [fixedWidth]="true" />
                                 <span class="hidden md:inline" jhiTranslate="artemisApp.exerciseAssessmentDashboard.exerciseDetails"></span>
                             </a>
                             @if (complaintsEnabled()) {
                                 <a
-                                    tumUiButton
+                                    tumAetUiButton
                                     severity="secondary"
                                     size="small"
                                     [routerLink]="complaintsLink()"
@@ -250,7 +239,7 @@
             <div class="col-12 text-center mt-2 mb-4">
                 <p jhiTranslate="artemisApp.exerciseAssessmentDashboard.pleaseContactIfUnclear"></p>
 
-                <button data-testid="participate-in-assessment" class="btn btn-primary p-1" (click)="readInstruction()" [disabled]="isLoading()">
+                <button type="button" data-testid="participate-in-assessment" class="btn btn-primary p-1" (click)="readInstruction()" [disabled]="isLoading()">
                     @if (exercise().gradingInstructions && exercise().gradingInstructions!.length > 0) {
                         <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.readAndUnderstood"></span>
                     }
@@ -259,6 +248,32 @@
                         <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.startYourParticipation"></span>
                     }
                 </button>
+            </div>
+        }
+
+        @if (
+            tutorParticipationStatus() === NOT_PARTICIPATED &&
+            exercise().isAtLeastInstructor &&
+            exam()?.numberOfCorrectionRoundsInExam &&
+            exam()?.numberOfCorrectionRoundsInExam! > 1 &&
+            isExamMode() &&
+            !isTestRun()
+        ) {
+            <div class="mb-3 flex w-full items-center justify-between gap-2" data-testid="correction-round-1">
+                <div class="flex items-center gap-1">
+                    <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam" [translateValues]="{ round: 2 }"></h4>
+                    <fa-icon
+                        class="text-muted-color"
+                        [icon]="faQuestionCircle"
+                        ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
+                    />
+                </div>
+                <jhi-second-correction-enable-button
+                    data-testid="toggle-second-correction"
+                    (ngModelChange)="toggleSecondCorrection()"
+                    [secondCorrectionEnabled]="secondCorrectionEnabled()"
+                    [togglingSecondCorrectionButton]="togglingSecondCorrectionButton()"
+                />
             </div>
         }
 
@@ -287,7 +302,11 @@
                                     </p>
 
                                     @if (stats.toReview.done < stats.toReview.total) {
-                                        <button class="btn btn-primary review-example-submission mb-4" (click)="openExampleSubmission(nextExampleSubmissionId(), true, false)">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary review-example-submission mb-4"
+                                            (click)="openExampleSubmission(nextExampleSubmissionId(), true, false)"
+                                        >
                                             @if (stats.toReview.done <= 0) {
                                                 <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.start"></span>
                                             } @else {
@@ -302,7 +321,11 @@
                                         <ul>
                                             @for (exampleSubmission of exampleSubmissionsToReview(); track exampleSubmission; let i = $index) {
                                                 <li>
-                                                    <button class="btn btn-link review-example-submission" (click)="openExampleSubmission(exampleSubmission.id!, true, false)">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-link review-example-submission"
+                                                        (click)="openExampleSubmission(exampleSubmission.id!, true, false)"
+                                                    >
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.readExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
                                                     @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
@@ -322,7 +345,11 @@
                                         {{ stats.toAssess.total }})
                                     </p>
                                     @if (stats.toAssess.done < stats.toAssess.total) {
-                                        <button class="btn btn-primary assess-example-submission mb-4" (click)="openExampleSubmission(nextExampleSubmissionId(), false, true)">
+                                        <button
+                                            type="button"
+                                            class="btn btn-primary assess-example-submission mb-4"
+                                            (click)="openExampleSubmission(nextExampleSubmissionId(), false, true)"
+                                        >
                                             @if (stats.toAssess.done <= 0) {
                                                 <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.start"></span>
                                             } @else {
@@ -337,7 +364,11 @@
                                         <ul>
                                             @for (exampleSubmission of exampleSubmissionsToAssess(); track exampleSubmission; let i = $index) {
                                                 <li>
-                                                    <button class="btn btn-link assess-example-submission" (click)="openExampleSubmission(exampleSubmission.id!, false, true)">
+                                                    <button
+                                                        type="button"
+                                                        class="btn btn-link assess-example-submission"
+                                                        (click)="openExampleSubmission(exampleSubmission.id!, false, true)"
+                                                    >
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.assessExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
                                                     @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
@@ -359,28 +390,46 @@
                             <span [jhiTranslate]="assessmentNotPossibleYet.translationKey" [translateValues]="{ date: assessmentNotPossibleYet.date | artemisDate }"></span>
                         </p-message>
                     }
-                    @for (roundState of numberOfAssessmentsOfCorrectionRounds(); track roundState; let correctionRound = $index) {
-                        <div>
+                    @for (correctionRound of correctionRoundIndices(); track correctionRound) {
+                        <div [attr.data-testid]="'correction-round-' + correctionRound">
                             @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isTestRun()) {
-                                @if (!isExamMode()) {
-                                    <h4 class="d-inline-block" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
-                                }
-                                @if (isExamMode()) {
-                                    <h4
-                                        class="d-inline-block"
-                                        jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam"
-                                        [translateValues]="{ round: correctionRound + 1 }"
-                                    ></h4>
-                                }
-                                @if (correctionRound > 0) {
-                                    <fa-icon
-                                        class="text-secondary"
-                                        [icon]="faQuestionCircle"
-                                        ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
-                                    />
-                                }
+                                <div class="mb-3 flex w-full items-center justify-between gap-2" data-testid="correction-round-header">
+                                    <div class="flex items-center gap-1">
+                                        @if (!isExamMode()) {
+                                            <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
+                                        }
+                                        @if (isExamMode()) {
+                                            <h4
+                                                class="m-0"
+                                                jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam"
+                                                [translateValues]="{ round: correctionRound + 1 }"
+                                            ></h4>
+                                        }
+                                        @if (correctionRound > 0) {
+                                            <fa-icon
+                                                class="text-muted-color"
+                                                [icon]="faQuestionCircle"
+                                                ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
+                                            />
+                                        }
+                                    </div>
+                                    @if (
+                                        correctionRound === 1 &&
+                                        exercise().isAtLeastInstructor &&
+                                        exam()?.numberOfCorrectionRoundsInExam &&
+                                        exam()?.numberOfCorrectionRoundsInExam! > 1 &&
+                                        isExamMode()
+                                    ) {
+                                        <jhi-second-correction-enable-button
+                                            data-testid="toggle-second-correction"
+                                            (ngModelChange)="toggleSecondCorrection()"
+                                            [secondCorrectionEnabled]="secondCorrectionEnabled()"
+                                            [togglingSecondCorrectionButton]="togglingSecondCorrectionButton()"
+                                        />
+                                    }
+                                </div>
                             }
-                            @if (numberOfCorrectionRoundsEnabled() > correctionRound) {
+                            @if (numberOfCorrectionRoundsEnabled() > correctionRound && numberOfAssessmentsOfCorrectionRounds().length > correctionRound) {
                                 @if (isTestRun()) {
                                     <h4 jhiTranslate="artemisApp.exerciseAssessmentDashboard.testRunSubmissions"></h4>
                                 }
@@ -437,7 +486,6 @@
                                                                         [class.disabled]="openingAssessmentEditorForNewSubmission() || !!assessmentNotPossibleYetReason()"
                                                                         [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
                                                                         [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
-                                                                        [ngStyle]="{}"
                                                                     >
                                                                         @if (openingAssessmentEditorForNewSubmission()) {
                                                                             <fa-icon [icon]="faSpinner" animation="spin" />
@@ -458,6 +506,7 @@
                                                                     [result]="getSubmissionResultByCorrectionRound(submission, correctionRound)"
                                                                     [participation]="submission.participation!"
                                                                     [exercise]="exercise()"
+                                                                    [isOwnParticipation]="false"
                                                                 />
                                                             </td>
                                                             @if (exercise().type === ExerciseType.TEXT) {
@@ -517,7 +566,7 @@
                                         @if (
                                             isExamMode() &&
                                             (!unassessedSubmissionByRound()[correctionRound]?.id || exercise().teamMode || isTestRun()) &&
-                                            numberOfSubmissions().inTime !== roundState.inTime
+                                            numberOfSubmissions().inTime !== numberOfAssessmentsOfCorrectionRounds()[correctionRound].inTime
                                         ) {
                                             <div class="alert alert-info">
                                                 <span
@@ -582,6 +631,7 @@
                                                         [result]="submissionWithComplaint.submission.latestResult"
                                                         [participation]="submissionWithComplaint.complaint.result!.submission!.participation!"
                                                         [exercise]="exercise()"
+                                                        [isOwnParticipation]="false"
                                                     />
                                                 </td>
                                                 <td>
@@ -686,7 +736,7 @@
                                                 <td>{{ i + 1 }}</td>
                                                 <td>{{ moreFeedbackRequest.complaint.submittedTime | artemisDate }}</td>
                                                 <td>
-                                                    <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise()" />
+                                                    <jhi-result [result]="moreFeedbackRequest.complaint.result" [exercise]="exercise()" [isOwnParticipation]="false" />
                                                 </td>
                                                 <td>
                                                     @if (moreFeedbackRequest.complaint.accepted === undefined) {
@@ -722,6 +772,7 @@
                                                         </a>
                                                     } @else {
                                                         <button
+                                                            type="button"
                                                             class="btn btn-primary btn-sm"
                                                             [routerLink]="getAssessmentLink(moreFeedbackRequest.submission)"
                                                             [queryParams]="getComplaintQueryParams(moreFeedbackRequest.complaint)"

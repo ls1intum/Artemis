@@ -14,8 +14,8 @@ import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ChartExerciseTypeFilter } from 'app/exercise/chart/chart-exercise-type-filter';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ChartMultiSeriesEntry, ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { multiSeriesLineChart } from 'app/shared-ui/chart/tum-ui-chart-adapters';
-import { TumUiChartSelectEvent, TumUiLineChartComponent, TumUiLineChartConfig } from '@tumaet/ui-angular';
+import { multiSeriesLineChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
+import { TumAetUiChartSelectEvent, TumAetUiLineChartComponent, TumAetUiLineChartConfig } from '@tumaet/ui-angular';
 import { ArtemisNavigationUtilService } from 'app/foundation/util/navigation.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
@@ -30,7 +30,7 @@ const PIXELS_PER_EXERCISE = 100;
     selector: 'jhi-exercise-scores-chart',
     templateUrl: './exercise-scores-chart.component.html',
     styleUrls: ['./exercise-scores-chart.component.scss'],
-    imports: [TranslateDirective, NgbDropdown, NgbDropdownToggle, FaIconComponent, NgbDropdownMenu, TumUiLineChartComponent, ArtemisTranslatePipe],
+    imports: [TranslateDirective, NgbDropdown, NgbDropdownToggle, FaIconComponent, NgbDropdownMenu, TumAetUiLineChartComponent, ArtemisTranslatePipe],
 })
 export class ExerciseScoresChartComponent implements AfterViewInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
@@ -67,7 +67,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     readonly chartData = computed(() => multiSeriesLineChart(this.chartEntries(), [GraphColors.BLUE, GraphColors.YELLOW, GraphColors.GREEN]));
     // dynamic width so that the chart grows with the number of exercises and can be scrolled horizontally (CSS enforces the container width as minimum)
     readonly chartWidth = computed(() => (this.chartEntries()[0]?.series.length ?? 0) * PIXELS_PER_EXERCISE);
-    readonly chartConfig = computed<TumUiLineChartConfig>(() => ({
+    readonly chartConfig = computed<TumAetUiLineChartConfig>(() => ({
         legend: { position: 'right' },
         xAxis: {
             label: this.xAxisLabel(),
@@ -180,7 +180,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
      * Toggling the visibility of a line is handled by the chart legend itself.
      * @param event the selection event emitted by the chart
      */
-    onSelect(event: TumUiChartSelectEvent): void {
+    onSelect(event: TumAetUiChartSelectEvent): void {
         const exerciseId = (event.meta as ChartSeriesEntry | undefined)?.['exerciseId'];
         if (exerciseId !== undefined) {
             this.navigateToExercise(exerciseId as number);

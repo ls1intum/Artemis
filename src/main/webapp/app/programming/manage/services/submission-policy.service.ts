@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
@@ -12,7 +12,7 @@ export interface ISubmissionPolicyService {
     updateSubmissionPolicyToProgrammingExercise: (submissionPolicy: SubmissionPolicy, exerciseId: number) => Observable<SubmissionPolicy>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SubmissionPolicyService implements ISubmissionPolicyService {
     private http = inject(HttpClient);
 

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
-import { faCancel, faCheck, faEdit, faFileExport, faFilter, faPencilAlt, faPlus, faQuestion, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCancel, faCheck, faEdit, faFileImport, faFilter, faPencilAlt, faPlus, faQuestion, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -14,9 +14,6 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -28,7 +25,8 @@ import { MarkdownDirective } from 'app/foundation/directives/markdown.directive'
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiEmptyStateComponent } from '@tumaet/ui-angular';
+import { FaqImportDialogComponent } from './import/faq-import-dialog.component';
+import { TumAetUiButtonComponent, TumAetUiEmptyStateComponent } from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
@@ -47,10 +45,21 @@ import { TumUiEmptyStateComponent } from '@tumaet/ui-angular';
         CommonModule,
         CourseTitleBarActionsDirective,
         ArtemisTranslatePipe,
-        TumUiEmptyStateComponent,
+        TumAetUiEmptyStateComponent,
+        TumAetUiButtonComponent,
+        FaqImportDialogComponent,
     ],
 })
 export class FaqComponent implements OnInit, OnDestroy {
+    private faqService = inject(FaqService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    private accountService = inject(AccountService);
+
+    readonly importDialogOpen = signal(false);
+    protected readonly faFileImport = faFileImport;
+
     protected readonly FaqState = FaqState;
     faqs?: Faq[]; // undefined until loaded; code distinguishes "not loaded / load failed" from an empty result
     course!: Course; // set in ngOnInit() from the route data resolver
@@ -61,7 +70,6 @@ export class FaqComponent implements OnInit, OnDestroy {
     readonly courseId = signal<number>(undefined!);
     readonly hasCategories = signal(false);
     readonly isAtLeastInstructor = signal(false);
-    readonly irisEnabled = signal(false);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -81,18 +89,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     protected readonly faSort = faSort;
     protected readonly faCancel = faCancel;
     protected readonly faCheck = faCheck;
-    protected readonly faFileExport = faFileExport;
     protected readonly faQuestion = faQuestion;
-
-    private faqService = inject(FaqService);
-    private route = inject(ActivatedRoute);
-    private alertService = inject(AlertService);
-    private sortService = inject(SortService);
-    private accountService = inject(AccountService);
-    private profileService = inject(ProfileService);
-    private irisSettingsService = inject(IrisSettingsService);
-
-    private profileInfoSubscription?: Subscription;
 
     constructor() {
         this.predicate = 'id';
@@ -113,19 +110,12 @@ export class FaqComponent implements OnInit, OnDestroy {
                 this.isAtLeastInstructor.set(this.accountService.isAtLeastInstructorInCourse(course));
             }
         });
-        const irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
-        if (irisEnabled) {
-            this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId()).subscribe((response) => {
-                this.irisEnabled.set(response?.settings?.enabled || false);
-            });
-        }
     }
 
     ngOnDestroy(): void {
         this.dialogErrorSource.complete();
         this.searchInput.complete();
         this.routeDataSubscription?.unsubscribe();
-        this.profileInfoSubscription?.unsubscribe();
     }
 
     deleteFaq(courseId: number, faqId: number) {
@@ -159,6 +149,18 @@ export class FaqComponent implements OnInit, OnDestroy {
         this.filteredFaqs.set([...this.sortService.sortByProperty(this.filteredFaqs(), this.predicate, this.ascending)]);
     }
 
+    /**
+     * Reloads FAQs and categories after copying FAQs into this course and reports the created count.
+     * Each reload reapplies the visible search and category filters independently of response order.
+     * @param count number of FAQs created by the import
+     */
+    onFaqsImported(count: number): void {
+        this.loadAll();
+        this.loadCourseFaqCategories(this.courseId());
+        this.alertService.success('artemisApp.faq.import.success', { count });
+    }
+
+    /** Reloads the course FAQs while preserving the active search, category filters, and sort order. */
     private loadAll() {
         this.faqService
             .findAllByCourseId(this.courseId())
@@ -167,7 +169,7 @@ export class FaqComponent implements OnInit, OnDestroy {
                 next: (res: Faq[]) => {
                     this.faqs = res;
                     this.hasFaqs.set(res.length > 0);
-                    this.applyFilters();
+                    this.refreshFaqList(this.searchInput.getValue());
                     this.sortRows();
                     this.loaded.set(true);
                 },
@@ -175,14 +177,25 @@ export class FaqComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * Reloads categories, removes filters for categories that no longer exist, and reapplies the current search and sort.
+     * @param courseId course whose FAQ categories should be loaded
+     */
     private loadCourseFaqCategories(courseId: number) {
         loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
             this.existingCategories.set(existingCategories);
             this.hasCategories.set(existingCategories.length > 0);
             this.checkAppliedFilter(this.activeFilters(), this.existingCategories());
+            this.refreshFaqList(this.searchInput.getValue());
+            this.sortRows();
         });
     }
 
+    /**
+     * Prunes category filters that are absent from the reloaded category list without changing the search query.
+     * @param activeFilters currently selected category names
+     * @param existingCategories categories still present in the course
+     */
     private checkAppliedFilter(activeFilters: Set<string>, existingCategories: FaqCategory[]) {
         const updatedFilters = new Set(activeFilters);
         updatedFilters.forEach((activeFilter) => {
@@ -191,7 +204,6 @@ export class FaqComponent implements OnInit, OnDestroy {
             }
         });
         this.activeFilters.set(updatedFilters);
-        this.applyFilters();
     }
 
     private applySearch(searchTerm: string) {
@@ -230,16 +242,5 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     acceptProposedFaq(courseId: number, faq: Faq) {
         this.updateFaqState(courseId, faq, FaqState.ACCEPTED, 'artemisApp.faq.accepted');
-    }
-
-    ingestFaqsInPyris() {
-        if (this.faqs?.first()) {
-            this.faqService.ingestFaqsInPyris(this.courseId()).subscribe({
-                next: () => this.alertService.success('artemisApp.iris.ingestionAlert.allFaqsSuccess'),
-                error: () => {
-                    this.alertService.error('artemisApp.iris.ingestionAlert.allFaqsError');
-                },
-            });
-        }
     }
 }

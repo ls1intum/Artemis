@@ -31,8 +31,8 @@ To test the build locally, you can run:
 pnpm run serve
 ```
 
-To build and serve the complete deployed site, including the TUM UI Storybook at
-`/developer/tum-ui/`, run from the repository root:
+To build and serve the complete deployed site, including the TUM AET UI Storybook at
+`/developer/tum-aet-ui/`, run from the repository root:
 
 ```bash
 pnpm install --frozen-lockfile

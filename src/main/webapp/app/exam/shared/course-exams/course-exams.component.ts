@@ -43,7 +43,6 @@ const DEFAULT_SHOW_ALWAYS: CollapseState = {
 @Component({
     selector: 'jhi-course-exams',
     templateUrl: './course-exams.component.html',
-    styleUrls: ['./course-exams.component.scss'],
     imports: [SidebarComponent, RouterOutlet, TranslateDirective],
 })
 export class CourseExamsComponent implements OnInit, OnDestroy, SidebarView {

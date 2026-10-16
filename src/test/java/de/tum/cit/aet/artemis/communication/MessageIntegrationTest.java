@@ -1,12 +1,14 @@
 package de.tum.cit.aet.artemis.communication;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topic;
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.topicMatching;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -16,10 +18,14 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import jakarta.mail.internet.MimeMessage;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +35,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -46,6 +53,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
@@ -58,15 +66,20 @@ import de.tum.cit.aet.artemis.communication.dto.PostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketDestination;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
+import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationParameterTestRepository;
 import de.tum.cit.aet.artemis.notification.test_repository.CourseNotificationTestRepository;
+import de.tum.cit.aet.artemis.notification.test_repository.UserCourseNotificationStatusTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @Execution(ExecutionMode.SAME_THREAD)
@@ -89,7 +102,16 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private ConversationUtilService conversationUtilService;
 
     @Autowired
+    private ConversationTestRepository conversationRepository;
+
+    @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
+
+    @Autowired
+    private CourseNotificationParameterTestRepository courseNotificationParameterRepository;
+
+    @Autowired
+    private UserCourseNotificationStatusTestRepository userCourseNotificationStatusRepository;
 
     private List<Post> existingCourseWideMessages;
 
@@ -102,6 +124,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private Course course;
 
     private Long courseId;
+
+    private Channel exerciseChannel;
 
     private static final int NUMBER_OF_POSTS = 5;
 
@@ -141,7 +165,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 .filter(coursePost -> (coursePost.getConversation() instanceof Channel channel && channel.getExercise() != null)).toList();
 
         // filter existing posts with first exercise context
-        Channel exerciseChannel = ((Channel) existingExercisePosts.getFirst().getConversation());
+        exerciseChannel = ((Channel) existingExercisePosts.getFirst().getConversation());
         Exercise exercise = exerciseChannel.getExercise();
 
         course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -192,11 +216,35 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         checkCreatedMessagePost(postToSave, createdPost);
 
         // conversation participants should be notified via a single course-wide broadcast, not per user
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
-        // One broadcast in total over the whole window: a restored /topic/metis/ mirror would make it two.
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
+        // One broadcast in total over the whole window: a restored legacy mirror topic would make it two.
         // after(...) rather than timeout(...), which would return at the first send and miss a later mirrored one.
-        verify(websocketMessagingService, after(2000).times(1)).sendMessage(anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, after(2000).times(1)).sendMessage(any(WebsocketDestination.class), any(PostBroadcastDTO.class));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreatePostInChannelOfUnreleasedExerciseOnlyReachesStaff() throws Exception {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseChannel.getExercise().getId());
+        exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+        User instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
+        User tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        Post postToSave = new Post();
+        postToSave.setAuthor(instructor);
+        postToSave.setConversation(exerciseChannel);
+        postToSave.setContent("message about the unreleased exercise");
+        createPostAndAwaitAsyncCode(postToSave);
+
+        // Students cannot see the channel yet, so the post must not go to the course-wide topic, but staff still receive it live.
+        // Other tests of this class send to the same topics in parallel, so only posts of this channel count.
+        long channelId = exerciseChannel.getId();
+        verify(websocketMessagingService, timeout(2000)).sendMessage(topic("/topic/user/" + tutor.getId() + "/notifications/conversations"), postInChannel(channelId));
+        verify(websocketMessagingService, after(1000).never()).sendMessage(topic("/topic/communication/courses/" + courseId), postInChannel(channelId));
+        verify(websocketMessagingService, never()).sendMessage(topic("/topic/user/" + student.getId() + "/notifications/conversations"), postInChannel(channelId));
     }
 
     @Test
@@ -217,7 +265,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation participants should be notified individually
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(aCanonicalPostBroadcastTopic(),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessage(topic("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -237,10 +285,12 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // + 1 bulk UPDATE incrementing the recipients' unread counters. This one is deliberately synchronous: the read
         // side resets the counter to zero and nothing orders the two, so incrementing from the async notification
         // path let a late increment overwrite a recipient's read. Most other write work here stays async.
+        // + 1 durable outbox enqueue (a synchronous INSERT recording the SearchableEntities upsert intent, which replaced
+        // the former fire-and-forget async Weaviate write). The actual Weaviate write still happens later off the request.
         // further database calls are made in async code
         // Note: post via the channel's own course — the path courseId must match the conversation's course (see ensureConversationBelongsToCourseElseThrow)
         assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + course.getId() + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED))
-                .hasBeenCalledTimes(9);
+                .hasBeenCalledTimes(10);
     }
 
     @ParameterizedTest
@@ -259,8 +309,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         if (!isUserMentionValid) {
             request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.BAD_REQUEST);
-            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
-            verify(websocketMessagingService, never()).sendMessage(anyString(), any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessage(any(WebsocketDestination.class), any(PostBroadcastDTO.class));
             return;
         }
 
@@ -268,11 +318,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         checkCreatedMessagePost(postToSave, createdPost);
 
         // conversation participants should be notified via a single course-wide broadcast, not per user
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
-        // One broadcast in total over the whole window: a restored /topic/metis/ mirror would make it two.
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic("/topic/communication/courses/" + courseId), any(PostBroadcastDTO.class));
+        // One broadcast in total over the whole window: a restored legacy mirror topic would make it two.
         // after(...) rather than timeout(...), which would return at the first send and miss a later mirrored one.
-        verify(websocketMessagingService, after(2000).times(1)).sendMessage(anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, after(2000).times(1)).sendMessage(any(WebsocketDestination.class), any(PostBroadcastDTO.class));
     }
 
     @ParameterizedTest
@@ -294,9 +344,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         checkCreatedMessagePost(postToSave, createdPost);
 
         // both users are updated
-        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + author.getUser().getId() + "/notifications/conversations"),
+        verify(websocketMessagingService, timeout(2000)).sendMessage(topic("/topic/user/" + author.getUser().getId() + "/notifications/conversations"),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
-        verify(websocketMessagingService, timeout(2000)).sendMessage(eq("/topic/user/" + mentionedUserParticipant.getUser().getId() + "/notifications/conversations"),
+        verify(websocketMessagingService, timeout(2000)).sendMessage(topic("/topic/user/" + mentionedUserParticipant.getUser().getId() + "/notifications/conversations"),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
     }
 
@@ -316,7 +366,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         PostResponseDTO createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
-        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/communication/courses/" + course.getId()),
+        verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(topic("/topic/communication/courses/" + course.getId()),
                 (Object) argThat(argument -> argument instanceof PostBroadcastDTO postBroadcastDTO && idOf(postBroadcastDTO.post()).equals(idOf(createdPost))));
     }
 
@@ -404,7 +454,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
 
         // active messaging again
         persistedCourse.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -433,7 +483,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(numberOfPostsBefore);
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -663,7 +713,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         if (!isUserMentionValid) {
             request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + postToUpdate.getId(), toUpdatePostingDTO(postToUpdate), PostResponseDTO.class,
                     HttpStatus.BAD_REQUEST);
-            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+            verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
             return;
         }
 
@@ -691,7 +741,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(notUpdatedPost).isNull();
 
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -716,7 +766,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(conversationMessageRepository.findById(conversationPostToDelete.getId())).isPresent();
         // conversation participants should not be notified
-        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostBroadcastDTO.class));
+        verify(websocketMessagingService, never()).sendMessageToUser(anyString(), any(WebsocketUserDestination.class), any(PostBroadcastDTO.class));
     }
 
     @Test
@@ -1135,6 +1185,36 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         });
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotifyTheStudentsOfADirectMessageOrGroupChat(boolean groupChat) throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User member = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        Conversation conversation = groupChat ? conversationUtilService.createGroupChat(course, author, member)
+                : conversationUtilService.createOneToOneChat(course, author, member);
+        Post postToSave = new Post();
+        postToSave.setAuthor(author);
+        postToSave.setConversation(conversation);
+        postToSave.setContent("Test content for the members of the conversation");
+
+        var createdPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(postToSave), PostResponseDTO.class,
+                HttpStatus.CREATED);
+
+        // the other member receives the notification, neither the author nor anybody outside the conversation does
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            Set<Long> notificationIds = courseNotificationParameterRepository.findAll().stream()
+                    .filter(parameter -> "postId".equals(parameter.getKey()) && String.valueOf(createdPost.id()).equals(parameter.getValue()))
+                    .map(parameter -> parameter.getCourseNotification().getId()).collect(Collectors.toSet());
+            List<CourseNotification> newPostNotifications = courseNotificationRepository.findAllById(notificationIds).stream().filter(notification -> notification.getType() == 1)
+                    .toList();
+            assertThat(newPostNotifications).hasSize(1);
+            assertThat(userCourseNotificationStatusRepository.findAllByCourseNotificationId(newPostNotifications.getFirst().getId())).extracting(status -> status.getUser().getId())
+                    .containsExactly(member.getId());
+        });
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendMentionNotificationForNewPostWhenFeatureIsEnabled() throws Exception {
@@ -1159,6 +1239,252 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotifyEveryUnmutedGroupChatMemberExceptTheAuthorForAtAll() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User member = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User mutedMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
+        User hiddenMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student4").orElseThrow();
+        User tutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        Conversation groupChat = conversationUtilService.createGroupChat(course, author, member, mutedMember, hiddenMember, tutor);
+        updateParticipant(groupChat, mutedMember, participant -> participant.setIsMuted(true));
+        updateParticipant(groupChat, hiddenMember, participant -> participant.setIsHidden(true));
+
+        var createdPost = postMessage(groupChat, "@all the exercise sheet is online");
+
+        // the content is stored as typed, the token is not expanded into [user] tags
+        assertThat(createdPost.content()).isEqualTo("@all the exercise sheet is online");
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, "postId", createdPost.id())).containsExactlyInAnyOrder(member.getId(), tutor.getId());
+            // the mention replaces the new post notification
+            assertThat(notificationRecipientIds(1, "postId", createdPost.id())).isEmpty();
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotTreatAtAllAsAMentionOutsideOfGroupChats(boolean oneToOneChat) throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User member = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        Conversation conversation = oneToOneChat ? conversationUtilService.createOneToOneChat(course, author, member) : createChannelWithTwoStudents();
+
+        var createdPost = postMessage(conversation, "@all please have a look");
+
+        // the member gets the regular notification, the token stays plain text
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(notificationRecipientIds(1, "postId", createdPost.id())).containsExactly(member.getId()));
+        await().during(Duration.ofMillis(500)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(notificationRecipientIds(3, "postId", createdPost.id())).isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldSendOnlyOneMentionNotificationWhenAtAllAndAUserMentionOverlap() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User mentionedMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User otherMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
+        Conversation groupChat = conversationUtilService.createGroupChat(course, author, mentionedMember, otherMember);
+
+        var createdPost = postMessage(groupChat, "[user]" + mentionedMember.getName() + "(" + mentionedMember.getLogin() + ")[/user] and @ALL, please read this");
+
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, "postId", createdPost.id())).containsExactlyInAnyOrder(mentionedMember.getId(), otherMember.getId());
+            assertThat(notificationRecipientIds(1, "postId", createdPost.id())).isEmpty();
+        });
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "> @all meeting at 5\n\nI will be there", "Use `@all` to ping everybody", "```\n@all\n```\nThe syntax", "https://example.org/@all",
+            "<code>@all</code>", "<blockquote>@all</blockquote>", "<pre>@all</pre>", "> quoted text\n@all please read", "- ~~~\n  @all\n  ~~~", "www.example.org/?q=(@all)",
+            "[details](https://host/?q=(@all))" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotTreatAtAllInQuotesCodeOrUrlsAsAMention(String content) throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User member = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        Conversation groupChat = conversationUtilService.createGroupChat(course, author, member);
+
+        var createdPost = postMessage(groupChat, content);
+
+        // the member gets the regular notification, the quoted token does not ping the group again
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(notificationRecipientIds(1, "postId", createdPost.id())).containsExactly(member.getId()));
+        await().during(Duration.ofMillis(500)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(notificationRecipientIds(3, "postId", createdPost.id())).isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "<p>@all please read</p>", "<div>\n<p>@all please read</p>\n</div>", "see www.example.org @all" })
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldTreatAtAllAsAMentionWhenItIsDisplayedAsNormalTextInHtmlOrNextToAnUrl(String content) throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User member = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        Conversation groupChat = conversationUtilService.createGroupChat(course, author, member);
+
+        var createdPost = postMessage(groupChat, content);
+
+        // the paragraph is displayed as normal text, so the group is pinged and the mention replaces the new post notification
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, "postId", createdPost.id())).containsExactly(member.getId());
+            assertThat(notificationRecipientIds(1, "postId", createdPost.id())).isEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotNotifyAnyoneWhenEditingAMessageToIncludeAtAll() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User member = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        Conversation groupChat = conversationUtilService.createGroupChat(course, author, member);
+        var createdPost = postMessage(groupChat, "Hello everybody");
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(notificationRecipientIds(1, "postId", createdPost.id())).containsExactly(member.getId()));
+
+        var updatedPost = request.putWithResponseBody("/api/communication/courses/" + courseId + "/messages/" + createdPost.id(),
+                new UpdatePostingDTO(createdPost.id(), "@all Hello everybody", null, false), PostResponseDTO.class, HttpStatus.OK);
+
+        // the edit is applied, but unlike the creation of a message it notifies nobody
+        assertThat(updatedPost.content()).isEqualTo("@all Hello everybody");
+        await().during(Duration.ofMillis(500)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(notificationRecipientIds(3, "postId", createdPost.id())).isEmpty());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotifyAMutedMemberWhoIsMentionedByNameOnceWhenTheMessageAlsoPingsAtAll() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User mutedMentionedMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User member = userTestRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
+        User hiddenMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student4").orElseThrow();
+        Conversation groupChat = conversationUtilService.createGroupChat(course, author, mutedMentionedMember, member, hiddenMember);
+        updateParticipant(groupChat, mutedMentionedMember, participant -> participant.setIsMuted(true));
+        updateParticipant(groupChat, hiddenMember, participant -> participant.setIsHidden(true));
+
+        var createdPost = postMessage(groupChat, "[user]" + mutedMentionedMember.getName() + "(" + mutedMentionedMember.getLogin() + ")[/user] and @all, please read this");
+
+        // a mention by name reaches the member although they muted the group chat, the token only adds the members who want to be notified, and nobody is notified twice
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, "postId", createdPost.id())).containsExactlyInAnyOrder(mutedMentionedMember.getId(), member.getId());
+            assertThat(notificationRecipientIds(1, "postId", createdPost.id())).isEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotNotifyACourseMemberOutsideOfTheGroupChatWhoIsMentionedByNameTogetherWithAtAll() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User member = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User tutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User outsider = userTestRepository.findOneByLogin(TEST_PREFIX + "student4").orElseThrow();
+        Conversation groupChat = conversationUtilService.createGroupChat(course, author, member, tutor);
+
+        var createdPost = postMessage(groupChat, "@all [user]" + outsider.getName() + "(" + outsider.getLogin() + ")[/user] is no member of this chat");
+
+        // the group chat is not shown to the mentioned course member, so the mention does not leak it, while the members are pinged
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            assertThat(notificationRecipientIds(3, "postId", createdPost.id())).containsExactlyInAnyOrder(member.getId(), tutor.getId());
+            assertThat(notificationRecipientIds(1, "postId", createdPost.id())).isEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldDescribeTheMessageInTheMentionNotificationOfAtAll() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User member = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User tutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        Conversation groupChat = nameGroupChat(conversationUtilService.createGroupChat(course, author, member, tutor), "Exercise sheet team");
+
+        var createdPost = postMessage(groupChat, "@all the exercise sheet is online");
+
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(notificationRecipientIds(3, "postId", createdPost.id())).hasSize(2));
+        // one notification is shared by all recipients, it tells them who pinged them, where and with which message
+        var parameters = notificationParameters(3, "postId", createdPost.id());
+        assertThat(parameters).containsEntry("postMarkdownContent", "@all the exercise sheet is online").containsEntry("postId", String.valueOf(createdPost.id()))
+                .containsEntry("postAuthorName", author.getName()).containsEntry("replyAuthorName", author.getName()).containsEntry("replyAuthorId", String.valueOf(author.getId()))
+                .containsEntry("channelId", String.valueOf(groupChat.getId())).containsEntry("channelName", "Exercise sheet team").doesNotContainKey("replyId");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotNotifyAnyoneForAtAllIfNobodyElseInTheGroupChatWantsToBeNotified() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User author = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User mutedMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User hiddenMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student3").orElseThrow();
+        Conversation groupChat = conversationUtilService.createGroupChat(course, author, mutedMember, hiddenMember);
+        updateParticipant(groupChat, mutedMember, participant -> participant.setIsMuted(true));
+        updateParticipant(groupChat, hiddenMember, participant -> participant.setIsHidden(true));
+
+        var postWithoutRecipients = postMessage(groupChat, "@all is anybody there?");
+
+        // the message is created, nobody is left to ping
+        assertThat(postWithoutRecipients.content()).isEqualTo("@all is anybody there?");
+        // The notifications are created asynchronously after the request returned and read the muted and hidden state of the members when they run, so the members keep their
+        // state for the whole test. That notifications are sent to unmuted members is checked by shouldNotifyEveryUnmutedGroupChatMemberExceptTheAuthorForAtAll.
+        // The mention notification is created even if nobody is left to ping and only after the new post notification is complete. Waiting for it proves that the task
+        // is running, so the empty results below are not read before it started.
+        await().atMost(Duration.ofSeconds(5)).until(() -> !notificationIds(3, "postId", postWithoutRecipients.id()).isEmpty());
+        assertThat(notificationRecipientIds(1, "postId", postWithoutRecipients.id())).isEmpty();
+        // Only the recipients of the mention notification are still written by the task, right after it created the notification.
+        await().during(Duration.ofMillis(200)).atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(notificationRecipientIds(3, "postId", postWithoutRecipients.id())).isEmpty());
+    }
+
+    private Conversation nameGroupChat(Conversation groupChat, String name) {
+        ((GroupChat) groupChat).setName(name);
+        return conversationRepository.save(groupChat);
+    }
+
+    private Map<String, String> notificationParameters(int type, String parameterKey, Long parameterValue) {
+        Set<Long> notificationIds = courseNotificationParameterRepository.findAll().stream()
+                .filter(parameter -> parameterKey.equals(parameter.getKey()) && String.valueOf(parameterValue).equals(parameter.getValue()))
+                .map(parameter -> parameter.getCourseNotification().getId()).collect(Collectors.toSet());
+        Set<Long> notificationIdsOfType = courseNotificationRepository.findAllById(notificationIds).stream().filter(notification -> notification.getType() == type)
+                .map(CourseNotification::getId).collect(Collectors.toSet());
+        assertThat(notificationIdsOfType).hasSize(1);
+        return courseNotificationParameterRepository.findAll().stream().filter(parameter -> notificationIdsOfType.contains(parameter.getCourseNotification().getId()))
+                .collect(Collectors.toMap(parameter -> parameter.getKey(), parameter -> parameter.getValue()));
+    }
+
+    private PostResponseDTO postMessage(Conversation conversation, String content) throws Exception {
+        Post postToSave = new Post();
+        postToSave.setConversation(conversation);
+        postToSave.setContent(content);
+        return request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", toCreatePostDTO(postToSave), PostResponseDTO.class, HttpStatus.CREATED);
+    }
+
+    private void updateParticipant(Conversation conversation, User user, Consumer<ConversationParticipant> update) {
+        ConversationParticipant participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversation.getId(), user.getId())
+                .orElseThrow();
+        update.accept(participant);
+        conversationParticipantRepository.save(participant);
+    }
+
+    /**
+     * Collects the ids of the users that received a course notification of the given type which carries the given parameter.
+     * An id appears once per received notification, so a duplicate notification for one user shows up as a repeated id.
+     */
+    private List<Long> notificationRecipientIds(int type, String parameterKey, Long parameterValue) {
+        return notificationIds(type, parameterKey, parameterValue).stream()
+                .flatMap(notificationId -> userCourseNotificationStatusRepository.findAllByCourseNotificationId(notificationId).stream()).map(status -> status.getUser().getId())
+                .toList();
+    }
+
+    /**
+     * Collects the ids of the course notifications of the given type which carry the given parameter, whether or not somebody received them.
+     */
+    private List<Long> notificationIds(int type, String parameterKey, Long parameterValue) {
+        Set<Long> notificationIds = courseNotificationParameterRepository.findAll().stream()
+                .filter(parameter -> parameterKey.equals(parameter.getKey()) && String.valueOf(parameterValue).equals(parameter.getValue()))
+                .map(parameter -> parameter.getCourseNotification().getId()).collect(Collectors.toSet());
+        return courseNotificationRepository.findAllById(notificationIds).stream().filter(notification -> notification.getType() == type).map(CourseNotification::getId).toList();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSendAnnouncementNotificationWhenFeatureIsEnabled() throws Exception {
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test-announcement");
@@ -1180,6 +1506,54 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(notifications).filteredOn(notification -> notification.getCourse().getId().equals(courseId)).filteredOn(notification -> notification.getType() == 4)
                     .isNotEmpty();
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotSendAnAnnouncementEmailToATestUserThatNeverConfiguredIt() throws Exception {
+        var regularMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        var testUserMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        // The recipients of an announcement are rebuilt from a projection of the members, which has to keep the flag.
+        testUserMember.setTestUser(true);
+        userTestRepository.save(testUserMember);
+        try {
+            Channel channel = conversationUtilService.createAnnouncementChannel(course, "test-announcement-email");
+            conversationUtilService.addParticipantToConversation(channel, regularMember.getLogin());
+            conversationUtilService.addParticipantToConversation(channel, testUserMember.getLogin());
+            ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
+
+            Post postToSave = new Post();
+            postToSave.setAuthor(author.getUser());
+            postToSave.setConversation(channel);
+            postToSave.setContent("Important announcement for the e-mail test!");
+            CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), postToSave.getHasForwardedMessages(),
+                    new CreatePostConversationDTO(channel.getId()));
+
+            request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED);
+
+            // The regular member is the control: the announcement e-mail is sent, so the absence of the other one means something.
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(recipientsOfSentMails()).contains(regularMember.getEmail()));
+            await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(recipientsOfSentMails()).doesNotContain(testUserMember.getEmail()));
+        }
+        finally {
+            testUserMember.setTestUser(false);
+            userTestRepository.save(testUserMember);
+        }
+    }
+
+    /**
+     * The addresses that every mail handed to the mail sender so far was sent to.
+     */
+    private List<String> recipientsOfSentMails() throws Exception {
+        ArgumentCaptor<MimeMessage> messages = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(javaMailSender, atLeast(0)).send(messages.capture());
+        List<String> recipients = new ArrayList<>();
+        for (MimeMessage message : messages.getAllValues()) {
+            for (var address : message.getAllRecipients()) {
+                recipients.add(address.toString());
+            }
+        }
+        return recipients;
     }
 
     private Channel createChannelWithTwoStudents() {
@@ -1433,13 +1807,17 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * Matches the two destinations a post broadcast legitimately uses: the per-user conversation topic for a private
      * conversation, and the course-wide communication topic for a course-wide channel. Which of the two applies depends
      * on the conversation under test, and some helpers here cover both, so this matcher accepts either shape but
-     * nothing else - in particular neither the retired {@code /topic/metis/} mirror nor an unrelated destination, both
+     * nothing else - in particular neither the retired legacy mirror topic nor an unrelated destination, both
      * of which a bare {@code anyString()} would have accepted.
      *
      * @return a Mockito matcher for a canonical post broadcast destination
      */
-    private static String aCanonicalPostBroadcastTopic() {
-        return argThat((String topic) -> topic != null && (topic.matches("/topic/user/\\d+/notifications/conversations") || topic.matches("/topic/communication/courses/\\d+")));
+    private static Object postInChannel(long channelId) {
+        return argThat(payload -> payload instanceof PostBroadcastDTO dto && dto.post().conversation() != null && dto.post().conversation().id() == channelId);
+    }
+
+    private static WebsocketDestination aCanonicalPostBroadcastTopic() {
+        return topicMatching("/topic/user/\\d+/notifications/conversations|/topic/communication/courses/\\d+");
     }
 
 }

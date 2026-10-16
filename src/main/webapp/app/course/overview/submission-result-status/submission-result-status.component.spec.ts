@@ -44,6 +44,19 @@ describe('SubmissionResultStatusComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('can move only the retry action while retaining the result display', () => {
+        fixture.componentRef.setInput('exercise', { id: 42, type: ExerciseType.PROGRAMMING });
+        fixture.componentRef.setInput('studentParticipation', { id: 12, initializationState: InitializationState.INITIALIZED });
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.directive(ProgrammingExerciseStudentTriggerBuildButtonComponent))).not.toBeNull();
+        const result = fixture.nativeElement.querySelector('jhi-updating-result');
+        expect(result).not.toBeNull();
+        fixture.componentRef.setInput('showTriggerBuildButton', false);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.directive(ProgrammingExerciseStudentTriggerBuildButtonComponent))).toBeNull();
+        expect(fixture.nativeElement.querySelector('jhi-updating-result')).toBe(result);
+    });
+
     describe('effect on input changes', () => {
         it.each([
             [{ type: ExerciseType.QUIZ, quizBatches: [{ started: false }, { started: true }] } as QuizExercise, undefined, true],

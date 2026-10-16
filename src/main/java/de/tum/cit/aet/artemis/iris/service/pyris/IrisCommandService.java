@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.iris.web.IrisWebsocketTopics.SESSION_COMMANDS;
+
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +31,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisCommandRequestWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisCommandResultDTO;
@@ -53,14 +57,17 @@ public class IrisCommandService {
     private static final Logger log = LoggerFactory.getLogger(IrisCommandService.class);
 
     /**
-     * WebSocket topic suffix (appended to the per-session Iris topic) on which command requests are pushed to the client.
-     */
-    public static final String COMMAND_TOPIC_SUFFIX = "/commands";
-
-    /**
      * The only command type Artemis implements so far. Every other type is dropped in {@link #executeCommand}.
      */
     private static final String POINT_OUT_TYPE = "pointOut";
+
+    private static final String MATERIAL_TYPE_PARAMETER = "materialType";
+
+    private static final String MATERIAL_VERSION_PARAMETER = "materialVersion";
+
+    private static final String ATTACHMENT_MATERIAL_TYPE = "attachment";
+
+    private static final String VIDEO_MATERIAL_TYPE = "video";
 
     private static final String MARKER_WRITE_LOCK_PREFIX = "iris-command-marker-write:";
 
@@ -89,11 +96,13 @@ public class IrisCommandService {
 
     private final JsonMapper objectMapper;
 
+    private final IrisLectureMaterialVersionService materialVersionService;
+
     private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     public IrisCommandService(IrisCommandCoordinationService coordinationService, DistributedDataProvider distributedDataProvider, IrisWebsocketService irisWebsocketService,
             IrisChatWebsocketService irisChatWebsocketService, IrisMessageService irisMessageService, IrisSessionRepository irisSessionRepository, UserRepository userRepository,
-            JsonMapper objectMapper, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
+            JsonMapper objectMapper, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, IrisLectureMaterialVersionService materialVersionService) {
         this.coordinationService = coordinationService;
         this.distributedDataProvider = distributedDataProvider;
         this.irisWebsocketService = irisWebsocketService;
@@ -102,6 +111,7 @@ public class IrisCommandService {
         this.irisSessionRepository = irisSessionRepository;
         this.userRepository = userRepository;
         this.objectMapper = objectMapper;
+        this.materialVersionService = materialVersionService;
         this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
     }
 
@@ -139,24 +149,46 @@ public class IrisCommandService {
             return PyrisCommandResultDTO.notApplied();
         }
         // Safe to dereference: isValidPointOut guarantees lectureUnitId is present and numeric.
-        var lectureUnit = resolveLectureUnitInCourse(command.parameters().get("lectureUnitId").asLong(), job.courseId());
+        long lectureUnitId = command.parameters().get("lectureUnitId").asLong();
+        var lectureUnit = resolveLectureUnitInCourse(lectureUnitId, job.courseId());
         if (lectureUnit == null) {
             return PyrisCommandResultDTO.notApplied();
         }
+        var versionedCommand = stampPointOutVersion(command, lectureUnitId, job.jobId());
         var session = irisSessionRepository.findByIdElseThrow(job.sessionId());
-        if (!dispatchToClient(session, command, targetClientId)) {
+        if (!dispatchToClient(session, versionedCommand, targetClientId)) {
             return PyrisCommandResultDTO.notApplied();
         }
 
         // The client already navigated, so the point-out succeeded regardless of the marker write. Persisting the
         // history marker is best-effort: a failure here must not turn into a 500 for Pyris.
         try {
-            persistAndPushMarker(session, buildPointOutMarkerContent(command, lectureUnit));
+            persistAndPushMarker(session, buildPointOutMarkerContent(versionedCommand, lectureUnit));
         }
         catch (Exception e) {
             log.error("Point-out command was applied on the client but persisting its marker failed", e);
         }
         return PyrisCommandResultDTO.success();
+    }
+
+    /**
+     * Pins a point-out to the version of the material Iris generated it from.
+     * <p>
+     * A timestamp makes the point-out a video reference, even when Pyris also supplies the slide shown at that time; otherwise a page makes it a slide reference. This is the
+     * same distinction used for lecture citations. The run snapshot supplies the version, never the latest database state or the command's untrusted parameter bag.
+     * Missing versions are explicitly unverified (0), so a new command cannot bypass verification through legacy behaviour.
+     */
+    private PyrisCommandDTO stampPointOutVersion(PyrisCommandDTO command, long lectureUnitId, String jobId) {
+        var parameters = new LinkedHashMap<>(command.parameters());
+        parameters.remove(MATERIAL_TYPE_PARAMETER);
+        parameters.remove(MATERIAL_VERSION_PARAMETER);
+
+        var ingestedVersions = materialVersionService.getSnapshot(jobId).get(lectureUnitId);
+        boolean pointsToVideo = parameters.containsKey("timestamp");
+        Integer version = ingestedVersions == null ? null : pointsToVideo ? ingestedVersions.videoVersion() : ingestedVersions.attachmentVersion();
+        parameters.put(MATERIAL_TYPE_PARAMETER, objectMapper.getNodeFactory().stringNode(pointsToVideo ? VIDEO_MATERIAL_TYPE : ATTACHMENT_MATERIAL_TYPE));
+        parameters.put(MATERIAL_VERSION_PARAMETER, objectMapper.getNodeFactory().numberNode(version == null || version <= 0 ? 0 : version));
+        return new PyrisCommandDTO(command.type(), parameters);
     }
 
     /**
@@ -183,7 +215,7 @@ public class IrisCommandService {
         // the view after this request has already returned "not applied" to Pyris.
         var expiresAt = System.currentTimeMillis() + CLIENT_ACTION_TIMEOUT_MILLIS;
         var request = new IrisCommandRequestWebsocketDTO(correlationId, command.type(), command.parameters(), targetClientId, expiresAt);
-        irisWebsocketService.send(userLogin, session.getId() + COMMAND_TOPIC_SUFFIX, request);
+        irisWebsocketService.send(userLogin, SESSION_COMMANDS.at(session.getId()), request);
         log.debug("Iris command {} of type {} sent to user {} (session {}, client {}), awaiting client ack", correlationId, command.type(), userLogin, session.getId(),
                 targetClientId);
 

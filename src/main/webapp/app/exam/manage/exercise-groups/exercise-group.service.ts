@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -6,7 +6,7 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 type EntityResponseType = HttpResponse<ExerciseGroup>;
 type EntityArrayResponseType = HttpResponse<ExerciseGroup[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExerciseGroupService {
     private http = inject(HttpClient);
 

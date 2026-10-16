@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ArtemisTextReplacementPlugin } from 'app/foundation/util/ArtemisTextReplacementPlugin';
 import { escapeStringForUseInRegex } from 'app/foundation/util/string-pure.utils';
@@ -10,13 +10,13 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import DOMPurify from 'dompurify';
 
 // This regex is the same as in the server: ProgrammingExerciseTaskService.java
-const testsColorRegex = /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g;
+const testsColorRegex = /testsColor\((\s*[^()\s]+(?:[ \t]+[^()\s]+)*(\([^()]*\))?)\)/g;
 
 /**
  * Singleton service that handles rendering of PlantUML diagrams embedded in programming exercise problem statements.
  *
  * IMPORTANT - SINGLETON HAZARD IN EXAM MODE:
- * This service is providedIn: 'root', meaning there is ONE shared instance across the entire application.
+ * This service is a root @Service(), meaning there is ONE shared instance across the entire application.
  * In exam mode, multiple ProgrammingExerciseInstructionComponent instances coexist simultaneously
  * in the DOM (hidden via [hidden], NOT destroyed). They ALL share this SAME singleton.
  *
@@ -32,8 +32,10 @@ const testsColorRegex = /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g;
  * returns the FIRST match in DOM order, which may belong to a DIFFERENT exercise.
  * This causes: (1) wrong diagram shown in one exercise, (2) no diagram in another.
  *
- * Solution: Container IDs are scoped per exercise: "plantUml-{exerciseId}-{index}".
+ * Solution: Container IDs are scoped per exercise and per component instance: "plantUml-{exerciseId}-{instanceId}-{index}".
  * - The exerciseId distinguishes exercises from each other (set via setExerciseId before each render)
+ * - The instanceId distinguishes components that show the same exercise at the same time, e.g. the exercise details page
+ *   and the online editor sidebar (set via setInstanceId before each render)
  * - The index (0, 1, 2, ...) distinguishes multiple diagrams within the same exercise;
  *   it is derived from the array position in replaceText(), NOT from mutable singleton state
  *
@@ -43,7 +45,7 @@ const testsColorRegex = /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g;
  * The fix removed the mutable counter entirely and uses the array index instead.
  * See programming-exercise-plant-uml.extension.spec.ts for regression tests.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextReplacementPlugin {
     private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
     private plantUmlService = inject(ProgrammingExercisePlantUmlService);
@@ -53,11 +55,15 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
     private injectableElementsFoundSubject = new Subject<() => void>();
 
     // The exercise ID used to scope PlantUML container DOM IDs.
-    // Combined with the per-diagram array index to form: "plantUml-{exerciseId}-{index}".
+    // Combined with the instance ID and the per-diagram array index to form: "plantUml-{exerciseId}-{instanceId}-{index}".
     // This guarantees globally unique IDs even when multiple exercises are on the same page (exams).
     // IMPORTANT: There is intentionally NO mutable index counter on this singleton.
     // The per-diagram index comes from the array position in replaceText() to avoid shared mutable state.
     private exerciseId?: number;
+
+    // Identifies the component instance that is rendering. Two components can show the same exercise at the same time
+    // (e.g. the hidden exercise details and the online editor sidebar), so the exercise ID alone is not unique in the DOM.
+    private instanceId?: number;
 
     constructor() {
         super();
@@ -79,10 +85,22 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
      * Sets the exercise ID for scoping PlantUML container IDs.
      * This ensures unique DOM IDs when multiple exercises are rendered on the same page (e.g. in exams).
      * Must be called before each markdown render, in the same synchronous block as the subsequent htmlForMarkdown() call.
+     * Resets the instance ID, so a caller that only scopes by exercise never inherits the instance ID of a previous caller of this singleton.
+     * Call setInstanceId afterwards if the rendering component has an instance ID.
      * @param exerciseId the ID of the exercise being rendered
      */
     public setExerciseId(exerciseId?: number): void {
         this.exerciseId = exerciseId;
+        this.instanceId = undefined;
+    }
+
+    /**
+     * Sets the ID of the component instance that renders the diagrams, so that two components showing the same exercise
+     * do not generate the same container IDs. Must be called together with setExerciseId before each markdown render.
+     * @param instanceId a number that is unique per rendering component instance
+     */
+    public setInstanceId(instanceId?: number): void {
+        this.instanceId = instanceId;
     }
 
     /**
@@ -131,12 +149,15 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
         // Replace test status markers.
         const plantUmls = text.match(plantUmlRegex) ?? [];
         // Assign unique container IDs to each diagram.
-        // The ID format is "plantUml-{exerciseId}-{index}" where:
+        // The ID format is "plantUml-{exerciseId}-{instanceId}-{index}" where:
         // - exerciseId: scopes IDs per exercise (prevents cross-contamination in exams)
+        // - instanceId: scopes IDs per rendering component (prevents collisions when the same exercise is rendered twice)
         // - index: the array position, distinguishes multiple diagrams within the same exercise
         // Using the array index (not a mutable counter) avoids shared singleton state bugs.
         const plantUmlsIndexed = plantUmls.map((plantUml, index) => {
-            const containerId = this.exerciseId != undefined ? `plantUml-${this.exerciseId}-${index}` : `plantUml-${index}`;
+            // The instance ID is only meaningful together with the exercise ID, otherwise "plantUml-{instanceId}-{index}" could collide with "plantUml-{exerciseId}-{index}"
+            const scope = this.exerciseId == undefined ? '' : [this.exerciseId, this.instanceId].filter((part) => part != undefined).join('-');
+            const containerId = scope ? `plantUml-${scope}-${index}` : `plantUml-${index}`;
             return { containerId, plantUml };
         });
         // custom markdown to html rendering: replace the plantUml in the markdown with a simple <div></div> container with a unique id placeholder
@@ -148,7 +169,8 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
         // (green == implemented, red == not yet implemented, grey == unknown)
         const plantUmlsValidated = plantUmlsIndexed.map((plantUmlIndexed: { containerId: string; plantUml: string }) => {
             plantUmlIndexed.plantUml = plantUmlIndexed.plantUml.replace(testsColorRegex, (match: string, capture: string) => {
-                const tests = this.programmingExerciseInstructionService.convertTestListToIds(capture, this.testCases);
+                // A testsColor element takes exactly one test, so the capture is one test reference and must not be split at commas (a test name may contain them).
+                const tests = [this.programmingExerciseInstructionService.convertProblemStatementTextToTestId(capture.trim(), this.testCases) ?? -1];
                 const { testCaseState } = this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult);
                 switch (testCaseState) {
                     case TestCaseState.SUCCESS:

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
@@ -172,9 +173,8 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         verify(websocketMessagingService, timeout(TIMEOUT_MS).times(1))
             .sendMessageToUser(
                 eq(userLogin),
-                eq("/topic/iris/" + topicSuffix),
-                ArgumentMatchers.argThat(matcher)
-            );
+                userTopic("/topic/iris/" + topicSuffix),
+                ArgumentMatchers.argThat(matcher));
         // @formatter:on
     }
 
@@ -186,9 +186,8 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         verify(websocketMessagingService, times(numberOfCalls))
             .sendMessageToUser(
                 eq(userLogin),
-                eq("/topic/iris/" + topicSuffix),
-                any()
-            );
+                userTopic("/topic/iris/" + topicSuffix),
+                any());
         // @formatter:on
     }
 }

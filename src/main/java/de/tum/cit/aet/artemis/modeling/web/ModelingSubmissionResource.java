@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
@@ -68,7 +69,7 @@ import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
  */
 @Conditional(ModelingEnabled.class)
 @Lazy
-@FeatureUsage("participation/submissions")
+@FeatureUsage(UserFeature.MODELING_EXERCISES)
 @RestController
 @RequestMapping("api/modeling/")
 public class ModelingSubmissionResource extends AbstractSubmissionResource {
@@ -209,6 +210,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return a list of modeling submissions
      */
     @ResponseStatus(HttpStatus.OK)
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ModelingSubmissionResponseDTO>> getAllModelingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
@@ -242,6 +244,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission for the given id, or with status 404 (Not Found) if the modelingSubmission could not be
      *         found
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("modeling-submissions/{submissionId}")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmissionResponseDTO> getModelingSubmission(@PathVariable Long submissionId,
@@ -273,7 +276,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         modelingSubmissionService.checkThatAssessmentIsPossibleElseThrow(modelingExercise, studentParticipation);
-        modelingSubmissionService.checkCorrectionRoundIsValidElseThrow(modelingExercise, correctionRound);
+        modelingSubmissionService.checkCorrectionRoundIsValidElseThrow(modelingExercise, submissionId, correctionRound);
 
         // now we can assume the user is at least a tutor for the underlying exercise
         var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(modelingExercise.getId());
@@ -324,6 +327,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param correctionRound correctionRound for which submissions without a result should be returned
      * @return the ResponseEntity with status 200 (OK) and a modeling submission without assessment in body
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/modeling-submission-without-assessment")
     @EnforceAtLeastTutor
     public ResponseEntity<ModelingSubmissionResponseDTO> getModelingSubmissionWithoutAssessment(@PathVariable Long exerciseId,

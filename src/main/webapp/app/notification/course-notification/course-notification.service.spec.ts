@@ -9,7 +9,7 @@ import { CourseNotificationPage } from 'app/notification/shared/entities/course-
 import { CourseNotificationCategory } from 'app/notification/shared/entities/course-notification/course-notification-category';
 import { CourseNotificationChannel } from 'app/notification/shared/entities/course-notification/course-notification-channel';
 import dayjs from 'dayjs/esm';
-import { faComments } from '@fortawesome/free-solid-svg-icons';
+import { faComments, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
 import { User } from 'app/account/user/user.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -138,6 +138,22 @@ describe('CourseNotificationService', () => {
             });
             req.flush({});
             vi.advanceTimersByTime(0);
+        });
+    });
+
+    describe('markDisplayedNotificationsAsSeen', () => {
+        it('should make PUT request to the seen endpoint, not the status endpoint', () => {
+            const courseId = 123;
+            const notificationIds = [4, 5];
+
+            service.markDisplayedNotificationsAsSeen(courseId, notificationIds);
+
+            const req = httpMock.expectOne(`/api/notification/courses/${courseId}/seen`);
+            expect(req.request.method).toBe('PUT');
+            expect(req.request.body).toEqual({ notificationIds });
+            req.flush({});
+            vi.advanceTimersByTime(0);
+            httpMock.expectNone(`/api/notification/courses/${courseId}/status`);
         });
     });
 
@@ -377,6 +393,10 @@ describe('CourseNotificationService', () => {
             expect(CourseNotificationService.NOTIFICATION_TYPE_ICON_MAP).toHaveProperty('irisResponseNeedsReviewNotification');
             expect(service.getIconFromType('irisResponseNeedsReviewNotification')).toBe(faComments);
         });
+
+        it('should register an icon for the Atlas competency update notification type', () => {
+            expect(service.getIconFromType('atlasCompetencyUpdateNotification')).toBe(faWandMagicSparkles);
+        });
     });
 
     describe('DISABLE_NOTIFICATION_CHANNEL_TYPES', () => {
@@ -388,6 +408,19 @@ describe('CourseNotificationService', () => {
             expect(disabledChannels).toContain(CourseNotificationChannel.EMAIL);
             expect(disabledChannels).toContain(CourseNotificationChannel.PUSH);
             expect(disabledChannels).not.toContain(CourseNotificationChannel.WEBAPP);
+        });
+
+        it('should only leave the Email channel configurable for the Atlas competency update notification', () => {
+            // The server only supports the EMAIL channel for this notification, so Webapp and Push must be non-configurable.
+            const disabledChannels = CourseNotificationService.DISABLE_NOTIFICATION_CHANNEL_TYPES['atlasCompetencyUpdateNotification'];
+
+            expect(disabledChannels).toEqual([CourseNotificationChannel.WEBAPP, CourseNotificationChannel.PUSH]);
+        });
+    });
+
+    describe('INSTRUCTOR_ONLY_NOTIFICATION_TYPES', () => {
+        it('should mark the Atlas competency update notification as instructor-only', () => {
+            expect(CourseNotificationService.INSTRUCTOR_ONLY_NOTIFICATION_TYPES).toContain('atlasCompetencyUpdateNotification');
         });
     });
 

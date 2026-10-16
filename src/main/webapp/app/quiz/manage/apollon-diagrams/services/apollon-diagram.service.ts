@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
@@ -20,7 +20,7 @@ export interface ApollonDiagramUpdateDTO {
     courseId: number;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ApollonDiagramService {
     private http = inject(HttpClient);
     private entityTitleService = inject(EntityTitleService);

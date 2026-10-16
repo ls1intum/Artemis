@@ -23,6 +23,9 @@ import { AlertService } from 'app/foundation/service/alert.service';
     imports: [ButtonComponent],
 })
 export class ProgrammingExerciseInstructorExerciseSharingComponent {
+    private readonly sharingService = inject(ProgrammingExerciseSharingService);
+    private readonly alertService = inject(AlertService);
+
     // Icons
     protected readonly faDownload = faDownload;
 
@@ -30,8 +33,6 @@ export class ProgrammingExerciseInstructorExerciseSharingComponent {
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
     sharingTab: WindowProxy | null = null;
-    private readonly sharingService = inject(ProgrammingExerciseSharingService);
-    private readonly alertService = inject(AlertService);
 
     exerciseId = input<number>();
 

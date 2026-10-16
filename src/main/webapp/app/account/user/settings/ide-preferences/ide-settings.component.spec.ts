@@ -52,7 +52,7 @@ describe('IdeSettingsComponent', () => {
 
         expect(component.isLoading()).toBe(true);
 
-        await component.ngOnInit();
+        await component['initializeIdeSettingsComponent']();
 
         expect(mockIdeSettingsService.loadPredefinedIdes).toHaveBeenCalledOnce();
         expect(mockIdeSettingsService.loadIdePreferences).toHaveBeenCalledOnce();

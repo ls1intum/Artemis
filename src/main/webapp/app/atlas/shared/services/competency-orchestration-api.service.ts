@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { BaseApiHttpService } from 'app/foundation/service/base-api-http.service';
 import { CompetencyOrchestrationResultDTO } from 'app/atlas/shared/dto/competency-orchestration-dto';
 
@@ -11,12 +11,16 @@ export interface OrchestratorDefaults {
     maxDailyOrchestrations: number;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class CompetencyOrchestrationApiService extends BaseApiHttpService {
     private readonly basePath = 'atlas/orchestrator';
 
     async runForExercise(exerciseId: number): Promise<CompetencyOrchestrationResultDTO> {
         return await this.post<CompetencyOrchestrationResultDTO>(`${this.basePath}/exercises/${exerciseId}/run`);
+    }
+
+    async runForLectureUnit(lectureUnitId: number): Promise<CompetencyOrchestrationResultDTO> {
+        return await this.post<CompetencyOrchestrationResultDTO>(`${this.basePath}/lecture-units/${lectureUnitId}/run`);
     }
 
     /**

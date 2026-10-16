@@ -19,7 +19,7 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
 import { downloadFile } from 'app/foundation/util/download.util';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
-import { TumUiButtonComponent, TumUiMessageComponent, TumUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiMessageComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 import { BuildAgentsService } from 'app/localci/build-agents.service';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/localci/shared/build-agent-address.utils';
@@ -40,9 +40,9 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
         ResultComponent,
         AdminTitleBarTitleDirective,
         HelpIconComponent,
-        TumUiButtonComponent,
-        TumUiTagComponent,
-        TumUiMessageComponent,
+        TumAetUiButtonComponent,
+        TumAetUiTagComponent,
+        TumAetUiMessageComponent,
     ],
 })
 export class BuildJobDetailComponent implements OnInit, OnDestroy {

@@ -435,9 +435,13 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
         participantScoreScheduleService.shutdown();
         statistics.clear();
 
-        request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+        // Count the request's queries with the thread-scoped HibernateQueryInterceptor (via assertThatDb), not the
+        // global Hibernate statistics: the Weaviate outbox dispatcher's periodic drain runs on a scheduler thread and
+        // its query would otherwise inflate the global count and flake this assertion. The entity-load checks below stay
+        // on the global statistics — they track specific entity types the drain never touches, so they are unaffected.
+        assertThatDb(() -> request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class))
+                .as("the projection-backed exercise overview query budget").hasBeenCalledAtMostTimes(MAX_EXERCISE_OVERVIEW_QUERIES);
 
-        assertThat(statistics.getPrepareStatementCount()).as("the projection-backed exercise overview query budget").isLessThanOrEqualTo(MAX_EXERCISE_OVERVIEW_QUERIES);
         assertEntityWasNotLoaded(Exercise.class);
         assertEntityWasNotLoaded(TextExercise.class);
         assertEntityWasNotLoaded(ProgrammingExercise.class);
@@ -576,6 +580,71 @@ class CourseOverviewLoadProfileTest extends AbstractSpringIntegrationIndependent
                 .orElseThrow(() -> new AssertionError("the assessed exercise must be part of the overview")).studentParticipations().iterator().next().submissions();
         assertThat(assessedSubmissions).as("the assessed submission must be visible").hasSize(1);
         assertThat(assessedSubmissions.iterator().next().submissionExerciseType()).as("and it must carry the discriminator its exercise implies").isEqualTo("text");
+    }
+
+    /**
+     * A student practices a team exercise on their own. That participation is keyed by the student, not by the team, so the team query of the overview does not find it and the
+     * exercise card would not know that the practice exists.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReportTheIndividualPracticeParticipationOfATeamExercise() throws Exception {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        TextExercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3),
+                ZonedDateTime.now().minusDays(2));
+        Team team = teamUtilService.createTeam(Set.of(student), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), teamExercise, TEST_PREFIX + "practiceoverviewteam");
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(teamExercise, team.getId());
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(teamExercise, TEST_PREFIX + "student1");
+
+        var overview = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+
+        var participations = overview.exercises().stream().filter(exercise -> exercise.id().equals(teamExercise.getId())).findFirst()
+                .orElseThrow(() -> new AssertionError("the team exercise must be part of the overview")).studentParticipations();
+        assertThat(participations).extracting(ParticipationOverviewDTO::id).containsExactlyInAnyOrder(teamParticipation.getId(), practiceParticipation.getId());
+        assertThat(participations).filteredOn(participation -> Boolean.TRUE.equals(participation.testRun())).extracting(ParticipationOverviewDTO::id)
+                .containsExactly(practiceParticipation.getId());
+    }
+
+    /**
+     * The practice work of another student is private: the rows that are added for the practice mode are keyed by the requesting student, so a practice participation of
+     * somebody else, teammate or not, must not show up in the overview of the student.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotReportThePracticeParticipationOfAnotherStudentOfATeamExercise() throws Exception {
+        User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        User otherStudent = userUtilService.createAndSaveUser(TEST_PREFIX + "otherpracticestudent");
+        TextExercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3),
+                ZonedDateTime.now().minusDays(2));
+        Team team = teamUtilService.createTeam(Set.of(student, otherStudent), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"), teamExercise,
+                TEST_PREFIX + "privatepracticeteam");
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(teamExercise, team.getId());
+        participationUtilService.createAndSavePracticeParticipationForExercise(teamExercise, TEST_PREFIX + "otherpracticestudent");
+
+        var overview = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+
+        var participations = overview.exercises().stream().filter(exercise -> exercise.id().equals(teamExercise.getId())).findFirst()
+                .orElseThrow(() -> new AssertionError("the team exercise must be part of the overview")).studentParticipations();
+        assertThat(participations).extracting(ParticipationOverviewDTO::id).as("only the team's participation, the practice work of the teammate is private")
+                .containsExactly(teamParticipation.getId());
+    }
+
+    /**
+     * A student without a team in a team exercise can still have started the practice mode, and the practice participation is then the only one of the exercise.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReportThePracticeParticipationOfAStudentWithoutTeamForATeamExercise() throws Exception {
+        TextExercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, ZonedDateTime.now().minusDays(4), ZonedDateTime.now().minusDays(3),
+                ZonedDateTime.now().minusDays(2));
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(teamExercise, TEST_PREFIX + "student1");
+
+        var overview = request.get("/api/course/courses/" + course.getId() + "/exercises-for-overview", HttpStatus.OK, CourseExercisesForOverviewDTO.class);
+
+        var participations = overview.exercises().stream().filter(exercise -> exercise.id().equals(teamExercise.getId())).findFirst()
+                .orElseThrow(() -> new AssertionError("the team exercise must be part of the overview")).studentParticipations();
+        assertThat(participations).extracting(ParticipationOverviewDTO::id).containsExactly(practiceParticipation.getId());
+        assertThat(participations.iterator().next().testRun()).isTrue();
     }
 
     /**

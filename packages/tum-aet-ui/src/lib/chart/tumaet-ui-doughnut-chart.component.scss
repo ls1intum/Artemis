@@ -1,0 +1,9 @@
+@use './tumaet-ui-chart.layout';
+
+.tumaet-ui-doughnut-chart-slice-interactive {
+    cursor: pointer;
+}
+
+.tumaet-ui-doughnut-chart-slice:hover {
+    filter: brightness(1.08);
+}

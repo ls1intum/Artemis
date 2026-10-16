@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SidebarAccordionComponent } from 'app/course/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { SidebarCardMediumComponent } from 'app/course/sidebar/sidebar-card-medium/sidebar-card-medium.component';
 import { SidebarCardItemComponent } from 'app/course/sidebar/sidebar-card-item/sidebar-card-item.component';
-import { SidebarCardDirective } from 'app/course/sidebar/directive/sidebar-card.directive';
+import { SidebarCardComponent } from 'app/course/sidebar/sidebar-card/sidebar-card.component';
 import { SearchFilterPipe } from 'app/foundation/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -14,8 +14,8 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { MockCourseConversationsService } from 'test/helpers/mocks/service/mock-course-conversations.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { CollapseState } from 'app/foundation/types/sidebar';
@@ -40,7 +40,7 @@ describe('SidebarAccordionComponent', () => {
                 SidebarAccordionComponent,
                 SidebarCardMediumComponent,
                 SidebarCardItemComponent,
-                SidebarCardDirective,
+                SidebarCardComponent,
                 SearchFilterPipe,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(SearchFilterComponent),
@@ -48,7 +48,7 @@ describe('SidebarAccordionComponent', () => {
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: CourseConversationsService, useClass: MockCourseConversationsService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();

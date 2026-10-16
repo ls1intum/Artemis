@@ -1,0 +1,119 @@
+@if (showSearch()) {
+    <div class="tumaet:mb-3">
+        <div class="tumaet:relative">
+            <fa-icon [icon]="faMagnifyingGlass" class="tumaet:pointer-events-none tumaet:absolute tumaet:start-3 tumaet:top-1/2 tumaet:-translate-y-1/2 tumaet:text-muted" />
+            <input
+                #searchInput
+                type="search"
+                [placeholder]="searchPlaceholder() | tumAetUiTranslate"
+                [attr.aria-label]="searchPlaceholder() | tumAetUiTranslate"
+                (input)="onSearchInput(searchInput.value)"
+                class="tumaet:box-border tumaet:w-full tumaet:rounded-md tumaet:border tumaet:border-control-border tumaet:bg-control-background tumaet:py-1.5 tumaet:ps-10 tumaet:pe-3 tumaet:text-sm tumaet:text-text"
+            />
+        </div>
+    </div>
+}
+
+<div
+    class="tumaet:relative tumaet:w-full tumaet:max-w-full tumaet:overflow-x-auto"
+    [style.overflow-y]="scrollable() ? 'auto' : null"
+    [style.flex]="scrollHeight() === 'flex' ? '1 1 0%' : null"
+    [style.min-height]="scrollHeight() === 'flex' ? 0 : null"
+    [style.max-height]="scrollHeight() && scrollHeight() !== 'flex' ? scrollHeight() : null"
+>
+    <table cdk-table [dataSource]="rows()" [trackBy]="effectiveTrackBy()" [class]="tableClasses()" [attr.aria-busy]="loading() ? 'true' : null">
+        @for (col of columns(); track columnName(col, $index)) {
+            <ng-container [cdkColumnDef]="columnName(col, $index)">
+                <th
+                    cdk-header-cell
+                    *cdkHeaderCellDef
+                    scope="col"
+                    [style.min-width]="col.width"
+                    [attr.aria-sort]="ariaSortFor(col)"
+                    [class]="headerCellClasses(col)"
+                    class="tumaet:border-border tumaet:bg-content-background tumaet:px-4 tumaet:py-2 tumaet:text-start tumaet:font-semibold tumaet:text-text"
+                >
+                    <span class="tumaet:inline-flex tumaet:items-center tumaet:gap-1">
+                        @if (col.sort && col.field) {
+                            <button
+                                type="button"
+                                class="tumaet:inline-flex tumaet:cursor-pointer tumaet:appearance-none tumaet:items-center tumaet:gap-2 tumaet:border-0 tumaet:bg-transparent tumaet:p-0 tumaet:font-semibold tumaet:text-text tumaet:hover:text-accent"
+                                (click)="onSortClick(col)"
+                            >
+                                @if (col.headerKey) {
+                                    <span>{{ col.headerKey | tumAetUiTranslate }}</span>
+                                } @else {
+                                    <span>{{ col.header }}</span>
+                                }
+                                <fa-icon [icon]="sortIcon(col)" class="tumaet:shrink-0 tumaet:text-muted" />
+                            </button>
+                        } @else if (col.headerKey) {
+                            <span>{{ col.headerKey | tumAetUiTranslate }}</span>
+                        } @else {
+                            <span>{{ col.header }}</span>
+                        }
+                        @if (col.headerTooltip; as headerTooltip) {
+                            @let tooltipText = headerTooltip | tumAetUiTranslate;
+                            <button
+                                type="button"
+                                class="tumaet:inline-flex tumaet:cursor-help tumaet:appearance-none tumaet:items-center tumaet:border-0 tumaet:bg-transparent tumaet:p-0 tumaet:text-muted"
+                                [tumAetUiTooltip]="tooltipText"
+                                [attr.aria-label]="tooltipText"
+                            >
+                                <fa-icon [icon]="faCircleQuestion" />
+                            </button>
+                        }
+                    </span>
+                </th>
+                <td cdk-cell *cdkCellDef="let row; let i = index" [class]="columnVisibilityClasses(col)" class="tumaet:border-border tumaet:px-4 tumaet:py-2 tumaet:text-text">
+                    @if (col.templateRef) {
+                        <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: cellParams(row, col, i) }" />
+                    } @else {
+                        {{ resolveValue(row, col) }}
+                    }
+                </td>
+            </ng-container>
+        }
+
+        @if (rowActions(); as actions) {
+            <ng-container [cdkColumnDef]="ACTIONS_COLUMN">
+                <th cdk-header-cell *cdkHeaderCellDef scope="col" class="tumaet:border-border tumaet:bg-content-background tumaet:px-4 tumaet:py-2">
+                    <span class="tumaet:sr-only">{{ 'tumAetUi.table.actions' | tumAetUiTranslate }}</span>
+                </th>
+                <!-- Declares no width, so it is the one column auto layout can squeeze: nowrap keeps the controls on one line. -->
+                <td cdk-cell *cdkCellDef="let row" class="tumaet:border-border tumaet:px-4 tumaet:py-2 tumaet:text-end tumaet:whitespace-nowrap">
+                    <ng-container [ngTemplateOutlet]="actions" [ngTemplateOutletContext]="{ $implicit: row }" />
+                </td>
+            </ng-container>
+        }
+
+        <tr cdk-header-row *cdkHeaderRowDef="displayedColumns(); sticky: scrollable()" class="tumaet:bg-content-background"></tr>
+        <tr cdk-row *cdkRowDef="let row; columns: displayedColumns()" [class.tumaet-ui-table-row-highlighted]="rowHighlighted()?.(row) ?? false"></tr>
+
+        <tr *cdkNoDataRow>
+            <td [attr.colspan]="displayedColumns().length" class="tumaet:bg-content-background tumaet:px-4 tumaet:py-6 tumaet:text-center tumaet:text-muted">
+                <span>{{ emptyMessage() | tumAetUiTranslate }}</span>
+            </td>
+        </tr>
+    </table>
+
+    @if (loading()) {
+        <div class="tumaet:absolute tumaet:inset-0 tumaet:flex tumaet:items-center tumaet:justify-center tumaet:bg-content-background/60" aria-hidden="true">
+            <span
+                class="tumaet:h-6 tumaet:w-6 tumaet:animate-spin tumaet:rounded-full tumaet:border-2 tumaet:border-border tumaet:border-t-primary tumaet:motion-reduce:animate-none"
+            ></span>
+        </div>
+    }
+</div>
+
+<tumaet-ui-paginator
+    [totalRecords]="totalRecords()"
+    [page]="currentPage()"
+    [pageSize]="effectivePageSize()"
+    [pageSizeOptions]="pageSizeOptions()"
+    [showRowsPerPage]="showRowsPerPage()"
+    [showCurrentPageReport]="showCurrentPageReport()"
+    [disabled]="loading()"
+    (pageChange)="onPageChange($event)"
+    (pageSizeChange)="onPageSizeChange($event)"
+/>

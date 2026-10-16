@@ -12,7 +12,7 @@ import { SidebarSubpageItem } from 'app/exam/manage/exam-management/exam-managem
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Course } from 'app/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TumUiPanelComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiPanelComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-exam-management-navigation-sidebar',
@@ -23,17 +23,18 @@ import { TumUiPanelComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
         CourseTitleBarTitleComponent,
         CourseSidebarToggleButtonComponent,
         DocumentationButtonComponent,
-        TumUiPanelComponent,
+        TumAetUiPanelComponent,
         FaIconComponent,
         RouterModule,
         SidebarSubpageItem,
         ArtemisTranslatePipe,
         TranslateDirective,
-        TumUiTooltipDirective,
+        TumAetUiTooltipDirective,
     ],
 })
 export class ExamManagementNavigationSidebarComponent {
     private router = inject(Router);
+    private elementRef = inject(ElementRef<HTMLElement>);
 
     readonly isCollapsed = input<boolean>(false);
 
@@ -57,8 +58,6 @@ export class ExamManagementNavigationSidebarComponent {
     readonly faVial = faVial;
 
     // State for the accordion
-    private elementRef = inject(ElementRef<HTMLElement>);
-
     readonly expandedExams = signal<Set<number>>(new Set<number>());
 
     constructor() {
@@ -123,7 +122,7 @@ export class ExamManagementNavigationSidebarComponent {
     onPanelClick(examId: number, event: MouseEvent) {
         // prevent collapse when clicking inside content
         const target = event.target as HTMLElement | null;
-        if (target?.closest('.tum-ui-panel-content-container') || target?.closest('.tum-ui-panel-toggler')) {
+        if (target?.closest('.tumaet-ui-panel-content-container') || target?.closest('.tumaet-ui-panel-toggler')) {
             return;
         }
 

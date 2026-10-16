@@ -32,6 +32,7 @@ import { createSampleCourse } from 'test/helpers/sample/course-sample-data';
 import { ScoresStorageService } from 'app/course/manage/course-scores/scores-storage.service';
 import { BehaviorSubject, distinctUntilChanged, firstValueFrom } from 'rxjs';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { UserForRegistration } from 'app/shared-ui/user-registration-modal/user-for-registration.model';
 import { CourseNotificationService } from 'app/notification/course-notification/course-notification.service';
 import { EntityTitleService } from 'app/core/navbar/entity-title.service';
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
@@ -211,6 +212,45 @@ describe('Course Management Service', () => {
         const req = httpMock.expectOne(`api/lti/courses/for-lti-dashboard?clientId=${mockClientId}`);
         expect(req.request.method).toBe('GET');
         req.flush(mockResponse);
+    });
+
+    it('should search the users of a course by login or name within the given roles', () => {
+        courseManagementService.searchUsers(1, 'ada', ['tutors', 'students']).subscribe();
+
+        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/users/search`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        expect(req.request.params.get('roles')).toBe('tutors,students');
+        req.flush([]);
+    });
+
+    it('should search the members of a course for a mention by login or name', () => {
+        courseManagementService.searchMembersForUserMentions(1, 'ada').subscribe();
+
+        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/members/search`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        req.flush([]);
+    });
+
+    it('should search the students of a course by login or name', () => {
+        courseManagementService.searchStudents(1, 'ada', 0, 25).subscribe();
+
+        const req = httpMock.expectOne((request) => request.url === `${resourceUrl}/1/students/search`);
+        expect(req.request.method).toBe('GET');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        expect(req.request.params.get('page')).toBe('0');
+        expect(req.request.params.get('size')).toBe('25');
+        req.flush([]);
+    });
+
+    it('should fetch the time zones a course may use from the server', () => {
+        let timeZones: string[] | undefined;
+
+        courseManagementService.getSupportedTimeZones().subscribe((response) => (timeZones = response));
+
+        httpMock.expectOne({ method: 'GET', url: 'api/course/time-zones' }).flush(['Europe/Kyiv', 'UTC']);
+        expect(timeZones).toEqual(['Europe/Kyiv', 'UTC']);
     });
 
     it('should find the course', () => {
@@ -506,17 +546,6 @@ describe('Course Management Service', () => {
         ]);
     });
 
-    it('should add user to course group', () => {
-        const user = new User(1, 'name');
-        const courseRoleSlug = CourseRoleSlug.STUDENTS;
-        courseManagementService
-            .addUserToCourseRole(course.id!, courseRoleSlug, user.login!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({}));
-        const req = httpMock.expectOne({ method: 'POST', url: `${resourceUrl}/${course.id}/${courseRoleSlug}/${user.login}` });
-        req.flush({});
-    });
-
     it('should remove user from course group', () => {
         const user = new User(1, 'name');
         const courseRoleSlug = CourseRoleSlug.STUDENTS;
@@ -547,6 +576,41 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual(users));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/search-other-users?nameOfUser=user1` });
         req.flush(returnedFromService);
+    });
+
+    it('should search users for course role and return content with total count', () => {
+        const courseRoleSlug = CourseRoleSlug.STUDENTS;
+        const mockUsers: UserForRegistration[] = [
+            { id: 1, login: 'student1', name: 'Student One', isRegistered: true },
+            { id: 2, login: 'student2', name: 'Student Two', isRegistered: false },
+        ];
+        let result: { content: UserForRegistration[]; totalElements: number } | undefined;
+        courseManagementService
+            .searchUsersForCourseRole(course.id!, courseRoleSlug, 'student', 0, 10)
+            .pipe(take(1))
+            .subscribe((res) => (result = res));
+        const req = httpMock.expectOne((r) => r.method === 'GET' && r.url === `${resourceUrl}/${course.id}/${courseRoleSlug}/users/search`);
+        req.flush(mockUsers, { headers: { 'X-Total-Count': '2' } });
+        expect(result).toEqual({ content: mockUsers, totalElements: 2 });
+    });
+
+    it('should search students using the requested page and size', () => {
+        const users = [new User(1, 'student1')];
+
+        courseManagementService
+            .searchStudents(course.id!, 'student', 2, 10)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(users));
+
+        const req = httpMock.expectOne(
+            (request) =>
+                request.method === 'GET' &&
+                request.url === `${resourceUrl}/${course.id}/students/search` &&
+                request.params.get('loginOrName') === 'student' &&
+                request.params.get('page') === '2' &&
+                request.params.get('size') === '10',
+        );
+        req.flush(users);
     });
 
     it('getNumberOfAllowedComplaintsInCourse', () => {
@@ -751,6 +815,7 @@ describe('Course DTO adapter boundary', () => {
         athenaGradingFeedbackEnabled: false,
         athenaFormativeFeedbackEnabled: false,
         learningPathsEnabled: false,
+        presentationAssessmentsEnabled: false,
         trainingEnabled: false,
     };
 
@@ -978,6 +1043,11 @@ describe('Course DTO adapter boundary', () => {
 
         expect(courseFromManagementDTO(withArchive).courseArchivePath).toBe('archives/course-1.zip');
         expect(courseFromManagementDTO(minimalCourseManagementDTO).courseArchivePath).toBeUndefined();
+    });
+
+    it.each([true, false])('preserves presentationAssessmentsEnabled=%s when hydrating a management response', (enabled) => {
+        const dto: CourseManagementDTO = { ...minimalCourseManagementDTO, presentationAssessmentsEnabled: enabled };
+        expect(courseFromManagementDTO(dto).presentationAssessmentsEnabled).toBe(enabled);
     });
 
     it('hydrates title, semester, description and prerequisites from the enrollment DTO', () => {

@@ -62,6 +62,10 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
     ],
 })
 export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnInit, OnDestroy {
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
+
     protected readonly ProjectType = ProjectType;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
@@ -114,10 +118,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             templateRef: this.auxDescriptionTemplate(),
         },
     ]);
-
-    private readonly exerciseService = inject(ExerciseService);
-    private readonly alertService = inject(AlertService);
-    private readonly profileService = inject(ProfileService);
 
     isShortNameFieldValid = signal<boolean>(false);
     isShortNameFromAdvancedMode = signal<boolean>(false);

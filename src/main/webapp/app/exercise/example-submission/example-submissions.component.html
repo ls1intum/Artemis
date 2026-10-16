@@ -15,7 +15,17 @@
                     </a>
                 }
                 @if (exercise().course!.isAtLeastEditor) {
-                    <a data-testid="import-example-submission" class="btn btn-primary me-1 mb-1" (click)="openImportModal()">
+                    <a
+                        data-testid="import-example-submission"
+                        class="btn btn-primary me-1 mb-1"
+                        (click)="openImportModal()"
+                        #keyboardAction18
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction18.click() : undefined"
+                        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+                        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction18.click() : undefined"
+                    >
                         <fa-icon [icon]="faPlus" />
                         <fa-icon class="d-xl-none" [icon]="faFont" />
                         <span class="d-none d-xl-inline" jhiTranslate="artemisApp.exampleSubmission.useAsExampleSubmission"></span>
@@ -99,7 +109,8 @@
                             @if (exercise().course!.isAtLeastEditor) {
                                 <td class="sticky end-0 z-10 text-end">
                                     <button
-                                        tumUiButton
+                                        type="button"
+                                        tumAetUiButton
                                         severity="danger"
                                         size="small"
                                         [renderButtonStyle]="false"

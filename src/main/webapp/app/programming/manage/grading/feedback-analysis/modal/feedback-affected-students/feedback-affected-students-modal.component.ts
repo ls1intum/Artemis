@@ -6,15 +6,18 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { NgTemplateOutlet } from '@angular/common';
 
 @Component({
     selector: 'jhi-affected-students-modal',
     templateUrl: './feedback-affected-students-modal.component.html',
-    imports: [CodeButtonComponent, TranslateDirective, NgTemplateOutlet],
+    imports: [CodeButtonComponent, TranslateDirective],
     providers: [FeedbackAnalysisService],
 })
 export class AffectedStudentsModalComponent {
+    activeModal = inject(NgbActiveModal);
+    feedbackService = inject(FeedbackAnalysisService);
+    alertService = inject(AlertService);
+
     courseId = input.required<number>();
     exerciseId = input.required<number>();
     feedbackDetail = input.required<FeedbackDetail>();
@@ -23,10 +26,6 @@ export class AffectedStudentsModalComponent {
 
     readonly faSpinner = faSpinner;
     readonly isLoading = signal<boolean>(false);
-
-    activeModal = inject(NgbActiveModal);
-    feedbackService = inject(FeedbackAnalysisService);
-    alertService = inject(AlertService);
 
     constructor() {
         effect(() => {

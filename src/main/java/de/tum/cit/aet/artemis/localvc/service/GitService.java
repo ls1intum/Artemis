@@ -38,6 +38,7 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
@@ -143,10 +144,14 @@ public class GitService extends AbstractGitService {
      * @param targetPath    path where the repo is located on disk
      * @return the repository if it could be checked out
      * @throws GitAPIException      if the repository could not be checked out.
+     * @throws GitException         if the participation has no repository URI.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
     public Repository getOrCheckoutRepositoryForJPlag(@NonNull ProgrammingExerciseParticipation participation, Path targetPath) throws GitAPIException, InvalidPathException {
         var repoUri = participation.getVcsRepositoryUri();
+        if (repoUri == null) {
+            throw new GitException("Participation " + participation.getId() + " has no repository URI and cannot be checked out for JPlag");
+        }
         String repoFolderName = repoUri.folderNameForRepositoryUri();
 
         // Replace the exercise name in the repository folder name with the participation ID.
@@ -246,6 +251,7 @@ public class GitService extends AbstractGitService {
             boolean writeAccess) throws GitAPIException, GitException, InvalidPathException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUri differs from the targetRepoUri, we attempt to clone the source repo into the target directory
+        deleteIncompleteWorkingCopy(localPath);
         Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUri, defaultBranch, writeAccess);
 
         // Note: in case the actual git repository in the file system is corrupt (e.g. by accident), we will get an exception here
@@ -362,6 +368,27 @@ public class GitService extends AbstractGitService {
             throw new IllegalArgumentException("Invalid path: " + resolvedPath);
         }
         return resolvedPath;
+    }
+
+    /**
+     * Deletes a working copy whose git directory has no HEAD or no config, so that it is cloned again. A clone always writes both, but a deletion that failed half-way
+     * (e.g. on a network file system, where files that are still open cannot be removed) can leave such a directory behind. It still opens as a repository, yet every
+     * git operation on it fails, e.g. with "Cannot check out from unborn branch".
+     *
+     * @param localPath the path of the working copy
+     */
+    private void deleteIncompleteWorkingCopy(Path localPath) {
+        if (cloneInProgressOperations.containsKey(localPath)) {
+            // A clone in progress writes HEAD and config last, so its git directory looks incomplete until it is done
+            return;
+        }
+        Path gitDirectory = localPath.resolve(".git");
+        if (Files.isDirectory(gitDirectory) && (Files.notExists(gitDirectory.resolve(Constants.HEAD)) || Files.notExists(gitDirectory.resolve(Constants.CONFIG)))) {
+            log.warn("Deleting the incomplete working copy {} so that it is cloned again", localPath);
+            if (!FileUtils.deleteQuietly(localPath.toFile()) && Files.exists(localPath)) {
+                log.error("Could not delete the incomplete working copy {}", localPath.toAbsolutePath());
+            }
+        }
     }
 
     /**
@@ -555,6 +582,11 @@ public class GitService extends AbstractGitService {
             log.debug("Pull ignore conflicts {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pullCommand(git).call();
+        }
+        catch (WrongRepositoryStateException ex) {
+            // A merge that stopped on conflicts leaves the repository in MERGING or MERGING_RESOLVED until the repository is reset, e.g. via the code editor.
+            // Pulling cannot succeed before then and every further attempt fails the same way, so this is reported as the repository's state, not as an unexpected error.
+            log.warn("Cannot pull the repo {}: {}", repo.getLocalPath(), ex.getMessage());
         }
         catch (GitAPIException ex) {
             log.error("Cannot pull the repo {}", repo.getLocalPath(), ex);

@@ -55,6 +55,11 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     },
 })
 export class ExerciseDetailsStudentActionsComponent {
+    private alertService = inject(AlertService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private participationService = inject(ParticipationService);
+    private profileService = inject(ProfileService);
+
     protected readonly faFolderOpen = faFolderOpen;
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
@@ -66,11 +71,6 @@ export class ExerciseDetailsStudentActionsComponent {
     protected readonly InitializationState = InitializationState;
     protected readonly ButtonType = ButtonType;
     protected readonly AssessmentType = AssessmentType;
-
-    private alertService = inject(AlertService);
-    private courseExerciseService = inject(CourseExerciseService);
-    private participationService = inject(ParticipationService);
-    private profileService = inject(ProfileService);
 
     constructor() {
         effect(() => {
@@ -192,10 +192,14 @@ export class ExerciseDetailsStudentActionsComponent {
      * Practicing an exercise is not possible in the exam, otherwise see exercise.utils -> isStartPracticeAvailable
      */
     isStartPracticeAvailable(): boolean {
-        return !this.examMode() && isStartPracticeAvailable(this.exercise(), this._practiceParticipation());
+        return !this.examMode() && isStartPracticeAvailable(this.exercise(), this._practiceParticipation(), this._gradedParticipation());
     }
 
     startExercise() {
+        // The button is only disabled after the next render, so ignore a second click that arrives before that
+        if (this._isLoading()) {
+            return;
+        }
         this._isLoading.set(true);
         const programmingExercise = this._programmingExercise();
         this.courseExerciseService

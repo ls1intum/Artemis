@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { Location } from '@angular/common';
@@ -21,7 +21,7 @@ export interface IAuthServerProvider {
     clearCaches: () => Observable<undefined>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class AuthServerProvider implements IAuthServerProvider {
     private http = inject(HttpClient);
     private localStorageService = inject(LocalStorageService);

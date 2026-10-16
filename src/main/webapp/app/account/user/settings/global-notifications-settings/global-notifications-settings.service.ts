@@ -1,13 +1,13 @@
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { GlobalNotificationType } from 'app/account/user/settings/global-notifications-settings/global-notifications-settings.component';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class GlobalNotificationSettingsService {
-    private resourceUrl = 'api/notification/global-notification-settings';
-
     private httpClient = inject(HttpClient);
+
+    private resourceUrl = 'api/notification/global-notification-settings';
 
     getAll(): Observable<{ [key: string]: boolean }> {
         return this.httpClient.get<{ [key: string]: boolean }>(`${this.resourceUrl}`);

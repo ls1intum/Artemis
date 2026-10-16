@@ -86,6 +86,9 @@ public class BeanInstantiationTracer implements InstantiationAwareBeanPostProces
             if (!stack.isEmpty() && stack.peek().equals(name)) {
                 stack.pop();
             }
+            if (stack.isEmpty()) {
+                callStack.remove();
+            }
         }
         return bean;
     }

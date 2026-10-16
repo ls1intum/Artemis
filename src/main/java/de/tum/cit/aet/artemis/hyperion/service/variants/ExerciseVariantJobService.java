@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.service.variants;
 
+import static de.tum.cit.aet.artemis.hyperion.web.HyperionWebsocketTopics.VARIANT_GENERATION_JOB;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -51,8 +53,6 @@ public class ExerciseVariantJobService {
     static final String JOB_MAP_NAME = "hyperion-exercise-variant-jobs";
 
     private static final String ENTITY_NAME = "exerciseVariantGeneration";
-
-    private static final String TOPIC_SUFFIX_PREFIX = "variant-generation/jobs/";
 
     // Finished jobs stay listable/deep-linkable in the tray for a day.
     private static final int JOB_TTL_SECONDS = 24 * 3600;
@@ -596,7 +596,7 @@ public class ExerciseVariantJobService {
      */
     private void publish(VariantJob job, VariantGenerationEventDTO event) {
         try {
-            websocketService.send(job.getInitiatorLogin(), TOPIC_SUFFIX_PREFIX + job.getJobId(), event);
+            websocketService.send(job.getInitiatorLogin(), VARIANT_GENERATION_JOB.at(job.getJobId()), event);
         }
         catch (RuntimeException e) {
             log.warn("Could not publish the {} event of variant job {}", event.type(), job.getJobId(), e);

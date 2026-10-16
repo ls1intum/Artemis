@@ -11,15 +11,21 @@ import { AuditsQuery, AuditsService } from './audits.service';
 import { AuditLogType } from './audit-log-type.model';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/foundation/pagination/item-count.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-title.directive';
-import { TumUiMessageComponent, TumUiPaginatorComponent, TumUiTabComponent, TumUiTabListComponent, TumUiTableDirective, TumUiTabsComponent } from '@tumaet/ui-angular';
-import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import {
+    TumAetUiDatePickerComponent,
+    TumAetUiMessageComponent,
+    TumAetUiPaginatorComponent,
+    TumAetUiTabComponent,
+    TumAetUiTabListComponent,
+    TumAetUiTableDirective,
+    TumAetUiTabsComponent,
+} from '@tumaet/ui-angular';
 
 /**
  * Admin component for viewing system audit logs.
@@ -31,20 +37,19 @@ import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/d
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         TranslateDirective,
-        FormsModule,
         SortDirective,
         SortByDirective,
         FaIconComponent,
         ItemCountComponent,
-        TumUiPaginatorComponent,
+        TumAetUiPaginatorComponent,
         ArtemisDatePipe,
         AdminTitleBarTitleDirective,
-        TumUiMessageComponent,
-        TumUiTableDirective,
-        FormDateTimePickerComponent,
-        TumUiTabsComponent,
-        TumUiTabListComponent,
-        TumUiTabComponent,
+        TumAetUiMessageComponent,
+        TumAetUiTableDirective,
+        TumAetUiDatePickerComponent,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
     ],
 })
 export class AuditsComponent implements OnInit {
@@ -124,16 +129,25 @@ export class AuditsComponent implements OnInit {
      */
     readonly hasDateRange = computed(() => this.fromDate() !== '' && this.toDate() !== '');
 
-    /** From date exposed to the shared date picker as a native Date (the wrapper's value contract). */
-    readonly fromDateValue = computed(() => this.toPickerDate(this.fromDate()));
+    /**
+     * What the from picker holds: the last date it committed. It is kept apart from {@link fromDate}, the applied filter,
+     * because feeding the filter back to the picker would clear its draft text whenever the text stops being a date.
+     */
+    readonly fromDateValue = signal<dayjs.Dayjs | undefined>(undefined);
 
-    /** To date exposed to the shared date picker as a native Date (the wrapper's value contract). */
-    readonly toDateValue = computed(() => this.toPickerDate(this.toDate()));
+    /** What the to picker holds, kept apart from {@link toDate} for the same reason as {@link fromDateValue}. */
+    readonly toDateValue = signal<dayjs.Dayjs | undefined>(undefined);
+
+    /**
+     * Whether the text typed into each picker is a date. A picker keeps its last valid date while the text is not one,
+     * so an invalid text is tracked here and keeps that stale date out of the filter.
+     */
+    protected readonly isFromTextValid = signal(true);
+    protected readonly isToTextValid = signal(true);
 
     private readonly dateFormat = 'yyyy-MM-dd';
 
     protected readonly faSort = faSort;
-    protected readonly DateTimePickerType = DateTimePickerType;
 
     ngOnInit(): void {
         this.toDate.set(this.today());
@@ -156,23 +170,81 @@ export class AuditsComponent implements OnInit {
     }
 
     /**
-     * Updates the from date filter from the shared date picker value.
-     * The picker emits a dayjs/Date (or null); the audits service consumes yyyy-MM-dd strings, so convert at the boundary.
+     * Applies a date picked or cleared in the from picker and reloads. The filter ignores it while the typed text is not a date,
+     * because the filter is cleared then and {@link onFromTextValidityChange} applies the date once the text is valid again.
      */
-    updateFromDate(value: dayjs.Dayjs | Date | null | undefined): void {
+    onFromDateChange(value: dayjs.Dayjs | undefined): void {
+        this.fromDateValue.set(value);
+        if (this.isFromTextValid()) {
+            this.updateFromDate(value);
+            this.transition();
+        }
+    }
+
+    /**
+     * Clears the from filter when the typed text stops being a date, and restores the picker's date once it is one again. The picker
+     * keeps its value and the text typed so far; only the filter changes.
+     *
+     * @param isValid whether the typed text is a date
+     * @param value the date the picker currently holds, used when the text becomes valid again without a new date
+     */
+    onFromTextValidityChange(isValid: boolean, value: dayjs.Dayjs | undefined): void {
+        if (isValid !== this.isFromTextValid()) {
+            this.isFromTextValid.set(isValid);
+            this.updateFromDate(isValid ? value : undefined);
+            this.transition();
+        }
+    }
+
+    /** Applies a date picked or cleared in the to picker and reloads. See {@link onFromDateChange}. */
+    onToDateChange(value: dayjs.Dayjs | undefined): void {
+        this.toDateValue.set(value);
+        if (this.isToTextValid()) {
+            this.updateToDate(value);
+            this.transition();
+        }
+    }
+
+    /** Clears the to filter when the typed text stops being a date, and restores the picker's date once it is one again. See {@link onFromTextValidityChange}. */
+    onToTextValidityChange(isValid: boolean, value: dayjs.Dayjs | undefined): void {
+        if (isValid !== this.isToTextValid()) {
+            this.isToTextValid.set(isValid);
+            this.updateToDate(isValid ? value : undefined);
+            this.transition();
+        }
+    }
+
+    /**
+     * Updates the from date filter from the date picker value.
+     * The audits service consumes yyyy-MM-dd strings, so the dayjs value is converted at the boundary.
+     */
+    updateFromDate(value: dayjs.Dayjs | undefined): void {
         this.fromDate.set(this.toDateString(value));
     }
 
     /**
-     * Updates the to date filter from the shared date picker value.
+     * Updates the to date filter from the date picker value.
      * See {@link updateFromDate} for the conversion rationale.
      */
-    updateToDate(value: dayjs.Dayjs | Date | null | undefined): void {
+    updateToDate(value: dayjs.Dayjs | undefined): void {
         this.toDate.set(this.toDateString(value));
     }
 
-    /** Converts a picker value (dayjs/Date) to the yyyy-MM-dd string the audits service expects. */
-    private toDateString(value: dayjs.Dayjs | Date | null | undefined): string {
+    /**
+     * Shows the applied filter dates in the pickers after the URL set them. A picker whose text is not a date keeps what the
+     * user is typing: its filter is empty then, which is no date to show.
+     */
+    private syncPickerValues(): void {
+        if (this.isFromTextValid() && this.toDateString(this.fromDateValue()) !== this.fromDate()) {
+            this.fromDateValue.set(this.toPickerDate(this.fromDate()));
+        }
+        if (this.isToTextValid() && this.toDateString(this.toDateValue()) !== this.toDate()) {
+            this.toDateValue.set(this.toPickerDate(this.toDate()));
+        }
+    }
+
+    /** Converts a picker value to the yyyy-MM-dd string the audits service expects. */
+    private toDateString(value: dayjs.Dayjs | undefined): string {
         if (value == undefined) {
             return '';
         }
@@ -182,13 +254,13 @@ export class AuditsComponent implements OnInit {
         return parsed.isValid() ? parsed.format('YYYY-MM-DD') : '';
     }
 
-    /** Converts a stored yyyy-MM-dd string to the native Date the shared date picker binds to. */
-    private toPickerDate(value: string): Date | null {
+    /** Converts a stored yyyy-MM-dd string to the dayjs value the date picker binds to. */
+    private toPickerDate(value: string): dayjs.Dayjs | undefined {
         if (!value) {
-            return null;
+            return undefined;
         }
         const parsed = dayjs(value);
-        return parsed.isValid() ? parsed.toDate() : null;
+        return parsed.isValid() ? parsed : undefined;
     }
 
     /**
@@ -258,6 +330,7 @@ export class AuditsComponent implements OnInit {
                 this.fromDate.set(from ? this.datePipe.transform(from, this.dateFormat)! : '');
                 this.toDate.set(to ? this.datePipe.transform(to, this.dateFormat)! : '');
             }
+            this.syncPickerValues();
             const logTypeParam = params.get('logType');
             // Set the log on every emission rather than only for a valid parameter: Angular reuses this component across
             // query-parameter-only navigations, so leaving the signal untouched would keep querying the previously

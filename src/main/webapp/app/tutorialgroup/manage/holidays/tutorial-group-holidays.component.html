@@ -3,7 +3,7 @@
          button would open a dialog that could be filled in and then silently do nothing. -->
     @if (configuration()) {
         <div *titleBarActions class="flex items-center gap-2">
-            <button tumUiButton size="small" type="button" data-testid="add-holiday-btn" (click)="openCreateDialogFrom($event)">
+            <button tumAetUiButton size="small" type="button" data-testid="add-holiday-btn" (click)="openCreateDialogFrom($event)">
                 <fa-icon [icon]="faPlus" />
                 <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.addHoliday"></span>
             </button>
@@ -14,8 +14,8 @@
          rather than rendering an empty calendar that looks like a course without holidays. -->
     @if (loadFailed()) {
         <div class="mb-3 flex items-center gap-3" data-testid="holiday-load-failed">
-            <tum-ui-message severity="error" [text]="'artemisApp.pages.tutorialFreePeriodsManagement.loadFailed' | artemisTranslate" />
-            <button tumUiButton size="small" severity="secondary" variant="outlined" type="button" data-testid="holiday-load-retry" (click)="retryLoad()">
+            <tumaet-ui-message severity="error" [text]="'artemisApp.pages.tutorialFreePeriodsManagement.loadFailed' | artemisTranslate" />
+            <button tumAetUiButton size="small" severity="secondary" variant="outlined" type="button" data-testid="holiday-load-retry" (click)="retryLoad()">
                 <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.retry"></span>
             </button>
         </div>
@@ -65,5 +65,5 @@
         (selectedSpanChange)="onDialogSpanChange($event)"
     />
 
-    <tum-ui-confirm-dialog />
+    <tumaet-ui-confirm-dialog />
 }

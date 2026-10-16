@@ -30,11 +30,15 @@ const APP_ROOT = join(REPO_ROOT, 'src/main/webapp/app');
 // file -- every real occurrence in this codebase has that exact shape, split across one or two lines.
 const LOAD_COMPONENT_RE = /loadComponent:\s*\(\)\s*=>\s*import\(\s*['"]([^'"]+)['"]\s*\)/g;
 
+// Route config files are named `*.route.ts`, `*.routes.ts` (e.g. app.routes.ts, admin.routes.ts)
+// or `*-routes.ts` (e.g. code-editor-management-routes.ts); all three must be scanned.
+const ROUTE_FILE_RE = /[.-]routes?\.ts$/;
+
 function findRouteFiles(dir, out = []) {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
         const full = join(dir, entry.name);
         if (entry.isDirectory()) findRouteFiles(full, out);
-        else if (entry.isFile() && entry.name.endsWith('.route.ts')) out.push(full);
+        else if (entry.isFile() && ROUTE_FILE_RE.test(entry.name)) out.push(full);
     }
     return out;
 }

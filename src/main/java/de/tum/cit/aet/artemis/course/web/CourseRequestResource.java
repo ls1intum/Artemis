@@ -19,13 +19,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.course.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.course.service.CourseRequestService;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("management/course-requests")
+@FeatureUsage(UserFeature.COURSE_CREATION)
 @RestController
 @RequestMapping("api/course/")
 public class CourseRequestResource {

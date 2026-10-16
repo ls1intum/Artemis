@@ -1,5 +1,5 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { Service, inject } from '@angular/core';
+import { HttpClient, HttpContext, HttpResponse } from '@angular/common/http';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -7,9 +7,7 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/le
 
 type EntityResponseType = HttpResponse<TextUnit>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class TextUnitService {
     private httpClient = inject(HttpClient);
     private lectureUnitService = inject(LectureUnitService);
@@ -28,9 +26,9 @@ export class TextUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    update(textUnit: TextUnit, lectureId: number): Observable<EntityResponseType> {
+    update(textUnit: TextUnit, lectureId: number, context?: HttpContext): Observable<EntityResponseType> {
         return this.httpClient
-            .put<TextUnit>(`${this.resourceURL}/lectures/${lectureId}/text-units`, textUnit, { observe: 'response' })
+            .put<TextUnit>(`${this.resourceURL}/lectures/${lectureId}/text-units`, textUnit, { observe: 'response', context })
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 }

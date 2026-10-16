@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewEncapsulation, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -55,6 +55,8 @@ import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/cours
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ParticipationPrivacyService } from 'app/exercise/participation/participation-privacy.service';
+import { ParticipationAccessNoticeComponent } from 'app/exercise/participation/participation-access-notice.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 /**
@@ -77,6 +79,7 @@ export enum FilterProp {
     encapsulation: ViewEncapsulation.None,
     imports: [
         TranslateDirective,
+        ParticipationAccessNoticeComponent,
         FaIconComponent,
         RouterLink,
         ExternalSubmissionButtonComponent,
@@ -100,6 +103,18 @@ export enum FilterProp {
     ],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
+    private readonly route = inject(ActivatedRoute);
+    private readonly privacyService = inject(ParticipationPrivacyService);
+    private readonly accountService = inject(AccountService);
+    private readonly courseService = inject(CourseManagementService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly resultService = inject(ResultService);
+    private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private readonly participationService = inject(ParticipationService);
+    private readonly profileService = inject(ProfileService);
+    private readonly alertService = inject(AlertService);
+    private readonly breakpointObserver = inject(BreakpointObserver);
+
     protected readonly faDownload = faDownload;
     protected readonly faSync = faSync;
     protected readonly faFolderOpen = faFolderOpen;
@@ -110,17 +125,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly AssessmentType = AssessmentType;
     readonly FilterProp = FilterProp;
-
-    private readonly route = inject(ActivatedRoute);
-    private readonly accountService = inject(AccountService);
-    private readonly courseService = inject(CourseManagementService);
-    private readonly exerciseService = inject(ExerciseService);
-    private readonly resultService = inject(ResultService);
-    private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
-    private readonly participationService = inject(ParticipationService);
-    private readonly profileService = inject(ProfileService);
-    private readonly alertService = inject(AlertService);
-    private readonly breakpointObserver = inject(BreakpointObserver);
 
     // Laptop and smaller: covers screens up to 1400px
     private static readonly LAPTOP_BREAKPOINT = '(max-width: 1400px)';
@@ -144,6 +148,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     readonly course = signal<Course | undefined>(undefined);
     readonly exercise = signal<Exercise | undefined>(undefined);
+    readonly hideParticipantInformation = computed(() => this.privacyService.isParticipantInformationHidden(this.exercise()));
+    /** Editors retain live repository access even when participant identities are masked. */
+    readonly canAccessLiveRepository = computed(() => !!this.exercise()?.isAtLeastEditor || !!this.exercise()?.isAtLeastInstructor || !this.hideParticipantInformation());
     readonly isAdmin = signal(false);
     readonly participations = signal<ParticipationScoreDTO[]>([]);
     readonly totalRows = signal(0);
@@ -177,6 +184,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     // Template refs for cell rendering
     readonly nameCellTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('nameCellTemplate');
+    readonly repositoryCellTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('repositoryCellTemplate');
     readonly completionDateTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('completionDateTemplate');
     readonly lastResultTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('lastResultTemplate');
     readonly assessmentTypeTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('assessmentTypeTemplate');
@@ -191,7 +199,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         striped: true,
         scrollable: true,
         scrollHeight: 'flex',
-        showSearch: !!this.exercise()?.isAtLeastInstructor,
+        showSearch: !this.hideParticipantInformation(),
         searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents',
         rowActionsAlignment: 'start',
     }));
@@ -202,7 +210,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         const compact = this.isLaptopOrSmaller();
 
         const cols: ColumnDef<ParticipationScoreDTO>[] = [
-            ex.isAtLeastInstructor
+            !this.hideParticipantInformation()
                 ? {
                       headerKey: ex.teamMode ? 'artemisApp.participation.team' : 'artemisApp.participation.student',
                       field: 'participantName',
@@ -212,6 +220,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                   }
                 : { headerKey: 'artemisApp.participation.participationId', field: 'participationId', width: '140px', sort: true },
         ];
+
+        if (ex.type === ExerciseType.PROGRAMMING && !this.hideParticipantInformation()) {
+            cols.push({
+                headerKey: 'artemisApp.participation.repository',
+                width: '80px',
+                sort: false,
+                templateRef: this.repositoryCellTemplate(),
+            });
+        }
 
         cols.push(
             {
@@ -276,6 +293,20 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         return cols;
     });
 
+    constructor() {
+        let previouslyHidden = true;
+        effect(() => {
+            const hidden = this.hideParticipantInformation();
+            if (hidden && !previouslyHidden) {
+                untracked(() => {
+                    this.participations.set([]);
+                    this.loadPage();
+                });
+            }
+            previouslyHidden = hidden;
+        });
+    }
+
     ngOnInit() {
         this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
         this.isAdmin.set(this.accountService.isAdmin());
@@ -317,8 +348,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         const requestId = ++this.currentLoadRequestId;
         const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
         const search: ParticipationScoreSearch = cloneWith(base, {
-            searchTerm: ex.isAtLeastInstructor ? base.searchTerm : '',
-            sortedColumn: !ex.isAtLeastInstructor && ['participantName', 'participantIdentifier', 'buildPlanId'].includes(base.sortedColumn) ? 'id' : base.sortedColumn,
+            searchTerm: this.hideParticipantInformation() ? '' : base.searchTerm,
+            sortedColumn: this.hideParticipantInformation() && ['participantName', 'participantIdentifier', 'buildPlanId'].includes(base.sortedColumn) ? 'id' : base.sortedColumn,
             filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
             scoreRangeLower: this.rangeFilter()?.lowerBound,
             scoreRangeUpper: this.rangeFilter()?.upperBound,

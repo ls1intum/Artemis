@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureAdoptionContributor;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureAdoptionEntry;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.course.repository.CourseAdoptionRepository;
 
@@ -33,11 +34,11 @@ public class CourseFeatureAdoptionContributor implements FeatureAdoptionContribu
     public List<FeatureAdoptionEntry> collectAdoption() {
         long total = adoptionRepository.count();
         long withCommunication = adoptionRepository.countWithCommunication(CourseInformationSharingConfiguration.DISABLED);
-        return List.of(new FeatureAdoptionEntry(MODULE, "communication", withCommunication, total),
-                new FeatureAdoptionEntry(MODULE, "learning-paths", adoptionRepository.countWithLearningPaths(), total),
-                new FeatureAdoptionEntry(MODULE, "self-enrollment", adoptionRepository.countWithEnrollment(), total),
-                new FeatureAdoptionEntry(MODULE, "online-course", adoptionRepository.countOnlineCourses(), total),
-                new FeatureAdoptionEntry(MODULE, "athena-feedback", adoptionRepository.countWithAthenaFeedbackEnabled(), total),
-                new FeatureAdoptionEntry(MODULE, "test-course", adoptionRepository.countTestCourses(), total));
+        return List.of(new FeatureAdoptionEntry(MODULE, "communication", UserFeature.MESSAGING, withCommunication, total),
+                new FeatureAdoptionEntry(MODULE, "learning-paths", UserFeature.LEARNING_PATHS, adoptionRepository.countWithLearningPaths(), total),
+                new FeatureAdoptionEntry(MODULE, "self-enrollment", UserFeature.COURSE_ENROLLMENT, adoptionRepository.countWithEnrollment(), total),
+                new FeatureAdoptionEntry(MODULE, "online-course", UserFeature.LTI, adoptionRepository.countOnlineCourses(), total),
+                new FeatureAdoptionEntry(MODULE, "athena-feedback", UserFeature.ATHENA_FEEDBACK_SUGGESTIONS, adoptionRepository.countWithAthenaFeedbackEnabled(), total),
+                new FeatureAdoptionEntry(MODULE, "test-course", UserFeature.COURSE_SETTINGS, adoptionRepository.countTestCourses(), total));
     }
 }

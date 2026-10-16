@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
@@ -55,7 +56,7 @@ import de.tum.cit.aet.artemis.localvc.service.UserVcsAccessTokenService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("account/self-service")
+@FeatureUsage(UserFeature.ACCOUNT_SETTINGS)
 @RestController
 @RequestMapping("api/account/")
 public class AccountResource {
@@ -117,6 +118,7 @@ public class AccountResource {
      * @return the ResponseEntity with status 200 (OK) when the password has been changed.
      * @throws PasswordViolatesRequirementsException {@code 400 (Bad Request)} if the new password does not meet the requirements.
      */
+    @FeatureUsage(UserFeature.REGISTRATION_PASSWORD)
     @PostMapping("change-password")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> changePassword(@RequestBody PasswordChangeDTO passwordChangeDto) {
@@ -167,6 +169,7 @@ public class AccountResource {
      * @param expiryDate The expiry date which should be set for the token
      * @return the ResponseEntity with a userDTO containing the token: with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
+    @FeatureUsage(UserFeature.GIT_CREDENTIALS)
     @PutMapping("user-vcs-access-token")
     @EnforceAtLeastStudent
     public ResponseEntity<UserDTO> createVcsAccessToken(@RequestParam("expiryDate") ZonedDateTime expiryDate) {
@@ -192,6 +195,7 @@ public class AccountResource {
      *
      * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request)
      */
+    @FeatureUsage(UserFeature.GIT_CREDENTIALS)
     @DeleteMapping("user-vcs-access-token")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deleteVcsAccessToken() {
@@ -209,6 +213,7 @@ public class AccountResource {
      *
      * @return the versionControlAccessToken belonging to the provided participation and user
      */
+    @FeatureUsage(UserFeature.GIT_CREDENTIALS)
     @GetMapping("participation-vcs-access-token")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -226,6 +231,7 @@ public class AccountResource {
      *
      * @return the versionControlAccessToken belonging to the provided participation and user
      */
+    @FeatureUsage(UserFeature.GIT_CREDENTIALS)
     @PutMapping("participation-vcs-access-token")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
@@ -296,6 +302,7 @@ public class AccountResource {
      * @param memirisEnabled the boolean indicating whether Memiris is enabled or not
      * @return the ResponseEntity with status 200 (OK)
      */
+    @FeatureUsage(UserFeature.IRIS_MEMORY)
     @PutMapping("enable-memiris")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> setMemirisEnabled(@RequestBody boolean memirisEnabled) {

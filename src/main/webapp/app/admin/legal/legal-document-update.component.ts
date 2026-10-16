@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/core/legal/legal-document.service';
-import { TumUiButtonDirective, TumUiSelectButtonComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiSelectButtonComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/admin/legal/legal-document.model';
 import { ActivatedRoute } from '@angular/router';
@@ -26,10 +26,10 @@ import { AdminTitleBarTitleDirective } from 'app/admin/shared/admin-title-bar-ti
         TranslateDirective,
         MarkdownEditorMonacoComponent,
         FaIconComponent,
-        TumUiTooltipDirective,
-        TumUiButtonDirective,
+        TumAetUiTooltipDirective,
+        TumAetUiButtonDirective,
         FormsModule,
-        TumUiSelectButtonComponent,
+        TumAetUiSelectButtonComponent,
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         UnsavedChangesWarningComponent,

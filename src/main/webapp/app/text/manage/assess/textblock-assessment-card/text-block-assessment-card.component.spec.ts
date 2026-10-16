@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ErrorHandler } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
@@ -68,6 +69,59 @@ describe('TextblockAssessmentCardComponent', () => {
         expect(selectSpy).not.toHaveBeenCalled();
     });
 
+    it.each([
+        { readOnly: true, selectable: true },
+        { readOnly: false, selectable: false },
+        { readOnly: true, selectable: false },
+    ])('should not expose an inactive block as a button ($readOnly, $selectable)', ({ readOnly, selectable }) => {
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.selectable = selectable;
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.componentRef.setInput('readOnly', readOnly);
+        fixture.detectChanges();
+        const block = fixture.nativeElement.querySelector('span') as HTMLElement;
+        const select = vi.spyOn(component, 'select');
+        const didSelect = vi.spyOn(component.didSelect, 'emit');
+
+        expect(block.hasAttribute('role')).toBe(false);
+        expect(block.hasAttribute('aria-pressed')).toBe(false);
+        expect(block.tabIndex).toBe(-1);
+        for (const [type, key] of [
+            ['keydown', 'Enter'],
+            ['keydown', ' '],
+            ['keyup', ' '],
+        ]) {
+            const event = new KeyboardEvent(type, { key, bubbles: true, cancelable: true });
+            block.dispatchEvent(event);
+            expect(event.defaultPrevented).toBe(false);
+        }
+        expect(select).not.toHaveBeenCalled();
+        expect(didSelect).not.toHaveBeenCalled();
+    });
+
+    it('should expose a selectable block as a button and select once on Space release', () => {
+        vi.useFakeTimers();
+        try {
+            const block = fixture.nativeElement.querySelector('span') as HTMLElement;
+            const didSelect = vi.spyOn(component.didSelect, 'emit');
+            expect(block.getAttribute('role')).toBe('button');
+            expect(block.tabIndex).toBe(0);
+            for (const repeat of [false, true, true]) {
+                const event = new KeyboardEvent('keydown', { key: ' ', repeat, bubbles: true, cancelable: true });
+                block.dispatchEvent(event);
+                expect(event.defaultPrevented).toBe(true);
+            }
+            expect(didSelect).not.toHaveBeenCalled();
+            block.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
+            expect(didSelect).toHaveBeenCalledExactlyOnceWith(component.textBlockRef());
+            block.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+            expect(didSelect).toHaveBeenCalledTimes(2);
+        } finally {
+            vi.clearAllTimers();
+            vi.useRealTimers();
+        }
+    });
+
     it('should select and emit when autofocus is enabled', () => {
         fixture.componentRef.setInput('readOnly', false);
         const textBlockRef = TextBlockRef.new();
@@ -84,6 +138,83 @@ describe('TextblockAssessmentCardComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(didSelectSpy).toHaveBeenCalledWith(textBlockRef);
+    });
+
+    it('should focus the feedback editor once it is rendered when focusFeedback is set', async () => {
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.initFeedback();
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.detectChanges();
+        const focusSpy = vi.spyOn(fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent)).componentInstance, 'focus');
+        const handledSpy = vi.spyOn(component.didHandleFocusFeedback, 'emit');
+        expect(focusSpy).not.toHaveBeenCalled();
+
+        fixture.componentRef.setInput('focusFeedback', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(focusSpy).toHaveBeenCalledOnce();
+        expect(handledSpy).toHaveBeenCalledExactlyOnceWith(textBlockRef);
+    });
+
+    it('should not focus the feedback editor when focusFeedback is set on a read-only card', async () => {
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.initFeedback();
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+        const focusSpy = vi.spyOn(fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent)).componentInstance, 'focus');
+        const handledSpy = vi.spyOn(component.didHandleFocusFeedback, 'emit');
+
+        fixture.componentRef.setInput('focusFeedback', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(focusSpy).not.toHaveBeenCalled();
+        // the request is used up, so it cannot move the focus once the card becomes editable again
+        expect(handledSpy).toHaveBeenCalledExactlyOnceWith(textBlockRef);
+    });
+
+    it('should hand over the focus request without an error when the card has no feedback editor', async () => {
+        const handleErrorSpy = vi.spyOn(TestBed.inject(ErrorHandler), 'handleError');
+        const textBlockRef = TextBlockRef.new();
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent))).toBeNull();
+        const handledSpy = vi.spyOn(component.didHandleFocusFeedback, 'emit');
+
+        fixture.componentRef.setInput('focusFeedback', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(handleErrorSpy).not.toHaveBeenCalled();
+        expect(handledSpy).toHaveBeenCalledExactlyOnceWith(textBlockRef);
+    });
+
+    it('should expose selected state only while the block is interactive', () => {
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.initFeedback();
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.detectChanges();
+        const block = fixture.nativeElement.querySelector('span') as HTMLElement;
+        expect(block.getAttribute('aria-pressed')).toBe('false');
+
+        fixture.componentRef.setInput('selected', true);
+        fixture.detectChanges();
+        expect(block.getAttribute('aria-pressed')).toBe('true');
+
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+        expect(block.hasAttribute('aria-pressed')).toBe(false);
+
+        fixture.componentRef.setInput('readOnly', false);
+        textBlockRef.selectable = false;
+        reapplyTextBlockRef(textBlockRef);
+        expect(block.hasAttribute('aria-pressed')).toBe(false);
+
+        textBlockRef.selectable = true;
+        reapplyTextBlockRef(textBlockRef);
+        expect(block.getAttribute('aria-pressed')).toBe('true');
     });
 
     it('should show text block', () => {
@@ -140,6 +271,19 @@ describe('TextblockAssessmentCardComponent', () => {
 
         expect(component.textBlockRef().feedback).toBeUndefined();
         expect(component.didDelete.emit).not.toHaveBeenCalled();
+    });
+
+    it('should delete feedback when the dismiss icon is clicked via a real DOM click (regression: click must not bubble into select())', () => {
+        const textBlockRef = component.textBlockRef();
+        textBlockRef.initFeedback();
+        reapplyTextBlockRef(textBlockRef);
+
+        const dismissIcon = fixture.debugElement.nativeElement.querySelector('#dismiss-icon') as HTMLButtonElement;
+        expect(dismissIcon).toBeTruthy();
+        dismissIcon.click();
+        fixture.changeDetectorRef.detectChanges();
+
+        expect(component.textBlockRef().feedback).toBeUndefined();
     });
 
     it('should send assessment event when selecting automatic text block', () => {

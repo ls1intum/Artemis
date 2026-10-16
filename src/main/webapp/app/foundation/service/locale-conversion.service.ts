@@ -1,9 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class LocaleConversionService {
     private translateService = inject(TranslateService);
 

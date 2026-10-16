@@ -31,9 +31,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.account.domain.User;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.domain.FeatureKind;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsageCollector;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotification;
 import de.tum.cit.aet.artemis.notification.domain.CourseNotificationParameter;
@@ -111,7 +113,8 @@ class CourseNotificationServiceTest {
 
         courseNotificationService.sendCourseNotification(notification, recipients);
 
-        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("notification"), eq("course-notification/webapp"), eq(Role.ANONYMOUS), eq(true), anyLong());
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("notification"), eq("course-notification/webapp"), eq(UserFeature.NOTIFICATION_DELIVERY),
+                eq(FeatureInteraction.ACTION), eq(Role.ANONYMOUS), eq(true), anyLong());
     }
 
     @Test
@@ -124,7 +127,8 @@ class CourseNotificationServiceTest {
 
         courseNotificationService.sendCourseNotification(notification, recipients);
 
-        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("notification"), eq("course-notification/webapp"), eq(Role.ANONYMOUS), eq(false), anyLong());
+        verify(featureUsageCollector).recordUsage(eq(FeatureKind.BACKGROUND), eq("notification"), eq("course-notification/webapp"), eq(UserFeature.NOTIFICATION_DELIVERY),
+                eq(FeatureInteraction.ACTION), eq(Role.ANONYMOUS), eq(false), anyLong());
     }
 
     @Test

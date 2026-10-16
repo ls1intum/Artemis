@@ -55,6 +55,11 @@ export interface AgentChatModalData {
     styleUrl: './agent-chat-modal.component.scss',
 })
 export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterViewChecked {
+    private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
+    private readonly agentChatService = inject(AgentChatService);
+    private readonly translateService = inject(TranslateService);
+
     private readonly messagesContainer = viewChild.required<ElementRef>('messagesContainer');
     private readonly messageInput = viewChild.required<ElementRef<HTMLTextAreaElement>>('messageInput');
 
@@ -63,10 +68,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     protected readonly closeIcon = faTimes;
     protected readonly userIcon = faUser;
 
-    private readonly dialogRef = inject(DynamicDialogRef);
-    private readonly dialogConfig = inject(DynamicDialogConfig, { optional: true });
-    private readonly agentChatService = inject(AgentChatService);
-    private readonly translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     courseId = signal<number>(0);

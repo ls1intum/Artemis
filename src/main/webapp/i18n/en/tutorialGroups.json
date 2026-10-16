@@ -58,6 +58,10 @@
                 }
             },
             "configurationForm": {
+                "hero": {
+                    "title": "Tutorial Group Configuration",
+                    "description": "Default settings applied to every tutorial group in this course."
+                },
                 "timeZoneInput": {
                     "label": "Tutorial Group Time Zone",
                     "changeWarning": "You have changed the time zone. All individually created sessions and tutorial free days will be deleted. Only scheduled sessions will be recreated in the new time zone. Are you absolutely sure you want to do this?",
@@ -81,6 +85,7 @@
         "pages": {
             "tutorialGroupsManagement": {
                 "intro": "Welcome to the tutorial group management page! It allows you to manage online and offline weekly tutorial groups. Start by either importing tutorial groups from a CSV file or by creating a new tutorial group manually.",
+                "noTutorialGroupsTitle": "No tutorial groups yet",
                 "title": "Tutorial Groups Management",
                 "freePeriodsButtons": "Holidays",
                 "creatTutorialGroupButton": "Create New Tutorial Group",
@@ -102,12 +107,13 @@
             "checklist": {
                 "title": "Tutorial Group Checklist",
                 "explanation": "Before you can start using the tutorial groups feature, you must perform some configuration steps",
+                "heroTitle": "Set up tutorial groups",
                 "timeZone": "The course has a time zone configured",
                 "timeZoneExplanation": "The course needs a time zone configured so that the tutorial groups can be scheduled correctly according to that time zone.",
                 "configurationExplanation": "The course needs a course wide configuration for the tutorial groups. This configuration contains default settings for all tutorial groups.",
                 "configuration": "The course has a tutorial group configuration",
                 "createConfiguration": "Create Configuration",
-                "continueToManagement": "Continue to Tutorial Group Management"
+                "continueToManagement": "Continue"
             },
             "tutorialGroupRegistrations": {
                 "title": "Tutorial Registrations",
@@ -251,7 +257,7 @@
                 "tutorChatLinkLabel": "Tutor Chat",
                 "groupChannelLinkLabel": "Group Channel",
                 "registrationsLinkLabel": "Registrations",
-                "newSessionButtonLabel": "New Session",
+                "newSessionButtonLabel": "Create Session",
                 "confirmationDialog": {
                     "deleteGroup": {
                         "header": "Delete Group?",
@@ -306,6 +312,7 @@
                         "attendance": "Attendance"
                     },
                     "validationError": {
+                        "dateInvalid": "Please enter a valid date.",
                         "dateRequired": "Please choose a date.",
                         "startTimeRequired": "Please choose a start time.",
                         "endTimeRequired": "Please choose an end time.",
@@ -367,8 +374,7 @@
                 "title": "Tutorial Group Session Management"
             },
             "createTutorialGroupsConfiguration": {
-                "title": "Create global Tutorial Groups Configuration",
-                "explanation": "Before you can start creating tutorial groups, you must specify some properties that concern all tutorial groups. This can also be changed later."
+                "title": "Create global Tutorial Groups Configuration"
             },
             "editTutorialGroupsConfiguration": {
                 "title": "Edit global Tutorial Groups Configuration"

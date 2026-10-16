@@ -1,11 +1,11 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { filter, skip, take } from 'rxjs/operators';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ArtemisNavigationUtilService {
     private router = inject(Router);
     private location = inject(Location);

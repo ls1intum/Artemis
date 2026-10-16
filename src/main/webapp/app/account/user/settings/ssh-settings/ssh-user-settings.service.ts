@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, lastValueFrom, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -12,7 +12,7 @@ export interface IASshUserSettingsService {
     deleteSshPublicKey: (keyId: number) => Observable<void>;
 }
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class SshUserSettingsService implements IASshUserSettingsService {
     private http = inject(HttpClient);
 

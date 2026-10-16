@@ -296,6 +296,26 @@ public class UserUtilService {
     }
 
     /**
+     * Creates and saves a User holding the given email address. If a User with the given username already exists, the existing User is updated and saved.
+     * <p>
+     * The address is set before the first save rather than by a second one afterwards, so the account exists with it from the start. That matters for the unique index on the
+     * column: a test that saves the address separately reaches the constraint on its own write, not on the one it is exercising.
+     *
+     * @param login The username of the User
+     * @param email The email address of the User
+     * @return The created User
+     */
+    public User createAndSaveUserWithEmail(String login, String email) {
+        User user = UserFactory.generateActivatedUser(login);
+        user.setEmail(email);
+        if (userExistsWithLogin(login)) {
+            // save the user with the newly created values (to override previous changes) with the same ID
+            user.setId(getUserByLogin(login).getId());
+        }
+        return saveWithDefaultAiPreference(user);
+    }
+
+    /**
      * Creates a User. If a User with the given username already exists, the newly created User's ID is set to the existing User's ID.
      *
      * @param login          The username of the User

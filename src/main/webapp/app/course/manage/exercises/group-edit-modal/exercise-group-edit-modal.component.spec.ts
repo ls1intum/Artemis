@@ -1,7 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
-import { TumUiButtonComponent, TumUiDialogComponent, TumUiInputDirective, TumUiInputNumberComponent, TumUiMessageComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiDialogComponent,
+    TumAetUiInputDirective,
+    TumAetUiInputNumberComponent,
+    TumAetUiMessageComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import dayjs from 'dayjs/esm';
 import { vi } from 'vitest';
@@ -39,12 +46,12 @@ describe('ExerciseGroupEditModalComponent', () => {
                 set: {
                     imports: [
                         FormsModule,
-                        TumUiDialogComponent,
-                        TumUiInputDirective,
-                        TumUiInputNumberComponent,
-                        TumUiButtonComponent,
-                        TumUiMessageComponent,
-                        TumUiTooltipDirective,
+                        TumAetUiDialogComponent,
+                        TumAetUiInputDirective,
+                        TumAetUiInputNumberComponent,
+                        TumAetUiButtonComponent,
+                        TumAetUiMessageComponent,
+                        TumAetUiTooltipDirective,
                         FaIconComponent,
                         ArtemisTranslatePipe,
                         TranslateDirective,

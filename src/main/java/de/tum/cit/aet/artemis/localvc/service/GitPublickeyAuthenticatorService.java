@@ -3,8 +3,6 @@ package de.tum.cit.aet.artemis.localvc.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
@@ -27,6 +25,7 @@ import de.tum.cit.aet.artemis.admin.service.RateLimitService;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.core.config.BuildAgentNetworkPolicy;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
+import de.tum.cit.aet.artemis.core.util.IpAddresses;
 import de.tum.cit.aet.artemis.localci.service.BuildAgentAddressRegistryService;
 import de.tum.cit.aet.artemis.localci.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.localvc.service.ssh.HashUtils;
@@ -34,7 +33,6 @@ import de.tum.cit.aet.artemis.localvc.service.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 import inet.ipaddr.IPAddress;
-import inet.ipaddr.IPAddressString;
 
 @Profile(PROFILE_LOCALVC)
 @Lazy
@@ -102,8 +100,15 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
             // getClientAddress rather than getRemoteAddress: behind a load balancer the latter is the balancer, so
             // every user would share one rate limit bucket. ProxyProtocolAcceptor fills in the real client where the
             // balancer announces it, and where it does not the two are the same address anyway.
-            String ipString = ((InetSocketAddress) session.getClientAddress()).getHostString();
-            final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
+            //
+            // Through the shared extractor rather than getHostString(), which yields the hostname for a peer whose
+            // address carries one. That parses to no address, and a null client shares one bucket with every other
+            // such peer, so the limit would be spent collectively instead of per client.
+            final IPAddress ipAddress = IpAddresses.canonical(AuthenticationContext.hostAddressOf(session.getClientAddress()));
+            if (ipAddress == null) {
+                log.warn("Refusing SSH authentication from {}, which does not report a usable client address", session.getClientAddress());
+                return false;
+            }
 
             rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
         }
@@ -165,7 +170,7 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
                 // The key proves which agent this is; the address decides whether that agent may act from here. Behind
                 // a load balancer this is the client address recovered from the PROXY protocol header rather than the
                 // balancer, which is the whole reason ProxyProtocolAcceptor exists.
-                String clientAddress = hostOf(session.getClientAddress());
+                String clientAddress = AuthenticationContext.hostAddressOf(session.getClientAddress());
                 if (clientAddress == null) {
                     // No usable address means the origin cannot be established. Refuse rather than fall through to the
                     // checks below, both of which answer "yes" when they have nothing to constrain: an unconfigured
@@ -190,13 +195,6 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
             }
         }
         return false;
-    }
-
-    private static String hostOf(SocketAddress address) {
-        if (address instanceof InetSocketAddress inetSocketAddress && inetSocketAddress.getAddress() != null) {
-            return inetSocketAddress.getAddress().getHostAddress();
-        }
-        return null;
     }
 
     /**

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -29,6 +30,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
@@ -42,7 +45,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
  */
 @Conditional(ModelingEnabled.class)
 @Lazy
-@FeatureUsage("diagrams/apollon-diagrams")
+@FeatureUsage(UserFeature.QUIZ_AUTHORING)
 @RestController
 @RequestMapping("api/modeling/")
 public class ApollonDiagramResource {
@@ -133,6 +136,7 @@ public class ApollonDiagramResource {
      * @param diagramId the id of the diagram
      * @return the ResponseEntity with status 200 (OK) and with body the title of the diagram or 404 Not Found if no diagram with that id exists
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("apollon-diagrams/{diagramId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getDiagramTitle(@PathVariable Long diagramId) {

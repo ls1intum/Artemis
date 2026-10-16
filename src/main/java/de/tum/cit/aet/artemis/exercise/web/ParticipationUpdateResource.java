@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -50,7 +51,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/participations")
+@FeatureUsage(UserFeature.EXERCISE_PARTICIPATIONS_STAFF)
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationUpdateResource {
@@ -117,7 +118,8 @@ public class ParticipationUpdateResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, existingParticipation.getExercise(), null);
 
         Course course = existingParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        boolean hideParticipant = !authCheckService.isAtLeastInstructorInCourse(course, user) && !authCheckService.isOwnerOfParticipation(existingParticipation);
+        boolean hideParticipant = !authCheckService.isAtLeastInstructorInCourse(course, user) && !authCheckService.isOwnerOfParticipation(existingParticipation)
+                && exerciseDateService.isAssessmentAnonymizationActive(existingParticipation.getExercise());
         String participantLabel = hideParticipant ? existingParticipation.getId().toString() : existingParticipation.getParticipant().getName();
         Double newPresentationScore = dto.presentationScore();
 

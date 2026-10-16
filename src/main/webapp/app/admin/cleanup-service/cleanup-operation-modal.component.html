@@ -1,4 +1,4 @@
-<tum-ui-dialog
+<tumaet-ui-dialog
     [(visible)]="visible"
     [closable]="true"
     [closeOnEscape]="false"
@@ -7,7 +7,7 @@
     [header]="'cleanupService.operation.' + operation().name | artemisTranslate"
 >
     @if (dialogError(); as error) {
-        <tum-ui-message severity="error" [text]="error" class="mb-3 w-full" aria-live="assertive" data-testid="cleanup-error-message" />
+        <tumaet-ui-message severity="error" [text]="error" class="mb-3 w-full" aria-live="assertive" data-testid="cleanup-error-message" />
     }
     @if (operation().ageBased) {
         <p
@@ -51,11 +51,11 @@
     </div>
     <ng-template #footer>
         <div class="flex justify-end gap-2">
-            <button tumUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="close()" data-testid="close-button">
+            <button tumAetUiButton type="button" severity="secondary" variant="outlined" size="small" (click)="close()" data-testid="close-button">
                 <span jhiTranslate="cleanupService.button.close"></span>
             </button>
             <button
-                tumUiButton
+                tumAetUiButton
                 type="button"
                 [severity]="actionPresentation[operation().action].severity"
                 size="small"
@@ -68,4 +68,4 @@
             </button>
         </div>
     </ng-template>
-</tum-ui-dialog>
+</tumaet-ui-dialog>

@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { BehaviorSubject } from 'rxjs';
@@ -15,7 +15,7 @@ import { generateUuid } from 'app/foundation/util/crypto.utils';
  * - Instance Identifier: A UUID stored in local storage to identify this specific browser instance.
  * - Session Identifier: A UUID stored in session storage to identify the current browser tab.
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class BrowserFingerprintService {
     private localStorageService = inject(LocalStorageService);
     private sessionStorageService = inject(SessionStorageService);

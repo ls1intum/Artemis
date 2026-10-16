@@ -1,5 +1,15 @@
 <div data-testid="cardBuildOutput" class="card border build-output">
-    <div [class]="secondaryHeader() ? 'card-second-header' : 'card-header code-editor-panel-header d-flex'" (click)="toggleEditorCollapse($event)">
+    <div
+        [class]="secondaryHeader() ? 'card-second-header' : 'card-header code-editor-panel-header d-flex'"
+        (click)="toggleEditorCollapse($event)"
+        [attr.aria-expanded]="!collapsed()"
+        #keyboardAction2
+        role="button"
+        tabindex="0"
+        (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+        (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
+        (keyup.space)="$event.target === $event.currentTarget ? keyboardAction2.click() : undefined"
+    >
         <h3 class="card-title">
             <fa-icon [icon]="faTerminal" />
             <span jhiTranslate="artemisApp.editor.buildOutput"></span>

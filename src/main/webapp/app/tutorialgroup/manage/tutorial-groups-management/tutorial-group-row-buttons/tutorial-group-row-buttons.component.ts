@@ -5,7 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
@@ -15,7 +15,7 @@ import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
     selector: 'jhi-tutorial-group-row-buttons',
     templateUrl: './tutorial-group-row-buttons.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, RouterLink, DeleteButtonDirective, TumUiButtonDirective],
+    imports: [FaIconComponent, TranslateDirective, RouterLink, DeleteButtonDirective, TumAetUiButtonDirective],
 })
 export class TutorialGroupRowButtonsComponent {
     private readonly tutorialGroupApiService = inject(TutorialGroupApi);

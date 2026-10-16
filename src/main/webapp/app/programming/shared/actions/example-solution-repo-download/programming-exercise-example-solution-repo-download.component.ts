@@ -8,7 +8,7 @@ import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.
     template: `<jhi-button
         [disabled]="!exerciseId()"
         [btnType]="displayedOnExamSummary() ? ButtonType.PRIMARY_OUTLINE : ButtonType.INFO"
-        [btnSize]="ButtonSize.MEDIUM"
+        [btnSize]="displayedOnExamSummary() ? ButtonSize.SMALL : ButtonSize.MEDIUM"
         [shouldSubmit]="false"
         [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
         [icon]="faDownload"

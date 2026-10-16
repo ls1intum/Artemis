@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { HttpClient, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -21,8 +21,7 @@ describe('Exercise Paging Service', () => {
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }, SessionStorageService, LocalStorageService],
         });
         httpMock = TestBed.inject(HttpTestingController);
-        const httpClient = TestBed.inject(HttpClient);
-        service = new DummyPagingService(httpClient);
+        service = TestBed.inject(DummyPagingService);
     });
 
     it('should find an element', () => {

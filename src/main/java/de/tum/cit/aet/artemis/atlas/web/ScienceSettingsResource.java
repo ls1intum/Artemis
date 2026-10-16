@@ -24,9 +24,12 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceSetting;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceSettingDTO;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
 /**
@@ -34,7 +37,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
  */
 @Conditional(AtlasEnabled.class)
 @Lazy
-@FeatureUsage("research/science-settings")
+@FeatureUsage(UserFeature.SCIENCE)
 @RestController
 @RequestMapping("api/atlas/")
 public class ScienceSettingsResource {
@@ -56,10 +59,12 @@ public class ScienceSettingsResource {
     /**
      * GET science-settings : Get all ScienceSettings for current user
      * <p>
-     * Fetches the ScienceSettings for the current user from the server.
+     * Fetches the ScienceSettings for the current user from the server. The client loads them on every sign-in to decide
+     * whether it may log learning events, so a call says nothing about anyone opening the settings.
      *
      * @return the list of found ScienceSettings
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("science-settings")
     @EnforceAtLeastStudent
     public ResponseEntity<Set<ScienceSettingDTO>> getScienceSettingsForCurrentUser() {

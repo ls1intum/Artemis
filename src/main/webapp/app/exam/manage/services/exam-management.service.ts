@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
 import { ExamUsersNotFoundDTO } from 'app/exam/shared/entities/exam-users-not-found-dto.model';
@@ -38,7 +38,7 @@ import { StudentExamDTO } from 'app/exam/shared/entities/student-exam-dto.model'
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
 
-@Injectable({ providedIn: 'root' })
+@Service()
 export class ExamManagementService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
@@ -527,7 +527,7 @@ export class ExamManagementService {
     }
 
     /**
-     * Resets an Exam with examId by deleting all its studentExams and participations.
+     * Resets an Exam with examId by deleting all its studentExams and participations and unregistering all its students.
      * @param courseId The course id.
      * @param examId The exam id.
      */

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { effect } from '@angular/core';
+import { effect, isSignal } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
@@ -140,8 +140,8 @@ describe('ScienceSettingsComponent', () => {
     // component actually renders. The previous spec never called detectChanges(), so a fully blank render slipped through.
     it('should inherit the userSettings/settings signals from the base and render the settings content (issue #13173)', () => {
         // The inherited fields must be callable signals, not undefined (a subclass field re-declaration would shadow them).
-        expect(typeof comp.userSettings).toBe('function');
-        expect(typeof comp.settings).toBe('function');
+        expect(isSignal(comp.userSettings)).toBe(true);
+        expect(isSignal(comp.settings)).toBe(true);
 
         vi.spyOn(scienceSettingsServiceMock, 'getScienceSettings').mockReturnValue([scienceSetting]);
         comp.ngOnInit();

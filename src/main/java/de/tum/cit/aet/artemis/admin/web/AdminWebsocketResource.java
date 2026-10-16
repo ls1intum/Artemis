@@ -17,18 +17,21 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.admin.dto.WebsocketNodeDTO;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.distributed.NodeRegistryService;
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionMessagingService;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionService;
 
 @Profile(PROFILE_CORE)
 @EnforceAdmin
 @Lazy
-@FeatureUsage("monitoring/websocket-broker")
+@FeatureUsage(UserFeature.MONITORING)
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping("api/admin/websocket/")
@@ -58,6 +61,7 @@ public class AdminWebsocketResource {
      *
      * @return list of websocket nodes with metadata used by the admin UI
      */
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("nodes")
     public ResponseEntity<Iterable<WebsocketNodeDTO>> getWebsocketNodes() {
         String localId = nodeRegistryService.getLocalNodeId();
@@ -81,14 +85,14 @@ public class AdminWebsocketResource {
     public ResponseEntity<Void> triggerReconnect(@RequestParam(value = "targetNodeId", required = false) String targetNodeId,
             @RequestParam(value = "action", required = false, defaultValue = "RECONNECT") String action) {
         String requester = SecurityUtils.getCurrentUserLogin().orElse("unknown");
-        log.info("REST request to trigger websocket broker action {} for target {} by {}", action, targetNodeId, requester);
 
         String localMemberId = nodeRegistryService.getLocalNodeId();
         var targetMembers = nodeRegistryService.getLiveNodes().stream().filter(node -> targetNodeId == null || targetNodeId.isBlank() || node.nodeId().equals(targetNodeId))
                 .toList();
 
         if (targetMembers.isEmpty()) {
-            log.info("No core websocket nodes matched reconnect request for target {}", targetNodeId);
+            log.info("No core websocket nodes matched the reconnect request by {}, live nodes: {}", requester,
+                    nodeRegistryService.getLiveNodes().stream().map(node -> node.nodeId()).toList());
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
 
@@ -99,6 +103,7 @@ public class AdminWebsocketResource {
         catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
         }
+        log.info("REST request to trigger websocket broker action {} on nodes {} by {}", controlAction, targetMembers.stream().map(node -> node.nodeId()).toList(), requester);
 
         targetMembers.forEach(node -> websocketBrokerReconnectionMessagingService.requestControl(node.nodeId(), requester, controlAction));
 

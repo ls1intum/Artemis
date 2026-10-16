@@ -416,7 +416,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
         athenaConfig.setCourse(course);
         athenaConfig.setFormativeFeedbackEnabled(true);
         course.setAthenaConfig(athenaConfig);
-        courseRepository.save(course);
+        courseUtilService.saveWithConfigurations(course);
 
         LectureDetailsDTO receivedLectureWithDetails = request.get("/api/lecture/lectures/" + lecture1.getId() + "/details", HttpStatus.OK, LectureDetailsDTO.class);
 
@@ -612,6 +612,13 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentBatchTe
 
         final var title = request.get("/api/lecture/lectures/" + lecture.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(lecture.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void getLecture_lectureDoesNotExist_shouldReturnNotFound() throws Exception {
+        // Administrators pass the access check without the lecture, so the lecture itself is looked up.
+        request.get("/api/lecture/lectures/123124123123", HttpStatus.NOT_FOUND, LectureResource.SimpleLectureDTO.class);
     }
 
     @Test

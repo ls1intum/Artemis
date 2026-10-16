@@ -1,12 +1,12 @@
 <div>
     <h5 *adminTitleBarTitle id="health-page-heading" class="mb-0" jhiTranslate="health.title"></h5>
     <div *adminTitleBarActions>
-        <tum-ui-button size="small" severity="secondary" variant="outlined" [icon]="faSync" [loading]="isRefreshing()" (clicked)="refresh()" data-testid="refresh-button">
+        <tumaet-ui-button size="small" severity="secondary" variant="outlined" [icon]="faSync" [loading]="isRefreshing()" (clicked)="refresh()" data-testid="refresh-button">
             <span jhiTranslate="health.refresh.button"></span>
-        </tum-ui-button>
+        </tumaet-ui-button>
     </div>
     <div class="overflow-x-auto">
-        <table tumUiTable [striped]="true" data-testid="healthCheck" aria-describedby="health-page-heading">
+        <table tumAetUiTable [striped]="true" data-testid="healthCheck" aria-describedby="health-page-heading">
             <thead>
                 <tr>
                     <!-- w-full on the first column collapses the other two to their content width. -->
@@ -35,7 +35,7 @@
                                 }
                             </td>
                             <td data-testid="status-cell">
-                                <tum-ui-tag
+                                <tumaet-ui-tag
                                     [severity]="getBadgeSeverity(componentHealth.value!.status)"
                                     [value]="'health.status.' + componentHealth.value!.status | artemisTranslate"
                                     data-testid="status-tag"
@@ -43,16 +43,16 @@
                             </td>
                             <td>
                                 @if (componentHealth.value!.details) {
-                                    <tum-ui-button
+                                    <tumaet-ui-button
                                         size="small"
                                         severity="info"
-                                        [tumUiTooltip]="'health.details.details' | artemisTranslate"
+                                        [tumAetUiTooltip]="'health.details.details' | artemisTranslate"
                                         [ariaLabel]="'health.details.details' | artemisTranslate"
                                         (clicked)="showHealth({ key: componentHealth.key, value: componentHealth.value! })"
                                         data-testid="details-link"
                                     >
                                         <fa-icon [icon]="faEye" />
-                                    </tum-ui-button>
+                                    </tumaet-ui-button>
                                 }
                             </td>
                         </tr>
@@ -60,10 +60,10 @@
                     <tr data-testid="websocketConnection">
                         <td>Websocket Connection (Client -&gt; Server)</td>
                         <td data-testid="status-cell">
-                            <tum-ui-tag [severity]="websocketConnected() ? 'success' : 'danger'" data-testid="status-tag">
+                            <tumaet-ui-tag [severity]="websocketConnected() ? 'success' : 'danger'" data-testid="status-tag">
                                 <fa-icon [fixedWidth]="true" [icon]="websocketConnected() ? faTowerBroadcast : faExclamation" />
                                 <span>{{ (websocketConnected() ? 'connectionStatus.connected' : 'connectionStatus.disconnected') | artemisTranslate }}</span>
-                            </tum-ui-tag>
+                            </tumaet-ui-tag>
                         </td>
                         <td>-</td>
                     </tr>

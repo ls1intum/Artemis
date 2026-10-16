@@ -9,7 +9,14 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { BuildAgentInformation } from 'app/localci/shared/entities/build-agent-information.model';
 import { createAddressToAgentInfoMap, getAgentInfoByAddress } from 'app/localci/shared/build-agent-address.utils';
-import { TumUiButtonComponent, TumUiTableDirective, TumUiTableSortEvent, TumUiTableSortableColumnComponent, TumUiTagComponent, TumUiTooltipDirective } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonComponent,
+    TumAetUiTableDirective,
+    TumAetUiTableSortEvent,
+    TumAetUiTableSortableColumnComponent,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 @Component({
     selector: 'jhi-finished-jobs-table',
     templateUrl: './finished-jobs-table.component.html',
@@ -23,11 +30,11 @@ import { TumUiButtonComponent, TumUiTableDirective, TumUiTableSortEvent, TumUiTa
         ResultComponent,
         ArtemisDatePipe,
         SlicePipe,
-        TumUiTableDirective,
-        TumUiTableSortableColumnComponent,
-        TumUiTagComponent,
-        TumUiButtonComponent,
-        TumUiTooltipDirective,
+        TumAetUiTableDirective,
+        TumAetUiTableSortableColumnComponent,
+        TumAetUiTagComponent,
+        TumAetUiButtonComponent,
+        TumAetUiTooltipDirective,
     ],
 })
 export class FinishedJobsTableComponent {
@@ -83,12 +90,12 @@ export class FinishedJobsTableComponent {
     }
 
     /**
-     * Handles the table sort event emitted by the tum-ui sortable column.
+     * Handles the table sort event emitted by the tumaet-ui sortable column.
      * Maps the event onto the two-way `predicate`/`ascending` models and triggers a (server-side)
      * reload via `onSortChange`. Guarded to ignore no-op events, which would otherwise cause redundant reloads.
-     * @param event The tum-ui table sort event ({ field, order }, order 1 = ascending, -1 = descending)
+     * @param event The tumaet-ui table sort event ({ field, order }, order 1 = ascending, -1 = descending)
      */
-    onTableSort(event: TumUiTableSortEvent): void {
+    onTableSort(event: TumAetUiTableSortEvent): void {
         const field = event.field ?? this.predicate();
         const ascending = (event.order ?? 1) === 1;
         if (field === this.predicate() && ascending === this.ascending()) {

@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -75,7 +76,7 @@ import de.tum.cit.aet.artemis.exercise.service.team.TeamService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/teams")
+@FeatureUsage(UserFeature.TEAM_EXERCISES)
 @RestController
 @RequestMapping("api/exercise/")
 public class TeamResource {
@@ -333,6 +334,7 @@ public class TeamResource {
     public ResponseEntity<Void> deleteTeam(@PathVariable long exerciseId, @PathVariable long teamId) {
         log.info("REST request to delete Team with id {} in exercise with id {}", teamId, exerciseId);
         User user = userRepository.getUserWithAuthorities();
+        String login = user.getLogin();
         Team team = teamRepository.findWithStudentsByIdElseThrow(teamId);
         if (team.getExercise() != null && !team.getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("The team does not belong to the specified exercise id.", ENTITY_NAME, "wrongExerciseId");
@@ -341,7 +343,7 @@ public class TeamResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
         // Create audit event for team delete action
         var logMessage = "Delete Team with id " + teamId + " in exercise with id " + exerciseId;
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_TEAM, logMessage);
+        var auditEvent = new AuditEvent(login, Constants.DELETE_TEAM, logMessage);
         auditEventRepository.add(auditEvent);
         // Delete all participations of the team first and then the team itself
         participationDeletionService.deleteAllByTeamId(teamId);
@@ -451,6 +453,7 @@ public class TeamResource {
         log.debug("REST request import all teams from source exercise with id {} into destination exercise with id {}", sourceExerciseId, destinationExerciseId);
 
         User user = userRepository.getUserWithAuthorities();
+        String login = user.getLogin();
         Exercise destinationExercise = exerciseRepository.findByIdElseThrow(destinationExerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, destinationExercise, user);
 
@@ -468,7 +471,7 @@ public class TeamResource {
         // Create audit event for team import action
         var logMessage = "Import teams from source exercise '" + sourceExercise.getTitle() + "' (id: " + sourceExercise.getId() + ") into destination exercise '"
                 + destinationExercise.getTitle() + "' (id: " + destinationExercise.getId() + ") using strategy " + importStrategyType;
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.IMPORT_TEAMS, logMessage);
+        var auditEvent = new AuditEvent(login, Constants.IMPORT_TEAMS, logMessage);
         auditEventRepository.add(auditEvent);
 
         // Import teams and return the teams that now belong to the destination exercise

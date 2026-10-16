@@ -2,7 +2,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Observable } from 'rxjs';
 import { EntitySummary } from 'app/shared-ui/delete-dialog/delete-dialog.model';
 
-/** The kit button severities the action buttons use (a subset of `TumUiButtonSeverity`). */
+/** The kit button severities the action buttons use (a subset of `TumAetUiButtonSeverity`). */
 export type ActionSeverity = 'primary' | 'info' | 'success' | 'warn' | 'danger';
 
 /** Everything a `[jhiDeleteButton]` action needs, gathered here so the bar can render it from data alone. */

@@ -28,11 +28,14 @@ import de.tum.cit.aet.artemis.course.service.CourseLoadService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.dto.StruggleEpisodeDTO;
 import de.tum.cit.aet.artemis.iris.dto.StruggleInterventionEventDTO;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
+import de.tum.cit.aet.artemis.iris.service.IrisLectureMaterialVersionService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor.PyrisAutonomousTutorPipelineExecutionDTO;
@@ -68,6 +71,8 @@ public class PyrisPipelineService {
 
     private final PyrisJobService pyrisJobService;
 
+    private final IrisLectureMaterialVersionService materialVersionService;
+
     private final PyrisDTOService pyrisDTOService;
 
     private final IrisChatWebsocketService irisChatWebsocketService;
@@ -90,10 +95,12 @@ public class PyrisPipelineService {
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
             IrisChatWebsocketService irisChatWebsocketService, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
-            CourseLoadService courseLoadService, FeatureToggleService featureToggleService, UserAiPreferenceService userAiPreferenceService) {
+            CourseLoadService courseLoadService, FeatureToggleService featureToggleService, UserAiPreferenceService userAiPreferenceService,
+            IrisLectureMaterialVersionService materialVersionService) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.userAiPreferenceService = userAiPreferenceService;
         this.pyrisJobService = pyrisJobService;
+        this.materialVersionService = materialVersionService;
         this.pyrisDTOService = pyrisDTOService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -163,10 +170,15 @@ public class PyrisPipelineService {
             ChatPipelineDTOBuilder dtoBuilder) {
         var user = userRepository.findByIdElseThrow(session.getUserId());
         var pyrisUser = toPyrisUserDTO(user);
-        var lastMessageId = session.getMessages().isEmpty() ? null : session.getMessages().getLast().getId();
+        // The run's user message, which gets the memories the run reports. Event-triggered runs (e.g. build failure, stalled progress) are not caused by a user message, so
+        // they carry no user message id. The last row of a session can be a stored conversation summary, which must not get memories, because that would push it to the client.
+        var userMessageId = eventVariant.isPresent() ? null
+                : session.getMessages().reversed().stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).findFirst().map(IrisMessage::getId).orElse(null);
+        var jobToken = pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), userMessageId, clientId);
+        materialVersionService.capture(jobToken, session.getCourseId());
         // @formatter:off
         executePipeline("chat", userAiPreferenceService.findDecision(user.getId()), variant, supportLevel, eventVariant,
-            pyrisJobService.addChatJob(session.getCourseId(), session.getId(), session.getEntityId(), lastMessageId, clientId),
+            jobToken,
             executionDto -> dtoBuilder.apply(executionDto, user, pyrisUser),
             (runId, runState, error) -> irisChatWebsocketService.sendStatusUpdate(session, runId, runState, error));
         // @formatter:on

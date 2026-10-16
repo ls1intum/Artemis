@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
@@ -53,12 +54,15 @@ public class PyrisDTOService {
 
     private final ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService;
 
+    private final BuildLogEntryService buildLogEntryService;
+
     private final IrisProactiveProperties proactiveProperties;
 
     public PyrisDTOService(RepositoryService repositoryService, ProgrammingFeedbackSynthesizerService programmingFeedbackSynthesizerService,
-            IrisProactiveProperties proactiveProperties) {
+            BuildLogEntryService buildLogEntryService, IrisProactiveProperties proactiveProperties) {
         this.repositoryService = repositoryService;
         this.programmingFeedbackSynthesizerService = programmingFeedbackSynthesizerService;
+        this.buildLogEntryService = buildLogEntryService;
         this.proactiveProperties = proactiveProperties;
     }
 
@@ -112,8 +116,8 @@ public class PyrisDTOService {
      * @return the converted PyrisSubmissionDTO
      */
     public PyrisSubmissionDTO toPyrisSubmissionDTO(@NonNull ProgrammingSubmission submission, Map<String, String> uncommittedFiles) {
-        var buildLogEntries = submission.getBuildLogEntries().stream().map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog()))
-                .toList();
+        var buildLogEntries = buildLogEntryService.getLatestBuildLogs(submission).stream()
+                .map(buildLogEntry -> new PyrisBuildLogEntryDTO(toInstant(buildLogEntry.getTime()), buildLogEntry.getLog())).toList();
         var participation = (ProgrammingExerciseParticipation) submission.getParticipation();
         var committed = getFilteredRepositoryContents(participation);
         Map<String, String> committedFiles = committed.files();
@@ -181,13 +185,15 @@ public class PyrisDTOService {
      * the episode it was given in. The tag text is the one channel that carries this, since {@code sent_at} is
      * dropped before the history reaches the model.
      *
-     * @param messages         the chat-history messages, in chronological order
+     * @param allMessages      the chat-history messages, in chronological order; SUMMARY messages are left out
      * @param currentEpisodeId the episode this run belongs to, or null when the caller has none. Null marks
      *                             NOTHING as earlier: with the episode relation unknown, keeping every hint under
      *                             today's tags can only ever suppress a repeat, never license one.
      * @return the converted DTOs with proactive messages outcome-tagged
      */
-    public List<PyrisMessageDTO> toPyrisMessageDTOListForStruggle(List<IrisMessage> messages, @Nullable String currentEpisodeId) {
+    public List<PyrisMessageDTO> toPyrisMessageDTOListForStruggle(List<IrisMessage> allMessages, @Nullable String currentEpisodeId) {
+        // Summaries are hidden from the student. Left in, one between a hint and the student's reply would hide the reply.
+        var messages = allMessages.stream().filter(message -> message.getSender() != IrisMessageSender.SUMMARY).toList();
         // One reverse pass instead of a forward scan per proactive message: "superseded" only asks whether a LATER
         // proactive message exists, so the index of the last one answers it for every message at once.
         int lastProactiveIndex = -1;
@@ -310,7 +316,11 @@ public class PyrisDTOService {
         if (participation == null) {
             return RepositoryContents.UNREADABLE;
         }
-        var language = participation.getProgrammingExercise().getProgrammingLanguage();
+        var exercise = participation.getProgrammingExercise();
+        if (exercise == null) {
+            return RepositoryContents.UNREADABLE;
+        }
+        var language = exercise.getProgrammingLanguage();
 
         var repositoryContents = getRepositoryContents(participation.getVcsRepositoryUri());
         if (repositoryContents == null) {

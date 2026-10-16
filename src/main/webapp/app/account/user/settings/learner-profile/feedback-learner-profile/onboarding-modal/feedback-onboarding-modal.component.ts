@@ -9,7 +9,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { TumUiButtonComponent, TumUiDialogComponent } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiDialogComponent } from '@tumaet/ui-angular';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
@@ -17,9 +17,14 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     standalone: true,
     templateUrl: './feedback-onboarding-modal.component.html',
     styleUrls: ['./feedback-onboarding-modal.component.scss'],
-    imports: [CommonModule, TextResultComponent, TranslateDirective, TumUiButtonComponent, TumUiDialogComponent, ArtemisTranslatePipe],
+    imports: [CommonModule, TextResultComponent, TranslateDirective, TumAetUiButtonComponent, TumAetUiDialogComponent, ArtemisTranslatePipe],
 })
 export class FeedbackOnboardingModalComponent {
+    private learnerProfileApiService = inject(LearnerProfileApiService);
+    private alertService = inject(AlertService);
+    protected translateService = inject(TranslateService);
+    protected themeService = inject(ThemeService);
+
     readonly visible = model<boolean>(false);
     readonly completed = output<void>();
 
@@ -27,11 +32,6 @@ export class FeedbackOnboardingModalComponent {
     readonly totalSteps = 2;
     readonly selected = signal<(number | undefined)[]>([undefined, undefined]);
     feedbackExamples = FEEDBACK_EXAMPLES;
-
-    private learnerProfileApiService = inject(LearnerProfileApiService);
-    private alertService = inject(AlertService);
-    protected translateService = inject(TranslateService);
-    protected themeService = inject(ThemeService);
 
     /**
      * Navigates to the next step in the onboarding process.

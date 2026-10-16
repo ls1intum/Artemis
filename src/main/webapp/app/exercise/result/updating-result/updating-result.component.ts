@@ -44,6 +44,8 @@ export class UpdatingResultComponent implements OnInit, OnDestroy {
     readonly showIcon = input(true);
     readonly isInSidebarCard = input(false);
     readonly showCompletion = input(true);
+    /** Forwarded to {@link ResultComponent.isOwnParticipation}; every current caller shows the viewer their own. */
+    readonly isOwnParticipation = input(true);
     readonly showProgressBar = input(false);
     readonly showProgressBarBorder = input(false);
     readonly showResult = output<void>();

@@ -100,6 +100,23 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
         return getValueElseThrow(findByRepositoryUri(repositoryUri));
     }
 
+    /**
+     * The id of the student participation a repository uri belongs to.
+     *
+     * <p>
+     * Reads one column and loads no entity, for callers that only have to point at the participation, such as an access
+     * log entry being attributed to a repository.
+     *
+     * @param repositoryUri the uri of the repository, without the git service suffix
+     * @return the id of the participation, or empty if no repository has that uri
+     */
+    @Query("""
+            SELECT participation.id
+            FROM ProgrammingExerciseStudentParticipation participation
+            WHERE participation.repositoryUri = :repositoryUri
+            """)
+    Optional<Long> findIdByRepositoryUri(@Param("repositoryUri") String repositoryUri);
+
     @Query("""
             SELECT DISTINCT participation
             FROM ProgrammingExerciseStudentParticipation participation

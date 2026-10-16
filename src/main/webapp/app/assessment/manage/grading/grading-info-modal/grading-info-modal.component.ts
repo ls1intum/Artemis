@@ -5,12 +5,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 @Component({
     selector: 'jhi-system-info-modal',
     templateUrl: './grading-info-modal.component.html',
-    imports: [TranslateDirective, FaIconComponent, DialogModule, ButtonModule, ArtemisTranslatePipe, TumUiButtonDirective],
+    imports: [TranslateDirective, FaIconComponent, DialogModule, ButtonModule, ArtemisTranslatePipe, TumAetUiButtonDirective],
 })
 export class GradingInfoModalComponent {
     // Icons

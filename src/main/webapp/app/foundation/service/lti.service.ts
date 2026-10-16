@@ -1,9 +1,7 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class LtiService {
     private shownViaLtiSubject = new BehaviorSubject<boolean>(false);
     isShownViaLti$ = this.shownViaLtiSubject.asObservable();

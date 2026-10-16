@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -8,6 +11,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -27,7 +31,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateD
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisEntitySourceDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisGlobalSearchAnswerStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.search.PyrisLectureSearchResultDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisRunState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStatusErrorDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.AutonomousTutorJob;
@@ -126,6 +132,18 @@ class PyrisStatusUpdateServiceTest {
         verifyLifecycle(job, runState);
     }
 
+    @Test
+    void tutorSuggestionJobIsRemovedWhenSessionNoLongerExists() {
+        var job = new TutorSuggestionJob("tutor-run", 1L, 2L, 3L, null, null, null);
+        var statusUpdate = new TutorSuggestionStatusUpdateDTO(null, null, PyrisRunState.RUNNING, null, List.of());
+        when(irisTutorSuggestionSessionService.handleStatusUpdate(job, statusUpdate)).thenReturn(null);
+
+        service.handleStatusUpdate(job, statusUpdate);
+
+        verify(pyrisJobService).removeJob(job);
+        verify(pyrisJobService, never()).updateJob(any());
+    }
+
     @ParameterizedTest
     @EnumSource(PyrisRunState.class)
     void autonomousTutorJobLifecycleUsesRunState(PyrisRunState runState) {
@@ -139,29 +157,129 @@ class PyrisStatusUpdateServiceTest {
     }
 
     @Test
+    void globalSearchEntitySourcesAreForwardedOnTheTerminalUpdate() {
+        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var entitySource = new PyrisEntitySourceDTO("exercise", 42L, new PyrisLectureSearchResultDTO.CourseDTO(9L, "Patterns"), "W03E03 Flyweight Pattern",
+                "Programming exercise: 'W03E03 Flyweight Pattern'", "/courses/9/exercises/42", "programming");
+        var terminalUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FINISHED, null, "answer.[1]", null, null, null, List.of(entitySource));
+
+        service.handleStatusUpdate(job, terminalUpdate);
+
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
+                eq(new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer.[1]", null, null, null, List.of(entitySource), false, false, null, null, null)));
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(job, null, true);
+    }
+
+    @Test
+    void globalSearchCitationSourceTypesAreForwardedOnTheTerminalUpdate() {
+        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var entitySource = new PyrisEntitySourceDTO("exercise", 42L, new PyrisLectureSearchResultDTO.CourseDTO(9L, "Patterns"), "W03E03 Flyweight Pattern",
+                "Programming exercise: 'W03E03 Flyweight Pattern'", "/courses/9/exercises/42", "programming");
+        var terminalUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FINISHED, null, "About the course.[1] About the slide.[2]", null, null, null,
+                List.of(entitySource), null, null, List.of("entity", "lecture"));
+
+        service.handleStatusUpdate(job, terminalUpdate);
+
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"), eq(new IrisGlobalSearchAnswerWebsocketDTO("global-run", false,
+                "About the course.[1] About the slide.[2]", null, null, null, List.of(entitySource), false, false, null, null, List.of("entity", "lecture"))));
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(job, null, true);
+    }
+
+    @Test
+    void globalSearchKeepsTheCitedMaterialVersionsOnlyForAnAnswer() {
+        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var source = new PyrisLectureSearchResultDTO(new PyrisLectureSearchResultDTO.CourseDTO(9L, "Patterns"), new PyrisLectureSearchResultDTO.LectureDTO(3L, "W03"),
+                new PyrisLectureSearchResultDTO.LectureUnitDTO(42L, "Slides", "/courses/9/lectures/3", 4, "slide", Map.of("unit", 42, "page", 4), null), "snippet");
+
+        service.handleStatusUpdate(job, new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FINISHED, null, "Slides.[1]", List.of(source)));
+        service.handleStatusUpdate(job, new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FAILED, null, null, List.of(source)));
+
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(job, List.of(source), true);
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(job, List.of(source), false);
+    }
+
+    @Test
+    void globalSearchPartialResultIsForwardedAsStreamedDraft() {
+        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var partialUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null, "Signals are reactive.[1]", 3);
+
+        service.handleStatusUpdate(job, partialUpdate);
+
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
+                eq(new IrisGlobalSearchAnswerWebsocketDTO("global-run", true, null, null, "Signals are reactive.[1]", 3, false)));
+        verify(pyrisJobService).updateJob(job);
+    }
+
+    @Test
+    void globalSearchEmptyPartialResultIsForwardedAsClearDraftInsteadOfEmptyText() {
+        // The provider's retry-clear signal (see PartialResultSender on the Pyris side) is an empty
+        // partialResult; it must be translated to clearDraft=true with partialResult omitted, since an
+        // empty string would not survive IrisGlobalSearchAnswerWebsocketDTO's NON_EMPTY serialization
+        // and would reach the client indistinguishable from "no partial result in this message".
+        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var clearUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null, "", 4);
+
+        service.handleStatusUpdate(job, clearUpdate);
+
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
+                eq(new IrisGlobalSearchAnswerWebsocketDTO("global-run", true, null, null, null, 4, true)));
+        verify(pyrisJobService).updateJob(job);
+    }
+
+    @Test
+    void globalSearchStageIsForwardedOnAThinkingUpdateWithNoPartialResultYet() {
+        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var stagedUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null, null, null, null, "searching", null);
+
+        service.handleStatusUpdate(job, stagedUpdate);
+
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
+                eq(IrisGlobalSearchAnswerWebsocketDTO.thinking("global-run", "searching", null)));
+        verify(pyrisJobService).updateJob(job);
+    }
+
+    @Test
+    void globalSearchStageSourcesAreForwardedAlongsideTheFoundStage() {
+        var job = new GlobalSearchAnswerJob("global-run", "student1");
+        var stagedUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null, null, null, null, "found",
+                List.of("Advanced Algorithms", "Software Engineering"));
+
+        service.handleStatusUpdate(job, stagedUpdate);
+
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
+                eq(IrisGlobalSearchAnswerWebsocketDTO.thinking("global-run", "found", List.of("Advanced Algorithms", "Software Engineering"))));
+        verify(pyrisJobService).updateJob(job);
+    }
+
+    @Test
     void globalSearchThinkingIsDerivedFromRunState() {
         var job = new GlobalSearchAnswerJob("global-run", "student1");
         var runningUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.RUNNING, null, null, null);
 
         service.handleStatusUpdate(job, runningUpdate);
 
-        verify(irisWebsocketService).send("student1", "global-search-answer", new IrisGlobalSearchAnswerWebsocketDTO("global-run", true, null, null));
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
+                eq(new IrisGlobalSearchAnswerWebsocketDTO("global-run", true, null, null)));
         verify(pyrisJobService).updateJob(job);
 
         var terminalUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FINISHED, null, "answer", null);
 
         service.handleStatusUpdate(job, terminalUpdate);
 
-        verify(irisWebsocketService).send("student1", "global-search-answer", new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer", null));
-        verify(pyrisJobService).removeJob(job);
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
+                eq(new IrisGlobalSearchAnswerWebsocketDTO("global-run", false, "answer", null)));
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(job, null, true);
 
         var failedJob = new GlobalSearchAnswerJob("global-failed-run", "student1");
         var failedUpdate = new PyrisGlobalSearchAnswerStatusUpdateDTO(PyrisRunState.FAILED, null, null, null);
 
         service.handleStatusUpdate(failedJob, failedUpdate);
 
-        verify(irisWebsocketService).send("student1", "global-search-answer", new IrisGlobalSearchAnswerWebsocketDTO("global-failed-run", false, null, null));
-        verify(pyrisJobService).removeJob(failedJob);
+        // A genuine failure must be distinguishable from a successful no-answer result (both otherwise
+        // produce the identical isThinking=false, answer=null shape), so the client can offer a retry.
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
+                eq(new IrisGlobalSearchAnswerWebsocketDTO("global-failed-run", false, null, null, null, null, null, false, true, null, null, null)));
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(failedJob, null, false);
     }
 
     @ParameterizedTest(name = "result={0}, state={1}, errorCode={2}")
@@ -181,7 +299,7 @@ class PyrisStatusUpdateServiceTest {
         }
         if (runState == PyrisRunState.RUNNING) {
             inOrder.verify(pyrisJobService).updateJob(job);
-            inOrder.verify(processingStateCallbackApi).handleHeartbeat(42L, "lecture-run");
+            inOrder.verify(processingStateCallbackApi).handleHeartbeat(42L, "lecture-run", null, null, null);
         }
         else {
             boolean success = runState == PyrisRunState.FINISHED;
@@ -219,8 +337,12 @@ class PyrisStatusUpdateServiceTest {
 
         service.handleStatusUpdate(globalJob, new PyrisGlobalSearchAnswerStatusUpdateDTO(null, null, null, null));
 
-        verify(irisWebsocketService).send("student1", "global-search-answer", new IrisGlobalSearchAnswerWebsocketDTO("global-null", false, null, null));
-        verify(pyrisJobService).removeJob(globalJob);
+        // A null run state resolves to FAILED (see the test name), which must reach the client as
+        // failed=true, not the same shape as a considered no-answer result.
+        verify(irisWebsocketService).send(eq("student1"), userTopic("/topic/iris/global-search-answer"),
+                eq(new IrisGlobalSearchAnswerWebsocketDTO("global-null", false, null, null, null, null, null, false, true, null, null, null)));
+        // A run without a state ends as failed, so it keeps no material versions for a handoff.
+        verify(pyrisJobService).finishGlobalSearchAnswerJob(globalJob, null, false);
 
         var lectureJob = new LectureIngestionWebhookJob("lecture-null", 1L, 2L, 42L);
 

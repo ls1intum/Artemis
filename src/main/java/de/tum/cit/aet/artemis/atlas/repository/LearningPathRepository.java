@@ -61,8 +61,8 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
             JOIN FETCH lp.user
             WHERE (lp.course.id = :courseId)
                 AND (
-                    lp.user.login LIKE %:searchTerm%
-                    OR CONCAT(lp.user.firstName, ' ', lp.user.lastName) LIKE %:searchTerm%
+                    LOWER(lp.user.login) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
+                    OR LOWER(CONCAT(lp.user.firstName, ' ', lp.user.lastName)) LIKE CONCAT('%', LOWER(CAST(:searchTerm AS string)), '%')
                 )
             """)
     Page<LearningPath> findWithEagerUserByLoginOrNameInCourse(@Param("searchTerm") String searchTerm, @Param("courseId") long courseId, Pageable pageable);

@@ -32,10 +32,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
@@ -49,7 +48,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupFreePeriodServi
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
-@FeatureUsage("management/free-periods")
+@FeatureUsage(UserFeature.TUTORIAL_GROUP_MANAGEMENT)
 @RestController
 @RequestMapping("api/tutorialgroup/")
 public class TutorialGroupFreePeriodResource {
@@ -61,7 +60,7 @@ public class TutorialGroupFreePeriodResource {
      *
      * The page asks for one month's grid, or for the span of a single holiday, so a year is already well past anything
      * it needs. The bound is there because the dates arrive straight from the request and the count materialises one
-     * row per session in the span: without it an instructor could ask for every session the course has ever held in one
+     * row per session in the span: without it an editor could ask for every session the course has ever held in one
      * call. It also keeps an extreme date such as {@code +999999999-12-31} from overflowing the exclusive upper bound
      * the count is taken over, which would answer 500 rather than saying the request was wrong.
      */
@@ -84,15 +83,11 @@ public class TutorialGroupFreePeriodResource {
 
     private final TutorialGroupFreePeriodService tutorialGroupFreePeriodService;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     public TutorialGroupFreePeriodResource(TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
-            TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository, TutorialGroupFreePeriodService tutorialGroupFreePeriodService,
-            AuthorizationCheckService authorizationCheckService) {
+            TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository, TutorialGroupFreePeriodService tutorialGroupFreePeriodService) {
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
         this.tutorialGroupFreePeriodRepository = tutorialGroupFreePeriodRepository;
         this.tutorialGroupFreePeriodService = tutorialGroupFreePeriodService;
-        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -106,14 +101,13 @@ public class TutorialGroupFreePeriodResource {
      */
     @GetMapping({ "courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialFreePeriodId}",
             "courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialFreePeriodId}" })
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<TutorialGroupFreePeriodDTO> getOneOfConfiguration(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @PathVariable("tutorialFreePeriodId") Long tutorialGroupFreePeriodId) {
         log.debug("REST request to get tutorial group free period: {} of tutorial group configuration {} of course: {}", tutorialGroupFreePeriodId, tutorialGroupsConfigurationId,
                 courseId);
         var freePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
         checkEntityIdMatchesPathIds(freePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, freePeriod.getTutorialGroupsConfiguration().getCourse(), null);
         return ResponseEntity.ok(TutorialGroupFreePeriodDTO.from(freePeriod));
     }
 
@@ -129,7 +123,7 @@ public class TutorialGroupFreePeriodResource {
      */
     @PutMapping({ "courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialFreePeriodId}",
             "courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialFreePeriodId}" })
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<TutorialGroupFreePeriodDTO> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @PathVariable("tutorialFreePeriodId") Long tutorialGroupFreePeriodId, @RequestBody @Valid TutorialGroupFreePeriodRequestDTO tutorialGroupFreePeriod)
             throws URISyntaxException {
@@ -140,7 +134,6 @@ public class TutorialGroupFreePeriodResource {
         }
         var existingFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
         checkEntityIdMatchesPathIds(existingFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingFreePeriod.getTutorialGroupsConfiguration().getCourse(), null);
 
         Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         var configuration = configurationOptional.orElseThrow(() -> new BadRequestException("The course has no tutorial groups configuration"));
@@ -178,7 +171,7 @@ public class TutorialGroupFreePeriodResource {
      */
     @PostMapping({ "courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}/tutorial-free-periods",
             "courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods" })
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<TutorialGroupFreePeriodDTO> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @RequestBody @Valid TutorialGroupFreePeriodRequestDTO tutorialGroupFreePeriod) throws URISyntaxException {
         log.debug("REST request to create TutorialGroupFreePeriod: {} for tutorial group configuration: {} of course: {}", tutorialGroupFreePeriod, tutorialGroupsConfigurationId,
@@ -191,7 +184,6 @@ public class TutorialGroupFreePeriodResource {
         if (tutorialGroupsConfiguration.getCourse().getTimeZone() == null) {
             throw new BadRequestException("The course has no time zone");
         }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupsConfiguration.getCourse(), null);
 
         TutorialGroupFreePeriod newTutorialGroupFreePeriod = new TutorialGroupFreePeriod();
         newTutorialGroupFreePeriod.setTutorialGroupsConfiguration(tutorialGroupsConfiguration);
@@ -223,14 +215,13 @@ public class TutorialGroupFreePeriodResource {
      */
     @DeleteMapping({ "courses/{courseId}/tutorial-groups-configurations/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialFreePeriodId}",
             "courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialFreePeriodId}" })
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> delete(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @PathVariable("tutorialFreePeriodId") Long tutorialGroupFreePeriodId) throws URISyntaxException {
         log.debug("REST request to delete TutorialGroupFreePeriod: {} of tutorial group configuration {} of course: {}", tutorialGroupFreePeriodId, tutorialGroupsConfigurationId,
                 courseId);
         TutorialGroupFreePeriod tutorialGroupFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
         checkEntityIdMatchesPathIds(tutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(), null);
         Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         TutorialGroupsConfiguration configuration = configurationOptional
                 .orElseThrow(() -> new BadRequestException("The course has no tutorial groups configuration with ID " + tutorialGroupsConfigurationId));
@@ -252,7 +243,7 @@ public class TutorialGroupFreePeriodResource {
      * @return ResponseEntity with status 200 (OK) and the counts of the days that hold at least one session
      */
     @GetMapping("courses/{courseId}/tutorial-free-periods/session-counts")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<TutorialGroupSessionCountDTO>> getSessionCounts(@PathVariable Long courseId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         log.debug("REST request to get tutorial group session counts between {} and {} of course: {}", from, to, courseId);
@@ -266,7 +257,6 @@ public class TutorialGroupFreePeriodResource {
             throw new BadRequestAlertException("The end of the span must not be later than " + LATEST_COUNTABLE_DAY, ENTITY_NAME, "endTooLate");
         }
         TutorialGroupsConfiguration configuration = getConfigurationElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);
         if (configuration.getCourse().getTimeZone() == null) {
             throw new BadRequestException("The course has no time zone");
         }
@@ -289,7 +279,7 @@ public class TutorialGroupFreePeriodResource {
      * @return ResponseEntity with status 200 (OK) and how many sessions saving would cancel
      */
     @GetMapping("courses/{courseId}/tutorial-free-periods/overlapping-session-count")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Long> getOverlappingSessionCount(@PathVariable Long courseId, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to, @RequestParam(required = false) Long editedFreePeriodId) {
         log.debug("REST request to count sessions between {} and {} of course: {}", from, to, courseId);
@@ -300,7 +290,6 @@ public class TutorialGroupFreePeriodResource {
             throw new BadRequestAlertException("The span must not cover more than " + MAX_SESSION_COUNT_SPAN_DAYS + " days", ENTITY_NAME, "spanTooLong");
         }
         TutorialGroupsConfiguration configuration = getConfigurationElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);
         if (configuration.getCourse().getTimeZone() == null) {
             throw new BadRequestException("The course has no time zone");
         }
@@ -325,11 +314,10 @@ public class TutorialGroupFreePeriodResource {
      * @return ResponseEntity with status 200 (OK) and one entry per free period of the course
      */
     @GetMapping("courses/{courseId}/tutorial-free-periods/session-counts-per-period")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<List<TutorialGroupFreePeriodSessionCountDTO>> getSessionCountsPerFreePeriod(@PathVariable Long courseId) {
         log.debug("REST request to count sessions per free period of course: {}", courseId);
         TutorialGroupsConfiguration configuration = getConfigurationElseThrow(courseId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);
         return ResponseEntity.ok(tutorialGroupFreePeriodService.countSessionsPerFreePeriod(configuration.getCourse()));
     }
 

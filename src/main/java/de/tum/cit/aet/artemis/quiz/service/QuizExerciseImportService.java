@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileSystemLocation;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseConfigurationService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
@@ -61,8 +62,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     public QuizExerciseImportService(QuizExerciseService quizExerciseService, ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository,
-            ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService, Optional<CompetencyProgressApi> competencyProgressApi) {
-        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
+            ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService, Optional<CompetencyProgressApi> competencyProgressApi,
+            ExerciseConfigurationService exerciseConfigurationService) {
+        super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService, exerciseConfigurationService);
         this.quizExerciseService = quizExerciseService;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
@@ -93,6 +95,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         // The first save is identity-preserving (the id was cleared, so Spring Data persists newExercise itself), so we
         // keep operating on the single newExercise reference instead of juggling the returned instances.
         quizExerciseService.save(newExercise);
+        initializeConfigurations(newExercise, newExercise);
 
         channelService.createExerciseChannel(newExercise, Optional.ofNullable(newExercise.getChannelName()));
 
@@ -195,19 +198,21 @@ public class QuizExerciseImportService extends ExerciseImportService {
         DragAndDropQuestion copy = new DragAndDropQuestion();
 
         // Copy background file
-        if (original.getBackgroundFilePath() != null) {
+        String originalBackgroundFilePath = original.getBackgroundFilePath();
+        if (originalBackgroundFilePath != null) {
             // Validate the value before any filesystem access to prevent path traversal
-            FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(original.getBackgroundFilePath());
-            Path oldPath = new FileSystemLocation.DragAndDropBackground(original.getBackgroundFilePath()).path().normalize();
+            FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(originalBackgroundFilePath);
+            Path oldPath = new FileSystemLocation.DragAndDropBackground(originalBackgroundFilePath).path().normalize();
             if (!oldPath.startsWith(FilePathConverter.getDragAndDropBackgroundFilePath().normalize())) {
                 throw new IllegalArgumentException("Invalid background file path: resolved path is outside the expected directory");
             }
             if (Files.exists(oldPath)) {
                 Path newPath = FileUtil.copyExistingFileToTarget(oldPath, FilePathConverter.getDragAndDropBackgroundFilePath(), FilePathType.DRAG_AND_DROP_BACKGROUND);
-                copy.setBackgroundFilePath(newPath.getFileName().toString());
+                // copyExistingFileToTarget returns null when the copy fails, and one unreadable background must not abort the whole quiz import
+                copy.setBackgroundFilePath(newPath == null ? originalBackgroundFilePath : newPath.getFileName().toString());
             }
             else {
-                copy.setBackgroundFilePath(original.getBackgroundFilePath());
+                copy.setBackgroundFilePath(originalBackgroundFilePath);
             }
         }
         else {
@@ -240,12 +245,13 @@ public class QuizExerciseImportService extends ExerciseImportService {
     }
 
     private void copyDragItemFile(DragItem source, DragItem target) {
-        if (source.getPictureFilePath() == null) {
+        String sourcePictureFilePath = source.getPictureFilePath();
+        if (sourcePictureFilePath == null) {
             return;
         }
         // Validate the value before any filesystem access to prevent path traversal
-        FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(source.getPictureFilePath());
-        Path oldPath = new FileSystemLocation.DragItem(source.getPictureFilePath()).path().normalize();
+        FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(sourcePictureFilePath);
+        Path oldPath = new FileSystemLocation.DragItem(sourcePictureFilePath).path().normalize();
         if (!oldPath.startsWith(FilePathConverter.getDragItemFilePath().normalize())) {
             throw new IllegalArgumentException("Invalid drag item file path: resolved path is outside the expected directory");
         }

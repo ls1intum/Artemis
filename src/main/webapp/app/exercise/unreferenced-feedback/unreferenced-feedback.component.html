@@ -1,5 +1,5 @@
 <div class="unreferenced-feedback" (drop)="createAssessmentOnDrop($event)" (dragover)="$event.preventDefault()">
-    <button type="button" tumUiButton severity="success" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
+    <button type="button" tumAetUiButton severity="success" size="small" class="add-unreferenced-feedback" (click)="addUnreferencedFeedback()" [disabled]="readOnly()">
         <span jhiTranslate="artemisApp.fileUploadAssessment.addFeedback"></span>
     </button>
 
@@ -35,8 +35,8 @@
         }
     </div>
 
-    @if (unreferencedFeedback.length + feedbackSuggestions().length === 0) {
-        <tum-ui-message severity="secondary" styleClass="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
+    @if (unreferencedFeedback.length === 0) {
+        <tumaet-ui-message severity="secondary" styleClass="mt-2" [text]="'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate" />
     }
 
     @for (group of feedbackGroups(); track $index) {
@@ -48,7 +48,7 @@
                     } @else {
                         <h5 class="unreferenced-feedback__group-title">{{ group.title }}</h5>
                     }
-                    <tum-ui-tag [severity]="group.pointsSeverity" [value]="'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: group.points }" />
+                    <tumaet-ui-tag [severity]="group.pointsSeverity" [value]="'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: group.points }" />
                 </header>
             }
             <div class="unreferenced-feedback__cards">
@@ -60,28 +60,6 @@
                         (onFeedbackDelete)="deleteFeedback(feedback)"
                         [readOnly]="readOnly()"
                         [highlightDifferences]="highlightDifferences()"
-                        [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText()"
-                    />
-                }
-            </div>
-        </section>
-    }
-
-    @if (feedbackSuggestions().length > 0) {
-        <section class="unreferenced-feedback__group">
-            <header class="unreferenced-feedback__group-header">
-                <h5 class="unreferenced-feedback__group-title" jhiTranslate="artemisApp.assessment.detail.feedbackSuggestions"></h5>
-            </header>
-            <div class="unreferenced-feedback__cards">
-                @for (suggestion of feedbackSuggestions(); track suggestion) {
-                    <jhi-unreferenced-feedback-detail
-                        [feedback]="suggestion"
-                        [resultId]="resultId()"
-                        [isSuggestion]="true"
-                        [readOnly]="true"
-                        (onAcceptSuggestion)="acceptSuggestion($event)"
-                        (onDiscardSuggestion)="discardSuggestion($event)"
-                        [useDefaultFeedbackSuggestionBadgeText]="useDefaultFeedbackSuggestionBadgeText()"
                     />
                 }
             </div>

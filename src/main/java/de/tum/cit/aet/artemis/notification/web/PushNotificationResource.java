@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationApiType;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.notification.domain.push_notification.PushNotificationDeviceConfigurationId;
@@ -50,7 +51,7 @@ import io.jsonwebtoken.ExpiredJwtException;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("delivery/push-devices")
+@FeatureUsage(UserFeature.MOBILE_APPS)
 @RestController
 @RequestMapping("api/notification/push_notification/")
 public class PushNotificationResource {

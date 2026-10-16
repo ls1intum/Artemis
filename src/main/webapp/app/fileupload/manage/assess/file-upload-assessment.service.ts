@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Service, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -20,9 +20,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 export type EntityResponseType = HttpResponse<Result>;
 type FileUploadResultDTOResponseType = HttpResponse<FileUploadResultDTO>;
 
-@Injectable({
-    providedIn: 'root',
-})
+@Service()
 export class FileUploadAssessmentService {
     private http = inject(HttpClient);
 

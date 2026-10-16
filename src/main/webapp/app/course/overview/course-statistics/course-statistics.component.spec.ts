@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
@@ -27,7 +28,7 @@ import { CourseOverviewExercisesService } from 'app/course/overview/services/cou
 import { CourseExercisesForOverviewDTO } from 'app/course/shared/entities/course-exercises-for-overview-dto';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { TumUiChartTooltipConfig } from '@tumaet/ui-angular';
+import { TumAetUiChartTooltipConfig } from '@tumaet/ui-angular';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -387,8 +388,25 @@ describe('CourseStatisticsComponent', () => {
         vi.restoreAllMocks();
     });
 
+    it('should size the total score doughnut chart in the component stylesheet, because its template is not scanned by Tailwind', () => {
+        // tailwind.css only generates utilities for the directories listed in its @source rules, so a class like h-[350px] on this template
+        // produces no CSS: the chart then collapses to a ring of about 110px on a phone and its centered label is offset from it.
+        const directory = 'src/main/webapp/app/course/overview/course-statistics/course-statistics.component';
+        const template = readFileSync(`${directory}.html`, 'utf8');
+        const stylesheet = readFileSync(`${directory}.scss`, 'utf8');
+
+        expect(template).toContain('data-testid="total-score-doughnut"');
+        // Only the doughnut block is checked, so unrelated elements of the template may still use such utilities
+        const doughnutBlock = template.slice(template.indexOf('data-testid="total-score-doughnut"'));
+        const doughnutChart = doughnutBlock.slice(0, doughnutBlock.indexOf('</div>', doughnutBlock.indexOf('</div>') + 1));
+        expect(doughnutChart).not.toMatch(/\b[hw]-\[\d+px\]/);
+        // The wrapper stays a square that never grows beyond the screen, and the label is centered over the same box
+        expect(stylesheet).toMatch(/\.doughnut-wrapper\s*\{[^}]*width:\s*350px;[^}]*max-width:\s*100%;[^}]*aspect-ratio:\s*1\s*\/\s*1/);
+        expect(stylesheet).toMatch(/\.chart-text\s*\{[^}]*inset:\s*0;/);
+    });
+
     it('should show the translated doughnut chart label as tooltip title and the value as body', () => {
-        const tooltip = comp.doughnutConfig().tooltip as TumUiChartTooltipConfig;
+        const tooltip = comp.doughnutConfig.tooltip as TumAetUiChartTooltipConfig;
         const datum = { seriesIndex: 0, index: 0, label: 'artemisApp.courseOverview.statistics.missingPointsLabel', value: 400 };
 
         expect(tooltip.title!([datum])).toBe('artemisApp.courseOverview.statistics.missingPointsLabel');

@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismAnswerPostCreateRequestDTO;
@@ -33,7 +34,7 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAnswerPostService;
  */
 @Conditional(PlagiarismEnabled.class)
 @Lazy
-@FeatureUsage("cases/answer-posts")
+@FeatureUsage(UserFeature.PLAGIARISM_CASES)
 @RestController
 @RequestMapping("api/plagiarism/")
 public class PlagiarismAnswerPostResource {

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.struggle;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.eq;
@@ -174,7 +175,7 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
         });
         // ...and a per-user 'active' event WAS pushed on the per-user struggle topic (sessionId set so the client opens/fetches).
         ArgumentCaptor<Object> activePayload = ArgumentCaptor.forClass(Object.class);
-        verify(websocketMessagingService, timeout(5000)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/struggle-intervention"), activePayload.capture());
+        verify(websocketMessagingService, timeout(5000)).sendMessageToUser(eq(TEST_PREFIX + "student1"), userTopic("/topic/iris/struggle-intervention"), activePayload.capture());
         assertThat(activePayload.getValue()).isInstanceOf(StruggleInterventionEventDTO.class);
         var activeEvent = (StruggleInterventionEventDTO) activePayload.getValue();
         assertThat(activeEvent.action()).isEqualTo("active");
@@ -215,7 +216,7 @@ class IrisStruggleInterventionRoundTripTest extends AbstractIrisIntegrationTest 
 
         // The ambient event is pushed to the per-user topic.
         ArgumentCaptor<Object> ambientPayload = ArgumentCaptor.forClass(Object.class);
-        verify(websocketMessagingService, timeout(5000)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/struggle-intervention"), ambientPayload.capture());
+        verify(websocketMessagingService, timeout(5000)).sendMessageToUser(eq(TEST_PREFIX + "student1"), userTopic("/topic/iris/struggle-intervention"), ambientPayload.capture());
         assertThat(ambientPayload.getValue()).isInstanceOf(StruggleInterventionEventDTO.class);
         var ambientEvent = (StruggleInterventionEventDTO) ambientPayload.getValue();
         assertThat(ambientEvent.kind()).isEqualTo("decide");

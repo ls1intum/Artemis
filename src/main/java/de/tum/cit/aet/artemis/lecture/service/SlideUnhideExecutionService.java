@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import java.time.ZonedDateTime;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -32,7 +34,7 @@ public class SlideUnhideExecutionService {
     }
 
     /**
-     * Unhides a slide by setting its hidden property to null.
+     * Unhides a slide by setting its hidden property to null, if its hidden date has passed.
      * After unhiding, regenerates the student version of the attachment.
      *
      * @param slideId The ID of the slide to unhide
@@ -42,8 +44,12 @@ public class SlideUnhideExecutionService {
             // A slide always belongs to a unit; the attachment behind that unit is what may be missing.
             Attachment attachment = slide.getAttachmentVideoUnit().getAttachment();
 
-            // Use repository method to handle transaction
-            slideRepository.unhideSlide(slideId);
+            // Use repository method to handle transaction. It only unhides the slide if its hidden date has passed, as it may have been moved
+            // to a later point after this task started
+            if (slideRepository.unhideSlideIfDue(slideId, ZonedDateTime.now()) == 0) {
+                log.debug("Did not unhide slide {} because it is not hidden or its hidden date has not passed yet", slideId);
+                return;
+            }
             log.debug("Unhid slide {}", slideId);
 
             // Regenerate student version of the attachment if applicable

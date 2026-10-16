@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.exam.service;
 
+import static de.tum.cit.aet.artemis.exam.web.ExamWebsocketTopics.IMPORT_PROGRESS;
+
 import java.util.List;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.core.security.websocket.WebsocketUserDestination;
 import de.tum.cit.aet.artemis.exam.domain.ExamImportProgressState;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseImportStatus;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportProgressDTO;
@@ -19,16 +22,11 @@ import de.tum.cit.aet.artemis.exam.dto.ExamImportProgressDTO;
  */
 class ExamImportProgressNotifier {
 
-    /**
-     * Prefix of the user-scoped websocket destination the client subscribes to ({@code /user/topic/exam-import/{importId}}).
-     */
-    private static final String TOPIC_PREFIX = "/topic/exam-import/";
-
     private final WebsocketMessagingService websocketMessagingService;
 
     private final String userLogin;
 
-    private final String topic;
+    private final WebsocketUserDestination topic;
 
     private final boolean active;
 
@@ -39,7 +37,7 @@ class ExamImportProgressNotifier {
     ExamImportProgressNotifier(WebsocketMessagingService websocketMessagingService, String userLogin, String importId) {
         this.websocketMessagingService = websocketMessagingService;
         this.userLogin = userLogin;
-        this.topic = importId == null ? null : TOPIC_PREFIX + importId;
+        this.topic = importId == null ? null : IMPORT_PROGRESS.at(importId);
         this.active = userLogin != null && importId != null;
     }
 

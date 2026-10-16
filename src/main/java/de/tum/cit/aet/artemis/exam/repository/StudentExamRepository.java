@@ -310,8 +310,12 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * the exam row and the full exercise row - problem statement included - once per student exam, so its size grows
      * with students times exercises even though the distinct data does not.
      *
+     * Test runs are left out: they set up their own participations when they are created, flagged as test run, and the
+     * preparation here would add graded ones alongside them that the test run never reads back. The flag is nullable and
+     * only ever set on a test run, so a null has to count as a regular student exam rather than drop it.
+     *
      * @param examId the id of the exam
-     * @return one row per exercise of every student exam of the exam, test runs included
+     * @return one row per exercise of every student exam of the exam, test runs excluded
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exam.dto.StudentExamExerciseStartDTO(studentExam.id, student.id, student.login, exercise.id)
@@ -319,13 +323,15 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 JOIN studentExam.user student
                 JOIN studentExam.exercises exercise
             WHERE studentExam.exam.id = :examId
+                AND (studentExam.testRun IS NULL OR studentExam.testRun = FALSE)
             ORDER BY studentExam.id, exercise.id
             """)
     List<StudentExamExerciseStartDTO> findExerciseStartDataByExamId(@Param("examId") long examId);
 
     /**
      * The same rows as {@link #findExerciseStartDataByExamId}, restricted to the given student exams. Ids that do not
-     * belong to the exam simply do not match, so callers cannot prepare exercises across exams.
+     * belong to the exam, and ids of test runs, simply do not match, so callers cannot prepare exercises across exams
+     * or interfere with a test run.
      *
      * @param examId         the id of the exam
      * @param studentExamIds the ids of the student exams to read
@@ -338,6 +344,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 JOIN studentExam.exercises exercise
             WHERE studentExam.exam.id = :examId
                 AND studentExam.id IN :studentExamIds
+                AND (studentExam.testRun IS NULL OR studentExam.testRun = FALSE)
             ORDER BY studentExam.id, exercise.id
             """)
     List<StudentExamExerciseStartDTO> findExerciseStartDataByExamIdAndStudentExamIds(@Param("examId") long examId, @Param("studentExamIds") Collection<Long> studentExamIds);
@@ -371,6 +378,30 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             )
             """)
     Optional<StudentExamWorkingPeriodDTO> findNewestWorkingPeriodByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
+
+    /**
+     * Checks whether an exercise is part of the newest student exam of a student in an exam, ignoring instructor test runs. An earlier attempt of a test exam does
+     * not count, because the exercises of an attempt are assigned to it alone.
+     *
+     * @param examId     the id of the exam
+     * @param userId     the id of the student
+     * @param exerciseId the id of the exercise
+     * @return true if the newest student exam of the student contains the exercise
+     */
+    @Query("""
+            SELECT COUNT(e.id) > 0
+            FROM StudentExam se
+                JOIN se.exercises e
+            WHERE se.id = (
+                SELECT MAX(se2.id)
+                FROM StudentExam se2
+                WHERE se2.exam.id = :examId
+                    AND se2.user.id = :userId
+                    AND (se2.testRun IS NULL OR se2.testRun = FALSE)
+            )
+                AND e.id = :exerciseId
+            """)
+    boolean isExerciseOfNewestStudentExam(@Param("examId") long examId, @Param("userId") long userId, @Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT se
@@ -447,6 +478,22 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * @return True if the given user id has a matching StudentExam in the given exam and course, else false.
      */
     boolean existsByExam_CourseIdAndExamIdAndUserId(long courseId, long examId, long userId);
+
+    @Query("""
+            SELECT COUNT(studentExam) > 0
+            FROM StudentExam studentExam
+            WHERE studentExam.id = :studentExamId
+                AND studentExam.user.login = :login
+            """)
+    boolean existsByIdAndUserLogin(@Param("studentExamId") long studentExamId, @Param("login") String login);
+
+    @Query("""
+            SELECT COUNT(studentExam) > 0
+            FROM StudentExam studentExam
+            WHERE studentExam.exam.id = :examId
+                AND studentExam.user.login = :login
+            """)
+    boolean existsByExamIdAndUserLogin(@Param("examId") long examId, @Param("login") String login);
 
     @Query("""
             SELECT DISTINCT se

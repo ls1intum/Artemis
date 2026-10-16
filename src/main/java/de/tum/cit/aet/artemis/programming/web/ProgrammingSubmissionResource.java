@@ -35,12 +35,12 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.repository.CourseAthenaConfigRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -52,8 +52,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForAssessmentDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionForTutorAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingFeedbackSynthesizerService;
@@ -66,7 +66,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("submission/submissions")
+@FeatureUsage(UserFeature.PROGRAMMING_RESULTS)
 @RestController
 @RequestMapping("api/programming/")
 public class ProgrammingSubmissionResource {
@@ -222,6 +222,7 @@ public class ProgrammingSubmissionResource {
      * @param exerciseId to identify the programming exercise.
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_REEVALUATION)
     @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build-all")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
@@ -231,7 +232,7 @@ public class ProgrammingSubmissionResource {
         // own membership query.
         User user = userRepository.getUserWithCourseRolesAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
-        programmingTriggerService.logTriggerInstructorBuild(user, exercise, exercise.getCourseViaExerciseGroupOrCourseMember());
+        programmingTriggerService.logTriggerInstructorBuild(user, exercise, exercise.getCourseViaExerciseGroupOrCourseMemberElseThrow());
         programmingTriggerService.triggerInstructorBuildForExercise(exerciseId);
         return ResponseEntity.ok().build();
     }
@@ -246,6 +247,7 @@ public class ProgrammingSubmissionResource {
      * @param participationIds list of participation ids.
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
+    @FeatureUsage(UserFeature.PROGRAMMING_REEVALUATION)
     @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
@@ -281,6 +283,7 @@ public class ProgrammingSubmissionResource {
      * @param assessedByTutor if the submission was assessed by calling tutor.
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/programming-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<ProgrammingSubmissionForAssessmentDTO>> getAllProgrammingSubmissions(@PathVariable Long exerciseId,
@@ -309,9 +312,9 @@ public class ProgrammingSubmissionResource {
         }
         // The nested exercise is not part of this list payload (the dashboard already holds the exercise), matching
         // the service, which detaches it from the participations before returning them.
-        boolean hideParticipant = !authCheckService.isAtLeastInstructorForExercise(exercise);
+        boolean hideParticipant = !participationAuthCheckService.canSeeParticipantInformation(exercise);
         var submissionDTOs = programmingSubmissions.stream().map(submission -> {
-            var response = ProgrammingSubmissionForAssessmentDTO.ofWithLoadedResults(submission, null);
+            var response = ProgrammingSubmissionForAssessmentDTO.ofWithLoadedResults(submission);
             return hideParticipant ? response.withoutParticipantInformation() : response;
         }).toList();
         return ResponseEntity.ok().body(submissionDTOs);
@@ -324,9 +327,10 @@ public class ProgrammingSubmissionResource {
      * @param correctionRound correction round for which we prepare the submission
      * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("programming-submissions/{submissionId}/lock")
     @EnforceAtLeastTutor
-    public ResponseEntity<ProgrammingSubmissionForAssessmentDTO> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
+    public ResponseEntity<ProgrammingSubmissionForTutorAssessmentDTO> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get ProgrammingSubmission with id: {}", submissionId);
         var programmingSubmission = (ProgrammingSubmission) submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
@@ -344,7 +348,7 @@ public class ProgrammingSubmissionResource {
         }
 
         programmingSubmissionService.checkThatAssessmentIsPossibleElseThrow(programmingExercise, participation);
-        programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, correctionRound);
+        programmingSubmissionService.checkCorrectionRoundIsValidElseThrow(programmingExercise, submissionId, correctionRound);
         if (!programmingExercise.areManualResultsAllowed()) {
             throw new AccessForbiddenException("Creating manual results is disabled for this exercise!");
         }
@@ -368,8 +372,6 @@ public class ProgrammingSubmissionResource {
             programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmission(programmingSubmission.getId(), correctionRound);
         }
 
-        // Determine visibility before hideDetails removes participant information from the entity.
-        boolean hideParticipant = !canSeeParticipantInformation(programmingSubmission.getParticipation(), programmingExercise, user);
         // prepare programming submission for response (double-blind assessment: removes the participant for tutors)
         programmingSubmissionService.hideDetails(programmingSubmission, user);
 
@@ -388,8 +390,7 @@ public class ProgrammingSubmissionResource {
             resultsForResponse = List.of(resultForCorrectionRound);
         }
 
-        var response = ProgrammingSubmissionForAssessmentDTO.of(programmingSubmission, ProgrammingExerciseResponseDTO.of(programmingExercise), resultsForResponse);
-        return ResponseEntity.ok(hideParticipant ? response.withoutParticipantInformation() : response);
+        return ResponseEntity.ok(ProgrammingSubmissionForTutorAssessmentDTO.of(programmingSubmission, programmingExercise, resultsForResponse));
     }
 
     /**
@@ -400,9 +401,10 @@ public class ProgrammingSubmissionResource {
      * @param correctionRound the correction round for which we want to find the submission
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
+    @FeatureUsage(UserFeature.MANUAL_ASSESSMENT)
     @GetMapping("exercises/{exerciseId}/programming-submission-without-assessment")
     @EnforceAtLeastTutor
-    public ResponseEntity<ProgrammingSubmissionForAssessmentDTO> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
+    public ResponseEntity<ProgrammingSubmissionForTutorAssessmentDTO> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
 
@@ -438,7 +440,6 @@ public class ProgrammingSubmissionResource {
             // NOTE: we explicitly load the feedback for the submission eagerly to avoid org.hibernate.LazyInitializationException
             submission = programmingSubmissionService.lockAndGetProgrammingSubmission(submission.getId(), correctionRound);
         }
-        boolean hideParticipant = !canSeeParticipantInformation(submission.getParticipation(), programmingExercise, user);
         programmingSubmissionService.hideDetails(submission, user);
         // Only the manual results belong in the response. Filtering happens in the mapper, never by mutating the
         // managed submission, whose result collection is mapped with orphanRemoval.
@@ -447,12 +448,6 @@ public class ProgrammingSubmissionResource {
         // attach the synthesized legacy views so the tutor sees the automatic feedback in the editor
         manualResults.forEach(result -> programmingFeedbackSynthesizerService.attachSynthesizedFeedback(result, programmingExercise, false));
 
-        var response = ProgrammingSubmissionForAssessmentDTO.of(submission, ProgrammingExerciseResponseDTO.of(programmingExercise), manualResults);
-        return ResponseEntity.ok(hideParticipant ? response.withoutParticipantInformation() : response);
-    }
-
-    private boolean canSeeParticipantInformation(Participation participation, Exercise exercise, User user) {
-        return authCheckService.isAtLeastInstructorForExercise(exercise, user)
-                || participation instanceof StudentParticipation studentParticipation && authCheckService.isOwnerOfParticipation(studentParticipation, user);
+        return ResponseEntity.ok(ProgrammingSubmissionForTutorAssessmentDTO.of(submission, programmingExercise, manualResults));
     }
 }

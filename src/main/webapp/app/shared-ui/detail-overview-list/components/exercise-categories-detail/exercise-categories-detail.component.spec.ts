@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NgStyle } from '@angular/common';
 import { ExerciseCategoriesDetailComponent } from 'app/shared-ui/detail-overview-list/components/exercise-categories-detail/exercise-categories-detail.component';
 import { ExerciseCategoriesDetail } from 'app/shared-ui/detail-overview-list/detail.model';
 import { DetailType } from 'app/shared-ui/detail-overview-list/detail-overview-list.component';
@@ -18,7 +17,7 @@ describe('ExerciseCategoriesDetailComponent', () => {
         })
             .overrideComponent(ExerciseCategoriesDetailComponent, {
                 set: {
-                    imports: [NgStyle, MockComponent(NoDataComponent)],
+                    imports: [MockComponent(NoDataComponent)],
                 },
             })
             .compileComponents();

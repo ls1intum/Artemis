@@ -1,6 +1,14 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.AdditionalAnswers.delegatesTo;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,6 +22,7 @@ import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
+import de.tum.cit.aet.artemis.atlas.service.profile.LearnerProfileService;
 
 class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
 
@@ -70,6 +79,21 @@ class LearnerProfileResourceTest extends AbstractAtlasIntegrationTest {
         // Optionally, assert that the profile now exists in the database
         LearnerProfile createdProfile = learnerProfileRepository.findByUserElseThrow(testUser);
         assertThat(createdProfile).isNotNull();
+    }
+
+    @Test
+    void testGetOrCreateLearnerProfile_CreatedConcurrently_ReturnsExistingProfile() {
+        // A concurrent request created the profile after this one looked for it: the first lookup misses it, later ones read the database
+        LearnerProfileRepository racingRepository = mock(LearnerProfileRepository.class, delegatesTo(learnerProfileRepository));
+        doAnswer(invocation -> Optional.empty()).doAnswer(delegatesTo(learnerProfileRepository)).when(racingRepository).findByUser(testUser);
+
+        LearnerProfile profile = new LearnerProfileService(racingRepository).getOrCreateLearnerProfile(testUser);
+
+        // The attempt to create a second profile failed on the unique constraint, and the existing profile is returned instead
+        verify(racingRepository).save(any(LearnerProfile.class));
+        assertThat(profile.getId()).isEqualTo(testProfile.getId());
+        assertThat(profile.getFeedbackDetail()).isEqualTo(1);
+        assertThat(learnerProfileRepository.findAllByUserIn(Set.of(testUser))).extracting(LearnerProfile::getId).containsExactly(testProfile.getId());
     }
 
     @Test

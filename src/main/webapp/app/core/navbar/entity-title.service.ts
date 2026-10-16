@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable, OnDestroy, inject } from '@angular/core';
+import { OnDestroy, Service, inject } from '@angular/core';
 import { captureException } from '@sentry/angular';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EMPTY, Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
@@ -22,12 +22,12 @@ const FETCH_FALLBACK_TIMEOUT = 3000;
 /**
  * Provides titles for entities, currently used by breadcrumbs
  */
-@Injectable({ providedIn: 'root' })
+@Service()
 export class EntityTitleService implements OnDestroy {
     private http = inject(HttpClient);
     private readonly accountService = inject(AccountService);
 
-    private readonly titleSubjects = new Map<string, { subject: Subject<string>; timeout?: ReturnType<typeof setTimeout> }>();
+    private readonly titleSubjects = new Map<string, { subject: Subject<string>; revision: number; timeout?: ReturnType<typeof setTimeout> }>();
 
     /**
      * Incremented on every {@link resetState} run. Captured by {@link fetchTitle} when it issues
@@ -51,11 +51,13 @@ export class EntityTitleService implements OnDestroy {
 
     ngOnDestroy(): void {
         this.authenticationStateSubscription?.unsubscribe();
+        // Cancel pending fallback fetches; otherwise they would call HttpClient on a destroyed injector.
+        this.resetState();
     }
 
     /**
      * Clears the cached title subjects and any pending fetch timeouts. Called on logout / user change
-     * so the next user does not see the previous user's entity titles in breadcrumbs.
+     * so the next user does not see the previous user's entity titles in breadcrumbs, and on destroy.
      */
     private resetState(): void {
         this.stateGeneration++;
@@ -89,6 +91,7 @@ export class EntityTitleService implements OnDestroy {
             const { subject } = this.titleSubjects.computeIfAbsent(mapKey, () => ({
                 timeout: setTimeout(() => this.fetchTitle(type, ids), FETCH_FALLBACK_TIMEOUT),
                 subject: new ReplaySubject<string>(1),
+                revision: 0,
             }));
 
             return subject.asObservable();
@@ -116,14 +119,16 @@ export class EntityTitleService implements OnDestroy {
 
             const mapKey = EntityTitleService.createMapKey(type, ids as number[]);
 
-            const { subject, timeout } = this.titleSubjects.computeIfAbsent(mapKey, () => ({
+            const entry = this.titleSubjects.computeIfAbsent(mapKey, () => ({
                 subject: new ReplaySubject<string>(1),
+                revision: 0,
             }));
 
-            subject.next(title);
+            entry.revision++;
+            entry.subject.next(title);
 
-            if (timeout) {
-                clearTimeout(timeout);
+            if (entry.timeout) {
+                clearTimeout(entry.timeout);
             }
         } catch (e) {
             captureException(e);
@@ -179,11 +184,13 @@ export class EntityTitleService implements OnDestroy {
         }
 
         const generation = this.stateGeneration;
+        const mapKey = EntityTitleService.createMapKey(type, ids);
+        const revision = this.titleSubjects.get(mapKey)?.revision;
         this.http.get(`${resourceUrl}/${ids[0]}/title`, { observe: 'response', responseType: 'text' }).subscribe((response: HttpResponse<string>) => {
             // Skip the write-back if a logout / user change happened between the request being issued
             // and the response arriving — otherwise we would repopulate the cleared cache (and via
             // setTitle's computeIfAbsent, seed a fresh subject) with the previous user's title.
-            if (this.stateGeneration !== generation) return;
+            if (this.stateGeneration !== generation || this.titleSubjects.get(mapKey)?.revision !== revision) return;
             if (response.body) {
                 this.setTitle(type, ids, response.body);
             }

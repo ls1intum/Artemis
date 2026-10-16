@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceSuperAdmin;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 /**
  * REST controller for public endpoints regarding the webauthn (Web Authentication) API, e.g. used for passkeys.
@@ -41,7 +42,7 @@ import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
  */
 @Conditional(PasskeyEnabled.class)
 @Lazy
-@FeatureUsage("account/passkeys")
+@FeatureUsage(UserFeature.PASSKEYS)
 @RestController
 @RequestMapping("api/account/passkeys/")
 public class PasskeyResource {
@@ -100,8 +101,8 @@ public class PasskeyResource {
         return ResponseEntity.ok(passkeys);
     }
 
-    private <T> ResponseEntity<T> logAndReturnNotFound(String credentialId) {
-        log.warn("Credential with id {} not found in the repository", credentialId);
+    private <T> ResponseEntity<T> logAndReturnNotFound() {
+        log.warn("A requested credential was not found in the repository");
         return ResponseEntity.notFound().build();
     }
 
@@ -115,26 +116,25 @@ public class PasskeyResource {
     @PutMapping("{passkeyId}")
     @EnforceAtLeastStudent
     public ResponseEntity<PasskeyDTO> updatePasskeyLabel(@PathVariable("passkeyId") @Base64Url String credentialId, @RequestBody PasskeyDTO passkeyWithUpdatedLabel) {
-        log.debug("Updating label for passkey with id: {}", credentialId);
-
         User currentUser = userRepository.getUser();
+        log.debug("User with id {} is updating the label of a passkey", currentUser.getId());
         Optional<PasskeyCredential> credentialToBeUpdated = passkeyCredentialsRepository.findByCredentialId(credentialId);
 
         if (credentialToBeUpdated.isEmpty()) {
-            return logAndReturnNotFound(credentialId);
+            return logAndReturnNotFound();
         }
 
         PasskeyCredential passkeyCredential = credentialToBeUpdated.get();
         boolean isUserAllowedToUpdatePasskey = passkeyCredential.getUser().getId().equals(currentUser.getId());
         if (!isUserAllowedToUpdatePasskey) {
-            log.warn("User with id {} tried to update credential with id {} of another user", currentUser.getId(), credentialId);
+            log.warn("User with id {} tried to update passkey {} owned by user {}", currentUser.getId(), passkeyCredential.getId(), passkeyCredential.getUser().getId());
             return ResponseEntity.notFound().build();
         }
 
         passkeyCredential.setLabel(passkeyWithUpdatedLabel.label());
         PasskeyCredential updatedPasskey = passkeyCredentialsRepository.save(passkeyCredential);
 
-        log.debug("Successfully updated label for passkey with id: {}", credentialId);
+        log.debug("Successfully updated label of a passkey of user with id {}", currentUser.getId());
         return ResponseEntity.ok(updatedPasskey.toDto());
     }
 
@@ -147,18 +147,18 @@ public class PasskeyResource {
     @DeleteMapping("{passkeyId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deletePasskey(@PathVariable("passkeyId") @Base64Url String credentialId) {
-        log.debug("Deleting passkey with id: {}", credentialId);
-
         User currentUser = userRepository.getUser();
+        log.debug("User with id {} is deleting a passkey", currentUser.getId());
         Optional<PasskeyCredential> credentialToBeDeleted = passkeyCredentialsRepository.findByCredentialId(credentialId);
 
         if (credentialToBeDeleted.isEmpty()) {
-            return logAndReturnNotFound(credentialId);
+            return logAndReturnNotFound();
         }
 
         boolean isUserAllowedToDeletePasskey = credentialToBeDeleted.get().getUser().getId().equals(currentUser.getId());
         if (!isUserAllowedToDeletePasskey) {
-            log.warn("User with id {} tried to delete credential with id {} of other user", currentUser.getId(), credentialId);
+            log.warn("User with id {} tried to delete passkey {} owned by user {}", currentUser.getId(), credentialToBeDeleted.get().getId(),
+                    credentialToBeDeleted.get().getUser().getId());
             return ResponseEntity.notFound().build();
         }
 
@@ -181,7 +181,7 @@ public class PasskeyResource {
         Optional<PasskeyCredential> credentialToBeUpdated = passkeyCredentialsRepository.findByCredentialId(credentialId);
 
         if (credentialToBeUpdated.isEmpty()) {
-            return logAndReturnNotFound(credentialId);
+            return logAndReturnNotFound();
         }
 
         PasskeyCredential passkeyCredential = credentialToBeUpdated.get();

@@ -40,7 +40,7 @@ export class ExamExerciseGroupsPage {
         }
         // The action collapsed into the row's ellipsis overflow menu, which the kit renders in an overlay popover.
         await overflowTrigger.click();
-        await this.page.locator('.tum-ui-popover-panel').getByTestId(`exercise-action-${actionId}`).click();
+        await this.page.locator('.tumaet-ui-popover-panel').getByTestId(`exercise-action-${actionId}`).click();
     }
 
     /**
@@ -51,7 +51,14 @@ export class ExamExerciseGroupsPage {
         const addButton = this.page.locator(`#group-${groupID}`).getByTestId('add-exercise-button');
         await addButton.waitFor({ state: 'visible', timeout: 30000 });
         await addButton.click();
+        // The form of a new exam exercise is only complete once the exercise group it belongs to has been loaded: a save before that is
+        // rejected with "An exercise must have either a course or an exerciseGroup". So the group's response is awaited before the test
+        // starts filling in the form.
+        const groupLoaded = this.page.waitForResponse(
+            (response) => response.request().method() === 'GET' && new RegExp(`/exercise-groups/${groupID}(\\?.*)?$`).test(response.url()),
+        );
         await this.page.getByTestId(`create-${type}-exercise`).click();
+        await groupLoaded;
     }
 
     async clickDeleteGroup(groupID: number, groupName: string) {

@@ -14,7 +14,9 @@ import java.util.regex.Pattern;
  */
 final class LinkPreviewUrlValidator {
 
-    private static final Pattern VALID_DOMAIN_PATTERN = Pattern.compile("^(?!-)([a-zA-Z0-9-]{1,63}\\.)+[a-zA-Z]{2,20}$");
+    private static final Pattern DOMAIN_LABEL_PATTERN = Pattern.compile("[a-zA-Z0-9-]{1,63}");
+
+    private static final Pattern TOP_LEVEL_DOMAIN_PATTERN = Pattern.compile("[a-zA-Z]{2,20}");
 
     private final HostAddressResolver hostAddressResolver;
 
@@ -41,13 +43,33 @@ final class LinkPreviewUrlValidator {
         return new ValidatedUrl(uri, ipv4Addresses);
     }
 
+    /**
+     * Checks that the host consists of at least two dot-separated labels, does not start with a hyphen, and ends in an alphabetic top-level domain.
+     * Splitting first keeps the matching linear instead of relying on a regular expression with a repeated group.
+     */
+    private static boolean isValidDomain(String host) {
+        if (host.startsWith("-")) {
+            return false;
+        }
+        String[] labels = host.split("\\.", -1);
+        if (labels.length < 2 || !TOP_LEVEL_DOMAIN_PATTERN.matcher(labels[labels.length - 1]).matches()) {
+            return false;
+        }
+        for (int i = 0; i < labels.length - 1; i++) {
+            if (!DOMAIN_LABEL_PATTERN.matcher(labels[i]).matches()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private boolean isValidUri(URI uri) {
         String scheme = uri.getScheme();
         String host = uri.getHost();
         int port = uri.getPort();
 
         return scheme != null && ("http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme)) && host != null && uri.getUserInfo() == null && port <= 65535
-                && !isIpAddress(host) && VALID_DOMAIN_PATTERN.matcher(host).matches();
+                && !isIpAddress(host) && isValidDomain(host);
     }
 
     private boolean isIpAddress(String host) {

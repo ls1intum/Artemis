@@ -1,15 +1,13 @@
 package de.tum.cit.aet.artemis.globalsearch.web;
 
-import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -25,26 +23,23 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseForSearchFilterDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
-import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.GlobalSearchResultRanker;
+import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityAccessFilterService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
  * REST controller for the unified global search endpoint backed by Weaviate.
@@ -56,14 +51,20 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
  */
 @Lazy
 @Conditional(WeaviateEnabled.class)
-@FeatureUsage("search/global-search")
+@FeatureUsage(UserFeature.GLOBAL_SEARCH)
 @RestController
 @RequestMapping("api/")
-@Tag(name = "Global Search Resource", description = "Weaviate-based semantic search across courses, exercises, lectures, lecture units, exams, FAQs, and public communication channels including their messages and replies")
+@Tag(name = "Global Search Resource", description = "Weaviate-based semantic search across courses, exercises, lectures, lecture units, exams, FAQs, and communication channels")
 public class GlobalSearchResource {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalSearchResource.class);
 
+    /**
+     * Every discriminator the collection holds, which is what {@code types} and {@code excludeTypes} accept. Posts and answer
+     * posts are among them but are not searchable (see {@link SearchableEntityAccessFilterService#SEARCHABLE_TYPES}): naming
+     * them matches nothing instead of failing the request, so a client built while they were searchable, which still sends
+     * them alongside {@code channel}, keeps getting its channels rather than a 400.
+     */
     private static final Set<String> VALID_TYPES = Set.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.LECTURE,
             SearchableEntitySchema.TypeValues.LECTURE_UNIT, SearchableEntitySchema.TypeValues.EXAM, SearchableEntitySchema.TypeValues.FAQ,
             SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.TypeValues.COURSE, SearchableEntitySchema.TypeValues.POST,
@@ -76,30 +77,29 @@ public class GlobalSearchResource {
      */
     private static final int MAX_COURSE_ID_FILTERS = 100;
 
+    /** How many rows are read from Weaviate per requested result, so ranking and de-duplication still fill the limit. */
+    private static final int CANDIDATE_FACTOR = 4;
+
+    /** Upper bound on the rows read from Weaviate for one search. */
+    private static final int MAX_CANDIDATES = 100;
+
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
+
+    private final SearchableEntityAccessFilterService accessFilterService;
 
     private final CourseRepository courseRepository;
 
     private final UserRepository userRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final ExerciseRepository exerciseRepository;
 
-    private final ChannelRepository channelRepository;
-
-    private final Optional<StudentExamApi> studentExamRepository;
-
-    public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, ChannelRepository channelRepository,
-            Optional<StudentExamApi> studentExamRepository) {
+    public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, SearchableEntityAccessFilterService accessFilterService,
+            CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository) {
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
+        this.accessFilterService = accessFilterService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
-        this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
-        this.channelRepository = channelRepository;
-        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -109,8 +109,8 @@ public class GlobalSearchResource {
      * compound {@code OR}-of-{@code AND}s filter so access control cannot leak across types.
      *
      * @param query            the search query (may be empty to browse recent items)
-     * @param types            optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel,course,post,answer_post}
-     *                             or {@code all}; default {@code all})
+     * @param types            optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel,course}
+     *                             or {@code all}; default {@code all}); {@code post} and {@code answer_post} are accepted but match nothing
      * @param excludeTypes     optional comma-separated list of types to hide; a row whose type is listed is dropped
      *                             regardless of {@code types}
      * @param courseIds        optional course ids to scope the search to one or more courses (OR); inaccessible or unknown ids are ignored
@@ -123,14 +123,15 @@ public class GlobalSearchResource {
     @GetMapping("search")
     @EnforceAtLeastStudent
     @Operation(summary = "Perform a unified semantic search across entity types", description = """
-            Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels, courses, posts, answer posts)
-            with a consistent response format. When courseIds is not specified, the search is performed
+            Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels, courses)
+            with a consistent response format. Messages and replies are not searchable; the types post and answer_post are
+            accepted for compatibility but match nothing. When courseIds is not specified, the search is performed
             globally across all courses the authenticated user has access to. Per-type access rules are
             enforced server-side via compound Weaviate filters.""")
     @ApiResponse(responseCode = "200", description = "Search results matching the query")
     @ApiResponse(responseCode = "400", description = "Unsupported entity type requested, or more course IDs than the endpoint accepts")
     public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") @Parameter(description = "Search query; can be empty to retrieve recent items") String query,
-            @RequestParam(value = "types", required = false) @Parameter(description = "Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel, course, post, answer_post) or 'all'; default 'all'") String types,
+            @RequestParam(value = "types", required = false) @Parameter(description = "Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel, course) or 'all'; default 'all'. post and answer_post are accepted but match nothing") String types,
             @RequestParam(value = "excludeTypes", required = false) @Parameter(description = "Comma-separated entity types to hide from the results; applied after 'types'") String excludeTypes,
             @RequestParam(value = "courseIds", required = false) @Parameter(description = "Course IDs to restrict the search to one or more courses (OR); inaccessible IDs are ignored") List<Long> courseIds,
             @RequestParam(value = "excludeCourseIds", required = false) @Parameter(description = "Course IDs to exclude from the search; results in these courses are hidden") List<Long> excludeCourseIds,
@@ -168,12 +169,23 @@ public class GlobalSearchResource {
             return ResponseEntity.badRequest().build();
         }
 
-        FilterBuildResult filterResult = buildSearchableItemFilter(user, includedCourseIds, excludeCourseIds, requestedTypes, hiddenTypes);
+        // rejectInaccessibleCourseIds=false: an OR across several courses must never fail outright on
+        // one stale or inaccessible id — inaccessible/unknown ids are silently dropped instead (see the
+        // shared service's javadoc for the contrast with the throwing caller). The service takes a
+        // non-null excludeCourseIds (its other caller always guarantees one); this request parameter is
+        // optional, so a missing one is normalized to empty here rather than pushed onto the service.
+        List<Long> excludedCourseIds = excludeCourseIds == null ? List.of() : excludeCourseIds;
+        SearchableEntityAccessFilterService.FilterBuildResult filterResult = accessFilterService.buildSearchableItemFilter(user, includedCourseIds, excludedCourseIds,
+                requestedTypes, hiddenTypes, false);
         if (!filterResult.hasAccess()) {
             return ResponseEntity.ok(List.of());
         }
 
-        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), effectiveLimit);
+        // A search is over-fetched, because the ranking below moves rows of running courses up and drops older semester
+        // copies of an item; the limit applies after that. A browse without a query is returned in Weaviate's order.
+        boolean hasQuery = query != null && !query.isBlank();
+        int candidateLimit = hasQuery ? Math.min(MAX_CANDIDATES, effectiveLimit * CANDIDATE_FACTOR) : effectiveLimit;
+        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), candidateLimit);
 
         Map<Long, Course> coursesById;
         Set<Long> staffCourseIds;
@@ -192,18 +204,49 @@ public class GlobalSearchResource {
         }
         Map<Long, String> courseNameById = new HashMap<>();
         coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
+        List<Map<String, Object>> rankedResults = GlobalSearchResultRanker.rank(rawResults, hasQuery, coursesById, ZonedDateTime.now());
+        if (hasQuery && rankedResults.size() < effectiveLimit && rawResults.size() == candidateLimit && candidateLimit < MAX_CANDIDATES) {
+            // Merging semester copies shrank a cut-off candidate set below the limit, so more distinct matches may lie
+            // beyond it. Reading the larger set keeps a short result list meaning "no more matches", which is what the
+            // client relies on to offer more results.
+            rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), MAX_CANDIDATES);
+            if (filterResult.accessibleCoursesById() == null) {
+                coursesById = resolveCoursesById(rawResults);
+                courseNameById.clear();
+                coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
+                staffCourseIds = coursesById.keySet();
+                editorCourseIds = coursesById.keySet();
+            }
+            rankedResults = GlobalSearchResultRanker.rank(rawResults, hasQuery, coursesById, ZonedDateTime.now());
+        }
+        rawResults = rankedResults.subList(0, Math.min(rankedResults.size(), effectiveLimit));
 
         Map<Long, Long> exerciseGroupIdByExerciseId = resolveExerciseGroupIds(rawResults);
-        Map<Long, String> channelNameById = resolveChannelNames(rawResults);
         List<GlobalSearchResultDTO> resultDTOs = new ArrayList<>();
         for (Map<String, Object> properties : rawResults) {
-            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds, editorCourseIds,
-                    channelNameById);
+            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds,
+                    editorCourseIds);
             if (dto != null) {
                 resultDTOs.add(dto);
             }
         }
         return ResponseEntity.ok(resultDTOs);
+    }
+
+    /**
+     * GET /api/search/course-options : the courses the user can scope a global search to.
+     * <p>
+     * Lists every course an unscoped search covers, past courses included, so the {@code course:} filter can narrow to
+     * any of them. The client ranks the active ones first.
+     *
+     * @return status 200 with the user's accessible courses and whether each is still active
+     */
+    @GetMapping("search/course-options")
+    @EnforceAtLeastStudent
+    @Operation(summary = "List the courses a global search can be scoped to", description = "Returns every course the user has access to, active and past, with an active flag.")
+    @ApiResponse(responseCode = "200", description = "The courses the user can filter the global search by")
+    public ResponseEntity<List<CourseForSearchFilterDTO>> getCourseFilterOptions() {
+        return ResponseEntity.ok(accessFilterService.findCourseFilterOptions(userRepository.getUserIdElseThrow()));
     }
 
     /**
@@ -238,7 +281,7 @@ public class GlobalSearchResource {
      */
     private static Set<String> parseTypes(String types) {
         if (types == null || types.isBlank() || "all".equalsIgnoreCase(types.trim())) {
-            return new LinkedHashSet<>(VALID_TYPES);
+            return new LinkedHashSet<>(SearchableEntityAccessFilterService.SEARCHABLE_TYPES);
         }
         Set<String> result = new LinkedHashSet<>();
         for (String token : types.split(",")) {
@@ -323,614 +366,4 @@ public class GlobalSearchResource {
         }
         return result;
     }
-
-    /**
-     * Resolves channel names for all post and answer_post results in the Weaviate results.
-     */
-    private Map<Long, String> resolveChannelNames(List<Map<String, Object>> rawResults) {
-        Set<Long> channelIds = new HashSet<>();
-        for (Map<String, Object> properties : rawResults) {
-            Object type = properties.get(SearchableEntitySchema.Properties.TYPE);
-            if (!SearchableEntitySchema.TypeValues.POST.equals(type) && !SearchableEntitySchema.TypeValues.ANSWER_POST.equals(type)) {
-                continue;
-            }
-            Object rawId = properties.get(SearchableEntitySchema.Properties.CHANNEL_ID);
-            if (rawId instanceof Number number) {
-                channelIds.add(number.longValue());
-            }
-        }
-        if (channelIds.isEmpty()) {
-            return Map.of();
-        }
-        Map<Long, String> result = new HashMap<>();
-        channelRepository.findAllById(channelIds).forEach(channel -> result.put(channel.getId(), channel.getName()));
-        return result;
-    }
-
-    /**
-     * Compound filter build result. {@code filter} may be {@code null} (admin access: no filter),
-     * and {@code hasAccess} may be {@code false} (user has no accessible courses → short-circuit empty).
-     * <p>
-     * {@code accessibleCoursesById} and {@code staffCourseIds} are populated for non-admin paths
-     * (and admin-with-courseIds) so the caller can resolve course names and staff membership without
-     * a redundant database round-trip. Both are {@code null} for admin-global (no courseIds filter)
-     * searches, where the result courses are unknown until after the Weaviate query.
-     */
-    private record FilterBuildResult(Filter filter, boolean hasAccess, Map<Long, Course> accessibleCoursesById, Set<Long> staffCourseIds, Set<Long> editorCourseIds) {
-    }
-
-    /**
-     * Per-student exam registration data, pre-fetched once per request to scope exam and exam
-     * exercise visibility to the student's actual registrations and assigned exercises.
-     *
-     * @param registeredExamIds       IDs of non-test exams where the student has a StudentExam
-     * @param assignedExamExerciseIds IDs of exercises assigned to the student's StudentExams
-     */
-    private record StudentExamInfo(Set<Long> registeredExamIds, Set<Long> assignedExamExerciseIds) {
-    }
-
-    private StudentExamInfo fetchStudentExamInfo(long userId, List<Long> studentCourseIds) {
-        if (studentCourseIds.isEmpty() || studentExamRepository.isEmpty()) {
-            return null;
-        }
-        StudentExamApi api = studentExamRepository.get();
-        Set<Long> registeredExamIds = api.findRegisteredNonTestExamIdsByUserIdAndCourseIds(userId, studentCourseIds);
-        Set<Long> assignedExerciseIds = api.findAssignedExamExerciseIdsByUserIdAndCourseIds(userId, studentCourseIds);
-        return new StudentExamInfo(registeredExamIds, assignedExerciseIds);
-    }
-
-    /**
-     * Builds the compound per-type filter for the current request. Returns:
-     * <ul>
-     * <li>{@code hasAccess = false} if the user has no accessible courses (caller short-circuits with empty list)</li>
-     * <li>{@code filter = null} for admins (Weaviate query runs with no filter)</li>
-     * <li>an {@code OR}-of-{@code AND}s filter with one disjunct per requested type otherwise</li>
-     * </ul>
-     */
-    private FilterBuildResult buildSearchableItemFilter(User user, List<Long> courseIds, List<Long> excludeCourseIds, Set<String> requestedTypes, Set<String> hiddenTypes) {
-        // Decide if the filters should be applied
-        boolean isAdmin = authCheckService.isCurrentUserAdminAccessEnabled();
-        boolean hasCourseFilter = courseIds != null && !courseIds.isEmpty();
-        boolean hasExcludeFilter = excludeCourseIds != null && !excludeCourseIds.isEmpty();
-        boolean needsCommFiltering = requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL) || requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)
-                || requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST);
-
-        if (isAdmin && !hasCourseFilter && !needsCommFiltering) {
-            // Admin, no include filter, no communication filtering: the cheap type-discriminator filter already
-            // covers visibility. An exclude filter is applied as a single NOT clause rather than enumerating the
-            // complement course set (which for an admin would be every course in the instance).
-            Filter adminFilter = buildTypeDiscriminatorFilter(requestedTypes, hiddenTypes);
-            if (hasExcludeFilter) {
-                // Safe because every indexed row carries a non-null course_id: course rows use their own id as
-                // course_id (CourseSearchableEntityDTO), and every other entity DTO writes the owning course_id.
-                // So this NOT-clause never evaluates against an absent property (whose negation semantics are
-                // version-dependent in Weaviate); a row is dropped iff its course_id is in the exclude set.
-                adminFilter = Filter.and(adminFilter, courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, excludeCourseIds).not());
-            }
-            return new FilterBuildResult(adminFilter, true, null, null, null);
-        }
-        List<Course> accessibleCourses;
-        if (isAdmin && !hasCourseFilter) {
-            accessibleCourses = courseRepository.findAll();
-        }
-        else if (hasCourseFilter) {
-            // Scope to the requested courses the user can actually access. Inaccessible or unknown ids are dropped
-            // rather than rejected, so an OR across courses never 403s on a single stale id.
-            Set<Long> requestedCourseIds = new HashSet<>(courseIds);
-            if (isAdmin) {
-                accessibleCourses = new ArrayList<>();
-                courseRepository.findAllById(requestedCourseIds).forEach(accessibleCourses::add);
-            }
-            else {
-                accessibleCourses = courseRepository.findAllAccessibleCoursesForUserAndIdIn(user.getId(), false, requestedCourseIds);
-            }
-            if (accessibleCourses.isEmpty()) {
-                return new FilterBuildResult(null, false, null, null, null);
-            }
-        }
-        else {
-            accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getId(), false);
-            if (accessibleCourses.isEmpty()) {
-                return new FilterBuildResult(null, false, null, null, null);
-            }
-        }
-        // Drop excluded courses so their results are hidden. Runs after include/access resolution, so an
-        // exclusion can only ever narrow the set the user may already see (never widen access).
-        if (hasExcludeFilter) {
-            Set<Long> excludedIds = new HashSet<>(excludeCourseIds);
-            accessibleCourses = accessibleCourses.stream().filter(course -> !excludedIds.contains(course.getId())).toList();
-            if (accessibleCourses.isEmpty()) {
-                return new FilterBuildResult(null, false, null, null, null);
-            }
-        }
-        List<Course> accessibleCoursesEnabledCommunication = accessibleCourses.stream()
-                .filter(course -> course.getCourseInformationSharingConfiguration().isAnyCommunicationEnabled()).toList();
-
-        CourseRoleSets roleSets = groupCoursesByRole(user, accessibleCourses);
-        CourseRoleSets roleSetsEnabledCommunication = groupCoursesByRole(user, accessibleCoursesEnabledCommunication);
-        StudentExamInfo studentExamInfo = fetchStudentExamInfo(user.getId(), roleSets.studentCourseIds());
-
-        Map<Long, Course> accessibleCoursesById = new HashMap<>();
-        for (Course course : accessibleCourses) {
-            accessibleCoursesById.put(course.getId(), course);
-        }
-        Set<Long> staffCourseIds = new HashSet<>(roleSets.staffCourseIds());
-        Set<Long> editorCourseIds = new HashSet<>(roleSets.editorCourseIds());
-
-        List<Filter> disjuncts = new ArrayList<>();
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE)) {
-            if (isAdmin && !hasCourseFilter) {
-                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE));
-            }
-            else {
-                Filter disjunct = buildExerciseDisjunct(roleSets, studentExamInfo);
-                if (disjunct != null) {
-                    disjuncts.add(disjunct);
-                }
-            }
-
-        }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE)) {
-            if (isAdmin && !hasCourseFilter) {
-                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.LECTURE));
-            }
-            else {
-                Filter disjunct = buildLectureDisjunct(roleSets);
-                if (disjunct != null) {
-                    disjuncts.add(disjunct);
-                }
-            }
-        }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.LECTURE_UNIT)) {
-            if (isAdmin && !hasCourseFilter) {
-                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT));
-            }
-            else {
-                Filter disjunct = buildLectureUnitDisjunct(roleSets);
-                if (disjunct != null) {
-                    disjuncts.add(disjunct);
-                }
-            }
-        }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.EXAM)) {
-            if (isAdmin && !hasCourseFilter) {
-                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.EXAM));
-            }
-            else {
-                Filter disjunct = buildExamDisjunct(roleSets, studentExamInfo);
-                if (disjunct != null) {
-                    disjuncts.add(disjunct);
-                }
-            }
-
-            // When the exam filter is active, also include exercises that belong to exams
-            // As above: skip the expansion when exercises were explicitly hidden rather than merely not asked for.
-            boolean isExerciseTypeAlreadyRequested = requestedTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
-            boolean areExercisesHidden = hiddenTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
-            if (!isExerciseTypeAlreadyRequested && !areExercisesHidden) {
-                Filter examExerciseDisjunct = buildExamExerciseDisjunct(roleSets, studentExamInfo);
-                if (examExerciseDisjunct != null) {
-                    disjuncts.add(examExerciseDisjunct);
-                }
-            }
-        }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.FAQ)) {
-            if (isAdmin && !hasCourseFilter) {
-                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.FAQ));
-            }
-            else {
-                Filter disjunct = buildFaqDisjunct(roleSets);
-                if (disjunct != null) {
-                    disjuncts.add(disjunct);
-                }
-            }
-        }
-        // Only search within courses where communication configuration is active
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.CHANNEL)) {
-            Filter disjunct = buildChannelDisjunct(roleSetsEnabledCommunication);
-            if (disjunct != null) {
-                disjuncts.add(disjunct);
-            }
-        }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.COURSE)) {
-            if (isAdmin && !hasCourseFilter) {
-                disjuncts.add(typeEquals(SearchableEntitySchema.TypeValues.COURSE));
-            }
-            else {
-                Filter disjunct = buildCourseDisjunct(roleSets);
-                if (disjunct != null) {
-                    disjuncts.add(disjunct);
-                }
-            }
-        }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.POST)) {
-            Filter disjunct = buildPostDisjunct(roleSetsEnabledCommunication);
-            if (disjunct != null) {
-                disjuncts.add(disjunct);
-            }
-        }
-        if (requestedTypes.contains(SearchableEntitySchema.TypeValues.ANSWER_POST)) {
-            Filter disjunct = buildAnswerPostDisjunct(roleSetsEnabledCommunication);
-            if (disjunct != null) {
-                disjuncts.add(disjunct);
-            }
-        }
-
-        if (disjuncts.isEmpty()) {
-            return new FilterBuildResult(null, false, null, null, null);
-        }
-        Filter combined = disjuncts.size() == 1 ? disjuncts.getFirst() : Filter.or(disjuncts.toArray(new Filter[0]));
-        // Admin without an include filter builds unscoped type-discriminator disjuncts (e.g. typeEquals(exercise)), so
-        // narrowing the accessible-course set above never reaches them. Apply the exclusion as a single course_id NOT
-        // IN (...) clause here too, mirroring the fast path. Safe because every indexed row carries a non-null
-        // course_id, so the negation never evaluates against an absent property.
-        if (isAdmin && !hasCourseFilter && hasExcludeFilter) {
-            combined = Filter.and(combined, courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, excludeCourseIds).not());
-        }
-        return new FilterBuildResult(combined, true, accessibleCoursesById, staffCourseIds, editorCourseIds);
-    }
-
-    /**
-     * Per-course role classification, computed once per request and reused across type disjuncts.
-     */
-    private record CourseRoleSets(List<Long> editorCourseIds, List<Long> taCourseIds, List<Long> studentCourseIds, List<Long> staffCourseIds, List<Long> allAccessibleCourseIds) {
-    }
-
-    private CourseRoleSets groupCoursesByRole(User user, List<Course> courses) {
-        List<Long> editorCourseIds = new ArrayList<>();
-        List<Long> taCourseIds = new ArrayList<>();
-        List<Long> studentCourseIds = new ArrayList<>();
-        for (Course course : courses) {
-            Role role = getUserRoleInCourse(user, course);
-            switch (role) {
-                case EDITOR, INSTRUCTOR -> editorCourseIds.add(course.getId());
-                case TEACHING_ASSISTANT -> taCourseIds.add(course.getId());
-                default -> studentCourseIds.add(course.getId());
-            }
-        }
-        List<Long> staffCourseIds = new ArrayList<>(editorCourseIds.size() + taCourseIds.size());
-        staffCourseIds.addAll(editorCourseIds);
-        staffCourseIds.addAll(taCourseIds);
-
-        List<Long> allAccessibleCourseIds = new ArrayList<>(courses.size());
-        for (Course course : courses) {
-            allAccessibleCourseIds.add(course.getId());
-        }
-        return new CourseRoleSets(editorCourseIds, taCourseIds, studentCourseIds, staffCourseIds, allAccessibleCourseIds);
-    }
-
-    private Role getUserRoleInCourse(User user, Course course) {
-        if (authCheckService.isAtLeastEditorInCourse(course, user)) {
-            return Role.EDITOR;
-        }
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            return Role.TEACHING_ASSISTANT;
-        }
-        return Role.STUDENT;
-    }
-
-    /**
-     * Builds the exercise type disjunct. Editors see all exercises in their courses; teaching
-     * assistants see exercises with non-automatic assessment (regular exercises unconditionally,
-     * exam exercises only after the exam ends); students see released regular exercises and exam
-     * exercises after the exam starts.
-     *
-     * @param roleSets the per-course role classification for the current user
-     * @return a filter matching exercises the user may access, or {@code null} if no courses qualify
-     */
-    private Filter buildExerciseDisjunct(CourseRoleSets roleSets, StudentExamInfo studentExamInfo) {
-        List<Filter> subBranches = new ArrayList<>();
-        if (!roleSets.editorCourseIds().isEmpty()) {
-            subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.editorCourseIds()));
-        }
-        if (!roleSets.taCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.taCourseIds()), exerciseAccessFilter(Role.TEACHING_ASSISTANT, null)));
-        }
-        if (!roleSets.studentCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()), exerciseAccessFilter(Role.STUDENT, studentExamInfo)));
-        }
-        Filter combined = combineOr(subBranches);
-        return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE), combined);
-    }
-
-    private static Filter exerciseAccessFilter(Role role, StudentExamInfo studentExamInfo) {
-        OffsetDateTime now = OffsetDateTime.now();
-        if (role == Role.TEACHING_ASSISTANT) {
-            // TAs: regular exercises are always visible (tutor uses the student view).
-            // Exam exercises are only visible after the exam ends and only if the exercise is
-            // assessable by TAs (not quiz, and programming only with manual/semi-automatic assessment).
-            Filter regularExercises = Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false);
-
-            Filter notProgrammingAndNotQuiz = Filter.and(Filter.property(SearchableEntitySchema.Properties.EXERCISE_TYPE).eq(ExerciseType.PROGRAMMING.getValue()).not(),
-                    Filter.property(SearchableEntitySchema.Properties.EXERCISE_TYPE).eq(ExerciseType.QUIZ.getValue()).not());
-            Filter programmingWithManualAssessment = Filter.and(Filter.property(SearchableEntitySchema.Properties.EXERCISE_TYPE).eq(ExerciseType.PROGRAMMING.getValue()),
-                    Filter.or(Filter.property(SearchableEntitySchema.Properties.ASSESSMENT_TYPE).eq(AssessmentType.SEMI_AUTOMATIC.name()),
-                            Filter.property(SearchableEntitySchema.Properties.ASSESSMENT_TYPE).eq(AssessmentType.MANUAL.name()),
-                            Filter.property(SearchableEntitySchema.Properties.ASSESSMENT_TYPE).eq(AssessmentType.AUTOMATIC_ATHENA.name())));
-            Filter assessableExamExercise = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
-                    Filter.property(SearchableEntitySchema.Properties.EXAM_END_DATE).lte(now), Filter.or(notProgrammingAndNotQuiz, programmingWithManualAssessment));
-
-            return Filter.or(regularExercises, assessableExamExercise);
-        }
-        // Students: released regular exercises + only assigned exam exercises after exam start
-        Filter releasedRegularExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(false),
-                Filter.or(Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).lte(now), Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull()));
-
-        if (studentExamInfo != null && !studentExamInfo.assignedExamExerciseIds().isEmpty()) {
-            // Only show exam exercises that are assigned to the student's individual exam
-            Filter assignedExamExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
-                    Filter.property(SearchableEntitySchema.Properties.EXAM_START_DATE).lte(now),
-                    Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).containsAny(studentExamInfo.assignedExamExerciseIds().toArray(new Long[0])));
-            return Filter.or(releasedRegularExercises, assignedExamExercises);
-        }
-        if (studentExamInfo != null) {
-            // Student has no assigned exam exercises (not registered for any exam)
-            return releasedRegularExercises;
-        }
-        // Fallback: studentExamInfo not available, use original behavior
-        Filter startedExamExercises = Filter.and(Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true),
-                Filter.property(SearchableEntitySchema.Properties.EXAM_START_DATE).lte(now));
-        return Filter.or(releasedRegularExercises, startedExamExercises);
-    }
-
-    /**
-     * Builds the lecture type disjunct. All users with course access can see lectures in their courses
-     * (no additional visibility constraints).
-     * <p>
-     * The {@code type} discriminator uses Weaviate's default {@code word} tokenization, which indexes
-     * {@code "lecture_unit"} as the tokens {@code ["lecture", "unit"]}. A {@code type Equal "lecture"}
-     * filter therefore also matches {@code lecture_unit} rows, which would drag them into this branch
-     * that has no release-date guard and leak unreleased lecture units. The explicit
-     * {@code type NotEqual "lecture_unit"} clause removes only the unit rows (they carry both tokens),
-     * while genuine {@code lecture} rows (token {@code ["lecture"]}) are kept; lecture units are gated
-     * by {@link #buildLectureUnitDisjunct(CourseRoleSets)} instead.
-     *
-     * @param roleSets the per-course role classification for the current user
-     * @return a filter matching lectures the user may access, or {@code null} if no courses qualify
-     */
-    private Filter buildLectureDisjunct(CourseRoleSets roleSets) {
-        if (roleSets.allAccessibleCourseIds().isEmpty()) {
-            return null;
-        }
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE), typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT).not(),
-                courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
-    }
-
-    /**
-     * Builds the lecture unit type disjunct. Staff members (editors, instructors, TAs) see all lecture
-     * units in their courses; students only see lecture units whose release date has passed or is unset.
-     *
-     * @param roleSets the per-course role classification for the current user
-     * @return a filter matching lecture units the user may access, or {@code null} if no courses qualify
-     */
-    private Filter buildLectureUnitDisjunct(CourseRoleSets roleSets) {
-        OffsetDateTime now = OffsetDateTime.now();
-        List<Filter> subBranches = new ArrayList<>();
-        if (!roleSets.staffCourseIds().isEmpty()) {
-            subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
-        }
-        if (!roleSets.studentCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()),
-                    Filter.or(Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).lte(now), Filter.property(SearchableEntitySchema.Properties.RELEASE_DATE).isNull())));
-        }
-        Filter combined = combineOr(subBranches);
-        return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.LECTURE_UNIT), combined);
-    }
-
-    /**
-     * Builds the exam exercise disjunct. This is used when the exam type filter is active but the exercise
-     * type filter is not, to include exercises belonging to exams in the results. Applies the same
-     * role-based visibility rules as {@link #buildExerciseDisjunct(CourseRoleSets, StudentExamInfo)} but restricts
-     * results to exam exercises only ({@code is_exam_exercise = true}).
-     *
-     * @param roleSets the per-course role classification for the current user
-     * @return a filter matching exam exercises the user may access, or {@code null} if no courses qualify
-     */
-    private Filter buildExamExerciseDisjunct(CourseRoleSets roleSets, StudentExamInfo studentExamInfo) {
-        List<Filter> subBranches = new ArrayList<>();
-        if (!roleSets.editorCourseIds().isEmpty()) {
-            subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.editorCourseIds()));
-        }
-        if (!roleSets.taCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.taCourseIds()), exerciseAccessFilter(Role.TEACHING_ASSISTANT, null)));
-        }
-        if (!roleSets.studentCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()), exerciseAccessFilter(Role.STUDENT, studentExamInfo)));
-        }
-        Filter combined = combineOr(subBranches);
-        if (combined == null) {
-            return null;
-        }
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE), Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true), combined);
-    }
-
-    /**
-     * Builds the exam type disjunct. Editors and instructors see all exams in their courses;
-     * teaching assistants and students only see exams whose visible date has passed.
-     *
-     * @param roleSets the per-course role classification for the current user
-     * @return a filter matching exams the user may access, or {@code null} if no courses qualify
-     */
-    private Filter buildExamDisjunct(CourseRoleSets roleSets, StudentExamInfo studentExamInfo) {
-        OffsetDateTime now = OffsetDateTime.now();
-        List<Filter> subBranches = new ArrayList<>();
-        if (!roleSets.editorCourseIds().isEmpty()) {
-            subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.editorCourseIds()));
-        }
-        // TAs: all exams with visible_date <= now
-        if (!roleSets.taCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.taCourseIds()),
-                    Filter.property(SearchableEntitySchema.Properties.VISIBLE_DATE).lte(now)));
-        }
-        // Students: test exams (visible to all) + registered regular exams, both gated by visible_date
-        if (!roleSets.studentCourseIds().isEmpty()) {
-            Filter studentExamFilter = buildStudentExamFilter(roleSets.studentCourseIds(), studentExamInfo, now);
-            if (studentExamFilter != null) {
-                subBranches.add(studentExamFilter);
-            }
-        }
-        Filter combined = combineOr(subBranches);
-        return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXAM), combined);
-    }
-
-    /**
-     * Builds the exam filter for students. Test exams are visible to all students (after visible_date),
-     * while regular exams are only visible if the student has a StudentExam registration.
-     */
-    private static Filter buildStudentExamFilter(List<Long> studentCourseIds, StudentExamInfo studentExamInfo, OffsetDateTime now) {
-        Filter courseFilter = courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, studentCourseIds);
-        Filter visibleFilter = Filter.property(SearchableEntitySchema.Properties.VISIBLE_DATE).lte(now);
-
-        if (studentExamInfo == null) {
-            // Fallback: studentExamInfo not available, show all visible exams (original behavior)
-            return Filter.and(courseFilter, visibleFilter);
-        }
-
-        List<Filter> branches = new ArrayList<>();
-        // Test exams: always visible to students in their courses
-        branches.add(Filter.and(courseFilter, visibleFilter, Filter.property(SearchableEntitySchema.Properties.TEST_EXAM).eq(true)));
-        // Regular exams: only if registered
-        if (!studentExamInfo.registeredExamIds().isEmpty()) {
-            branches.add(Filter.and(courseFilter, visibleFilter,
-                    Filter.property(SearchableEntitySchema.Properties.ENTITY_ID).containsAny(studentExamInfo.registeredExamIds().toArray(new Long[0]))));
-        }
-        return combineOr(branches);
-    }
-
-    /**
-     * Builds the FAQ type disjunct. Staff members (editors, instructors, TAs) see all FAQs in their
-     * courses; students only see FAQs with state {@code ACCEPTED}.
-     *
-     * @param roleSets the per-course role classification for the current user
-     * @return a filter matching FAQs the user may access, or {@code null} if no courses qualify
-     */
-    private Filter buildFaqDisjunct(CourseRoleSets roleSets) {
-        List<Filter> subBranches = new ArrayList<>();
-        if (!roleSets.staffCourseIds().isEmpty()) {
-            subBranches.add(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.staffCourseIds()));
-        }
-        if (!roleSets.studentCourseIds().isEmpty()) {
-            subBranches.add(Filter.and(courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.studentCourseIds()),
-                    Filter.property(SearchableEntitySchema.Properties.FAQ_STATE).eq("ACCEPTED")));
-        }
-        Filter combined = combineOr(subBranches);
-        return combined == null ? null : Filter.and(typeEquals(SearchableEntitySchema.TypeValues.FAQ), combined);
-    }
-
-    /**
-     * Builds the channel type disjunct. All users with course access can see channels that are either
-     * course-wide or public within their courses.
-     *
-     * @param roleSets the per-course role classification for the current user
-     * @return a filter matching channels the user may access, or {@code null} if no courses qualify
-     */
-    private Filter buildChannelDisjunct(CourseRoleSets roleSets) {
-        if (roleSets.allAccessibleCourseIds().isEmpty()) {
-            return null;
-        }
-        Filter courseScope = courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds());
-        Filter visibility = Filter.or(Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_COURSE_WIDE).eq(true),
-                Filter.property(SearchableEntitySchema.Properties.CHANNEL_IS_PUBLIC).eq(true));
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.CHANNEL), courseScope, visibility);
-    }
-
-    /**
-     * Builds the course type disjunct. Users see courses they have access to (no additional
-     * visibility constraints beyond course membership).
-     *
-     * @param roleSets the per-course role classification for the current user
-     * @return a filter matching courses the user may access, or {@code null} if no courses qualify
-     */
-    private Filter buildCourseDisjunct(CourseRoleSets roleSets) {
-        if (roleSets.allAccessibleCourseIds().isEmpty()) {
-            return null;
-        }
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.COURSE), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
-    }
-
-    /**
-     * Builds the post type disjunct. Posts are only indexed for public channels, so course membership
-     * is sufficient for access (no additional channel-level visibility check needed).
-     * <p>
-     * Carries the same {@code type}-tokenization guard as {@link #buildLectureDisjunct(CourseRoleSets)}:
-     * {@code "answer_post"} is indexed as the tokens {@code ["answer", "post"]}, so {@code type Equal "post"}
-     * also matches answer-post rows and a caller asking for posts would get replies mixed in. Unlike the
-     * lecture case this is a correctness rather than an access problem, because answer posts are gated by
-     * the same course membership, but the filter must still mean what it says.
-     *
-     * @param roleSets the per-course role classification for the current user
-     * @return a filter matching posts the user may access, or {@code null} if no courses qualify
-     */
-    private Filter buildPostDisjunct(CourseRoleSets roleSets) {
-        if (roleSets.allAccessibleCourseIds().isEmpty()) {
-            return null;
-        }
-        // Posts are only indexed for public channels, so course membership is sufficient for access
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.POST), typeEquals(SearchableEntitySchema.TypeValues.ANSWER_POST).not(),
-                courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
-    }
-
-    /**
-     * Builds the answer post type disjunct. Answer posts are only indexed for public channels, so
-     * course membership is sufficient for access (no additional channel-level visibility check needed).
-     *
-     * @param roleSets the per-course role classification for the current user
-     * @return a filter matching answer posts the user may access, or {@code null} if no courses qualify
-     */
-    private Filter buildAnswerPostDisjunct(CourseRoleSets roleSets) {
-        if (roleSets.allAccessibleCourseIds().isEmpty()) {
-            return null;
-        }
-        // Answer posts are only indexed for public channels, so course membership is sufficient for access
-        return Filter.and(typeEquals(SearchableEntitySchema.TypeValues.ANSWER_POST), courseIdIn(SearchableEntitySchema.Properties.COURSE_ID, roleSets.allAccessibleCourseIds()));
-    }
-
-    // -- Shared helpers --
-
-    private static Filter buildTypeDiscriminatorFilter(Set<String> types, Set<String> hiddenTypes) {
-        List<Filter> typeFilters = new ArrayList<>(types.size());
-        for (String type : types) {
-            typeFilters.add(typeEquals(type));
-        }
-
-        // Absent is not the same as excluded: exercises may be missing because only exams were asked for, in which
-        // case exam exercises belong in the answer, or because the caller hid them, in which case they do not.
-        boolean isExamRequestedButExercisesAreNotIncludedYet = types.contains(SearchableEntitySchema.TypeValues.EXAM) && !types.contains(SearchableEntitySchema.TypeValues.EXERCISE)
-                && !hiddenTypes.contains(SearchableEntitySchema.TypeValues.EXERCISE);
-        if (isExamRequestedButExercisesAreNotIncludedYet) {
-            typeFilters.add(Filter.and(typeEquals(SearchableEntitySchema.TypeValues.EXERCISE), Filter.property(SearchableEntitySchema.Properties.IS_EXAM_EXERCISE).eq(true)));
-        }
-        if (typeFilters.size() == 1) {
-            return typeFilters.getFirst();
-        }
-        return Filter.or(typeFilters.toArray(new Filter[0]));
-    }
-
-    private static Filter typeEquals(String type) {
-        return Filter.property(SearchableEntitySchema.Properties.TYPE).eq(type);
-    }
-
-    private static Filter courseIdIn(String property, List<Long> courseIds) {
-        if (courseIds.size() == 1) {
-            return Filter.property(property).eq(courseIds.getFirst());
-        }
-        return Filter.property(property).containsAny(courseIds.toArray(new Long[0]));
-    }
-
-    private static Filter combineOr(Collection<Filter> filters) {
-        List<Filter> nonNull = new ArrayList<>(filters.size());
-        for (Filter f : filters) {
-            if (f != null) {
-                nonNull.add(f);
-            }
-        }
-        if (nonNull.isEmpty()) {
-            return null;
-        }
-        if (nonNull.size() == 1) {
-            return nonNull.getFirst();
-        }
-        return Filter.or(nonNull.toArray(new Filter[0]));
-    }
-
 }

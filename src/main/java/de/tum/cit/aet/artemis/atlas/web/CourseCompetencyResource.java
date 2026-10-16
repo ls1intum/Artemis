@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyRelationService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
+import de.tum.cit.aet.artemis.core.domain.FeatureInteraction;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -59,6 +60,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UsageInteraction;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisCompetencyApi;
@@ -66,7 +69,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCompetencyRecommendationDTO;
 
 @Conditional(AtlasEnabled.class)
 @Lazy
-@FeatureUsage("competencies/competencies")
+@FeatureUsage(UserFeature.COMPETENCY_MANAGEMENT)
 @RestController
 @RequestMapping("api/atlas/")
 public class CourseCompetencyResource {
@@ -117,6 +120,8 @@ public class CourseCompetencyResource {
      * @param competencyId the id of the course competency
      * @return the title of the course competency wrapped in an ResponseEntity or 404 Not Found if no competency with that id exists
      */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
+    @UsageInteraction(FeatureInteraction.AUTOMATIC)
     @GetMapping("course-competencies/{competencyId}/title")
     @EnforceAtLeastStudent
     public ResponseEntity<String> getCompetencyTitle(@PathVariable long competencyId) {
@@ -146,6 +151,7 @@ public class CourseCompetencyResource {
      * @param courseId     the id of the course to which the competency belongs
      * @return the ResponseEntity with status 200 (OK) and with body the competency, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("courses/{courseId}/course-competencies/{competencyId}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<CourseCompetencyResponseDTO> getCourseCompetency(@PathVariable long competencyId, @PathVariable long courseId) {
@@ -167,6 +173,7 @@ public class CourseCompetencyResource {
      * @param filter   Whether to filter out competencies that are not linked to any learning objects
      * @return the ResponseEntity with status 200 (OK) and with body the found competencies
      */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("courses/{courseId}/course-competencies")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<CourseCompetencyResponseDTO>> getCourseCompetenciesWithProgress(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean filter) {
@@ -184,6 +191,7 @@ public class CourseCompetencyResource {
      * @param refresh      whether to update the student progress or fetch it from the database (default)
      * @return the ResponseEntity with status 200 (OK) and with the competency course performance in the body
      */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("courses/{courseId}/course-competencies/{competencyId}/student-progress")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<CompetencyProgressDTO> getCompetencyStudentProgress(@PathVariable long courseId, @PathVariable long competencyId,
@@ -360,6 +368,7 @@ public class CourseCompetencyResource {
      * @param input    the course description and current competencies
      * @return the ResponseEntity with status 202 (Accepted)
      */
+    @FeatureUsage(UserFeature.AI_COMPETENCY_GENERATION)
     @PostMapping("courses/{courseId}/course-competencies/generate-from-description")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> generateCompetenciesFromCourseDescription(@PathVariable Long courseId, @Valid @RequestBody CompetencyGenerationRequestDTO input) {
@@ -403,6 +412,7 @@ public class CourseCompetencyResource {
      * @param exerciseId the id of the exercise for which to get the contributions
      * @return the ResponseEntity with status 200 (OK) and with body the competency contributions
      */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("exercises/{exerciseId}/contributions")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<List<CompetencyContributionDTO>> getCompetencyContributionsForExercise(@PathVariable long exerciseId) {
@@ -419,6 +429,7 @@ public class CourseCompetencyResource {
      * @param lectureUnitId the id of the lecture unit for which to get the contributions
      * @return the ResponseEntity with status 200 (OK) and with body the competency contributions
      */
+    @FeatureUsage(UserFeature.COMPETENCY_PROGRESS)
     @GetMapping("lecture-units/{lectureUnitId}/contributions")
     @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<List<CompetencyContributionDTO>> getCompetencyContributionsForLectureUnit(@PathVariable long lectureUnitId) {

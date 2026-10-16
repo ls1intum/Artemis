@@ -87,7 +87,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public static final String IRIS_BOT_LOGIN = "iris_bot";
 
-    @NonNull
     @Pattern(regexp = Constants.LOGIN_REGEX)
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
     @Column(length = USERNAME_MAX_LENGTH, unique = true, nullable = false)
@@ -117,7 +116,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @Email
     @Size(max = 100)
-    @Column(length = 100)
+    @Column(length = 100, unique = true)
     private String email;
 
     /**
@@ -413,7 +412,7 @@ public class User extends AbstractAuditingEntity implements Participant {
      * <p>
      * Note for callers that need to know whether the collection was loaded: do NOT test the returned value with
      * {@code Hibernate.isInitialized(...)} — the wrapper is never a {@code PersistentSet}, so it always reports
-     * initialised. Use {@code Persistence.getPersistenceUtil().isLoaded(user, "courseRoles")}, which inspects the
+     * initialised. Use the persistence util's {@code isLoaded} check with {@code User_.COURSE_ROLES}, which inspects the
      * attribute itself.
      *
      * @return an unmodifiable view of this user's course roles

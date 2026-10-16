@@ -14,7 +14,7 @@
             ],
             "vitest": false
         },
-        "packages/tum-ui": {
+        "packages/tum-aet-ui": {
             "entry": [
                 "src/public-api.ts"
             ],

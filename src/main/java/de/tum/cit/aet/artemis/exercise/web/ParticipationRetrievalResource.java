@@ -23,12 +23,14 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -53,7 +55,7 @@ import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("participation/participations")
+@FeatureUsage(UserFeature.EXERCISE_PARTICIPATIONS_STAFF)
 @RestController
 @RequestMapping("api/exercise/")
 public class ParticipationRetrievalResource {
@@ -92,6 +94,7 @@ public class ParticipationRetrievalResource {
      * @param participationId the participationId of the participation to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.EXERCISE_PARTICIPATION)
     @GetMapping("participations/{participationId}/with-latest-result")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipationDTO> getParticipationWithLatestResult(@PathVariable Long participationId) {
@@ -109,6 +112,7 @@ public class ParticipationRetrievalResource {
      * @param participationId the participationId of the participation to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
+    @FeatureUsage(UserFeature.EXERCISE_PARTICIPATION)
     @GetMapping("participations/{participationId}")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipationDTO> getParticipationForCurrentUser(@PathVariable Long participationId) {
@@ -133,11 +137,21 @@ public class ParticipationRetrievalResource {
     }
 
     private Course findCourseFromParticipation(StudentParticipation participation) {
-        if (participation.getExercise() != null && participation.getExercise().getCourseViaExerciseGroupOrCourseMember() != null) {
-            return participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        Course course = null;
+        Exercise exercise = participation.getExercise();
+        if (exercise != null) {
+            course = exercise.getCourseViaExerciseGroupOrCourseMember();
         }
-
-        return studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise().getCourseViaExerciseGroupOrCourseMember();
+        if (course == null) {
+            Exercise loadedExercise = studentParticipationRepository.findByIdElseThrow(participation.getId()).getExercise();
+            if (loadedExercise != null) {
+                course = loadedExercise.getCourseViaExerciseGroupOrCourseMember();
+            }
+        }
+        if (course == null) {
+            throw new EntityNotFoundException("Course", "of participation " + participation.getId());
+        }
+        return course;
     }
 
     /**
@@ -236,16 +250,16 @@ public class ParticipationRetrievalResource {
     }
 
     private boolean canSeeParticipant(StudentParticipation participation) {
-        return authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastInstructorInCourse(findCourseFromParticipation(participation), null);
+        return participationAuthCheckService.canSeeParticipantInformation(participation);
     }
 
     private boolean shouldHideParticipantInformation(Exercise exercise, String searchTerm, String sortedColumn) {
-        if (authCheckService.isAtLeastInstructorForExercise(exercise)) {
+        if (participationAuthCheckService.canSeeParticipantInformation(exercise)) {
             return false;
         }
         // Filtering or ordering by identity would let tutors correlate an anonymous participation with a known student.
         if (StringUtils.hasText(searchTerm) || "participantName".equals(sortedColumn) || "participantIdentifier".equals(sortedColumn) || "buildPlanId".equals(sortedColumn)) {
-            throw new AccessForbiddenException("Only instructors may search or sort participations by participant identity.");
+            throw new AccessForbiddenException("Participant identity search and sorting are unavailable during anonymous assessment.");
         }
         return true;
     }

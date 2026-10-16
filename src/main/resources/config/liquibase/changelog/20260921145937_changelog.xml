@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+    iris_message.tool_activity is a text column holding one message's tool trail as JSON. The entity mapped it as a
+    CLOB, which on PostgreSQL means a large object: the JSON went into pg_largeobject and the column received the
+    object's id instead, while rows written before the move to PostgreSQL still hold the JSON itself. Reading one of
+    those failed - the column was read as an object id - which brought down every session load for the user, so the
+    mapping now stores and reads the column as the text it is.
+
+    That leaves the rows written through the large object behind, and this changeset puts their JSON back into the
+    column. Only PostgreSQL ever wrote one; MySQL has no large objects and stored the JSON inline all along.
+    -->
+
+    <changeSet id="20260921145937-01-iris-message-tool-activity-back-into-its-column" author="benjaminschmitz" dbms="postgresql">
+        <comment>Move each tool trail out of its large object and into the column, then drop the object.</comment>
+        <!--
+        A row written through the large object holds nothing but the object's id, so a column holding only digits is
+        one of those rows: a trail is a JSON array and begins with a bracket. The digits are read as a numeric and
+        range-checked before they are used as an oid, so that a value too large to be one cannot fail the upgrade.
+
+        Where the object is no longer there - or the number was never an object id - there is nothing to restore and
+        the trail is gone, so the column becomes null, the same value a message that recorded no activity carries. It
+        is what the chat renders when a message has no trail, and losing an old trail costs a detail of one answer's
+        presentation, nothing more.
+        -->
+        <sql splitStatements="false"><![CDATA[
+            DO $$
+            DECLARE
+                message_id bigint;
+                stored_number numeric;
+                object_id oid;
+            BEGIN
+                FOR message_id, stored_number IN
+                    SELECT id, CAST(tool_activity AS numeric) FROM iris_message WHERE tool_activity ~ '^[0-9]+$'
+                LOOP
+                    object_id := NULL;
+                    -- Guarded in its own statement rather than as one condition, because an AND is not evaluated
+                    -- left to right: a number beyond an oid is also beyond the bigint the cast to oid goes through.
+                    IF stored_number <= 4294967295 THEN
+                        object_id := CAST(CAST(stored_number AS bigint) AS oid);
+                    END IF;
+                    IF object_id IS NOT NULL AND EXISTS (SELECT 1 FROM pg_largeobject_metadata WHERE oid = object_id) THEN
+                        UPDATE iris_message SET tool_activity = convert_from(lo_get(object_id), 'UTF8') WHERE id = message_id;
+                        PERFORM lo_unlink(object_id);
+                    ELSE
+                        UPDATE iris_message SET tool_activity = NULL WHERE id = message_id;
+                    END IF;
+                END LOOP;
+            END $$;
+        ]]></sql>
+        <rollback/>
+    </changeSet>
+
+</databaseChangeLog>

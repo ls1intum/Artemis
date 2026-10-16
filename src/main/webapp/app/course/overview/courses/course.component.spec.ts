@@ -32,8 +32,10 @@ import { CourseAccessStorageService } from 'app/course/shared/services/course-ac
 import { AccountService } from 'app/core/auth/account.service';
 import { Authority } from 'app/foundation/constants/authority.constants';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
+import { TeamService } from 'app/exercise/team/team.service';
+import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
-import { TumUiButtonDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 import { By } from '@angular/platform-browser';
 import { User } from 'app/account/user/user.model';
 
@@ -95,10 +97,13 @@ describe('CoursesComponent', () => {
     let location: Location;
     let httpMock: HttpTestingController;
     let accountService: AccountService;
+    let teamAssignmentSubscribeSpy: ReturnType<typeof vi.spyOn>;
 
     const route = { data: of({ courseId: course1.id }), children: [] } as any as ActivatedRoute;
 
     beforeEach(async () => {
+        const teamAssignmentUpdates = of<TeamAssignmentPayload>();
+        teamAssignmentSubscribeSpy = vi.spyOn(teamAssignmentUpdates, 'subscribe');
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }]),
@@ -115,6 +120,7 @@ describe('CoursesComponent', () => {
                 { provide: CourseExerciseRowComponent },
                 MockProvider(AlertService),
                 MockProvider(WebsocketService),
+                { provide: TeamService, useValue: { teamAssignmentUpdates: Promise.resolve(teamAssignmentUpdates) } },
                 MockProvider(FeatureToggleService),
                 MockProvider(CourseAccessStorageService),
                 provideHttpClient(),
@@ -143,6 +149,12 @@ describe('CoursesComponent', () => {
     });
 
     describe('onInit', () => {
+        it('should subscribe to the injected team assignment stream on init', async () => {
+            await fixture.whenStable();
+
+            expect(teamAssignmentSubscribeSpy).toHaveBeenCalledOnce();
+        });
+
         it('should call loadAndFilterCourses on init', () => {
             const loadAndFilterCoursesSpy = vi.spyOn(component, 'loadAndFilterCourses');
 
@@ -288,8 +300,8 @@ describe('CoursesComponent', () => {
         component.coursesLoaded.set(true);
         fixture.detectChanges();
 
-        const requestCourseButton = fixture.debugElement.query(By.css('#request-course')).injector.get(TumUiButtonDirective);
-        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumUiButtonDirective);
+        const requestCourseButton = fixture.debugElement.query(By.css('#request-course')).injector.get(TumAetUiButtonDirective);
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumAetUiButtonDirective);
         expect(requestCourseButton.severity()).toBe('primary');
         expect(enrollmentButton.severity()).toBe('secondary');
         expect(fixture.nativeElement.querySelector('#create-course')).toBeNull();
@@ -300,8 +312,8 @@ describe('CoursesComponent', () => {
         component.coursesLoaded.set(true);
         fixture.detectChanges();
 
-        const createCourseButton = fixture.debugElement.query(By.css('#create-course')).injector.get(TumUiButtonDirective);
-        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumUiButtonDirective);
+        const createCourseButton = fixture.debugElement.query(By.css('#create-course')).injector.get(TumAetUiButtonDirective);
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumAetUiButtonDirective);
         expect(createCourseButton.severity()).toBe('primary');
         expect(enrollmentButton.severity()).toBe('secondary');
         expect(fixture.nativeElement.querySelector('#request-course')).toBeNull();
@@ -312,7 +324,7 @@ describe('CoursesComponent', () => {
         component.coursesLoaded.set(true);
         fixture.detectChanges();
 
-        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumUiButtonDirective);
+        const enrollmentButton = fixture.debugElement.query(By.css('#course-enrollment')).injector.get(TumAetUiButtonDirective);
         expect(enrollmentButton.severity()).toBe('primary');
         expect(fixture.nativeElement.querySelector('#request-course')).toBeNull();
         expect(fixture.nativeElement.querySelector('#create-course')).toBeNull();
@@ -329,7 +341,7 @@ describe('CoursesComponent', () => {
 
         const onSortSpy = vi.spyOn(component, 'onSort');
         const button = fixture.debugElement.nativeElement.querySelector('#test-sort');
-        const sortButton = fixture.debugElement.query(By.css('#test-sort')).injector.get(TumUiButtonDirective);
+        const sortButton = fixture.debugElement.query(By.css('#test-sort')).injector.get(TumAetUiButtonDirective);
         button.click();
         expect(onSortSpy).toHaveBeenCalledOnce();
         expect(component.isSortAscending()).toBe(false);

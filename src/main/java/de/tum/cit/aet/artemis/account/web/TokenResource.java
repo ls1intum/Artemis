@@ -25,10 +25,11 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JwtWithSource;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("account/access-tokens")
+@FeatureUsage(UserFeature.VS_CODE_EXTENSION)
 @RestController
 @SuppressWarnings("deprecation")
 @RequestMapping("api/account/")

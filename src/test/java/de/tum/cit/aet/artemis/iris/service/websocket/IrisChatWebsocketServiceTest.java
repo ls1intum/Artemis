@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.websocket;
 
+import static de.tum.cit.aet.artemis.core.util.WebsocketDestinationMatchers.userTopic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -54,7 +55,7 @@ class IrisChatWebsocketServiceTest {
         verifyNoInteractions(rateLimitService);
 
         var payloadCaptor = ArgumentCaptor.forClass(IrisChatWebsocketDTO.class);
-        verify(websocketService).send(eq("iris-student"), eq("42"), payloadCaptor.capture());
+        verify(websocketService).send(eq("iris-student"), userTopic("/topic/iris/42"), payloadCaptor.capture());
         var payload = payloadCaptor.getValue();
         assertThat(payload.type()).isEqualTo(IrisChatWebsocketDTO.IrisWebsocketMessageType.PARTIAL);
         assertThat(payload.rateLimitInfo()).isNull();

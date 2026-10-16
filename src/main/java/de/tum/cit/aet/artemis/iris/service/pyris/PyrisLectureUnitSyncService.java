@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
+
 import java.util.Comparator;
 import java.util.List;
 
@@ -9,11 +11,11 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.iris.api.dtos.LectureUnitSyncOutcome;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitMetadataWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureUnitVisibilityWebhookDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisSlideVisibilityDTO;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
@@ -27,16 +29,13 @@ public class PyrisLectureUnitSyncService {
 
     private final PyrisConnectorService pyrisConnectorService;
 
-    private final IrisSettingsService irisSettingsService;
-
     private final VideoSourceResolverService videoSourceResolver;
 
     @Value("${server.url}")
     private String artemisBaseUrl;
 
-    public PyrisLectureUnitSyncService(PyrisConnectorService pyrisConnectorService, IrisSettingsService irisSettingsService, VideoSourceResolverService videoSourceResolver) {
+    public PyrisLectureUnitSyncService(PyrisConnectorService pyrisConnectorService, VideoSourceResolverService videoSourceResolver) {
         this.pyrisConnectorService = pyrisConnectorService;
-        this.irisSettingsService = irisSettingsService;
         this.videoSourceResolver = videoSourceResolver;
     }
 
@@ -44,14 +43,14 @@ public class PyrisLectureUnitSyncService {
      * Updates lightweight lecture unit metadata in Pyris without sending PDF or transcription payloads.
      *
      * @param attachmentVideoUnit the attachment video unit whose metadata changed
-     * @return a dispatch token if the update was sent, otherwise null
+     * @return what became of the update
      */
-    public String updateLectureUnitMetadataInPyris(AttachmentVideoUnit attachmentVideoUnit) {
+    public LectureUnitSyncOutcome updateLectureUnitMetadataInPyris(AttachmentVideoUnit attachmentVideoUnit) {
         if (!isLectureUnitProcessableForPyris(attachmentVideoUnit)) {
-            return null;
+            return LectureUnitSyncOutcome.SKIPPED;
         }
-        pyrisConnectorService.executeLectureMetadataWebhook(buildMetadataDto(attachmentVideoUnit));
-        return "metadata-" + attachmentVideoUnit.getId();
+        boolean accepted = pyrisConnectorService.executeLectureMetadataWebhook(buildMetadataDto(attachmentVideoUnit));
+        return accepted ? LectureUnitSyncOutcome.DISPATCHED : LectureUnitSyncOutcome.NOT_INGESTED;
     }
 
     /**
@@ -59,14 +58,14 @@ public class PyrisLectureUnitSyncService {
      *
      * @param attachmentVideoUnit the attachment video unit whose visibility changed
      * @param slides              all slides belonging to the lecture unit
-     * @return a dispatch token if the update was sent, otherwise null
+     * @return what became of the update
      */
-    public String updateLectureUnitVisibilityInPyris(AttachmentVideoUnit attachmentVideoUnit, List<Slide> slides) {
+    public LectureUnitSyncOutcome updateLectureUnitVisibilityInPyris(AttachmentVideoUnit attachmentVideoUnit, List<Slide> slides) {
         if (!isLectureUnitProcessableForPyris(attachmentVideoUnit)) {
-            return null;
+            return LectureUnitSyncOutcome.SKIPPED;
         }
-        pyrisConnectorService.executeLectureVisibilityWebhook(buildVisibilityDto(attachmentVideoUnit, slides));
-        return "visibility-" + attachmentVideoUnit.getId();
+        boolean accepted = pyrisConnectorService.executeLectureVisibilityWebhook(buildVisibilityDto(attachmentVideoUnit, slides));
+        return accepted ? LectureUnitSyncOutcome.DISPATCHED : LectureUnitSyncOutcome.NOT_INGESTED;
     }
 
     private PyrisLectureUnitMetadataWebhookDTO buildMetadataDto(AttachmentVideoUnit attachmentVideoUnit) {
@@ -75,7 +74,7 @@ public class PyrisLectureUnitSyncService {
 
         String lectureUnitLink = "";
         if (attachmentVideoUnit.getAttachment() != null && attachmentVideoUnit.getAttachment().getLink() != null) {
-            lectureUnitLink = artemisBaseUrl + "/" + attachmentVideoUnit.getAttachment().getLink();
+            lectureUnitLink = artemisBaseUrl + ARTEMIS_FILE_PATH_PREFIX + attachmentVideoUnit.getAttachment().getLink();
         }
 
         ResolvedVideo resolved = resolveVideoUrl(attachmentVideoUnit.getVideoSource());
@@ -102,7 +101,8 @@ public class PyrisLectureUnitSyncService {
         return videoSourceResolver.resolve(videoSource);
     }
 
+    // Ingested regardless of the course's Iris setting, which only switches off the interactive Iris features (see PyrisWebhookService).
     private boolean isLectureUnitProcessableForPyris(AttachmentVideoUnit attachmentVideoUnit) {
-        return irisSettingsService.isEnabledForCourse(attachmentVideoUnit.getLecture().getCourse()) && PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit);
+        return PyrisLectureUnitEligibility.isProcessable(attachmentVideoUnit, videoSourceResolver);
     }
 }

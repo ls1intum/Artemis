@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Service, inject, signal } from '@angular/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { DeleteDialogComponent } from 'app/shared-ui/delete-dialog/component/delete-dialog.component';
 import { DeleteDialogData } from 'app/shared-ui/delete-dialog/delete-dialog.model';
@@ -7,7 +7,17 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
-@Injectable({ providedIn: 'root' })
+/**
+ * Added to PrimeNG's modal z-index (1100) for the confirmation dialog. A confirmation is often opened from inside a dialog that
+ * lives in the CDK overlay container (a TUM AET UI dialog with a delete button), and that container sits at z-index 1200 in
+ * `global.scss` so that calendars inside PrimeNG dialogs stay visible. With the default base the confirmation would open
+ * underneath the dialog that asked for it and could not be confirmed. 300 puts it at 1402, above the container and below the alerts.
+ * PrimeNG keeps one z-index stack for all its layers and ignores the base when the top entry is another modal, so a
+ * confirmation opened from a PrimeNG dialog still stacks just above that dialog.
+ */
+export const CONFIRMATION_DIALOG_BASE_Z_INDEX = 300;
+
+@Service()
 export class DeleteDialogService {
     private dialogService = inject(DialogService);
     private alertService = inject(AlertService);
@@ -33,6 +43,7 @@ export class DeleteDialogService {
             closable: true,
             closeOnEscape: true,
             dismissableMask: false,
+            baseZIndex: CONFIRMATION_DIALOG_BASE_Z_INDEX,
             data: {
                 entityTitle: deleteDialogData.entityTitle,
                 deleteQuestion: deleteDialogData.deleteQuestion,

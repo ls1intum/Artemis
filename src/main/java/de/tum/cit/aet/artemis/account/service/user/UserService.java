@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -429,7 +430,8 @@ public class UserService {
             return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
         }
 
-        // Do not use a single-result lookup here: installations can still contain legacy duplicate emails during the preparation phase.
+        // The unique index makes the address the caller is registering the only decisive fact, so an existence check is
+        // all that is needed; loading the account that holds it would tell the caller who that is.
         if (newUser.getEmail() != null && userRepository.existsByEmailIgnoreCase(newUser.getEmail())) {
             throw new EmailAlreadyUsedException();
         }
@@ -717,7 +719,19 @@ public class UserService {
         if (userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
             return;
         }
-        userCourseRoleRepository.save(new UserCourseRole(user, course, role));
+        try {
+            userCourseRoleRepository.save(new UserCourseRole(user, course, role));
+        }
+        catch (DataIntegrityViolationException e) {
+            // The check above does not hold back a concurrent request for the same enrollment, e.g. a double submit: both pass it and the second insert hits the primary key.
+            // Either way the user now holds the requested role. Anything other than that duplicate must still surface, which the second check tells apart.
+            if (!userCourseRoleRepository.existsByUser_IdAndCourse_IdAndRole(user.getId(), course.getId(), role)) {
+                throw e;
+            }
+            // The request that inserted the row is the one that rebuilds the authorities, so this one stops here like the check above.
+            log.debug("User {} was concurrently added to course {} with role {}", user.getLogin(), course.getId(), role);
+            return;
+        }
         // ROLE_STUDENT is always granted, so adding a STUDENT role never changes the global authorities; only a newly
         // granted TA/EDITOR/INSTRUCTOR role can. Rebuild authorities only when they could actually change.
         if (role != CourseRole.STUDENT) {

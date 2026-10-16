@@ -57,7 +57,7 @@ describe('ExternalUserPasswordResetModalComponent', () => {
         let templateFixture: ComponentFixture<ExternalUserPasswordResetModalComponent>;
 
         // The dialog renders into the CDK overlay container, not into the fixture element.
-        const dialog = () => document.querySelector('.tum-ui-dialog') as HTMLElement;
+        const dialog = () => document.querySelector('.tumaet-ui-dialog') as HTMLElement;
 
         beforeEach(async () => {
             TestBed.resetTestingModule();
@@ -96,7 +96,7 @@ describe('ExternalUserPasswordResetModalComponent', () => {
             templateFixture.componentInstance.visible.set(true);
             templateFixture.detectChanges();
 
-            (dialog().querySelector('.tum-ui-dialog-footer button') as HTMLButtonElement).click();
+            (dialog().querySelector('.tumaet-ui-dialog-footer button') as HTMLButtonElement).click();
             templateFixture.detectChanges();
 
             expect(templateFixture.componentInstance.visible()).toBe(false);

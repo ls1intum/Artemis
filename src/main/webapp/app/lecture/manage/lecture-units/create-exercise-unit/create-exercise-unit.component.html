@@ -1,82 +1,71 @@
-<div class="container">
-    <div class="row">
-        <div class="col-12 mx-auto">
-            <h2 jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.headline"></h2>
-        </div>
+<div class="flex flex-col gap-3.5">
+    @if (shouldNavigateOnSubmit()) {
+        <h2 class="m-0 text-xl font-semibold" jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.headline"></h2>
+    }
+    <p class="create-exercise-unit-hint m-0 text-sm" jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.description"></p>
+    <div class="overflow-x-auto">
+        <table tumAetUiTable size="small" rowHover [sortField]="predicate()" [sortOrder]="ascending() ? 1 : -1" (sortChange)="onSortChange($event)">
+            <thead>
+                <tr>
+                    <th class="w-10"><span class="sr-only" jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.select"></span></th>
+                    <th tumAetUiSortableColumn="type"><span jhiTranslate="artemisApp.exercise.type"></span></th>
+                    <th tumAetUiSortableColumn="title"><span jhiTranslate="artemisApp.exercise.title"></span></th>
+                    <th tumAetUiSortableColumn="shortName"><span jhiTranslate="artemisApp.exercise.shortName"></span></th>
+                    <th tumAetUiSortableColumn="releaseDate"><span jhiTranslate="artemisApp.exercise.releaseDate"></span></th>
+                    <th tumAetUiSortableColumn="dueDate"><span jhiTranslate="artemisApp.exercise.dueDate"></span></th>
+                    <th tumAetUiSortableColumn="assessmentDueDate"><span jhiTranslate="artemisApp.exercise.assessmentDueDate"></span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (exercise of exercisesAvailableForUnitCreation(); track exercise.id) {
+                    @let selected = isExerciseSelectedForUnitCreation(exercise);
+                    <tr
+                        id="exercise-{{ exercise.id }}"
+                        class="cursor-pointer"
+                        [class.create-exercise-unit-selected]="selected"
+                        (click)="selectExerciseForUnitCreation(exercise)"
+                        (keydown.enter)="selectExerciseForUnitCreation(exercise)"
+                    >
+                        <td>
+                            <!-- The row toggles the selection for pointer users; the checkbox is the only tab stop per row; Enter on it bubbles to the row handler, so keyboard users toggle once. -->
+                            <tumaet-ui-checkbox
+                                [inputId]="'exercise-select-' + exercise.id"
+                                [ariaLabel]="exercise.title ?? ''"
+                                [checked]="selected"
+                                (click)="$event.stopPropagation()"
+                                (checkedChange)="selectExerciseForUnitCreation(exercise)"
+                            />
+                        </td>
+                        <td>{{ exercise.type ?? '' }}</td>
+                        <td>{{ exercise.title ?? '' }}</td>
+                        <td>{{ exercise.shortName ?? '' }}</td>
+                        <td>{{ exercise.releaseDate | artemisDate }}</td>
+                        <td>{{ exercise.dueDate | artemisDate }}</td>
+                        <td>{{ exercise.assessmentDueDate | artemisDate }}</td>
+                    </tr>
+                } @empty {
+                    <tr>
+                        <td
+                            colspan="7"
+                            class="create-exercise-unit-hint"
+                            [jhiTranslate]="
+                                hasCourseExercises() ? 'artemisApp.exerciseUnit.createExerciseUnit.noExercises' : 'artemisApp.exerciseUnit.createExerciseUnit.noCourseExercises'
+                            "
+                        ></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
     </div>
-    <div class="row">
-        <div class="col-sm-6 mx-auto">
-            <p jhiTranslate="artemisApp.exerciseUnit.createExerciseUnit.description"></p>
-        </div>
-        <div class="col-sm-6 mx-auto text-end">
-            @if (hasCancelButton()) {
-                <button type="button" (click)="cancelForm()" class="btn btn-secondary"><fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>
-            }
-            <button
-                id="createButton"
-                type="button"
-                class="btn btn-primary"
-                [disabled]="exercisesToCreateUnitFor().length === 0"
-                (click)="createExerciseUnits()"
-                jhiTranslate="entity.action.submit"
-            ></button>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-12 mx-auto">
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead class="thead-dark">
-                        <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
-                            <th jhiSortBy="id">
-                                id
-                                <fa-icon [icon]="faSort" />
-                            </th>
-                            <th jhiSortBy="type">
-                                <span jhiTranslate="artemisApp.exercise.type"></span>
-                                <fa-icon [icon]="faSort" />
-                            </th>
-                            <th jhiSortBy="title">
-                                <span jhiTranslate="artemisApp.exercise.title"></span>
-                                <fa-icon [icon]="faSort" />
-                            </th>
-                            <th jhiSortBy="shortName">
-                                <span jhiTranslate="artemisApp.exercise.shortName"></span>
-                                <fa-icon [icon]="faSort" />
-                            </th>
-                            <th jhiSortBy="releaseDate">
-                                <span jhiTranslate="artemisApp.exercise.releaseDate"></span>
-                                <fa-icon [icon]="faSort" />
-                            </th>
-                            <th jhiSortBy="dueDate">
-                                <span jhiTranslate="artemisApp.exercise.dueDate"></span>
-                                <fa-icon [icon]="faSort" />
-                            </th>
-                            <th jhiSortBy="assessmentDueDate">
-                                <span jhiTranslate="artemisApp.exercise.assessmentDueDate"></span>
-                                <fa-icon [icon]="faSort" />
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @for (exercise of exercisesAvailableForUnitCreation(); track exercise.id) {
-                            <tr
-                                (click)="selectExerciseForUnitCreation(exercise)"
-                                [class.table-primary]="isExerciseSelectedForUnitCreation(exercise)"
-                                id="exercise-{{ exercise.id }}"
-                            >
-                                <td>{{ exercise.id ? exercise.id : '' }}</td>
-                                <td>{{ exercise.type ? exercise.type : '' }}</td>
-                                <td>{{ exercise.title ? exercise.title : '' }}</td>
-                                <td>{{ exercise.shortName ? exercise.shortName : '' }}</td>
-                                <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
-                                <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
-                                <td>{{ exercise.assessmentDueDate ? exercise.assessmentDueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
+    <div class="flex flex-wrap gap-2">
+        <button tumAetUiButton id="createButton" type="button" [disabled]="exercisesToCreateUnitFor().length === 0" (click)="createExerciseUnits()">
+            <span jhiTranslate="entity.action.submit"></span>
+        </button>
+        @if (hasCancelButton()) {
+            <button tumAetUiButton type="button" severity="secondary" (click)="cancelForm()">
+                <fa-icon [icon]="faTimes" />
+                <span jhiTranslate="entity.action.cancel"></span>
+            </button>
+        }
     </div>
 </div>

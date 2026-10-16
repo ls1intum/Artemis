@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
+import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
@@ -47,7 +48,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizMessagingService;
  */
 @Profile(PROFILE_CORE)
 @Lazy
-@FeatureUsage("conduction/batches")
+@FeatureUsage(UserFeature.QUIZ_LIFECYCLE)
 @RestController
 @RequestMapping("api/quiz/")
 public class QuizExerciseBatchResource {
@@ -92,6 +93,7 @@ public class QuizExerciseBatchResource {
      * @param joinRequest    DTO with the password for the batch to join; unused for quizzes in INDIVIDUAL mode
      * @return the ResponseEntity with status 200 (OK) and with body the quizBatch that was joined
      */
+    @FeatureUsage(UserFeature.QUIZ_LIVE)
     @PostMapping("quiz-exercises/{quizExerciseId}/join")
     @EnforceAtLeastStudent
     public ResponseEntity<QuizBatchDTO> joinBatch(@PathVariable Long quizExerciseId, @RequestBody QuizBatchJoinDTO joinRequest) {

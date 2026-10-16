@@ -1,31 +1,37 @@
 <div *titleBarTitle class="flex items-center">
-    <h5 class="mb-0" jhiTranslate="artemisApp.examTimeline.title" [translateValues]="{ username: studentExam()?.user?.login }"></h5>
+    <h5 class="mb-0!" jhiTranslate="artemisApp.examTimeline.title" [translateValues]="{ username: studentExam()?.user?.login }"></h5>
 </div>
 @if (studentExam()) {
     <div>
-        <div class="custom-slider">
-            <h5>Selected Timestamp: {{ displayCurrentTimestamp() }}</h5>
-            <p-slider
-                [(ngModel)]="timestampIndex"
-                [min]="0"
+        <div>
+            <h5 id="exam-timeline-selected-timestamp">Selected Timestamp: {{ displayCurrentTimestamp() }}</h5>
+            <!-- The kit has no slider, so this is a native range input: it is a slider for assistive tech, is focusable, and
+                 its arrow, Home, End and Page keys fire a change event per step, just like a pointer release does. -->
+            <input
+                type="range"
+                class="block w-[98%] cursor-pointer accent-primary"
+                min="0"
+                step="1"
                 [max]="submissionTimeStamps().length - 1"
-                [step]="1"
-                (onSlideEnd)="onSliderInputChange()"
-                (keyup)="onSliderKeyup($event)"
-                #slider
+                [value]="timestampIndex()"
+                aria-labelledby="exam-timeline-selected-timestamp"
+                [attr.aria-valuetext]="displayCurrentTimestamp()"
+                (input)="timestampIndex.set(+rangeInput.value)"
+                (change)="onSliderInputChange()"
+                #rangeInput
             />
-            <!-- Tick markers for each discrete submission timestamp, restoring the Material slider's [showTickMarks] cue
-                 (the PrimeNG p-slider has no equivalent input). Decorative, so hidden from assistive tech. -->
-            <div class="submission-ticks mb-5" aria-hidden="true">
+            <!-- Tick markers for each discrete submission timestamp (a native range input has no tick marks). A tick at
+                 `left: (i / (count - 1)) * 100%` aligns with the handle at step i. Decorative, so hidden from assistive tech. -->
+            <div class="relative mt-0.5 mb-12 h-1.5 w-[98%]" aria-hidden="true">
                 @for (percentage of submissionTickPercentages(); track $index) {
-                    <span class="submission-tick" [style.left.%]="percentage"></span>
+                    <span class="absolute top-0 size-1.5 -translate-x-1/2 rounded-full bg-(--text-body-secondary)" [style.left.%]="percentage"></span>
                 }
             </div>
         </div>
         <jhi-exam-navigation-bar
             #examNavigationBar
             id="exam-navigation-bar"
-            class="sticky-top d-block"
+            class="sticky top-0 block"
             [exercises]="studentExam()?.exercises!"
             [exerciseIndex]="exerciseIndex()"
             (onPageChanged)="onPageChange($event)"
@@ -77,6 +83,7 @@
                                     (cachedDiffInformationChange)="cachedDiffInformation.set($event)"
                                 />
                             }
+                            @default {}
                         }
                     </div>
                 }
