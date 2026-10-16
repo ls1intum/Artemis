@@ -380,10 +380,28 @@ final class JavaSourceInspector {
         if (content == null || type == null) {
             return false;
         }
+        String structural = stripJavaTrivia(content, true);
+        StringBuilder declarations = new StringBuilder(structural);
+        for (int offset = 0; offset < structural.length(); offset++) {
+            if (structural.charAt(offset) != '@') {
+                continue;
+            }
+            JavaAnnotation annotation = readAnnotation(structural, structural, offset);
+            if (annotation == null) {
+                return false;
+            }
+            if (!annotation.text().equals("@interface")) {
+                for (int index = offset; index < annotation.end(); index++) {
+                    char current = structural.charAt(index);
+                    declarations.setCharAt(index, current == '\n' || current == '\r' ? current : ' ');
+                }
+            }
+            offset = annotation.end() - 1;
+        }
         String declarationStart = "(?:^|[;{}])\\s*";
         String modifiers = "(?:(?:public|protected|private|static|abstract|final|sealed|non-sealed)\\s+)*";
         return Pattern.compile(declarationStart + modifiers + "(?:class|interface|enum|record|trait|struct|protocol)\\s+" + Pattern.quote(type) + "\\b", Pattern.MULTILINE)
-                .matcher(stripJavaTrivia(content, true)).find();
+                .matcher(declarations).find();
     }
 
     /**

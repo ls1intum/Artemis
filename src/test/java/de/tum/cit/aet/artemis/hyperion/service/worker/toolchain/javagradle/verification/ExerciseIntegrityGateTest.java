@@ -770,6 +770,51 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, map("src/Track.java", track), solution)).isEmpty();
     }
 
+    private static Stream<Arguments> annotatedTypeOwnershipCases() {
+        return Stream
+                .of("@FunctionalInterface public interface Strategy { int apply(int x); }", "@java.lang.FunctionalInterface public interface Strategy { int apply(int x); }",
+                        "@Deprecated @FunctionalInterface public interface Strategy { int apply(int x); }",
+                        "@Deprecated(since = \"1.0\", forRemoval = false) public interface Strategy { int apply(int x); }",
+                        "@Metadata(values = {@Nested(value = \"}) class Phantom {}\")}) public interface Strategy { int apply(int x); }",
+                        "class Host { @FunctionalInterface public interface Strategy { int apply(int x); } }",
+                        "@Deprecated public @FunctionalInterface interface Strategy { int apply(int x); }")
+                .flatMap(source -> Stream.of(Arguments.of("student-creates", source), Arguments.of("given", source)));
+    }
+
+    @ParameterizedTest
+    @MethodSource("annotatedTypeOwnershipCases")
+    void approvedSpecification_acceptsAnnotatedStudentCreatedAndIdenticalGivenTypes(String status, String source) {
+        String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Strategy | abstraction | " + status + " |\n";
+        Map<String, String> solution = map("src/Strategy.java", source);
+        Map<String, String> template = status.equals("given") ? solution : Map.of();
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).isEmpty();
+    }
+
+    @Test
+    void approvedSpecification_preservesAnnotatedOwnershipAndGivenByteEquality() {
+        String given = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Strategy | abstraction | given |\n";
+        String source = "@FunctionalInterface public interface Strategy { int apply(int x); }";
+        Map<String, String> solution = map("src/Strategy.java", source);
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(given, map("src/Strategy.java", source + "\n"), solution)).singleElement().asString()
+                .contains("byte-for-byte identical");
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(given.replace("given", "student-creates"), solution, solution)).singleElement().asString()
+                .contains("template already declares them");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "// @FunctionalInterface public interface Strategy { int apply(int x); }",
+            "class Host { String text = \"@FunctionalInterface public interface Strategy {}\"; }",
+            "class Host { String text = \"\"\"\n@FunctionalInterface public interface Strategy {}\n\"\"\"; }",
+            "@Metadata(values = {@Nested(value = \"public interface Strategy {}\")}) public class Other {}", "@Broken( public interface Strategy { int apply(int x); }" })
+    void approvedSpecification_doesNotAcceptAnnotationTriviaOrMalformedArgumentsAsTypes(String source) {
+        String spec = "## Design\n| Type | Role | Template status |\n|---|---|---|\n| Strategy | abstraction | student-creates |\n";
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, Map.of(), map("src/Example.java", source))).singleElement().asString()
+                .contains("reference solution does not declare them");
+    }
+
     @Test
     void approvedSpecification_doesNotMistakeATodoBreadcrumbForATypeDeclaration() {
         String spec = """
