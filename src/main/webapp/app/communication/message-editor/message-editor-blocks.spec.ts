@@ -258,6 +258,32 @@ describe('Message editor block formatting', () => {
         expect(root.querySelector('pre code code')).toBeNull();
     });
 
+    it('flattens reference chips, links, and marks to visible code text and restores rich content on undo', () => {
+        const source = 'Before\n\n**Hello** [Guide](https://example.org) [user]Anna(anna)[/user]\n[channel]general(42)[/channel] ![diagram](/diagram.png)\n\nAfter';
+        editor.load(source);
+        const paragraph = root.querySelectorAll('p')[1];
+        const original = paragraph.innerHTML;
+        select(paragraph, 0, paragraph, paragraph.childNodes.length);
+
+        editor.block('pre');
+
+        const expected = 'Before\n\n```\nHello Guide @Anna\n#general diagram\n```\n\nAfter';
+        expect(root.querySelector('pre code [data-message-reference], pre a, pre strong, pre img')).toBeNull();
+        expect(root.querySelector('pre code')!.innerHTML).toBe('Hello Guide @Anna<br>#general diagram');
+        expectMessage(expected);
+        const reopened = document.createElement('div');
+        reopened.innerHTML = messageToEditorHtml(expected);
+        expect(reopened.querySelector('pre code')!.innerHTML).toBe('Hello Guide @Anna<br>#general diagram');
+
+        editor.undo();
+        expectMessage(source);
+        expect(root.querySelectorAll('p')[1].innerHTML).toBe(original);
+        expect(root.querySelectorAll('[data-message-reference]')).toHaveLength(3);
+        editor.redo();
+        expectMessage(expected);
+        expect(root.querySelector('pre code [data-message-reference]')).toBeNull();
+    });
+
     it('converts multiline code to a quote without leaving code formatting or losing newlines', () => {
         editor.load('Before\n\n```\nfirst\nsecond\n```\n\nAfter');
         select(root.querySelector('pre code')!.firstChild!, 2);

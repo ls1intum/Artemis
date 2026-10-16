@@ -56,6 +56,9 @@ export class MessageEditorResources {
                     const studentLink = attachment.studentVersion || this.files.createStudentLink(attachment.link!);
                     const link = this.files.addAttachmentVersionToUrl(studentLink, attachment.version);
                     const shortLink = link.split('attachments/')[1];
+                    if (!shortLink) {
+                        return [];
+                    }
                     const label = `${lecture.title} › ${unit.name}`;
                     return [
                         { label, kind: 'lecture-unit', markdown: `[lecture-unit]${sanitizeStringForMarkdownEditor(unit.name)}(${shortLink})[/lecture-unit]` },

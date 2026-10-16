@@ -2,7 +2,8 @@ import MarkdownIt, { type RendererRule } from 'markdown-it';
 import DOMPurify from 'dompurify';
 import TurndownService from 'turndown';
 
-const referencePattern = /^\[(user|channel|programming|modeling|quiz|text|file-upload|lecture|lecture-unit|attachment|slide|faq)]([^\n]*?)\(([^\n]*?)\)\[\/\1]/;
+// The label ends at the first opening parenthesis; excluding it prevents overlapping label/payload backtracking.
+const referencePattern = /^\[(user|channel|programming|modeling|quiz|text|file-upload|lecture|lecture-unit|attachment|slide|faq)]([^\n(]*)\(([^\n]*?)\)\[\/\1]/;
 const markdown = MarkdownIt({ html: true, breaks: true, linkify: true });
 
 markdown.inline.ruler.before('html_inline', 'message_reference', (state, silent) => {
@@ -39,6 +40,9 @@ markdown.renderer.rules.image = (tokens, index) => {
 };
 
 const serializer = new TurndownService({ bulletListMarker: '-', codeBlockStyle: 'fenced', emDelimiter: '*', strongDelimiter: '**' });
+const escapeMarkdown = serializer.escape.bind(serializer);
+// Turndown's defaults omit HTML, entities, and the strikethrough syntax supported by our renderer.
+serializer.escape = (text) => escapeMarkdown(text).replace(/[<&~]/g, '\\$&');
 serializer.addRule('message-reference', {
     filter: (node) => node.hasAttribute('data-message-reference'),
     replacement: (_content, node) => node.getAttribute('data-message-reference') ?? '',
@@ -90,7 +94,14 @@ export function editorCodeText(element: HTMLElement): string {
 
 /** Limits the exploratory composer to syntax it can export without silently discarding legacy content. */
 export function canEditMessageVisually(source: string): boolean {
+    let quoteDepth = 0;
     return markdown.parse(source, {}).every((token) => {
+        if (token.type === 'blockquote_open') quoteDepth++;
+        if (token.type === 'blockquote_close') quoteDepth--;
+        // Match the legacy alert renderer, including its case-insensitive markers, titles, and escaped opening brackets.
+        if (quoteDepth && token.type === 'inline' && /^\\?\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i.test(token.content)) {
+            return false;
+        }
         if (['table_open', 'heading_open', 'hr', 'html_block'].includes(token.type)) {
             return false;
         }

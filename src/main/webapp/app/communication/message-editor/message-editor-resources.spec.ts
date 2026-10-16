@@ -75,6 +75,12 @@ describe('Formatted message resources', () => {
         expect(lectures.findAllByCourseIdWithSlides).toHaveBeenCalledTimes(1);
     });
 
+    it.each(['/api/core/files/slides/7', '/attachments/', ''])('skips attachment units with an unusable versioned link: %s', async (link) => {
+        files.addAttachmentVersionToUrl.mockReturnValue(link);
+
+        expect(await resources.search('slides', '', 1)).toEqual([]);
+    });
+
     it('separates course caches and retries failed loads', async () => {
         faqs.findAllByCourseIdAndState.mockReturnValueOnce(throwError(() => new Error('offline')));
         await expect(resources.search('faq', '', 1)).rejects.toThrow('offline');

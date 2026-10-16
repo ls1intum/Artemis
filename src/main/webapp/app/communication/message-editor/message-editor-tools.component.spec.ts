@@ -94,6 +94,47 @@ describe('Formatted message attachment and resource controls', () => {
         expect(component.uploading()).toBe(false);
     });
 
+    it('isolates pending uploads when switching between equal-content drafts in one conversation', async () => {
+        fixture.componentRef.setInput('draftIdentity', 'reply:11:new');
+        fixture.detectChanges();
+        let completeOld!: (value: { path: string }) => void;
+        let completeNew!: (value: { path: string }) => void;
+        upload.mockReturnValueOnce(new Promise((resolve) => (completeOld = resolve)));
+        upload.mockReturnValueOnce(new Promise((resolve) => (completeNew = resolve)));
+        const insert = vi.spyOn(component.insert, 'emit');
+        const busy = vi.spyOn(component.uploadingChange, 'emit');
+        const oldUpload = component.uploadFiles([new File(['old'], 'old.png')]);
+
+        fixture.componentRef.setInput('draftIdentity', 'reply:12:new');
+        fixture.detectChanges();
+        expect(component.uploading()).toBe(false);
+        expect(busy.mock.calls.map(([value]) => value)).toEqual([true, false]);
+        const newUpload = component.uploadFiles([new File(['new'], 'new.png')]);
+        completeOld({ path: '/old.png' });
+        await oldUpload;
+        expect(insert).not.toHaveBeenCalled();
+        expect(component.uploading()).toBe(true);
+        expect(component.error()).toBeUndefined();
+
+        completeNew({ path: '/new.png' });
+        await newUpload;
+        expect(insert).toHaveBeenCalledExactlyOnceWith({ markdown: '![new.png](/new.png)', range: expect.any(Range) });
+        expect(busy.mock.calls.map(([value]) => value)).toEqual([true, false, true, false]);
+    });
+
+    it('cancels pending uploads when source content is externally replaced', async () => {
+        let complete!: (value: { path: string }) => void;
+        upload.mockReturnValueOnce(new Promise((resolve) => (complete = resolve)));
+        const insert = vi.spyOn(component.insert, 'emit');
+        const pending = component.uploadFiles([new File(['old'], 'old.png')]);
+        fixture.componentRef.setInput('editorRevision', 1);
+        fixture.detectChanges();
+        complete({ path: '/old.png' });
+        await pending;
+        expect(insert).not.toHaveBeenCalled();
+        expect(component.uploading()).toBe(false);
+    });
+
     it('requires a conversation and a valid message-text caret before uploading', async () => {
         fixture.componentRef.setInput('conversationId', undefined);
         fixture.detectChanges();

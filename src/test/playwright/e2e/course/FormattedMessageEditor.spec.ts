@@ -1,7 +1,8 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { test as artemisTest } from '../../support/fixtures';
-import { admin, studentOne } from '../../support/users';
+import { admin, studentOne, studentTwo, studentThree, studentFour } from '../../support/users';
 import { generateUUID, readResponseJson } from '../../support/utils';
+import { expectWithinViewport, forEachViewport } from '../../support/layout';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -311,6 +312,86 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         });
     }
 
+    for (const list of ['ul', 'ol']) {
+        test(`Backspace exits an empty ${list} item onto its own line between surrounding paragraphs`, async ({ page, composer, communicationAPIRequests }) => {
+            const listMarkdown = list === 'ul' ? '- first' : '1. first';
+            const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', `Before\n\n${listMarkdown}`);
+            const { posting, editor } = await reopen(page, original);
+            await expect(editor.locator(`${list} > li`)).toHaveText(['first']);
+            await selectText(editor, 11, 11);
+            await page.keyboard.press('Enter');
+            await expect(editor.locator(`${list} > li`)).toHaveCount(2);
+            await page.keyboard.press('Backspace');
+            await expect(editor.locator(`${list} > li`)).toHaveText(['first']);
+            await expectCaret(editor, 11);
+            // Text offsets alone cannot distinguish the end of the item from the new empty line.
+            await expect
+                .poll(() =>
+                    editor.evaluate((element) => {
+                        const node = window.getSelection()?.anchorNode;
+                        const parent = node instanceof Element ? node : node?.parentElement;
+                        return !!parent && element.contains(parent) && !parent.closest('li, ul, ol');
+                    }),
+                )
+                .toBe(true);
+            await page.keyboard.type('After');
+            await expect(editor.locator(':scope > p')).toHaveText(['Before', 'After']);
+            await expectCaret(editor, 16);
+            const saved = await saveEdited(page, composer, posting, original);
+            expect(saved.content).toBe(`Before\n\n${listMarkdown}\n\nAfter`);
+            const reopened = await reopen(page, saved);
+            await expect(reopened.editor.locator(`${list} > li`)).toHaveText(['first']);
+            await expect(reopened.editor.locator(':scope > p')).toHaveText(['Before', 'After']);
+        });
+    }
+
+    test('toolbar pressed states follow native caret movement and pending format toggles', async ({ page, composer, communicationAPIRequests }) => {
+        const original = await communicationAPIRequests.createCourseMessage(
+            composer.course,
+            composer.channel.id!,
+            'channel',
+            'plain **bold** *italic*\n\n- bullet\n\n1. numbered\n\n> quote\n\n```\ncode\n```\n\nafter',
+        );
+        const { posting, editor } = await reopen(page, original);
+        const controls = ['strong', 'em', 'ul', 'ol', 'blockquote', 'pre'];
+        for (const target of [
+            { text: 'bold', active: 'strong' },
+            { text: 'italic', active: 'em' },
+            { text: 'plain', active: undefined },
+            { text: 'bullet', active: 'ul' },
+            { text: 'numbered', active: 'ol' },
+            { text: 'quote', active: 'blockquote' },
+            { text: 'code', active: 'pre' },
+            { text: 'after', active: undefined },
+        ]) {
+            const offset = (await editor.textContent())!.indexOf(target.text) + 1;
+            expect(offset).toBeGreaterThan(0);
+            await selectText(editor, offset, offset);
+            await page.keyboard.press('ArrowRight');
+            for (const control of controls) {
+                const kind = ['strong', 'em'].includes(control) ? 'format' : 'block';
+                await expect(posting.getByTestId(`message-${kind}-${control}`)).toHaveAttribute('aria-pressed', String(control === target.active));
+            }
+        }
+        const bold = posting.getByTestId('message-format-strong');
+        const italic = posting.getByTestId('message-format-em');
+        await bold.click();
+        await expect(bold).toHaveAttribute('aria-pressed', 'true');
+        await italic.click();
+        await expect(bold).toHaveAttribute('aria-pressed', 'true');
+        await expect(italic).toHaveAttribute('aria-pressed', 'true');
+        await page.keyboard.type('X');
+        await expect(editor.locator('strong em, em strong')).toHaveText('X');
+        await bold.click();
+        await expect(bold).toHaveAttribute('aria-pressed', 'false');
+        await expect(italic).toHaveAttribute('aria-pressed', 'true');
+        await italic.click();
+        await expect(italic).toHaveAttribute('aria-pressed', 'false');
+        await page.keyboard.type('Y');
+        await expect(editor.locator('strong em, em strong')).toHaveText('X');
+        await expect(editor).toContainText('afXYter');
+    });
+
     test('code Enter and Shift+Enter preserve literal lines when returning to a paragraph', async ({ page, composer }) => {
         const { editor } = composer;
         await editor.pressSequentially('const answer = 42;');
@@ -370,6 +451,61 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         expect(saved.content).toBe('Read [guide](https://example.com/guide?section=2) today');
         await expect(postContent(page, saved.id!).getByRole('link', { name: 'guide', exact: true })).toHaveAttribute('href', 'https://example.com/guide?section=2');
     });
+
+    for (const trigger of ['toolbar', 'shortcut']) {
+        test(`${trigger} edits the existing link at a native caret without nesting or duplicating anchors`, async ({ page, composer, communicationAPIRequests }) => {
+            const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', 'Read [guide](https://example.com/old) today');
+            const { posting, editor } = await reopen(page, original);
+            await selectText(editor, 7, 7);
+            if (trigger === 'toolbar') {
+                await posting.getByTestId('message-link-button').click();
+            } else {
+                await page.keyboard.press('ControlOrMeta+k');
+            }
+            await expect(posting.getByTestId('message-link-text')).toHaveValue('guide');
+            await expect(posting.getByTestId('message-link-url')).toHaveValue('https://example.com/old');
+            await posting.getByTestId('message-link-url').fill('https://example.com/new');
+            await posting.getByTestId('apply-message-link').click();
+            await expect(editor.locator('a')).toHaveCount(1);
+            await expect(editor.locator('a')).toHaveText('guide');
+            await expect(editor.locator('a')).toHaveAttribute('href', 'https://example.com/new');
+            await expectCaret(editor, 10);
+            await page.keyboard.type('!');
+            await expect(editor.locator('a')).toHaveText('guide');
+            const saved = await saveEdited(page, composer, posting, original);
+            expect(saved.content).toBe('Read [guide](https://example.com/new)! today');
+            const reopened = await reopen(page, saved);
+            await expect(reopened.editor.locator('a')).toHaveCount(1);
+            await expect(reopened.editor.locator('a')).toHaveAttribute('href', 'https://example.com/new');
+            await expectText(reopened.editor, 'Read guide! today');
+        });
+    }
+
+    for (const code of [
+        { name: 'inline code', markdown: 'Before `literal` after', selector: 'p > code', content: 'Before `lite!ral` after' },
+        { name: 'code block', markdown: '```\nliteral\n```', selector: 'pre code', content: '```\nlite!ral\n```' },
+    ]) {
+        test(`link insertion stays disabled inside ${code.name} through the toolbar and keyboard shortcut`, async ({ page, composer, communicationAPIRequests }) => {
+            const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', code.markdown);
+            const { posting, editor } = await reopen(page, original);
+            const offset = (await editor.textContent())!.indexOf('literal') + 3;
+            await selectText(editor, offset, offset);
+            await page.keyboard.press('ArrowRight');
+            await expect(posting.getByTestId('message-link-button')).toBeDisabled();
+            await page.keyboard.press('ControlOrMeta+k');
+            await expect(posting.getByTestId('message-link-url')).toBeHidden();
+            await expect(editor.locator('a')).toHaveCount(0);
+            await expect(editor.locator(code.selector)).toHaveText('literal');
+            await expectCaret(editor, offset + 1);
+            await page.keyboard.type('!');
+            await expect(editor.locator(code.selector)).toHaveText('lite!ral');
+            const saved = await saveEdited(page, composer, posting, original);
+            expect(saved.content).toBe(code.content);
+            const reopened = await reopen(page, saved);
+            await expect(reopened.editor.locator('a')).toHaveCount(0);
+            await expect(reopened.editor.locator(code.selector)).toHaveText('lite!ral');
+        });
+    }
 
     test('native multiline code is persisted literally and reopened as one editable code block', async ({ page, composer }) => {
         const { editor } = composer;
@@ -579,6 +715,110 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         expect(saved.content).not.toContain(':jo');
         expect(sentRequests).toHaveLength(1);
         await expect(postContent(page, saved.id!)).toContainText(`Nice ${glyph} thanks`);
+    });
+
+    test('mention completions stay beside the caret on the first line of a multiline editor at every viewport', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('Context details');
+        for (let line = 0; line < 7; line++) {
+            await page.keyboard.press('Shift+Enter');
+            await page.keyboard.type(`Later line ${line}`);
+        }
+        await forEachViewport(page, async () => {
+            await editor.scrollIntoViewIfNeeded();
+            await selectText(editor, 0, 0);
+            await page.keyboard.type(`@${studentOne.username}`);
+            const suggestions = page.getByTestId('message-completion-list');
+            await expect(suggestions).toBeVisible();
+            await expect(suggestions.getByRole('option')).not.toHaveCount(0);
+            await expectWithinViewport(suggestions, ['top', 'right', 'bottom', 'left'], { name: 'mention completions' });
+            await expect
+                .poll(
+                    () =>
+                        suggestions.evaluate((popup) => {
+                            const selection = window.getSelection();
+                            if (!selection?.rangeCount) return Number.POSITIVE_INFINITY;
+                            const caret = selection.getRangeAt(0).getBoundingClientRect();
+                            const box = popup.getBoundingClientRect();
+                            return Math.min(Math.abs(box.top - caret.bottom), Math.abs(caret.top - box.bottom));
+                        }),
+                    { message: 'completion popup should be within 16px above or below the active caret line' },
+                )
+                .toBeLessThanOrEqual(16);
+            await page.keyboard.press('Escape');
+            await expect(suggestions).toBeHidden();
+            await selectText(editor, 0, 1 + studentOne.username.length, `@${studentOne.username}`);
+            await page.keyboard.press('Backspace');
+            await expectText(editor, 'Context detailsLater line 0Later line 1Later line 2Later line 3Later line 4Later line 5Later line 6');
+        });
+    });
+
+    test('async mention results reposition the growing popup inside a narrow viewport', async ({
+        page,
+        composer,
+        login,
+        courseManagementAPIRequests,
+        communicationAPIRequests,
+    }) => {
+        await login(admin);
+        for (const student of [studentTwo, studentThree, studentFour]) {
+            await courseManagementAPIRequests.addStudentToCourse(composer.course, student);
+            await communicationAPIRequests.joinUserIntoChannel(composer.course, composer.channel.id!, student);
+        }
+        await login(studentOne, composer.route);
+        await page.setViewportSize({ width: 390, height: 844 });
+        const { editor } = composer;
+        await expect(editor).toBeVisible();
+        const query = 'artemis_test_user_';
+        let releaseResponse!: () => void;
+        const responseGate = new Promise<void>((resolve) => (releaseResponse = resolve));
+        let responseReady!: () => void;
+        const realResponseReady = new Promise<void>((resolve) => (responseReady = resolve));
+        await page.route(
+            (url) => url.pathname === `/api/course/courses/${composer.course.id}/members/search` && url.searchParams.get('loginOrName') === query,
+            async (route) => {
+                const response = await route.fetch();
+                expect(response.ok()).toBe(true);
+                responseReady();
+                await responseGate;
+                await route.fulfill({ response });
+            },
+        );
+        try {
+            await editor.pressSequentially('Formatting stays visible while you write.');
+            await page.keyboard.press('Shift+Enter');
+            await page.keyboard.type(`@${query}`);
+            await realResponseReady;
+            const suggestions = page.getByTestId('message-completion-list');
+            await expect(suggestions).toBeVisible();
+            await expect(suggestions.getByRole('option')).toHaveCount(0);
+            releaseResponse();
+            await expect(suggestions.getByRole('option')).toHaveCount(4);
+            for (const student of [studentOne, studentTwo, studentThree, studentFour]) {
+                await expect(suggestions.getByRole('option').getByText(`@${student.displayName}`, { exact: true })).toBeVisible();
+            }
+            await expectWithinViewport(suggestions, ['top', 'right', 'bottom', 'left'], { name: 'loaded mention completions at 390px' });
+            await expect(suggestions.getByRole('option').last()).toBeInViewport({ ratio: 1 });
+            await expectText(editor, `Formatting stays visible while you write.@${query}`);
+        } finally {
+            releaseResponse();
+        }
+    });
+
+    test('an empty dirty draft keeps a neutral border after native blur while sending stays disabled', async ({ page, composer }) => {
+        const { editor } = composer;
+        const host = page.locator('jhi-posting-markdown-editor').filter({ has: editor });
+        await editor.pressSequentially('x');
+        await expect(page.getByTestId('send-formatted-message')).toBeEnabled();
+        await editor.press('ControlOrMeta+a');
+        await editor.press('Backspace');
+        await expectText(editor, '');
+        await editor.press('Tab');
+        await expect(editor).not.toBeFocused();
+        await expect(host).toHaveClass(/\bng-dirty\b/);
+        await expect(host).toHaveClass(/\bng-invalid\b/);
+        await expect(page.getByTestId('send-formatted-message')).toBeDisabled();
+        await expect.poll(() => host.evaluate((element) => getComputedStyle(element).borderLeftWidth)).toBe('0px');
     });
 
     test('formatted draft reload keeps marks and selection editing sends the restored content once', async ({ page, composer }) => {

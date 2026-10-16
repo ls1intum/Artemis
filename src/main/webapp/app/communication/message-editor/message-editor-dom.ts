@@ -413,10 +413,48 @@ export class MessageEditorDom {
         return true;
     }
 
+    /** Reads the link under a keyboard caret or a selection wholly inside one link. */
+    linkAtSelection(): HTMLAnchorElement | undefined {
+        const range = this.range();
+        const item = this.selectedItem(range);
+        const link = item instanceof HTMLAnchorElement ? item : this.parentElement(range.commonAncestorContainer)?.closest('a');
+        return link instanceof HTMLAnchorElement && this.element.contains(link) ? link : undefined;
+    }
+
+    /** Links cannot be represented inside literal code; reject both caret and spanning selections there. */
+    canLinkSelection(): boolean {
+        const range = this.range();
+        if (this.parentElement(range.startContainer)?.closest('code, pre') || this.parentElement(range.endContainer)?.closest('code, pre')) return false;
+        if (range.collapsed) return true;
+        return !Array.from(this.element.querySelectorAll('code, pre')).some((code) => {
+            const content = this.element.ownerDocument.createRange();
+            content.selectNode(code);
+            return content.compareBoundaryPoints(Range.END_TO_START, range) < 0 && content.compareBoundaryPoints(Range.START_TO_END, range) > 0;
+        });
+    }
+
+    /** Active marks reflect the selection and pending caret formats without inserting empty DOM wrappers. */
+    activeFormatting(): string[] {
+        const range = this.range();
+        const parent = this.parentElement(range.startContainer);
+        const marks = parent?.closest('pre') ? [] : range.collapsed ? (this.typingMarks ?? inlineMarks.filter((tag) => parent?.closest(tag))) : this.selectionMarks(range);
+        const nodes = range.collapsed ? [range.startContainer] : this.selectedTextNodes(range);
+        const blocks = ['ul', 'ol', 'blockquote', 'pre'].filter(
+            (tag) =>
+                nodes.length &&
+                nodes.every((node) => {
+                    const element = this.parentElement(node);
+                    return tag === 'ul' || tag === 'ol' ? element?.closest('ul, ol')?.tagName.toLowerCase() === tag : !!element?.closest(tag);
+                }),
+        );
+        return [...marks, ...blocks];
+    }
+
     setLink(label: string, url: string, existing?: HTMLAnchorElement): void {
-        if (!isMessageLinkSafe(url) || (existing && !this.element.contains(existing))) {
+        if (!isMessageLinkSafe(url) || !this.canLinkSelection() || (existing && !this.element.contains(existing))) {
             return;
         }
+        existing ??= this.linkAtSelection();
         this.transact(() => {
             if (existing && this.element.contains(existing)) {
                 if (existing.textContent !== (label || url)) {

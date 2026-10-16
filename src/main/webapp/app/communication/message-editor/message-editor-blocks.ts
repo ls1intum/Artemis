@@ -140,7 +140,7 @@ export function formatMessageBlocks(root: HTMLElement, selection: Range, style: 
                 });
             } else if (
                 node instanceof HTMLElement &&
-                !node.hasAttribute('data-message-reference') &&
+                (plain || !node.hasAttribute('data-message-reference')) &&
                 !node.hasAttribute('data-message-selection-boundary') &&
                 ((plain && node.tagName !== 'BR') || (flattenParagraphs && node.matches('p, div')))
             ) {

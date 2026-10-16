@@ -34,6 +34,7 @@ export class MessageEditorToolsComponent {
     readonly courseId = input.required<number>();
     readonly conversationId = input<number>();
     readonly editorRevision = input(0);
+    readonly draftIdentity = input<string>();
     readonly captureSelection = input.required<() => Range | undefined>();
     readonly insert = output<MessageResourceInsertion>();
     readonly uploadingChange = output<boolean>();
@@ -77,6 +78,7 @@ export class MessageEditorToolsComponent {
             this.courseId();
             this.conversationId();
             this.editorRevision();
+            this.draftIdentity();
             untracked(() => {
                 this.context++;
                 this.close(false);

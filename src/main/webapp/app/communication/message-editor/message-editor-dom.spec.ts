@@ -374,6 +374,64 @@ describe('Message editor editing transactions', () => {
         expect(root.textContent).toBe('First new paragraph');
     });
 
+    it('finds an existing link from a keyboard selection and updates it without nesting anchors', () => {
+        editor.load('Read [**guide**](https://example.org/old) next');
+        const link = root.querySelector('a')!;
+        select(link.querySelector('strong')!.firstChild!, 2);
+        expect(editor.linkAtSelection()).toBe(link);
+        expect(editor.canLinkSelection()).toBe(true);
+        editor.setLink('guide', 'https://example.org/new');
+        expect(root.querySelectorAll('a')).toHaveLength(1);
+        expect(root.querySelector('a a')).toBeNull();
+        expect(root.querySelector('a strong')!.textContent).toBe('guide');
+        expect(link.getAttribute('href')).toBe('https://example.org/new');
+        expect(changed).toHaveBeenLastCalledWith('Read [**guide**](https://example.org/new) next');
+    });
+
+    it.each(['`literal`', '```\nliteral\n```'])('rejects link creation in code: %s', (message) => {
+        editor.load(message);
+        const text = root.querySelector('code')!.firstChild!;
+        select(text, 0, 7);
+        expect(editor.canLinkSelection()).toBe(false);
+        editor.setLink('literal', 'https://example.org');
+        expect(root.querySelector('a')).toBeNull();
+        expect(root.querySelector('code')!.textContent).toBe('literal');
+        expect(changed).not.toHaveBeenCalled();
+    });
+
+    it('rejects a link selection spanning ordinary text and code', () => {
+        editor.load('Before `code` after');
+        const range = document.createRange();
+        range.selectNodeContents(root);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        expect(editor.canLinkSelection()).toBe(false);
+        editor.setLink('combined', 'https://example.org');
+        expect(root.querySelector('a')).toBeNull();
+        expect(root.textContent).toBe('Before code after');
+    });
+
+    it('reports active formats at a caret, across a uniform selection and when a pending format is disabled', () => {
+        editor.load('- **bold** plain');
+        const bold = root.querySelector('strong')!.firstChild!;
+        select(bold, 2);
+        expect(editor.activeFormatting()).toEqual(expect.arrayContaining(['strong', 'ul']));
+        editor.format('strong');
+        expect(editor.activeFormatting()).not.toContain('strong');
+        expect(editor.activeFormatting()).toContain('ul');
+        const item = root.querySelector('li')!;
+        select(item, 0, item.childNodes.length);
+        expect(editor.activeFormatting()).not.toContain('strong');
+        expect(editor.activeFormatting()).toContain('ul');
+    });
+
+    it('reports a code block without implying that inline-code formatting is enabled', () => {
+        editor.load('```\nliteral\n```');
+        select(root.querySelector('code')!.firstChild!, 3);
+        expect(editor.activeFormatting()).toContain('pre');
+        expect(editor.activeFormatting()).not.toContain('code');
+    });
+
     it('leaves ordinary character deletion and unsafe links to their respective handlers', () => {
         editor.load('Text');
         select(root.querySelector('p')!.firstChild!, 2);
