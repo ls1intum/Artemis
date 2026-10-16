@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Faq, FaqState, UpdateFaqDTO } from 'app/communication/shared/entities/faq.model';
-import { faCancel, faCheck, faEdit, faFileExport, faFilter, faPencilAlt, faPlus, faQuestion, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCancel, faCheck, faEdit, faFilter, faPencilAlt, faPlus, faQuestion, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -14,9 +14,6 @@ import { SortService } from 'app/foundation/service/sort.service';
 import { SearchFilterComponent } from 'app/shared-ui/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/course/shared/entities/course.model';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -56,8 +53,6 @@ export class FaqComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
     private accountService = inject(AccountService);
-    private profileService = inject(ProfileService);
-    private irisSettingsService = inject(IrisSettingsService);
 
     protected readonly FaqState = FaqState;
     faqs?: Faq[]; // undefined until loaded; code distinguishes "not loaded / load failed" from an empty result
@@ -69,7 +64,6 @@ export class FaqComponent implements OnInit, OnDestroy {
     readonly courseId = signal<number>(undefined!);
     readonly hasCategories = signal(false);
     readonly isAtLeastInstructor = signal(false);
-    readonly irisEnabled = signal(false);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -89,10 +83,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     protected readonly faSort = faSort;
     protected readonly faCancel = faCancel;
     protected readonly faCheck = faCheck;
-    protected readonly faFileExport = faFileExport;
     protected readonly faQuestion = faQuestion;
-
-    private profileInfoSubscription?: Subscription;
 
     constructor() {
         this.predicate = 'id';
@@ -113,19 +104,12 @@ export class FaqComponent implements OnInit, OnDestroy {
                 this.isAtLeastInstructor.set(this.accountService.isAtLeastInstructorInCourse(course));
             }
         });
-        const irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
-        if (irisEnabled) {
-            this.irisSettingsService.getCourseSettingsWithRateLimit(this.courseId()).subscribe((response) => {
-                this.irisEnabled.set(response?.settings?.enabled || false);
-            });
-        }
     }
 
     ngOnDestroy(): void {
         this.dialogErrorSource.complete();
         this.searchInput.complete();
         this.routeDataSubscription?.unsubscribe();
-        this.profileInfoSubscription?.unsubscribe();
     }
 
     deleteFaq(courseId: number, faqId: number) {
@@ -230,16 +214,5 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     acceptProposedFaq(courseId: number, faq: Faq) {
         this.updateFaqState(courseId, faq, FaqState.ACCEPTED, 'artemisApp.faq.accepted');
-    }
-
-    ingestFaqsInPyris() {
-        if (this.faqs?.first()) {
-            this.faqService.ingestFaqsInPyris(this.courseId()).subscribe({
-                next: () => this.alertService.success('artemisApp.iris.ingestionAlert.allFaqsSuccess'),
-                error: () => {
-                    this.alertService.error('artemisApp.iris.ingestionAlert.allFaqsError');
-                },
-            });
-        }
     }
 }

@@ -249,22 +249,6 @@ describe('Faq Service', () => {
             expect(service.hasSearchTokens(faq1, 'title answer')).toBe(true);
             expect(service.hasSearchTokens(faq1, 'title answer missing')).toBe(false);
         });
-
-        it('should send a POST request to ingest faqs and return an OK response', () => {
-            const courseId = 123;
-            const expectedUrl = `api/communication/courses/${courseId}/faqs/ingest`;
-            const expectedStatus = 200;
-
-            service.ingestFaqsInPyris(courseId).subscribe((response) => {
-                expect(response.status).toBe(expectedStatus);
-            });
-
-            const req = httpMock.expectOne({
-                url: expectedUrl,
-                method: 'POST',
-            });
-            expect(req.request.method).toBe('POST');
-        });
     });
     it('should stringify categories without mutating the original createFaqDTO', () => {
         const original = createFaqDTODefault;
