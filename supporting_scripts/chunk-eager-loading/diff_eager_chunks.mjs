@@ -16,11 +16,17 @@
  * bury the ones that actually need a look under a wall of routes nothing happened to.
  *
  * Usage:
- *   node diff_eager_chunks.mjs <fresh-report.json> --baseline <baseline-report.json> [--out <report.md>]
+ *   node diff_eager_chunks.mjs <fresh-report.json> --baseline <baseline-report.json>
+ *     [--out <comment.md>] [--full-out <full-report.md>] [--max-chars <n>]
+ *
+ * --out receives the report shortened to at most --max-chars characters (default 60,000) for a PR
+ * comment; --full-out receives it in full.
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+
+const USAGE = 'node diff_eager_chunks.mjs <fresh-report.json> --baseline <baseline-report.json> [--out <comment.md>] [--full-out <full-report.md>] [--max-chars <n>]';
 
 const CHUNK_COUNT_THRESHOLD = 3; // absolute: allow small drift (e.g. a shared vendor chunk split differently)
 const BYTES_THRESHOLD_PCT = 0.1; // relative: classify as changed if eager bytes moved more than 10%
@@ -36,13 +42,24 @@ function requireOptionValue(args, index, option) {
 
 function parseArgs(argv) {
     const args = argv.slice(2);
-    let reportPathArg, baselinePathArg, outPathArg;
+    let reportPathArg, baselinePathArg, outPathArg, fullOutPathArg;
+    let maxChars = DEFAULT_MAX_CHARS;
     for (let i = 0; i < args.length; i++) {
         if (args[i] === '--baseline') {
             baselinePathArg = requireOptionValue(args, i, '--baseline');
             i++;
         } else if (args[i] === '--out') {
             outPathArg = requireOptionValue(args, i, '--out');
+            i++;
+        } else if (args[i] === '--full-out') {
+            fullOutPathArg = requireOptionValue(args, i, '--full-out');
+            i++;
+        } else if (args[i] === '--max-chars') {
+            maxChars = Number(requireOptionValue(args, i, '--max-chars'));
+            if (!Number.isInteger(maxChars) || maxChars < 1000) {
+                console.error('--max-chars must be an integer of at least 1000.');
+                process.exit(1);
+            }
             i++;
         } else if (!args[i].startsWith('--') && !reportPathArg) reportPathArg = args[i];
     }
@@ -54,6 +71,8 @@ function parseArgs(argv) {
         reportPath: reportPathArg ? resolve(reportPathArg) : null,
         baselinePath: resolve(baselinePathArg),
         outPath: outPathArg ? resolve(outPathArg) : null,
+        fullOutPath: fullOutPathArg ? resolve(fullOutPathArg) : null,
+        maxChars,
     };
 }
 
@@ -188,16 +207,16 @@ const MAX_LISTED_ROOTS = 5;
 const MAX_LISTED_CHUNKS = 15;
 
 /**
- * Renders one route's drill-down. When the reports carry import edges, the roots (the static
- * imports that caused the change) come first and the full size-sorted chunk list is folded away;
- * without edges (an older baseline) only the plain list is shown, as before.
+ * Renders one route's drill-down as its own block. When the reports carry import edges, the roots
+ * (the static imports that caused the change) come first and the full size-sorted chunk list is
+ * folded away; without edges (an older baseline) only the plain list is shown, as before.
  */
-function renderDrillDown(lines, heading, rootsLabel, roots, chunks) {
-    lines.push('');
+function renderDrillDown(heading, rootsLabel, roots, chunks) {
+    const lines = [''];
     if (roots.length === 0) {
         lines.push(`${heading}:`);
         appendChunkList(lines, chunks);
-        return;
+        return lines.join('\n');
     }
     lines.push(`${heading}, through ${roots.length} static import(s):`);
     for (const r of roots.slice(0, MAX_LISTED_ROOTS)) {
@@ -215,6 +234,7 @@ function renderDrillDown(lines, heading, rootsLabel, roots, chunks) {
     appendChunkList(lines, chunks);
     lines.push('');
     lines.push('</details>');
+    return lines.join('\n');
 }
 
 function appendChunkList(lines, chunks) {
@@ -226,60 +246,99 @@ function appendChunkList(lines, chunks) {
     }
 }
 
-function toMarkdown(diffs, meta) {
+// GitHub rejects a comment body over 65,536 characters. The workflow appends a footer of a few
+// hundred characters, so the comment version of the report stays well below the limit.
+const DEFAULT_MAX_CHARS = 60_000;
+const TRUNCATION_MARKER = '<!-- chunk-eager-report-truncated -->';
+
+/**
+ * Renders the report twice: in full, and as a comment of at most maxChars characters. The
+ * comment always keeps the heading, the summary and the baseline line; table rows and then
+ * drill-downs follow in order until the next one would not fit, and a note says what was left out.
+ */
+function toMarkdown(diffs, meta, maxChars) {
     const regressed = diffs.filter((d) => d.status === 'regressed');
     const improved = diffs.filter((d) => d.status === 'improved');
     const unchanged = diffs.filter((d) => d.status === 'unchanged');
     const skipped = diffs.filter((d) => d.skipped);
-    const lines = [];
-    lines.push('### Client Eager-Chunk Loading Report');
+    const head = [];
+    head.push('### Client Eager-Chunk Loading Report');
 
     const summary = [];
     if (regressed.length) summary.push(`⚠️ ${regressed.length} regression(s)`);
     if (improved.length) summary.push(`✅ ${improved.length} improvement(s)`);
     if (unchanged.length) summary.push(`➖ ${unchanged.length} unchanged`);
     if (skipped.length) summary.push(`${skipped.length} skipped`);
-    lines.push(summary.length ? summary.join(', ') + ` (of ${diffs.length} routes).` : '➖ No meaningful change on any route.');
+    head.push(summary.length ? summary.join(', ') + ` (of ${diffs.length} routes).` : '➖ No meaningful change on any route.');
 
-    lines.push('');
-    lines.push(`_Baseline: \`${meta.sourceBranch}\` @ \`${meta.sourceCommit}\`._`);
+    head.push('');
+    head.push(`_Baseline: \`${meta.sourceBranch}\` @ \`${meta.sourceCommit}\`._`);
 
     // Routes now number in the hundreds (auto-discovered, not a hand-curated handful) -- listing
     // every unchanged route in the table would bury the routes that actually need a look. Only
     // regressed/improved/skipped rows earn a table row; unchanged ones are just a count above.
-    const tableWorthy = diffs.filter((d) => d.status !== 'unchanged');
-    if (tableWorthy.length) {
-        lines.push('');
-        lines.push('| | Route | Eager chunks | Eager size | Δ chunks | Δ size |');
-        lines.push('|---|---|---|---|---|---|');
-        for (const d of tableWorthy) {
-            if (d.skipped) {
-                lines.push(`| | ${d.route} | - | - | _${d.skipped}_ | - |`);
-                continue;
-            }
-            lines.push(
-                `| ${STATUS_MARKER[d.status]} | ${d.route} | ${d.fresh.eagerChunkCount} | ${fmtKB(d.fresh.eagerBytes)} | ${d.chunkCountDelta >= 0 ? '+' : ''}${d.chunkCountDelta} | ${fmtKB(d.bytesDelta)} (${fmtPct(d.bytesDeltaPct)}) |`,
-            );
+    const tableRows = [];
+    for (const d of diffs.filter((diff) => diff.status !== 'unchanged')) {
+        if (d.skipped) {
+            tableRows.push(`| | ${d.route} | - | - | _${d.skipped}_ | - |`);
+            continue;
         }
+        tableRows.push(
+            `| ${STATUS_MARKER[d.status]} | ${d.route} | ${d.fresh.eagerChunkCount} | ${fmtKB(d.fresh.eagerBytes)} | ${d.chunkCountDelta >= 0 ? '+' : ''}${d.chunkCountDelta} | ${fmtKB(d.bytesDelta)} (${fmtPct(d.bytesDeltaPct)}) |`,
+        );
     }
+    const tableHeader = ['', '| | Route | Eager chunks | Eager size | Δ chunks | Δ size |', '|---|---|---|---|---|---|'].join('\n');
 
+    const drillDowns = [];
     for (const d of regressed) {
         if (d.newChunks.length === 0) continue; // size-only regression, nothing new to list
-        renderDrillDown(lines, `**${d.route}** — ${d.newChunks.length} new chunk(s) became eager-reachable`, 'Pulled in by', d.newRoots, d.newChunks);
+        drillDowns.push(renderDrillDown(`**${d.route}** — ${d.newChunks.length} new chunk(s) became eager-reachable`, 'Pulled in by', d.newRoots, d.newChunks));
     }
-
     for (const d of improved) {
         if (d.removedChunks.length === 0) continue; // size-only improvement, nothing removed to list
-        renderDrillDown(lines, `**${d.route}** — ${d.removedChunks.length} chunk(s) are no longer eager-reachable`, 'No longer pulled in by', d.removedRoots, d.removedChunks);
+        drillDowns.push(
+            renderDrillDown(`**${d.route}** — ${d.removedChunks.length} chunk(s) are no longer eager-reachable`, 'No longer pulled in by', d.removedRoots, d.removedChunks),
+        );
     }
 
-    return lines.join('\n');
+    const headText = head.join('\n');
+    const full = [headText, ...(tableRows.length ? [tableHeader, ...tableRows] : []), ...drillDowns].join('\n');
+    if (full.length <= maxChars) return { full, comment: full };
+
+    // Reserve room for the note first, so adding it can never push the comment over the budget.
+    const noteReserve = 400;
+    const parts = [headText];
+    let length = headText.length;
+    const fits = (text) => length + 1 + text.length + noteReserve <= maxChars;
+    const add = (text) => {
+        parts.push(text);
+        length += 1 + text.length;
+    };
+
+    let shownRows = 0;
+    if (tableRows.length && fits(tableHeader)) {
+        add(tableHeader);
+        while (shownRows < tableRows.length && fits(tableRows[shownRows])) add(tableRows[shownRows++]);
+    }
+    let shownDrillDowns = 0;
+    // Drill-downs only follow a complete table, so a shown drill-down never refers to a route the table left out.
+    if (shownRows === tableRows.length) {
+        while (shownDrillDowns < drillDowns.length && fits(drillDowns[shownDrillDowns])) add(drillDowns[shownDrillDowns++]);
+    }
+
+    const omitted = [];
+    if (shownRows < tableRows.length) omitted.push(`${tableRows.length - shownRows} table row(s)`);
+    if (shownDrillDowns < drillDowns.length) omitted.push(`${drillDowns.length - shownDrillDowns} route drill-down(s)`);
+    add('');
+    add(`_This comment is shortened to fit GitHub's comment size limit: ${omitted.join(' and ')} left out. The full report is attached to the workflow run._`);
+    add(TRUNCATION_MARKER);
+    return { full, comment: parts.join('\n') };
 }
 
 function main() {
-    const { reportPath, baselinePath, outPath } = parseArgs(process.argv);
+    const { reportPath, baselinePath, outPath, fullOutPath, maxChars } = parseArgs(process.argv);
     if (!reportPath) {
-        console.error('Usage: node diff_eager_chunks.mjs <fresh-report.json> --baseline <baseline-report.json> [--out <report.md>]');
+        console.error(`Usage: ${USAGE}`);
         process.exit(1);
     }
 
@@ -291,13 +350,17 @@ function main() {
     const allRoutes = [...new Set([...Object.keys(freshByRoute), ...Object.keys(baselineByRoute)])];
 
     const diffs = allRoutes.map((route) => diffRoute(route, baselineByRoute[route], freshByRoute[route]));
-    const markdown = toMarkdown(diffs, baseline.meta);
+    const { full, comment } = toMarkdown(diffs, baseline.meta, maxChars);
 
     if (outPath) {
-        writeFileSync(outPath, markdown);
+        writeFileSync(outPath, comment);
         console.log(`Markdown report written to ${outPath}`);
     }
-    console.log(markdown);
+    if (fullOutPath) {
+        writeFileSync(fullOutPath, full);
+        console.log(`Full markdown report written to ${fullOutPath}`);
+    }
+    console.log(full);
 
     // Exit code reflects regressions only (never improvements) -- kept mainly so this is usable
     // as a merge gate later if desired; ci-build.yml's chunk-eager-quality job currently ignores

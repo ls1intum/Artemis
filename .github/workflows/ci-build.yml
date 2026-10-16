@@ -93,10 +93,10 @@ jobs:
         # before the first task runs. build/webapp-dist is not declared as any task's output, so
         # it survives; the `webapp` Gradle task picks it up from there.
         #
-        # stats.json (the esbuild metafile for the eager-chunk report below) is moved out first:
+        # browser-stats.json (the esbuild metafile for the eager-chunk report below) is moved out first:
         # the `webapp` task copies everything in build/webapp-dist into the WAR, where it would
         # otherwise be served publicly.
-        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false --stats-json && mv build/resources/main/static/stats.json build/client-stats.json && mv build/resources/main/static build/webapp-dist
+        run: pnpm run clean-www && pnpm run prebuild && pnpm exec ng build --configuration production --optimization=false --stats-json && mv build/resources/main/static/browser-stats.json build/client-stats.json && mv build/resources/main/static build/webapp-dist
       - name: Generate eager-chunk loading report
         # Feeds the chunk-eager-quality job below (PR runs) and, on develop pushes, becomes the
         # next baseline that PR runs compare against. See supporting_scripts/chunk-eager-loading/README.md.
@@ -112,7 +112,7 @@ jobs:
           CHUNK_REPORT_BRANCH: ${{ github.head_ref }}
         run: node supporting_scripts/chunk-eager-loading/analyze_eager_chunks.mjs build/client-stats.json --out chunk-eager-report.json
       - name: Upload eager-chunk report artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: chunk-eager-report
           path: chunk-eager-report.json
@@ -189,15 +189,15 @@ jobs:
       pull-requests: write
       actions: read
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.commit_sha }}
       - name: Setup Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '${{ env.node }}'
       - name: Download this PR's report
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: chunk-eager-report
           path: pr-report
@@ -224,7 +224,7 @@ jobs:
           token: ${{ github.token }}
       - name: Download develop's report
         if: steps.resolve-develop-run.outcome == 'success'
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: chunk-eager-report
           path: develop-report
@@ -243,12 +243,24 @@ jobs:
           node supporting_scripts/chunk-eager-loading/diff_eager_chunks.mjs \
             pr-report/chunk-eager-report.json \
             --baseline develop-report/chunk-eager-report.json \
-            --out chunk-diff-report.md
+            --out chunk-diff-report.md \
+            --full-out chunk-diff-report-full.md
+      - name: Upload full eager-chunk diff report
+        # The PR comment is shortened when the report would exceed GitHub's comment size limit;
+        # this artifact keeps the complete report, and the comment links to it.
+        if: steps.resolve-develop-run.outcome == 'success'
+        id: upload-full-diff
+        continue-on-error: true
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: chunk-eager-diff-report
+          path: chunk-diff-report-full.md
+          if-no-files-found: ignore
       - name: Find existing PR comment
         if: steps.resolve-develop-run.outcome == 'success'
         id: find-comment
         continue-on-error: true  # cosmetic lookup; a transient API blip must not fail the job
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_NUMBER: ${{ inputs.pr_number }}
         with:
@@ -256,21 +268,23 @@ jobs:
           script: |
             const prNumber = Number(process.env.PR_NUMBER);
             const marker = '<!-- Chunk Eager-Loading Report -->';
-            const { data: comments } = await github.rest.issues.listComments({
+            const comments = await github.paginate(github.rest.issues.listComments, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
               per_page: 100,
             });
-            const found = comments.find((c) => c.body && c.body.includes(marker));
+            // Only the workflow's own comment counts; anyone else quoting the marker is ignored.
+            const found = comments.find((c) => c.user?.login === 'github-actions[bot]' && c.body?.includes(marker));
             return found ? String(found.id) : '';
       - name: Post eager-chunk report comment
         if: steps.resolve-develop-run.outcome == 'success'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         continue-on-error: true  # cosmetic PR comment; must not fail the job over an API blip
         env:
           PR_NUMBER: ${{ inputs.pr_number }}
           EXISTING_COMMENT_ID: ${{ steps.find-comment.outputs.result }}
+          FULL_REPORT_URL: ${{ steps.upload-full-diff.outputs.artifact-url }}
         with:
           script: |
             const fs = require('fs');
@@ -282,6 +296,9 @@ jobs:
               body = fs.readFileSync('chunk-diff-report.md', 'utf8');
             } catch {
               return;
+            }
+            if (body.includes('<!-- chunk-eager-report-truncated -->') && process.env.FULL_REPORT_URL) {
+              body += `\n\n📄 [Full report](${process.env.FULL_REPORT_URL})`;
             }
             body += `\n\n🔗 [Workflow Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
             body += `\n<!-- Chunk Eager-Loading Report -->`;
