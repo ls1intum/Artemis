@@ -634,9 +634,8 @@ public class ProgrammingExerciseParticipationResource {
         ProgrammingExerciseParticipation programmingParticipation = repositoryService.getAsProgrammingExerciseParticipationOfExerciseElseThrow(exerciseId, participation,
                 ENTITY_NAME);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        // The files of a submitted commit are part of the assessment snapshot, which feedback shows as code references, so a commit named by its full hash stays readable
-        // for a tutor, as it is on the commit file endpoint. A branch or a tag name would reach the live repository, which needs the participant visibility.
-        if (!ObjectId.isId(commitId)) {
+        // Only a recorded submission of this participation is an assessment snapshot; a full hash alone can also name unsubmitted code.
+        if (!ObjectId.isId(commitId) || !submissionService.isCommitSubmitted(participationId, commitId)) {
             checkParticipantRepositoryVisibilityElseThrow(participation);
         }
         try {

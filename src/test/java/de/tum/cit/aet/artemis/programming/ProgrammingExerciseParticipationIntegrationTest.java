@@ -1890,6 +1890,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void shouldLetATutorReadTheFilesOfASubmittedCommitAfterTheSupportWindowClosed() throws Exception {
             closeTheTutorSupportWindow();
+            var submission = new ProgrammingSubmission();
+            submission.setCommitHash(studentCommitHash);
+            participationUtilService.addSubmission((ProgrammingExerciseStudentParticipation) participation, submission);
             // the code references of anonymous feedback read the submitted commit by its hash
             var path = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + studentCommitHash
                     + "&participationId=" + participation.getId();

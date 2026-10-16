@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -38,6 +39,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -675,6 +677,10 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void manualAssessmentDeadlineClosesLiveRepositoryButKeepsAnonymousSubmittedCode() throws Exception {
         String commit = pushCommitFromLocalClone("submitted code");
+        var submission = new ProgrammingSubmission();
+        submission.setParticipation(participation);
+        submission.setCommitHash(commit);
+        participationUtilService.addSubmission(participation, submission);
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.save(programmingExercise);
@@ -687,6 +693,30 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var files = request.getMap(commitUrl(commit, "/files"), HttpStatus.OK, String.class, FileType.class);
         assertThat(files).containsKey(currentLocalFileName);
         request.getMap(commitUrl(commit, "/files-change"), HttpStatus.OK, String.class, Boolean.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void tutorCannotReadAnUnsubmittedCommitAfterTheDeadline(boolean submittedForAnotherParticipation) throws Exception {
+        String commit = pushCommitFromLocalClone("not submitted for this participation");
+        if (submittedForAnotherParticipation) {
+            var otherParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+            var submission = new ProgrammingSubmission();
+            submission.setParticipation(otherParticipation);
+            submission.setCommitHash(commit);
+            participationUtilService.addSubmission(otherParticipation, submission);
+        }
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+
+        request.getMap(commitUrl(commit, "/files"), HttpStatus.FORBIDDEN, String.class, FileType.class);
+        request.get(commitUrl(commit, "/file"), HttpStatus.FORBIDDEN, byte[].class, fileParams(currentLocalFileName));
+        request.getMap(commitUrl(commit, "/files-change"), HttpStatus.FORBIDDEN, String.class, Boolean.class);
+        String selectedFilesUrl = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + commit
+                + "&participationId=" + participation.getId();
+        request.postWithResponseBody(selectedFilesUrl, Set.of(currentLocalFileName), Map.class, HttpStatus.FORBIDDEN);
     }
 
     private String commitUrl(String commitId, String suffix) {
