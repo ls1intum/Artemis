@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import org.redisson.spring.starter.RedissonAutoConfigurationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
@@ -65,7 +68,7 @@ public class RedissonCodecConfiguration {
     /** Starts the existing Redisson client only in a standalone worker that selected Redis. */
     @Configuration(proxyBeanMethods = false)
     @Lazy
-    @Profile("aiworker & !core")
+    @Profile(PROFILE_AIWORKER + " & !" + PROFILE_CORE)
     @Conditional(RedisCondition.class)
     @Import(org.redisson.spring.starter.RedissonAutoConfigurationV4.class)
     public static class WorkerRedisClientConfiguration {

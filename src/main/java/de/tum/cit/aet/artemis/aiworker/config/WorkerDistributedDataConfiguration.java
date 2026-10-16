@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.aiworker.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.web.server.autoconfigure.ServerProperties;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +22,7 @@ import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistribu
 /** Loads only the shared distributed-data client and its required support on a worker-only node. */
 @Configuration(proxyBeanMethods = false)
 @Lazy
-@Profile("aiworker & !core")
+@Profile(PROFILE_AIWORKER + " & !" + PROFILE_CORE)
 @EnableConfigurationProperties({ ArtemisProperties.class, ServerProperties.class })
 @Import({ EurekaClientConfiguration.class, EurekaInstanceHelper.class, HazelcastConfiguration.class, HazelcastDistributedDataProviderService.class,
         RedissonCodecConfiguration.class, RedisClientListResolver.class, RedissonDistributedDataProviderService.class })

@@ -4,7 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AIWORKER;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -102,7 +105,7 @@ public class ArtemisApp {
             if (environment.getProperty("spring.main.web-application-type", WebApplicationType.class, WebApplicationType.NONE) != WebApplicationType.NONE) {
                 throw new IllegalArgumentException("An AI Worker-only node cannot enable an HTTP server");
             }
-            if (environment.matchesProfiles("buildagent | localci | localvc")) {
+            if (environment.matchesProfiles(PROFILE_BUILDAGENT + " | " + PROFILE_LOCALCI + " | " + PROFILE_LOCALVC)) {
                 throw new IllegalArgumentException("An AI Worker-only node cannot use server or build-agent profiles");
             }
             if (DistributedDataProviderResolver.isProvider(environment, LOCAL)) {
