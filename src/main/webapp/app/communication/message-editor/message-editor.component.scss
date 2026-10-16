@@ -204,3 +204,9 @@ jhi-message-editor .message-editor-content {
     outline-offset: 0;
     box-shadow: inset 0 0 0 1px var(--primary);
 }
+
+// Keep keyboard and pointer formatting state visible using the existing theme accent.
+jhi-message-editor .message-editor-divider button[aria-pressed='true'] {
+    background: color-mix(in srgb, var(--primary) 15%, var(--artemis-control-background));
+    color: var(--artemis-control-color);
+}

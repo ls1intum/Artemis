@@ -70,6 +70,8 @@ import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect
     ],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    // An idle blank composer must stay neutral even when Angular marks its required control as touched.
+    host: { '[style.border-left-width.px]': '!content()?.trim() ? 0 : undefined' },
     imports: [MarkdownEditorMonacoComponent, PostingContentComponent, MessageEditorComponent, TumAetUiButtonDirective, ArtemisTranslatePipe, RedirectToIrisButtonComponent],
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterViewInit, Validator {
@@ -87,6 +89,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     readonly markdownEditor = viewChild.required(MarkdownEditorMonacoComponent);
 
     readonly maxContentLength = input<number>();
+    /** Identifies the message or reply draft independently of its current text. */
+    readonly draftIdentity = input<string>();
     readonly editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
     readonly isInputLengthDisplayed = input(true);
     readonly suppressNewlineOnEnter = input(true);
@@ -108,7 +112,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     readonly lectureAttachmentReferenceAction = signal<LectureAttachmentReferenceAction>(undefined!);
     readonly defaultActions = signal<TextEditorAction[]>(undefined!);
     readonly content = signal<string | undefined>(undefined);
-    private readonly supportsFormattedContent = signal(true);
+    protected readonly supportsFormattedContent = signal(true);
     readonly formattedMode = computed(() => this.supportsFormattedContent() && !!this.effectiveCourseId());
     readonly uploadingFormattedAttachment = signal(false);
     readonly effectiveCourseId = computed(() => this.course()?.id ?? this.communicationService.getCourse()?.id);
@@ -235,7 +239,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * @param value
      */
     writeValue(value: string | undefined): void {
-        if (this.uploadingFormattedAttachment()) {
+        if (this.uploadingFormattedAttachment() && (value ?? '') !== this.content()) {
             this.formattedUploadStateChanged(false);
         }
         this.supportsFormattedContent.set(canEditMessageVisually(value ?? ''));

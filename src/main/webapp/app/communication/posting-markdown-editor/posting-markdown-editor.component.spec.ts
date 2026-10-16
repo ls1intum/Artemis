@@ -305,7 +305,7 @@ describe('PostingsMarkdownEditor', () => {
         const charCounter = getElement(debugElement, 'p.small');
         expect(charCounter.textContent).toContain(component.maxContentLength()!.toString());
         expect(charCounter.textContent).toContain(communicationPostExerciseUser1.content!.length.toString());
-        expect(charCounter.style.color).toBe('red');
+        expect(charCounter.classList.contains('text-state-danger')).toBe(true);
     });
 
     it('should initialize markdown correctly with post content', () => {
@@ -872,6 +872,54 @@ describe('PostingsMarkdownEditor', () => {
         component.formattedUploadStateChanged(false);
         expect(component.validate()).toBeNull();
         expect(changed).toHaveBeenCalledTimes(2);
+    });
+
+    it('preserves attachment validation when the form writes the same value during an upload', () => {
+        component.writeValue('Hello');
+        component.formattedUploadStateChanged(true);
+        const changed = vi.fn();
+        component.registerOnValidatorChange(changed);
+
+        component.writeValue('Hello');
+
+        expect(component.validate()).toEqual({ attachmentUploading: true });
+        expect(changed).not.toHaveBeenCalled();
+    });
+
+    it('only explains unsupported content when the actual content cannot be edited visually', () => {
+        fixture.componentRef.setInput('course', { id: undefined });
+        vi.spyOn(communicationService, 'getCourse').mockReturnValue(undefined!);
+        component.writeValue('Hello');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector(':scope > p')).toBeNull();
+
+        component.writeValue('$$x^2$$');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector(':scope > p')).not.toBeNull();
+    });
+
+    it('suppresses the external required accent for a blank optional composer while retaining length errors', () => {
+        fixture.nativeElement.classList.add('ng-invalid', 'ng-touched');
+        component.writeValue('');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.style.borderLeftWidth).toBe('0px');
+
+        component.writeValue('A message that exceeds the limit');
+        fixture.componentRef.setInput('maxContentLength', 5);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.style.borderLeftWidth).toBe('');
+    });
+
+    it('passes the stable draft identity to the formatted editor independently of content', () => {
+        component.writeValue('');
+        fixture.componentRef.setInput('draftIdentity', 'reply:11:new');
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(MessageEditorComponent)).componentInstance as MessageEditorComponent;
+        expect(editor.draftIdentity()).toBe('reply:11:new');
+
+        fixture.componentRef.setInput('draftIdentity', 'reply:12:new');
+        fixture.detectChanges();
+        expect(editor.draftIdentity()).toBe('reply:12:new');
     });
 
     it('clears pending upload validation when an external message switches back to Markdown', () => {

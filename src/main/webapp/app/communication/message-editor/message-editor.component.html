@@ -10,6 +10,7 @@
                 [attr.aria-label]="'artemisApp.communication.formattedEditor.' + format.label | artemisTranslate"
                 [title]="'artemisApp.communication.formattedEditor.' + format.label | artemisTranslate"
                 [attr.data-testid]="'message-format-' + format.tag"
+                [attr.aria-pressed]="activeFormatting().includes(format.tag)"
                 (mousedown)="remember($event)"
                 (click)="applyFormat(format.tag)"
             >
@@ -26,6 +27,7 @@
                 [attr.aria-label]="'artemisApp.communication.formattedEditor.' + block.label | artemisTranslate"
                 [title]="'artemisApp.communication.formattedEditor.' + block.label | artemisTranslate"
                 [attr.data-testid]="'message-block-' + block.tag"
+                [attr.aria-pressed]="activeFormatting().includes(block.tag)"
                 (mousedown)="remember($event)"
                 (click)="applyBlock(block.tag)"
             >
@@ -41,6 +43,7 @@
             [attr.aria-label]="'artemisApp.communication.formattedEditor.link' | artemisTranslate"
             [title]="'artemisApp.communication.formattedEditor.link' | artemisTranslate"
             data-testid="message-link-button"
+            [disabled]="!linkAllowed()"
             [attr.aria-expanded]="linkOpen()"
             (mousedown)="remember($event)"
             (click)="openLink()"
@@ -79,6 +82,7 @@
             [courseId]="courseId()"
             [conversationId]="conversation()?.id"
             [editorRevision]="editorRevision()"
+            [draftIdentity]="draftIdentity()"
             [captureSelection]="captureEntitySelection"
             (insert)="insertResource($event)"
             (uploadingChange)="uploadStateChanged($event)"
@@ -129,7 +133,7 @@
         </div>
     }
 
-    <div cdkOverlayOrigin #origin="cdkOverlayOrigin">
+    <div>
         <div
             #editable
             contenteditable="true"
@@ -157,6 +161,7 @@
             (mouseup)="selectionChanged()"
             (mousedown)="clearItemHighlight()"
             (blur)="dismissSuggestions()"
+            (scroll)="dismissSuggestions()"
         ></div>
     </div>
     <p [id]="hintId" class="message-editor-divider message-editor-muted m-0 border-t p-2 text-xs">{{ 'artemisApp.communication.formattedEditor.hint' | artemisTranslate }}</p>
@@ -164,12 +169,13 @@
 
 <ng-template
     cdkConnectedOverlay
-    [cdkConnectedOverlayOrigin]="origin"
+    [cdkConnectedOverlayOrigin]="completionOrigin()"
+    [cdkConnectedOverlayPush]="true"
     [cdkConnectedOverlayOpen]="suggestionsOpen()"
     [cdkConnectedOverlayPositions]="positions"
     (detach)="dismissSuggestions()"
 >
-    <div class="message-suggestions rounded-md shadow-md">
+    <div class="message-suggestions rounded-md shadow-md" data-testid="message-completion-list">
         <div class="message-editor-muted p-2 text-xs" role="status" aria-live="polite">
             @if (loading()) {
                 {{ 'artemisApp.communication.formattedEditor.loading' | artemisTranslate }}

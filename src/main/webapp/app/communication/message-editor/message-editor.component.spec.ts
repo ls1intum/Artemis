@@ -8,6 +8,7 @@ import { MessageEditorToolsComponent } from './message-editor-tools.component';
 import { MessageEditorResources } from './message-editor-resources';
 import { FileUploaderService } from 'app/foundation/service/file-uploader.service';
 import { By } from '@angular/platform-browser';
+import { OverlayRef } from '@angular/cdk/overlay';
 
 describe('Formatted message composer', () => {
     let fixture: ComponentFixture<MessageEditorComponent>;
@@ -83,6 +84,118 @@ describe('Formatted message composer', () => {
         expect(editable.querySelectorAll('a')).toHaveLength(1);
         expect(editable.querySelector('a')!.textContent).toBe('guide');
         expect(editable.querySelector('blockquote a')!.getAttribute('href')).toBe('https://example.org');
+    });
+
+    it.each(['draftIdentity', 'conversation'])('resets undo history on an equal-content %s switch', (identity) => {
+        fixture.componentRef.setInput('draftIdentity', 'reply:1:new');
+        fixture.detectChanges();
+        editable.querySelector('p')!.textContent = 'Hello!';
+        caretAtEnd();
+        editable.dispatchEvent(new InputEvent('input', { bubbles: true }));
+        editable.querySelector('p')!.textContent = 'Hello';
+        caretAtEnd();
+        editable.dispatchEvent(new InputEvent('input', { bubbles: true }));
+        fixture.componentRef.setInput(identity, identity === 'draftIdentity' ? 'reply:2:new' : { id: 22 });
+        fixture.detectChanges();
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true, bubbles: true, cancelable: true }));
+        expect(editable.textContent).toBe('Hello');
+        expect(component.linkOpen()).toBe(false);
+    });
+
+    it('preloads an existing link when opened from its keyboard caret and updates only its target', () => {
+        fixture.componentRef.setInput('content', 'Read [guide](https://example.org/old) next');
+        fixture.detectChanges();
+        const link = editable.querySelector('a')!;
+        const range = document.createRange();
+        range.setStart(link.firstChild!, 2);
+        range.collapse(true);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+        expect(component.linkOpen()).toBe(true);
+        expect(component.linkUrl()).toBe('https://example.org/old');
+        expect(component.linkText()).toBe('guide');
+        component.linkUrl.set('https://example.org/new');
+        (fixture.nativeElement.querySelector('[data-testid="apply-message-link"]') as HTMLButtonElement).click();
+        expect(editable.querySelectorAll('a')).toHaveLength(1);
+        expect(editable.querySelector('a')!.getAttribute('href')).toBe('https://example.org/new');
+    });
+
+    it('disables the link action inside code and ignores its keyboard shortcut', () => {
+        fixture.componentRef.setInput('content', '`literal`');
+        fixture.detectChanges();
+        const range = document.createRange();
+        range.setStart(editable.querySelector('code')!.firstChild!, 3);
+        range.collapse(true);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        editable.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        fixture.detectChanges();
+        expect((fixture.nativeElement.querySelector('[data-testid="message-link-button"]') as HTMLButtonElement).disabled).toBe(true);
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true, cancelable: true }));
+        expect(component.linkOpen()).toBe(false);
+        expect(editable.querySelector('a')).toBeNull();
+    });
+
+    it('exposes active and pending formatting through toolbar pressed state', () => {
+        caretAtEnd();
+        const bold = fixture.nativeElement.querySelector('[data-testid="message-format-strong"]') as HTMLButtonElement;
+        expect(bold.getAttribute('aria-pressed')).toBe('false');
+        bold.click();
+        fixture.detectChanges();
+        expect(bold.getAttribute('aria-pressed')).toBe('true');
+        bold.click();
+        fixture.detectChanges();
+        expect(bold.getAttribute('aria-pressed')).toBe('false');
+        expect(editable.textContent).toBe('Hello');
+    });
+
+    it('uses the caret line geometry as the completion origin', async () => {
+        fixture.componentRef.setInput('content', 'Hello @ann');
+        fixture.detectChanges();
+        caretAtEnd();
+        const original = Object.getOwnPropertyDescriptor(Range.prototype, 'getBoundingClientRect');
+        Object.defineProperty(Range.prototype, 'getBoundingClientRect', { configurable: true, value: () => ({ left: 170, top: 210, width: 0, height: 24 }) });
+        try {
+            await component.refreshSuggestions();
+            expect(component['completionOrigin']()).toEqual({ x: 170, y: 210, width: 0, height: 24 });
+            expect(component.suggestionsOpen()).toBe(true);
+        } finally {
+            if (original) Object.defineProperty(Range.prototype, 'getBoundingClientRect', original);
+            else Reflect.deleteProperty(Range.prototype, 'getBoundingClientRect');
+        }
+    });
+
+    it.each([
+        ['b', 'strong'],
+        ['i', 'em'],
+        ['u', 'ins'],
+    ])('immediately reflects the keyboard %s format toggle before text is typed', (key, tag) => {
+        caretAtEnd();
+        const button = fixture.nativeElement.querySelector(`[data-testid="message-format-${tag}"]`) as HTMLButtonElement;
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key, ctrlKey: true, bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+        expect(button.getAttribute('aria-pressed')).toBe('true');
+        expect(editable.querySelector(tag)).toBeNull();
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key, ctrlKey: true, bubbles: true, cancelable: true }));
+        fixture.detectChanges();
+        expect(button.getAttribute('aria-pressed')).toBe('false');
+        expect(editable.textContent).toBe('Hello');
+    });
+
+    it('keeps suggestions open for popup scrolling but dismisses them when an ancestor scrolls', async () => {
+        fixture.componentRef.setInput('content', '@ann');
+        fixture.detectChanges();
+        caretAtEnd();
+        await component.refreshSuggestions();
+        fixture.detectChanges();
+        const popup = document.querySelector('[data-testid="message-completion-list"]')!;
+        expect(popup).not.toBeNull();
+        popup.dispatchEvent(new Event('scroll'));
+        expect(component.suggestionsOpen()).toBe(true);
+        fixture.nativeElement.parentElement.dispatchEvent(new Event('scroll'));
+        expect(component.suggestionsOpen()).toBe(false);
     });
 
     it('immediately emits the current message without debounce', () => {
@@ -180,6 +293,28 @@ describe('Formatted message composer', () => {
         editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
         expect(emit).toHaveBeenLastCalledWith('[user]Anna(anna)[/user]');
         expect(bubbled).not.toHaveBeenCalled();
+    });
+
+    it('repositions the completion overlay after loading changes its rendered size', async () => {
+        let resolve!: (value: { label: string; kind: 'user'; markdown: string }[]) => void;
+        search.mockReturnValue(new Promise((complete) => (resolve = complete)));
+        fixture.componentRef.setInput('content', '@ann');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        caretAtEnd();
+        const pending = component.refreshSuggestions();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const reposition = vi.spyOn(OverlayRef.prototype, 'updatePosition');
+        expect(component.loading()).toBe(true);
+        expect(document.querySelectorAll('[role="option"]')).toHaveLength(0);
+        resolve([{ label: '@Anna', kind: 'user', markdown: '[user]Anna(anna)[/user]' }]);
+        await pending;
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(document.querySelectorAll('[role="option"]')).toHaveLength(1);
+        expect(component.loading()).toBe(false);
+        expect(reposition).toHaveBeenCalled();
     });
 
     it('ignores search results that arrive after the query is dismissed', async () => {

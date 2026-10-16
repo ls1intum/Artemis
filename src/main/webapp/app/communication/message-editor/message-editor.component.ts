@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, ViewEncapsulation, effect, inject, input, output, signal, viewChild } from '@angular/core';
-import { CdkConnectedOverlay, CdkOverlayOrigin, ConnectedPosition } from '@angular/cdk/overlay';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, ViewEncapsulation, afterRenderEffect, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { CdkConnectedOverlay, ConnectedPosition } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faAt, faBold, faCode, faHashtag, faItalic, faLink, faListOl, faListUl, faQuoteLeft, faStrikethrough, faUnderline, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiInputDirective } from '@tumaet/ui-angular';
@@ -14,10 +14,10 @@ import { MessageEditorToolsComponent, MessageResourceInsertion } from './message
     selector: 'jhi-message-editor',
     templateUrl: './message-editor.component.html',
     styleUrl: './message-editor.component.scss',
-    imports: [ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, CdkOverlayOrigin, CdkConnectedOverlay, MessageEditorToolsComponent],
+    imports: [ArtemisTranslatePipe, FaIconComponent, TumAetUiButtonDirective, TumAetUiInputDirective, CdkConnectedOverlay, MessageEditorToolsComponent],
     providers: [MessageEditorSuggestions],
     encapsulation: ViewEncapsulation.None,
-    host: { '(keydown)': 'toolbarKeydown($event)' },
+    host: { '(keydown)': 'toolbarKeydown($event)', '(document:selectionchange)': 'updateSelectionState()', '(window:resize)': 'dismissSuggestions()' },
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MessageEditorComponent {
@@ -28,11 +28,13 @@ export class MessageEditorComponent {
     readonly courseId = input.required<number>();
     readonly conversation = input<ConversationDTO>();
     readonly editing = input(false);
+    readonly draftIdentity = input<string>();
     readonly suppressNewlineOnEnter = input(true);
     readonly contentChange = output<string>();
     readonly uploadingChange = output<boolean>();
     private readonly editable = viewChild<ElementRef<HTMLElement>>('editable');
     private readonly tools = viewChild(MessageEditorToolsComponent);
+    private readonly completionOverlay = viewChild(CdkConnectedOverlay);
     protected readonly uploading = signal(false);
     protected readonly editorRevision = signal(0);
     protected readonly captureEntitySelection = () => this.editor?.captureEntitySelection();
@@ -47,6 +49,9 @@ export class MessageEditorComponent {
     readonly linkUrl = signal('');
     readonly linkInvalid = signal(false);
     protected readonly editingLink = signal(false);
+    readonly activeFormatting = signal<string[]>([]);
+    readonly linkAllowed = signal(true);
+    protected readonly completionOrigin = signal({ x: 0, y: 0, width: 0, height: 0 });
 
     protected readonly icons = { faLink, faAt, faHashtag, faXmark };
     protected readonly formats = [
@@ -63,8 +68,8 @@ export class MessageEditorComponent {
         { tag: 'pre' as const, icon: faCode, label: 'codeBlock' },
     ];
     protected readonly positions: ConnectedPosition[] = [
-        { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top' },
-        { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom' },
+        { originX: 'start', originY: 'bottom', overlayX: 'start', overlayY: 'top', offsetY: 4 },
+        { originX: 'start', originY: 'top', overlayX: 'start', overlayY: 'bottom', offsetY: -4 },
     ];
     private static nextId = 0;
     readonly listId = `message-completions-${MessageEditorComponent.nextId++}`;
@@ -80,11 +85,25 @@ export class MessageEditorComponent {
     private existingLink?: HTMLAnchorElement;
 
     constructor() {
+        afterRenderEffect(() => {
+            this.suggestions();
+            this.loading();
+            this.searchFailed();
+            // Search results change the popup's size after attachment, so measure its rendered content again.
+            if (this.suggestionsOpen()) this.completionOverlay()?.overlayRef?.updatePosition();
+        });
+        const dismissOnAncestorScroll = (event: Event) => {
+            const element = this.editable()?.nativeElement;
+            if (element && (event.target === element.ownerDocument || (event.target instanceof Element && event.target.contains(element)))) this.dismissSuggestions();
+        };
+        // A viewport-point origin cannot follow ancestor scrolling. Scrolling the popup itself must remain possible.
+        document.addEventListener('scroll', dismissOnAncestorScroll, true);
         effect(() => {
             const element = this.editable()?.nativeElement;
             const content = this.content();
-            const context = `${this.courseId()}:${this.conversation()?.id}:${this.editing()}`;
-            if (context !== this.lastContext) {
+            const context = JSON.stringify([this.courseId(), this.conversation()?.id, this.editing(), this.draftIdentity()]);
+            const changedContext = context !== this.lastContext;
+            if (changedContext) {
                 this.lastContext = context;
                 this.dismissSuggestions();
             }
@@ -93,17 +112,23 @@ export class MessageEditorComponent {
                     this.linkOpen.set(false);
                     this.lastValue = value;
                     this.contentChange.emit(value);
+                    this.refreshFormatState();
                 });
-                if (content !== this.lastValue) {
+                if (changedContext || content !== this.lastValue) {
                     this.editor.load(content);
                     this.editorRevision.update((revision) => revision + 1);
                     this.lastValue = content;
+                    this.existingLink = undefined;
+                    this.composing = false;
+                    this.uploading.set(false);
                     this.dismissSuggestions();
                     this.linkOpen.set(false);
+                    this.refreshFormatState();
                 }
             }
         });
         this.destroyRef.onDestroy(() => {
+            document.removeEventListener('scroll', dismissOnAncestorScroll, true);
             clearTimeout(this.searchTimer);
             this.request++;
         });
@@ -208,6 +233,7 @@ export class MessageEditorComponent {
                 default:
                     break;
             }
+            this.refreshFormatState();
             return;
         }
         if (this.suggestionsOpen()) {
@@ -233,7 +259,7 @@ export class MessageEditorComponent {
             this.dismissSuggestions();
         }
         if (event.key === 'Backspace' || event.key === 'Delete') {
-            if (this.editor?.deleteItem(event.key === 'Backspace')) {
+            if ((event.key === 'Backspace' && this.editor?.exitEmptyList()) || this.editor?.deleteItem(event.key === 'Backspace')) {
                 event.preventDefault();
                 event.stopPropagation();
             }
@@ -317,6 +343,7 @@ export class MessageEditorComponent {
         }
         const request = ++this.request;
         this.completion = completion;
+        this.positionCompletion(completion.range);
         this.suggestionsOpen.set(true);
         this.loading.set(true);
         this.searchFailed.set(false);
@@ -365,6 +392,7 @@ export class MessageEditorComponent {
     protected selectionChanged(): void {
         this.dismissSuggestions();
         this.editor?.rememberSelection();
+        this.refreshFormatState();
         this.scheduleSuggestions();
     }
 
@@ -381,12 +409,14 @@ export class MessageEditorComponent {
     }
 
     protected openLink(link?: HTMLAnchorElement): void {
+        if (!this.editor?.canLinkSelection()) return;
         if (!link && this.linkOpen()) {
             this.closeLink();
             return;
         }
         this.editor?.rememberSelection();
         this.dismissSuggestions();
+        link ??= this.editor?.linkAtSelection();
         this.existingLink = link;
         this.editingLink.set(!!link);
         this.linkText.set(link?.textContent ?? window.getSelection()?.toString() ?? '');
@@ -427,5 +457,29 @@ export class MessageEditorComponent {
 
     protected focus(): void {
         this.editor?.focus();
+        this.refreshFormatState();
+    }
+
+    protected updateSelectionState(): void {
+        const selection = this.editable()?.nativeElement.ownerDocument.getSelection();
+        if (selection?.anchorNode && this.editable()?.nativeElement.contains(selection.anchorNode)) this.refreshFormatState();
+    }
+
+    private refreshFormatState(): void {
+        this.activeFormatting.set(this.editor?.activeFormatting() ?? []);
+        this.linkAllowed.set(this.editor?.canLinkSelection() ?? true);
+    }
+
+    private positionCompletion(range: Range): void {
+        const caret = range.cloneRange();
+        caret.collapse(false);
+        // A caret range follows wrapping and multiline text; the composer box can be several lines away.
+        const rect = caret.getBoundingClientRect?.();
+        if (rect?.height) {
+            this.completionOrigin.set({ x: rect.left, y: rect.top, width: 0, height: rect.height });
+        } else {
+            const editor = this.editable()!.nativeElement.getBoundingClientRect();
+            this.completionOrigin.set({ x: editor.left, y: editor.top, width: 0, height: editor.height });
+        }
     }
 }
