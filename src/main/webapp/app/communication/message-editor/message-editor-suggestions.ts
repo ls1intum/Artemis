@@ -11,6 +11,9 @@ export interface MessageSuggestion {
     label: string;
     kind: 'user' | 'channel' | 'exercise' | 'lecture' | 'message' | 'faq' | 'slide' | 'lecture-unit';
     markdown: string;
+    resourceLabel?: string;
+    slideNumber?: number;
+    previewUrl?: string;
 }
 
 /** Loads course-scoped completion data only when requested. Each composer owns its cache. */

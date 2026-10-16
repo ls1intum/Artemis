@@ -315,6 +315,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should update value if markdown change is emitted', () => {
+        component.writeValue('$$x^2$$');
         fixture.componentRef.setInput('maxContentLength', 200);
         fixture.changeDetectorRef.detectChanges();
         mockMarkdownEditorComponent.markdownChange.emit('updated text');
@@ -346,6 +347,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should flush the pending editor text before the user submits with enter', () => {
+        component.writeValue('$$x^2$$');
         fixture.componentRef.setInput('suppressNewlineOnEnter', true);
         const flushSpy = vi.spyOn(mockMarkdownEditorComponent, 'flushPendingTextChange');
         component.onKeyDown(new KeyboardEvent('keydown', { key: 'Enter' }));
@@ -353,6 +355,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should flush the pending editor text when the host form asks for it', () => {
+        component.writeValue('$$x^2$$');
         const flushSpy = vi.spyOn(mockMarkdownEditorComponent, 'flushPendingTextChange');
         component.flushPendingTextChange();
         expect(flushSpy).toHaveBeenCalledOnce();
@@ -816,27 +819,36 @@ describe('PostingsMarkdownEditor', () => {
         expect(cursorPosition?.getColumn()).toBe(5);
     });
 
-    it('flushes pending Markdown before opting into the formatted composer', () => {
-        component.content.set('Hello');
-        const flush = vi.spyOn(mockMarkdownEditorComponent, 'flushPendingTextChange').mockImplementation(() => component.updateField('Hello **world**'));
-        component.toggleFormattedMode();
-        expect(flush).toHaveBeenCalledOnce();
+    it('uses the formatted composer by default without an editor switch', () => {
+        component.writeValue('Hello **world**');
+        fixture.detectChanges();
         expect(component.formattedMode()).toBe(true);
-        expect(component.content()).toBe('Hello **world**');
+        expect(fixture.debugElement.query(By.directive(MessageEditorComponent))).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('[data-testid="toggle-formatted-message-editor"]')).toBeNull();
     });
 
     it('keeps unsupported legacy content in the existing editor', () => {
-        component.content.set('$$x^2$$');
-        component.toggleFormattedMode();
+        component.writeValue('$$x^2$$');
         expect(component.formattedMode()).toBe(false);
         expect(component.content()).toBe('$$x^2$$');
     });
 
+    it('uses formatted editing again when the next message is supported', () => {
+        component.writeValue('$$x^2$$');
+        component.writeValue('Hello');
+        expect(component.formattedMode()).toBe(true);
+    });
+
+    it('uses the existing editor when no course context is available', () => {
+        fixture.componentRef.setInput('course', { id: undefined });
+        vi.spyOn(communicationService, 'getCourse').mockReturnValue(undefined!);
+        component.writeValue('Hello');
+        expect(component.formattedMode()).toBe(false);
+    });
+
     it('does not flush a hidden Monaco instance over current formatted content', () => {
-        component.content.set('Hello');
-        component.toggleFormattedMode();
+        component.writeValue('Hello');
         const flush = vi.spyOn(mockMarkdownEditorComponent, 'flushPendingTextChange');
-        flush.mockClear();
         component.updateField('Hello [user]Anna(anna)[/user]');
         component.flushPendingTextChange();
         component.onMarkdownChange('stale value');
@@ -845,8 +857,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('returns to Markdown when a different message contains unsupported content', () => {
-        component.content.set('Hello');
-        component.toggleFormattedMode();
+        component.writeValue('Hello');
         component.writeValue('$$x^2$$');
         expect(component.formattedMode()).toBe(false);
         expect(component.content()).toBe('$$x^2$$');
@@ -864,7 +875,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('clears pending upload validation when an external message switches back to Markdown', () => {
-        component.formattedMode.set(true);
+        component.writeValue('Hello');
         component.formattedUploadStateChanged(true);
         component.writeValue('$$x^2$$');
         expect(component.formattedMode()).toBe(false);

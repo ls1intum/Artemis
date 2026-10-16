@@ -210,8 +210,7 @@
             "newMessages": "Neu",
             "newMessagesButton": "Zur ersten ungelesenen Nachricht springen",
             "formattedEditor": {
-                "tryFormatted": "Formatierten Editor ausprobieren (experimentell)",
-                "useMarkdown": "Markdown-Editor verwenden",
+                "previewUnavailable": "Die Folienvorschau ist nicht verfügbar.",
                 "unsupported": "Diese Nachricht verwendet Formatierungen, die derzeit nur in Markdown bearbeitet werden können.",
                 "formatting": "Nachricht formatieren",
                 "bold": "Fett (Strg/Cmd+B)",

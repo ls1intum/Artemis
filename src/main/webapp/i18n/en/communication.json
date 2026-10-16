@@ -210,8 +210,7 @@
             "newMessages": "New",
             "newMessagesButton": "Jump to first unread message",
             "formattedEditor": {
-                "tryFormatted": "Try formatted editor (experimental)",
-                "useMarkdown": "Use Markdown editor",
+                "previewUnavailable": "Slide preview is unavailable.",
                 "unsupported": "This message uses formatting that is currently only editable in Markdown.",
                 "formatting": "Message formatting",
                 "bold": "Bold (Ctrl/Cmd+B)",

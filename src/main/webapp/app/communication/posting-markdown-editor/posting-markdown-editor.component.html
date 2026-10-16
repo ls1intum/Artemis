@@ -1,21 +1,6 @@
-<div class="mb-2 flex flex-wrap items-center gap-2">
-    <button
-        type="button"
-        tumAetUiButton
-        variant="text"
-        size="small"
-        data-testid="toggle-formatted-message-editor"
-        [disabled]="uploadingFormattedAttachment() || (!formattedMode() && (!canUseFormatted() || !effectiveCourseId()))"
-        [attr.aria-pressed]="formattedMode()"
-        (click)="toggleFormattedMode()"
-        (keydown.enter)="$event.stopPropagation()"
-    >
-        {{ (formattedMode() ? 'artemisApp.communication.formattedEditor.useMarkdown' : 'artemisApp.communication.formattedEditor.tryFormatted') | artemisTranslate }}
-    </button>
-    @if (!canUseFormatted() && !formattedMode()) {
-        <span class="text-xs text-muted-color">{{ 'artemisApp.communication.formattedEditor.unsupported' | artemisTranslate }}</span>
-    }
-</div>
+@if (!formattedMode()) {
+    <p class="mb-2 text-xs text-muted-color">{{ 'artemisApp.communication.formattedEditor.unsupported' | artemisTranslate }}</p>
+}
 @if (formattedMode() && effectiveCourseId(); as courseId) {
     <jhi-message-editor
         [content]="content() ?? ''"
