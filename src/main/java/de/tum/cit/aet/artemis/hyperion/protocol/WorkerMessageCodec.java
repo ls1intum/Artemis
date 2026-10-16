@@ -8,7 +8,6 @@ import tools.jackson.core.json.JsonFactory;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
-import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
 import de.tum.cit.aet.artemis.aiworker.domain.WorkerCommandType;
 import de.tum.cit.aet.artemis.aiworker.domain.WorkerEventType;
 import de.tum.cit.aet.artemis.aiworker.dto.ExecutionAssignmentDTO;
@@ -18,33 +17,13 @@ import de.tum.cit.aet.artemis.aiworker.dto.WorkerCommandDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkerEventDTO;
 import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
 
-/** Fixed JSON wire format, independent of either application's HTTP mapper or Java serialization. */
+/** Maps typed Hyperion payloads to shared worker envelopes and validates returned evidence. */
 public final class WorkerMessageCodec {
-
-    public static final int MAX_MESSAGE_CHARS = WorkerMessageCodecApi.MAX_MESSAGE_CHARS;
-
-    private final WorkerMessageCodecApi wire = new WorkerMessageCodecApi();
 
     private final JsonMapper mapper = JsonMapper
             .builder(JsonFactory.builder().enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
                     .streamReadConstraints(StreamReadConstraints.builder().maxNestingDepth(64).maxStringLength(12 * 1024 * 1024).maxNumberLength(32).build()).build())
             .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).build();
-
-    public String encode(WorkerCommand command) {
-        return wire.encode(toWire(command));
-    }
-
-    public String encode(WorkerEvent event) {
-        return wire.encode(toWire(event));
-    }
-
-    public WorkerCommand decodeCommand(String body) {
-        return fromWire(wire.decodeCommand(body));
-    }
-
-    public WorkerEvent decodeEvent(String body) {
-        return fromWire(wire.decodeEvent(body));
-    }
 
     /**
      * Encodes a typed authoring command in the workload-neutral execution envelope.
@@ -59,12 +38,6 @@ public final class WorkerMessageCodec {
                 assignment == null ? null
                         : new ExecutionAssignmentDTO(toWire(assignment.identity()), capability(assignment.brief().toolchain()), assignment.authoringDeadline(),
                                 assignment.imageDigest(), encodePayload(assignment)));
-    }
-
-    public WorkerCommand fromWire(WorkerCommandDTO command) {
-        GenerationAssignment assignment = command.assignment() == null ? null : decodeAssignment(command.assignment());
-        return new WorkerCommand(command.protocolVersion(), WorkerCommand.Type.valueOf(command.type().name().equals("FINISH") ? "STOP_AUTHORING" : command.type().name()),
-                fromWire(command.identity()), assignment);
     }
 
     /**
