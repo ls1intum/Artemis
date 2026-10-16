@@ -1026,6 +1026,21 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReEvaluateShortAnswerSolutionTextChangeIsPersisted() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
+        ShortAnswerQuestion shortAnswerQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
+        ShortAnswerSolution editedSolution = shortAnswerQuestion.getSolutions().getFirst();
+        editedSolution.setText("corrected solution");
+
+        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), OK);
+
+        QuizExercise updatedQuizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndCategoriesAndBatchesElseThrow(quizExercise.getId());
+        ShortAnswerQuestion updatedQuestion = (ShortAnswerQuestion) updatedQuizExercise.getQuizQuestions().get(2);
+        assertThat(updatedQuestion.findSolutionById(editedSolution.getId()).getText()).isEqualTo("corrected solution");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReevaluate_DragItemRemoved() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
