@@ -96,6 +96,19 @@ The output is a Markdown table compatible with GitHub PR descriptions:
 | CourseResource.java | 88.2% | 150 |
 ```
 
+Server coverage is matched by package and source filename. A source file that JaCoCo reports
+without executable lines (for example, an interface containing only abstract methods) is shown as
+`N/A (no executable lines)`. A missing source entry or report still shows `not found`.
+Module reports take precedence over the aggregated report.
+
+### Regression Tests
+
+The parser tests run in CI with the build-helper tests. To run them locally:
+
+```bash
+pnpm exec vitest run --config config/eslint/rules/vitest.config.mjs supporting_scripts/code-coverage/local-pr-coverage/local-pr-coverage.spec.mjs
+```
+
 ### Column Descriptions
 
 **Client columns:**
