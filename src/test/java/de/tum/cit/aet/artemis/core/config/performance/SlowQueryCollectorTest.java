@@ -147,6 +147,32 @@ class SlowQueryCollectorTest {
     }
 
     @Test
+    void parameterSignatureSeparatesSwappedValuesButNotCallOrder() {
+        String rawSql = "select * from participation where exercise_id=? and student_id=?";
+        ParameterSetOperation firstIsOne = new ParameterSetOperation(null, new Object[] { 1, 1L });
+        ParameterSetOperation secondIsTwo = new ParameterSetOperation(null, new Object[] { 2, 2L });
+        ParameterSetOperation firstIsTwo = new ParameterSetOperation(null, new Object[] { 1, 2L });
+        ParameterSetOperation secondIsOne = new ParameterSetOperation(null, new Object[] { 2, 1L });
+        long bound = SlowQueryListener.parameterSignature(rawSql, List.of(List.of(firstIsOne, secondIsTwo)));
+
+        assertThat(SlowQueryListener.parameterSignature(rawSql, List.of(List.of(firstIsTwo, secondIsOne)))).isNotEqualTo(bound);
+        assertThat(SlowQueryListener.parameterSignature(rawSql, List.of(List.of(secondIsTwo, firstIsOne)))).isEqualTo(bound);
+    }
+
+    @Test
+    void normalizationCollapsesValueListsButKeepsSubqueries() {
+        assertThat(SlowQueryListener.normalizeSql("select id from t where id in (1, 2, 3)")).isEqualTo("select id from t where id IN (?)");
+        assertThat(SlowQueryListener.normalizeSql("select id from t where id in (?, ?)")).isEqualTo("select id from t where id IN (?)");
+
+        String fromA = SlowQueryListener.normalizeSql("select id from t where id in (select id from a)");
+        String fromB = SlowQueryListener.normalizeSql("select id from t where id in (select id from b)");
+        assertThat(fromA).isEqualTo("select id from t where id in (select id from a)");
+        assertThat(fromA).isNotEqualTo(fromB);
+        assertThat(SlowQueryListener.normalizeSql("select id from t where id in (select max(id) from a where x in (4, 5))"))
+                .isEqualTo("select id from t where id in (select max(id) from a where x IN (?))");
+    }
+
+    @Test
     void testNameHeaderIsPercentDecoded() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         assertThat(SlowQueryListener.testName(request)).isNull();

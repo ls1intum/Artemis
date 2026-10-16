@@ -393,7 +393,8 @@ document.querySelectorAll('table.sortable').forEach(function (table) {
     });
 });
 
-// A filter hides non-matching rows; in a grouped table the group row decides for its detail row.
+// A filter hides non-matching rows; in a grouped table the group row decides for its detail row,
+// and matches on the detail row's text too (test names and phases are only listed there).
 document.querySelectorAll('.filter-box').forEach(function (input) {
     input.addEventListener('input', function () {
         var table = document.getElementById(input.dataset.target);
@@ -401,12 +402,11 @@ document.querySelectorAll('.filter-box').forEach(function (input) {
         var query = input.value.toLowerCase();
         Array.prototype.forEach.call(table.tBodies[0].rows, function (row) {
             if (row.classList.contains('detail-row')) return;
-            var visible = row.textContent.toLowerCase().indexOf(query) !== -1;
+            var detail = row.dataset.detailTarget ? document.getElementById(row.dataset.detailTarget) : null;
+            var text = row.textContent + (detail ? ' ' + detail.textContent : '');
+            var visible = text.toLowerCase().indexOf(query) !== -1;
             row.style.display = visible ? '' : 'none';
-            if (row.dataset.detailTarget) {
-                var detail = document.getElementById(row.dataset.detailTarget);
-                if (detail && !visible) detail.hidden = true;
-            }
+            if (detail && !visible) detail.hidden = true;
         });
     });
 });

@@ -4,7 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,11 +64,11 @@ public class SlowQueryListener implements QueryExecutionListener {
 
     private static final Pattern LITERAL_NUMBERS = Pattern.compile("\\b\\d+(\\.\\d+)?\\b");
 
-    // \b before IN is required -- without it this also matches the "IN" inside "JOIN" whenever a
-    // subquery follows (e.g. "join (select ...) alias"), corrupting it to "joIN (?)" and, since
-    // [^)]+ can't cross into the subquery's own nested parens, often leaving a stray trailing ')'
-    // behind too (stops at the first ')' found, e.g. an inner count(*)'s close).
-    private static final Pattern IN_LIST_VALUES = Pattern.compile("\\bIN\\s*\\([^)]+\\)", Pattern.CASE_INSENSITIVE);
+    // Only a list of values or placeholders collapses: an IN (select ...) subquery keeps its
+    // structure, so two different subqueries stay two different templates. [^()] never crosses a
+    // nested parenthesis, so no partial match can leave a stray ')' behind. \b before IN is required
+    // -- without it this also matches the "IN" inside "JOIN".
+    private static final Pattern IN_LIST_VALUES = Pattern.compile("\\bIN\\s*\\((?!\\s*select\\b)[^()]+\\)", Pattern.CASE_INSENSITIVE);
 
     private static final Pattern WHITESPACE_RUNS = Pattern.compile("\\s+");
 
@@ -151,17 +153,26 @@ public class SlowQueryListener implements QueryExecutionListener {
         long hash = rawSql != null ? rawSql.hashCode() : 0;
         if (parametersList != null) {
             for (List<ParameterSetOperation> parameterSet : parametersList) {
-                // each operation is one setXxx(index, value, ...) call; summed, so the order of the
-                // calls does not matter, and hashed by content (deepHashCode also covers byte[] values,
+                // each operation is one setXxx(index, value, ...) call; hashed in parameter-index
+                // order, so the result depends on which value is bound to which parameter but not on
+                // the order of the calls, and by content (deepHashCode also covers byte[] values,
                 // whose plain hashCode is their identity)
+                List<ParameterSetOperation> ordered = new ArrayList<>(parameterSet);
+                ordered.sort(Comparator.comparing(SlowQueryListener::parameterIndex));
                 long setHash = 0;
-                for (ParameterSetOperation operation : parameterSet) {
-                    setHash += Arrays.deepHashCode(operation.getArgs());
+                for (ParameterSetOperation operation : ordered) {
+                    setHash = setHash * 31 + Arrays.deepHashCode(operation.getArgs());
                 }
                 hash = hash * 1_000_003L + setHash;
             }
         }
         return hash;
+    }
+
+    /** The JDBC parameter index (or name) a setXxx call binds, its first argument. */
+    private static String parameterIndex(ParameterSetOperation operation) {
+        Object[] args = operation.getArgs();
+        return args == null || args.length == 0 ? "" : String.valueOf(args[0]);
     }
 
     /**

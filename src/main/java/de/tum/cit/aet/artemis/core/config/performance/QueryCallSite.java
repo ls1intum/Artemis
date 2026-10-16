@@ -54,16 +54,31 @@ public record QueryCallSite(String repositoryMethod, String callerMethod) {
                     // keep overwriting: the stack is walked innermost-first, and the outermost
                     // repository method (e.g. a default findByIdElseThrow wrapping findById) is the
                     // one application code actually calls, so the one static analysis also sees
-                    repositoryMethod = repositoryName + "." + frame.getMethodName();
+                    repositoryMethod = repositoryName + "." + sourceMethodName(frame.getMethodName());
                     continue;
                 }
                 String className = declaringClass.getName();
                 if (className.startsWith(APP_PACKAGE) && !DETECTOR_CLASSES.contains(declaringClass) && !AbstractApi.class.isAssignableFrom(declaringClass)) {
-                    return new QueryCallSite(repositoryMethod, declaringClass.getSimpleName() + "." + frame.getMethodName());
+                    return new QueryCallSite(repositoryMethod, declaringClass.getSimpleName() + "." + sourceMethodName(frame.getMethodName()));
                 }
             }
             return new QueryCallSite(repositoryMethod, null);
         });
+    }
+
+    /**
+     * The method name as written in the source. A lambda body compiles to a synthetic method named
+     * after its enclosing method ({@code lambda$index$0}); this returns that enclosing method
+     * ({@code index}), which is the name static analysis reports and which does not change when
+     * the compiler renumbers lambdas.
+     */
+    static String sourceMethodName(String methodName) {
+        String prefix = "lambda$";
+        int end = methodName.lastIndexOf('$');
+        if (methodName.startsWith(prefix) && end > prefix.length()) {
+            return methodName.substring(prefix.length(), end);
+        }
+        return methodName;
     }
 
     /**

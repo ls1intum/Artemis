@@ -9,6 +9,7 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.function.Supplier;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.data.repository.NoRepositoryBean;
@@ -62,6 +63,21 @@ class QueryCallSiteTest {
 
         assertThat(site.repositoryMethod()).isEqualTo("ExampleRepository.findByExerciseId");
         assertThat(site.callerMethod()).isEqualTo("QueryCallSiteTest.skipsModuleApiDelegatesAndNamesTheirCaller");
+    }
+
+    @Test
+    void namesTheEnclosingMethodOfALambdaCaller() throws ReflectiveOperationException {
+        ExampleRepository repository = repositoryProxy();
+        Supplier<QueryCallSite> inLambda = () -> repository.findByExerciseId();
+
+        assertThat(inLambda.get().callerMethod()).isEqualTo("QueryCallSiteTest.namesTheEnclosingMethodOfALambdaCaller");
+    }
+
+    @Test
+    void sourceMethodNameStripsTheSyntheticLambdaName() {
+        assertThat(QueryCallSite.sourceMethodName("lambda$index$0")).isEqualTo("index");
+        assertThat(QueryCallSite.sourceMethodName("lambda$deleteResultsAndSubmissionsOfParticipation$12")).isEqualTo("deleteResultsAndSubmissionsOfParticipation");
+        assertThat(QueryCallSite.sourceMethodName("findByExerciseId")).isEqualTo("findByExerciseId");
     }
 
     @Test
