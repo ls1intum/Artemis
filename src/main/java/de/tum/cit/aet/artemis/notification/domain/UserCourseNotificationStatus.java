@@ -11,8 +11,14 @@ import jakarta.persistence.Id;
 import jakarta.persistence.IdClass;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PostPersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
+import org.springframework.data.domain.Persistable;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.account.domain.User;
@@ -27,7 +33,7 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
 @Table(name = "user_course_notification_status")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @IdClass(UserCourseNotificationStatus.UserCourseNotificationStatusId.class)
-public class UserCourseNotificationStatus implements Serializable {
+public class UserCourseNotificationStatus implements Serializable, Persistable<UserCourseNotificationStatus.UserCourseNotificationStatusId> {
 
     @Id
     @ManyToOne(fetch = FetchType.LAZY)
@@ -45,6 +51,13 @@ public class UserCourseNotificationStatus implements Serializable {
     @Enumerated
     @Column(name = "status", nullable = false)
     private UserCourseNotificationStatusType status;
+
+    /**
+     * Whether this instance has not been written to the database yet. The identifier is assigned by the application, so Spring Data cannot tell a new row from an
+     * existing one and would load every row it is asked to save before inserting it, one select per row. Reporting new rows as new lets it insert them directly.
+     */
+    @Transient
+    private boolean isNew = true;
 
     /**
      * Default constructor.
@@ -117,6 +130,24 @@ public class UserCourseNotificationStatus implements Serializable {
      */
     public void setStatus(UserCourseNotificationStatusType status) {
         this.status = status;
+    }
+
+    @Override
+    @JsonIgnore
+    public UserCourseNotificationStatusId getId() {
+        return new UserCourseNotificationStatusId(courseNotification.getId(), user.getId());
+    }
+
+    @Override
+    @JsonIgnore
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostLoad
+    @PostPersist
+    void markNotNew() {
+        isNew = false;
     }
 
     /**

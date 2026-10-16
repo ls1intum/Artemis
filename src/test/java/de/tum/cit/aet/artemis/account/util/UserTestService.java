@@ -808,8 +808,8 @@ public class UserTestService {
     public void getAndCreateParticipationVcsAccessToken() throws Exception {
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
-        // try to get token for non existent participation
-        request.get("/api/account/participation-vcs-access-token?participationId=11", HttpStatus.NOT_FOUND, String.class);
+        // Normal participation IDs can already exist in the shared test database.
+        request.get("/api/account/participation-vcs-access-token?participationId=" + Long.MAX_VALUE, HttpStatus.NOT_FOUND, String.class);
 
         var course = courseUtilService.addEnrolledEmptyCourse(TEST_PREFIX);
         var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
