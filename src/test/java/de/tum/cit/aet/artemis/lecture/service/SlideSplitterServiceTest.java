@@ -271,6 +271,24 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
                 .containsOnly(tuple(testAttachmentVideoUnit.getAttachment().getVersion(), testAttachmentVideoUnit.getAttachment().getSha256Hash()));
     }
 
+    /**
+     * The instructor replaced every page: the page order holds only new pages. The previous slides must leave the deck instead of staying current next to the new ones.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void pageOrderWithOnlyNewPagesSupersedesEveryPreviousSlide() {
+        Set<Long> previousSlideIds = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId()).stream().map(Slide::getId).collect(Collectors.toSet());
+        assertThat(previousSlideIds).isNotEmpty();
+        List<SlideOrderDTO> pageOrder = List.of(new SlideOrderDTO("temp_first", 1), new SlideOrderDTO("temp_second", 2));
+
+        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(testDocument, testAttachmentVideoUnit, "test.pdf", List.of(), pageOrder);
+
+        List<Slide> currentSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
+        assertThat(currentSlides).hasSize(2).extracting(Slide::getId).doesNotContainAnyElementsOf(previousSlideIds);
+        assertThat(currentSlides).extracting(Slide::getAttachmentVersion, Slide::getAttachmentSha256Hash)
+                .containsOnly(tuple(testAttachmentVideoUnit.getAttachment().getVersion(), testAttachmentVideoUnit.getAttachment().getSha256Hash()));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentVideoUnitIntoSingleSlides_WithNewSlideInPageOrder() throws IOException {
@@ -466,6 +484,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
         Path secondSlideOriginalFile = slideDirectory.resolve(String.valueOf(secondSlide.getSlideNumber())).resolve(Path.of(secondSlide.getSlideImagePath()).getFileName());
         firstSlide.setSlideImagePath(firstSlideOriginalFile.getFileName().toString());
         secondSlide.setSlideImagePath(secondSlideOriginalFile.getFileName().toString());
+        // Split from the previous file
+        firstSlide.setAttachmentRevision(-7, "previous-file");
+        secondSlide.setAttachmentRevision(-7, "previous-file");
         slideRepository.saveAll(List.of(firstSlide, secondSlide));
         String firstSlideOriginalImagePath = firstSlide.getSlideImagePath();
         Files.delete(secondSlideOriginalFile);
@@ -481,6 +502,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentBatch
 
         Slide unchangedFirstSlide = slideRepository.findById(firstSlide.getId()).orElseThrow();
         assertThat(unchangedFirstSlide.getSlideImagePath()).isEqualTo(firstSlideOriginalImagePath);
+        // The revision is only recorded once the whole deck is saved, so the slide saved before the failure never belonged to the new file
+        assertThat(slideRepository.findAllById(List.of(firstSlide.getId(), secondSlide.getId()))).extracting(Slide::getAttachmentVersion, Slide::getAttachmentSha256Hash)
+                .containsOnly(tuple(-7, "previous-file"));
         assertThat(firstSlideOriginalFile).exists();
         try (var files = Files.walk(attachmentDirectory)) {
             assertThat(files.filter(Files::isRegularFile).collect(Collectors.toSet())).isEqualTo(filesBeforeFailedSplit);

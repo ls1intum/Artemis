@@ -30,6 +30,7 @@ import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.task.TaskRejectedException;
 import org.springframework.mock.web.MockMultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
@@ -479,6 +480,29 @@ class AttachmentVideoUnitServiceTest {
 
         verify(slideSplitterService).updateSlideVisibility(unit, hiddenPages);
         verify(attachmentService).regenerateStudentVersionOrRemoveOutdated(attachment);
+    }
+
+    @Test
+    void rejectedSplitAfterAFileReplacementRemovesThePreviousStudentVersion() throws Exception {
+        var attachment = attachment();
+        attachment.setStudentVersion("student.pdf");
+        var unit = attachmentVideoUnit("Unit", attachment);
+        var dto = AttachmentVideoUnitDTO.from(unit, AttachmentUpdateIntent.EDITOR_PDF_CONTENT_CHANGED);
+        var uploadedFile = pdfUpload("different content");
+        var studentVersionFile = new MockMultipartFile("studentVersion", "unit_student.pdf", "application/pdf", "filtered content".getBytes(StandardCharsets.UTF_8));
+        when(attachmentFileHashService.sha256(uploadedFile)).thenReturn(new AttachmentFileHashService.FileHash("SHA-256", NEW_HASH));
+        when(attachmentRepository.saveAndFlush(attachment)).thenReturn(attachment);
+        when(attachmentService.stageUploadedStudentVersionFile(any(), eq(LECTURE_UNIT_ID), eq("unit_student.pdf"))).thenReturn("staged.pdf");
+        when(slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(any(AttachmentVideoUnitSlideSplitJob.class))).thenThrow(new TaskRejectedException("executor full"));
+
+        assertThatCode(
+                () -> service.updateAttachmentVideoUnit(unit, dto, attachment, uploadedFile, studentVersionFile, false, List.of(), List.of(new SlideOrderDTO("21", 1)), Set.of()))
+                .isInstanceOf(TaskRejectedException.class);
+
+        // The new file is saved without a split; the student version of the previous file must not stay downloadable
+        verify(attachmentService).removeStudentVersionFile(attachment);
+        verify(attachmentService).discardStagedStudentVersionFile(LECTURE_UNIT_ID, "staged.pdf");
+        verify(attachmentService, never()).publishSubmittedStudentVersionFile(any(), anyLong(), anyString(), any());
     }
 
     @Test

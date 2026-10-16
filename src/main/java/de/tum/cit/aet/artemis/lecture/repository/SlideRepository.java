@@ -101,6 +101,28 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
     Set<Long> findAttachmentVideoUnitIdsWithSlidesOfOtherRevision(@Param("attachmentVideoUnitIds") Collection<Long> attachmentVideoUnitIds);
 
     /**
+     * Records on the given current slides of an attachment video unit the file revision they were split from. Called as the last step of a split, with the slides it saved.
+     *
+     * @param attachmentVideoUnitId the id of the attachment video unit
+     * @param slideIds              the ids of the slides the split saved
+     * @param version               the version of the attachment file
+     * @param sha256Hash            the hash of the attachment file
+     * @return the number of slides updated
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Slide s
+            SET s.attachmentVersion = :version,
+                s.attachmentSha256Hash = :sha256Hash
+            WHERE s.attachmentVideoUnit.id = :attachmentVideoUnitId
+                AND s.id IN :slideIds
+                AND s.superseded = FALSE
+            """)
+    int stampRevisionOnCurrentSlides(@Param("attachmentVideoUnitId") long attachmentVideoUnitId, @Param("slideIds") Collection<Long> slideIds, @Param("version") Integer version,
+            @Param("sha256Hash") String sha256Hash);
+
+    /**
      * Records the hash of the attachment file on the current slides that were split from it before its hash was known: same version, no hash yet. Used when an upload of
      * the same bytes fills in the hash of an older attachment without a new split.
      *

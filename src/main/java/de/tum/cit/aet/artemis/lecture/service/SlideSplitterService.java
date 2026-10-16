@@ -8,6 +8,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -218,11 +219,11 @@ public class SlideSplitterService {
                 slideEntity.setSlideImagePath(savePath.getFileName().toString());
                 slideEntity.setSlideNumber(slideNumber);
                 slideEntity.setAttachmentVideoUnit(attachmentVideoUnit);
-                stampRevision(slideEntity, attachmentVideoUnit);
                 operation.save(slideEntity);
             }
 
             markSupersededSlides(operation, supersededSlides);
+            stampRevisionOnCompletedDeck(attachmentVideoUnit, operation.savedCurrentSlideIds);
         }
         catch (IOException e) {
             operation.compensate();
@@ -289,6 +290,7 @@ public class SlideSplitterService {
 
             // Clean up slides that are no longer in the page order
             cleanupRemovedSlides(operation, pageOrder, existingSlides);
+            stampRevisionOnCompletedDeck(attachmentVideoUnit, operation.savedCurrentSlideIds);
         }
         catch (IOException e) {
             operation.compensate();
@@ -304,12 +306,18 @@ public class SlideSplitterService {
     }
 
     /**
-     * Records on a slide that it now belongs to the attachment's stored file. A split job only runs while the attachment still has the file revision it was scheduled for,
-     * so this is the revision the slide images are rendered from.
+     * Records on the current slides this split saved that the deck now belongs to the attachment's stored file. Slides the split did not save keep their previous revision,
+     * so a slide left over from an earlier deck never counts as part of this one. It runs as the last step of a split, inside the guarded region: while the
+     * split is still saving slides, some of them carry the previous revision or none, so regeneration and the student downloads treat the deck as not matching the file and
+     * stay closed, instead of seeing a deck in which a hidden page is not saved yet. A split job only runs while the attachment still has the file revision it was scheduled
+     * for, so this is the revision the slides were made from. If the split fails, compensation restores the previous slides with their previous revision.
      */
-    private static void stampRevision(Slide slide, AttachmentVideoUnit attachmentVideoUnit) {
+    private void stampRevisionOnCompletedDeck(AttachmentVideoUnit attachmentVideoUnit, Set<Long> savedCurrentSlideIds) {
+        if (savedCurrentSlideIds.isEmpty()) {
+            return;
+        }
         var attachment = attachmentVideoUnit.getAttachment();
-        slide.setAttachmentRevision(attachment.getVersion(), attachment.getSha256Hash());
+        slideRepository.stampRevisionOnCurrentSlides(attachmentVideoUnit.getId(), savedCurrentSlideIds, attachment.getVersion(), attachment.getSha256Hash());
     }
 
     /**
@@ -337,7 +345,6 @@ public class SlideSplitterService {
         // before the new order overwrites it.
         int numberTheImageWasWrittenUnder = slideEntity.getSlideNumber();
         slideEntity.setSlideNumber(order);
-        stampRevision(slideEntity, attachmentVideoUnit);
         ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slideEntity, hiddenPagesMap, slideId);
 
         if (isNewSlide) {
@@ -487,21 +494,19 @@ public class SlideSplitterService {
             return;
         }
 
+        // Also when the page order holds only new pages: then every existing slide was removed from the deck, for example after the instructor replaced all pages.
         Set<String> slideIdsInPageOrder = pageOrderList.stream().map(SlideOrderDTO::slideId).filter(id -> !id.startsWith("temp_")).collect(Collectors.toSet());
+        List<Slide> slidesToSupersede = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(String.valueOf(slide.getId()))).toList();
 
-        if (!slideIdsInPageOrder.isEmpty()) {
-            List<Slide> slidesToSupersede = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(String.valueOf(slide.getId()))).toList();
-
-            if (!slidesToSupersede.isEmpty()) {
-                for (Slide slide : slidesToSupersede) {
-                    slide.setSuperseded(true);
-                    // Through the operation like every other write here. These rows already exist, so nothing is
-                    // recorded as created and the restore point already covers them; routing it here keeps that true
-                    // if this ever starts writing a row of its own.
-                    operation.save(slide);
-                }
-                log.debug("Marked {} slides that are no longer in the page order as superseded", slidesToSupersede.size());
+        if (!slidesToSupersede.isEmpty()) {
+            for (Slide slide : slidesToSupersede) {
+                slide.setSuperseded(true);
+                // Through the operation like every other write here. These rows already exist, so nothing is
+                // recorded as created and the restore point already covers them; routing it here keeps that true
+                // if this ever starts writing a row of its own.
+                operation.save(slide);
             }
+            log.debug("Marked {} slides that are no longer in the page order as superseded", slidesToSupersede.size());
         }
     }
 
@@ -537,6 +542,9 @@ public class SlideSplitterService {
 
         private final List<Long> createdSlideIds = new ArrayList<>();
 
+        /** The current slides this operation saved: the deck it produces. */
+        private final Set<Long> savedCurrentSlideIds = new LinkedHashSet<>();
+
         private final List<Slide> restorePoint = new ArrayList<>();
 
         private final List<Runnable> onSuccess = new ArrayList<>();
@@ -560,6 +568,12 @@ public class SlideSplitterService {
             Slide saved = slideRepository.save(slide);
             if (isNew) {
                 createdSlideIds.add(saved.getId());
+            }
+            if (saved.isSuperseded()) {
+                savedCurrentSlideIds.remove(saved.getId());
+            }
+            else {
+                savedCurrentSlideIds.add(saved.getId());
             }
             return saved;
         }

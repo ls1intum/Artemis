@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -452,6 +453,15 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // Collect units freshly from the database to prevent issues when persisting the lecture again
         lecture.setLectureUnits(attachmentVideoUnitRepo.findAllByLectureIdAndAttachmentType(lecture.getId(), AttachmentType.FILE).stream().map(unit -> (LectureUnit) unit)
                 .collect(Collectors.toCollection(ArrayList::new)));
+
+        if (expectedStatus == HttpStatus.CREATED) {
+            // Each PDF is split into slides asynchronously, and the student downloads stay closed until its slides are complete: 3 + 2 pages
+            List<Long> unitIds = lecture.getLectureUnits().stream().map(LectureUnit::getId).toList();
+            await().untilAsserted(() -> {
+                assertThat(unitIds.stream().mapToInt(id -> slideRepository.findAllByAttachmentVideoUnitId(id).size()).sum()).isEqualTo(5);
+                assertThat(slideRepository.findAttachmentVideoUnitIdsWithSlidesOfOtherRevision(unitIds)).isEmpty();
+            });
+        }
 
         return lecture;
     }

@@ -239,16 +239,24 @@ public class AttachmentVideoUnitService {
                     attachmentService.removeStudentVersionFile(savedAttachment);
                 }
                 if (splitsSlides) {
-                    // Split the PDF into slides, respecting a custom page order if provided
-                    if (pageOrder == null) {
-                        AttachmentVideoUnitSlideSplitJob job = AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null);
-                        retireSlidesOfReplacedFile(job);
-                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(job);
-                        projectedSlideHiddenUntilBySlideNumber = Map.of();
+                    try {
+                        // Split the PDF into slides, respecting a custom page order if provided
+                        if (pageOrder == null) {
+                            AttachmentVideoUnitSlideSplitJob job = AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, null, null);
+                            retireSlidesOfReplacedFile(job);
+                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(job);
+                            projectedSlideHiddenUntilBySlideNumber = Map.of();
+                        }
+                        else {
+                            slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, hiddenPages, pageOrder));
+                            projectedSlideHiddenUntilBySlideNumber = buildProjectedSlideHiddenUntilBySlideNumber(hiddenPages, pageOrder);
+                        }
                     }
-                    else {
-                        slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnitSlideSplitJob.of(savedAttachmentVideoUnit, hiddenPages, pageOrder));
-                        projectedSlideHiddenUntilBySlideNumber = buildProjectedSlideHiddenUntilBySlideNumber(hiddenPages, pageOrder);
+                    catch (RuntimeException exception) {
+                        // The new file is saved, but no split was scheduled, for example because the executor rejected it. The student version of the previous file
+                        // must not stay downloadable; without it, the slides that still belong to that file keep the downloads closed until the file is split.
+                        attachmentService.removeStudentVersionFile(savedAttachment);
+                        throw exception;
                     }
                     visibilitySyncDeferredToSlideSplit = true;
                 }
