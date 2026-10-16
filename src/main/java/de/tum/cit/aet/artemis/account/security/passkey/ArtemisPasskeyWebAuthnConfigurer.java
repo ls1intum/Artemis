@@ -120,9 +120,8 @@ public class ArtemisPasskeyWebAuthnConfigurer {
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,
-            MailSendingService mailSendingService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService,
-            GlobalNotificationSettingService globalNotificationSettingService, RateLimitService rateLimitService, PasskeyCredentialsRepository passkeyCredentialsRepository,
-            SessionFreshnessService sessionFreshnessService) {
+            MailSendingService mailSendingService, ArtemisSuccessfulLoginService artemisSuccessfulLoginService, GlobalNotificationSettingService globalNotificationSettingService,
+            RateLimitService rateLimitService, PasskeyCredentialsRepository passkeyCredentialsRepository, SessionFreshnessService sessionFreshnessService) {
         this.auditEventRepository = auditEventRepository;
         this.converter = new JacksonJsonHttpMessageConverter(jsonMapper);
         this.jwtCookieService = jwtCookieService;

@@ -289,7 +289,8 @@ public class EmailChangeService {
         if (hasCurrentAddress) {
             sendConfirmationMail(MailRecipientDTO.from(user), true, newEmail, currentKeyId, currentSecret);
         }
-        sendConfirmationMail(new MailRecipientDTO(newEmail, user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName()), false, newEmail, newKeyId, newSecret);
+        sendConfirmationMail(new MailRecipientDTO(newEmail, user.getLangKey(), user.getLogin(), user.getFirstName(), user.getLastName(), null, null, user.isTestUser()), false,
+                newEmail, newKeyId, newSecret);
         accountSecurityEventService.recordEmailChangeRequested(user);
         return PendingEmailChangeDTO.of(change, VALIDITY);
     }
