@@ -143,6 +143,32 @@ describe('TutorialCreateOrEditComponent', () => {
         expect(component.location()).toBe('');
     });
 
+    it('clears optional fields and the schedule when switching to another group', async () => {
+        await createComponentWithLanguageValues(of(['English']));
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupDetailData());
+        fixture.componentRef.setInput('schedule', createTutorialGroupSchedule());
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        fixture.componentRef.setInput(
+            'tutorialGroup',
+            createTutorialGroupDetailData({ id: 18, title: 'TG 2', campus: undefined, capacity: undefined, additionalInformation: undefined }),
+        );
+        fixture.componentRef.setInput('schedule', undefined);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.title()).toBe('TG 2');
+        expect(component.campus()).toBe('');
+        expect(component.capacity()).toBeUndefined();
+        expect(component.additionalInformation()).toBe('');
+        expect(component.configureSessionPlan()).toBe(false);
+        expect(component.firstSessionStart()).toBeUndefined();
+        expect(component.firstSessionEnd()).toBeUndefined();
+        expect(component.tutorialPeriodEnd()).toBeUndefined();
+        expect(component.location()).toBe('');
+    });
+
     it('should initialize in edit mode from tutorial group and schedule inputs', async () => {
         await createComponentWithLanguageValues(of(['English', 'German']));
 

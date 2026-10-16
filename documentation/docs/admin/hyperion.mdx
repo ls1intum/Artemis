@@ -446,6 +446,16 @@ mix incompatible job-record readers while runs are active. This is a provider
 record compatibility requirement, not a database schema migration or a reason to
 stop ordinary exercise edits across the deployment.
 
+Layer 3 introduces the live-save coordination map and its `LiveSaveSlot` and
+`TestCaseSynchronization` records; these types are absent from the upstream
+`develop` baseline. Their complete initial wire surface is recorded in
+`distributed-data-surface.txt`, so this introduction needs no distributed namespace
+migration and makes no database schema change. Earlier development builds used a
+four-component slot. Do not mix those builds with this five-component slot or
+reuse their active reservations: drain generation, undo, and result processing
+before updating all affected cores together. Reconcile any retained reservation
+before the update; do not delete it to bypass an uncertain save.
+
 ### Inspect runs and worker capacity
 
 Open **Administration → AI generations** to see active generation/adaptation

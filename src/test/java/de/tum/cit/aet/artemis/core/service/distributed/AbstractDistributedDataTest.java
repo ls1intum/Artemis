@@ -9,6 +9,7 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,6 +49,8 @@ import de.tum.cit.aet.artemis.core.service.distributed.local.LocalDataProviderSe
 import de.tum.cit.aet.artemis.core.service.distributed.local.LocalMap;
 import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonDistributedMap;
 import de.tum.cit.aet.artemis.core.util.IpAddresses;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.LiveSaveSlot;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.TestCaseSynchronization;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
 public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAgentTest {
@@ -452,6 +455,25 @@ public abstract class AbstractDistributedDataTest extends AbstractArtemisBuildAg
         private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
             in.defaultReadObject();
             derived = stored.toUpperCase(java.util.Locale.ROOT);
+        }
+    }
+
+    @Test
+    void testLiveSaveSynchronizationSurvivesProviderRoundTripAndValueGuardedUpdates() {
+        var synchronization = new TestCaseSynchronization("solution", "tests", false, false);
+        var pending = new LiveSaveSlot("token", "owner", Instant.EPOCH, Map.of(), synchronization);
+        DistributedMap<String, LiveSaveSlot> map = getDistributedDataProvider().getMap("liveSaveSynchronizationRoundTrip");
+        try {
+            map.put("exercise", pending);
+            assertThat(map.get("exercise")).isEqualTo(pending);
+            var completed = new LiveSaveSlot("token", "owner", Instant.EPOCH, Map.of(), new TestCaseSynchronization("solution", "tests", false, true));
+            assertThat(map.replace("exercise", pending, completed)).isTrue();
+            assertThat(map.get("exercise")).isEqualTo(completed);
+            assertThat(map.remove("exercise", pending)).isFalse();
+            assertThat(map.remove("exercise", completed)).isTrue();
+        }
+        finally {
+            map.clear();
         }
     }
 
