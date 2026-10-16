@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.agent
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedSpecRegistry;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.DifferentialVerifier;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ExerciseIntegrityGate;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StageChecks;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.StructuralOracleSeeder;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.workspace.GenerationWorkspace;
@@ -172,6 +173,15 @@ public class GenerationOrchestrator {
                     baselineProblemStatement);
             if (cancelled.getAsBoolean()) {
                 return stopOrPreserve(sandbox, sessionId, capture, new AgentLoopResult(AgentLoopResult.Status.CANCELLED, 0, "")).withTermination(TerminationReason.CANCELLED);
+            }
+
+            List<String> harnessReasons = ExerciseIntegrityGate.javaAresHarnessReasons(testsSeedSnapshot);
+            if (!harnessReasons.isEmpty()) {
+                return GenerationOutcome
+                        .error(new AgentLoopResult(AgentLoopResult.Status.ERROR, 0, ""),
+                                "Exercise generation requires an Ares 2 Gradle test harness. Migrate the exercise harness manually before starting generation; "
+                                        + "Hyperion does not change build dependencies or security settings automatically. " + String.join(" ", harnessReasons))
+                        .withTermination(TerminationReason.ENVIRONMENT_UNAVAILABLE);
             }
 
             emit(progress, "Checking the build environment");

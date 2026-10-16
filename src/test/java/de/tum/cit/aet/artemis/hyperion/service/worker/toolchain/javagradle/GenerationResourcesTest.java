@@ -34,11 +34,10 @@ class GenerationResourcesTest {
     }
 
     @Test
-    void teachingFixturesUseGradleSecurityPathsAndStableReportNamesWithoutChangingTheTestBody() {
+    void teachingFixturesKeepAresPolicyAndUseStableReportNamesWithoutChangingTheTestBody() {
         String fixture = """
                 @Public
-                @WhitelistPath("target")
-                @BlacklistPath("target/test-classes")
+                @Policy(value = "SecurityPolicy.yaml")
                 class StackTest {
                     @Test @StrictTimeout(1)
                     void pushes() { assertEquals(1, stack.size()); }
@@ -48,8 +47,7 @@ class GenerationResourcesTest {
         assertThat(GenerationResources.javaGradleFixture(fixture)).isEqualTo("""
                 @org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)
                 @Public
-                @WhitelistPath("build")
-                @BlacklistPath("build/classes/java/test")
+                @Policy(value = "SecurityPolicy.yaml")
                 class StackTest {
                     @Test @StrictTimeout(1)
                     void pushes() { assertEquals(1, stack.size()); }

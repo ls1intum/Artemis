@@ -23,9 +23,8 @@ public class GenerationResources {
      * @return the Gradle teaching fixture
      */
     public static String javaGradleFixture(String source) {
-        return FIXTURE_AUTHOR.matcher(source).replaceAll("").replace("@WhitelistPath(\"target\")", "@WhitelistPath(\"build\")")
-                .replace("@BlacklistPath(\"target/test-classes\")", "@BlacklistPath(\"build/classes/java/test\")")
-                .replace("@Public\n", "@org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)\n@Public\n");
+        return FIXTURE_AUTHOR.matcher(source).replaceAll("").replace("@Public\n",
+                "@org.junit.jupiter.api.DisplayNameGeneration(org.junit.jupiter.api.DisplayNameGenerator.Simple.class)\n@Public\n");
     }
 
     /**
