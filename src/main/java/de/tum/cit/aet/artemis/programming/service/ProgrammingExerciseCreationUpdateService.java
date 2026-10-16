@@ -237,6 +237,10 @@ public class ProgrammingExerciseCreationUpdateService {
         // Extract competency links before first save - they require the exercise ID which doesn't exist yet
         var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(programmingExercise);
 
+        // These values only depend on the course and short name, so persist them with the initial insert.
+        programmingExercise.generateAndSetProjectKey();
+        setURLsForAuxiliaryRepositoriesOfExercise(programmingExercise);
+
         // We save once in order to generate an id for the programming exercise. The build configuration names the
         // exercise, so it is written afterwards rather than before.
         var savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -249,7 +253,6 @@ public class ProgrammingExerciseCreationUpdateService {
 
         buildConfig.setBranch(defaultBranch);
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveForExercise(buildConfig, savedProgrammingExercise);
-        savedProgrammingExercise.generateAndSetProjectKey();
 
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
         initParticipations(savedProgrammingExercise);
@@ -258,7 +261,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
         connectBaseParticipationsToExerciseAndSave(savedProgrammingExercise);
 
-        savedProgrammingExercise = programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
+        programmingExerciseRepository.updateRepositoryMetadataForCreation(savedProgrammingExercise);
 
         connectAuxiliaryRepositoriesToExercise(savedProgrammingExercise);
 

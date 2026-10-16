@@ -1173,15 +1173,28 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         var params = new LinkedMultiValueMap<String, String>();
         params.add("emptyRepositories", String.valueOf(emptyRepositories));
         // Create the exercise and verify status code 201. The query cap guards against the response mapping pulling
-        // additional sub-graphs into the creation flow. It leaves room for the creations that do the most work inside
-        // the request: an SCA-enabled exercise also inserts its default category rows (Python: 60 inserts).
-        int queryLimit = (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) ? 153 : 93) + 2 * newExercise.getAuxiliaryRepositories().size();
+        // additional sub-graphs into the creation flow. Default SCA categories are inserted in one statement,
+        // irrespective of the programming language's category count (Python has 60).
+        int queryLimit = (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) ? 77 : 76) + newExercise.getAuxiliaryRepositories().size();
         var response = assertThatDb(() -> request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
                 ProgrammingExerciseResponseDTO.class, params, HttpStatus.CREATED)).hasBeenCalledAtMostTimes(queryLimit);
         assertCreationResponseReadContract(response, newExercise);
         assertThat(programmingExerciseUtilService.buildConfigOf(programmingExerciseRepository.findByIdElseThrow(response.id())).getBranch()).isEqualTo(defaultBranch);
         ProgrammingExercise createdExercise = programmingExerciseRepository.findWithAllParticipationsById(response.id()).orElseThrow();
         createdExercisesToCleanUp.add(createdExercise);
+        assertThat(createdExercise.getProjectKey()).isEqualTo(response.projectKey());
+        assertThat(createdExercise.getTestRepositoryUri()).isEqualTo(response.testRepositoryUri());
+        assertThat(createdExercise.getTemplateParticipation().getId()).isEqualTo(response.templateParticipation().id());
+        assertThat(createdExercise.getSolutionParticipation().getId()).isEqualTo(response.solutionParticipation().id());
+        var storedAuxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(createdExercise.getId());
+        for (var storedRepository : storedAuxiliaryRepositories) {
+            assertThat(response.auxiliaryRepositories()).anySatisfy(repository -> {
+                assertThat(repository.id()).isEqualTo(storedRepository.getId());
+                assertThat(repository.repositoryUri()).isEqualTo(storedRepository.getRepositoryUri());
+                assertThat(repository.checkoutDirectory()).isEqualTo(storedRepository.getCheckoutDirectory());
+                assertThat(repository.description()).isEqualTo(storedRepository.getDescription());
+            });
+        }
         for (var participation : List.of(createdExercise.getTemplateParticipation(), createdExercise.getSolutionParticipation())) {
             String expectedCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
             assertThat(expectedCommitHash).isNotNull();

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -9,11 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -68,7 +71,10 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     void testCreateDefaultCategories_noConfigurationAvailable() {
         // Haskell does not have a default configuration at the time of creation of this test
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.HASKELL);
-        staticCodeAnalysisService.createDefaultCategories(programmingExercise);
+        assertThatDb(() -> {
+            staticCodeAnalysisService.createDefaultCategories(programmingExercise);
+            return null;
+        }).hasBeenCalledTimes(0);
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExercise.getId());
         assertThat(categories).isEmpty();
     }
@@ -98,16 +104,34 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
+    @MethodSource("languagesWithDefaultCategories")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateDefaultCategories(ProgrammingLanguage programmingLanguage) {
         var testExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1),
                 programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember(), programmingLanguage);
         testExercise = programmingExerciseRepository.save(testExercise);
-        staticCodeAnalysisService.createDefaultCategories(testExercise);
-        // Swift has only one default category at the time of creation of this test
+        var storedExercise = testExercise;
+        assertThatDb(() -> {
+            staticCodeAnalysisService.createDefaultCategories(storedExercise);
+            return null;
+        }).hasBeenCalledTimes(1);
+        // Verify every persisted setting, not just the number of category rows.
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(testExercise.getId());
-        if (programmingLanguage == ProgrammingLanguage.SWIFT) {
+        var defaults = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(programmingLanguage);
+        assertThat(categories).hasSize(defaults.size());
+        for (var defaultCategory : defaults) {
+            assertThat(categories).filteredOn(category -> category.getName().equals(defaultCategory.name())).singleElement().satisfies(category -> {
+                assertThat(category.getId()).isNotNull();
+                assertThat(category.getExercise().getId()).isEqualTo(storedExercise.getId());
+                assertThat(category.getPenalty()).isEqualTo(defaultCategory.penalty());
+                assertThat(category.getMaxPenalty()).isEqualTo(defaultCategory.maxPenalty());
+                assertThat(category.getState()).isEqualTo(defaultCategory.state());
+            });
+        }
+        if (programmingLanguage == ProgrammingLanguage.PYTHON) {
+            assertThat(categories).hasSize(60);
+        }
+        else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             assertThat(categories).hasSize(6);
             assertThat(categories.stream().filter(c -> c.getState() == CategoryState.FEEDBACK).count()).isEqualTo(1);
         }
@@ -119,6 +143,28 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
             assertThat(categories).hasSize(5);
             assertThat(categories.stream().filter(c -> c.getState() == CategoryState.FEEDBACK).count()).isEqualTo(4);
         }
+    }
+
+    private static Stream<ProgrammingLanguage> languagesWithDefaultCategories() {
+        return StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().keySet().stream();
+    }
+
+    @Test
+    void testInsertDefaultCategories_preservesNullsZeroesAndEscapedNames() {
+        assertThatDb(() -> {
+            staticCodeAnalysisCategoryRepository.insertDefaultCategories(programmingExercise.getId(), """
+                    [
+                      {"name":"O'Reilly — 名称","state":"INACTIVE","penalty":0.25,"maxPenalty":null},
+                      {"name":"Feedback","state":"FEEDBACK","penalty":0.5,"maxPenalty":-1.5},
+                      {"name":"Graded","state":"GRADED","penalty":0.0,"maxPenalty":0.0}
+                    ]
+                    """);
+            return null;
+        }).hasBeenCalledTimes(1);
+        assertThat(staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExercise.getId())).extracting(StaticCodeAnalysisCategory::getName,
+                StaticCodeAnalysisCategory::getState, StaticCodeAnalysisCategory::getPenalty, StaticCodeAnalysisCategory::getMaxPenalty)
+                .containsExactlyInAnyOrder(tuple("O'Reilly — 名称", CategoryState.INACTIVE, 0.25, null), tuple("Feedback", CategoryState.FEEDBACK, 0.5, -1.5),
+                        tuple("Graded", CategoryState.GRADED, 0.0, 0.0));
     }
 
     @Test
