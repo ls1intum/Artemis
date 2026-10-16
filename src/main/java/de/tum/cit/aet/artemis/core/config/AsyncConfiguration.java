@@ -64,6 +64,27 @@ public class AsyncConfiguration implements AsyncConfigurer {
     }
 
     /**
+     * Serialize FAQ synchronization on a bounded worker pool. Saturation must never run a Pyris call on the request
+     * thread or reject a successful local save: reconciliation recovers tasks that do not fit in the queue.
+     * Under the test profile, run synchronously to keep shared Iris request mocks isolated between tests.
+     *
+     * @return the FAQ executor, synchronous only under the test profile
+     */
+    @Bean("faqTaskExecutor")
+    public Executor faqTaskExecutor() {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(1000);
+        executor.setThreadNamePrefix("faq-sync-");
+        executor.setRejectedExecutionHandler((task, pool) -> log.warn("FAQ synchronization queue is full or shutting down; reconciliation will retry"));
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
+    }
+
+    /**
      * Dedicated executor for Deimos batch runs to isolate long-running LLM workloads from the shared async infrastructure.
      *
      * @param corePoolSize  minimum number of threads kept in the Deimos executor
@@ -107,6 +128,37 @@ public class AsyncConfiguration implements AsyncConfigurer {
             return new SyncTaskExecutor();
         }
         return taskExecutor::execute;
+    }
+
+    /**
+     * Executor for the job that works off the queue of mails that the SMTP server did not accept (see {@code MailSendingService}).
+     * <p>
+     * A run sends up to a batch of mails one after the other, and every send can take as long as the timeouts of the SMTP
+     * connection allow, so a run is long compared to the other {@code @Async} tasks. On the shared pool it could occupy a
+     * worker for minutes while an outage keeps every send slow, and a password reset that waits for a free worker would be
+     * delayed by the very outage the queue is for. The run has a pool of its own instead.
+     * <p>
+     * One thread is enough, because the job guards itself against overlapping runs. A trigger that finds the thread busy and the
+     * single queue place taken is discarded: the next trigger comes after the configured interval, and a run that is still
+     * working has the queue in hand anyway.
+     * <p>
+     * In the {@code test} profile it is a {@link SyncTaskExecutor}, like the executor for mail, so tests that call the job see its
+     * effect before they continue.
+     *
+     * @return a synchronous executor under the {@code test} profile, otherwise a dedicated single threaded pool
+     */
+    @Bean("mailRetryTaskExecutor")
+    public Executor mailRetryTaskExecutor() {
+        if (environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return new SyncTaskExecutor();
+        }
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(1);
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.DiscardPolicy());
+        executor.setThreadNamePrefix("mail-retry-");
+        return new ExceptionHandlingAsyncTaskExecutor(executor);
     }
 
     /**

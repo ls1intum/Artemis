@@ -20,6 +20,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { MockRepositoryFileService } from 'test/helpers/mocks/service/mock-repository-file.service';
@@ -37,6 +38,7 @@ import { ActivatedRoute, ParamMap, Router, UrlTree, convertToParamMap, provideRo
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -175,6 +177,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         submission.results = [result];
         submission.participation = participation;
         submission.id = 1234;
+        submission.commitHash = '0123456789abcdef0123456789abcdef01234567';
         submission.latestResult = result;
         participation.submissions = [submission];
 
@@ -311,6 +314,23 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
         getFilesWithContentStub.mockRestore();
         getFileStub.mockRestore();
+        fixture.destroy();
+    });
+
+    it('should show exactly the submitted commit and not the working copy of the repository', async () => {
+        vi.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
+        const feedbackLoaded = firstValueFrom(outputToObservable(comp.onFeedbackLoaded));
+        fixture.detectChanges();
+        await feedbackLoaded;
+        await flushMicrotasks();
+        fixture.changeDetectorRef.detectChanges();
+
+        const codeEditorContainer: CodeEditorContainerComponent = fixture.debugElement.query(By.directive(CodeEditorContainerComponent)).componentInstance;
+        expect(codeEditorContainer.commitId()).toBe(submission.commitHash);
+        const codeEditorFileBrowser: CodeEditorFileBrowserComponent = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
+        expect(codeEditorFileBrowser.commitId()).toBe(submission.commitHash);
+        const codeEditorMonaco: CodeEditorMonacoComponent = fixture.debugElement.query(By.directive(CodeEditorMonacoComponent)).componentInstance;
+        expect(codeEditorMonaco.commitId()).toBe(submission.commitHash);
         fixture.destroy();
     });
 
@@ -1074,6 +1094,82 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(banner).not.toBeNull();
     });
 
+    describe('commit history link', () => {
+        const commitHistoryButton = () => fixture.debugElement.query(By.css('[data-testid="open-commit-history-button"]'));
+
+        async function renderAssessmentWithRouteParams(params: Record<string, string | number>) {
+            TestBed.inject(ActivatedRoute).params = of(params);
+            vi.spyOn(repositoryFileService, 'getFilesWithContent').mockReturnValue(of(templateFileSessionReturn));
+            vi.spyOn(repositoryFileService, 'getFile').mockReturnValue(new BehaviorSubject({ fileContent: '' }));
+            fixture.detectChanges();
+            await flushMicrotasks();
+            fixture.changeDetectorRef.detectChanges();
+        }
+
+        /** A course programming exercise, assessed manually and due in the given number of days, which is what decides whether participants are anonymous. */
+        const useProgrammingExerciseDueIn = (days: number, isAtLeastEditor: boolean) => {
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            exercise.dueDate = dayjs().add(days, 'day');
+            // the access rights are set by the account service when the participation is loaded, so the role of the user is decided there
+            vi.spyOn(accountService, 'setAccessRightsForExercise').mockImplementation((loaded) => {
+                loaded.isAtLeastEditor = isAtLeastEditor;
+            });
+        };
+
+        it('should link a tutor to the commit history of the assessed participation in the course while participants are visible', async () => {
+            // a tutor is not an editor, so the "go to repository" button is not available to them
+            useProgrammingExerciseDueIn(1, false);
+            const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree');
+
+            await renderAssessmentWithRouteParams({ courseId: 5, exerciseId: 1, submissionId: 123 });
+
+            expect(commitHistoryButton()).not.toBeNull();
+            expect(commitHistoryButton().nativeElement.getAttribute('target')).toBe('_blank');
+            expect(comp.commitHistoryLink()).toEqual(['/course-management', '5', 'programming-exercises', '1', 'repository', 'USER', '1', 'commit-history']);
+            expect(createUrlTreeSpy).toHaveBeenCalledWith(
+                ['/course-management', '5', 'programming-exercises', '1', 'repository', 'USER', '1', 'commit-history'],
+                expect.anything(),
+            );
+        });
+
+        it('should not offer a tutor the commit history once participants are anonymous, because the server refuses it', async () => {
+            useProgrammingExerciseDueIn(-1, false);
+
+            await renderAssessmentWithRouteParams({ courseId: 5, exerciseId: 1, submissionId: 123 });
+
+            expect(comp.commitHistoryLink()).toBeUndefined();
+            expect(commitHistoryButton()).toBeNull();
+        });
+
+        it('should keep offering an editor the commit history once participants are anonymous', async () => {
+            useProgrammingExerciseDueIn(-1, true);
+
+            await renderAssessmentWithRouteParams({ courseId: 5, exerciseId: 1, submissionId: 123 });
+
+            expect(commitHistoryButton()).not.toBeNull();
+        });
+
+        it('should link an editor to the commit history of the exam exercise when assessing an exam', async () => {
+            // exam participants are always anonymous for a tutor, an editor keeps the access
+            useProgrammingExerciseDueIn(-1, true);
+            const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree');
+
+            await renderAssessmentWithRouteParams({ courseId: 5, examId: 7, exerciseGroupId: 9, exerciseId: 1, submissionId: 123 });
+
+            expect(commitHistoryButton()).not.toBeNull();
+            expect(createUrlTreeSpy).toHaveBeenCalledWith(
+                ['/course-management', '5', 'exams', '7', 'exercise-groups', '9', 'programming-exercises', '1', 'repository', 'USER', '1', 'commit-history'],
+                expect.anything(),
+            );
+        });
+
+        it('should not offer the commit history before a participation is loaded', () => {
+            expect(comp.commitHistoryLink()).toBeUndefined();
+            expect(commitHistoryButton()).toBeNull();
+        });
+    });
+
     describe('when assessment is not possible yet', () => {
         // The server rejects opening an assessment while the exam is still running and says when the tutor can come
         // back. The editor is unusable until then, so the container explains that instead of the code editor.
@@ -1119,6 +1215,30 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
             expect(comp.assessmentNotPossibleYet()).toBeUndefined();
             expect(comp.submission()).toEqual(submission);
+        });
+    });
+
+    describe('when the locked submission has no result', () => {
+        // The server answers with an empty result list when the submission holds no result for the requested correction round.
+        // Reading the result used to throw halfway through the initialisation and left the notes box beside an empty page.
+        it('should explain it instead of showing a half-initialised page', async () => {
+            const findExerciseSpy = vi.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
+            const submissionWithoutResult = { ...submission, results: [] } as ProgrammingSubmission;
+            lockAndGetProgrammingSubmissionParticipationStub.mockReturnValue(scheduled([submissionWithoutResult], asapScheduler));
+
+            fixture.detectChanges();
+            await flushMicrotasks();
+            fixture.detectChanges();
+
+            expect(comp.resultNotFound()).toBe(true);
+            expect(comp.submission()).toBeUndefined();
+            expect(comp.loadingParticipation()).toBe(false);
+            expect(debugElement.query(By.css('[data-testid="assessment-result-not-found"]'))).not.toBeNull();
+            // nothing can be saved or submitted without a result, so neither the notes nor the header with its buttons are shown
+            expect(debugElement.query(By.css('jhi-assessment-layout'))).toBeNull();
+            expect(debugElement.query(By.css('jhi-assessment-note'))).toBeNull();
+            expect(debugElement.query(By.css('[jhiTranslate="artemisApp.programmingAssessment.notFound"]'))).toBeNull();
+            expect(findExerciseSpy).not.toHaveBeenCalled();
         });
     });
 });

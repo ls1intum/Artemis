@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Subject, Subscription } from 'rxjs';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
@@ -28,7 +28,7 @@ import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
@@ -45,6 +45,8 @@ import { FilterDropdownComponent } from 'app/exercise/shared/filter-dropdown/fil
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
 import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
+import { ParticipationPrivacyService } from 'app/exercise/participation/participation-privacy.service';
+import { ParticipationAccessNoticeComponent } from 'app/exercise/participation/participation-access-notice.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
 import { TumAetUiTagComponent } from '@tumaet/ui-angular';
 
@@ -60,13 +62,14 @@ export enum FilterProp {
     templateUrl: './participation.component.html',
     imports: [
         TranslateDirective,
+        ParticipationAccessNoticeComponent,
         FormsModule,
         ProgrammingExerciseInstructorSubmissionStateComponent,
         RouterLink,
         FaIconComponent,
         TableViewComponent,
         CodeButtonComponent,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         DeleteButtonDirective,
         FeatureToggleDirective,
@@ -81,6 +84,7 @@ export enum FilterProp {
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
+    private readonly privacyService = inject(ParticipationPrivacyService);
     private readonly participationService = inject(ParticipationService);
     private readonly alertService = inject(AlertService);
     private readonly exerciseService = inject(ExerciseService);
@@ -107,6 +111,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     protected readonly RepositoryType = RepositoryType;
 
     readonly exercise = signal<Exercise | undefined>(undefined);
+    readonly hideParticipantInformation = computed(() => this.privacyService.isParticipantInformationHidden(this.exercise()));
     readonly participations = signal<ParticipationManagementDTO[]>([]);
     readonly totalRows = signal(0);
     readonly isLoading = signal(false);
@@ -173,13 +178,15 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     // Track individual due date inline editing
     readonly editingDueDateIds = signal<ReadonlySet<number>>(new Set());
     private readonly pendingDueDates = new Map<number, dayjs.Dayjs | undefined>();
+    /** Rows whose due date text is not a date: the picker keeps its last valid date then, so it cannot be told from the pending date. */
+    private readonly invalidDueDateTextIds = signal<ReadonlySet<number>>(new Set());
 
     readonly tableOptions = computed<TableViewOptions>(() => ({
         dataKey: 'participationId',
         striped: true,
         scrollable: true,
         scrollHeight: 'flex',
-        showSearch: !!this.exercise()?.isAtLeastInstructor,
+        showSearch: !this.hideParticipantInformation(),
         searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents',
     }));
 
@@ -201,7 +208,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
         const cols: ColumnDef<ParticipationManagementDTO>[] = [];
 
-        if (!ex.isAtLeastInstructor) {
+        if (this.hideParticipantInformation()) {
             cols.push({ headerKey: 'artemisApp.participation.participationId', field: 'participationId', width: '150px', sort: true });
         } else if (!ex.teamMode) {
             cols.push({
@@ -229,7 +236,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             );
         }
 
-        if (ex.type === ExerciseType.PROGRAMMING && ex.isAtLeastInstructor) {
+        if (ex.type === ExerciseType.PROGRAMMING && !this.hideParticipantInformation()) {
             cols.push({
                 headerKey: 'artemisApp.participation.repository',
                 width: '80px',
@@ -305,6 +312,20 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return cols;
     });
 
+    constructor() {
+        let previouslyHidden = true;
+        effect(() => {
+            const hidden = this.hideParticipantInformation();
+            if (hidden && !previouslyHidden) {
+                untracked(() => {
+                    this.participations.set([]);
+                    this.loadPage();
+                });
+            }
+            previouslyHidden = hidden;
+        });
+    }
+
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
         this.isAdmin.set(this.accountService.isAdmin());
@@ -378,8 +399,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         const requestId = ++this.currentLoadRequestId;
         const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
         const search: ParticipationSearch = cloneWith(base, {
-            searchTerm: ex.isAtLeastInstructor ? base.searchTerm : '',
-            sortedColumn: !ex.isAtLeastInstructor && ['participantName', 'participantIdentifier', 'buildPlanId'].includes(base.sortedColumn) ? 'id' : base.sortedColumn,
+            searchTerm: this.hideParticipantInformation() ? '' : base.searchTerm,
+            sortedColumn: this.hideParticipantInformation() && ['participantName', 'participantIdentifier', 'buildPlanId'].includes(base.sortedColumn) ? 'id' : base.sortedColumn,
             filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
         });
 
@@ -509,6 +530,33 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.pendingDueDates.set(id, value);
     }
 
+    setDueDateTextValidity(id: number, isValid: boolean) {
+        this.invalidDueDateTextIds.update((ids) => {
+            if (ids.has(id) === !isValid) {
+                return ids;
+            }
+            const next = new Set(ids);
+            if (isValid) {
+                next.delete(id);
+            } else {
+                next.add(id);
+            }
+            return next;
+        });
+    }
+
+    /** Whether the pending individual due date lies before the due date of the exercise. The calendar greys out earlier days, but typed text is not limited by it. */
+    isBeforeExerciseDueDate(id: number): boolean {
+        const pending = this.pendingDueDates.get(id);
+        const dueDate = this.exercise()?.dueDate;
+        return !!pending && !!dueDate && pending.isBefore(dueDate);
+    }
+
+    /** Whether the row cannot be saved: the typed text is not a date, or the date lies before the due date of the exercise. */
+    isPendingDueDateInvalid(id: number): boolean {
+        return this.invalidDueDateTextIds().has(id) || this.isBeforeExerciseDueDate(id);
+    }
+
     startEditDueDate(dto: ParticipationManagementDTO) {
         this.pendingDueDates.set(dto.participationId, dto.individualDueDate);
         this.editingDueDateIds.update((s) => new Set([...s, dto.participationId]));
@@ -516,6 +564,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     cancelEditDueDate(dto: ParticipationManagementDTO) {
         this.pendingDueDates.delete(dto.participationId);
+        this.setDueDateTextValidity(dto.participationId, true);
         this.editingDueDateIds.update((s) => {
             const next = new Set(s);
             next.delete(dto.participationId);
@@ -533,6 +582,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             next: () => {
                 dto.individualDueDate = newDueDate;
                 this.pendingDueDates.delete(dto.participationId);
+                this.setDueDateTextValidity(dto.participationId, true);
                 this.editingDueDateIds.update((s) => {
                     const next = new Set(s);
                     next.delete(dto.participationId);
@@ -562,6 +612,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             next: () => {
                 this.dialogErrorSource.next('');
                 this.pendingDueDates.delete(participationId);
+                this.setDueDateTextValidity(participationId, true);
                 this.editingDueDateIds.update((s) => {
                     const next = new Set(s);
                     next.delete(participationId);

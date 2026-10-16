@@ -296,15 +296,18 @@
     <span data-testid="table-cell" [attr.data-column]="cell.col.field" class="block">
         @if (attendanceCheckFailed(dto)) {
             <div [title]="'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate">
-                <fa-icon [icon]="faTimes" size="2x" class="text-state-danger" />
+                <fa-icon [icon]="faTimes" size="2x" class="text-state-danger" aria-hidden="true" />
+                <span class="sr-only">{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}</span>
             </div>
         } @else if (attendanceCheckPassed(dto)) {
             <div [title]="'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate">
-                <fa-icon [icon]="faCheck" size="2x" class="text-state-success" />
+                <fa-icon [icon]="faCheck" size="2x" class="text-state-success" aria-hidden="true" />
+                <span class="sr-only">{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}</span>
             </div>
         } @else if (didNotAttendExam(dto)) {
             <div [title]="'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate">
-                <fa-icon [icon]="faUserTimes" size="2x" />
+                <fa-icon [icon]="faUserTimes" size="2x" aria-hidden="true" />
+                <span class="sr-only">{{ 'artemisApp.exam.examUsers.didNotAttend' | artemisTranslate }}</span>
             </div>
         }
     </span>

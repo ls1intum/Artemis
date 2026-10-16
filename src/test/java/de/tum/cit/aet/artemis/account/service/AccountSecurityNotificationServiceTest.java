@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.account.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -24,7 +23,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.dto.CredentialRevocationChoiceDTO;
 import de.tum.cit.aet.artemis.notification.domain.GlobalNotificationType;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
-import de.tum.cit.aet.artemis.notification.repository.GlobalNotificationSettingRepository;
+import de.tum.cit.aet.artemis.notification.service.GlobalNotificationSettingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 
 /**
@@ -39,7 +38,7 @@ class AccountSecurityNotificationServiceTest {
 
     private MailSendingService mailSendingService;
 
-    private GlobalNotificationSettingRepository globalNotificationSettingRepository;
+    private GlobalNotificationSettingService globalNotificationSettingService;
 
     private AuditEventRepository auditEventRepository;
 
@@ -50,9 +49,9 @@ class AccountSecurityNotificationServiceTest {
     @BeforeEach
     void init() {
         mailSendingService = mock(MailSendingService.class);
-        globalNotificationSettingRepository = mock(GlobalNotificationSettingRepository.class);
+        globalNotificationSettingService = mock(GlobalNotificationSettingService.class);
         auditEventRepository = mock(AuditEventRepository.class);
-        accountSecurityNotificationService = new AccountSecurityNotificationService(mailSendingService, globalNotificationSettingRepository, auditEventRepository);
+        accountSecurityNotificationService = new AccountSecurityNotificationService(mailSendingService, globalNotificationSettingService, auditEventRepository);
 
         user = new User();
         user.setId(42L);
@@ -60,7 +59,7 @@ class AccountSecurityNotificationServiceTest {
         user.setEmail("affected-user@example.com");
         user.setLangKey("en");
         // The opt-out defaults to enabled, which is what an account without an explicit setting looks like.
-        when(globalNotificationSettingRepository.isNotificationEnabled(anyLong(), any())).thenReturn(true);
+        when(globalNotificationSettingService.isNotificationEnabled(any(User.class), any())).thenReturn(true);
     }
 
     @Test
@@ -135,7 +134,7 @@ class AccountSecurityNotificationServiceTest {
 
     @Test
     void shouldNotEmailAUserWhoTurnedTheNotificationOff() {
-        when(globalNotificationSettingRepository.isNotificationEnabled(42L, GlobalNotificationType.CREDENTIALS_REVOKED)).thenReturn(false);
+        when(globalNotificationSettingService.isNotificationEnabled(user, GlobalNotificationType.CREDENTIALS_REVOKED)).thenReturn(false);
 
         accountSecurityNotificationService.credentialsRevoked(user, new CredentialRevocationChoiceDTO(true, true, true));
 
