@@ -76,17 +76,15 @@ function studentDisplayName(row: PresentationStudentRow): string {
     return row.student.name || fullName || row.studentLogin;
 }
 
-function decorateStudentRow(row: PresentationStudentRow, expandedRows: string[]): PresentationStudentTableRow {
-    const rowKey = studentRowKey(row);
+function decorateStudentRow(row: PresentationStudentRow): PresentationStudentTableRow {
     return {
         studentLogin: row.studentLogin,
         student: row.student,
         presentationAssessment: row.presentationAssessment,
         instance: row.instance,
-        rowKey,
+        rowKey: studentRowKey(row),
         displayName: studentDisplayName(row),
         assessed: hasResultPoints(row.instance.resultPoints),
-        expanded: expandedRows.includes(rowKey),
     };
 }
 
@@ -180,7 +178,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     readonly presentationTypeFilter = signal<PresentationTypeFilter>('all');
     readonly overviewPage = signal(0);
     readonly overviewPageSize = signal(25);
-    readonly expandedStudentRows = signal<string[]>([]);
     readonly presentationDialogVisible = signal(false);
     readonly dialogPresentationAssessment = signal<PresentationAssessment | undefined>(undefined);
     readonly instanceDialogVisible = signal(false);
@@ -262,10 +259,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
             ];
         }),
     );
-    readonly studentRows = computed(() => {
-        const expandedRows = this.expandedStudentRows();
-        return this.currentPageStudentRows().map((row) => decorateStudentRow(row, expandedRows));
-    });
+    readonly studentRows = computed(() => this.currentPageStudentRows().map(decorateStudentRow));
     readonly assessedStudentCount = computed(() => this.statistics()?.assessedCount);
     readonly pendingStudentCount = computed(() => {
         const statistics = this.statistics();
@@ -324,7 +318,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
                     this.presentationAssessments.set([]);
                     this.selectedPresentationId.set(undefined);
                     this.exercises.set([]);
-                    this.expandedStudentRows.set([]);
                     this.overviewPage.set(0);
                     this.presentationFilter.set('all');
                     this.studentSearchTerm.set('');
@@ -462,11 +455,6 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     updateOverviewPageSize(pageSize: number): void {
         this.overviewPageSize.set(pageSize);
         this.overviewPage.set(0);
-    }
-
-    toggleStudentRowDetails(row: PresentationStudentRow): void {
-        const key = studentRowKey(row);
-        this.expandedStudentRows.update((keys) => (keys.includes(key) ? keys.filter((value) => value !== key) : [...keys, key]));
     }
 
     startEdit(presentationAssessment: PresentationAssessment): void {

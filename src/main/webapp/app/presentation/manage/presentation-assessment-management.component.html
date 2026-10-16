@@ -92,7 +92,6 @@
                                         [rows]="studentRows()"
                                         [presentationAssessment]="presentationAssessment"
                                         [canDelete]="isAtLeastEditor()"
-                                        (toggleDetails)="toggleStudentRowDetails($event)"
                                         (editInstance)="startEditInstance(presentationAssessment, $event)"
                                         (deleteInstance)="deleteInstance(presentationAssessment, $event)"
                                     />
@@ -192,7 +191,6 @@
                                     [sortOrder]="studentSortOrder()"
                                     [canDelete]="isAtLeastEditor()"
                                     (sortChange)="onStudentSort($event)"
-                                    (toggleDetails)="toggleStudentRowDetails($event)"
                                     (editInstance)="startEditInstance($event.presentationAssessment, $event.instance)"
                                     (deleteInstance)="deleteInstance($event.presentationAssessment, $event.instance)"
                                 />

@@ -649,20 +649,14 @@ describe('PresentationAssessmentManagementComponent', () => {
         expect(component.selectedPresentationExerciseRoute()).toEqual(['/course-management', courseId, 'text-exercises', 7]);
     });
 
-    it('should expose stable keys and expansion state in the row view models', () => {
+    it('should expose stable keys in the row view models', () => {
+        const source = component.currentPageStudentRows()[0];
         const row = component.studentRows()[0];
-        component.toggleStudentRowDetails(row);
 
-        const selectedRow = component.studentRows()[0];
-        const overviewRow = component.studentRows()[0];
-        expect(selectedRow).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
-        expect(overviewRow).toMatchObject({ rowKey: '11:student1', assessed: true, expanded: true });
-        expect(selectedRow.student).toBe(row.student);
-        expect(selectedRow.instance).toBe(row.instance);
-        expect(selectedRow.presentationAssessment).toBe(row.presentationAssessment);
-        expect(overviewRow.student).toBe(row.student);
-        expect(overviewRow.instance).toBe(row.instance);
-        expect(overviewRow.presentationAssessment).toBe(row.presentationAssessment);
+        expect(row).toMatchObject({ rowKey: '11:student1', assessed: true });
+        expect(row.student).toBe(source.student);
+        expect(row.instance).toBe(source.instance);
+        expect(row.presentationAssessment).toBe(source.presentationAssessment);
     });
 
     it('should open the create dialog without persisting on cancel', () => {

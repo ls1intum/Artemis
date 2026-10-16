@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 
@@ -40,7 +40,13 @@ export class PresentationAssessmentInstancesTableComponent {
     /** Editors remove assigned students; tutors only grade them. */
     readonly canDelete = input(false);
 
-    readonly toggleDetails = output<PresentationStudentTableRow>();
     readonly editInstance = output<PresentationAssessmentInstance>();
     readonly deleteInstance = output<PresentationAssessmentInstance>();
+
+    /** Keys of the rows whose details are shown. */
+    protected readonly expandedRowKeys = signal<string[]>([]);
+
+    protected toggleDetails(row: PresentationStudentTableRow): void {
+        this.expandedRowKeys.update((keys) => (keys.includes(row.rowKey) ? keys.filter((key) => key !== row.rowKey) : [...keys, row.rowKey]));
+    }
 }

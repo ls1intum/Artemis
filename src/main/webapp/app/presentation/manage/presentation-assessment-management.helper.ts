@@ -24,7 +24,6 @@ export interface PresentationStudentTableRow extends PresentationStudentRow {
     rowKey: string;
     displayName: string;
     assessed: boolean;
-    expanded: boolean;
 }
 
 export function createPresentationSidebarData(

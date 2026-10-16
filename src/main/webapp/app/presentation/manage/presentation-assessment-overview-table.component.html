@@ -12,15 +12,16 @@
     </thead>
     <tbody>
         @for (row of rows(); track row.rowKey) {
+            @let expanded = expandedRowKeys().includes(row.rowKey);
             <tr>
                 <td>
                     <button
                         type="button"
                         class="inline-flex items-center gap-3 rounded-sm border-0 bg-transparent p-0 text-left text-inherit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
-                        [attr.aria-expanded]="row.expanded"
+                        [attr.aria-expanded]="expanded"
                         [attr.aria-controls]="'presentation-overview-detail-' + row.rowKey"
-                        [attr.aria-label]="(row.expanded ? 'artemisApp.presentationAssessment.hideDetails' : 'artemisApp.presentationAssessment.showDetails') | artemisTranslate"
-                        (click)="toggleDetails.emit(row)"
+                        [attr.aria-label]="(expanded ? 'artemisApp.presentationAssessment.hideDetails' : 'artemisApp.presentationAssessment.showDetails') | artemisTranslate"
+                        (click)="toggleDetails(row)"
                         data-testid="toggle-overview-row-details"
                     >
                         <jhi-profile-picture
@@ -98,7 +99,7 @@
                     </div>
                 </td>
             </tr>
-            @if (row.expanded) {
+            @if (expanded) {
                 <tr class="presentation-detail-row" [id]="'presentation-overview-detail-' + row.rowKey">
                     <td colspan="7">
                         <jhi-presentation-assessment-instance-details [instance]="row.instance" [presentationAssessment]="row.presentationAssessment" />

@@ -27,7 +27,6 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
             rowKey: '10:student1',
             displayName: 'Student One',
             assessed: true,
-            expanded: false,
             ...overrides,
         };
     }
@@ -87,17 +86,19 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
         expect(editSpy).toHaveBeenCalledWith(row.instance);
     });
 
-    it('should emit the row when the student is clicked and show the details of an expanded row', () => {
-        const row = createRow();
-        const toggleSpy = vi.fn();
-        component.toggleDetails.subscribe(toggleSpy);
-        render([row]);
+    it('should show and hide the details of a row when the student is clicked', () => {
+        render([createRow()]);
+        const toggle = query('button[aria-controls="presentation-detail-10:student1"]')!;
         expect(query('.presentation-detail-row')).toBeNull();
 
-        query('button[aria-controls="presentation-detail-10:student1"]')!.click();
-        expect(toggleSpy).toHaveBeenCalledWith(row);
-
-        render([createRow({ expanded: true })]);
+        toggle.click();
+        fixture.detectChanges();
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
         expect(query('#presentation-detail-10\\:student1')?.textContent).toContain('Room 1');
+
+        toggle.click();
+        fixture.detectChanges();
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+        expect(query('.presentation-detail-row')).toBeNull();
     });
 });
