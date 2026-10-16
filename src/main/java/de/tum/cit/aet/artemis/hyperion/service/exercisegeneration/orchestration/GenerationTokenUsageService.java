@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -154,7 +155,7 @@ public class GenerationTokenUsageService {
                     || cachedInputTokens != null && (cachedInputTokens < 0 || cachedInputTokens > promptTokens)) {
                 return false;
             }
-            String model = metadata.getModel() != null ? metadata.getModel() : "";
+            String model = Objects.requireNonNullElse(metadata.getModel(), "");
             GenerationUsage llmRequest = buildLLMRequest(model, promptTokens, completionTokens, pipelineId, metadata.getId(), cachedInputTokens);
             LLMRequest persisted = new LLMRequest(model, promptTokens, llmRequest.costPerMillionInputToken(), completionTokens, llmRequest.costPerMillionOutputToken(), pipelineId,
                     cachedInputTokens == null ? 0 : cachedInputTokens.intValue(), llmRequest.costPerMillionCachedInputToken(), 0, 0f);
@@ -189,8 +190,8 @@ public class GenerationTokenUsageService {
             return 0;
         }
         Usage usage = chatResponse.getMetadata().getUsage();
-        long promptTokens = usage.getPromptTokens() == null ? 0 : usage.getPromptTokens().longValue();
-        long completionTokens = usage.getCompletionTokens() == null ? 0 : usage.getCompletionTokens().longValue();
+        long promptTokens = Objects.requireNonNullElse(usage.getPromptTokens(), 0).longValue();
+        long completionTokens = Objects.requireNonNullElse(usage.getCompletionTokens(), 0).longValue();
         Long reportedCached = usage.getCacheReadInputTokens();
         // A provider that reports no split is treated as having served nothing from cache, so an unknown split can never understate the spend.
         long cached = reportedCached == null ? 0 : Math.max(0, Math.min(promptTokens, reportedCached));

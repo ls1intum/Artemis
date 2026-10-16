@@ -108,6 +108,8 @@ public class GenerationSeedService {
     private void captureRepository(ProgrammingExercise exercise, RepositoryType role, List<WorkspaceFile> files, Map<RepositoryType, String> heads, String repositoryBranch) {
         Path temporary = null;
         Repository repository = null;
+        Throwable operationFailure = null;
+        IllegalStateException cleanupFailure = null;
         try {
             temporary = temporaryFiles.createTempDirectory("hyperion-seed-");
             var uri = exercise.getRepositoryURI(role);
@@ -137,20 +139,32 @@ public class GenerationSeedService {
             }
         }
         catch (Exception e) {
-            throw new IllegalStateException("Could not capture the " + role + " repository for generation", e);
+            var failure = new IllegalStateException("Could not capture the " + role + " repository for generation", e);
+            operationFailure = failure;
+            throw failure;
+        }
+        catch (Error failure) {
+            operationFailure = failure;
+            throw failure;
         }
         finally {
-            if (repository != null) {
-                repository.closeBeforeDelete();
-            }
             try {
+                if (repository != null) {
+                    repository.closeBeforeDelete();
+                }
                 if (temporary != null) {
                     FileUtils.deleteDirectory(temporary.toFile());
                 }
             }
-            catch (IOException e) {
-                throw new IllegalStateException("Could not remove the temporary generation checkout", e);
+            catch (IOException | RuntimeException e) {
+                cleanupFailure = new IllegalStateException("Could not remove the temporary generation checkout", e);
+                if (operationFailure != null) {
+                    operationFailure.addSuppressed(cleanupFailure);
+                }
             }
+        }
+        if (cleanupFailure != null) {
+            throw cleanupFailure;
         }
     }
 

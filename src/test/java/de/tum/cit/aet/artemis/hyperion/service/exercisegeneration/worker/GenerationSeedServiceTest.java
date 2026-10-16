@@ -2,15 +2,18 @@ package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -18,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.lib.CommitBuilder;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.FileMode;
@@ -28,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -99,6 +104,30 @@ class GenerationSeedServiceTest {
         assertThat(seed.snapshot().files()).filteredOn(file -> file.path().equals("problem-statement.md")).singleElement()
                 .satisfies(file -> assertThat(new String(file.content(), StandardCharsets.UTF_8)).isEqualTo("The instructor's specification."));
         assertThat(temporary.toFile().list()).isEmpty();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void cleanupFailureDoesNotHideRepositoryCaptureFailure(boolean captureFails) throws Exception {
+        var captureFailure = new IllegalArgumentException("checkout failed");
+        if (captureFails) {
+            when(git.getOrCheckoutRepositoryOnBranch(eq(uri), any(Path.class), eq("main"))).thenThrow(captureFailure);
+        }
+        var deletionFailure = new IOException("delete failed");
+        try (var files = mockStatic(FileUtils.class)) {
+            files.when(() -> FileUtils.deleteDirectory(any())).thenThrow(deletionFailure);
+
+            var failure = catchThrowable(() -> service.capture(exercise));
+
+            if (captureFails) {
+                assertThat(failure).isInstanceOf(IllegalStateException.class).hasMessage("Could not capture the exercise repository for generation").hasCause(captureFailure);
+                assertThat(failure.getSuppressed()).singleElement().satisfies(cleanup -> assertThat(cleanup).isInstanceOf(IllegalStateException.class)
+                        .hasMessage("Could not remove the temporary generation checkout").hasCause(deletionFailure));
+            }
+            else {
+                assertThat(failure).isInstanceOf(IllegalStateException.class).hasMessage("Could not remove the temporary generation checkout").hasCause(deletionFailure);
+            }
+        }
     }
 
     @ParameterizedTest

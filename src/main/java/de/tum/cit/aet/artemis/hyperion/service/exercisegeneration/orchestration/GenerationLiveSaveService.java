@@ -305,20 +305,33 @@ public class GenerationLiveSaveService {
             if (!reservations.replace(key, current, claimed)) {
                 continue;
             }
-            boolean completed = false;
+            boolean completed;
             try {
                 completed = callback.getAsBoolean();
-                return completed;
             }
-            finally {
-                var finished = new LiveSaveSlot(claimed.token(), claimed.ownerNodeId(), claimed.startedAt(), claimed.readers(),
-                        new TestCaseSynchronization(solutionCommit, testsCommit, false, completed));
-                if (!reservations.replace(key, claimed, finished)) {
-                    throw new IllegalStateException("Test synchronization lost its save reservation");
+            catch (RuntimeException | Error failure) {
+                try {
+                    finishTestCaseSynchronization(exerciseId, claimed, false);
                 }
-                log.info("Canonical test synchronization for exercise {} finished: solution {}, tests {}, accepted {}", exerciseId, solutionCommit, testsCommit, completed);
+                catch (RuntimeException | Error cleanupFailure) {
+                    failure.addSuppressed(cleanupFailure);
+                }
+                throw failure;
             }
+            finishTestCaseSynchronization(exerciseId, claimed, completed);
+            return completed;
         }
+    }
+
+    private void finishTestCaseSynchronization(long exerciseId, LiveSaveSlot claimed, boolean completed) {
+        var synchronization = claimed.synchronization();
+        var finished = new LiveSaveSlot(claimed.token(), claimed.ownerNodeId(), claimed.startedAt(), claimed.readers(),
+                new TestCaseSynchronization(synchronization.solutionCommit(), synchronization.testsCommit(), false, completed));
+        if (!reservations.replace(String.valueOf(exerciseId), claimed, finished)) {
+            throw new IllegalStateException("Test synchronization lost its save reservation");
+        }
+        log.info("Canonical test synchronization for exercise {} finished: solution {}, tests {}, accepted {}", exerciseId, synchronization.solutionCommit(),
+                synchronization.testsCommit(), completed);
     }
 
     /**
