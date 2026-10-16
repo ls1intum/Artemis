@@ -390,7 +390,7 @@ export class PresentationAssessmentManagementComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.route.parent?.data.subscribe(({ course }) => this.course.set(course));
+        this.route.parent?.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ course }) => this.course.set(course));
     }
 
     retryLoading(): void {
