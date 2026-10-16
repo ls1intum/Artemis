@@ -23,7 +23,7 @@ import { PostCreateEditModalComponent } from 'app/communication/posting-create-e
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
+import { ForwardedMessage, ForwardedMessagesGroupDTO } from 'app/communication/shared/entities/forwarded-message.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingType } from '../../../shared/entities/posting.model';
 import { InfiniteScrollDirective } from 'app/shared-ui/infinite-scroll/infinite-scroll.directive';
@@ -349,6 +349,7 @@ examples.forEach((activeConversation) => {
                     component.setPosts();
                     expect(scrollToBottomSpy).not.toHaveBeenCalled();
                     callbacks.complete(true);
+                    fixture.detectChanges();
                     expect(scrollToBottomSpy).toHaveBeenCalledOnce();
                 });
             });
@@ -490,8 +491,86 @@ examples.forEach((activeConversation) => {
             component.setPosts();
             Object.defineProperty(container, 'scrollHeight', { value: 1500, configurable: true });
             callbacks!.complete(true);
+            fixture.detectChanges();
             vi.runAllTimers();
             expect(container.scrollTop).toBe(730);
+        });
+
+        it.each([false, true])('waits for delayed forwarded messages before restoring the page (delay sources: %s)', (delaySources) => {
+            vi.runAllTimers();
+            const container = component.content()!.nativeElement;
+            Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+            container.scrollTop = 230;
+            component.canStartSaving = true;
+            component.totalNumberOfPosts.set(100);
+            const forwarded = new Subject<HttpResponse<ForwardedMessagesGroupDTO[]>>();
+            const sources = new Subject<Post[]>();
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(forwarded);
+            vi.spyOn(communicationService, 'getSourcePostsByIds').mockReturnValue(sources);
+            const request = vi.spyOn(communicationService, 'getFilteredPosts');
+            component.fetchNextPage();
+            const callbacks = request.mock.calls.at(-1)![3]!;
+            callbacks.beforeApply();
+            component.allPosts.set([{ id: 2, hasForwardedMessages: true, creationDate: dayjs() } as Post, { ...examplePost, creationDate: dayjs().subtract(1, 'minute') }]);
+            component.setPosts();
+            callbacks.complete(true);
+            fixture.detectChanges();
+            vi.runAllTimers();
+            // The page response is complete, but the list still contains the previous groups.
+            expect(container.scrollTop).toBe(230);
+
+            container.scrollTop = 330; // Reader movement while forwarded metadata is still loading.
+            forwarded.next(new HttpResponse({ body: [{ id: 2, messages: delaySources ? [{ sourceType: PostingType.POST, sourceId: 10 }] : [] }] }));
+            forwarded.complete();
+            if (delaySources) {
+                fixture.detectChanges();
+                vi.runAllTimers();
+                expect(container.scrollTop).toBe(330);
+                container.scrollTop = 430; // Reader movement while source previews are still loading.
+                sources.next([{ id: 10, conversation: activeConversation } as Post]);
+                sources.complete();
+            }
+            fixture.detectChanges();
+            Object.defineProperty(container, 'scrollHeight', { value: 1500, configurable: true });
+            vi.runAllTimers();
+            expect(
+                component
+                    .groupedPosts()
+                    .flatMap((group) => group.posts)
+                    .map((post) => post.id),
+            ).toEqual([1, 2]);
+            expect(container.scrollTop).toBe(delaySources ? 930 : 830);
+        });
+
+        it('ignores a forwarded lookup superseded by a newer message list', () => {
+            const forwarded = new Subject<HttpResponse<ForwardedMessagesGroupDTO[]>>();
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(forwarded);
+            const sources = vi.spyOn(communicationService, 'getSourcePostsByIds');
+            component.allPosts.set([{ id: 2, hasForwardedMessages: true } as Post]);
+            component.setPosts();
+            component.allPosts.set([{ id: 3 } as Post]);
+            component.setPosts();
+            const currentGroups = component.groupedPosts();
+
+            forwarded.next(new HttpResponse({ body: [{ id: 2, messages: [{ sourceType: PostingType.POST, sourceId: 10 }] }] }));
+            forwarded.complete();
+
+            expect(sources).not.toHaveBeenCalled();
+            expect(component.groupedPosts()).toBe(currentGroups);
+            expect(component.groupedPosts()[0].posts[0].id).toBe(3);
+        });
+
+        it('renders and positions the list when forwarded metadata cannot be loaded', () => {
+            vi.runAllTimers();
+            vi.spyOn(communicationService, 'getForwardedMessagesByIds').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+            component.allPosts.set([{ id: 2, hasForwardedMessages: true } as Post]);
+            component.setPosts();
+            component['wasScrolledToBottom'] = true;
+            const follow = vi.spyOn(component, 'scrollToBottomOfMessages');
+            fixture.detectChanges();
+
+            expect(component.groupedPosts()[0].posts[0].id).toBe(2);
+            expect(follow).toHaveBeenCalled();
         });
 
         it('should follow layout changes at the bottom but preserve the position after the reader scrolls up', () => {

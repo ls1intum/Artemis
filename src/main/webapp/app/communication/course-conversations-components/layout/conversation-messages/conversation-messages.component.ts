@@ -6,6 +6,7 @@ import {
     OnDestroy,
     OnInit,
     ViewEncapsulation,
+    afterRenderEffect,
     effect,
     inject,
     input,
@@ -113,6 +114,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private pendingPageScrollDistance: number | undefined;
     private preserveScrollOnNextPage = false;
     private postRequestId = 0;
+    private postPreparationId = 0;
+    private readonly isPreparingPosts = signal(false);
     private restoringPageScroll = false;
     private pageScrollFrame: number | undefined;
 
@@ -162,7 +165,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     isOpenThreadOnFocus = false;
 
     constructor() {
-        // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as effect()s: the first three react to
+        // Reviewed for the effect()-debt cleanup (P2.2) and intentionally kept as effects: the first three react to
         // rendered view children / focus inputs to perform DOM side effects (scroll, highlight, requestAnimationFrame)
         // — exactly what effect() is for. The last one re-runs the imperative setPosts() (which filters, reverses,
         // re-groups, and may fetch forwarded messages over HTTP, and is also driven from the posts subscription), so it
@@ -186,11 +189,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         // These effects are created in the constructor (injection context) but
         // the viewChildren signals won't resolve until after view init, which
         // is fine because effects re-run reactively.
-        effect(() => {
-            // Read the signal to track changes
+        afterRenderEffect(() => {
             void this.messages();
+            void this.groupedPosts();
+            const pending = this.isFetchingPosts() || this.isPreparingPosts();
             untracked(() => {
-                this.handleScrollOnNewMessage();
+                if (!pending) this.handleScrollOnNewMessage();
             });
         });
         effect(() => {
@@ -206,6 +210,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 const keepsSearchPosition = !!this.searchText && this.canStartSaving && !hasPendingNavigation;
                 if (
                     !this.isFetchingPosts() &&
+                    !this.isPreparingPosts() &&
+                    this.pendingPageScrollDistance === undefined &&
                     !this.createdNewMessage &&
                     this.posts().length > 0 &&
                     !keepsFollowingNewMessages &&
@@ -335,6 +341,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     ngOnDestroy(): void {
         this.postRequestId++;
+        this.postPreparationId++;
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         this.scrollSubject.complete();
@@ -373,6 +380,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (this.course() && activeConversation) {
             if (this.bottomScrollFrame !== undefined) window.cancelAnimationFrame(this.bottomScrollFrame);
             this.bottomScrollFrame = undefined;
+            this.postPreparationId++;
+            this.isPreparingPosts.set(false);
             this.allPosts.set([]);
             this.posts.set([]);
             this.groupedPosts.set([]);
@@ -420,10 +429,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * Groups posts by author and timestamp proximity (within 5 minutes),
      * marking consecutive posts for visual grouping.
      */
-    private groupPosts(): void {
+    private groupPosts(preparationId = this.postPreparationId): void {
+        if (preparationId !== this.postPreparationId) return;
+        // Forwarded-source lookups leave the old groups visible; include reader movement during those lookups too.
+        if (this.pendingPageScrollDistance !== undefined) {
+            const element = this.content()?.nativeElement;
+            this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
+        }
         // If there are no posts, clear groupedPosts and exit.
         if (!this.posts() || this.posts().length === 0) {
             this.groupedPosts.set([]);
+            this.isPreparingPosts.set(false);
             return;
         }
 
@@ -479,6 +495,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         } else {
             this.groupedPosts.set(computedGroups);
         }
+        this.isPreparingPosts.set(false);
     }
 
     private isAuthorEqual(groupA: PostGroup, groupB: PostGroup): boolean {
@@ -494,6 +511,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * Applies pinned message filters, loads forwarded messages and their sources, and groups posts for rendering.
      */
     setPosts(): void {
+        const preparationId = ++this.postPreparationId;
+        this.isPreparingPosts.set(true);
         // Preserve the scroll state captured before the request until the new messages have been rendered.
         if (!this.isFetchingPosts()) {
             this.captureScrolledToBottom();
@@ -504,46 +523,55 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         const postIds = this.getPostIdsWithForwardedMessages();
 
         if (postIds.length === 0) {
-            this.groupPosts();
+            this.groupPosts(preparationId);
             return;
         }
         // only fetch forwarded messages if there are any
-        this.fetchForwardedMessages(postIds);
+        this.fetchForwardedMessages(postIds, preparationId);
     }
 
-    private fetchForwardedMessages = (postIds: number[]) => {
-        this.communicationService.getForwardedMessagesByIds(postIds, PostingType.POST)?.subscribe((response) => {
-            const forwardedMessagesGroups = response.body;
+    private fetchForwardedMessages = (postIds: number[], preparationId: number) => {
+        const forwardedRequest = this.communicationService.getForwardedMessagesByIds(postIds, PostingType.POST);
+        if (!forwardedRequest) {
+            this.groupPosts(preparationId);
+            return;
+        }
+        forwardedRequest
+            .pipe(
+                catchError(() => of(undefined)),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe((response) => {
+                if (preparationId !== this.postPreparationId) return;
+                const forwardedMessagesGroups = response?.body;
 
-            if (!forwardedMessagesGroups) {
-                this.groupPosts();
-                return;
-            }
-
-            const forwardedMessagesMap = this.mapForwardedMessages(forwardedMessagesGroups);
-            // collect post and answer post ids from the forwarded messages to be fetched
-            const { sourcePostIds, sourceAnswerIds } = this.collectSourceIds(forwardedMessagesMap);
-
-            const requests = this.buildSourceRequests(sourcePostIds, sourceAnswerIds);
-
-            if (requests.length === 0) {
-                this.groupPosts();
-                return;
-            }
-
-            // fetch the actual information and wait until all responses are received before grouping the posts
-            forkJoin(requests).subscribe((responses) => {
-                const { fetchedPosts, fetchedAnswerPosts } = this.extractFetchedSources(responses);
-
-                this.posts.set(this.attachForwardedMessages(this.posts(), forwardedMessagesMap, fetchedPosts, fetchedAnswerPosts));
-
-                this.groupPosts();
-                if (this.createdNewMessage) {
-                    this.scrollToBottomOfMessages();
-                    this.createdNewMessage = false;
+                if (!forwardedMessagesGroups) {
+                    this.groupPosts(preparationId);
+                    return;
                 }
+
+                const forwardedMessagesMap = this.mapForwardedMessages(forwardedMessagesGroups);
+                const { sourcePostIds, sourceAnswerIds } = this.collectSourceIds(forwardedMessagesMap);
+                const requests = this.buildSourceRequests(sourcePostIds, sourceAnswerIds);
+
+                if (requests.length === 0) {
+                    this.groupPosts(preparationId);
+                    return;
+                }
+
+                forkJoin(requests)
+                    .pipe(takeUntil(this.ngUnsubscribe))
+                    .subscribe((responses) => {
+                        if (preparationId !== this.postPreparationId) return;
+                        const { fetchedPosts, fetchedAnswerPosts } = this.extractFetchedSources(responses);
+                        this.posts.set(this.attachForwardedMessages(this.posts(), forwardedMessagesMap, fetchedPosts, fetchedAnswerPosts));
+                        this.groupPosts(preparationId);
+                        if (this.createdNewMessage) {
+                            this.scrollToBottomOfMessages();
+                            this.createdNewMessage = false;
+                        }
+                    });
             });
-        });
     };
 
     /**
@@ -703,9 +731,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                     if (requestId !== this.postRequestId) return;
                     this.isFetchingPosts.set(false);
                     this.preserveScrollOnNextPage = false;
-                    if (applied) {
-                        this.handleScrollOnNewMessage();
-                    }
+                    // Position only after grouped posts (including forwarded sources) have rendered.
+                    if (!applied) this.pendingPageScrollDistance = undefined;
                 },
             });
         }
@@ -757,7 +784,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     handleScrollOnNewMessage = () => {
-        if (this.isFetchingPosts()) return;
+        if (this.isFetchingPosts() || this.isPreparingPosts()) return;
         const el = this.content()?.nativeElement;
         if (!el) {
             return;
