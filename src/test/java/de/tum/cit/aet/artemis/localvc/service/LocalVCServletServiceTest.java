@@ -695,7 +695,7 @@ class LocalVCServletServiceTest {
         private static final long PRACTICE_PARTICIPATION_ID = 5L;
 
         private GitRepositoryAccessDTO exerciseOfMode(ExerciseMode mode) {
-            return new GitRepositoryAccessDTO(testExercise.getId(), 1L, mode, null, null, null, null, null, null, null);
+            return new GitRepositoryAccessDTO(testExercise.getId(), 1L, mode, null, null, null, null, null, null, null, null);
         }
 
         private ProgrammingExerciseStudentParticipation participation(long id, boolean practiceMode) {

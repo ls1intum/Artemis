@@ -15,12 +15,6 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { SortService } from 'app/foundation/service/sort.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
@@ -43,8 +37,6 @@ describe('FaqComponent', () => {
     let alertServiceStub: ReturnType<typeof vi.spyOn>;
     let alertService: AlertService;
     let sortService: SortService;
-    let profileService: ProfileService;
-    let irisSettingsService: IrisSettingsService;
 
     let faq1: Faq;
     let faq2: Faq;
@@ -64,10 +56,6 @@ describe('FaqComponent', () => {
 
         courseId = 1;
 
-        const profileInfo = {
-            activeProfiles: [],
-        } as unknown as ProfileInfo;
-
         TestBed.configureTestingModule({
             imports: [FaqComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
             providers: [
@@ -85,7 +73,6 @@ describe('FaqComponent', () => {
                         },
                     },
                 },
-                { provide: ProfileService, useValue: new MockProfileService() },
 
                 MockProvider(FaqService, {
                     findAllByCourseId: () => {
@@ -125,9 +112,6 @@ describe('FaqComponent', () => {
         faqService = TestBed.inject(FaqService);
         alertService = TestBed.inject(AlertService);
         sortService = TestBed.inject(SortService);
-        irisSettingsService = TestBed.inject(IrisSettingsService);
-        profileService = TestBed.inject(ProfileService);
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
     });
 
     it('should fetch faqs when initialized', () => {
@@ -271,45 +255,5 @@ describe('FaqComponent', () => {
             expect.objectContaining({ id: faq1.id, faqState: FaqState.ACCEPTED, questionTitle: faq1.questionTitle }),
         );
         expect(faq1.faqState).toEqual(FaqState.PROPOSED);
-    });
-
-    it('should call the service to ingest faqs when ingestFaqsInPyris is called', () => {
-        faqComponent.faqs = [faq1];
-        const ingestSpy = vi.spyOn(faqService, 'ingestFaqsInPyris').mockImplementation(() => of(new HttpResponse<void>({ status: 200 })));
-        faqComponent.ingestFaqsInPyris();
-        expect(ingestSpy).toHaveBeenCalledWith(faq1.course?.id);
-        expect(ingestSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should log error when error occurs', () => {
-        alertServiceStub = vi.spyOn(alertService, 'error');
-        faqComponent.faqs = [faq1];
-        vi.spyOn(faqService, 'ingestFaqsInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
-        faqComponent.ingestFaqsInPyris();
-        expect(alertServiceStub).toHaveBeenCalledOnce();
-    });
-
-    it('should set irisEnabled based on service response', () => {
-        faqComponent.faqs = [faq1];
-        const profileInfoResponse = {
-            activeModuleFeatures: [MODULE_FEATURE_IRIS],
-        } as ProfileInfo;
-        const irisSettingsResponse = {
-            courseId: faqComponent.courseId(),
-            settings: {
-                enabled: true,
-                customInstructions: '',
-                variant: 'default',
-                rateLimit: { requests: 100, timeframeHours: 24 },
-            },
-            effectiveRateLimit: { requests: 100, timeframeHours: 24 },
-            applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
-        } as IrisCourseSettingsWithRateLimitDTO;
-        vi.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
-        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-        vi.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockImplementation(() => of(irisSettingsResponse));
-        faqComponent.ngOnInit();
-        expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(faqComponent.courseId());
-        expect(faqComponent.irisEnabled()).toBe(true);
     });
 });

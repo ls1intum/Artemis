@@ -358,7 +358,13 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
         var participation = getProgrammingExerciseParticipation(participationId);
         var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipationElseThrow(participation);
-        repositoryAccessService.checkAccessRepositoryElseThrow(participation, userRepository.getUserWithAuthorities(), programmingExercise, RepositoryActionType.READ);
+        var user = userRepository.getUserWithAuthorities();
+        if (programmingSubmissionRepository.existsByParticipationIdAndCommitHash(participationId, commitId)) {
+            repositoryAccessService.checkAccessRepositoryForAssessmentElseThrow(participation, user, programmingExercise);
+        }
+        else {
+            repositoryAccessService.checkAccessRepositoryElseThrow(participation, user, programmingExercise, RepositoryActionType.READ);
+        }
         return participation;
     }
 
