@@ -73,6 +73,14 @@ public class WeaviateEnqueueExecutorConfiguration {
      */
     public static final class WaitForRoomPolicy implements RejectedExecutionHandler {
 
+        /**
+         * Waits for queue capacity while preserving task order. Rechecks shutdown after insertion so a task cannot
+         * remain stranded if the last worker stopped while this caller was waiting.
+         *
+         * @param task     the task that did not fit in the queue
+         * @param executor the executor that owns the queue
+         * @throws RejectedExecutionException if shutdown or interruption prevents accepting the task
+         */
         @Override
         public void rejectedExecution(Runnable task, ThreadPoolExecutor executor) {
             if (executor.isShutdown()) {

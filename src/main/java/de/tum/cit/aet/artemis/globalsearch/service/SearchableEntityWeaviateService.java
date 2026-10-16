@@ -645,6 +645,14 @@ public class SearchableEntityWeaviateService {
         }
     }
 
+    /**
+     * Persists an upsert before waking the dispatcher. A failed write is logged by {@link #saveUpsert} and must not
+     * publish a wake-up for work that does not exist. Live callers run this on the enqueue executor.
+     *
+     * @param type     the searchable entity discriminator
+     * @param entityId the source entity id
+     * @param origin   the request or reconciliation path that requested the update
+     */
     private void saveUpsertAndSignal(String type, Long entityId, WeaviateOutboxOrigin origin) {
         if (!saveUpsert(type, entityId, origin)) {
             return;
@@ -690,6 +698,14 @@ public class SearchableEntityWeaviateService {
         saveDeleteEntityAndSignal(type, entityId, origin);
     }
 
+    /**
+     * Persists a deletion before waking the dispatcher. Unlike asynchronous live upserts, deletions finish their
+     * outbox write on the request thread so removed content is queued for removal before the request returns.
+     *
+     * @param type     the searchable entity discriminator
+     * @param entityId the source entity id
+     * @param origin   the request or reconciliation path that requested the deletion
+     */
     private void saveDeleteEntityAndSignal(String type, long entityId, WeaviateOutboxOrigin origin) {
         if (!save(WeaviateOutboxEntry.forDeleteEntity(type, entityId, origin))) {
             return;
