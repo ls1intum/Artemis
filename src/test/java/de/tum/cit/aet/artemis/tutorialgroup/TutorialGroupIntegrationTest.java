@@ -518,6 +518,36 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void update_withTrailingWhitespaceInUnchangedTitle_preservesChannelName() throws Exception {
+            firstCourseChannel1.setName("tutorgroup-custom-name-7");
+            channelRepository.saveAndFlush(firstCourseChannel1);
+            var update = new CreateOrUpdateTutorialGroupRequestDTO(firstCourseTutorialGroup1.getTitle() + "  ", firstCourseTutor2.getId(), "English", false, "Garching", 15,
+                    "Updated information.", null);
+
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), update,
+                    HttpStatus.NO_CONTENT);
+
+            var updatedGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(firstCourseTutorialGroup1.getId());
+            assertThat(updatedGroup.getTitle()).isEqualTo(firstCourseTutorialGroup1.getTitle());
+            assertThat(updatedGroup.getTeachingAssistant()).isEqualTo(firstCourseTutor2);
+            assertThat(tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup1.getId()).orElseThrow().getName()).isEqualTo("tutorgroup-custom-name-7");
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void update_withTrailingWhitespaceInDuplicateTitle_rejectsUpdate() throws Exception {
+            var update = new CreateOrUpdateTutorialGroupRequestDTO(firstCourseTutorialGroup2.getTitle() + "  ", firstCourseTutor2.getId(), "English", false, "Garching", 15,
+                    "Updated information.", null);
+
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), update,
+                    HttpStatus.BAD_REQUEST);
+
+            assertThat(tutorialGroupTestRepository.findByIdElseThrow(firstCourseTutorialGroup1.getId()).getTitle()).isEqualTo(firstCourseTutorialGroup1.getTitle());
+            assertThat(tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup1.getId()).orElseThrow().getName()).isEqualTo(firstCourseChannel1.getName());
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void update_withTitleCollidingWithAnotherChannel_addsSuffix() throws Exception {
             var otherChannel = tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup2.getId()).orElseThrow();
             otherChannel.setName("tutorgroup-renamed");
