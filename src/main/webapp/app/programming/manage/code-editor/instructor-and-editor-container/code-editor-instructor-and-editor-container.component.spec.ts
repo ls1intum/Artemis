@@ -2411,6 +2411,18 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Adapt exercise', () 
         expect(availability.blockedReason()).toBeUndefined();
     });
 
+    it('keeps legacy feedback selectable for a released exercise when whole-exercise generation is enabled', () => {
+        comp.exercise.update((exercise) => Object.assign(exercise!, { releaseDate: dayjs().subtract(1, 'day') }));
+        const availability = reviewCommentService.connectAdaptation.mock.calls.at(-1)![0] as ReviewAdaptationAvailability;
+
+        expect(comp['hyperionGenerationSupported']).toBe(true);
+        expect(availability.offered()).toBe(true);
+        expect(comp['adaptBlockedReason']()).toBe('artemisApp.hyperion.generation.blocker.released');
+        expect(comp['legacyCodeGenerationOffered']()).toBe(true);
+        expect(availability.feedbackOffered!()).toBe(true);
+        expect(availability.blockedReason()).toBeUndefined();
+    });
+
     it('does not offer adaptation when whole-exercise generation is disabled', () => {
         const jenkinsProfileService = TestBed.inject(ProfileService);
         vi.spyOn(jenkinsProfileService, 'isModuleFeatureActive').mockImplementation((feature) => feature === MODULE_FEATURE_HYPERION);

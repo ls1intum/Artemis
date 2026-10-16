@@ -291,7 +291,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.exerciseReviewCommentService.connectAdaptation({
             offered: this.adaptOffered,
             feedbackOffered: computed(() => this.adaptOffered() || this.legacyCodeGenerationOffered()),
-            blockedReason: computed(() => (this.adaptOffered() ? this.adaptBlockedReason() : this.legacyCodeGenerationBlockedReason())),
+            blockedReason: computed(() => (this.legacyCodeGenerationOffered() ? this.legacyCodeGenerationBlockedReason() : this.adaptBlockedReason())),
         });
     }
 
