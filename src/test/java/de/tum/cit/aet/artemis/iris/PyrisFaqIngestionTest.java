@@ -85,11 +85,12 @@ class PyrisFaqIngestionTest extends AbstractIrisIntegrationTest {
     void noAutoIngestionWhenIrisIsDisabled() throws Exception {
         disableIrisFor(course1);
 
-        irisRequestMockProvider.mockFaqIngestionWebhookRunResponse(dto -> assertThat(dto.settings().authenticationToken()).isNotNull());
+        irisRequestMockProvider.expectNoFaqIngestionWebhook();
         CreateFaqDTO newFaq = new CreateFaqDTO(course1.getId(), "title", "answer", null, FaqState.ACCEPTED);
         FaqDTO returnedFaq = request.postWithResponseBody("/api/communication/courses/" + faq1.getCourse().getId() + "/faqs", newFaq, FaqDTO.class, HttpStatus.CREATED);
         assertThat(returnedFaq.id()).isNotNull();
-        // TODO Add more assertions
+        assertThat(faqRepository.findByIdElseThrow(returnedFaq.id()).getQuestionAnswer()).isEqualTo("answer");
+        irisRequestMockProvider.verify();
     }
 
     @Test
