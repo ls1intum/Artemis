@@ -236,6 +236,7 @@ public class GenerationPersistenceService {
                 !current.getAuxiliaryRepositories().isEmpty())) {
             throw new IllegalStateException("The exercise configuration changed and is no longer supported for generation");
         }
+        GenerationGrading.validatePlan(current, outcome.testPlanJson());
         GenerationGrading.Snapshot previousGrading = gradingService.capture(exercise.getId());
         Runnable beforeFirstDurableMutation = oneShot(beforeDurableMutation);
         String repositoryBranch = repositoryBranch(exercise);
@@ -332,7 +333,7 @@ public class GenerationPersistenceService {
         try {
             // Internal LocalVC pushes bypass the HTTP/SSH post-receive hook, so the canonical tests build must be triggered explicitly before waiting for test-case sync.
             savedExerciseVersionId = syncTestCasesAndRecordVersion(exercise, user, testsCommitHash != null ? testsBuildSignal : null, true, finalizationGuard,
-                    persistedRepositoryHeads, () -> gradingService.apply(exercise, outcome.testPlanJson(), beforeFirstDurableMutation));
+                    persistedRepositoryHeads, () -> gradingService.apply(current, outcome.testPlanJson(), beforeFirstDurableMutation));
             savedGrading = gradingService.capture(exercise.getId());
         }
         catch (RuntimeException e) {

@@ -91,13 +91,21 @@ public final class GenerationGrading {
         }
     }
 
-    void apply(ProgrammingExercise exercise, @Nullable String testPlanJson, Runnable beforeDurableMutation) {
+    static @Nullable GeneratedTestPlan validatePlan(ProgrammingExercise exercise, @Nullable String testPlanJson) {
         if (testPlanJson == null || testPlanJson.isBlank()) {
-            return;
+            return null;
         }
         GeneratedTestPlan plan = GeneratedTestPlan.parse(testPlanJson);
         if (!plan.hiddenEntries().isEmpty() && exercise.getDueDate() == null) {
             throw new IllegalStateException("The verified test plan contains AFTER_DUE_DATE tests, but exercise " + exercise.getId() + " has no due date");
+        }
+        return plan;
+    }
+
+    void apply(ProgrammingExercise exercise, @Nullable String testPlanJson, Runnable beforeDurableMutation) {
+        GeneratedTestPlan plan = validatePlan(exercise, testPlanJson);
+        if (plan == null) {
+            return;
         }
         // Build synchronization retains replaced tests as inactive rows. Only the active suite must match the verified plan.
         Map<String, ProgrammingExerciseTestCase> byName = testCaseRepository.findByExerciseId(exercise.getId()).stream()

@@ -1001,10 +1001,15 @@ class GenerationPersistenceServiceTest {
     }
 
     @Test
-    void persist_appliesHiddenPlanAndSchedulesCanonicalDueDateRecalculation() throws Exception {
+    void persist_appliesHiddenPlanUsingFreshDueDateAndSchedulesCanonicalRecalculation() throws Exception {
         stubSuccessfulCheckoutAndCommits();
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
-        when(exercise.getDueDate()).thenReturn(ZonedDateTime.now().plusDays(1));
+        ProgrammingExercise current = new ProgrammingExercise();
+        current.setId(1L);
+        current.setProgrammingLanguage(de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA);
+        current.setProjectType(de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_GRADLE);
+        current.setDueDate(ZonedDateTime.now().plusDays(1));
+        when(programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(1L)).thenReturn(current);
         ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS).active(true);
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour));
         String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
@@ -1048,20 +1053,54 @@ class GenerationPersistenceServiceTest {
         verify(testCaseRepository).saveAll(any());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "removed-date", "invalid-plan" })
+    void persistRejectsFreshPlanPreconditionsWithoutInvalidatingBaseline(String change) {
+        when(exercise.getDueDate()).thenReturn(ZonedDateTime.now().plusDays(1));
+        ProgrammingExercise current = new ProgrammingExercise();
+        current.setId(1L);
+        current.setProgrammingLanguage(de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA);
+        current.setProjectType(de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_GRADLE);
+        current.setProblemStatement("Instructor's updated instructions");
+        when(programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(1L)).thenAnswer(_ -> {
+            try (var reader = Executors.newSingleThreadExecutor()) {
+                assertThatThrownBy(() -> reader.submit(() -> liveSaves.claimReader(1L)).get(5, TimeUnit.SECONDS)).hasCauseInstanceOf(ConflictException.class);
+            }
+            return current;
+        });
+        String plan = change.equals("invalid-plan") ? "{broken"
+                : "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
+        AtomicBoolean baselineInvalidated = new AtomicBoolean();
+
+        assertThatThrownBy(() -> service.persist(exercise, user,
+                outcomeWithPlan(Map.of("Template.java", "t"), Map.of("Solution.java", "s"), Map.of("Test.java", "x"), "generated statement", plan), null, null, "fresh-plan",
+                GenerationMode.GENERATE, () -> true, () -> baselineInvalidated.set(true))).isInstanceOf(RuntimeException.class);
+
+        assertThat(baselineInvalidated).isFalse();
+        assertThat(current.getProblemStatement()).isEqualTo("Instructor's updated instructions");
+        assertThat(current.getDueDate()).isNull();
+        Mockito.verifyNoInteractions(gitService, repositoryService, testCaseRepository, continuousIntegrationTriggerService, exerciseVersionService,
+                programmingExerciseTaskService);
+        verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
+        String token = liveSaves.claimReader(1L);
+        liveSaves.releaseReader(1L, token);
+    }
+
     @Test
-    void persist_failsFinalizationRatherThanPublishingAHiddenPlanWithoutADueDate() throws Exception {
-        stubSuccessfulCheckoutAndCommits();
+    void persist_rejectsHiddenPlanWithoutADueDateBeforeAnyWrite() throws Exception {
         when(participationService.retrieveSolutionParticipation(exercise)).thenReturn(mock(ProgrammingExerciseParticipation.class));
         ProgrammingExerciseTestCase behaviour = new ProgrammingExerciseTestCase().testName("behaviourTest").weight(1.0).visibility(Visibility.ALWAYS).active(true);
         when(testCaseRepository.findByExerciseId(1L)).thenReturn(Set.of(behaviour));
         String plan = "{\"tests\":[{\"name\":\"behaviourTest\",\"seam\":\"S1\",\"seamWeightTier\":3,\"visibility\":\"AFTER_DUE_DATE\"}]}";
 
         assertThatThrownBy(() -> service.persist(exercise, user, outcomeWithPlan(Map.of("Template.cpp", "t"), Map.of("Solution.cpp", "s"), Map.of("Test.cpp", "x"), "", plan)))
-                .isInstanceOf(GenerationIncompleteException.class).hasMessageContaining("has no due date");
+                .isInstanceOf(IllegalStateException.class).hasMessageContaining("has no due date");
 
         assertThat(behaviour.getWeight()).isEqualTo(1.0);
         assertThat(behaviour.getVisibility()).isEqualTo(Visibility.ALWAYS);
         verify(programmingExerciseCreationScheduleService, never()).scheduleOperations(anyLong());
+        Mockito.verifyNoInteractions(gitService, repositoryService, continuousIntegrationTriggerService, exerciseVersionService, programmingExerciseTaskService);
+        verify(programmingExerciseRepository, never()).updateProblemStatementAndTitleIfUnchanged(anyLong(), any(), any(), any(), any());
     }
 
     @Test
