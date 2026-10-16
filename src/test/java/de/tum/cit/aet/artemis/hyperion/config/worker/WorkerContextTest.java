@@ -6,6 +6,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 
 import jakarta.persistence.EntityManagerFactory;
 
@@ -27,7 +29,11 @@ import com.github.dockerjava.api.DockerClient;
 
 import de.tum.cit.aet.artemis.ArtemisApp;
 import de.tum.cit.aet.artemis.aiworker.api.AiWorkerApi;
+import de.tum.cit.aet.artemis.aiworker.api.ExecutionObserver;
+import de.tum.cit.aet.artemis.aiworker.api.WorkloadApi;
 import de.tum.cit.aet.artemis.aiworker.config.WorkerSettings;
+import de.tum.cit.aet.artemis.aiworker.dto.ExecutionAssignmentDTO;
+import de.tum.cit.aet.artemis.aiworker.dto.WorkloadCapabilityDTO;
 import de.tum.cit.aet.artemis.aiworker.service.WorkerClientService;
 import de.tum.cit.aet.artemis.aiworker.service.WorkerRegistryService;
 import de.tum.cit.aet.artemis.aiworker.service.WorkerSupervisorService;
@@ -44,7 +50,7 @@ class WorkerContextTest {
     @ValueSource(strings = { "aiworker", "prod,aiworker" })
     void standaloneWorkerDoesNotLoadServerModules(String profiles) {
         new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles(profiles.split(",")))
-                .withInitializer(new ConfigDataApplicationContextInitializer()).withUserConfiguration(ArtemisApp.class, ExternalServices.class)
+                .withInitializer(new ConfigDataApplicationContextInitializer()).withUserConfiguration(ArtemisApp.class, ExternalServices.class, HyperionModel.class)
                 .withInitializer(context -> context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance()))
                 .withPropertyValues("artemis.aiworker.workload=hyperion-generation", "artemis.aiworker.profile=java-gradle", "artemis.aiworker.id=context-test",
                         "artemis.aiworker.image=sha256:" + "a".repeat(64), "artemis.aiworker.max-concurrent-executions=4", "artemis.distributed-data.provider=local",
@@ -77,6 +83,31 @@ class WorkerContextTest {
                 });
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "aiworker", "prod,aiworker" })
+    void genericWorkerDoesNotLoadHyperionOrModelsWithInheritedServerModelSettings(String profiles) {
+        new ApplicationContextRunner().withInitializer(context -> context.getEnvironment().setActiveProfiles(profiles.split(",")))
+                .withInitializer(new ConfigDataApplicationContextInitializer()).withUserConfiguration(ArtemisApp.class, ExternalServices.class)
+                .withBean(WorkloadApi.class, GenericWorkload::new)
+                .withInitializer(context -> context.getBeanFactory().setConversionService(ApplicationConversionService.getSharedInstance()))
+                .withPropertyValues("artemis.aiworker.workload=document-check", "artemis.aiworker.profile=plain-text", "artemis.aiworker.id=context-test",
+                        "artemis.aiworker.image=sha256:" + "a".repeat(64), "artemis.distributed-data.provider=local", "artemis.aiworker.enabled=true",
+                        "artemis.hyperion.enabled=true", "artemis.hyperion.exercise-generation.enabled=true", "artemis.atlas.enabled=true", "spring.ai.model.chat=openai",
+                        "spring.ai.openai.api-key=worker-isolation-test-key")
+                .run(context -> {
+                    assertThat(context).hasNotFailed().hasSingleBean(WorkerSupervisorService.class).hasSingleBean(WorkloadApi.class);
+                    assertThat(context.getEnvironment().getProperty("spring.ai.model.chat")).isEqualTo("openai");
+                    assertThat(context.getBean(WorkloadApi.class).capability()).isEqualTo(new WorkloadCapabilityDTO("document-check", 1, "plain-text"));
+                    assertThat(context).doesNotHaveBean(HyperionWorkloadService.class).doesNotHaveBean(ChatModel.class).doesNotHaveBean(AiWorkerApi.class)
+                            .doesNotHaveBean(WorkerClientService.class).doesNotHaveBean(WorkerRegistryService.class).doesNotHaveBean(javax.sql.DataSource.class)
+                            .doesNotHaveBean(EntityManagerFactory.class).doesNotHaveBean(ServletWebServerFactory.class);
+                    assertThat(context).doesNotHaveBean("openAiEmbeddingModel").doesNotHaveBean("openAiImageModel").doesNotHaveBean("openAiSdkAudioSpeechModel")
+                            .doesNotHaveBean("openAiSdkAudioTranscriptionModel").doesNotHaveBean("openAiSdkModerationModel");
+                    assertThat(context.getBeanNamesForAnnotation(Controller.class)).isEmpty();
+                    assertThat(context.getBeanNamesForAnnotation(RestController.class)).isEmpty();
+                });
+    }
+
     @TestConfiguration(proxyBeanMethods = false)
     static class ExternalServices {
 
@@ -101,11 +132,27 @@ class WorkerContextTest {
             return event -> {
             };
         }
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class HyperionModel {
 
         @Bean
         ChatModel testChatModel() {
             return mock(ChatModel.class);
         }
+    }
 
+    static class GenericWorkload implements WorkloadApi {
+
+        @Override
+        public WorkloadCapabilityDTO capability() {
+            return new WorkloadCapabilityDTO("document-check", 1, "plain-text");
+        }
+
+        @Override
+        public String execute(ExecutionAssignmentDTO assignment, BooleanSupplier stopping, ExecutionObserver observer, Consumer<String> checkpoint) {
+            return "checked";
+        }
     }
 }
