@@ -111,6 +111,36 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentBatchTes
     }
 
     @Test
+    void aSubmittedStudentVersionIsStoredOnlyWhileTheSplitIsPending() {
+        long unitId = testAttachment2.getAttachmentVideoUnit().getId();
+        var state = attachmentRepository.findStudentVersionStateById(testAttachment2.getId()).orElseThrow();
+        // The slides belong to the stored file: the split has completed and its regeneration is authoritative, also once a later unhide set the reference back to null
+        assertThat(attachmentRepository.updateSubmittedStudentVersionWhileSplitPending(testAttachment2.getId(), unitId, "late.pdf", state.version(), state.sha256Hash(),
+                state.studentVersion())).isZero();
+
+        // While the slides still belong to the previous file, the split is pending and the submitted student version is stored
+        markSlidesAsSplitFromAnotherFile(unitId);
+        assertThat(attachmentRepository.updateSubmittedStudentVersionWhileSplitPending(testAttachment2.getId(), unitId, "submitted.pdf", state.version(), state.sha256Hash(),
+                state.studentVersion())).isEqualTo(1);
+
+        // A plain replacement retires the previous slides first; with no current slide yet, the split is pending as well
+        List<Slide> current = slideRepository.findAllByAttachmentVideoUnitId(unitId);
+        current.forEach(slide -> slide.setSuperseded(true));
+        slideRepository.saveAll(current);
+        var stateNow = attachmentRepository.findStudentVersionStateById(testAttachment2.getId()).orElseThrow();
+        assertThat(attachmentRepository.updateSubmittedStudentVersionWhileSplitPending(testAttachment2.getId(), unitId, "submitted-again.pdf", stateNow.version(),
+                stateNow.sha256Hash(), stateNow.studentVersion())).isEqualTo(1);
+    }
+
+    @Test
+    void removingAStudentVersionKeepsTheOneOfANewerFile() {
+        var state = attachmentRepository.findStudentVersionStateById(testAttachment1.getId()).orElseThrow();
+        // A caller that stored an older file revision must not remove the student version of the file stored now
+        assertThat(attachmentRepository.clearStudentVersionOfFileIfUnchanged(testAttachment1.getId(), "example.pdf", -1, "an-older-file")).isZero();
+        assertThat(attachmentRepository.clearStudentVersionOfFileIfUnchanged(testAttachment1.getId(), "example.pdf", state.version(), state.sha256Hash())).isEqualTo(1);
+    }
+
+    @Test
     void savingALoadedAttachmentKeepsAStudentVersionPublishedMeanwhile() {
         // A metadata update loads the attachment while it points at example.pdf ...
         Attachment loaded = attachmentRepository.findById(testAttachment1.getId()).orElseThrow();

@@ -241,16 +241,27 @@ public class AttachmentService {
             log.error("Failed to read the student version reference of attachment {}: {}", attachment.getId(), exception.getMessage(), exception);
             return;
         }
-        removeStudentVersionIfUnchanged(attachment, FileSystemLocation.storedFilename(stored));
+        removeStudentVersionIfUnchanged(attachment, FileSystemLocation.storedFilename(stored), true);
     }
 
     private void removeStudentVersionIfUnchanged(Attachment attachment, String expectedStudentVersion) {
+        removeStudentVersionIfUnchanged(attachment, expectedStudentVersion, false);
+    }
+
+    /**
+     * @param guardByFile whether the reference is only removed while the attachment still has the file version and hash of the given entity, so a caller that replaced the
+     *                        file never removes the student version of a newer file a later request stored
+     */
+    private void removeStudentVersionIfUnchanged(Attachment attachment, String expectedStudentVersion, boolean guardByFile) {
         AttachmentVideoUnit attachmentVideoUnit = attachment.getAttachmentVideoUnit();
         if (expectedStudentVersion == null || attachment.getId() == null || attachmentVideoUnit == null) {
             return;
         }
         try {
-            if (attachmentRepository.clearStudentVersionIfUnchanged(attachment.getId(), expectedStudentVersion) == 0) {
+            int cleared = guardByFile
+                    ? attachmentRepository.clearStudentVersionOfFileIfUnchanged(attachment.getId(), expectedStudentVersion, attachment.getVersion(), attachment.getSha256Hash())
+                    : attachmentRepository.clearStudentVersionIfUnchanged(attachment.getId(), expectedStudentVersion);
+            if (cleared == 0) {
                 log.debug("Student version of attachment {} was replaced concurrently, so it is kept", attachment.getId());
                 return;
             }
@@ -321,7 +332,7 @@ public class AttachmentService {
         // Read before staging, so a student version regenerated meanwhile is not replaced by this upload
         String studentVersionBeforeStaging = findStoredStudentVersion(attachment.getId());
         String filename = stageUploadedStudentVersionFile(pdfData, attachmentVideoUnitId, originalFilename);
-        publishSubmittedStudentVersionFile(attachment, attachmentVideoUnitId, filename, studentVersionBeforeStaging);
+        publishSubmitted(attachment, attachmentVideoUnitId, filename, studentVersionBeforeStaging, false);
     }
 
     /**
@@ -339,6 +350,14 @@ public class AttachmentService {
         // overwritten in place.
         if (!"pdf".equalsIgnoreCase(FilenameUtils.getExtension(FileUtil.checkAndSanitizeFilename(originalFilename)))) {
             throw new BadRequestAlertException("The student version must be a PDF file", "attachment", "studentVersionNotPdf");
+        }
+        // A file named .pdf can hold anything; students must never be served an unreadable student version.
+        try (PDDocument document = Loader.loadPDF(pdfData)) {
+            document.getNumberOfPages();
+        }
+        catch (IOException | RuntimeException e) {
+            // PDFBox reports some malformed files with runtime exceptions instead of IOException
+            throw new BadRequestAlertException("The student version is not a readable PDF", "attachment", "studentVersionNotReadablePdf");
         }
         String filename = newStudentVersionFilename();
         writeStudentVersionFile(pdfData, attachmentVideoUnitId, filename);
@@ -370,10 +389,11 @@ public class AttachmentService {
     }
 
     /**
-     * Stores the reference to a submitted student version, and only then deletes the previous file. It is stored only while the attachment still has the file version and
-     * hash it was submitted for and the student version reference is still the one the request read before staging; a student version published in the meantime, such as
-     * one regenerated after the split, is newer and stays, and the submitted file is deleted. If storing the reference fails, the new file is deleted and the previous one
-     * stays referenced. Once the reference is stored, nothing here deletes or clears it again.
+     * Stores the reference to a student version submitted with an editor change, and only then deletes the previous file. It is stored only while the attachment still has
+     * the file version and hash it was submitted for, the student version reference is still the one the request read before staging, and the split the change scheduled
+     * has not completed. Once that split has completed, the student version regenerated from its slides is authoritative; a submitted one arriving later is deleted, even
+     * if a later visibility change set the reference back to what the request read. If storing the reference fails, the new file is deleted and the previous one stays
+     * referenced. Once the reference is stored, nothing here deletes or clears it again.
      *
      * @param attachment             the attachment the student version belongs to, with the file version and hash the request stored
      * @param attachmentVideoUnitId  the id of the attachment video unit
@@ -381,10 +401,21 @@ public class AttachmentService {
      * @param expectedStudentVersion the stored student version value the request read at its start, or null if there was none
      */
     public void publishSubmittedStudentVersionFile(Attachment attachment, long attachmentVideoUnitId, String filename, @Nullable String expectedStudentVersion) {
+        publishSubmitted(attachment, attachmentVideoUnitId, filename, expectedStudentVersion, true);
+    }
+
+    /**
+     * @param onlyWhileSplitPending whether the student version may only be stored while the split the request scheduled has not completed; see
+     *                                  {@link AttachmentRepository#updateSubmittedStudentVersionWhileSplitPending}
+     */
+    private void publishSubmitted(Attachment attachment, long attachmentVideoUnitId, String filename, @Nullable String expectedStudentVersion, boolean onlyWhileSplitPending) {
         int updated;
         try {
-            updated = attachmentRepository.updateStudentVersionIfUnchangedSince(attachment.getId(), filename, attachment.getVersion(), attachment.getSha256Hash(),
-                    expectedStudentVersion);
+            updated = onlyWhileSplitPending
+                    ? attachmentRepository.updateSubmittedStudentVersionWhileSplitPending(attachment.getId(), attachmentVideoUnitId, filename, attachment.getVersion(),
+                            attachment.getSha256Hash(), expectedStudentVersion)
+                    : attachmentRepository.updateStudentVersionIfUnchangedSince(attachment.getId(), filename, attachment.getVersion(), attachment.getSha256Hash(),
+                            expectedStudentVersion);
         }
         catch (RuntimeException exception) {
             deleteStudentVersionFile(attachmentVideoUnitId, filename);
@@ -413,7 +444,7 @@ public class AttachmentService {
      */
     public void removeStudentVersionIfStill(Attachment attachment, @Nullable String expectedStoredValue) {
         if (attachment != null) {
-            removeStudentVersionIfUnchanged(attachment, FileSystemLocation.storedFilename(expectedStoredValue));
+            removeStudentVersionIfUnchanged(attachment, FileSystemLocation.storedFilename(expectedStoredValue), true);
         }
     }
 

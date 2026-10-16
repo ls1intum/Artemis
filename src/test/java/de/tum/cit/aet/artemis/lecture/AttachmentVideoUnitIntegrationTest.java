@@ -894,7 +894,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         originalSlides.getFirst().setHidden(ZonedDateTime.now().plusDays(1));
         slideRepository.saveAndFlush(originalSlides.getFirst());
 
-        MockMultipartFile studentVersionFile = new MockMultipartFile("studentVersion", "stale_student_version.pdf", "application/pdf", "student content".getBytes());
+        MockMultipartFile studentVersionFile = new MockMultipartFile("studentVersion", "stale_student_version.pdf", "application/pdf",
+                createAttachmentVideoUnitPdf("stale student version").getBytes());
         MockMultipartHttpServletRequestBuilder studentVersionBuilder = MockMvcRequestBuilders
                 .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/" + attachmentVideoUnitId + "/student-version")
                 .file(studentVersionFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
@@ -1343,7 +1344,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(persistedAttachment.studentVersion()).isNull();
 
         // Create a student version file
-        MockMultipartFile studentVersionFile = new MockMultipartFile("studentVersion", "student_version.pdf", "application/pdf", "student content".getBytes());
+        MockMultipartFile studentVersionFile = new MockMultipartFile("studentVersion", "student_version.pdf", "application/pdf",
+                createAttachmentVideoUnitPdf("student version").getBytes());
 
         // Build request for adding student version
         MockMultipartHttpServletRequestBuilder builder = MockMvcRequestBuilders
@@ -1360,7 +1362,8 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(updatedAttachmentVideoUnit.attachment().studentVersion()).startsWith("attachments/attachment-video-units/" + persistedAttachmentVideoUnit.id() + "/student/");
 
         // Now update with a new student version to test replacement
-        MockMultipartFile newStudentVersionFile = new MockMultipartFile("studentVersion", "updated_student_version.pdf", "application/pdf", "updated student content".getBytes());
+        MockMultipartFile newStudentVersionFile = new MockMultipartFile("studentVersion", "updated_student_version.pdf", "application/pdf",
+                createAttachmentVideoUnitPdf("updated student version").getBytes());
 
         // Build a new request to update the student version
         MockMultipartHttpServletRequestBuilder updateBuilder = MockMvcRequestBuilders

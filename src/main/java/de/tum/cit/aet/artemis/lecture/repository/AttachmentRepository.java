@@ -115,6 +115,72 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
             @Param("expectedStudentVersion") String expectedStudentVersion);
 
     /**
+     * Stores the filename of a student version submitted together with an editor change, under the conditions of {@link #updateStudentVersionIfUnchangedSince}, and only
+     * while the split that change scheduled has not completed: while no current slide exists, or a current slide still belongs to another file revision. Once the split has
+     * completed, the student version regenerated from its slides is authoritative, even when a later visibility change set the reference back to what the request read.
+     *
+     * @param attachmentId           the id of the attachment
+     * @param attachmentVideoUnitId  the id of its attachment video unit
+     * @param studentVersionFilename the stored filename of the submitted student version
+     * @param expectedVersion        the version of the file the request stored
+     * @param expectedSha256Hash     the hash of that file
+     * @param expectedStudentVersion the stored student version value the request read at its start, or null if there was none
+     * @return 1 when stored, 0 otherwise
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Attachment a
+            SET a.studentVersion = :studentVersionFilename
+            WHERE a.id = :attachmentId
+                AND (a.version = :expectedVersion OR (:expectedVersion IS NULL AND a.version IS NULL))
+                AND (a.sha256Hash = :expectedSha256Hash OR (:expectedSha256Hash IS NULL AND a.sha256Hash IS NULL))
+                AND (a.studentVersion = :expectedStudentVersion OR (:expectedStudentVersion IS NULL AND a.studentVersion IS NULL))
+                AND (
+                    NOT EXISTS (
+                        SELECT s.id
+                        FROM Slide s
+                        WHERE s.attachmentVideoUnit.id = :attachmentVideoUnitId
+                            AND s.superseded = FALSE
+                    )
+                    OR EXISTS (
+                        SELECT s.id
+                        FROM Slide s
+                        WHERE s.attachmentVideoUnit.id = :attachmentVideoUnitId
+                            AND s.superseded = FALSE
+                            AND (COALESCE(s.attachmentVersion, -1) <> COALESCE(:expectedVersion, -1)
+                                OR COALESCE(s.attachmentSha256Hash, '') <> COALESCE(:expectedSha256Hash, ''))
+                    )
+                )
+            """)
+    int updateSubmittedStudentVersionWhileSplitPending(@Param("attachmentId") long attachmentId, @Param("attachmentVideoUnitId") long attachmentVideoUnitId,
+            @Param("studentVersionFilename") String studentVersionFilename, @Param("expectedVersion") Integer expectedVersion,
+            @Param("expectedSha256Hash") String expectedSha256Hash, @Param("expectedStudentVersion") String expectedStudentVersion);
+
+    /**
+     * Removes the student version reference, but only while the attachment still points at the given file and still has the given file version and hash. A caller that
+     * replaced the file therefore never removes the student version of a newer file stored by a later request.
+     *
+     * @param attachmentId                   the id of the attachment
+     * @param expectedStudentVersionFilename the stored filename the caller wants to remove
+     * @param expectedVersion                the version of the file the caller stored or loaded
+     * @param expectedSha256Hash             the hash of that file
+     * @return the number of updated attachments
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Attachment a
+            SET a.studentVersion = NULL
+            WHERE a.id = :attachmentId
+                AND a.studentVersion = :expectedStudentVersionFilename
+                AND (a.version = :expectedVersion OR (:expectedVersion IS NULL AND a.version IS NULL))
+                AND (a.sha256Hash = :expectedSha256Hash OR (:expectedSha256Hash IS NULL AND a.sha256Hash IS NULL))
+            """)
+    int clearStudentVersionOfFileIfUnchanged(@Param("attachmentId") long attachmentId, @Param("expectedStudentVersionFilename") String expectedStudentVersionFilename,
+            @Param("expectedVersion") Integer expectedVersion, @Param("expectedSha256Hash") String expectedSha256Hash);
+
+    /**
      * Reads the stored student version reference and the file version of an attachment.
      *
      * @param attachmentId the id of the attachment
