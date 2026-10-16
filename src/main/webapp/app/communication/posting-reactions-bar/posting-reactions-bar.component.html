@@ -123,9 +123,9 @@
         <jhi-post-create-edit-modal #createEditModal [posting]="posting()!" [isCommunicationPage]="isCommunicationPage()!" (isModalOpen)="isModalOpen.emit()" />
         <!-- Delete button -->
         @if (!isEmojiCount() && mayDelete()) {
-            <div class="reaction-button clickable fs-small" data-testid="posting-reaction-delete">
+            <div class="reaction-button clickable px-2 fs-small" data-testid="posting-reaction-delete">
                 <jhi-confirm-icon
-                    iconSize="sm"
+                    iconSize="1x"
                     (confirmEvent)="deletePosting()"
                     [initialTooltip]="'artemisApp.communication.delete' + (getPostingType() === 'answerPost' ? 'Answer' : 'Post') | artemisTranslate"
                     [confirmTooltip]="'artemisApp.communication.confirmDelete' + (getPostingType() === 'answerPost' ? 'Answer' : 'Post') | artemisTranslate"
