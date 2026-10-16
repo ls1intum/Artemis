@@ -149,6 +149,26 @@ class ExerciseIntegrityGateTest {
 
     // --- Java/Ares convention gate ---
 
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void javaAresConvention_rejectsLegacyHarnessEvenWhenAdaptationLeavesItUnchanged(boolean adaptation) {
+        var legacy = map("build.gradle", classpathResource("hyperion/legacy-ares1-build.gradle"));
+
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(legacy)).anyMatch(reason -> reason.contains("legacy Ares 1 harnesses are not supported"));
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(legacy, legacy, adaptation)).anyMatch(reason -> reason.contains("legacy Ares 1 harnesses are not supported"));
+    }
+
+    @Test
+    void javaAresHarness_requiresCurrentInfrastructureWithoutInspectingExistingTests() {
+        var tests = aresTests("build.gradle", aresBuildGradle(), "test/de/test/ExistingTest.java", "class ExistingTest { @org.junit.jupiter.api.Test void existing() {} }");
+
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(tests)).isEmpty();
+        tests.remove("SecurityPolicy.yaml");
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(tests)).singleElement().asString().contains("explicit SecurityPolicy.yaml");
+        tests.put("SecurityPolicy.yaml", " ");
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(tests)).singleElement().asString().contains("explicit SecurityPolicy.yaml");
+    }
+
     @Test
     void javaAresConvention_rejectsAMavenHarnessInsteadOfTheRequiredGradleHarness() {
         var files = Map.of("pom.xml", classpathResource("templates/java/maven_maven/test/projectTemplate/pom.xml"));
@@ -163,14 +183,12 @@ class ExerciseIntegrityGateTest {
                 package de.test;
 
                 import org.junit.jupiter.api.Test;
-                import de.tum.in.test.api.BlacklistPath;
-                import de.tum.in.test.api.StrictTimeout;
-                import de.tum.in.test.api.WhitelistPath;
-                import de.tum.in.test.api.jupiter.Public;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
 
                 @Public
-                @WhitelistPath("build")
-                @BlacklistPath("build/classes/java/test")
+                @Policy(value = "SecurityPolicy.yaml")
                 class StackTest {
 
                     @Test
@@ -180,7 +198,7 @@ class ExerciseIntegrityGateTest {
                 }
                 """;
 
-        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", gradle, "test/de/test/StackTest.java", test))).isEmpty();
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(aresTests("build.gradle", gradle, "test/de/test/StackTest.java", test))).isEmpty();
     }
 
     @Test
@@ -196,23 +214,22 @@ class ExerciseIntegrityGateTest {
         String generatedTest = """
                 package de.test;
                 import org.junit.jupiter.api.Test;
-                import de.tum.in.test.api.BlacklistPath;
-                import de.tum.in.test.api.StrictTimeout;
-                import de.tum.in.test.api.WhitelistPath;
-                import de.tum.in.test.api.jupiter.Public;
-                @Public @WhitelistPath("build") @BlacklistPath("build/classes/java/test")
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
+                @Public @Policy(value = "SecurityPolicy.yaml")
                 class GeneratedTest {
                     @Test
                     @StrictTimeout(1)
                     void adaptedBehaviour() {}
                 }
                 """;
-        Map<String, String> seed = map("build.gradle", aresBuildGradle(), "test/de/test/LegacyTest.java", legacyTest);
-        Map<String, String> adapted = map("build.gradle", aresBuildGradle(), "test/de/test/LegacyTest.java", legacyTest, "test/de/test/GeneratedTest.java", generatedTest);
+        Map<String, String> seed = aresTests("build.gradle", aresBuildGradle(), "test/de/test/LegacyTest.java", legacyTest);
+        Map<String, String> adapted = aresTests("build.gradle", aresBuildGradle(), "test/de/test/LegacyTest.java", legacyTest, "test/de/test/GeneratedTest.java", generatedTest);
 
         assertThat(ExerciseIntegrityGate.javaAresConventionReasons(seed, adapted, true)).isEmpty();
 
-        adapted = map("build.gradle", aresBuildGradle(), "test/de/test/LegacyTest.java", legacyTest, "test/de/test/GeneratedTest.java",
+        adapted = aresTests("build.gradle", aresBuildGradle(), "test/de/test/LegacyTest.java", legacyTest, "test/de/test/GeneratedTest.java",
                 generatedTest.replace("@StrictTimeout(1)\n", ""));
         assertThat(ExerciseIntegrityGate.javaAresConventionReasons(seed, adapted, true)).anyMatch(reason -> reason.contains("GeneratedTest.java"))
                 .noneMatch(reason -> reason.contains("LegacyTest.java"));
@@ -221,7 +238,7 @@ class ExerciseIntegrityGateTest {
     @Test
     void javaAresConvention_preservesUnchangedLegacyTestsWithOrdinaryUnicodeStringEscapes() {
         String legacy = "package de.test; class LegacyTest { @org.junit.jupiter.api.Test void existing() { String text = \"" + "\\" + "u00e4\"; } }";
-        var seed = map("build.gradle", aresBuildGradle(), "test/de/test/LegacyTest.java", legacy);
+        var seed = aresTests("build.gradle", aresBuildGradle(), "test/de/test/LegacyTest.java", legacy);
 
         assertThat(ExerciseIntegrityGate.javaAresConventionReasons(seed, seed, true)).isEmpty();
         assertThat(ExerciseIntegrityGate.javaAresConventionReasons(seed)).anyMatch(reason -> reason.contains("@Public")).anyMatch(reason -> reason.contains("@StrictTimeout"));
@@ -243,11 +260,11 @@ class ExerciseIntegrityGateTest {
                 }
                 """;
 
-        var reasons = ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", gradle, "test/de/test/CalculatorTest.java", test));
+        var reasons = ExerciseIntegrityGate.javaAresConventionReasons(aresTests("build.gradle", gradle, "test/de/test/CalculatorTest.java", test));
 
         assertThat(reasons).hasSize(4);
-        assertThat(reasons).anyMatch(reason -> reason.contains("artemis-java-test-sandbox"));
-        assertThat(reasons).anyMatch(reason -> reason.contains("forbidden-package checks"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("requires the current Ares 2 dependency"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("AresReservedPackages.gradle"));
         assertThat(reasons).anyMatch(reason -> reason.contains("@Public"));
         assertThat(reasons).anyMatch(reason -> reason.contains("@StrictTimeout"));
     }
@@ -267,7 +284,7 @@ class ExerciseIntegrityGateTest {
                 }
                 """;
 
-        var reasons = ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", aresBuildGradle(), "behavior/test/de/test/CalculatorTest.java", test));
+        var reasons = ExerciseIntegrityGate.javaAresConventionReasons(aresTests("build.gradle", aresBuildGradle(), "behavior/test/de/test/CalculatorTest.java", test));
 
         assertThat(reasons).hasSize(2);
         assertThat(reasons).anyMatch(reason -> reason.contains("@Public"));
@@ -281,8 +298,8 @@ class ExerciseIntegrityGateTest {
         if (encoded) {
             declaration = declaration.replace("Test", "\\" + "u0054est");
         }
-        var seed = map("build.gradle", aresBuildGradle(), "test/de/test/MyTest.java", declaration);
-        var candidate = map("build.gradle", aresBuildGradle(), "test/de/test/MyTest.java", declaration, "test/de/test/UnsafeTest.java",
+        var seed = aresTests("build.gradle", aresBuildGradle(), "test/de/test/MyTest.java", declaration);
+        var candidate = aresTests("build.gradle", aresBuildGradle(), "test/de/test/MyTest.java", declaration, "test/de/test/UnsafeTest.java",
                 "package de.test; class UnsafeTest { @MyTest void unbounded() { while (true) {} } }");
 
         assertThat(ExerciseIntegrityGate.javaAresConventionReasons(seed, candidate, true)).singleElement().asString().contains("annotations cannot be inspected safely",
@@ -295,14 +312,12 @@ class ExerciseIntegrityGateTest {
                 package de.test;
 
                 import org.junit.jupiter.params.ParameterizedTest;
-                import de.tum.in.test.api.BlacklistPath;
-                import de.tum.in.test.api.StrictTimeout;
-                import de.tum.in.test.api.WhitelistPath;
-                import de.tum.in.test.api.jupiter.Public;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
 
                 @Public
-                @WhitelistPath("build")
-                @BlacklistPath("build/classes/java/test")
+                @Policy(value = "SecurityPolicy.yaml")
                 @StrictTimeout(1)
                 class StackTest {
 
@@ -312,7 +327,7 @@ class ExerciseIntegrityGateTest {
                 }
                 """;
 
-        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", aresBuildGradle(), "test/de/test/StackTest.java", test))).isEmpty();
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(aresTests("build.gradle", aresBuildGradle(), "test/de/test/StackTest.java", test))).isEmpty();
     }
 
     @Test
@@ -322,14 +337,12 @@ class ExerciseIntegrityGateTest {
                 package de.test;
 
                 import org.junit.jupiter.api.TestFactory;
-                import de.tum.in.test.api.BlacklistPath;
-                import de.tum.in.test.api.StrictTimeout;
-                import de.tum.in.test.api.WhitelistPath;
-                import de.tum.in.test.api.jupiter.Public;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
 
                 @Public
-                @WhitelistPath("build")
-                @BlacklistPath("build/classes/java/test")
+                @Policy(value = "SecurityPolicy.yaml")
                 class ClassTest {
 
                     @TestFactory
@@ -340,7 +353,7 @@ class ExerciseIntegrityGateTest {
                 }
                 """;
 
-        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", aresBuildGradle(), "test/de/test/ClassTest.java", test))).isEmpty();
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(aresTests("build.gradle", aresBuildGradle(), "test/de/test/ClassTest.java", test))).isEmpty();
     }
 
     @Test
@@ -349,14 +362,12 @@ class ExerciseIntegrityGateTest {
                 package de.test;
 
                 import org.junit.jupiter.api.Test;
-                import de.tum.in.test.api.BlacklistPath;
-                import de.tum.in.test.api.StrictTimeout;
-                import de.tum.in.test.api.WhitelistPath;
-                import de.tum.in.test.api.jupiter.Public;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
 
                 @Public
-                @WhitelistPath("build")
-                @BlacklistPath("build/classes/java/test")
+                @Policy(value = "SecurityPolicy.yaml")
                 class CalculatorTest {
 
                     @Test
@@ -366,7 +377,7 @@ class ExerciseIntegrityGateTest {
                 }
                 """;
 
-        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", aresBuildGradle(), "test/de/test/CalculatorTest.java", test)))
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(aresTests("build.gradle", aresBuildGradle(), "test/de/test/CalculatorTest.java", test)))
                 .anyMatch(reason -> reason.contains("@StrictTimeout") && reason.contains("bounded"));
     }
 
@@ -378,7 +389,7 @@ class ExerciseIntegrityGateTest {
 
                 import org.junit.jupiter.api.Test;
 
-                // @Public @WhitelistPath("build") @BlacklistPath("build/classes/java/test")
+                // @Public @Policy(value = "SecurityPolicy.yaml")
                 class CalculatorTest {
 
                     @Test
@@ -389,7 +400,7 @@ class ExerciseIntegrityGateTest {
                 """;
 
         var reasons = ExerciseIntegrityGate
-                .javaAresConventionReasons(map("build.gradle", gradle, "test/de/test/CalculatorTest.java", test, "target/test-classes/CalculatorTest.java", test));
+                .javaAresConventionReasons(aresTests("build.gradle", gradle, "test/de/test/CalculatorTest.java", test, "target/test-classes/CalculatorTest.java", test));
 
         assertThat(reasons).anyMatch(reason -> reason.contains("target/"));
         assertThat(reasons).anyMatch(reason -> reason.contains("@Public"));
@@ -404,13 +415,11 @@ class ExerciseIntegrityGateTest {
 
                 import org.junit.jupiter.api.TestFactory;
                 import org.junit.jupiter.params.ParameterizedTest;
-                import de.tum.in.test.api.BlacklistPath;
-                import de.tum.in.test.api.WhitelistPath;
-                import de.tum.in.test.api.jupiter.Public;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
 
                 @Public
-                @WhitelistPath("build")
-                @BlacklistPath("build/classes/java/test")
+                @Policy(value = "SecurityPolicy.yaml")
                 class CalculatorTest {
 
                     @ParameterizedTest
@@ -424,7 +433,7 @@ class ExerciseIntegrityGateTest {
                 }
                 """;
 
-        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", gradle, "test/de/test/CalculatorTest.java", test)))
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(aresTests("build.gradle", gradle, "test/de/test/CalculatorTest.java", test)))
                 .anyMatch(reason -> reason.contains("@StrictTimeout"));
     }
 
@@ -435,15 +444,13 @@ class ExerciseIntegrityGateTest {
                 package de.test;
 
                 import org.junit.jupiter.api.Test;
+                import de.tum.cit.ase.ares.api.Policy;
 
                 @interface Public {}
-                @interface WhitelistPath { String value(); }
-                @interface BlacklistPath { String value(); }
                 @interface StrictTimeout { int value(); }
 
                 @Public
-                @WhitelistPath("build")
-                @BlacklistPath("build/classes/java/test")
+                @Policy(value = "SecurityPolicy.yaml")
                 @StrictTimeout(1)
                 class CalculatorTest {
 
@@ -453,9 +460,9 @@ class ExerciseIntegrityGateTest {
                 }
                 """;
 
-        var reasons = ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", aresBuildGradle(), "test/de/test/CalculatorTest.java", test));
+        var reasons = ExerciseIntegrityGate.javaAresConventionReasons(aresTests("build.gradle", aresBuildGradle(), "test/de/test/CalculatorTest.java", test));
 
-        assertThat(reasons).anyMatch(reason -> reason.contains("trusted Ares annotations"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("trusted Ares 2"));
         assertThat(reasons).anyMatch(reason -> reason.contains("@StrictTimeout(1)"));
     }
 
@@ -464,15 +471,13 @@ class ExerciseIntegrityGateTest {
         String test = """
                 package de.test;
 
-                import de.tum.in.test.api.BlacklistPath;
-                import de.tum.in.test.api.StrictTimeout;
-                import de.tum.in.test.api.WhitelistPath;
-                import de.tum.in.test.api.jupiter.Public;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
                 import org.junit.jupiter.api.Test;
 
                 @Public
-                @WhitelistPath("build")
-                @BlacklistPath("build/classes/java/test")
+                @Policy(value = "SecurityPolicy.yaml")
                 class CalculatorTest {
 
                     @interface StrictTimeout { int value(); }
@@ -484,7 +489,7 @@ class ExerciseIntegrityGateTest {
                 }
                 """;
 
-        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(map("build.gradle", aresBuildGradle(), "test/de/test/CalculatorTest.java", test)))
+        assertThat(ExerciseIntegrityGate.javaAresConventionReasons(aresTests("build.gradle", aresBuildGradle(), "test/de/test/CalculatorTest.java", test)))
                 .anyMatch(reason -> reason.contains("@StrictTimeout(1)"));
     }
 
@@ -492,22 +497,20 @@ class ExerciseIntegrityGateTest {
     void javaAresConvention_rejectsCommentSpoofedGradleHarnessAndTrustedPackageSources() {
         String gradle = """
                 /*
-                testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.0'
-                def forbiddenPackageFolders = ['de/tum/in/test/api/', 'org/junit/']
+                testImplementation 'de.tum.cit.ase:ares:2.2.1'
+                apply from: 'gradle/AresReservedPackages.gradle'
                 */
                 """;
         String test = """
                 package de.test;
 
                 import org.junit.jupiter.api.Test;
-                import de.tum.in.test.api.BlacklistPath;
-                import de.tum.in.test.api.StrictTimeout;
-                import de.tum.in.test.api.WhitelistPath;
-                import de.tum.in.test.api.jupiter.Public;
+                import de.tum.cit.ase.ares.api.Policy;
+                import de.tum.cit.ase.ares.api.StrictTimeout;
+                import de.tum.cit.ase.ares.api.jupiter.Public;
 
                 @Public
-                @WhitelistPath("build")
-                @BlacklistPath("build/classes/java/test")
+                @Policy(value = "SecurityPolicy.yaml")
                 class StackTest {
 
                     @Test
@@ -518,10 +521,10 @@ class ExerciseIntegrityGateTest {
                 """;
 
         var reasons = ExerciseIntegrityGate
-                .javaAresConventionReasons(map("build.gradle", gradle, "test/de/test/StackTest.java", test, "behavior/test/org/junit/FakeTest.java", "fake"));
+                .javaAresConventionReasons(aresTests("build.gradle", gradle, "test/de/test/StackTest.java", test, "behavior/test/org/junit/FakeTest.java", "fake"));
 
-        assertThat(reasons).anyMatch(reason -> reason.contains("artemis-java-test-sandbox"));
-        assertThat(reasons).anyMatch(reason -> reason.contains("forbidden-package checks"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("requires the current Ares 2 dependency"));
+        assertThat(reasons).anyMatch(reason -> reason.contains("AresReservedPackages.gradle"));
     }
 
     @Test
@@ -1510,9 +1513,22 @@ class ExerciseIntegrityGateTest {
         assertThat(ExerciseIntegrityGate.isResidueOutsideCanonicalRoot("R/column_sums.R")).isFalse();
     }
 
-    /** The preserved Ares 1 harness used by the legacy annotation cases. */
+    private static Map<String, String> aresTests(String... files) {
+        Map<String, String> tests = map(files);
+        tests.put("gradle/AresReservedPackages.gradle", classpathResource("templates/java/test/gradle/projectTemplate/gradle/AresReservedPackages.gradle"));
+        String classes = tests.keySet().stream().filter(path -> path.endsWith(".java"))
+                .filter(path -> path.startsWith("test/") || path.startsWith("behavior/test/") || path.startsWith("structural/test/"))
+                .map(path -> path.substring(path.indexOf("test/") + 5, path.length() - 5).replace('/', '.')).sorted().map(name -> "    - \"" + name + "\"\n")
+                .collect(java.util.stream.Collectors.joining());
+        String policy = classpathResource("templates/java/test/gradle/projectTemplate/SecurityPolicy.yaml").replace("${packageName}", "de.test");
+        tests.put("SecurityPolicy.yaml", policy.replaceAll("(?m)  theFollowingClassesAreTestClasses:\\n(?:    - [^\\n]*\\n)*",
+                java.util.regex.Matcher.quoteReplacement("  theFollowingClassesAreTestClasses:\n" + classes)));
+        return tests;
+    }
+
+    /** The current exercise scaffold, shared with manually authored Java Gradle exercises. */
     private static String aresBuildGradle() {
-        return classpathResource("hyperion/legacy-ares1-build.gradle");
+        return classpathResource("templates/java/test/gradle/projectTemplate/build.gradle");
     }
 
     private static String classpathResource(String path) {

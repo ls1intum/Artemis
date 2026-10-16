@@ -583,12 +583,22 @@ public final class ExerciseIntegrityGate {
     }
 
     /**
+     * Checks the immutable Java harness before authoring, without imposing conventions on existing test sources.
+     *
+     * @param testsFiles captured tests repository
+     * @return unsupported or missing Ares 2 harness components
+     */
+    public static List<String> javaAresHarnessReasons(Map<String, String> testsFiles) {
+        return AresConventions.harnessReasons(testsFiles);
+    }
+
+    /**
      * Java exercises are graded through the Ares test sandbox, and a plain JUnit suite can pass the differential oracle while bypassing its public-test and timeout conventions.
-     * When {@code preserveUnchangedLegacyTests} is set, only sources this run touched are held to the conventions; the build-harness protections always apply to the whole
+     * When {@code preserveUnchangedTests} is set, only sources this run touched are held to the conventions; the build-harness protections always apply to the whole
      * produced repository.
      */
-    static List<String> javaAresConventionReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, boolean preserveUnchangedLegacyTests) {
-        return AresConventions.reasons(seedTestsFiles, producedTestsFiles, preserveUnchangedLegacyTests);
+    static List<String> javaAresConventionReasons(Map<String, String> seedTestsFiles, Map<String, String> producedTestsFiles, boolean preserveUnchangedTests) {
+        return AresConventions.reasons(seedTestsFiles, producedTestsFiles, preserveUnchangedTests);
     }
 
     /**
