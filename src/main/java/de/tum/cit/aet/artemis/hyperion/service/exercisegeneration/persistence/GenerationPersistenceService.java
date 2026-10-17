@@ -651,7 +651,7 @@ public class GenerationPersistenceService {
     private String commitRepository(ProgrammingExercise exercise, User user, RepositoryType repositoryType, Map<String, String> producedFiles, Set<String> candidatePaths,
             String seedHead, String repositoryBranch, GenerationMode mode, String commitMessage, Map<RepositoryType, String> prePersistHashes,
             Map<RepositoryType, String> postPersistHashes, BooleanSupplier stillOwnsMutationSlot, Runnable beforeFirstDurableMutation) {
-        if (producedFiles == null || producedFiles.isEmpty()) {
+        if (producedFiles == null || (producedFiles.isEmpty() && seedHead == null)) {
             return null;
         }
         LocalVCRepositoryUri uri = exercise.getRepositoryURI(repositoryType);
