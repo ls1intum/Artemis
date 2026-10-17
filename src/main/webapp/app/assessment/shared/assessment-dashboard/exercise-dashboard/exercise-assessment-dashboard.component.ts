@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -23,7 +23,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TutorParticipation, TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
@@ -37,22 +37,21 @@ import { parseJson } from 'app/foundation/util/json.util';
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
 import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
-import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import {
+    TumAetUiButtonDirective,
+    TumAetUiMessageComponent,
+    TumAetUiPanelComponent,
+    TumAetUiTableDirective,
+    TumAetUiTagComponent,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
-import { faCheckCircle, faCircleInfo, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
-import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
+import { faCheckCircle, faExclamationTriangle, faFlag, faFolderOpen, faListAlt, faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
-import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TooltipModule } from 'primeng/tooltip';
-import { Message } from 'primeng/message';
 import { SortDirective } from 'app/foundation/sort/directive/sort.directive';
 import { SortByDirective } from 'app/foundation/sort/directive/sort-by.directive';
 import { AssessmentQueueComponent } from './assessment-queue/assessment-queue.component';
@@ -61,11 +60,13 @@ import { TutorLeaderboardComponent } from 'app/exercise/dashboards/tutor-leaderb
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { AssessmentDashboardInformationEntry } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard-information.component';
-import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
-import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ComplaintDTO } from 'app/assessment/shared/entities/complaint-dto.model';
+import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
+import { CourseTitleBarTitleDirective } from 'app/course/shared/directives/course-title-bar-title.directive';
 import { getAssessmentNotPossibleYetReason } from 'app/assessment/shared/util/assessment-availability.util';
 
 /** Largest delay `setTimeout` accepts before its signed 32-bit delay overflows and the timer fires immediately. */
@@ -79,26 +80,26 @@ export interface ExampleSubmissionQueryParams {
 @Component({
     selector: 'jhi-exercise-assessment-dashboard',
     templateUrl: './exercise-assessment-dashboard.component.html',
-    styleUrls: ['./exercise-assessment-dashboard.component.scss'],
     providers: [CourseManagementService],
     imports: [
-        HeaderExercisePageWithDetailsComponent,
-        TutorParticipationGraphComponent,
         SecondCorrectionEnableButtonComponent,
-        TumAetUiDoughnutChartComponent,
+        CourseTitleBarTitleDirective,
+        TutorParticipationGraphComponent,
+        ExerciseCategoriesComponent,
+        IncludedInScoreBadgeComponent,
+        TumAetUiPanelComponent,
+        TumAetUiTagComponent,
+        TumAetUiTableDirective,
+        TumAetUiMessageComponent,
+        TumAetUiTooltipDirective,
         TumAetUiButtonDirective,
-        SidePanelComponent,
         TranslateDirective,
         RouterLink,
         FaIconComponent,
-        InfoPanelComponent,
         ProgrammingExerciseInstructionComponent,
         ModelingEditorComponent,
         CodeButtonComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
-        NgbTooltip,
-        TooltipModule,
-        Message,
         SortDirective,
         SortByDirective,
         AssessmentQueueComponent,
@@ -127,6 +128,9 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
+    readonly getIcon = getIcon;
+    readonly getIconTooltip = getIconTooltip;
+    readonly preparationContent = viewChild<ElementRef<HTMLElement>>('preparationContent');
 
     // Async-loaded, template-bound state — signals so writes schedule change detection under zoneless (no markForCheck).
     readonly exercise = signal<Exercise>(undefined!);
@@ -150,7 +154,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly numberOfAssessmentsOfCorrectionRounds = signal<DueDateStat[]>([new DueDateStat()]);
     readonly complaintsEnabled = signal(false);
     readonly feedbackRequestEnabled = signal(false);
-    readonly tutorAssessmentPercentage = signal(0);
     readonly tutorParticipationStatus = signal<TutorParticipationStatus>(undefined!);
     readonly exampleSubmissionsToReview = signal<ExampleSubmission[]>([]);
     readonly exampleSubmissionsToAssess = signal<ExampleSubmission[]>([]);
@@ -173,6 +176,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     reverseOrders = [true, false, false];
 
     readonly ExerciseType = ExerciseType;
+    readonly IncludedInOverallScore = IncludedInOverallScore;
     protected readonly RepositoryType = RepositoryType;
 
     // Mutated in place only within the getForTutors subscribe (alongside exercise.set()), so it renders on that signal's CD tick.
@@ -199,18 +203,25 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     readonly moreFeedbackRequestsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
     readonly ratingsDashboardInfo = signal(new AssessmentDashboardInformationEntry(0, 0));
 
-    // graph (rebuilt in setupGraph, which also runs on the async onLangChange — signals so the chart re-renders under zoneless)
-    private readonly chartEntries = signal<ChartSeriesEntry[]>([]);
-    // colors as CSS variable references, index-aligned with chartEntries; the SVG chart consumes them directly
-    private readonly rawChartColors = signal<string[]>([]);
+    readonly isAutomaticAssessedProgrammingExercise = computed(
+        () => this.programmingExercise()?.assessmentType === AssessmentType.AUTOMATIC && !!this.programmingExercise()?.allowComplaintsForAutomaticAssessments,
+    );
 
-    readonly chartData = computed(() => singleSeriesChart(this.chartEntries(), this.rawChartColors()));
-    readonly chartConfig = computed<TumAetUiDoughnutChartConfig>(() => ({
-        arcWidth: 1,
-        legend: { position: 'bottom' },
-        tooltip: { label: (item) => `${((item.value * 100) / this.numberOfSubmissions().total).toFixed(2)}%` },
-    }));
-    readonly isAutomaticAssessedProgrammingExercise = signal(false);
+    readonly assessmentProgress = computed(() => {
+        const stats = this.statsForDashboard();
+        const complaintsOnly = this.isAutomaticAssessedProgrammingExercise();
+        const total = complaintsOnly ? stats.numberOfComplaints : this.numberOfSubmissions().total * (this.isExamMode() ? (this.exam()?.numberOfCorrectionRoundsInExam ?? 1) : 1);
+        const assessed = Math.min(total, Math.max(0, complaintsOnly ? stats.numberOfComplaints - stats.numberOfOpenComplaints : this.totalNumberOfAssessments()));
+        const inProgress = complaintsOnly ? 0 : Math.min(total - assessed, Math.max(0, stats.totalNumberOfAssessmentLocks));
+        return {
+            total,
+            assessed,
+            inProgress,
+            open: total - assessed - inProgress,
+            assessedPercentage: total > 0 ? Math.floor((100 * assessed) / total) : 0,
+            inProgressPercentage: total > 0 ? (100 * inProgress) / total : 0,
+        };
+    });
 
     /**
      * Bumped once the moment assessment becomes possible has passed, so that the reason below stops applying without the
@@ -260,7 +271,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
     faExclamationTriangle = faExclamationTriangle;
     faListAlt = faListAlt;
     faFlag = faFlag;
-    faCircleInfo = faCircleInfo;
 
     /**
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server
@@ -282,56 +292,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
         // onLangChange never completes, so it has to be tied to the component lifetime explicitly
         this.translateService.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.currentLanguage.set(this.translateService.getCurrentLang() ?? undefined);
-            this.setupGraph();
         });
     }
 
     ngOnDestroy(): void {
         clearTimeout(this.assessmentAvailabilityTimeout);
-    }
-
-    setupGraph() {
-        // If the programming exercise is assessed automatically but complaints are enabled, the term "unassessed submissions" might be misleading.
-        // In this case, we only show open and resolved complaints
-        if (
-            this.programmingExercise() &&
-            this.programmingExercise().assessmentType === AssessmentType.AUTOMATIC &&
-            this.programmingExercise().allowComplaintsForAutomaticAssessments
-        ) {
-            const numberOfComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
-            const numberOfResolvedComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
-            this.isAutomaticAssessedProgrammingExercise.set(true);
-            this.rawChartColors.set([GraphColors.YELLOW, GraphColors.GREEN]);
-            this.chartEntries.set([
-                {
-                    name: numberOfComplaintsLabel,
-                    value: this.statsForDashboard().numberOfOpenComplaints,
-                },
-                {
-                    name: numberOfResolvedComplaintsLabel,
-                    value: this.statsForDashboard().numberOfComplaints - this.statsForDashboard().numberOfOpenComplaints,
-                },
-            ]);
-        } else {
-            const numberOfUnassessedSubmissionLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfUnassessedSubmissions');
-            const numberOfAutomaticAssistedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfAutomaticAssistedSubmissions');
-            const numberOfManualAssessedSubmissionsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfManualAssessedSubmissions');
-            this.rawChartColors.set([GraphColors.RED, GraphColors.BLUE, GraphColors.YELLOW]);
-            this.chartEntries.set([
-                {
-                    name: numberOfUnassessedSubmissionLabel,
-                    value: this.numberOfSubmissions().total - this.totalNumberOfAssessments(),
-                },
-                {
-                    name: numberOfManualAssessedSubmissionsLabel,
-                    value: this.totalNumberOfAssessments() - this.numberOfAutomaticAssistedAssessments().total,
-                },
-                {
-                    name: numberOfAutomaticAssistedSubmissionsLabel,
-                    value: this.numberOfAutomaticAssistedAssessments().total,
-                },
-            ]);
-        }
     }
 
     setupLinks() {
@@ -475,15 +440,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                         this.ratingsDashboardInfo.set(new AssessmentDashboardInformationEntry(this.statsForDashboard().numberOfRatings, 0));
                     }
 
-                    if (this.numberOfSubmissions().total > 0) {
-                        this.tutorAssessmentPercentage.set(Math.floor((this.numberOfTutorAssessments() / this.numberOfSubmissions().total) * 100));
-                    } else {
-                        this.tutorAssessmentPercentage.set(100);
-                    }
                     this.complaintsEnabled.set(this.statsForDashboard().complaintsEnabled);
                     this.feedbackRequestEnabled.set(this.statsForDashboard().feedbackRequestEnabled);
-
-                    this.setupGraph();
                 },
                 error: (response: string) => this.onError(response),
             });
@@ -520,22 +478,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit, OnDestroy {
                 return;
             }
         }, millisecondsUntilNextChange);
-    }
-
-    get yourStatusTitle(): string {
-        switch (this.tutorParticipationStatus()) {
-            case TutorParticipationStatus.TRAINED:
-                // If we are in 'TRAINED' state, but never really "trained" on example submissions, display the
-                // 'REVIEWED_INSTRUCTIONS' state text instead.
-                const exampleSubmissions = this.exercise().exampleSubmissions;
-                if (!exampleSubmissions || exampleSubmissions.length === 0) {
-                    return TutorParticipationStatus.REVIEWED_INSTRUCTIONS.toString();
-                }
-
-                return TutorParticipationStatus.TRAINED.toString();
-            default:
-                return this.tutorParticipationStatus().toString();
-        }
     }
 
     language(submission: Submission): string {

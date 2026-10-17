@@ -9,6 +9,9 @@
             },
             "pageHeader": "Exercise Assessment Dashboard for:",
             "testRunPageHeader": "Test Run Exercise Dashboard for exercise:",
+            "complaintProgress": "Complaint resolution",
+            "complaintsResolved": "complaints resolved",
+            "noSubmissionsYet": "No submissions yet.",
             "yourStatus": "Your status",
             "tutorParticipationStatus": {
                 "title": {

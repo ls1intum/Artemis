@@ -9,6 +9,9 @@
             },
             "pageHeader": "Bewertungs-Dashboard für die Übung",
             "testRunPageHeader": "Testlaufübungs-Dashboard für die Übung:",
+            "complaintProgress": "Bearbeitung der Beschwerden",
+            "complaintsResolved": "Beschwerden bearbeitet",
+            "noSubmissionsYet": "Noch keine Abgaben vorhanden.",
             "yourStatus": "Dein Status",
             "tutorParticipationStatus": {
                 "title": {

@@ -7,17 +7,16 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { SidePanelComponent } from 'app/shared-ui/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { TutorParticipationGraphComponent } from 'app/exercise/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/exercise/dashboards/tutor-leaderboard/tutor-leaderboard.component';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { TutorParticipationDTO, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
+import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -55,7 +54,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AssessmentQueueComponent } from './assessment-queue/assessment-queue.component';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
-import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -75,8 +73,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let tutorParticipationService: TutorParticipationService;
 
     let accountService: AccountService;
-
-    let translateService: TranslateService;
 
     let submissionService: SubmissionService;
 
@@ -142,10 +138,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         ExerciseAssessmentDashboardComponent,
         FaIconComponent,
         MockComponent(TutorLeaderboardComponent),
-        MockComponent(TutorParticipationGraphComponent),
-        MockComponent(HeaderExercisePageWithDetailsComponent),
-        MockComponent(SidePanelComponent),
-        MockComponent(InfoPanelComponent),
         MockComponent(ModelingEditorComponent),
         MockComponent(SecondCorrectionEnableButtonComponent),
         MockComponent(CollapsableAssessmentInstructionsComponent),
@@ -205,7 +197,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.exerciseId.set(modelingExercise.id!);
         comp.submissionsWithComplaints.set([submissionWithComplaintDTO]);
         accountService = TestBed.inject(AccountService);
-        translateService = TestBed.inject(TranslateService);
     });
 
     afterEach(() => {
@@ -222,11 +213,40 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.exerciseId()).toBe(modelingExercise.id);
 
         expect(comp.tutor()).toEqual(user);
+    });
 
-        const setupGraphSpy = vi.spyOn(comp, 'setupGraph');
+    it('shows the participation graph with the exercise assessment progress', () => {
+        fixture.detectChanges();
+        const graph = fixture.debugElement.query(By.directive(TutorParticipationGraphComponent)).componentInstance as TutorParticipationGraphComponent;
+        expect(graph.exercise()).toBe(comp.exercise());
+        expect(graph.tutorParticipation()).toBe(comp.tutorParticipation());
+        expect(graph.numberOfSubmissions()?.total).toBe(17);
+        expect(graph.numberOfAssessmentsOfCorrectionRounds()).toEqual(numberOfAssessmentsOfCorrectionRounds);
+    });
 
-        translateService.use('en'); // Change language.
-        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
+    it('separates completed, locked and open assessment slots across correction rounds', () => {
+        fixture.detectChanges();
+        comp.statsForDashboard.set({ ...comp.statsForDashboard(), totalNumberOfAssessmentLocks: 4 });
+        expect(comp.assessmentProgress()).toEqual({ total: 34, assessed: 9, inProgress: 4, open: 21, assessedPercentage: 26, inProgressPercentage: (100 * 4) / 34 });
+
+        comp.statsForDashboard.set({ ...comp.statsForDashboard(), totalNumberOfAssessmentLocks: 100 });
+        expect(comp.assessmentProgress().inProgress).toBe(25);
+        expect(comp.assessmentProgress().open).toBe(0);
+    });
+
+    it('shows an explicit empty state without invalid percentages', () => {
+        fixture.detectChanges();
+        comp.numberOfSubmissions.set(new DueDateStat());
+        expect(comp.assessmentProgress()).toEqual({ total: 0, assessed: 0, inProgress: 0, open: 0, assessedPercentage: 0, inProgressPercentage: 0 });
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('[data-testid="assessment-progress-empty"]')).not.toBeNull();
+    });
+
+    it('summarizes complaint resolution for automatically assessed programming exercises', () => {
+        fixture.detectChanges();
+        comp.programmingExercise.set({ assessmentType: AssessmentType.AUTOMATIC, allowComplaintsForAutomaticAssessments: true } as ProgrammingExercise);
+        comp.statsForDashboard.set({ ...comp.statsForDashboard(), numberOfComplaints: 5, numberOfOpenComplaints: 2, totalNumberOfAssessmentLocks: 10 });
+        expect(comp.assessmentProgress()).toEqual({ total: 5, assessed: 3, inProgress: 0, open: 2, assessedPercentage: 60, inProgressPercentage: 0 });
     });
 
     it.each([ExerciseType.PROGRAMMING, ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD])('uses only the assessment queue for %s exercises', (type) => {
@@ -288,11 +308,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.complaintsDashboardInfo().tutor).toBe(tutorLeaderBoardEntry.numberOfTutorComplaints);
         expect(comp.moreFeedbackRequestsDashboardInfo().tutor).toBe(tutorLeaderBoardEntry.numberOfTutorMoreFeedbackRequests);
         expect(comp.ratingsDashboardInfo().tutor).toBe(tutorLeaderBoardEntry.numberOfTutorRatings);
-
-        const setupGraphSpy = vi.spyOn(comp, 'setupGraph');
-
-        translateService.use('en'); // Change language.
-        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should set exam and stats properties', () => {

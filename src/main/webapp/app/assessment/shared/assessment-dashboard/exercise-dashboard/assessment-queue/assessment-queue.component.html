@@ -1,10 +1,13 @@
 <section class="flex flex-col gap-2" data-testid="assessment-queue">
-    <div>
-        <h4 class="mb-0" [jhiTranslate]="isTestRun() ? 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' : translationKey() + '.title'"></h4>
-        <p class="m-0 text-sm text-muted-color" [jhiTranslate]="translationKey() + '.hint'"></p>
+    <div class="space-y-1">
+        <h4
+            class="m-0! text-base! font-semibold! text-color"
+            [jhiTranslate]="isTestRun() ? 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' : translationKey() + '.title'"
+        ></h4>
+        <p class="m-0! text-sm text-muted-color" [jhiTranslate]="translationKey() + '.hint'"></p>
     </div>
     @if (!isTestRun() && (exercise().exerciseGroup?.exam?.numberOfCorrectionRoundsInExam ?? 1) > correctionRoundsEnabled()) {
-        <p class="m-0 text-sm text-muted-color" jhiTranslate="artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled"></p>
+        <p class="m-0! text-sm text-muted-color" jhiTranslate="artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled"></p>
     }
     <tumaet-ui-table
         data-testid="assessment-queue-table"
