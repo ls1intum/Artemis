@@ -46,7 +46,7 @@
                     <span class="unified-feedback-icon-badge">
                         <fa-icon [icon]="inferredIcon()" class="unified-feedback-icon" />
                     </span>
-                    @if (editable()) {
+                    @if (editable() && titleEditable()) {
                         <textarea
                             #titleTextarea
                             class="unified-feedback-title-input"
