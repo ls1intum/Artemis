@@ -501,6 +501,22 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectASecondRowSpellingTheSameParticipationIdDifferently() {
+        // "042-login" parses to the same participation as "42-login" but differs as an identifier string, and each row brings a text file of its own, so neither the raw
+        // identifier check nor text-file matching catches the pair. Without deduplication by resolved id the participant would be assessed twice by one upload.
+        final String aliasIdentifier = "0" + identifier1;
+        final String csv = "Identifier,Overall points\n%s,80\n%s,40\n".formatted(identifier1, aliasIdentifier);
+
+        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
+                buildZip(csv, Map.of(identifier1 + ".txt", "first", aliasIdentifier + ".txt", "second")));
+
+        assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.DUPLICATE_IDENTIFIER);
+        assertThat(getManualResults(participation1.getId())).isEmpty();
+        assertThat(getSubmissions(participation1.getId())).hasSizeLessThanOrEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectUploadWhenLoginDoesNotMatchParticipation() {
         final String csv = "Identifier,Overall points\n%s-wrong,80\n".formatted(identifier1);
         // No text file for the row: it fails the login cross-check before text-file matching, so the only expected error is the mismatch itself.

@@ -306,6 +306,7 @@ public class AssessmentUploadService {
         assert errors != null && errors.isEmpty() : "errors must be a mutable, initially empty list";
         final List<ValidatedRow> validatedRows = new ArrayList<>();
         final Set<String> seenIdentifiers = new HashSet<>();
+        final Set<Long> seenParticipationIds = new HashSet<>();
         final Set<String> matchedTextKeys = new HashSet<>();
         final Set<Long> requestedParticipationIds = csv.records().stream().map(this::extractIdentifier).map(this::parseParticipationId).flatMap(Optional::stream)
                 .collect(Collectors.toSet());
@@ -328,6 +329,15 @@ public class AssessmentUploadService {
                 continue;
             }
             if (!seenIdentifiers.add(identifier)) {
+                errors.add(AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.DUPLICATE_IDENTIFIER));
+                continue;
+            }
+            // Two spellings of one participation id are the same participant, so they have to collide here too. The id is read with Long.parseLong, which accepts
+            // non-canonical forms, so "42-login" and "042-login" differ as identifier strings while both resolving to participation 42. Artemis never emits the second form,
+            // but the endpoint takes any archive matching the documented schema, and with a text file of its own each row would otherwise validate and store a second
+            // assessment for that participant.
+            final Optional<Long> participationId = parseParticipationId(identifier);
+            if (participationId.isPresent() && !seenParticipationIds.add(participationId.get())) {
                 errors.add(AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.DUPLICATE_IDENTIFIER));
                 continue;
             }
