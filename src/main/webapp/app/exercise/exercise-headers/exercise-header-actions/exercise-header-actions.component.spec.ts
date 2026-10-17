@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -53,7 +54,7 @@ describe('ExerciseHeaderActionsComponent', () => {
         }
     }
 
-    function withCourse(exercise: Exercise, athenaFormativeFeedbackEnabled: boolean): Exercise {
+    function withCourse<T extends Exercise>(exercise: T, athenaFormativeFeedbackEnabled: boolean): T {
         const course = new Course();
         course.athenaFormativeFeedbackEnabled = athenaFormativeFeedbackEnabled;
         exercise.course = course;
@@ -66,11 +67,23 @@ describe('ExerciseHeaderActionsComponent', () => {
         return exercise;
     }
 
-    function createComponent(exercise: Exercise, options: { athenaEnabled?: boolean; examMode?: boolean; llmAccepted?: boolean; quizStatus?: QuizStatus } = {}) {
-        const { athenaEnabled = true, examMode = false, llmAccepted = true, quizStatus } = options;
+    function createComponent(
+        exercise: Exercise,
+        options: {
+            athenaEnabled?: boolean;
+            examMode?: boolean;
+            llmAccepted?: boolean;
+            llmSelection?: LLMSelectionDecision;
+            onPremiseAvailable?: boolean;
+            quizStatus?: QuizStatus;
+        } = {},
+    ) {
+        const { athenaEnabled = true, examMode = false, llmAccepted = true, llmSelection, onPremiseAvailable = true, quizStatus } = options;
 
         const accountService = new MockAccountService();
-        if (llmAccepted) {
+        if (llmSelection) {
+            accountService.userIdentity.set({ selectedLLMUsage: llmSelection } as User);
+        } else if (llmAccepted) {
             accountService.userIdentity.set({ selectedLLMUsage: LLMSelectionDecision.CLOUD_AI } as User);
         }
 
@@ -86,7 +99,7 @@ describe('ExerciseHeaderActionsComponent', () => {
                     getSpecificStudentParticipation: (participations: StudentParticipation[], testRun: boolean) =>
                         participations.find((participation) => !!participation.testRun === testRun),
                 }),
-                { provide: ProfileService, useValue: { isModuleFeatureActive: () => athenaEnabled } },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: () => athenaEnabled, isLLMDeploymentEnabled: () => onPremiseAvailable } },
                 { provide: AccountService, useValue: accountService },
             ],
         });
@@ -245,6 +258,23 @@ describe('ExerciseHeaderActionsComponent', () => {
 
             expect(fixture.componentInstance.activeParticipationForCode()?.id).toBe(20);
         });
+
+        it('should opt the exercise header feedback button into the AI Experience prompt', () => {
+            const graded = { id: 10, testRun: false, submissions: [{ submitted: true }] } as StudentParticipation;
+            const fixture = createComponent(new TextExercise(undefined, undefined), { llmAccepted: false });
+            vi.spyOn(TestBed.inject(ParticipationService), 'getSpecificStudentParticipation').mockReturnValue(graded);
+
+            const exercise = withCourse(manualAssessmentProgrammingExercise(), true);
+            exercise.id = 1;
+            exercise.allowOnlineEditor = false;
+            exercise.studentParticipations = [graded];
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.detectChanges();
+
+            const feedbackButton = fixture.debugElement.query(By.directive(RequestFeedbackButtonComponent));
+            expect(feedbackButton).not.toBeNull();
+            expect(feedbackButton.componentInstance.showAiExperiencePrompt()).toBe(true);
+        });
     });
 
     describe('showFeedbackPopover', () => {
@@ -278,10 +308,10 @@ describe('ExerciseHeaderActionsComponent', () => {
             expect(fixture.componentInstance.showFeedbackPopover()).toBe(false);
         });
 
-        it('should not show the popover when the user has not accepted AI feedback usage', () => {
+        it('should still show the popover recommending AI feedback when the user has not accepted AI feedback usage', () => {
             createComponent(withCourse(manualAssessmentProgrammingExercise(), true), { llmAccepted: false });
 
-            expect(fixture.componentInstance.showFeedbackPopover()).toBe(false);
+            expect(fixture.componentInstance.showFeedbackPopover()).toBe(true);
         });
 
         it('should not show the popover for a programming exercise without manual assessment enabled', () => {
@@ -291,6 +321,49 @@ describe('ExerciseHeaderActionsComponent', () => {
             createComponent(withCourse(exercise, true));
 
             expect(fixture.componentInstance.showFeedbackPopover()).toBe(false);
+        });
+    });
+
+    describe('submitAndShowPopover', () => {
+        const submitPopoverRef = () => (fixture.componentInstance as unknown as { submitPopoverRef: () => { isOpen: () => boolean } }).submitPopoverRef();
+
+        it('opens the AI-disabled recommendation popover even when the user has not accepted AI usage', () => {
+            createComponent(withCourse(manualAssessmentProgrammingExercise(), true), { llmAccepted: false });
+            fixture.componentRef.setInput('onSubmitExercise', () => vi.fn());
+            fixture.detectChanges();
+
+            fixture.componentInstance.submitAndShowPopover();
+
+            expect(submitPopoverRef().isOpen()).toBe(true);
+        });
+
+        it.each([
+            { llmSelection: undefined, descriptionKey: 'descriptionDisabled' },
+            { llmSelection: LLMSelectionDecision.NO_AI, descriptionKey: 'descriptionNoAi' },
+        ])('explains the AI-disabled popover with $descriptionKey when the AI Experience selection is $llmSelection', ({ llmSelection, descriptionKey }) => {
+            createComponent(withCourse(manualAssessmentProgrammingExercise(), true), { llmAccepted: false, llmSelection });
+
+            expect(fixture.componentInstance.aiFeedbackPopoverDisabledDescriptionKey()).toBe(`artemisApp.exercise.aiFeedbackPopover.${descriptionKey}`);
+        });
+
+        it.each([
+            { llmSelection: undefined, descriptionKey: 'descriptionDisabledCloudOnly' },
+            { llmSelection: LLMSelectionDecision.NO_AI, descriptionKey: 'descriptionNoAiCloudOnly' },
+        ])('only names Cloud in the AI-disabled popover when On-premise AI is unavailable and the selection is $llmSelection', ({ llmSelection, descriptionKey }) => {
+            createComponent(withCourse(manualAssessmentProgrammingExercise(), true), { llmAccepted: false, llmSelection, onPremiseAvailable: false });
+
+            expect(fixture.componentInstance.aiFeedbackPopoverDisabledDescriptionKey()).toBe(`artemisApp.exercise.aiFeedbackPopover.${descriptionKey}`);
+        });
+
+        it('does not reopen the dismissed AI-disabled recommendation popover', () => {
+            createComponent(withCourse(manualAssessmentProgrammingExercise(), true), { llmAccepted: false });
+            fixture.componentRef.setInput('onSubmitExercise', () => vi.fn());
+            fixture.detectChanges();
+
+            fixture.componentInstance.dismissAiFeedbackPopoverPermanently();
+            fixture.componentInstance.submitAndShowPopover();
+
+            expect(submitPopoverRef().isOpen()).toBe(false);
         });
     });
 
