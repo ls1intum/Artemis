@@ -1,7 +1,23 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+    AfterViewInit,
+    Component,
+    DestroyRef,
+    ElementRef,
+    HostListener,
+    OnDestroy,
+    ViewEncapsulation,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+} from '@angular/core';
 import { AlertService } from 'app/foundation/service/alert.service';
-import { EMPTY, Observable, Subject, Subscription, of } from 'rxjs';
-import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { EMPTY, Observable, Subject, Subscription, defer, of } from 'rxjs';
+import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -68,6 +84,7 @@ import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
     ],
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnDestroy {
+    private readonly destroyRef = inject(DestroyRef);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private alertService = inject(AlertService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
@@ -143,6 +160,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     readonly externalHeight = input<boolean>(false);
     readonly showSaveButton = input<boolean>(false);
+    readonly beforeSave = input<(() => Observable<boolean>) | undefined>();
     /**
      * Whether to show the preview button and default preview in the markdown editor.
      * Set to false when using an external preview component (e.g., in the code editor).
@@ -167,6 +185,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     readonly hasUnsavedChanges = output<boolean>();
     readonly instructionChange = output<string>();
     readonly onProblemStatementSaved = output<void>();
+    readonly canonicalProblemStatementSaved = output<string | undefined>();
     readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
@@ -281,17 +300,39 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     }
 
     private persistProblemStatement(): Observable<void> {
+        if (this.isGeneratingOrRefining() || this.awaitingCanonicalSync()) return EMPTY;
+        const beforeSave = this.beforeSave();
+        if (!beforeSave) return this.persistRevalidatedProblemStatement();
+        if (this.savingInstructions()) return EMPTY;
+        this.savingInstructions.set(true);
+        return defer(beforeSave).pipe(
+            take(1),
+            takeUntilDestroyed(this.destroyRef),
+            switchMap((allowed) => (allowed ? this.persistRevalidatedProblemStatement() : EMPTY)),
+            finalize(() => this.savingInstructions.set(false)),
+            catchError(() => {
+                this.alertService.error('artemisApp.programmingExercise.problemStatementCouldNotBeUpdated');
+                return EMPTY;
+            }),
+        );
+    }
+
+    private persistRevalidatedProblemStatement(): Observable<void> {
         if (this.isGeneratingOrRefining() || this.awaitingCanonicalSync()) {
             return EMPTY;
         }
         this.savingInstructions.set(true);
         const currentProblemStatement = this.getCurrentContent() ?? this.exercise().problemStatement;
         const problemStatementToSave = currentProblemStatement?.trim() || undefined;
+        const exerciseId = this.exercise().id;
         const submittedRevision = this.problemStatementRevision;
         const acknowledgeCanonicalSave = this.createCanonicalSaveAcknowledgement();
         return this.programmingExerciseService.updateProblemStatement(this.exercise().id!, problemStatementToSave).pipe(
             tap((response) => {
-                if (response.body) acknowledgeCanonicalSave(response.body.problemStatement);
+                if (response.body) {
+                    acknowledgeCanonicalSave(response.body.problemStatement);
+                    if (this.exercise().id === exerciseId) this.canonicalProblemStatementSaved.emit(response.body.problemStatement);
+                }
                 if (submittedRevision === this.problemStatementRevision && (this.getCurrentContent() ?? this.exercise().problemStatement) === currentProblemStatement) {
                     this.unsavedChanges = false;
                     this.onProblemStatementSaved.emit();

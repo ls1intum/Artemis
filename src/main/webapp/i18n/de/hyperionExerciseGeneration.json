@@ -329,6 +329,7 @@
                 "checkingStatus": "Generierungsstatus wird geprüft…",
                 "refreshingEditor": "Der Editor wird mit der gespeicherten Aufgabe aktualisiert…",
                 "editorRefreshFailed": "Die Aufgabe wurde gespeichert, aber der Editor konnte nicht sicher aktualisiert werden. Sichere alles, was du brauchst, bevor du die gespeicherte Aufgabe neu lädst.",
+                "settingsContentNotValidated": "Die gespeicherte Aufgabe hat sich geändert oder konnte nicht überprüft werden. Kopiere deine lokalen Änderungen vor dem Neuladen. Lade die Einstellungen neu, bevor du speicherst.",
                 "reloadSavedExercise": "Gespeicherte Aufgabe neu laden",
                 "reloadSavedExerciseConfirmHeader": "Gespeicherte Aufgabe neu laden?",
                 "reloadSavedExerciseConfirmMessage": "Beim Neuladen wird der Editor durch die gespeicherte Aufgabe ersetzt. Alle nicht gespeicherten lokalen Änderungen gehen verloren.",

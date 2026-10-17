@@ -1,21 +1,24 @@
 import { createExerciseMetadataHandlers } from 'app/exercise/synchronization/metadata/exercise-metadata-handlers';
 import { isEqual } from 'lodash-es';
 import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
-import { hyperionGenerationBlocker } from 'app/hyperion/exercise-generation/hyperion-generation-support';
+import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
+import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { hyperionGenerationBlocker, usesCanonicalProblemStatementSync } from 'app/hyperion/exercise-generation/hyperion-generation-support';
 import { serverTimeSignal } from 'app/hyperion/exercise-generation/hyperion-server-time.util';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { AfterViewInit, Component, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/foundation/service/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { Observable, Subject, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription, defer, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 import { TranslateService } from '@ngx-translate/core';
-import { switchMap, take, tap } from 'rxjs/operators';
+import { catchError, finalize, map, switchMap, take, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -56,7 +59,7 @@ import { ExerciseGroupTimelineLockComponent } from 'app/course/manage/exercises/
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
@@ -96,7 +99,10 @@ const GRADING_FIELD_REASON_KEYS = new Set([
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
     styleUrls: ['../../shared/programming-exercise-form.scss'],
+    providers: [HyperionGenerationActivityFacade, TumAetUiConfirmationService],
     imports: [
+        TumAetUiButtonDirective,
+        TumAetUiConfirmDialogComponent,
         CreateVariantWithAiButtonComponent,
         TranslateDirective,
         DocumentationButtonComponent,
@@ -134,6 +140,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly localStorageService = inject(LocalStorageService);
     private readonly exerciseEditorSyncService = inject(ExerciseEditorSyncService);
     private readonly metadataSyncService = inject(ExerciseMetadataSyncService);
+    protected readonly generationActivity = inject(HyperionGenerationActivityFacade);
+    private readonly confirmationService = inject(TumAetUiConfirmationService);
+    private readonly destroyRef = inject(DestroyRef);
 
     private readonly packageNameRegexForJavaKotlin = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN);
     private readonly packageNameRegexForJavaBlackbox = RegExp(PACKAGE_NAME_PATTERN_FOR_JAVA_BLACKBOX);
@@ -238,13 +247,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this._programmingExercise.set(value);
     }
 
-    private readonly variantMetadataFields = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
+    private readonly settingsMetadataFields = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
 
     /** Compare editable metadata, not hydrated course, participation, result or presentation state. */
     get variantSourceHasUnsavedChanges(): boolean {
         if (this.hasUnsavedChanges || !this.backupExercise) return true;
-        const current = this.programmingExercise;
-        const baseline = this.backupExercise;
+        return this.editableSettingsDiffer(this.programmingExercise, this.backupExercise);
+    }
+
+    private editableSettingsDiffer(current: ProgrammingExercise, baseline: ProgrammingExercise): boolean {
         if (current.problemStatement !== baseline.problemStatement) return true;
         if (
             !isEqual(
@@ -253,7 +264,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             )
         )
             return true;
-        return this.variantMetadataFields.some((field) => {
+        return this.settingsMetadataFields.some((field) => {
             const currentValue = field.getCurrentValue(current);
             const baselineValue = field.getBaselineValue(baseline);
             // The settings page initializes absent category/repository lists to an empty array.
@@ -261,6 +272,30 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             return !isEqual(list ? (currentValue ?? []) : currentValue, list ? (baselineValue ?? []) : baselineValue);
         });
     }
+
+    protected readonly generationExerciseId = signal<number | undefined>(undefined);
+    private readonly settingsForm = viewChild<NgForm>('editForm');
+    readonly generationRefreshRequired = signal(false);
+    readonly generationRefreshPending = signal(false);
+    private readonly generationReloading = signal(false);
+    private generationRefreshSequence = 0;
+    readonly generationEditingLocked = computed(
+        () => this.generationExerciseId() !== undefined && (this.generationActivity.running() || this.generationActivity.statusLoading() || this.generationReloading()),
+    );
+    readonly generationStatementSaveBlocked = computed(
+        () =>
+            this.generationExerciseId() !== undefined &&
+            (this.generationActivity.running() ||
+                this.generationActivity.statusLoading() ||
+                this.generationActivity.statusLoadFailed() ||
+                this.generationRefreshRequired() ||
+                this.generationReloading()),
+    );
+    readonly generationSaveBlocked = computed(() => this.generationStatementSaveBlocked() || this.generationRefreshPending());
+    readonly generationFullSaveBlocked = computed(
+        () => this.generationSaveBlocked() || (this.generationExerciseId() !== undefined && !!this.exerciseProblemComponent()?.editableInstructions()?.savingInstructions()),
+    );
+    readonly beforeStatementSave = () => this.revalidateGenerationContents();
 
     backupExercise!: ProgrammingExercise; // set in ngOnInit() from the loaded programming exercise, before any edit/update action reads it
     readonly isSaving = signal<boolean>(undefined!);
@@ -335,6 +370,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
     constructor() {
+        this.generationActivity.connect({ exerciseId: this.generationExerciseId, refreshingEditor: this.generationReloading });
+        this.generationActivity.generationCompleted.pipe(takeUntilDestroyed()).subscribe((event) => {
+            if (event.liveExerciseChanged !== false) this.refreshAfterGeneration();
+        });
+        this.generationActivity.generationReverted.pipe(takeUntilDestroyed()).subscribe(() => this.refreshAfterGeneration());
+        this.generationActivity.exerciseContentsInvalidated.pipe(takeUntilDestroyed()).subscribe(() => this.refreshAfterGeneration());
         const editModeRetrievedFromLocalStorage: boolean | undefined = this.localStorageService.retrieve(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
         this.isSimpleMode.set(editModeRetrievedFromLocalStorage !== undefined ? editModeRetrievedFromLocalStorage : true);
 
@@ -682,11 +723,22 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         for (const subscription of this.inputFieldSubscriptions) {
             subscription?.unsubscribe();
         }
+        this.confirmationService.close('hyperionSettingsReloadConfirmation');
         this.metadataSyncService.destroy();
         this.exerciseEditorSyncService.disconnect();
     }
 
     private setupMetadataSync(): void {
+        // Pin to the persisted configuration: changing the form's language must not turn off save protection.
+        this.generationExerciseId.set(
+            this.isEdit &&
+                !this.isImportFromExistingExercise &&
+                !this.isImportFromFile &&
+                !this.isImportFromSharing &&
+                usesCanonicalProblemStatementSync(this.backupExercise, this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION))
+                ? this.backupExercise.id
+                : undefined,
+        );
         if (!this.programmingExercise?.id || this.isImportFromExistingExercise || this.isImportFromFile || this.isImportFromSharing || !this.isEdit) {
             return;
         }
@@ -856,7 +908,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             (reference) => {
                 const requestOptions: { deleteFeedback?: unknown } = {};
                 requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
-                this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
+                if (this.generationFullSaveBlocked()) return;
+                this.revalidateGenerationContents().subscribe((valid) => {
+                    if (valid && !this.generationFullSaveBlocked())
+                        this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
+                });
             },
         );
     }
@@ -865,7 +921,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         onConfirmed: () => void,
         onReEvaluated: (reference: Awaited<ReturnType<ExerciseUpdateWarningService['checkExerciseBeforeUpdate']>>) => void = () => onConfirmed(),
     ) {
-        if (this.isSaving()) {
+        if (this.isSaving() || this.generationFullSaveBlocked()) {
             return;
         }
         // Flush before isSaving / modal so pending Monaco text is on the DTO even if the user confirms
@@ -898,6 +954,13 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     saveExercise(emptyRepositories = false) {
+        if (this.generationFullSaveBlocked()) return;
+        this.revalidateGenerationContents().subscribe((valid) => {
+            if (valid && !this.generationFullSaveBlocked()) this.persistExercise(emptyRepositories);
+        });
+    }
+
+    private persistExercise(emptyRepositories: boolean) {
         if (this.programmingExercise.buildConfig?.timeoutSeconds && this.programmingExercise.buildConfig?.timeoutSeconds < 1) {
             this.programmingExercise.buildConfig.timeoutSeconds = 0;
         }
@@ -957,6 +1020,85 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
+    }
+
+    protected onCanonicalStatementSaved(content: string | undefined): void {
+        if (this.generationExerciseId() !== undefined && this.generationExerciseId() === this.programmingExercise.id) this.backupExercise.problemStatement = content;
+    }
+
+    private refreshAfterGeneration(): void {
+        if (this.generationExerciseId() === undefined) return;
+        this.generationRefreshRequired.set(true);
+        this.revalidateGenerationContents(true).subscribe();
+    }
+
+    private revalidateGenerationContents(refresh = false): Observable<boolean> {
+        return defer(() => {
+            const exerciseId = this.generationExerciseId();
+            if (exerciseId === undefined) return of(true);
+            if (!refresh && this.generationSaveBlocked()) return of(false);
+            const sequence = ++this.generationRefreshSequence;
+            this.generationRefreshPending.set(true);
+            return this.programmingExerciseService.find(exerciseId).pipe(
+                take(1),
+                takeUntilDestroyed(this.destroyRef),
+                map((response) => {
+                    if (sequence !== this.generationRefreshSequence || this.generationExerciseId() !== exerciseId) return false;
+                    if (!response.body) throw new Error('The saved exercise could not be loaded');
+                    this.generationRefreshPending.set(false);
+                    if (!this.editableSettingsDiffer(response.body, this.backupExercise)) {
+                        this.generationRefreshRequired.set(false);
+                        return !this.generationSaveBlocked();
+                    }
+                    this.generationRefreshRequired.set(true);
+                    if (refresh && !this.hasLocalSettingsChanges()) this.reloadSettings();
+                    return false;
+                }),
+                catchError(() => {
+                    if (sequence === this.generationRefreshSequence && this.generationExerciseId() === exerciseId) {
+                        this.generationRefreshRequired.set(true);
+                    }
+                    return of(false);
+                }),
+                finalize(() => {
+                    if (sequence === this.generationRefreshSequence) this.generationRefreshPending.set(false);
+                }),
+            );
+        });
+    }
+
+    private hasLocalSettingsChanges(): boolean {
+        return (
+            this.hasUnsavedChanges ||
+            !this.backupExercise ||
+            this.editableSettingsDiffer(this.programmingExercise, this.backupExercise) ||
+            !!this.settingsForm()?.dirty ||
+            !!this.exerciseProblemComponent()?.editableInstructions()?.unsavedChangesValue()
+        );
+    }
+
+    protected reloadSavedSettings(): void {
+        const exerciseId = this.generationExerciseId();
+        const sequence = this.generationRefreshSequence;
+        if (exerciseId === undefined || !this.generationRefreshRequired() || this.generationReloading()) return;
+        this.confirmationService.confirm({
+            key: 'hyperionSettingsReloadConfirmation',
+            header: this.translateService.instant('artemisApp.hyperion.generationActivity.reloadSavedExerciseConfirmHeader'),
+            message: this.translateService.instant('artemisApp.hyperion.generationActivity.reloadSavedExerciseConfirmMessage'),
+            acceptLabel: this.translateService.instant('artemisApp.hyperion.generationActivity.reloadSavedExercise'),
+            rejectLabel: this.translateService.instant('entity.action.cancel'),
+            acceptSeverity: 'danger',
+            accept: () => {
+                if (this.generationExerciseId() === exerciseId && this.generationRefreshSequence === sequence && this.generationRefreshRequired()) this.reloadSettings();
+            },
+        });
+    }
+
+    private reloadSettings(): void {
+        this.generationReloading.set(true);
+        this.hasUnsavedChanges = false;
+        this.settingsForm()?.form.markAsPristine();
+        window.location.reload();
     }
 
     private openLegacyCodeEditor(exercise: ProgrammingExercise): void {

@@ -329,6 +329,7 @@
                 "checkingStatus": "Checking generation status…",
                 "refreshingEditor": "Updating the editor with the saved exercise…",
                 "editorRefreshFailed": "The exercise was saved, but the editor could not be updated safely. Copy anything you need before reloading the saved exercise.",
+                "settingsContentNotValidated": "The saved exercise changed or could not be checked. Copy your local edits before you reload it. Reload the settings before you save.",
                 "reloadSavedExercise": "Reload saved exercise",
                 "reloadSavedExerciseConfirmHeader": "Reload the saved exercise?",
                 "reloadSavedExerciseConfirmMessage": "Reloading replaces the editor with the saved exercise. All unsaved local edits will be lost.",
