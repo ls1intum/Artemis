@@ -121,8 +121,8 @@ Three settings control how students can work on the exercise:
 - **Starting experience level in the Online IDE**: Beginner, Advanced or Expert, which decides how much of the Online IDE students see when they first
   open the exercise there. Shown only when **Allow Online IDE** is selected. Artemis writes the level into `.vscode/eduide.json` of every student
   repository it creates from the template, replacing a file of the template at that path. Students can still switch to another level, and once they
-  have, the file no longer applies to them. Changing the setting affects only repositories created afterwards. Leave it unset to start students at
-  the Online IDE's own default level.
+  have, the file no longer applies to them. Changing the setting affects only repositories created afterwards. If you leave it unset, Artemis adds
+  no file: students start at the level in the template's own `.vscode/eduide.json` if it has one, otherwise at the Online IDE's default level.
 - **Enable Static Code Analysis**: Adds automated code quality checks to the build. **Cannot be changed after creation.** See [Configure Static Code Analysis](/instructor/exercises/programming-exercise/configure-the-build#configure-static-code-analysis).
 - **Sequential Test Runs**: Runs structural tests before behavioral ones. Not compatible with static code analysis. **Cannot be changed after creation.**
 - **Build plan**: Artemis creates a default build plan for the exercise. You adapt it after creation on the dedicated build plan editor page, see [Adapt Build Phases](/instructor/exercises/programming-exercise/configure-the-build#adapt-build-phases-optional). Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle); Jenkins exercises use their own build plan configuration.

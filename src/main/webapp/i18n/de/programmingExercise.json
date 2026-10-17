@@ -277,8 +277,8 @@
             },
             "onlineIdeExperienceLevel": {
                 "title": "Anfängliche Erfahrungsstufe in der Online IDE",
-                "notSet": "Nicht festgelegt (Studierende starten mit der Standardstufe der Online IDE)",
-                "description": "Studierende starten mit dieser Erfahrungsstufe, wenn sie die Aufgabe in der Online IDE öffnen. Artemis schreibt sie in die Datei .vscode/eduide.json jedes Repositorys, das es für Studierende aus der Vorlage erstellt, und ersetzt dabei eine gleichnamige Datei der Vorlage. Studierende können weiterhin eine andere Stufe wählen, und bereits bestehende Repositorys werden nicht verändert.",
+                "notSet": "Nicht festgelegt (Artemis fügt keine Konfiguration hinzu)",
+                "description": "Studierende starten mit dieser Erfahrungsstufe, wenn sie die Aufgabe in der Online IDE öffnen. Artemis schreibt sie in die Datei .vscode/eduide.json jedes Repositorys, das es für Studierende aus der Vorlage erstellt, und ersetzt dabei eine gleichnamige Datei der Vorlage. Ohne Festlegung fügt Artemis keine Datei hinzu: Studierende starten mit der Stufe aus der .vscode/eduide.json der Vorlage, falls diese eine enthält, sonst mit der Standardstufe der Online IDE. Studierende können weiterhin eine andere Stufe wählen, und bereits bestehende Repositorys werden nicht verändert.",
                 "levels": {
                     "BEGINNER": "Anfänger",
                     "ADVANCED": "Fortgeschritten",

@@ -277,8 +277,8 @@
             },
             "onlineIdeExperienceLevel": {
                 "title": "Starting experience level in the Online IDE",
-                "notSet": "Not set (students start at the Online IDE's default level)",
-                "description": "Students start at this experience level when they open the exercise in the Online IDE. Artemis writes it into .vscode/eduide.json of every student repository it creates from the template, replacing a file of the template at that path. Students can still choose another level, and repositories that already exist are not changed.",
+                "notSet": "Not set (Artemis adds no configuration)",
+                "description": "Students start at this experience level when they open the exercise in the Online IDE. Artemis writes it into .vscode/eduide.json of every student repository it creates from the template, replacing a file of the template at that path. If not set, Artemis adds no file: students start at the level in the template's own .vscode/eduide.json if it has one, otherwise at the Online IDE's default level. Students can still choose another level, and repositories that already exist are not changed.",
                 "levels": {
                     "BEGINNER": "Beginner",
                     "ADVANCED": "Advanced",
