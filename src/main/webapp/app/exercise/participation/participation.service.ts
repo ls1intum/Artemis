@@ -1,9 +1,9 @@
 import { Service, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { createRequestOption } from 'app/foundation/util/request.util';
-import { PageableResult, ParticipationScoreSearch, ParticipationSearch } from 'app/foundation/pagination/pageable-table';
+import { PageableResult, ParticipationScoreSearch, ParticipationSearch, toPageableResult } from 'app/foundation/pagination/pageable-table';
 import { ParticipationNameExportDTO } from 'app/exercise/exercise-scores/participation-name-export-dto.model';
 import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
 import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
@@ -122,14 +122,13 @@ export class ParticipationService {
                 observe: 'response',
             })
             .pipe(
-                map((res: HttpResponse<ParticipationManagementDTO[]>) => {
-                    const content = res.body ?? [];
+                map(toPageableResult),
+                tap(({ content }) =>
                     content.forEach((dto) => {
                         dto.initializationDate = convertDateFromServer(dto.initializationDate);
                         dto.individualDueDate = convertDateFromServer(dto.individualDueDate);
-                    });
-                    return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
-                }),
+                    }),
+                ),
             );
     }
 
@@ -156,14 +155,13 @@ export class ParticipationService {
                 observe: 'response',
             })
             .pipe(
-                map((res: HttpResponse<ParticipationScoreDTO[]>) => {
-                    const content = res.body ?? [];
+                map(toPageableResult),
+                tap(({ content }) =>
                     content.forEach((dto) => {
                         dto.initializationDate = convertDateFromServer(dto.initializationDate);
                         dto.completionDate = convertDateFromServer(dto.completionDate);
-                    });
-                    return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
-                }),
+                    }),
+                ),
             );
     }
 

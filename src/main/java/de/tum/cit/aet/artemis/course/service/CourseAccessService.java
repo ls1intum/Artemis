@@ -18,7 +18,6 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +29,7 @@ import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
 import de.tum.cit.aet.artemis.core.dto.CourseRoleMemberDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseRoleMembersSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.PagedSearchDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserForRegistrationDTO;
 import de.tum.cit.aet.artemis.core.repository.UserCourseRoleRepository;
@@ -238,7 +237,7 @@ public class CourseAccessService {
      * @return page of matching users
      */
     @NonNull
-    public Page<CourseRoleMemberDTO> getPagedUsersInCourseRole(long courseId, CourseRole role, CourseRoleMembersSearchDTO search) {
+    public Page<CourseRoleMemberDTO> getPagedUsersInCourseRole(long courseId, CourseRole role, PagedSearchDTO search) {
         return userRepository.searchUsersInCourseRole(PageRequest.of(search.page(), search.pageSize()), search, courseId, role).map(CourseRoleMemberDTO::of);
     }
 
@@ -254,13 +253,7 @@ public class CourseAccessService {
      * @return a page of {@link UserForRegistrationDTO} with {@code isRegistered} set appropriately
      */
     public Page<UserForRegistrationDTO> searchUsersForCourseRole(long courseId, CourseRole role, String searchTerm, int page, int size) {
-        PageRequest pageable = PageRequest.of(page, size);
-        Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(pageable, searchTerm);
-        List<Long> userIds = users.getContent().stream().map(User::getId).toList();
-        Set<Long> registeredIds = userIds.isEmpty() ? Set.of() : userCourseRoleRepository.findUserIdsByCourse_IdAndRoleAndUser_IdIn(courseId, role, userIds);
-        List<UserForRegistrationDTO> dtos = users.getContent().stream().map(
-                u -> new UserForRegistrationDTO(u.getId(), u.getLogin(), u.getName(), u.getEmail(), u.getRegistrationNumber(), u.getImageUrl(), registeredIds.contains(u.getId())))
-                .toList();
-        return new PageImpl<>(dtos, pageable, users.getTotalElements());
+        Page<User> users = userRepository.searchAllByLoginOrNameOrEmailOrRegistrationNumber(PageRequest.of(page, size), searchTerm);
+        return UserForRegistrationDTO.pageOf(users, userIds -> userCourseRoleRepository.findUserIdsByCourse_IdAndRoleAndUser_IdIn(courseId, role, userIds));
     }
 }

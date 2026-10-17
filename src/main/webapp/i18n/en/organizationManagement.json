@@ -21,7 +21,7 @@
             "userSearch": {
                 "usersPerPage": "{{number}} users per page",
                 "showAllUsers": "Show all users",
-                "searchForUsers": "Add a user to this organization by searching for login or name",
+                "searchForUsers": "Search members by login, name, email, or registration number",
                 "searchNoResults": "No users found",
                 "addUsersButton": "Add Users",
                 "removeFromOrganization": {
