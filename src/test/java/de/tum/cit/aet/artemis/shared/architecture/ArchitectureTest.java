@@ -942,6 +942,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 "AppleAppSiteAssociationResourceTest", "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "CourseResourceArchitectureTest",
                 "LocalCIResourceArchitectureTest", "LocalVCResourceArchitectureTest", "NotificationResourceArchitectureTest", "PlagiarismApiArchitectureTest",
                 "LtiApiArchitectureTest", "IrisTutorSuggestionIntegrationTest", "IrisAutonomousTutorPipelineIntegrationTest", "HyperionCodeGenerationResourceTest",
+                "HyperionExerciseGenerationResourceTest",
                 // Unit tests of the logic a resource performs around its endpoints: the argument validation, the mapping of a
                 // failure to a status, and the access checks made inside the method rather than by its annotations. They call
                 // the resource directly on purpose; the annotations and the routing stay covered by the integration tests.
@@ -949,7 +950,13 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 "ProgrammingExerciseParticipationResourceResetTest", "PublicProgrammingExerciseResultResourceTest", "RepositoryProgrammingExerciseParticipationResourceTest",
                 "IrisGlobalSearchResourceTest", "IngestionCoverageResourceTest", "PyrisInternalIngestionWorkerResourceTest", "GlobalSearchResourceCandidateTest",
                 "FaqImportResourceTest" };
-        final var classes = classesExcept(allClasses, exceptions);
+        // Resource unit tests exercise validation and ownership checks directly. Their nested parameterized cases belong to the same test, not production code.
+        final var resourceBehaviourTests = new String[] { "ParticipationResourceGenerationGuardTest", "ProgrammingExerciseCreationResourceMutationGuardTest",
+                "ProgrammingExerciseDeletionResourceMutationGuardTest", "ProgrammingExerciseBuildConfigResourceMutationGuardTest", "ProgrammingExercisePartialUpdateResourceTest",
+                "ProgrammingExerciseTestCaseResourceTest", "ProgrammingExerciseUpdateResourceTest", "RepositoryResourceMutationGuardTest",
+                "StaticCodeAnalysisResourceMutationGuardTest", "SubmissionPolicyResourceMutationGuardTest", "AdminHyperionLiveSaveRecoveryTest",
+                "ProgrammingGradingLiveSaveCoordinationTest" };
+        final var classes = classesAndNestedExcept(classesExcept(allClasses, exceptions), resourceBehaviourTests);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
 
