@@ -218,11 +218,21 @@ public class BuildJobContainerService {
 
             // Docker reads the swap limit as the total of memory and swap and refuses to create a container whose total is
             // below its memory. A job that sets only its memory inherits the default total, so the total is raised to the
-            // memory, which leaves the job without swap instead of without a container.
+            // memory, which leaves the job without swap instead of without a container. Where the administrator's maximum
+            // total forbids that, the memory is lowered to the total instead, so neither maximum is exceeded.
             if (adjustedMemory > 0 && adjustedMemorySwap > 0 && adjustedMemorySwap < adjustedMemory) {
-                log.warn("The memory swap limit {} of container {} is below its memory limit {}; the container runs without swap",
-                        BuildAgentConfiguration.formatMemory(adjustedMemorySwap), containerName, BuildAgentConfiguration.formatMemory(adjustedMemory));
-                adjustedMemorySwap = adjustedMemory;
+                long maxTotal = maxMemorySwap > 0 ? convertMemoryFromMBToBytes(maxMemorySwap) : Long.MAX_VALUE;
+                if (adjustedMemory <= maxTotal) {
+                    log.warn("The memory swap limit {} of container {} is below its memory limit {}; the container runs without swap",
+                            BuildAgentConfiguration.formatMemory(adjustedMemorySwap), containerName, BuildAgentConfiguration.formatMemory(adjustedMemory));
+                    adjustedMemorySwap = adjustedMemory;
+                }
+                else {
+                    log.warn("The memory limit {} of container {} exceeds the maximum total memory and swap limit {} of this build agent; both are set to the maximum",
+                            BuildAgentConfiguration.formatMemory(adjustedMemory), containerName, BuildAgentConfiguration.formatMemory(maxTotal));
+                    adjustedMemory = maxTotal;
+                    adjustedMemorySwap = maxTotal;
+                }
             }
 
             customHostConfig = copyAndAdjustHostConfig(defaultHostConfig, network, adjustedCpuCount, adjustedMemory, adjustedMemorySwap);

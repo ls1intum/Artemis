@@ -141,6 +141,19 @@ class BuildJobContainerServiceTest extends AbstractArtemisBuildAgentTest {
     }
 
     @Test
+    void testTheMaximumTotalLimitBoundsTheMemoryWhenItIsBelowTheMaximumMemory() {
+        // the administrator allows 8096 MB of memory but a total of 2048 MB; a job asking for 4096/4096 MB keeps both maxima, so it gets 2048/2048 MB
+        ReflectionTestUtils.setField(buildJobContainerService, "maxMemory", 8096);
+        ReflectionTestUtils.setField(buildJobContainerService, "maxMemorySwap", 2048);
+        var runConfig = new DockerRunConfig(List.of(), "", 0, 4096, 4096);
+        buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
+
+        HostConfig hostConfig = captureHostConfig();
+        assertThat(hostConfig.getMemory()).as("the memory is lowered to the maximum total instead of the total being raised above it").isEqualTo(2048L * 1024L * 1024L);
+        assertThat(hostConfig.getMemorySwap()).isEqualTo(2048L * 1024L * 1024L);
+    }
+
+    @Test
     void testNullNetworkIsIgnored() {
         var runConfig = new DockerRunConfig(List.of(), null, 1, 1, 1);
         buildJobContainerService.configureContainer(CONTAINER_NAME, IMAGE_NAME, BUILD_SCRIPT, runConfig);
