@@ -8,7 +8,14 @@
                         <span class="text-state-danger" aria-hidden="true">*</span>
                     }
                     @if (titleHelpIconText()) {
-                        <fa-icon [icon]="faQuestionCircle" class="ms-1 text-muted-color" tabindex="0" [tumAetUiTooltip]="titleHelpIconText()! | artemisTranslate" />
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="ms-1 text-muted-color"
+                            role="img"
+                            tabindex="0"
+                            [attr.aria-label]="titleHelpIconText()! | artemisTranslate"
+                            [tumAetUiTooltip]="titleHelpIconText()! | artemisTranslate"
+                        />
                     }
                 </div>
             }
@@ -21,6 +28,7 @@
                 type="text"
                 tumAetUiInput
                 [tumAetUiInputInvalid]="!!field_title.invalid && (field_title.dirty || field_title.touched)"
+                [tumAetUiInputDescribedBy]="field_title.control.errors?.disallowedValue ? titleErrorId : undefined"
                 class="w-full"
                 name="title"
                 id="field_title"
@@ -30,7 +38,7 @@
                 [disallowedValues]="alreadyUsedTitles()"
             />
             @if (field_title?.control?.errors?.disallowedValue) {
-                <div role="alert" class="mt-1 text-state-danger" jhiTranslate="artemisApp.exercise.form.title.disallowedValue"></div>
+                <div [id]="titleErrorId" role="alert" class="mt-1 text-state-danger" jhiTranslate="artemisApp.exercise.form.title.disallowedValue"></div>
             }
         </div>
     }
@@ -43,7 +51,14 @@
                         <span class="text-state-danger" aria-hidden="true">*</span>
                     }
                     @if (channelNameHelpIconText()) {
-                        <fa-icon [icon]="faQuestionCircle" class="ms-1 text-muted-color" tabindex="0" [tumAetUiTooltip]="channelNameHelpIconText()! | artemisTranslate" />
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="ms-1 text-muted-color"
+                            role="img"
+                            tabindex="0"
+                            [attr.aria-label]="channelNameHelpIconText()! | artemisTranslate"
+                            [tumAetUiTooltip]="channelNameHelpIconText()! | artemisTranslate"
+                        />
                     }
                 </div>
             }

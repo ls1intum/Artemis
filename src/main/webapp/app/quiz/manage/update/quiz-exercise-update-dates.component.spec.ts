@@ -22,7 +22,6 @@ import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
-import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { CategorySelectorPrimengComponent } from 'app/exercise/category-selector-primeng/category-selector-primeng.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
@@ -99,17 +98,10 @@ describe('QuizExerciseUpdateComponent schedule section', () => {
         })
             .overrideComponent(QuizExerciseUpdateComponent, {
                 remove: {
-                    imports: [
-                        ExerciseTitleChannelNameComponent,
-                        CategorySelectorPrimengComponent,
-                        CompetencySelectionComponent,
-                        QuizQuestionListEditComponent,
-                        QuizAiGenerationModalComponent,
-                    ],
+                    imports: [CategorySelectorPrimengComponent, CompetencySelectionComponent, QuizQuestionListEditComponent, QuizAiGenerationModalComponent],
                 },
                 add: {
                     imports: [
-                        MockComponent(ExerciseTitleChannelNameComponent),
                         MockComponent(CategorySelectorPrimengComponent),
                         MockComponent(CompetencySelectionComponent),
                         MockComponent(QuizQuestionListEditComponent),

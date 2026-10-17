@@ -247,7 +247,9 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
             .filter((link) => link.competency?.id && !availableIds.has(link.competency.id))
             .map((link) => new CompetencyLearningObjectLink(link.competency, link.weight ?? MEDIUM_COMPETENCY_LINK_WEIGHT));
         if (newLinks.length > 0) {
-            this.competencyLinks.set([...this.competencyLinks()!, ...newLinks]);
+            const updatedLinks = [...this.competencyLinks()!, ...newLinks];
+            this.competencyLinks.set(updatedLinks);
+            this.availableCount.emit(updatedLinks.length);
         }
 
         // Update selection state

@@ -156,3 +156,27 @@ test('a conflict retains the last published value', () => {
     assert.throws(() => publishBadges(first, ['coverage.json']));
     assert.equal(git(remote, ['show', 'badges:coverage.json']).toString(), 'second update');
 });
+
+test('publishing named badges leaves unrelated staged files out of the commit', () => {
+    const { remote, first } = badgeRepository();
+    fs.writeFileSync(path.join(first, 'unrelated.txt'), 'keep staged');
+    git(first, ['add', 'unrelated.txt']);
+    fs.writeFileSync(path.join(first, 'coverage.svg'), 'new coverage');
+
+    assert.equal(publishBadges(first, ['coverage.svg']), true);
+
+    assert.equal(git(remote, ['show', '--format=', '--name-only', 'badges']).toString().trim(), 'coverage.svg');
+    assert.equal(git(first, ['diff', '--cached', '--name-only']).toString().trim(), 'unrelated.txt');
+});
+
+test('unrelated staged files do not trigger publication of unchanged badges', () => {
+    const { remote, first } = badgeRepository();
+    const previousHead = git(remote, ['rev-parse', 'badges']).toString();
+    fs.writeFileSync(path.join(first, 'unrelated.txt'), 'keep staged');
+    git(first, ['add', 'unrelated.txt']);
+
+    assert.equal(publishBadges(first, ['coverage.json']), false);
+
+    assert.equal(git(remote, ['rev-parse', 'badges']).toString(), previousHead);
+    assert.equal(git(first, ['diff', '--cached', '--name-only']).toString().trim(), 'unrelated.txt');
+});

@@ -8,6 +8,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { generateUuid } from 'app/foundation/util/crypto.utils';
 
 @Component({
     selector: 'jhi-title-channel-name',
@@ -17,6 +18,7 @@ import { TumAetUiInputDirective, TumAetUiTooltipDirective } from '@tumaet/ui-ang
 })
 export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnInit {
     protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly titleErrorId = `title-error-${generateUuid()}`;
 
     title = model<string | undefined>(undefined);
     channelName = model<string | undefined>(undefined);

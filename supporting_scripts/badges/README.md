@@ -7,7 +7,8 @@ The README loads `coverage.svg`, `latest-version.svg` and `license.svg` directly
 
 ## Render locally
 
-In a checkout of the `badges` branch that already contains the authoritative `coverage.json`:
+Run these commands from an Artemis source checkout. Pass a separate checkout of the `badges`
+branch that already contains the authoritative `coverage.json` as the directory argument:
 
 ```bash
 node supporting_scripts/badges/render-badges.mjs coverage /path/to/badges-checkout

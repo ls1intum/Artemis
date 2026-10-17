@@ -239,6 +239,18 @@ describe('CompetencySelection', () => {
         const competency1 = { id: 1, title: 'first' } as Competency;
         const competency2 = { id: 2, title: 'second' } as Competency;
 
+        it('should reveal a consuming form section when a refresh adds the first available competency', () => {
+            const counts: number[] = [];
+            component.availableCount.subscribe((count) => counts.push(count));
+            fixture.detectChanges();
+
+            component.refreshWithLinks([new CompetencyLearningObjectLink(competency1, 0.5)]);
+            component.refreshWithLinks([new CompetencyLearningObjectLink(competency1, 1)]);
+
+            expect(counts).toEqual([0, 1]);
+            expect(component.competencyLinks()).toHaveLength(1);
+        });
+
         it('should not emit valueChange (regression: infinite valueChange loop with a parent that refreshes on valueChange)', () => {
             vi.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: [competency1, competency2] });
             fixture.detectChanges();

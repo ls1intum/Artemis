@@ -7,8 +7,13 @@ export function publishBadges(directory, files, run = (args) => execFileSync('gi
     run(['config', 'user.name', 'github-actions[bot]']);
     run(['config', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com']);
     run(['add', '--', ...files]);
-    if (!run(['diff', '--cached', '--name-only']).toString().trim()) return false;
-    run(['commit', '-m', 'Update README badges']);
+    if (
+        !run(['diff', '--cached', '--name-only', '--', ...files])
+            .toString()
+            .trim()
+    )
+        return false;
+    run(['commit', '-m', 'Update README badges', '--', ...files]);
     for (let attempt = 0; attempt < 3; attempt += 1) {
         try {
             run(['push', 'origin', 'HEAD:badges']);

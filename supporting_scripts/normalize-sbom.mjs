@@ -9,10 +9,15 @@ export function normalizeSbom(bom) {
         return Object.fromEntries(
             Object.keys(value)
                 .sort()
-                .map((key) => [key, canonicalize(key === 'externalReferences' ? value[key].filter((reference) => reference.type !== 'build-system') : value[key])]),
+                .map((key) => [key, canonicalize(value[key])]),
         );
     };
     const result = canonicalize(bom);
+    // Only this BOM and its main component describe the current build environment.
+    // Dependency components can carry stable build provenance that must remain intact.
+    for (const subject of [result, result.metadata?.component]) {
+        if (subject?.externalReferences) subject.externalReferences = subject.externalReferences.filter((reference) => reference.type !== 'build-system');
+    }
     delete result.serialNumber;
     if (result.metadata) delete result.metadata.timestamp;
     // cdxgen's optional boilerplate includes both a generation clock and a prose date.
