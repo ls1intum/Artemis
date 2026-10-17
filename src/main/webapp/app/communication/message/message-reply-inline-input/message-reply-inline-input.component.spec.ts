@@ -76,6 +76,30 @@ describe('MessageReplyInlineInputComponent', () => {
         communicationServiceUpdateStub = vi.spyOn(communicationService, 'updateAnswerPost');
     });
 
+    it('passes a distinct draft identity when equal-content replies change parent threads', () => {
+        component.posting.set({ post: { id: 11 }, content: '' });
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.draftIdentity()).toBe('reply:11:new');
+
+        component.posting.set({ post: { id: 12 }, content: '' });
+        fixture.detectChanges();
+        expect(editor.draftIdentity()).toBe('reply:12:new');
+    });
+
+    it('loads a different edited reply in the same thread instead of preserving the previous reply content', () => {
+        component.posting.set({ id: 21, post: { id: 11 }, content: 'First reply' });
+        fixture.detectChanges();
+        component.formGroup.get('content')!.setValue('Unsaved first reply');
+
+        component.posting.set({ id: 22, post: { id: 11 }, content: 'Second reply' });
+        fixture.detectChanges();
+
+        expect(component.formGroup.get('content')!.value).toBe('Second reply');
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.draftIdentity()).toBe('reply:11:22');
+    });
+
     it('should invoke communication service with created message reply', () => {
         component.posting.set({ ...communicationPostToCreateUser1 });
         fixture.detectChanges();

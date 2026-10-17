@@ -14,7 +14,7 @@ import {
     viewChild,
 } from '@angular/core';
 import monaco from 'monaco-editor';
-import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -47,6 +47,11 @@ import { PostingEditType } from '../communication.util';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { FileService } from 'app/foundation/service/file.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
+import { MessageEditorComponent } from 'app/communication/message-editor/message-editor.component';
+import { canEditMessageVisually } from 'app/communication/message-editor/message-editor-conversion';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -57,12 +62,19 @@ import { CourseManagementService } from 'app/course/manage/services/course-manag
             useExisting: forwardRef(() => PostingMarkdownEditorComponent),
             multi: true,
         },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => PostingMarkdownEditorComponent),
+            multi: true,
+        },
     ],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MarkdownEditorMonacoComponent, PostingContentComponent],
+    // An idle blank composer must stay neutral even when Angular marks its required control as touched.
+    host: { '[style.border-left-width.px]': '!content()?.trim() ? 0 : undefined' },
+    imports: [MarkdownEditorMonacoComponent, PostingContentComponent, MessageEditorComponent, TumAetUiButtonDirective, ArtemisTranslatePipe, RedirectToIrisButtonComponent],
 })
-export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterViewInit {
+export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterViewInit, Validator {
     private communicationService = inject(CommunicationService);
     private fileService = inject(FileService);
     private courseManagementService = inject(CourseManagementService);
@@ -77,6 +89,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     readonly markdownEditor = viewChild.required(MarkdownEditorMonacoComponent);
 
     readonly maxContentLength = input<number>();
+    /** Identifies the message or reply draft independently of its current text. */
+    readonly draftIdentity = input<string>();
     readonly editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
     readonly isInputLengthDisplayed = input(true);
     readonly suppressNewlineOnEnter = input(true);
@@ -98,6 +112,12 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     readonly lectureAttachmentReferenceAction = signal<LectureAttachmentReferenceAction>(undefined!);
     readonly defaultActions = signal<TextEditorAction[]>(undefined!);
     readonly content = signal<string | undefined>(undefined);
+    protected readonly supportsFormattedContent = signal(true);
+    readonly formattedMode = computed(() => this.supportsFormattedContent() && !!this.effectiveCourseId());
+    readonly uploadingFormattedAttachment = signal(false);
+    readonly effectiveCourseId = computed(() => this.course()?.id ?? this.communicationService.getCourse()?.id);
+    readonly effectiveConversation = computed(() => this.activeConversation() ?? this.communicationService.getCurrentConversation());
+    readonly isUpdating = computed(() => this.editType() === PostingEditType.UPDATE);
     previewMode = false;
     fallbackConversationId = computed<number | undefined>(() => this.activeConversation()?.id);
 
@@ -190,6 +210,21 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * the callback function to register on UI change
      */
     onChange = (_val: string) => {};
+    private validatorChanged = () => {};
+
+    /** Prevents a form submission from discarding an attachment that is still uploading. */
+    validate(): ValidationErrors | null {
+        return this.uploadingFormattedAttachment() ? { attachmentUploading: true } : null;
+    }
+
+    registerOnValidatorChange(callback: () => void): void {
+        this.validatorChanged = callback;
+    }
+
+    formattedUploadStateChanged(uploading: boolean): void {
+        this.uploadingFormattedAttachment.set(uploading);
+        this.validatorChanged();
+    }
 
     /**
      * emits the value change from component
@@ -204,6 +239,10 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * @param value
      */
     writeValue(value: string | undefined): void {
+        if (this.uploadingFormattedAttachment() && (value ?? '') !== this.content()) {
+            this.formattedUploadStateChanged(false);
+        }
+        this.supportsFormattedContent.set(canEditMessageVisually(value ?? ''));
         this.content.set(value ?? '');
     }
 
@@ -230,6 +269,13 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         this.valueChanged();
     }
 
+    /** Ignores delayed emissions from the hidden Markdown editor while formatted editing owns the value. */
+    onMarkdownChange(value: string): void {
+        if (!this.formattedMode()) {
+            this.updateField(value);
+        }
+    }
+
     onKeyDown(event: KeyboardEvent) {
         // Prevent a newline from being added to the text when pressing enter
         if (this.suppressNewlineOnEnter() && event.key === 'Enter' && !event.shiftKey) {
@@ -244,6 +290,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * keystrokes. Call this before submitting the form to sync the control with the editor.
      */
     flushPendingTextChange(): void {
-        this.markdownEditor().flushPendingTextChange();
+        if (!this.formattedMode()) {
+            this.markdownEditor().flushPendingTextChange();
+        }
     }
 }

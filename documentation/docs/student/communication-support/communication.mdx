@@ -23,6 +23,9 @@ import tutorRoleImg from "../assets/communication/user-authorities/tutor-role.pn
 import studentRoleImg from "../assets/communication/user-authorities/student-role.png";
 
 import messageReferencesImg from "../assets/communication/references.png";
+import formattedMessageEditorImg from "../assets/communication/formatted-message-editor.png";
+import compactMessageToolbarImg from "../assets/communication/formatted-message-toolbar-collapsed.png";
+import expandedMessageToolbarImg from "../assets/communication/formatted-message-toolbar-expanded.png";
 import slideMenuImg from "../assets/communication/slide-menu-view.png";
 import slidePreviewImg from "../assets/communication/slide-preview-message.png";
 import slideViewImg from "../assets/communication/slide-open.png";
@@ -309,6 +312,46 @@ Student Authority
 To foster interaction between users, we integrate the well-known emoji reaction bar.
 Each user in the course can react on any message by making use of the emoji selection button.
 The ➕ emoji serves as the up-voting reaction, which influences the display order of messages.
+
+### Formatted Message Editor
+
+In the web app, messages and replies open with their formatting visible.
+The compact toolbar shows bold, italic, links, person mentions and course references.
+Select **More options** to show the remaining formats, attachments, slides, FAQs and emojis; **Fewer options** hides them again.
+The expanded controls stay in the same row when space permits and wrap on narrower screens.
+Keyboard shortcuts and pasting or dropping files also work while these options are hidden.
+
+<Image src={compactMessageToolbarImg} alt={"The compact message toolbar with basic formatting, links, mentions, references and More options"} size={ImageSize.large} />
+
+<Image src={expandedMessageToolbarImg} alt={"The expanded message toolbar showing additional formatting and resource controls; Fewer options hides the additional controls"} size={ImageSize.large} />
+
+Use the toolbar to format selected text or add a link. Select the link toolbar button again to close its popup. Select an existing link to change its text or destination.
+**Remove link** keeps the text and removes its destination.
+Select text to change its formatting, or choose a format at the cursor to apply it to the text you type next.
+Choose the same format again to turn it off. Toolbar buttons show which formats are active at the cursor.
+
+<Image src={formattedMessageEditorImg} alt={"A message with slide and FAQ references, an image preview and a PDF attachment"} size={ImageSize.large} />
+
+Type `@` to search for people, `#` to search for channels, exercises and lectures in the current course,
+or `:` followed by an emoji name to search for an emoji.
+Suggestions open beside the text you are completing. Use the arrow keys to choose a result and Enter to insert it. Enter accepts the result without sending the message;
+Escape closes the suggestions. Numeric references such as `#123` remain available for linking to messages.
+
+Pressing Backspace immediately after a reference or link selects only that item, including when the cursor follows its automatic separating space.
+Press Backspace again to delete it. The surrounding text stays unchanged.
+Use Ctrl+Z or Command+Z to undo edits, formatting and reference insertions.
+Enter sends a message in normal text, while Shift+Enter inserts a line break. Inside lists, quotes and code blocks, Enter continues editing.
+Press Enter or Backspace on an empty list item to return to normal text on the same line.
+
+The toolbar also lets you attach images or PDFs, search lecture attachments and individual slides, reference a published FAQ, or search for an emoji.
+Images have a thumbnail in the editor, and PDFs appear as links. You can also paste or drop files into the message.
+Uploads use the same file types and size limits as the Markdown editor. Wait for an upload to finish before sending or saving.
+Resource pickers insert at the cursor position you selected before opening them. Slide numbers stay visible beside the title.
+Hover over a slide or select it with the arrow keys to preview it before inserting.
+The compact emoji picker closes when you click outside it or press Escape.
+
+Messages with tables, mathematical formulas or other unsupported formatting remain in the Markdown editor to preserve their content.
+The formatted editor is an exploration for the web app; the iOS app continues to use its existing editor.
 
 ### Reference Course Entities
 

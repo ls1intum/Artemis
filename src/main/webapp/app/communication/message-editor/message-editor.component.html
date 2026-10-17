@@ -1,0 +1,259 @@
+<div class="message-composer rounded-md">
+    <div class="message-editor-divider flex flex-wrap items-center gap-1 border-b p-1" data-testid="message-editor-toolbar">
+        <div class="flex max-w-full flex-wrap items-center gap-1" role="group" [attr.aria-label]="'artemisApp.communication.formattedEditor.formatting' | artemisTranslate">
+            @for (format of basicFormats; track format.tag) {
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="text"
+                    severity="secondary"
+                    size="small"
+                    [attr.aria-label]="'artemisApp.communication.formattedEditor.' + format.label | artemisTranslate"
+                    [title]="'artemisApp.communication.formattedEditor.' + format.label | artemisTranslate"
+                    [attr.data-testid]="'message-format-' + format.tag"
+                    [attr.aria-pressed]="activeFormatting().includes(format.tag)"
+                    (mousedown)="remember($event)"
+                    (click)="applyFormat(format.tag)"
+                >
+                    <fa-icon [icon]="format.icon" />
+                </button>
+            }
+            <button
+                type="button"
+                tumAetUiButton
+                variant="text"
+                severity="secondary"
+                size="small"
+                [attr.aria-label]="'artemisApp.communication.formattedEditor.link' | artemisTranslate"
+                [title]="'artemisApp.communication.formattedEditor.link' | artemisTranslate"
+                data-testid="message-link-button"
+                [disabled]="!linkAllowed()"
+                [attr.aria-expanded]="linkOpen()"
+                (mousedown)="remember($event)"
+                (click)="openLink()"
+            >
+                <fa-icon [icon]="icons.faLink" />
+            </button>
+            <button
+                type="button"
+                tumAetUiButton
+                variant="text"
+                severity="secondary"
+                size="small"
+                [attr.aria-label]="'artemisApp.communication.formattedEditor.mention' | artemisTranslate"
+                [title]="'artemisApp.communication.formattedEditor.mention' | artemisTranslate"
+                data-testid="message-mention-button"
+                (mousedown)="remember($event)"
+                (click)="insertTrigger('@')"
+            >
+                <fa-icon [icon]="icons.faAt" />
+            </button>
+            <button
+                type="button"
+                tumAetUiButton
+                variant="text"
+                severity="secondary"
+                size="small"
+                [attr.aria-label]="'artemisApp.communication.formattedEditor.reference' | artemisTranslate"
+                [title]="'artemisApp.communication.formattedEditor.reference' | artemisTranslate"
+                data-testid="message-reference-button"
+                (mousedown)="remember($event)"
+                (click)="insertTrigger('#')"
+            >
+                <fa-icon [icon]="icons.faHashtag" />
+            </button>
+            <button
+                type="button"
+                tumAetUiButton
+                variant="text"
+                severity="secondary"
+                size="small"
+                data-testid="message-toolbar-toggle"
+                [attr.aria-label]="'artemisApp.communication.formattedEditor.' + (toolbarExpanded() ? 'fewerOptions' : 'moreOptions') | artemisTranslate"
+                [title]="'artemisApp.communication.formattedEditor.' + (toolbarExpanded() ? 'fewerOptions' : 'moreOptions') | artemisTranslate"
+                [attr.aria-expanded]="toolbarExpanded()"
+                [attr.aria-controls]="advancedToolbarId"
+                (mousedown)="remember($event)"
+                (click)="toggleToolbar()"
+            >
+                <fa-icon [icon]="toolbarExpanded() ? icons.faChevronUp : icons.faEllipsis" />
+            </button>
+        </div>
+        <div
+            class="message-editor-advanced-toolbar flex max-w-full flex-wrap items-center gap-1"
+            [id]="advancedToolbarId"
+            [hidden]="!toolbarExpanded() && !uploading() && !tools()?.error()"
+            [attr.role]="toolbarExpanded() ? 'group' : null"
+            [attr.aria-label]="toolbarExpanded() ? ('artemisApp.communication.formattedEditor.moreOptions' | artemisTranslate) : null"
+            data-testid="message-advanced-toolbar"
+        >
+            <div class="message-editor-advanced-controls flex flex-wrap gap-1" [hidden]="!toolbarExpanded()">
+                @for (format of advancedFormats; track format.tag) {
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="text"
+                        severity="secondary"
+                        size="small"
+                        [attr.aria-label]="'artemisApp.communication.formattedEditor.' + format.label | artemisTranslate"
+                        [title]="'artemisApp.communication.formattedEditor.' + format.label | artemisTranslate"
+                        [attr.data-testid]="'message-format-' + format.tag"
+                        [attr.aria-pressed]="activeFormatting().includes(format.tag)"
+                        (mousedown)="remember($event)"
+                        (click)="applyFormat(format.tag)"
+                    >
+                        <fa-icon [icon]="format.icon" />
+                    </button>
+                }
+                @for (block of blocks; track block.tag) {
+                    <button
+                        type="button"
+                        tumAetUiButton
+                        variant="text"
+                        severity="secondary"
+                        size="small"
+                        [attr.aria-label]="'artemisApp.communication.formattedEditor.' + block.label | artemisTranslate"
+                        [title]="'artemisApp.communication.formattedEditor.' + block.label | artemisTranslate"
+                        [attr.data-testid]="'message-block-' + block.tag"
+                        [attr.aria-pressed]="activeFormatting().includes(block.tag)"
+                        (mousedown)="remember($event)"
+                        (click)="applyBlock(block.tag)"
+                    >
+                        <fa-icon [icon]="block.icon" />
+                    </button>
+                }
+            </div>
+            <jhi-message-editor-tools
+                [controlsVisible]="toolbarExpanded()"
+                [courseId]="courseId()"
+                [conversationId]="conversation()?.id"
+                [editorRevision]="editorRevision()"
+                [draftIdentity]="draftIdentity()"
+                [captureSelection]="captureEntitySelection"
+                (insert)="insertResource($event)"
+                (uploadingChange)="uploadStateChanged($event)"
+                (closed)="focus()"
+            />
+        </div>
+    </div>
+
+    @if (linkOpen()) {
+        <div
+            class="message-editor-divider flex flex-wrap items-end gap-2 border-b p-2"
+            role="group"
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.link' | artemisTranslate"
+            (keydown.escape)="closeLink(); $event.stopPropagation()"
+        >
+            <label class="flex min-w-0 flex-1 flex-col gap-1 text-sm">
+                {{ 'artemisApp.communication.formattedEditor.linkText' | artemisTranslate }}
+                <input data-testid="message-link-text" tumAetUiInput type="text" [value]="linkText()" (input)="updateLinkField($event, false)" (keydown.enter)="saveLink($event)" />
+            </label>
+            <label class="flex min-w-0 flex-1 flex-col gap-1 text-sm">
+                {{ 'artemisApp.communication.formattedEditor.linkUrl' | artemisTranslate }}
+                <input
+                    tumAetUiInput
+                    type="url"
+                    data-testid="message-link-url"
+                    [value]="linkUrl()"
+                    [attr.aria-invalid]="linkInvalid()"
+                    [attr.aria-describedby]="linkInvalid() ? listId + '-url-error' : null"
+                    (input)="updateLinkField($event, true)"
+                    (keydown.enter)="saveLink($event)"
+                />
+            </label>
+            <button data-testid="apply-message-link" type="button" tumAetUiButton size="small" (click)="saveLink()">
+                {{ 'artemisApp.communication.formattedEditor.apply' | artemisTranslate }}
+            </button>
+            @if (editingLink()) {
+                <button data-testid="remove-message-link" type="button" tumAetUiButton variant="text" size="small" (click)="removeLink()">
+                    {{ 'artemisApp.communication.formattedEditor.unlink' | artemisTranslate }}
+                </button>
+            }
+            <button type="button" tumAetUiButton variant="text" size="small" (click)="closeLink()" [attr.aria-label]="'artemisApp.communication.cancel' | artemisTranslate">
+                <fa-icon [icon]="icons.faXmark" />
+            </button>
+            @if (linkInvalid()) {
+                <p [id]="listId + '-url-error'" class="m-0 w-full text-sm text-state-danger" role="alert">
+                    {{ 'artemisApp.communication.formattedEditor.invalidLink' | artemisTranslate }}
+                </p>
+            }
+        </div>
+    }
+
+    <div>
+        <div
+            #editable
+            contenteditable="true"
+            role="textbox"
+            aria-multiline="true"
+            aria-autocomplete="list"
+            spellcheck="true"
+            class="message-editor-content"
+            data-testid="formatted-message-input"
+            [attr.aria-label]="'artemisApp.communication.formattedEditor.message' | artemisTranslate"
+            [attr.aria-describedby]="hintId"
+            [attr.aria-controls]="suggestionsOpen() ? listId : null"
+            [attr.aria-activedescendant]="suggestionsOpen() && suggestions().length ? listId + '-' + activeIndex() : null"
+            (beforeinput)="beforeInput($event)"
+            (input)="onInput($event)"
+            (keydown)="keydown($event)"
+            (compositionstart)="compositionStart()"
+            (compositionend)="compositionEnd()"
+            (paste)="paste($event)"
+            (drop)="drop($event)"
+            (dragover)="$event.preventDefault()"
+            (click)="clicked($event)"
+            (keyup.arrowleft)="selectionChanged()"
+            (keyup.arrowright)="selectionChanged()"
+            (mouseup)="selectionChanged()"
+            (mousedown)="clearItemHighlight()"
+            (blur)="dismissSuggestions()"
+            (scroll)="dismissSuggestions()"
+        ></div>
+    </div>
+    <p [id]="hintId" class="message-editor-divider message-editor-muted m-0 border-t p-2 text-xs">{{ 'artemisApp.communication.formattedEditor.hint' | artemisTranslate }}</p>
+</div>
+
+<ng-template
+    cdkConnectedOverlay
+    [cdkConnectedOverlayOrigin]="completionOrigin()"
+    [cdkConnectedOverlayPush]="true"
+    [cdkConnectedOverlayOpen]="suggestionsOpen()"
+    [cdkConnectedOverlayPositions]="positions"
+    (detach)="dismissSuggestions()"
+>
+    <div class="message-suggestions rounded-md shadow-md" data-testid="message-completion-list">
+        <div class="message-editor-muted p-2 text-xs" role="status" aria-live="polite">
+            @if (loading()) {
+                {{ 'artemisApp.communication.formattedEditor.loading' | artemisTranslate }}
+            } @else if (searchFailed()) {
+                {{ 'artemisApp.communication.formattedEditor.searchError' | artemisTranslate }}
+                <button type="button" tumAetUiButton size="small" variant="text" (mousedown)="$event.preventDefault()" (click)="refreshSuggestions()">
+                    {{ 'artemisApp.communication.formattedEditor.retry' | artemisTranslate }}
+                </button>
+            } @else if (!suggestions().length) {
+                {{ 'artemisApp.communication.formattedEditor.noResults' | artemisTranslate }}
+            } @else {
+                {{ 'artemisApp.communication.formattedEditor.choose' | artemisTranslate }}
+            }
+        </div>
+        <ul [id]="listId" role="listbox" class="m-0 list-none p-1" [attr.aria-label]="'artemisApp.communication.formattedEditor.suggestions' | artemisTranslate">
+            @for (suggestion of suggestions(); track suggestion.markdown; let index = $index) {
+                <li
+                    tabindex="-1"
+                    role="option"
+                    [id]="listId + '-' + index"
+                    [attr.aria-selected]="index === activeIndex()"
+                    class="message-suggestion flex cursor-pointer items-center justify-between gap-4 rounded-sm px-2 py-1"
+                    (mousedown)="$event.preventDefault()"
+                    (click)="accept(suggestion)"
+                    (keydown.enter)="accept(suggestion); $event.preventDefault(); $event.stopPropagation()"
+                    (mouseenter)="activeIndex.set(index)"
+                >
+                    <span class="min-w-0 truncate">{{ suggestion.label }}</span>
+                    <span class="message-editor-muted shrink-0 text-xs">{{ 'artemisApp.communication.formattedEditor.kind.' + suggestion.kind | artemisTranslate }}</span>
+                </li>
+            }
+        </ul>
+    </div>
+</ng-template>

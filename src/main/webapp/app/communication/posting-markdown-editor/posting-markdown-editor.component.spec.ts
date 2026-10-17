@@ -49,6 +49,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PostingEditType } from 'app/communication/communication.util';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { MessageEditorComponent } from 'app/communication/message-editor/message-editor.component';
+import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect-to-iris-button/redirect-to-iris-button.component';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -156,8 +158,8 @@ describe('PostingsMarkdownEditor', () => {
             declarations: [],
         });
         TestBed.overrideComponent(PostingMarkdownEditorComponent, {
-            remove: { imports: [MarkdownEditorMonacoComponent] },
-            add: { imports: [MockComponent(MarkdownEditorMonacoComponent)] },
+            remove: { imports: [MarkdownEditorMonacoComponent, MessageEditorComponent, RedirectToIrisButtonComponent] },
+            add: { imports: [MockComponent(MarkdownEditorMonacoComponent), MockComponent(MessageEditorComponent), MockComponent(RedirectToIrisButtonComponent)] },
         });
         fixture = TestBed.createComponent(PostingMarkdownEditorComponent);
         component = fixture.componentInstance;
@@ -303,7 +305,7 @@ describe('PostingsMarkdownEditor', () => {
         const charCounter = getElement(debugElement, 'p.small');
         expect(charCounter.textContent).toContain(component.maxContentLength()!.toString());
         expect(charCounter.textContent).toContain(communicationPostExerciseUser1.content!.length.toString());
-        expect(charCounter.style.color).toBe('red');
+        expect(charCounter.classList.contains('text-state-danger')).toBe(true);
     });
 
     it('should initialize markdown correctly with post content', () => {
@@ -313,6 +315,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should update value if markdown change is emitted', () => {
+        component.writeValue('$$x^2$$');
         fixture.componentRef.setInput('maxContentLength', 200);
         fixture.changeDetectorRef.detectChanges();
         mockMarkdownEditorComponent.markdownChange.emit('updated text');
@@ -320,8 +323,8 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should write value of form group in content variable', () => {
-        component.writeValue(communicationAnswerPostUser2 as unknown as string);
-        expect(component.content()).toEqual(communicationAnswerPostUser2);
+        component.writeValue(communicationAnswerPostUser2.content);
+        expect(component.content()).toEqual(communicationAnswerPostUser2.content);
     });
 
     it('should write an empty string into content for undefined values', () => {
@@ -344,6 +347,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should flush the pending editor text before the user submits with enter', () => {
+        component.writeValue('$$x^2$$');
         fixture.componentRef.setInput('suppressNewlineOnEnter', true);
         const flushSpy = vi.spyOn(mockMarkdownEditorComponent, 'flushPendingTextChange');
         component.onKeyDown(new KeyboardEvent('keydown', { key: 'Enter' }));
@@ -351,6 +355,7 @@ describe('PostingsMarkdownEditor', () => {
     });
 
     it('should flush the pending editor text when the host form asks for it', () => {
+        component.writeValue('$$x^2$$');
         const flushSpy = vi.spyOn(mockMarkdownEditorComponent, 'flushPendingTextChange');
         component.flushPendingTextChange();
         expect(flushSpy).toHaveBeenCalledOnce();
@@ -812,6 +817,117 @@ describe('PostingsMarkdownEditor', () => {
             getColumn: expect.any(Function),
         });
         expect(cursorPosition?.getColumn()).toBe(5);
+    });
+
+    it('uses the formatted composer by default without an editor switch', () => {
+        component.writeValue('Hello **world**');
+        fixture.detectChanges();
+        expect(component.formattedMode()).toBe(true);
+        expect(fixture.debugElement.query(By.directive(MessageEditorComponent))).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('[data-testid="toggle-formatted-message-editor"]')).toBeNull();
+    });
+
+    it('keeps unsupported legacy content in the existing editor', () => {
+        component.writeValue('$$x^2$$');
+        expect(component.formattedMode()).toBe(false);
+        expect(component.content()).toBe('$$x^2$$');
+    });
+
+    it('uses formatted editing again when the next message is supported', () => {
+        component.writeValue('$$x^2$$');
+        component.writeValue('Hello');
+        expect(component.formattedMode()).toBe(true);
+    });
+
+    it('uses the existing editor when no course context is available', () => {
+        fixture.componentRef.setInput('course', { id: undefined });
+        vi.spyOn(communicationService, 'getCourse').mockReturnValue(undefined!);
+        component.writeValue('Hello');
+        expect(component.formattedMode()).toBe(false);
+    });
+
+    it('does not flush a hidden Monaco instance over current formatted content', () => {
+        component.writeValue('Hello');
+        const flush = vi.spyOn(mockMarkdownEditorComponent, 'flushPendingTextChange');
+        component.updateField('Hello [user]Anna(anna)[/user]');
+        component.flushPendingTextChange();
+        component.onMarkdownChange('stale value');
+        expect(flush).not.toHaveBeenCalled();
+        expect(component.content()).toBe('Hello [user]Anna(anna)[/user]');
+    });
+
+    it('returns to Markdown when a different message contains unsupported content', () => {
+        component.writeValue('Hello');
+        component.writeValue('$$x^2$$');
+        expect(component.formattedMode()).toBe(false);
+        expect(component.content()).toBe('$$x^2$$');
+    });
+
+    it('invalidates the form during an attachment upload and revalidates it when the upload finishes', () => {
+        const changed = vi.fn();
+        component.registerOnValidatorChange(changed);
+        expect(component.validate()).toBeNull();
+        component.formattedUploadStateChanged(true);
+        expect(component.validate()).toEqual({ attachmentUploading: true });
+        component.formattedUploadStateChanged(false);
+        expect(component.validate()).toBeNull();
+        expect(changed).toHaveBeenCalledTimes(2);
+    });
+
+    it('preserves attachment validation when the form writes the same value during an upload', () => {
+        component.writeValue('Hello');
+        component.formattedUploadStateChanged(true);
+        const changed = vi.fn();
+        component.registerOnValidatorChange(changed);
+
+        component.writeValue('Hello');
+
+        expect(component.validate()).toEqual({ attachmentUploading: true });
+        expect(changed).not.toHaveBeenCalled();
+    });
+
+    it('only explains unsupported content when the actual content cannot be edited visually', () => {
+        fixture.componentRef.setInput('course', { id: undefined });
+        vi.spyOn(communicationService, 'getCourse').mockReturnValue(undefined!);
+        component.writeValue('Hello');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector(':scope > p')).toBeNull();
+
+        component.writeValue('$$x^2$$');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector(':scope > p')).not.toBeNull();
+    });
+
+    it('suppresses the external required accent for a blank optional composer while retaining length errors', () => {
+        fixture.nativeElement.classList.add('ng-invalid', 'ng-touched');
+        component.writeValue('');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.style.borderLeftWidth).toBe('0px');
+
+        component.writeValue('A message that exceeds the limit');
+        fixture.componentRef.setInput('maxContentLength', 5);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.style.borderLeftWidth).toBe('');
+    });
+
+    it('passes the stable draft identity to the formatted editor independently of content', () => {
+        component.writeValue('');
+        fixture.componentRef.setInput('draftIdentity', 'reply:11:new');
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(MessageEditorComponent)).componentInstance as MessageEditorComponent;
+        expect(editor.draftIdentity()).toBe('reply:11:new');
+
+        fixture.componentRef.setInput('draftIdentity', 'reply:12:new');
+        fixture.detectChanges();
+        expect(editor.draftIdentity()).toBe('reply:12:new');
+    });
+
+    it('clears pending upload validation when an external message switches back to Markdown', () => {
+        component.writeValue('Hello');
+        component.formattedUploadStateChanged(true);
+        component.writeValue('$$x^2$$');
+        expect(component.formattedMode()).toBe(false);
+        expect(component.validate()).toBeNull();
     });
 
     it('should insert emoji at the cursor position', () => {

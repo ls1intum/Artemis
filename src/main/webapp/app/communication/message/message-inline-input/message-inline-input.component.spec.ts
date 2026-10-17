@@ -73,6 +73,17 @@ describe('MessageInlineInputComponent', () => {
         communicationServiceUpdateStub = vi.spyOn(communicationService, 'updatePost');
     });
 
+    it('passes a distinct draft identity when equal-content messages are edited', () => {
+        component.posting.set({ id: 21, content: '' });
+        fixture.detectChanges();
+        const editor = fixture.debugElement.query(By.directive(PostingMarkdownEditorComponent)).componentInstance as PostingMarkdownEditorComponent;
+        expect(editor.draftIdentity()).toBe('message:21');
+
+        component.posting.set({ id: 22, content: '' });
+        fixture.detectChanges();
+        expect(editor.draftIdentity()).toBe('message:22');
+    });
+
     it('should invoke communication service with created post', () => {
         component.posting.set(communicationPostToCreateUser1);
         fixture.detectChanges();
