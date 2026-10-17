@@ -5,12 +5,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { DialogService, DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared-ui/components/buttons/button/button.component';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
 import { faBan, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { BuildRunState, ProgrammingBuildRunService } from 'app/programming/shared/services/programming-build-run.service';
 import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exercise.utils';
@@ -21,23 +23,28 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
 @Component({
     selector: 'jhi-programming-exercise-trigger-all-button',
     template: `
-        <jhi-button
+        <button
+            type="button"
+            tumAetUiButton
             id="trigger-all-button"
-            [disabled]="disabled()"
-            [btnSize]="btnSize()"
-            [btnType]="ButtonType.ERROR"
-            [isLoading]="isTriggeringBuildAll()"
-            [tooltip]="'artemisApp.programmingExercise.resubmitAllTooltip'"
-            [tooltipPlacement]="TooltipPlacement.BOTTOM"
-            [icon]="faRedo"
-            [title]="'artemisApp.programmingExercise.resubmitAll'"
-            [shouldToggle]="shouldToggle()"
-            [toggleBreakpoint]="toggleBreakpoint()"
-            [featureToggle]="FeatureToggle.ProgrammingExercises"
-            (onClick)="openTriggerAllModal()"
-        />
+            [size]="btnSize() === ButtonSize.SMALL ? 'small' : btnSize() === ButtonSize.LARGE ? 'large' : 'default'"
+            severity="danger"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [overwriteDisabled]="disabled() || isTriggeringBuildAll()"
+            [attr.aria-label]="'artemisApp.programmingExercise.resubmitAll' | artemisTranslate"
+            [attr.aria-busy]="isTriggeringBuildAll()"
+            [tumAetUiTooltip]="'artemisApp.programmingExercise.resubmitAllTooltip' | artemisTranslate"
+            tumAetUiTooltipPlacement="bottom"
+            (click)="openTriggerAllModal()"
+        >
+            <fa-icon [icon]="faRedo" [animation]="isTriggeringBuildAll() ? 'spin' : undefined" />
+            <span
+                [class]="shouldToggle() ? (toggleBreakpoint() === 'md' ? 'hidden md:inline' : 'hidden xl:inline') : ''"
+                [jhiTranslate]="'artemisApp.programmingExercise.resubmitAll'"
+            ></span>
+        </button>
     `,
-    imports: [ButtonComponent],
+    imports: [TumAetUiButtonDirective, TumAetUiTooltipDirective, FaIconComponent, ArtemisTranslatePipe, FeatureToggleDirective, TranslateDirective],
 })
 export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     private submissionService = inject(ProgrammingSubmissionService);
@@ -46,9 +53,7 @@ export class ProgrammingExerciseTriggerAllButtonComponent implements OnInit {
     private translateService = inject(TranslateService);
 
     FeatureToggle = FeatureToggle;
-    ButtonType = ButtonType;
     ButtonSize = ButtonSize;
-    TooltipPlacement = TooltipPlacement;
     readonly exercise = input.required<ProgrammingExercise>();
     readonly disabled = input(false);
     readonly btnSize = input(ButtonSize.MEDIUM);

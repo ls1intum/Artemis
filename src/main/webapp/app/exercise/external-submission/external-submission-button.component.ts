@@ -2,32 +2,33 @@ import { Component, inject, input } from '@angular/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
-import { ButtonSize, ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from 'primeng/dynamicdialog';
 
 @Component({
     selector: 'jhi-external-submission',
     template: `
-        <jhi-button
-            [btnType]="ButtonType.WARNING"
-            [btnSize]="ButtonSize.SMALL"
-            [icon]="faPlus"
-            [title]="'entity.action.addExternalSubmission'"
-            [shouldToggle]="true"
-            [toggleBreakpoint]="'md'"
-            (onClick)="openExternalSubmissionDialog($event)"
-        />
+        <button
+            type="button"
+            tumAetUiButton
+            size="small"
+            severity="warn"
+            [attr.aria-label]="'entity.action.addExternalSubmission' | artemisTranslate"
+            (click)="openExternalSubmissionDialog($event)"
+        >
+            <fa-icon [icon]="faPlus" />
+            <span class="hidden md:inline" [jhiTranslate]="'entity.action.addExternalSubmission'"></span>
+        </button>
     `,
-    imports: [ButtonComponent],
+    imports: [TumAetUiButtonDirective, FaIconComponent, ArtemisTranslatePipe, TranslateDirective],
 })
 export class ExternalSubmissionButtonComponent {
     private readonly dialogService = inject(DialogService);
     private readonly translateService = inject(TranslateService);
-
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
 
     readonly exercise = input.required<Exercise>();
 

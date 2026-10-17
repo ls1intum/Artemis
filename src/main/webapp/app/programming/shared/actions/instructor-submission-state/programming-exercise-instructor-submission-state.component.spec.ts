@@ -104,12 +104,12 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     });
 
     const getTriggerAllButton = () => {
-        const triggerButton = debugElement.query(By.css('#trigger-all-button button'));
+        const triggerButton = debugElement.query(By.css('#trigger-all-button'));
         return triggerButton ? triggerButton.nativeElement : null;
     };
 
     const getTriggerFailedButton = () => {
-        const triggerButton = debugElement.query(By.css('#trigger-failed-button button'));
+        const triggerButton = debugElement.query(By.css('#trigger-failed-button'));
         return triggerButton ? triggerButton.nativeElement : null;
     };
 

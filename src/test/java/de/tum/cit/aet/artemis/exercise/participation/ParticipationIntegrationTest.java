@@ -3009,6 +3009,36 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         }
 
         @Test
+        void getParticipationsPage_combinesCategoriesAndKeepsAlternativesWithinCategory() throws Exception {
+            var manualSuccess = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
+            var automaticSuccess = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
+            var manualFailure = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
+            var practice = participationUtilService.createAndSavePracticeParticipationForExercise(textExercise, TEST_PREFIX + "student4");
+            for (var participation : List.of(manualSuccess, automaticSuccess, manualFailure, practice)) {
+                var result = participationUtilService.createSubmissionAndResult(participation, participation == manualFailure ? 30 : 100, true);
+                result.setSuccessful(participation != manualFailure);
+                result.setAssessmentType(participation == automaticSuccess ? AssessmentType.AUTOMATIC : AssessmentType.MANUAL);
+                resultRepository.save(result);
+            }
+
+            var search = buildParticipationSearch("", "Successful,Manual,NoPracticeMode", "id", SortingOrder.ASCENDING);
+            var results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(manualSuccess.getId());
+
+            search = buildParticipationSearch("", "Successful,Unsuccessful,Manual,NoPracticeMode", "id", SortingOrder.ASCENDING);
+            results = request.getList(managementUrl, HttpStatus.OK, ParticipationManagementDTO.class, pageableSearchUtilService.searchMapping(search));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(manualSuccess.getId(), manualFailure.getId());
+
+            search = new ParticipationSearchDTO(0, 1, SortingOrder.ASCENDING, "id", "", "Successful,Unsuccessful,Manual,Automatic,NoPracticeMode", 50, 100);
+            var page = request.performMvcRequest(MockMvcRequestBuilders.get(managementUrl).params(pageableSearchUtilService.searchMapping(search))).andExpect(status().isOk())
+                    .andReturn();
+            assertThat(page.getResponse().getHeader("X-Total-Count")).isEqualTo("2");
+            results = request.getObjectMapper().readValue(page.getResponse().getContentAsString(),
+                    request.getObjectMapper().getTypeFactory().constructCollectionType(List.class, ParticipationManagementDTO.class));
+            assertThat(results).extracting(ParticipationManagementDTO::participationId).containsExactly(manualSuccess.getId());
+        }
+
+        @Test
         void getParticipationsPage_filterSuccessful() throws Exception {
             var p1 = participationUtilService.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
             var r1 = participationUtilService.createSubmissionAndResult(p1, 100, true);

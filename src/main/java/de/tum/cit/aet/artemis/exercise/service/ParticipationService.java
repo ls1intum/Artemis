@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -1202,7 +1203,7 @@ public class ParticipationService {
         boolean teamMode = exercise.isTeamMode();
 
         ZonedDateTime stuckBuildCutoff = null;
-        if ("Failed".equals(search.filterProp()) && exercise instanceof ProgrammingExercise) {
+        if (search.filterProp() != null && Arrays.asList(search.filterProp().split(",")).contains("Failed") && exercise instanceof ProgrammingExercise) {
             int timeoutSeconds = programmingExerciseRepository.findBuildTimeoutSecondsByExerciseId(exercise.getId()).filter(t -> t > 0).orElse(120);
             stuckBuildCutoff = ZonedDateTime.now().minusSeconds(timeoutSeconds);
         }

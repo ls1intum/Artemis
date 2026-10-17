@@ -1,3 +1,13 @@
+import {
+    TumAetUiButtonDirective,
+    TumAetUiMenuComponent,
+    TumAetUiMenuItemDirective,
+    TumAetUiMenuTriggerDirective,
+    TumAetUiMessageComponent,
+    TumAetUiPopoverComponent,
+    TumAetUiPopoverTriggerDirective,
+    TumAetUiTooltipDirective,
+} from '@tumaet/ui-angular';
 import { Component, OnInit, computed, effect, inject, input, signal } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
@@ -13,12 +23,9 @@ import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 
-import { faCode, faExternalLink, faLaptopCode } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faCode, faExternalLink, faLaptopCode } from '@fortawesome/free-solid-svg-icons';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
-import { TooltipModule } from 'primeng/tooltip';
-import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Router, RouterLink } from '@angular/router';
@@ -47,22 +54,23 @@ export enum RepositoryAuthenticationMethod {
 @Component({
     selector: 'jhi-code-button',
     templateUrl: './code-button.component.html',
-    styleUrls: ['./code-button.component.scss'],
     imports: [
-        ExerciseActionButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiMessageComponent,
+        TumAetUiPopoverComponent,
+        TumAetUiPopoverTriggerDirective,
+        TumAetUiMenuComponent,
+        TumAetUiMenuTriggerDirective,
+        TumAetUiMenuItemDirective,
+        TumAetUiTooltipDirective,
         FeatureToggleDirective,
-        NgbPopover,
         TranslateDirective,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
         CdkCopyToClipboard,
         FaIconComponent,
         RouterLink,
         HelpIconComponent,
         ArtemisTranslatePipe,
         SafeUrlPipe,
-        TooltipModule,
     ],
 })
 export class CodeButtonComponent implements OnInit {
@@ -83,6 +91,7 @@ export class CodeButtonComponent implements OnInit {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
 
+    readonly faCircleNotch = faCircleNotch;
     loading = input<boolean>(false);
 
     // Input
@@ -112,7 +121,7 @@ export class CodeButtonComponent implements OnInit {
     user!: User; // set in ngOnInit() from accountService.identity()
     // The current user's login as a signal (set in ngOnInit alongside `user`) so the token-loading effect and the
     // usesStudentRepositoryStaffToken computed react once the user becomes known and can detect whether a participation is the user's own.
-    private readonly userLogin = signal<string | undefined>(undefined);
+    protected readonly userLogin = signal<string | undefined>(undefined);
     // Guards against reporting the same missing-token anomaly repeatedly (getHttpOrSshRepositoryUri runs on every change detection).
     private vcsAccessTokenReportedMissing = false;
     // Set once a participation VCS token request has terminally failed to yield a token (empty response or an error that

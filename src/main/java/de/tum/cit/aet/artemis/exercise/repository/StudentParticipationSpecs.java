@@ -408,6 +408,26 @@ public class StudentParticipationSpecs {
     }
 
     /**
+     * Combines comma-separated selections as alternatives within each category and intersections across categories.
+     * Unknown selections are ignored, as with the single-filter management view.
+     *
+     * @param filterProp       selected filter names, or null for all participations
+     * @param stuckBuildCutoff cutoff timestamp for the Failed filter
+     * @return combined management filter
+     */
+    @NonNull
+    public static Specification<StudentParticipation> managementFilters(@Nullable String filterProp, @Nullable ZonedDateTime stuckBuildCutoff) {
+        if (filterProp == null || filterProp.isBlank()) {
+            return noOp();
+        }
+        var selected = Arrays.asList(filterProp.split(","));
+        var groups = List.of(List.of("Failed", "BuildFailed", "NoSubmissions"), List.of("Successful", "Unsuccessful"), List.of("Manual", "Automatic"), List.of("NoPracticeMode"),
+                List.of("Locked"));
+        return Specification.allOf(groups.stream()
+                .map(group -> Specification.anyOf(group.stream().filter(selected::contains).map(filter -> managementFilter(filter, stuckBuildCutoff)).toList())).toList());
+    }
+
+    /**
      * Returns the filter specification for the management view based on filter name.
      *
      * @param filterProp       filter name (Failed, NoSubmissions, NoPracticeMode, Successful, Unsuccessful, BuildFailed, Manual, Automatic, Locked)
@@ -415,7 +435,7 @@ public class StudentParticipationSpecs {
      * @return specification, or null for unrecognized filterProp
      */
     @NonNull
-    public static Specification<StudentParticipation> managementFilter(@Nullable String filterProp, @Nullable ZonedDateTime stuckBuildCutoff) {
+    private static Specification<StudentParticipation> managementFilter(@Nullable String filterProp, @Nullable ZonedDateTime stuckBuildCutoff) {
         if (filterProp == null) {
             return noOp();
         }

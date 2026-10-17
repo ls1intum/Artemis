@@ -1,47 +1,46 @@
-<ng-container>
-    <button
-        type="button"
-        jhi-exercise-action-button
-        [buttonIcon]="faCode"
-        class="code-button"
-        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-        [buttonLabel]="'artemisApp.exerciseActions.code' | artemisTranslate"
-        [buttonLoading]="loading()"
-        [smallButton]="smallButtons()"
-        [hideLabelMobile]="hideLabelMobile()"
-        [hideLabelBreakpoint]="hideLabelBreakpoint()"
-        [ngbPopover]="popContent"
-        [autoClose]="'outside'"
-        (click)="onClick()"
-        placement="right auto"
-        container="body"
-    ></button>
-    <ng-template #popContent>
-        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && !doesUserHaveSSHkeys()) {
-            <div class="alert alert-warning" data-testid="ssh-key-missing-alert" [innerHTML]="sshKeyMissingTip()"></div>
-        }
-        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && areAnySshKeysExpired()) {
-            <div class="alert alert-warning" [innerHTML]="sshKeysExpiredTip()"></div>
-        }
-        @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password && authenticationMechanisms().includes(RepositoryAuthenticationMethod.Token)) {
-            <div class="alert alert-warning d-flex align-items-center justify-content-between flex-wrap gap-2" data-testid="password-warning-nudge">
-                <div class="d-flex align-items-center">
-                    <span>
-                        {{ 'artemisApp.exerciseActions.passwordWarningText' | artemisTranslate }}
-                        <span class="fw-bold">Token</span>.
-                    </span>
-                    <jhi-help-icon class="ms-1" placement="right auto" text="artemisApp.exerciseActions.passwordWarningHelp" />
-                </div>
-                <button type="button" class="btn btn-sm btn-primary text-nowrap" (click)="useHttpsToken()" data-testid="switch-to-token-button">
-                    {{ 'artemisApp.exerciseActions.switchToToken' | artemisTranslate }}
-                </button>
-            </div>
-        }
-        <h5 [jhiTranslate]="clonedHeadline()"></h5>
+<button
+    type="button"
+    tumAetUiButton
+    data-testid="code-button"
+    [size]="smallButtons() ? 'small' : 'default'"
+    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+    [overwriteDisabled]="loading()"
+    [attr.aria-label]="'artemisApp.exerciseActions.code' | artemisTranslate"
+    [tumAetUiPopoverTrigger]="codePopover"
+    (click)="onClick()"
+>
+    <fa-icon [icon]="loading() ? faCircleNotch : faCode" [animation]="loading() ? 'spin' : undefined" />
+    <span [class]="hideLabelMobile() ? (hideLabelBreakpoint() === 'md' ? 'hidden md:inline' : 'hidden xl:inline') : ''">
+        {{ 'artemisApp.exerciseActions.code' | artemisTranslate }}
+    </span>
+</button>
+<tumaet-ui-popover #codePopover placement="right" [ariaLabel]="clonedHeadline() | artemisTranslate">
+    @if (codePopover.isOpen() && userLogin()) {
+        <div class="flex max-w-[min(38rem,80vw)] flex-col gap-2">
+            @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && !doesUserHaveSSHkeys()) {
+                <tumaet-ui-message severity="warn" data-testid="ssh-key-missing-alert"><span [innerHTML]="sshKeyMissingTip()"></span></tumaet-ui-message>
+            }
+            @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH && areAnySshKeysExpired()) {
+                <tumaet-ui-message severity="warn"><span [innerHTML]="sshKeysExpiredTip()"></span></tumaet-ui-message>
+            }
+            @if (selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password && authenticationMechanisms().includes(RepositoryAuthenticationMethod.Token)) {
+                <tumaet-ui-message severity="warn" data-testid="password-warning-nudge">
+                    <div class="flex items-center gap-1">
+                        <span>
+                            {{ 'artemisApp.exerciseActions.passwordWarningText' | artemisTranslate }}
+                            <span class="font-semibold">Token</span>.
+                        </span>
+                        <jhi-help-icon class="ms-1" placement="right auto" text="artemisApp.exerciseActions.passwordWarningHelp" />
+                    </div>
+                    <button type="button" tumAetUiButton size="small" (click)="useHttpsToken()" data-testid="switch-to-token-button">
+                        {{ 'artemisApp.exerciseActions.switchToToken' | artemisTranslate }}
+                    </button>
+                </tumaet-ui-message>
+            }
 
-        <div class="d-flex" style="margin: 0; max-width: 100%">
-            <div aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
-                <button class="btn btn-primary btn-sm dropdown-toggle https-or-ssh-button" ngbDropdownToggle type="button">
+            <h5 [jhiTranslate]="clonedHeadline()"></h5>
+            <div class="flex min-w-0 flex-wrap items-center gap-1">
+                <button type="button" tumAetUiButton size="small" data-testid="repository-authentication" [tumAetUiMenuTrigger]="authenticationMenu">
                     {{
                         selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH
                             ? 'SSH'
@@ -50,124 +49,104 @@
                               : 'HTTPS'
                     }}
                 </button>
-                <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
-                    @for (mechanism of authenticationMechanisms(); track mechanism) {
-                        @if (mechanism === RepositoryAuthenticationMethod.Password) {
-                            <a
-                                (click)="useHttpsPassword()"
-                                class="dropdown-item {{ selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password ? 'active' : '' }}"
-                                id="useHTTPSButton"
-                                [attr.aria-pressed]="selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Password"
-                                #keyboardAction41
-                                role="button"
-                                tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction41.click() : undefined"
-                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction41.click() : undefined"
-                                >HTTPS</a
-                            >
+                <ng-template #authenticationMenu>
+                    <tumaet-ui-menu>
+                        @for (mechanism of authenticationMechanisms(); track mechanism) {
+                            @switch (mechanism) {
+                                @case (RepositoryAuthenticationMethod.Password) {
+                                    <button
+                                        type="button"
+                                        tumAetUiMenuItem
+                                        id="useHTTPSButton"
+                                        (triggered)="useHttpsPassword()"
+                                        [attr.aria-pressed]="selectedAuthenticationMechanism() === mechanism"
+                                    >
+                                        HTTPS
+                                    </button>
+                                }
+                                @case (RepositoryAuthenticationMethod.Token) {
+                                    <button
+                                        type="button"
+                                        tumAetUiMenuItem
+                                        id="useHTTPSWithTokenButton"
+                                        (triggered)="useHttpsToken()"
+                                        [attr.aria-pressed]="selectedAuthenticationMechanism() === mechanism"
+                                    >
+                                        Token
+                                    </button>
+                                }
+                                @case (RepositoryAuthenticationMethod.SSH) {
+                                    <button
+                                        type="button"
+                                        tumAetUiMenuItem
+                                        id="useSSHButton"
+                                        (triggered)="useSshUrl()"
+                                        [attr.aria-pressed]="selectedAuthenticationMechanism() === mechanism"
+                                    >
+                                        SSH
+                                    </button>
+                                }
+                                @default {}
+                            }
                         }
-                        @if (mechanism === RepositoryAuthenticationMethod.Token) {
-                            <a
-                                (click)="useHttpsToken()"
-                                class="dropdown-item {{ selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token ? 'active' : '' }}"
-                                id="useHTTPSWithTokenButton"
-                                [attr.aria-pressed]="selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.Token"
-                                #keyboardAction49
-                                role="button"
-                                tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction49.click() : undefined"
-                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction49.click() : undefined"
-                                >Token</a
-                            >
-                        }
-                        @if (mechanism === RepositoryAuthenticationMethod.SSH) {
-                            <a
-                                (click)="useSshUrl()"
-                                class="dropdown-item {{ selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH ? 'active' : '' }}"
-                                id="useSSHButton"
-                                [attr.aria-pressed]="selectedAuthenticationMechanism() === RepositoryAuthenticationMethod.SSH"
-                                #keyboardAction57
-                                role="button"
-                                tabindex="0"
-                                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction57.click() : undefined"
-                                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction57.click() : undefined"
-                                >SSH</a
-                            >
-                        }
-                    }
-                </div>
-            </div>
-            <pre
-                class="clone-url url-box-remove-line-left url-box-remove-line-right"
-                [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
-                (cdkCopyToClipboardCopied)="copyEnabled() ? onCopyFinished($event) : null"
-                >{{ getHttpOrSshRepositoryUri() }} </pre>
-            <div class="d-flex align-items-center">
+                    </tumaet-ui-menu>
+                </ng-template>
+                <pre
+                    class="m-0! min-w-0 flex-1 truncate"
+                    [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
+                    (cdkCopyToClipboardCopied)="copyEnabled() ? onCopyFinished($event) : null"
+                    >{{ getHttpOrSshRepositoryUri() }}</pre>
                 <a
-                    [style.flex]="1"
-                    class="btn btn-secondary btn-sm me-2 open-repository-button"
+                    tumAetUiButton
+                    size="small"
+                    variant="outlined"
+                    data-testid="open-repository"
                     [routerLink]="routerLinkForRepositoryView()"
                     target="_blank"
                     rel="noopener noreferrer"
                     [attr.aria-label]="'artemisApp.exerciseActions.openRepositoryReadOnly' | artemisTranslate"
-                    [pTooltip]="'artemisApp.exerciseActions.openRepositoryReadOnly' | artemisTranslate"
-                    tooltipPosition="top"
-                    appendTo="body"
+                    [tumAetUiTooltip]="'artemisApp.exerciseActions.openRepositoryReadOnly' | artemisTranslate"
                 >
                     <fa-icon [icon]="faExternalLink" />
                 </a>
             </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <button
+                    type="button"
+                    tumAetUiButton
+                    size="small"
+                    [severity]="wasCopied() ? 'success' : 'primary'"
+                    [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
+                    (cdkCopyToClipboardCopied)="onCopyFinished($event)"
+                    [disabled]="!copyEnabled()"
+                    data-testid="copyRepoUrlButton"
+                    [jhiTranslate]="wasCopied() ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl'"
+                ></button>
+                @if (theiaEnabled()) {
+                    <button type="button" tumAetUiButton size="small" (click)="startOnlineIDE()" data-testid="openOnlineIDEButton">
+                        <fa-icon [icon]="faLaptopCode" />
+                        <span jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
+                    </button>
+                }
+                <a
+                    tumAetUiButton
+                    size="small"
+                    target="hidden-iframe"
+                    [href]="buildIdeUrl() | safeUrl"
+                    jhiTranslate="artemisApp.exerciseActions.ideButton.openIn"
+                    [translateValues]="{ ideName: ideName() }"
+                ></a>
+                <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.ideButton.helpIcon" />
+                <a tumAetUiButton size="small" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneSourceTree.button"></a>
+                <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneSourceTree.helpIcon" />
+            </div>
+            <iframe
+                name="hidden-iframe"
+                [title]="'accessibility.externalApplicationLauncher' | artemisTranslate"
+                aria-hidden="true"
+                tabindex="-1"
+                class="invisible absolute"
+            ></iframe>
         </div>
-        <button
-            [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
-            (cdkCopyToClipboardCopied)="onCopyFinished($event)"
-            [disabled]="!copyEnabled()"
-            [class.btn-success]="wasCopied()"
-            class="btn btn-primary btn-sm me-2"
-            data-testid="copyRepoUrlButton"
-            type="button"
-            style="min-width: 100px"
-            jhiTranslate="{{ wasCopied() ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl' }}"
-        ></button>
-        @if (theiaEnabled()) {
-            <a
-                class="btn btn-primary btn-sm me-2"
-                (click)="startOnlineIDE()"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-testid="openOnlineIDEButton"
-                #keyboardAction96
-                role="button"
-                tabindex="0"
-                (keydown.enter)="$event.target === $event.currentTarget ? keyboardAction96.click() : undefined"
-                (keydown.space)="$event.target === $event.currentTarget ? $event.preventDefault() : undefined"
-                (keyup.space)="$event.target === $event.currentTarget ? keyboardAction96.click() : undefined"
-            >
-                <fa-icon [icon]="faLaptopCode" />
-                <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
-            </a>
-        }
-        <a
-            class="btn btn-primary btn-sm"
-            target="hidden-iframe"
-            [href]="buildIdeUrl() | safeUrl"
-            jhiTranslate="artemisApp.exerciseActions.ideButton.openIn"
-            [translateValues]="{ ideName: ideName() }"
-        >
-        </a>
-        <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.ideButton.helpIcon" />
-        <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneSourceTree.button"> </a>
-        <!-- This hidden iframe is used to avoid "Do you want to leave the site" messages in the exam mode -->
-        <iframe
-            name="hidden-iframe"
-            [title]="'accessibility.externalApplicationLauncher' | artemisTranslate"
-            aria-hidden="true"
-            tabindex="-1"
-            style="visibility: hidden; position: absolute"
-        ></iframe>
-        <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneSourceTree.helpIcon" />
-    </ng-template>
-</ng-container>
+    }
+</tumaet-ui-popover>

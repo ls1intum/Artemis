@@ -1,3 +1,4 @@
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -5,7 +6,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import dayjs from 'dayjs/esm';
-import { provideTranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
@@ -119,6 +120,7 @@ describe('TriggerBuildButtonSpec', () => {
     });
 
     it('should be enabled and trigger the build on click if it is provided with a participation including results', () => {
+        vi.spyOn(TestBed.inject(TranslateService), 'instant').mockReturnValue('Retry failed submission');
         const newParticipation = { ...participation, results: [gradedResult1], initializationState: InitializationState.INITIALIZED };
         fixture.componentRef.setInput('exercise', { id: 5 } as ProgrammingExercise);
         fixture.componentRef.setInput('participation', newParticipation);
@@ -133,6 +135,8 @@ describe('TriggerBuildButtonSpec', () => {
 
         let triggerButton = getTriggerButton();
         expect(triggerButton.disabled).toBe(false);
+        const tooltip = debugElement.query(By.directive(TumAetUiTooltipDirective)).injector.get(TumAetUiTooltipDirective);
+        expect(tooltip.content()).toBe('Retry failed submission');
 
         // Click the button to start a build.
         triggerButton.click();

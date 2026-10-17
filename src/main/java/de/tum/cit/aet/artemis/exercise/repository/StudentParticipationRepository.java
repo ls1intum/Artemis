@@ -2170,7 +2170,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param exerciseId       the exercise to query
      * @param teamMode         whether the exercise uses teams
      * @param searchTerm       free-text search (matched against student login/name or team name/shortName)
-     * @param filterProp       filter property name (All, Failed, NoSubmissions, NoPracticeMode, Successful, Unsuccessful, BuildFailed, Manual, Automatic, Locked)
+     * @param filterProp       comma-separated filter selections (alternatives within a category, intersections across categories)
      * @param stuckBuildCutoff for the Failed filter: participations whose latest submission has no result and was submitted before this timestamp are considered stuck (nullable)
      * @param scoreRangeLower  inclusive lower bound of score range filter (nullable)
      * @param scoreRangeUpper  upper bound of score range filter; exclusive unless equal to 100 (nullable)
@@ -2182,7 +2182,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff,
             Integer scoreRangeLower, Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn) {
         Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forManagementMode(teamMode))
-                .and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode)).and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff))
+                .and(StudentParticipationSpecs.searchForManagement(searchTerm, teamMode)).and(StudentParticipationSpecs.managementFilters(filterProp, stuckBuildCutoff))
                 .and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
                 .and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
 

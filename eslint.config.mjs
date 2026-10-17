@@ -735,6 +735,11 @@ export default tseslint.config(
             // The whole exam mode: instructor pages, student pages and the pieces they share, and the example solution that only the exam summary shows.
             'src/main/webapp/app/exam/**/*.html',
             'src/main/webapp/app/exercise/example-solution/**/*.html',
+            'src/main/webapp/app/exercise/shared/filter-dropdown/**/*.html',
+            'src/main/webapp/app/exercise/participation/**/*.html',
+            'src/main/webapp/app/exercise/exercise-scores/manage-assessment-buttons/**/*.html',
+            'src/main/webapp/app/exercise/exercise-scores/export-button/**/*.html',
+            'src/main/webapp/app/shared-ui/components/buttons/code-button/**/*.html',
             'src/main/webapp/app/exercise/exercise-action-bar/**/*.html',
             'src/main/webapp/app/exercise/exam-exercise-row-buttons/**/*.html',
             'src/main/webapp/app/course/manage/user-management-dropdown/**/*.html',

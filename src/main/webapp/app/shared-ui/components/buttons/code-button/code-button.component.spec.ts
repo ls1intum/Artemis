@@ -20,7 +20,7 @@ import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared-
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
-import { Tooltip } from 'primeng/tooltip';
+import { TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { Subject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -122,6 +122,14 @@ describe('CodeButtonComponent', () => {
                 fixture.detectChanges();
             });
     });
+
+    const authenticationButton = (selector: string): HTMLButtonElement => {
+        if (!document.querySelector(selector)) {
+            fixture.debugElement.query(By.css('[data-testid="repository-authentication"]')).nativeElement.click();
+            fixture.detectChanges();
+        }
+        return document.querySelector(selector) as HTMLButtonElement;
+    };
 
     afterEach(() => {
         vi.restoreAllMocks();
@@ -369,12 +377,12 @@ describe('CodeButtonComponent', () => {
         it('should display password warning nudge when password is selected and switch to token on click', () => {
             fixture.componentRef.setInput('participations', [participation]);
 
-            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
             fixture.detectChanges();
 
-            const useHTTPSButton = fixture.debugElement.query(By.css('#useHTTPSButton'));
+            const useHTTPSButton = authenticationButton('#useHTTPSButton');
             expect(useHTTPSButton).not.toBeNull();
-            useHTTPSButton.nativeElement.click();
+            useHTTPSButton.click();
             fixture.detectChanges();
 
             const warningNudge = fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'));
@@ -394,7 +402,7 @@ describe('CodeButtonComponent', () => {
             fixture.componentRef.setInput('participations', [participation]);
             component.authenticationMechanisms.set([RepositoryAuthenticationMethod.Password]);
 
-            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
             fixture.detectChanges();
 
             expect(component.selectedAuthenticationMechanism()).toBe(RepositoryAuthenticationMethod.Password);
@@ -405,7 +413,7 @@ describe('CodeButtonComponent', () => {
             fixture.componentRef.setInput('participations', [participation]);
             component.selectedAuthenticationMechanism.set(RepositoryAuthenticationMethod.Token);
 
-            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
             fixture.detectChanges();
 
             expect(fixture.debugElement.query(By.css('[data-testid="password-warning-nudge"]'))).toBeNull();
@@ -426,7 +434,7 @@ describe('CodeButtonComponent', () => {
             component.isInCourseManagement.set(true);
             fixture.detectChanges();
 
-            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
             fixture.detectChanges();
 
             expect(component.isBaseRepository()).toBe(true);
@@ -937,13 +945,13 @@ describe('CodeButtonComponent', () => {
         it('should describe the icon-only button with an accessible name and a tooltip', () => {
             fixture.componentRef.setInput('routerLinkForRepositoryView', ['.', 'repository', 'SOLUTION']);
             fixture.detectChanges();
-            fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+            fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
             fixture.detectChanges();
 
-            const openRepositoryButton = fixture.debugElement.query(By.css('.open-repository-button'));
+            const openRepositoryButton = fixture.debugElement.query(By.css('[data-testid="open-repository"]'));
             expect(openRepositoryButton.nativeElement.getAttribute('aria-label')).toBe(openRepositoryKey);
             expect(openRepositoryButton.nativeElement.getAttribute('target')).toBe('_blank');
-            expect(openRepositoryButton.injector.get(Tooltip).content).toBe(openRepositoryKey);
+            expect(openRepositoryButton.injector.get(TumAetUiTooltipDirective).content()).toBe(openRepositoryKey);
         });
 
         it.each([
@@ -966,42 +974,42 @@ describe('CodeButtonComponent', () => {
 
         expect(component.useSsh()).toBeFalsy();
 
-        fixture.debugElement.query(By.css('.code-button')).nativeElement.click();
+        fixture.debugElement.query(By.css('[data-testid="code-button"]')).nativeElement.click();
         fixture.detectChanges();
 
-        const useSSHButton = fixture.debugElement.query(By.css('#useSSHButton'));
+        const useSSHButton = authenticationButton('#useSSHButton');
         expect(useSSHButton).not.toBeNull();
-        useSSHButton.nativeElement.click();
+        useSSHButton.click();
         fixture.detectChanges();
-        expect(
-            ['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) =>
-                fixture.debugElement.query(By.css(selector)).nativeElement.getAttribute('aria-pressed'),
-            ),
-        ).toEqual(['false', 'false', 'true']);
+        expect(['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) => authenticationButton(selector).getAttribute('aria-pressed'))).toEqual([
+            'false',
+            'false',
+            'true',
+        ]);
         expect(localStorageMock.store).toHaveBeenNthCalledWith(2, 'code-button-state', 'ssh');
         expect(component.useSsh()).toBeTruthy();
 
-        const useHTTPSButton = fixture.debugElement.query(By.css('#useHTTPSButton'));
+        const useHTTPSButton = authenticationButton('#useHTTPSButton');
         expect(useHTTPSButton).not.toBeNull();
-        useHTTPSButton.nativeElement.click();
+        useHTTPSButton.click();
         fixture.detectChanges();
-        expect(
-            ['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) =>
-                fixture.debugElement.query(By.css(selector)).nativeElement.getAttribute('aria-pressed'),
-            ),
-        ).toEqual(['true', 'false', 'false']);
+        expect(['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) => authenticationButton(selector).getAttribute('aria-pressed'))).toEqual([
+            'true',
+            'false',
+            'false',
+        ]);
         expect(localStorageMock.store).toHaveBeenNthCalledWith(3, 'code-button-state', 'password');
         expect(component.useSsh()).toBeFalsy();
 
-        const useHTTPSWithTokenButton = fixture.debugElement.query(By.css('#useHTTPSWithTokenButton'));
+        const useHTTPSWithTokenButton = authenticationButton('#useHTTPSWithTokenButton');
         expect(useHTTPSWithTokenButton).not.toBeNull();
-        useHTTPSWithTokenButton.nativeElement.click();
+        useHTTPSWithTokenButton.click();
         fixture.detectChanges();
-        expect(
-            ['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) =>
-                fixture.debugElement.query(By.css(selector)).nativeElement.getAttribute('aria-pressed'),
-            ),
-        ).toEqual(['false', 'true', 'false']);
+        expect(['#useHTTPSButton', '#useHTTPSWithTokenButton', '#useSSHButton'].map((selector) => authenticationButton(selector).getAttribute('aria-pressed'))).toEqual([
+            'false',
+            'true',
+            'false',
+        ]);
         expect(localStorageMock.store).toHaveBeenNthCalledWith(4, 'code-button-state', 'token');
         expect(component.useSsh()).toBeFalsy();
         expect(component.useToken()).toBeTruthy();

@@ -1,3 +1,5 @@
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { Component, inject, input } from '@angular/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from '../programming-exercise-trigger-build-button.component';
 import { AlertService } from 'app/foundation/service/alert.service';
@@ -5,12 +7,14 @@ import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-student-trigger-build-button',
     templateUrl: '../programming-exercise-trigger-build-button.component.html',
-    imports: [ButtonComponent],
+    imports: [TumAetUiButtonDirective, TumAetUiTooltipDirective, FeatureToggleDirective, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
 })
 export class ProgrammingExerciseStudentTriggerBuildButtonComponent extends ProgrammingExerciseTriggerBuildButtonComponent {
     private alertService = inject(AlertService);

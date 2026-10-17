@@ -3,13 +3,13 @@ import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-i
 import { debounceTime, filter, finalize, map, switchMap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared-ui/components/buttons/button/button.component';
-import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icons';
+import { ButtonSize } from 'app/shared-ui/components/buttons/button/button.component';
+import { faCircleNotch, faClock, faExclamationTriangle, faRedo } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { NgClass } from '@angular/common';
 import { ProgrammingExerciseTriggerAllButtonComponent } from '../trigger-all-button/programming-exercise-trigger-all-button.component';
-import { ButtonComponent } from 'app/shared-ui/components/buttons/button/button.component';
+import { TumAetUiButtonDirective, TumAetUiTagComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
+import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { DurationPipe } from 'app/foundation/pipes/duration.pipe';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
@@ -25,16 +25,24 @@ import { cloneWith } from 'app/foundation/util/deep-clone.util';
 @Component({
     selector: 'jhi-programming-exercise-instructor-submission-state',
     templateUrl: './programming-exercise-instructor-submission-state.component.html',
-    imports: [FaIconComponent, NgbTooltip, NgClass, ProgrammingExerciseTriggerAllButtonComponent, ButtonComponent, ArtemisTranslatePipe, DurationPipe],
+    imports: [
+        FaIconComponent,
+        ProgrammingExerciseTriggerAllButtonComponent,
+        TumAetUiButtonDirective,
+        TumAetUiTagComponent,
+        TumAetUiTooltipDirective,
+        FeatureToggleDirective,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+        DurationPipe,
+    ],
 })
 export class ProgrammingExerciseInstructorSubmissionStateComponent implements OnInit {
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private destroyRef = inject(DestroyRef);
 
     FeatureToggle = FeatureToggle;
-    ButtonType = ButtonType;
     ButtonSize = ButtonSize;
-    TooltipPlacement = TooltipPlacement;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
 
     readonly exercise = input.required<ProgrammingExercise>();
@@ -66,6 +74,7 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
 
     // Icons
     faClock = faClock;
+    readonly faExclamationTriangle = faExclamationTriangle;
     faCircleNotch = faCircleNotch;
     faRedo = faRedo;
 

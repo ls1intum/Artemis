@@ -1,174 +1,103 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
-import { Select } from 'primeng/select';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { FilterDropdownComponent, FilterGroup } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 import { TranslateService } from '@ngx-translate/core';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { FilterDropdownComponent } from './filter-dropdown.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
-describe('FilterDropdownComponent', () => {
-    let component: FilterDropdownComponent;
+/** Exercise the real dropdowns and their portaled options, including changes while a panel remains open. */
+describe('Participation filter toolbar', () => {
     let fixture: ComponentFixture<FilterDropdownComponent>;
-
-    const mockFilters = ['SUCCESSFUL', 'UNSUCCESSFUL'];
-    const mockGroupedFilters: FilterGroup[] = [
-        { labelKey: 'group.progress', items: ['NotStarted', 'Started', 'Submitted'] },
-        { labelKey: 'group.attendance', items: ['AttendanceChecked', 'AttendanceNotChecked'] },
-    ];
+    let changed: ReturnType<typeof vi.fn<(values: string[]) => void>>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FilterDropdownComponent],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        })
-            .overrideTemplate(FilterDropdownComponent, '')
-            .compileComponents();
-
-        fixture = TestBed.createComponent(FilterDropdownComponent);
-        component = fixture.componentInstance;
-
-        fixture.componentRef.setInput('filters', mockFilters);
-        fixture.componentRef.setInput('activeFilter', 'All');
-
-        fixture.detectChanges();
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
-
-    it('should create', () => {
-        expect(component).toBeTruthy();
-    });
-
-    it('should reflect filters input', () => {
-        expect(component.filters()).toEqual(mockFilters);
-    });
-
-    it('should reflect activeFilter input', () => {
-        expect(component.activeFilter()).toBe('All');
-    });
-
-    it('should default allValue to "All"', () => {
-        expect(component.allValue()).toBe('All');
-    });
-
-    it('should default filterLabelKey to artemisApp.exercise.filter', () => {
-        expect(component.filterLabelKey()).toBe('artemisApp.exercise.filter');
-    });
-
-    it('should default translationPrefix to artemisApp.exercise.show', () => {
-        expect(component.translationPrefix()).toBe('artemisApp.exercise.show');
-    });
-
-    it('should reflect groupedFilters input', () => {
-        fixture.componentRef.setInput('groupedFilters', mockGroupedFilters);
-        expect(component.groupedFilters()).toEqual(mockGroupedFilters);
-    });
-
-    it('should reflect custom filterLabelKey', () => {
-        fixture.componentRef.setInput('filterLabelKey', 'artemisApp.examManagement.filter');
-        expect(component.filterLabelKey()).toBe('artemisApp.examManagement.filter');
-    });
-
-    it('should reflect custom translationPrefix', () => {
-        fixture.componentRef.setInput('translationPrefix', 'artemisApp.examManagement.examStudents.filter.');
-        expect(component.translationPrefix()).toBe('artemisApp.examManagement.examStudents.filter.');
-    });
-
-    describe('isFiltered', () => {
-        it('should be false when activeFilter equals allValue (default "All")', () => {
-            fixture.componentRef.setInput('activeFilter', 'All');
-            expect(component.isFiltered()).toBe(false);
-        });
-
-        it('should be true when activeFilter differs from allValue', () => {
-            fixture.componentRef.setInput('activeFilter', 'SUCCESSFUL');
-            expect(component.isFiltered()).toBe(true);
-        });
-
-        it('should be false when activeFilter matches custom allValue', () => {
-            fixture.componentRef.setInput('allValue', 'NONE');
-            fixture.componentRef.setInput('activeFilter', 'NONE');
-            expect(component.isFiltered()).toBe(false);
-        });
-
-        it('should be true when activeFilter does not match custom allValue', () => {
-            fixture.componentRef.setInput('allValue', 'NONE');
-            fixture.componentRef.setInput('activeFilter', 'SUCCESSFUL');
-            expect(component.isFiltered()).toBe(true);
-        });
-
-        it('should be true when a grouped filter item is active', () => {
-            fixture.componentRef.setInput('groupedFilters', mockGroupedFilters);
-            fixture.componentRef.setInput('activeFilter', 'Submitted');
-            expect(component.isFiltered()).toBe(true);
-        });
-    });
-
-    describe('filterChange output', () => {
-        it('should emit when filterChange is triggered', () => {
-            const emitSpy = vi.spyOn(component.filterChange, 'emit');
-
-            component.filterChange.emit('SUCCESSFUL');
-
-            expect(emitSpy).toHaveBeenCalledExactlyOnceWith('SUCCESSFUL');
-        });
-
-        it('should emit allValue when resetting filter', () => {
-            const emitSpy = vi.spyOn(component.filterChange, 'emit');
-
-            component.filterChange.emit('All');
-
-            expect(emitSpy).toHaveBeenCalledWith('All');
-        });
-    });
-});
-
-describe('FilterDropdownComponent popup', () => {
-    it.each([false, true])('stays open when its scroll container moves (grouped: %s)', async (grouped) => {
-        await TestBed.configureTestingModule({
-            imports: [FilterDropdownComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
-        const fixture = TestBed.createComponent(FilterDropdownComponent);
-        fixture.componentRef.setInput('activeFilter', 'All');
-        fixture.componentRef.setInput('filters', ['Successful', 'Unsuccessful']);
-        if (grouped) {
-            fixture.componentRef.setInput('groupedFilters', [{ labelKey: 'Results', items: ['Successful', 'Unsuccessful'] }]);
+        fixture = TestBed.createComponent(FilterDropdownComponent);
+        fixture.componentRef.setInput('groupedFilters', [
+            { labelKey: 'Submissions', items: ['BuildFailed', 'NoSubmissions'] },
+            { labelKey: 'Results', items: ['Successful', 'Unsuccessful'] },
+            { labelKey: 'Assessment', items: ['Manual', 'Automatic'] },
+        ]);
+        fixture.componentRef.setInput('activeFilters', []);
+        changed = vi.fn((values: string[]) => fixture.componentRef.setInput('activeFilters', values));
+        fixture.componentInstance.filterChange.subscribe(changed);
+        fixture.detectChanges();
+        await fixture.whenStable();
+    });
+
+    function openGroup(index: number): HTMLElement {
+        const trigger = fixture.nativeElement.querySelectorAll('[role="combobox"]')[index] as HTMLElement;
+        trigger.click();
+        fixture.detectChanges();
+        return trigger;
+    }
+
+    function toggleOption(index: number): void {
+        (document.querySelectorAll('[role="option"]')[index] as HTMLElement).click();
+        fixture.detectChanges();
+    }
+
+    it('keeps the panel open for multiple selections and retains other categories', async () => {
+        fixture.componentRef.setInput('activeFilters', ['Manual']);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const trigger = openGroup(1);
+        toggleOption(0);
+        toggleOption(1);
+        await fixture.whenStable();
+
+        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Successful', 'Unsuccessful']);
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+        expect(document.querySelectorAll('[role="option"][aria-selected="true"]')).toHaveLength(2);
+        expect(fixture.nativeElement.querySelectorAll('tumaet-ui-chip')).toHaveLength(3);
+        toggleOption(0);
+        expect(changed).toHaveBeenLastCalledWith(['Manual', 'Unsuccessful']);
+    });
+
+    it('removes a chip without opening its dropdown and can reset all filters', async () => {
+        fixture.componentRef.setInput('activeFilters', ['Successful', 'Manual']);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        (fixture.nativeElement.querySelector('tumaet-ui-chip button') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(changed).toHaveBeenLastCalledWith(['Manual']);
+        expect(fixture.nativeElement.querySelector('[aria-expanded="true"]')).toBeNull();
+
+        (fixture.nativeElement.querySelector('button[tumAetUiButton]') as HTMLButtonElement).click();
+        fixture.detectChanges();
+        expect(changed).toHaveBeenLastCalledWith([]);
+        expect(fixture.nativeElement.querySelector('button[tumAetUiButton]')).toBeNull();
+    });
+
+    it('stays open on scroll and input refresh, and closes on outside click', () => {
+        const trigger = openGroup(0);
+        fixture.nativeElement.dispatchEvent(new Event('scroll', { bubbles: true }));
+        fixture.componentRef.setInput('groupedFilters', [
+            { labelKey: 'Submissions', items: ['BuildFailed', 'NoSubmissions'] },
+            { labelKey: 'Results', items: ['Successful', 'Unsuccessful'] },
+        ]);
+        fixture.detectChanges();
+        expect(trigger.getAttribute('aria-expanded')).toBe('true');
+        (document.querySelector('.cdk-overlay-backdrop') as HTMLElement).click();
+        fixture.detectChanges();
+        expect(trigger.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    it('supports keyboard selection and Escape', () => {
+        const trigger = fixture.nativeElement.querySelector('[role="combobox"]') as HTMLElement;
+        for (const [key, keyCode] of [
+            ['Enter', 13],
+            ['ArrowDown', 40],
+            [' ', 32],
+        ] as const) {
+            trigger.dispatchEvent(new KeyboardEvent('keydown', { key, keyCode, bubbles: true }));
+            fixture.detectChanges();
         }
-        fixture.nativeElement.style.overflow = 'auto';
+        expect(changed).toHaveBeenLastCalledWith(['NoSubmissions']);
+        trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         fixture.detectChanges();
-        const select: Select = fixture.debugElement.query(By.directive(Select)).componentInstance;
-        select.show();
-        fixture.detectChanges();
-        // JSDOM does not complete CSS enter animations, which normally attach these listeners.
-        select.overlayViewChild!.bindListeners();
-
-        fixture.nativeElement.dispatchEvent(new Event('scroll'));
-        fixture.detectChanges();
-
-        expect(select.overlayVisible).toBe(true);
-        const emit = vi.spyOn(fixture.componentInstance.filterChange, 'emit');
-        const option: HTMLElement = fixture.nativeElement.querySelector('[role="option"][aria-label="Successful"]');
-        option.click();
-        fixture.detectChanges();
-        expect(emit).toHaveBeenCalledExactlyOnceWith('Successful');
-        expect(select.overlayVisible).toBe(false);
-
-        select.show();
-        fixture.detectChanges();
-        select.overlayViewChild!.bindListeners();
-        document.body.click();
-        fixture.detectChanges();
-        expect(select.overlayVisible).toBe(false);
-
-        select.show();
-        fixture.detectChanges();
-        const input: HTMLInputElement = fixture.nativeElement.querySelector('[role="combobox"]');
-        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true }));
-        fixture.detectChanges();
-        expect(select.overlayVisible).toBe(false);
+        expect(trigger.getAttribute('aria-expanded')).toBe('false');
     });
 });
