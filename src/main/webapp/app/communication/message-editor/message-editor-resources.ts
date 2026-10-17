@@ -19,6 +19,7 @@ export class MessageEditorResources {
     private readonly faqs = inject(FaqService);
     private readonly cache = new Map<string, Promise<MessageSuggestion[]>>();
 
+    /** Returns up to 50 matching course resources; failed loads leave the per-course cache retryable. */
     async search(kind: MessageResourceKind, query: string, courseId: number): Promise<MessageSuggestion[]> {
         const key = `${courseId}:${kind}`;
         let items = this.cache.get(key);

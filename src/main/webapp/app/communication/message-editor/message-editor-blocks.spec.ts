@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { editorToMessage, messageToEditorHtml } from './message-editor-conversion';
+import { editorToMessage, messageToEditorFragment } from './message-editor-conversion';
 import { MessageEditorDom } from './message-editor-dom';
 
 describe('Message editor block formatting', () => {
@@ -68,7 +68,7 @@ describe('Message editor block formatting', () => {
         expect(Array.from(item.querySelectorAll(':scope > p'), (paragraph) => paragraph.textContent)).toEqual(['Parent', 'Another', 'Tail']);
         expect(item.querySelector('ol > li')!.textContent).toBe('Child');
         const reopened = document.createElement('div');
-        reopened.innerHTML = messageToEditorHtml(editorToMessage(root));
+        reopened.replaceChildren(messageToEditorFragment(editorToMessage(root)));
         expect(Array.from(reopened.querySelectorAll('ul > li > p'), (paragraph) => paragraph.textContent)).toEqual(['Parent', 'Another', 'Tail']);
         expect(reopened.querySelector('ul > li > ol > li')!.textContent).toBe('Child');
     });
@@ -272,7 +272,7 @@ describe('Message editor block formatting', () => {
         expect(root.querySelector('pre code')!.innerHTML).toBe('Hello Guide @Anna<br>#general diagram');
         expectMessage(expected);
         const reopened = document.createElement('div');
-        reopened.innerHTML = messageToEditorHtml(expected);
+        reopened.replaceChildren(messageToEditorFragment(expected));
         expect(reopened.querySelector('pre code')!.innerHTML).toBe('Hello Guide @Anna<br>#general diagram');
 
         editor.undo();

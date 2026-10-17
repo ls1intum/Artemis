@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { editorToMessage, messageToEditorHtml } from './message-editor-conversion';
+import { editorToMessage, messageToEditorFragment } from './message-editor-conversion';
 import { MessageEditorDom } from './message-editor-dom';
 
 describe('Message editor inline formatting sequences', () => {
@@ -24,7 +24,7 @@ describe('Message editor inline formatting sequences', () => {
 
     function expectRoundTrip(): HTMLDivElement {
         const restored = document.createElement('div');
-        restored.innerHTML = messageToEditorHtml(editorToMessage(root));
+        restored.replaceChildren(messageToEditorFragment(editorToMessage(root)));
         expect(restored.textContent).toBe(root.textContent);
         expect(editorToMessage(restored)).toBe(editorToMessage(root));
         return restored;

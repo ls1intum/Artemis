@@ -5,7 +5,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/course/shared/entities/course.model';
 import { UserCredentials } from '../../users';
 import { CommunicationAPIRequests } from '../../requests/CommunicationAPIRequests';
-import { readResponseJson, setMonacoEditorContent, setMonacoEditorContentByLocator } from '../../utils';
+import { readResponseJson } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Messages page.
@@ -296,18 +296,14 @@ export class CourseMessagesPage {
     }
 
     private getActiveMessageEditor(container: Locator) {
-        return container.getByTestId('formatted-message-input').or(container.locator('.monaco-editor')).filter({ visible: true });
+        return container.getByTestId('formatted-message-input').filter({ visible: true });
     }
 
-    /** Uses the legacy editor only when unsupported existing content makes it visible. */
+    /** Replaces plain message text through the native rich editor. */
     private async setMessageContent(container: Locator, message: string) {
         const editor = this.getActiveMessageEditor(container);
         await editor.waitFor({ state: 'visible', timeout: 10000 });
-        if ((await editor.getAttribute('contenteditable')) === 'true') {
-            await editor.fill(message);
-        } else {
-            await setMonacoEditorContentByLocator(this.page, container, message);
-        }
+        await editor.fill(message);
     }
 
     private getSendButton(container: Locator) {
@@ -339,12 +335,11 @@ export class CourseMessagesPage {
      */
     getMessageEditorText() {
         const container = this.getMainMessageInput();
-        return container.getByTestId('formatted-message-input').or(container.locator('.monaco-editor .view-lines')).filter({ visible: true });
+        return this.getActiveMessageEditor(container);
     }
 
     /**
-     * Waits until the send button becomes enabled. The editor propagates content to the send form
-     * with a debounce, so the button's enabled state only mirrors form validity a moment after typing.
+     * Waits until the latest rich-editor edit has made the send form valid.
      */
     async waitUntilSendEnabled() {
         await expect(this.getSendButton(this.getMainMessageInput())).toBeEnabled({ timeout: 10000 });
@@ -854,7 +849,7 @@ export class CourseMessagesPage {
             }
         }
         if (extraContent) {
-            await setMonacoEditorContent(this.page, 'jhi-forward-message-dialog jhi-markdown-editor-monaco', extraContent);
+            await dialog.getByTestId('formatted-message-input').fill(extraContent);
         }
         // forwarding first creates the container post, then the forwarded-message link(s)
         const forwardResponse = this.page.waitForResponse((resp) => resp.url().includes('/forwarded-messages') && resp.request().method() === 'POST');

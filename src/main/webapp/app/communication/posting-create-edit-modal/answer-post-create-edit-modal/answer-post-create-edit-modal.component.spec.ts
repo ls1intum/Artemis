@@ -217,19 +217,17 @@ describe('AnswerPostCreateEditModalComponent editor template', () => {
         view.destroy();
     });
 
-    it('should flush the pending editor text before Save submits the reply', () => {
+    it('saves the latest synchronous form value when Save submits the reply', () => {
         component.posting.set(communicationAnswerPostUser2);
         const updateSpy = vi.spyOn(TestBed.inject(CommunicationService), 'updateAnswerPost');
-        // the editor debounces its text changes, so the form control only receives the latest text once the editor is flushed
-        const flushSpy = vi.fn(() => component.formGroup.get('content')!.setValue('latest text typed right before Save'));
-        MockInstance(PostingMarkdownEditorComponent, 'flushPendingTextChange', flushSpy);
         const view = renderEditor();
         const form = view.rootNodes[0] as HTMLElement;
         document.body.appendChild(form);
+        component.formGroup.get('content')!.setValue('latest text typed right before Save');
+        view.detectChanges();
 
         (form.querySelector('[data-testid="answer-post-edit-save"] button') as HTMLButtonElement).click();
 
-        expect(flushSpy).toHaveBeenCalledOnce();
         expect(updateSpy).toHaveBeenCalledOnce();
         expect(updateSpy.mock.calls[0][0].content).toBe('latest text typed right before Save');
         form.remove();

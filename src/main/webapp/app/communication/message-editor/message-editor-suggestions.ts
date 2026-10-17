@@ -9,6 +9,7 @@ import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.util';
 
+/** A readable completion label paired with the message payload to insert; resource metadata supports slide previews. */
 export interface MessageSuggestion {
     label: string;
     kind: 'emoji' | 'user' | 'channel' | 'exercise' | 'lecture' | 'message' | 'faq' | 'slide' | 'lecture-unit';
@@ -29,6 +30,10 @@ export class MessageEditorSuggestions {
 
     private readonly content = new Map<number, Promise<MessageSuggestion[]>>();
 
+    /**
+     * Resolves emoji, person mentions, or course references for the active trigger.
+     * Person searches stay live; course content is cached. The @all suggestion is limited to new group-chat messages.
+     */
     async search(trigger: '@' | '#' | ':', query: string, courseId: number, conversation?: ConversationDTO, editing = false): Promise<MessageSuggestion[]> {
         if (trigger === ':') {
             if (!query || !/^[A-Za-z0-9_+-]+$/.test(query) || EMOTICON_TO_EMOJI[`:${query}`] !== undefined) {

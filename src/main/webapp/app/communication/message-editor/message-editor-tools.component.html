@@ -7,7 +7,7 @@
             severity="secondary"
             size="small"
             data-testid="message-attachment-button"
-            [disabled]="uploading()"
+            [disabled]="uploading() || !conversationId()"
             [title]="'artemisApp.communication.formattedEditor.attachments' | artemisTranslate"
             [attr.aria-label]="'artemisApp.communication.formattedEditor.attachments' | artemisTranslate"
             (mousedown)="remember($event)"

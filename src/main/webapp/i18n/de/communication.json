@@ -211,7 +211,8 @@
             "newMessagesButton": "Zur ersten ungelesenen Nachricht springen",
             "formattedEditor": {
                 "previewUnavailable": "Die Folienvorschau ist nicht verfügbar.",
-                "unsupported": "Diese Nachricht verwendet Formatierungen, die derzeit nur in Markdown bearbeitet werden können.",
+                "discardDraft": "Entwurf verwerfen",
+                "unsupported": "Diese Nachricht enthält nicht unterstützte Formatierungen und kann hier nicht bearbeitet werden.",
                 "formatting": "Nachricht formatieren",
                 "moreOptions": "Weitere Optionen",
                 "fewerOptions": "Weniger Optionen",

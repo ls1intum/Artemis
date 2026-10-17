@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { canEditMessageVisually, editorToMessage, messageToEditorHtml } from './message-editor-conversion';
+import { canEditMessageVisually, editorToMessage, messageToEditorFragment } from './message-editor-conversion';
+import { renderPostingMarkdownToHtml } from 'app/foundation/util/markdown-render.util';
+
+/** Serializes the fragment only for assertions about generated markup. */
+function messageToEditorHtml(source: string): string {
+    const element = document.createElement('div');
+    element.append(messageToEditorFragment(source));
+    return element.innerHTML;
+}
 
 describe('Message editor conversion', () => {
     const roundTrip = (message: string) => {
@@ -210,6 +218,94 @@ describe('Message editor conversion', () => {
         expect(reopened.textContent).toBe(text);
         expect(reopened.querySelector('ins, del, s, strong, em, a, script, pre')).toBeNull();
         expect(editorToMessage(reopened)).toBe(message);
+    });
+
+    it.each(['$5', '$x^2$', '$$x^2$$', String.raw`\$x^2\$`, String.raw`\\$x^2\\$`])(
+        'keeps typed dollars literal when the saved posting is rendered and reopened: %s',
+        async (text) => {
+            const element = document.createElement('div');
+            const paragraph = document.createElement('p');
+            paragraph.textContent = text;
+            element.append(paragraph);
+
+            const message = editorToMessage(element);
+            const posting = document.createElement('div');
+            posting.innerHTML = await renderPostingMarkdownToHtml(message);
+            expect(posting.textContent).toBe(text);
+            expect(posting.querySelector('math, .katex')).toBeNull();
+            expect(canEditMessageVisually(message)).toBe(true);
+
+            const reopened = document.createElement('div');
+            reopened.innerHTML = messageToEditorHtml(message);
+            expect(reopened.textContent).toBe(text);
+            expect(editorToMessage(reopened)).toBe(message);
+        },
+    );
+
+    it.each(['`$x^2$`', '```text\n$x^2$\n```'])('leaves dollars inside code literal without escaping them: %s', async (source) => {
+        const message = roundTrip(source);
+        expect(message).toBe(source);
+        const posting = document.createElement('div');
+        posting.innerHTML = await renderPostingMarkdownToHtml(message);
+        expect(posting.querySelector('code')!.textContent?.trimEnd()).toBe('$x^2$');
+        expect(posting.querySelector('math, .katex')).toBeNull();
+        expect(canEditMessageVisually(message)).toBe(true);
+    });
+
+    it.each(['$x^2$', String.raw`$x\$y$`, '`code` $x^2$'])('rejects active math for visual editing: %s', (source) => {
+        expect(canEditMessageVisually(source)).toBe(false);
+    });
+
+    it.each(['$ x $', '$ x$', '$x $', '$x\ny$', '$**x**$', '&#65;$x$', '$a `b$`', '$a [label$](https://example.org)', '$a **b$**'])(
+        'rejects formulas accepted by the posting renderer for visual editing: %s',
+        async (source) => {
+            const posting = document.createElement('div');
+            posting.innerHTML = await renderPostingMarkdownToHtml(source);
+            expect(posting.querySelector('.katex')).not.toBeNull();
+            expect(canEditMessageVisually(source)).toBe(false);
+        },
+    );
+
+    it.each(['$5', String.raw`\$x^2\$`, '&dollar;x^2&dollar;', '[user]Dollar $name$(anna)[/user]'])('accepts literal dollars without math: %s', (source) => {
+        expect(canEditMessageVisually(source)).toBe(true);
+    });
+
+    it.each(['Costs $5 and $10', '$5 for `a` and $10 for b', 'id$x$', '$x$id', '_$x$_', String.raw`\\$x^2$`])(
+        'keeps currency and other literal dollars editable when the posting renderer leaves them literal: %s',
+        async (source) => {
+            const posting = document.createElement('div');
+            posting.innerHTML = await renderPostingMarkdownToHtml(source);
+            expect(posting.querySelector('.katex')).toBeNull();
+            expect(canEditMessageVisually(source)).toBe(true);
+        },
+    );
+
+    it.each(['<img src=x onerror=alert(1)>', '&copy; &#169;', String.raw`\<script> \&copy;`, '$x^2$'])(
+        'keeps underlined literal text safe through posting and reopening: %s',
+        async (text) => {
+            const element = document.createElement('div');
+            const underline = document.createElement('ins');
+            underline.textContent = text;
+            element.append(underline);
+
+            const message = editorToMessage(element);
+            const posting = document.createElement('div');
+            posting.innerHTML = await renderPostingMarkdownToHtml(message);
+            expect(posting.querySelector('ins')!.textContent).toBe(text);
+            expect(posting.querySelector('img, script, math, .katex')).toBeNull();
+            expect(canEditMessageVisually(message)).toBe(true);
+
+            const reopened = document.createElement('div');
+            reopened.innerHTML = messageToEditorHtml(message);
+            expect(reopened.querySelector('ins')!.textContent).toBe(text);
+            expect(editorToMessage(reopened)).toBe(message);
+        },
+    );
+
+    it('preserves protected reference source inside underline markup', () => {
+        const source = '<ins>[user]Anna & <em>Friends</em>(anna)[/user]</ins>';
+        expect(roundTrip(source)).toBe(source);
+        expect(canEditMessageVisually(source)).toBe(true);
     });
 
     it('accepts supported formatting and literal code containing HTML', () => {

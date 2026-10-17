@@ -1,9 +1,12 @@
 import MarkdownIt, { type RendererRule } from 'markdown-it';
+import MarkdownItKatex from '@vscode/markdown-it-katex';
 import DOMPurify from 'dompurify';
 import TurndownService from 'turndown';
 
 const referenceTypes = ['user', 'channel', 'programming', 'modeling', 'quiz', 'text', 'file-upload', 'lecture', 'lecture-unit', 'attachment', 'slide', 'faq'];
-const markdown = MarkdownIt({ html: true, breaks: true, linkify: true });
+// Classify formulas with the same existing grammar as the posting renderer. Duplicating
+// delimiter detection misses math spanning formatting/code and can lock out ordinary currency.
+const markdown = MarkdownIt({ html: true, breaks: true, linkify: true }).use(MarkdownItKatex, { enableMathInlineInHtml: true });
 
 markdown.inline.ruler.before('html_inline', 'message_reference', (state, silent) => {
     if (state.src[state.pos] !== '[') {
@@ -40,9 +43,22 @@ markdown.renderer.rules.message_reference = (tokens, index) => tokens[index].con
 const renderCode: RendererRule = (tokens, index) => {
     const token = tokens[index];
     const language = token.info.trim().split(/\s+/)[0];
-    const attribute = language ? ` class="language-${markdown.utils.escapeHtml(language)}"` : '';
-    const code = markdown.utils.escapeHtml(token.content.replace(/\n$/, '')).replace(/\n/g, '<br>');
-    return `<pre><code${attribute}>${code}</code></pre>`;
+    const pre = document.createElement('pre');
+    const code = document.createElement('code');
+    if (language) {
+        code.className = `language-${language}`;
+    }
+    token.content
+        .replace(/\n$/, '')
+        .split('\n')
+        .forEach((line, lineNumber) => {
+            if (lineNumber) {
+                code.append(document.createElement('br'));
+            }
+            code.append(document.createTextNode(line));
+        });
+    pre.append(code);
+    return pre.outerHTML;
 };
 markdown.renderer.rules.fence = renderCode;
 markdown.renderer.rules.code_block = renderCode;
@@ -56,17 +72,21 @@ markdown.renderer.rules.image = (tokens, index) => {
 };
 
 const serializer = new TurndownService({ bulletListMarker: '-', codeBlockStyle: 'fenced', emDelimiter: '*', strongDelimiter: '**' });
+const underlineMarkdownStart = '<ins>';
+const underlineMarkdownEnd = '</ins>';
 const escapeMarkdown = serializer.escape.bind(serializer);
 // Turndown first escapes backslashes and Markdown syntax. Keep those escape pairs intact while
-// adding the HTML, entity, and strikethrough escapes that its defaults omit.
-serializer.escape = (text) => escapeMarkdown(text).replace(/\\.|[<&~]/gs, (token) => (token.length === 2 ? token : '\\' + token));
+// adding the HTML, entity, strikethrough, and math escapes that its defaults omit.
+serializer.escape = (text) => escapeMarkdown(text).replace(/\\.|[<&~$]/gs, (token) => (token.length === 2 ? token : '\\' + token));
 serializer.addRule('message-reference', {
     filter: (node) => node.hasAttribute('data-message-reference'),
     replacement: (_content, node) => node.getAttribute('data-message-reference') ?? '',
 });
 serializer.addRule('message-underline', {
     filter: ['ins', 'u'],
-    replacement: (content) => `<ins>${content}</ins>`,
+    // These fixed delimiters belong to the message's Markdown wire grammar. Turndown
+    // has already serialized content; HTML encoding would corrupt its escapes and reference payloads.
+    replacement: (content) => [underlineMarkdownStart, content, underlineMarkdownEnd].join(''),
 });
 serializer.addRule('message-strikethrough', {
     filter: ['s', 'del'],
@@ -96,9 +116,18 @@ serializer.addRule('message-list-item', {
 });
 
 function referenceHtml(source: string, label: string, type: string, imageSource?: string): string {
-    const escapedLabel = markdown.utils.escapeHtml(label);
-    const image = imageSource ? `<img src="${markdown.utils.escapeHtml(imageSource)}" alt="${escapedLabel}">` : '';
-    return `<span contenteditable="false" data-message-reference="${markdown.utils.escapeHtml(source)}" data-reference-type="${type}">${image}${escapedLabel}</span>`;
+    const reference = document.createElement('span');
+    reference.setAttribute('contenteditable', 'false');
+    reference.setAttribute('data-message-reference', source);
+    reference.setAttribute('data-reference-type', type);
+    if (imageSource) {
+        const image = document.createElement('img');
+        image.setAttribute('src', imageSource);
+        image.alt = label;
+        reference.append(image);
+    }
+    reference.append(document.createTextNode(label));
+    return reference.outerHTML;
 }
 
 /** Reads code without the caret placeholders that are needed by native browser editing. */
@@ -122,17 +151,21 @@ export function canEditMessageVisually(source: string): boolean {
         if (['table_open', 'heading_open', 'hr', 'html_block'].includes(token.type)) {
             return false;
         }
+        if (token.type.startsWith('math_')) {
+            return false;
+        }
         return (token.children ?? []).every((child) => {
+            if (child.type.startsWith('math_')) return false;
             if (child.type === 'html_inline') {
                 return /^<\/?(?:ins|u)>$/.test(child.content);
             }
-            return child.type !== 'text' || !/\$\$|\$\S[^$\n]*\$/.test(child.content);
+            return true;
         });
     });
 }
 
-/** Renders only the message grammar; reference payloads remain attached to protected inline items. */
-export function messageToEditorHtml(source: string): string {
+/** Renders a sanitized editing document; reference payloads remain attached to protected inline items. */
+export function messageToEditorFragment(source: string): DocumentFragment {
     // Preserve user whitespace in the editing host, but remove linefeeds used only to lay out generated HTML.
     // Literal code is escaped by markdown-it and cannot match these tag boundaries.
     const html = markdown.render(source).replace(/(<\/(?:p|li|ul|ol|blockquote|pre)>|<(?:ul|ol|blockquote|li)>|<br>)\n/g, '$1');
@@ -140,6 +173,7 @@ export function messageToEditorHtml(source: string): string {
         ALLOWED_TAGS: ['p', 'br', 'strong', 'b', 'em', 'i', 'ins', 'u', 's', 'del', 'code', 'pre', 'blockquote', 'ul', 'ol', 'li', 'a', 'span', 'img'],
         ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'start', 'class', 'contenteditable', 'data-message-reference', 'data-reference-type'],
         ALLOW_DATA_ATTR: false,
+        RETURN_DOM_FRAGMENT: true,
     });
 }
 

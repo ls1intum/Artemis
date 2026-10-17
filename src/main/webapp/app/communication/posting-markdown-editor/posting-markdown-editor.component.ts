@@ -1,52 +1,9 @@
-import {
-    AfterViewInit,
-    ChangeDetectionStrategy,
-    Component,
-    OnInit,
-    ViewContainerRef,
-    ViewEncapsulation,
-    computed,
-    forwardRef,
-    inject,
-    input,
-    output,
-    signal,
-    viewChild,
-} from '@angular/core';
-import monaco from 'monaco-editor';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, forwardRef, inject, input, output, signal } from '@angular/core';
 import { ControlValueAccessor, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import { CommunicationService } from 'app/communication/service/communication.service';
-import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { Course, isCommunicationEnabled } from 'app/course/shared/entities/course.model';
-import { TextEditorAction } from 'app/editor/monaco-editor/model/actions/text-editor-action.model';
-import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
-import { ItalicAction } from 'app/editor/monaco-editor/model/actions/italic.action';
-import { UnderlineAction } from 'app/editor/monaco-editor/model/actions/underline.action';
-import { QuoteAction } from 'app/editor/monaco-editor/model/actions/quote.action';
-import { CodeAction } from 'app/editor/monaco-editor/model/actions/code.action';
-import { CodeBlockAction } from 'app/editor/monaco-editor/model/actions/code-block.action';
-import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
-import { ChannelReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/channel-reference.action';
-import { UserMentionAction } from 'app/editor/monaco-editor/model/actions/communication/user-mention.action';
-import { ExerciseReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/exercise-reference.action';
-import { LectureAttachmentReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
-import { FaqReferenceAction } from 'app/editor/monaco-editor/model/actions/communication/faq-reference.action';
-import { UrlAction } from 'app/editor/monaco-editor/model/actions/url.action';
-import { AttachmentAction } from 'app/editor/monaco-editor/model/actions/attachment.action';
+import { Course } from 'app/course/shared/entities/course.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { EmojiAction } from 'app/editor/monaco-editor/model/actions/emoji.action';
-import { EmojiCompletionAction } from 'app/editor/monaco-editor/model/actions/communication/emoji-completion.action';
-import { EmojiSearch } from '@ctrl/ngx-emoji-mart';
-import { Overlay, OverlayPositionBuilder } from '@angular/cdk/overlay';
-import { BulletedListAction } from 'app/editor/monaco-editor/model/actions/bulleted-list.action';
-import { OrderedListAction } from 'app/editor/monaco-editor/model/actions/ordered-list.action';
-import { StrikethroughAction } from 'app/editor/monaco-editor/model/actions/strikethrough.action';
-import { PostingContentComponent } from '../posting-content/posting-content.components';
 import { PostingEditType } from '../communication.util';
-import { ChannelService } from 'app/communication/conversations/service/channel.service';
-import { FileService } from 'app/foundation/service/file.service';
-import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { MessageEditorComponent } from 'app/communication/message-editor/message-editor.component';
 import { canEditMessageVisually } from 'app/communication/message-editor/message-editor-conversion';
 import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
@@ -57,163 +14,48 @@ import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect
     selector: 'jhi-posting-markdown-editor',
     templateUrl: './posting-markdown-editor.component.html',
     providers: [
-        {
-            provide: NG_VALUE_ACCESSOR,
-            useExisting: forwardRef(() => PostingMarkdownEditorComponent),
-            multi: true,
-        },
-        {
-            provide: NG_VALIDATORS,
-            useExisting: forwardRef(() => PostingMarkdownEditorComponent),
-            multi: true,
-        },
+        { provide: NG_VALUE_ACCESSOR, useExisting: forwardRef(() => PostingMarkdownEditorComponent), multi: true },
+        { provide: NG_VALIDATORS, useExisting: forwardRef(() => PostingMarkdownEditorComponent), multi: true },
     ],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    // An idle blank composer must stay neutral even when Angular marks its required control as touched.
-    host: { '[style.border-left-width.px]': '!content()?.trim() ? 0 : undefined' },
-    imports: [MarkdownEditorMonacoComponent, PostingContentComponent, MessageEditorComponent, TumAetUiButtonDirective, ArtemisTranslatePipe, RedirectToIrisButtonComponent],
+    // An idle blank composer stays neutral when Angular marks its required control as touched.
+    host: { '[style.border-left-width.px]': '!content()?.trim() ? 0 : undefined', '(focusout)': 'onTouched()' },
+    imports: [MessageEditorComponent, TumAetUiButtonDirective, ArtemisTranslatePipe, RedirectToIrisButtonComponent],
 })
-export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterViewInit, Validator {
-    private communicationService = inject(CommunicationService);
-    private fileService = inject(FileService);
-    private courseManagementService = inject(CourseManagementService);
-    private lectureService = inject(LectureService);
-    private exerciseService = inject(ExerciseService);
-    private channelService = inject(ChannelService);
-    private emojiSearch = inject(EmojiSearch);
-    viewContainerRef = inject(ViewContainerRef);
-    private positionBuilder = inject(OverlayPositionBuilder);
-    private overlay = inject(Overlay);
-
-    readonly markdownEditor = viewChild.required(MarkdownEditorMonacoComponent);
+export class PostingMarkdownEditorComponent implements ControlValueAccessor, Validator {
+    private readonly communicationService = inject(CommunicationService);
 
     readonly maxContentLength = input<number>();
     /** Identifies the message or reply draft independently of its current text. */
     readonly draftIdentity = input<string>();
-    readonly editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
     readonly isInputLengthDisplayed = input(true);
     readonly suppressNewlineOnEnter = input(true);
-
-    showCloseButton = input<boolean>(false);
-    closeEditor = output<void>();
-    isButtonLoading = input<boolean>(false);
-    isFormGroupValid = input<boolean>(false);
-    editType = input<PostingEditType>();
-    course = input<Course>();
-
-    readonly EditType = PostingEditType.CREATE;
-    /**
-     * For AnswerPosts, the CommunicationService may not always have an active conversation (e.g. when in the 'all messages' view).
-     * In this case, file uploads have to rely on the parent post to determine the course.
-     */
+    readonly showCloseButton = input(false);
+    readonly closeEditor = output<void>();
+    readonly isButtonLoading = input(false);
+    readonly isFormGroupValid = input(false);
+    readonly editType = input<PostingEditType>();
+    readonly course = input<Course>();
+    /** The parent post supplies the conversation when the all-messages view has none selected. */
     readonly activeConversation = input<ConversationDTO>();
-    readonly valueChange = output();
-    readonly lectureAttachmentReferenceAction = signal<LectureAttachmentReferenceAction>(undefined!);
-    readonly defaultActions = signal<TextEditorAction[]>(undefined!);
+    readonly valueChange = output<void>();
     readonly content = signal<string | undefined>(undefined);
-    protected readonly supportsFormattedContent = signal(true);
-    readonly formattedMode = computed(() => this.supportsFormattedContent() && !!this.effectiveCourseId());
     readonly uploadingFormattedAttachment = signal(false);
+    protected readonly supportsFormattedContent = computed(() => canEditMessageVisually(this.content() ?? ''));
     readonly effectiveCourseId = computed(() => this.course()?.id ?? this.communicationService.getCourse()?.id);
     readonly effectiveConversation = computed(() => this.activeConversation() ?? this.communicationService.getCurrentConversation());
     readonly isUpdating = computed(() => this.editType() === PostingEditType.UPDATE);
-    previewMode = false;
-    fallbackConversationId = computed<number | undefined>(() => this.activeConversation()?.id);
 
-    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-
-    /**
-     * on initialization: sets commands that will be available as formatting buttons during creation/editing of postings
-     */
-    ngOnInit(): void {
-        const messagingOnlyActions = isCommunicationEnabled(this.communicationService.getCourse())
-            ? [
-                  new UserMentionAction(
-                      this.courseManagementService,
-                      this.communicationService,
-                      () => this.editType() === PostingEditType.UPDATE,
-                      () => this.activeConversation(),
-                  ),
-                  new ChannelReferenceAction(this.communicationService, this.channelService),
-              ]
-            : [];
-
-        this.defaultActions.set([
-            new BoldAction(),
-            new ItalicAction(),
-            new UnderlineAction(),
-            new StrikethroughAction(),
-            new EmojiAction(this.viewContainerRef, this.overlay, this.positionBuilder),
-            new EmojiCompletionAction(this.emojiSearch),
-            new BulletedListAction(),
-            new OrderedListAction(),
-            new QuoteAction(),
-            new CodeAction(),
-            new CodeBlockAction(),
-            new UrlAction(),
-            new AttachmentAction(),
-            ...messagingOnlyActions,
-            new ExerciseReferenceAction(this.communicationService, this.exerciseService),
-            new FaqReferenceAction(this.communicationService),
-        ]);
-
-        this.lectureAttachmentReferenceAction.set(new LectureAttachmentReferenceAction(this.communicationService, this.lectureService, this.fileService));
-    }
-
-    ngAfterViewInit(): void {
-        this.markdownEditor().enableTextFieldMode();
-
-        const editor = this.markdownEditor().monacoEditor?.();
-        if (editor) {
-            editor.onDidChangeModelContent((event: monaco.editor.IModelContentChangedEvent) => {
-                const position = editor.getPosition();
-                if (!position) {
-                    return;
-                }
-
-                const model = editor.getModel();
-                if (!model) {
-                    return;
-                }
-
-                const lineContent = model.getLineContent(position.lineNumber).trimStart();
-                const hasPrefix = lineContent.startsWith('- ') || /^\s*1\. /.test(lineContent);
-                if (hasPrefix && event.changes.length === 1 && (event.changes[0].text.startsWith('- ') || event.changes[0].text.startsWith('1. '))) {
-                    return;
-                }
-
-                if (hasPrefix) {
-                    this.handleKeyDown(model, position.lineNumber);
-                }
-            });
-        }
-    }
-
-    private handleKeyDown(model: monaco.editor.ITextModel, lineNumber: number): void {
-        const lineContent = model.getLineContent(lineNumber).trimStart();
-
-        if (lineContent.startsWith('- ')) {
-            this.markdownEditor().handleActionClick(
-                new MouseEvent('click'),
-                this.defaultActions().find((action) => action instanceof BulletedListAction)!,
-            );
-        } else if (/^\d+\. /.test(lineContent)) {
-            this.markdownEditor().handleActionClick(
-                new MouseEvent('click'),
-                this.defaultActions().find((action) => action instanceof OrderedListAction)!,
-            );
-        }
-    }
-
-    /**
-     * the callback function to register on UI change
-     */
-    onChange = (_val: string) => {};
+    private onChange = (_value: string) => {};
+    protected onTouched = () => {};
     private validatorChanged = () => {};
 
-    /** Prevents a form submission from discarding an attachment that is still uploading. */
+    /** Keeps unsupported legacy source intact and prevents submissions during attachment uploads. */
     validate(): ValidationErrors | null {
+        if (!this.supportsFormattedContent()) {
+            return { unsupportedMessageFormatting: true };
+        }
         return this.uploadingFormattedAttachment() ? { attachmentUploading: true } : null;
     }
 
@@ -226,72 +68,41 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         this.validatorChanged();
     }
 
-    /**
-     * emits the value change from component
-     */
-    valueChanged() {
-        this.valueChange.emit();
-    }
-
-    /**
-     * writes the current value of a form group into the `content` variable,
-     * i.e. sets the value programmatically
-     * @param value
-     */
     writeValue(value: string | undefined): void {
-        if (this.uploadingFormattedAttachment() && (value ?? '') !== this.content()) {
-            this.formattedUploadStateChanged(false);
+        const nextValue = value ?? '';
+        const wasSupported = this.supportsFormattedContent();
+        const resetUpload = this.uploadingFormattedAttachment() && nextValue !== this.content();
+        this.content.set(nextValue);
+        if (resetUpload) {
+            this.uploadingFormattedAttachment.set(false);
         }
-        this.supportsFormattedContent.set(canEditMessageVisually(value ?? ''));
-        this.content.set(value ?? '');
-    }
-
-    /**
-     * upon UI element value changes, this method is triggered (required)
-     * @param fn
-     */
-    registerOnChange(fn: (value: string) => void): void {
-        this.onChange = fn;
-    }
-
-    /**
-     * upon touching the element, this method gets triggered (required)
-     */
-    registerOnTouched(): void {}
-
-    /**
-     * changes in bound markdown content
-     * @param newValue
-     */
-    updateField(newValue: string) {
-        this.content.set(newValue);
-        this.onChange(newValue);
-        this.valueChanged();
-    }
-
-    /** Ignores delayed emissions from the hidden Markdown editor while formatted editing owns the value. */
-    onMarkdownChange(value: string): void {
-        if (!this.formattedMode()) {
-            this.updateField(value);
+        if (resetUpload || wasSupported !== this.supportsFormattedContent()) {
+            this.validatorChanged();
         }
     }
 
-    onKeyDown(event: KeyboardEvent) {
-        // Prevent a newline from being added to the text when pressing enter
-        if (this.suppressNewlineOnEnter() && event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            // Enter submits the form right after this handler, therefore sync the form control first.
-            this.flushPendingTextChange();
+    registerOnChange(callback: (value: string) => void): void {
+        this.onChange = callback;
+    }
+
+    registerOnTouched(callback: () => void): void {
+        this.onTouched = callback;
+    }
+
+    /** Explicitly discards an incompatible unsent draft; existing messages cannot be cleared this way. */
+    discardUnsupportedDraft(): void {
+        if (!this.isUpdating() && !this.isButtonLoading() && !this.supportsFormattedContent()) {
+            this.updateField('');
         }
     }
 
-    /**
-     * The editor debounces its text changes, so the form control may still hold the content from before the last
-     * keystrokes. Call this before submitting the form to sync the control with the editor.
-     */
-    flushPendingTextChange(): void {
-        if (!this.formattedMode()) {
-            this.markdownEditor().flushPendingTextChange();
+    updateField(value: string): void {
+        const wasSupported = this.supportsFormattedContent();
+        this.content.set(value);
+        if (wasSupported !== this.supportsFormattedContent()) {
+            this.validatorChanged();
         }
+        this.onChange(value);
+        this.valueChange.emit();
     }
 }

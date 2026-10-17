@@ -39,13 +39,17 @@ export class MessageEditorComponent {
     private readonly search = inject(MessageEditorSuggestions);
     private readonly destroyRef = inject(DestroyRef);
 
+    /** Serialized message content; external replacements reset history, while emitted local edits retain it. */
     readonly content = input('');
     readonly courseId = input.required<number>();
     readonly conversation = input<ConversationDTO>();
     readonly editing = input(false);
+    /** Distinguishes drafts with identical text so thread switches discard history and pending upload insertions. */
     readonly draftIdentity = input<string>();
     readonly suppressNewlineOnEnter = input(true);
+    /** Emits serialized content immediately after an edit or history operation. */
     readonly contentChange = output<string>();
+    /** Reports pending attachment work so the parent form can block submission. */
     readonly uploadingChange = output<boolean>();
     private readonly editable = viewChild<ElementRef<HTMLElement>>('editable');
     protected readonly tools = viewChild(MessageEditorToolsComponent);
@@ -155,17 +159,20 @@ export class MessageEditorComponent {
         });
     }
 
+    /** Keeps pointer toolbar activation from stealing the native editing selection. */
     protected remember(event: MouseEvent): void {
         event.preventDefault();
         this.editor?.rememberSelection();
     }
 
+    /** Changes toolbar disclosure without losing the selection or interrupting pending uploads. */
     protected toggleToolbar(): void {
         this.toolbarExpanded.update((expanded) => !expanded);
         if (!this.toolbarExpanded()) this.tools()?.close(false);
         this.dismissSuggestions();
     }
 
+    /** Applies an inline mark after dismissing popup ranges that the DOM edit could invalidate. */
     protected applyFormat(tag: 'strong' | 'em' | 'ins' | 's' | 'code'): void {
         this.dismissSuggestions();
         this.linkOpen.set(false);
@@ -173,6 +180,7 @@ export class MessageEditorComponent {
         this.focus();
     }
 
+    /** Changes selected blocks and returns focus to the preserved editing range. */
     protected applyBlock(tag: 'ul' | 'ol' | 'blockquote' | 'pre'): void {
         this.dismissSuggestions();
         this.linkOpen.set(false);
@@ -180,6 +188,7 @@ export class MessageEditorComponent {
         this.focus();
     }
 
+    /** Routes native undo and managed text insertion through the adapter while leaving IME edits to the browser. */
     protected beforeInput(event: Event): void {
         if (!(event instanceof InputEvent)) {
             return;
@@ -201,6 +210,7 @@ export class MessageEditorComponent {
         }
     }
 
+    /** Commits native edits and searches the new caret position once IME composition has finished. */
     protected onInput(event: Event): void {
         if (!(event instanceof InputEvent && event.isComposing) && !this.composing) {
             this.editor?.afterInput();
@@ -208,18 +218,21 @@ export class MessageEditorComponent {
         }
     }
 
+    /** Saves pending typing marks and defers ordinary input handling until the browser commits the IME text. */
     protected compositionStart(): void {
         this.editor?.beginComposition();
         this.composing = true;
         this.dismissSuggestions();
     }
 
+    /** Commits the composed text as one editor update before resuming completion searches. */
     protected compositionEnd(): void {
         this.composing = false;
         this.editor?.endComposition();
         this.scheduleSuggestions();
     }
 
+    /** Handles editing shortcuts and completion acceptance before allowing the parent form's send shortcut to run. */
     protected keydown(event: KeyboardEvent): void {
         if (event.isComposing || this.composing) {
             event.stopPropagation();
@@ -317,12 +330,14 @@ export class MessageEditorComponent {
         }
     }
 
+    /** Keeps Enter used to activate toolbar or popup controls from reaching the message form's submit handler. */
     protected toolbarKeydown(event: KeyboardEvent): void {
         if (event.key === 'Enter' && event.target !== this.editable()?.nativeElement) {
             event.stopPropagation();
         }
     }
 
+    /** Routes clipboard files through attachment uploads and inserts other clipboard content as literal plain text. */
     protected paste(event: ClipboardEvent): void {
         event.preventDefault();
         const files = Array.from(event.clipboardData?.files ?? []);
@@ -334,12 +349,14 @@ export class MessageEditorComponent {
         this.dismissSuggestions();
     }
 
+    /** Uploads dropped files through the captured editor context instead of letting the browser insert their contents. */
     protected drop(event: DragEvent): void {
         event.preventDefault();
         void this.tools()?.uploadFiles(Array.from(event.dataTransfer?.files ?? []));
         this.dismissSuggestions();
     }
 
+    /** Recovers an asynchronous insertion bookmark in the current document or reports an invalid position. */
     protected insertResource(insertion: MessageResourceInsertion): void {
         const range = this.editor?.resolveEntitySelection(insertion.range);
         if (range && this.editable()?.nativeElement.contains(range.commonAncestorContainer)) {
@@ -392,6 +409,7 @@ export class MessageEditorComponent {
         }
     }
 
+    /** Invalidates pending searches and clears their replacement range so stale results cannot reopen the popup. */
     dismissSuggestions(): void {
         clearTimeout(this.searchTimer);
         this.request++;
@@ -401,6 +419,7 @@ export class MessageEditorComponent {
         this.loading.set(false);
     }
 
+    /** Replaces only the active completion range, then restores focus without submitting the surrounding form. */
     protected accept(suggestion: MessageSuggestion): void {
         const range = this.completion?.range;
         this.dismissSuggestions();
@@ -416,6 +435,7 @@ export class MessageEditorComponent {
         void this.refreshSuggestions();
     }
 
+    /** Drops selection-bound popups and refreshes formatting and completions for the new caret. */
     protected selectionChanged(): void {
         this.dismissSuggestions();
         this.linkOpen.set(false);
@@ -436,6 +456,7 @@ export class MessageEditorComponent {
         }
     }
 
+    /** Opens the link form for an explicit or enclosing anchor; repeated toolbar activation closes the form. */
     protected openLink(link?: HTMLAnchorElement): void {
         const target = link ?? this.editor?.linkAtSelection();
         if (!this.editor?.canLinkSelection(target)) return;
@@ -461,6 +482,7 @@ export class MessageEditorComponent {
         }
     }
 
+    /** Validates the destination before updating the captured link or selection and prevents form submission. */
     protected saveLink(event?: Event): void {
         event?.preventDefault();
         event?.stopPropagation();
@@ -490,6 +512,7 @@ export class MessageEditorComponent {
         this.refreshFormatState();
     }
 
+    /** Tracks native caret movement without closing a link form while focus is in its inputs. */
     protected updateSelectionState(): void {
         const element = this.editable()?.nativeElement;
         const selection = element?.ownerDocument.getSelection();

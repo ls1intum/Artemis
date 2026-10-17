@@ -4,7 +4,6 @@
             formControlName="content"
             [draftIdentity]="'message:' + (posting()?.id ?? 'new')"
             [activeConversation]="activeConversation()"
-            [editorHeight]="editorHeight"
             [maxContentLength]="maxContentLength"
             [isInputLengthDisplayed]="false"
             (keydown.enter)="confirm()"

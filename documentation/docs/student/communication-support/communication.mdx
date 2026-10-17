@@ -330,7 +330,9 @@ Use the toolbar to format selected text or add a link. Select the link toolbar b
 Select text to change its formatting, or choose a format at the cursor to apply it to the text you type next.
 Choose the same format again to turn it off. Toolbar buttons show which formats are active at the cursor.
 
-<Image src={formattedMessageEditorImg} alt={"A message with slide and FAQ references, an image preview and a PDF attachment"} size={ImageSize.large} />
+<Image src={formattedMessageEditorImg} alt={"A formatted draft listing MIT Introduction to Algorithms lecture and recitation materials with a link to MIT OpenCourseWare"} size={ImageSize.large} />
+
+The course material titles shown in these screenshots are from [MIT OpenCourseWare: 6.006 Introduction to Algorithms (Fall 2011)](https://ocw.mit.edu/courses/6-006-introduction-to-algorithms-fall-2011/).
 
 Type `@` to search for people, `#` to search for channels, exercises and lectures in the current course,
 or `:` followed by an emoji name to search for an emoji.
@@ -345,12 +347,14 @@ Press Enter or Backspace on an empty list item to return to normal text on the s
 
 The toolbar also lets you attach images or PDFs, search lecture attachments and individual slides, reference a published FAQ, or search for an emoji.
 Images have a thumbnail in the editor, and PDFs appear as links. You can also paste or drop files into the message.
-Uploads use the same file types and size limits as the Markdown editor. Wait for an upload to finish before sending or saving.
+Uploads use the conversation file types and size limits. Wait for an upload to finish before sending or saving.
 Resource pickers insert at the cursor position you selected before opening them. Slide numbers stay visible beside the title.
 Hover over a slide or select it with the arrow keys to preview it before inserting.
 The compact emoji picker closes when you click outside it or press Escape.
 
-Messages with tables, mathematical formulas or other unsupported formatting remain in the Markdown editor to preserve their content.
+Communication supports the messaging formats shown in the toolbar. Tables, mathematical formulas and arbitrary HTML belong in exercise problem statements.
+Existing messages with unsupported formatting cannot be edited here; their saved content remains unchanged.
+For an unsent draft with unsupported formatting, select **Discard draft** to start a new message.
 The formatted editor is an exploration for the web app; the iOS app continues to use its existing editor.
 
 ### Reference Course Entities

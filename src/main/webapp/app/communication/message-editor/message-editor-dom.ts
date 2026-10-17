@@ -1,7 +1,7 @@
 import { captureMessageBookmark, messageBookmarkText, restoreMessageBookmark } from './message-editor-bookmarks';
 import { preserveMessageSelection, restoreMessageSelectionBoundaries } from './message-editor-selection';
 import { formatMessageBlocks } from './message-editor-blocks';
-import { editorToMessage, isMessageLinkSafe, messageToEditorHtml } from './message-editor-conversion';
+import { editorToMessage, isMessageLinkSafe, messageToEditorFragment } from './message-editor-conversion';
 import { formatMessageSelection, messageSelectionOffset, restoreMessageSelection, setMessageSelectionMarks } from './message-editor-formatting';
 import { EMOTICON_TO_EMOJI } from 'app/editor/monaco-editor/model/emoticon-emoji.util';
 import { DiffMatchPatch } from 'diff-match-patch-typescript';
@@ -15,10 +15,11 @@ interface SelectionPoint {
 
 interface EditorSnapshot {
     html: string;
-    selectionHtml: string;
+    selectionContent: HTMLElement;
     typingMarks?: string[];
 }
 
+/** A trigger/query pair and the native text range that accepting a suggestion must replace. */
 export interface MessageCompletion {
     trigger: '@' | '#' | ':';
     query: string;
@@ -42,9 +43,10 @@ export class MessageEditorDom {
         private readonly changed: (message: string) => void,
     ) {}
 
+    /** Replaces the document from Markdown and starts a fresh history, discarding saved selections and composition state. */
     load(message: string): void {
         this.revision++;
-        this.element.innerHTML = messageToEditorHtml(message);
+        this.element.replaceChildren(messageToEditorFragment(message));
         this.ensureCaret();
         this.savedRange = undefined;
         this.typingMarks = undefined;
@@ -114,6 +116,7 @@ export class MessageEditorDom {
         this.select(range);
     }
 
+    /** Reports when insertion must use the adapter to preserve typing marks, code, or a caret beside a break or link. */
     needsManagedTextInsertion(): boolean {
         const range = this.range();
         if (!range.collapsed) {
@@ -198,6 +201,7 @@ export class MessageEditorDom {
         this.beforeInput();
     }
 
+    /** Applies the pending marks to the committed IME text and records the resulting edit in the shared undo history. */
     endComposition(): void {
         const composition = this.composition;
         this.composition = undefined;
@@ -258,6 +262,7 @@ export class MessageEditorDom {
         this.afterInput();
     }
 
+    /** Replaces the selection with literal text and soft line breaks, retaining applicable marks as one undoable edit. */
     insertText(text: string): void {
         this.transact(() => {
             const fragment = this.element.ownerDocument.createDocumentFragment();
@@ -285,6 +290,7 @@ export class MessageEditorDom {
         });
     }
 
+    /** Inserts sanitized message content at the supplied or remembered range, retaining a trailing completion space. */
     insertMarkdown(message: string, range?: Range): void {
         this.typingMarks = undefined;
         this.typingCaret = undefined;
@@ -292,15 +298,14 @@ export class MessageEditorDom {
             if (range) {
                 this.select(range);
             }
-            const template = this.element.ownerDocument.createElement('template');
-            template.innerHTML = messageToEditorHtml(message);
+            const content = messageToEditorFragment(message);
             // Completion inserts inline content, not a paragraph inside the current paragraph.
-            const paragraph = template.content.firstElementChild;
+            const paragraph = content.firstElementChild;
             const fragment = this.element.ownerDocument.createDocumentFragment();
-            if (paragraph?.tagName === 'P' && template.content.childElementCount === 1) {
+            if (paragraph?.tagName === 'P' && content.childElementCount === 1) {
                 fragment.append(...Array.from(paragraph.childNodes));
             } else {
-                fragment.append(template.content);
+                fragment.append(content);
             }
             // Markdown renderers trim trailing spaces. Keep an editable text position after an atomic item.
             const trailingSpace = /[ \t]+$/.exec(message)?.[0];
@@ -366,6 +371,7 @@ export class MessageEditorDom {
             : [];
     }
 
+    /** Toggles a mark on selected text or the next typed run; fenced code keeps its literal contents unchanged. */
     format(tag: 'strong' | 'em' | 'ins' | 's' | 'code'): void {
         const range = this.range();
         if (this.parentElement(range.startContainer)?.closest('pre')) {
@@ -452,6 +458,7 @@ export class MessageEditorDom {
         return [...marks, ...blocks];
     }
 
+    /** Updates an enclosing link or links the selection, rejecting unsafe URLs and new links inside literal code. */
     setLink(label: string, url: string, existing?: HTMLAnchorElement): void {
         existing ??= this.linkAtSelection();
         if (!isMessageLinkSafe(url) || !this.canLinkSelection(existing)) {
@@ -481,6 +488,7 @@ export class MessageEditorDom {
         });
     }
 
+    /** Removes a link belonging to this editor, preserves its formatted label, and leaves the caret after it. */
     unlink(link: HTMLAnchorElement): void {
         if (this.element.contains(link)) {
             this.transact(() => {
@@ -572,6 +580,7 @@ export class MessageEditorDom {
         return node instanceof HTMLElement && node.matches('[data-message-reference], a');
     }
 
+    /** Finds a trigger immediately before a collapsed caret; code, links, protected references, and selections cannot complete. */
     completion(): MessageCompletion | undefined {
         const range = this.range();
         let node: Node | undefined = range.startContainer;
@@ -600,12 +609,14 @@ export class MessageEditorDom {
         return node instanceof HTMLElement ? node : (node.parentElement ?? undefined);
     }
 
+    /** Restores the preceding document, typing marks, and native selection, then emits its serialized content. */
     undo(): void {
         if (this.historyIndex > 0) {
             this.restore(this.history[--this.historyIndex]);
         }
     }
 
+    /** Reapplies an undone snapshot, including its typing marks and selection, and emits the restored content. */
     redo(): void {
         if (this.historyIndex < this.history.length - 1) {
             this.restore(this.history[++this.historyIndex]);
@@ -631,12 +642,13 @@ export class MessageEditorDom {
         selection.setStart(resolve(first), first.offset);
         selection.setEnd(resolve(last), last.offset);
         preserveMessageSelection(clone, selection);
-        return { html: this.element.innerHTML, selectionHtml: clone.innerHTML, typingMarks: this.typingMarks };
+        return { html: this.element.innerHTML, selectionContent: clone, typingMarks: this.typingMarks };
     }
 
     private restore(snapshot: EditorSnapshot): void {
         this.revision++;
-        this.element.innerHTML = snapshot.selectionHtml;
+        const content = snapshot.selectionContent.cloneNode(true);
+        this.element.replaceChildren(...Array.from(content.childNodes));
         this.typingMarks = snapshot.typingMarks;
         this.typingCaret = undefined;
         this.select(restoreMessageSelectionBoundaries(this.element));

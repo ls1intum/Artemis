@@ -211,7 +211,8 @@
             "newMessagesButton": "Jump to first unread message",
             "formattedEditor": {
                 "previewUnavailable": "Slide preview is unavailable.",
-                "unsupported": "This message uses formatting that is currently only editable in Markdown.",
+                "discardDraft": "Discard draft",
+                "unsupported": "This message contains unsupported formatting and cannot be edited here.",
                 "formatting": "Message formatting",
                 "moreOptions": "More options",
                 "fewerOptions": "Fewer options",

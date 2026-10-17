@@ -13,6 +13,7 @@ import { sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.ut
 import { MessageEditorResources, MessageResourceKind } from './message-editor-resources';
 import { MessageSuggestion } from './message-editor-suggestions';
 
+/** An insertion payload paired with the editor range captured before a picker or upload took focus. */
 export interface MessageResourceInsertion {
     markdown: string;
     range: Range;
@@ -34,9 +35,13 @@ export class MessageEditorToolsComponent {
     readonly courseId = input.required<number>();
     readonly controlsVisible = input(true);
     readonly conversationId = input<number>();
+    /** Invalidates asynchronous insertions when external content replaces the editor document. */
     readonly editorRevision = input(0);
+    /** Invalidates uploads even when switching between drafts with identical content. */
     readonly draftIdentity = input<string>();
+    /** Captures an eligible insertion point; undefined prevents resources from being inserted into code or links. */
     readonly captureSelection = input.required<() => Range | undefined>();
+    /** Lets the editor restore the captured range and perform the insertion in its own undo history. */
     readonly insert = output<MessageResourceInsertion>();
     readonly uploadingChange = output<boolean>();
     readonly closed = output<void>();
@@ -95,6 +100,7 @@ export class MessageEditorToolsComponent {
         this.range = this.captureSelection()();
     }
 
+    /** Captures the insertion range before opening a picker and reports an ineligible caret instead of moving it. */
     protected open(kind: MessageResourceKind | 'emoji'): void {
         this.range = this.captureSelection()();
         if (!this.range) {
@@ -121,6 +127,7 @@ export class MessageEditorToolsComponent {
         }
     }
 
+    /** Loads the current picker query, ignoring responses superseded by another query, closure, or destruction. */
     protected async search(event?: Event): Promise<void> {
         if (event?.target instanceof HTMLInputElement) {
             this.query.set(event.target.value);
@@ -151,6 +158,7 @@ export class MessageEditorToolsComponent {
         }
     }
 
+    /** Emits a resource at the original insertion range, with a separating space for subsequent typing. */
     protected choose(item: MessageSuggestion): void {
         if (this.range) {
             this.insert.emit({ markdown: item.markdown + ' ', range: this.range });
@@ -158,6 +166,7 @@ export class MessageEditorToolsComponent {
         this.close();
     }
 
+    /** Inserts the selected native emoji at the saved caret without exposing its shortcode. */
     protected chooseEmoji(event: EmojiEvent): void {
         if (event.emoji.native && this.range) {
             this.insert.emit({ markdown: event.emoji.native, range: this.range });
@@ -165,6 +174,7 @@ export class MessageEditorToolsComponent {
         this.close();
     }
 
+    /** Keeps picker navigation from submitting the message and leaves IME confirmation unhandled. */
     protected keydown(event: Event): void {
         event.stopPropagation();
         if (!(event instanceof KeyboardEvent) || event.isComposing || this.composing) {
@@ -195,11 +205,13 @@ export class MessageEditorToolsComponent {
         this.preview.set(item?.previewUrl && origin ? { item, origin } : undefined);
     }
 
+    /** Saves the editor caret before the operating system's file chooser takes focus. */
     protected openFiles(): void {
         this.range = this.captureSelection()();
         this.fileInput()?.nativeElement.click();
     }
 
+    /** Starts uploads at the saved caret and clears the chooser so the same file can be selected again. */
     protected filesSelected(event: Event): void {
         const input = event.target as HTMLInputElement;
         void this.uploadFiles(Array.from(input.files ?? []), this.range);

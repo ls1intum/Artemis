@@ -105,12 +105,16 @@ async function expectText(editor: Locator, text: string) {
     await expect.poll(() => editor.evaluate((element) => element.textContent?.replace(/\u200b/g, ''))).toBe(text);
 }
 
-async function send(page: Page, composer: Composer): Promise<Post> {
+async function send(page: Page, composer: Composer, keyboard = false): Promise<Post> {
     const responsePromise = page.waitForResponse(
         (response) => response.url().endsWith(`/api/communication/courses/${composer.course.id}/messages`) && response.request().method() === 'POST',
     );
     await expect(page.getByTestId('send-formatted-message')).toBeEnabled();
-    await page.getByTestId('send-formatted-message').click();
+    if (keyboard) {
+        await page.getByTestId('send-formatted-message').press('Enter');
+    } else {
+        await page.getByTestId('send-formatted-message').click();
+    }
     const response = await responsePromise;
     expect(response.status()).toBe(201);
     const saved = await readResponseJson<Post>(response);
@@ -153,6 +157,47 @@ async function saveEdited(page: Page, composer: Composer, posting: Locator, orig
 }
 
 test.describe('Formatted message editor native editing', { tag: '@fast' }, () => {
+    test('literal dollars stay text through keyboard sending, reopening and saving without a Markdown editor', async ({ page, composer }) => {
+        await composer.editor.fill('$x^2$');
+        await expect(page.locator('jhi-markdown-editor-monaco')).toHaveCount(0);
+        const saved = await send(page, composer, true);
+        expect(saved.content).toBe('\\$x^2\\$');
+        await expect(postContent(page, saved.id!)).toContainText('$x^2$');
+        const { posting, editor } = await reopen(page, saved);
+        await expectText(editor, '$x^2$');
+        await selectText(editor, 5, 5);
+        await expectCaret(editor, 5);
+        await editor.pressSequentially(' literal');
+        const edited = await saveEdited(page, composer, posting, saved);
+        expect(edited.content).toBe('\\$x^2\\$ literal');
+        await expect(postContent(page, edited.id!)).toContainText('$x^2$ literal');
+        await expect(page.locator('jhi-markdown-editor-monaco')).toHaveCount(0);
+    });
+
+    test('unsupported existing formulas cannot be destructively saved and Cancel leaves normal composing available', async ({ page, composer, communicationAPIRequests }) => {
+        const source = '$ x $';
+        const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', source);
+        const posting = page.locator(`#item-${original.id}`);
+        const updates: string[] = [];
+        page.on('request', (request) => {
+            if (request.method() === 'PUT' && request.url().endsWith(`/messages/${original.id}`)) updates.push(request.url());
+        });
+        await expect(postContent(page, original.id!)).toContainText('x');
+        await posting.hover();
+        await posting.getByTestId('posting-reaction-edit').click();
+        await expect(posting.getByTestId('unsupported-message-formatting')).toBeVisible();
+        await expect(posting.getByTestId('formatted-message-input')).toHaveCount(0);
+        await expect(page.locator('jhi-markdown-editor-monaco')).toHaveCount(0);
+        await expect(posting.locator('#save')).toBeDisabled();
+        await posting.getByRole('button', { name: 'Cancel', exact: true }).click();
+        await expect(posting.getByTestId('unsupported-message-formatting')).toHaveCount(0);
+        await expect(postContent(page, original.id!)).toContainText('x');
+        await composer.editor.fill('A normal course message');
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('A normal course message');
+        expect(updates).toHaveLength(0);
+    });
+
     for (const mark of [
         { tag: 'strong', markdown: '**marked**' },
         { tag: 'em', markdown: '*marked*' },
