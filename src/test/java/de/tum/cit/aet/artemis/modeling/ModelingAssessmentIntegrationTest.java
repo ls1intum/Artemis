@@ -426,6 +426,25 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndepen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testManualAssessmentSave_creditsOutOfBounds() throws Exception {
+        ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
+                TEST_PREFIX + "student1");
+        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
+        feedbacks.getFirst().setCredits(Feedback.MAX_MANUAL_CREDITS + 0.5);
+
+        createAssessment(submission, feedbacks, "/assessment", HttpStatus.BAD_REQUEST);
+
+        feedbacks.getFirst().setCredits(-Feedback.MAX_MANUAL_CREDITS - 0.5);
+        createAssessment(submission, feedbacks, "/assessment", HttpStatus.BAD_REQUEST);
+
+        assertThat(resultRepository.findDistinctBySubmissionId(submission.getId())).as("no result is saved for a refused assessment").isNotPresent();
+
+        feedbacks.getFirst().setCredits((double) Feedback.MAX_MANUAL_CREDITS);
+        createAssessment(submission, feedbacks, "/assessment", HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSubmit_classDiagram() throws Exception {
         User assessor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
