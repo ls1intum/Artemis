@@ -26,7 +26,17 @@ export class PanelDirective {
     selector: 'jhi-resizable-panels',
     templateUrl: './resizable-panels.component.html',
     styleUrls: ['./resizable-panels.component.scss'],
-    imports: [CdkScrollable, FaIconComponent, NgTemplateOutlet, SplitterModule, TumAetUiTabsComponent, TumAetUiTabListComponent, TumAetUiTabComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [
+        CdkScrollable,
+        FaIconComponent,
+        NgTemplateOutlet,
+        SplitterModule,
+        TumAetUiTabsComponent,
+        TumAetUiTabListComponent,
+        TumAetUiTabComponent,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
 })
 export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     private readonly elementRef = inject(ElementRef);
