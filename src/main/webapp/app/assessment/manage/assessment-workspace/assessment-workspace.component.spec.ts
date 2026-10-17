@@ -162,9 +162,17 @@ describe('AssessmentWorkspaceComponent', () => {
             expect(fixture.nativeElement.querySelector('.feedback-bottom-panel--collapsed')).toBeNull();
         });
 
-        it('is only limited in height when dragged down: its splitter does not ask for a collapse', () => {
+        it('collapses to one icon for each tab when dragged down to a sliver', () => {
             const splitter = fixture.debugElement.query(By.css('.assessment-workspace__area p-splitter'));
             splitter.triggerEventHandler('onResizeEnd', { originalEvent: new MouseEvent('mouseup'), sizes: [92, 8] });
+            fixture.detectChanges();
+
+            expect(detailsIcons()).toHaveLength(2);
+        });
+
+        it('keeps the panel open while it is dragged to a usable height', () => {
+            const splitter = fixture.debugElement.query(By.css('.assessment-workspace__area p-splitter'));
+            splitter.triggerEventHandler('onResizeEnd', { originalEvent: new MouseEvent('mouseup'), sizes: [70, 30] });
             fixture.detectChanges();
 
             expect(detailsIcons()).toHaveLength(1);
