@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { splitterPassThrough } from 'app/assessment/manage/assessment-workspace/splitter-pass-through';
 
-const gutterBackground = (pt: ReturnType<typeof splitterPassThrough>) => ((pt.gutter as { style: Record<string, string> }).style as Record<string, string>)['background'];
+const gutterBackground = (pt: ReturnType<typeof splitterPassThrough>) => (pt as unknown as { gutter: { style: Record<string, string> } }).gutter.style['background'];
 
 describe('splitterPassThrough', () => {
     it('should draw the gutters in the grey of the shell by default, as on the pages of a student', () => {
