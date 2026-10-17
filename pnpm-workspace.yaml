@@ -226,6 +226,12 @@ overrides:
 # Patch files applied by pnpm to specific transitive dependencies during install
 # (the pnpm-native replacement for the old patch-package/postinstall flow).
 patchedDependencies:
+  # GHSA-vfj7-8cjw-p6xm has no upstream fixed release. Bound parser and AST
+  # traversal depth while preserving normal brace globbing used by stylelint.
+  # Documentation shares this patch; exercise-template installs are separate.
+  # Version-based audit findings remain visible until upstream ships a fix.
+  # Remove after an upstream fix: https://github.com/micromatch/braces/issues/70
+  braces@3.0.3: config/pnpm/patches/braces@3.0.3.patch
   'eslint@10.12.0': 'config/pnpm/patches/eslint+10.12.0.patch'
   y-monaco@0.1.6: config/pnpm/patches/y-monaco@0.1.6.patch
 
