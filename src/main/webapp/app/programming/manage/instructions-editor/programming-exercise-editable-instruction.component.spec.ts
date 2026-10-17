@@ -622,6 +622,44 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(updateProblemStatement).toHaveBeenCalledExactlyOnceWith(exercise.id, 'live editor value');
     });
 
+    it.each(['denied', 'error', 'busy', 'destroyed'])('does not write after an asynchronous pre-save guard is %s', (outcome) => {
+        setRequiredInputs(fixture, exercise);
+        const allowed = new Subject<boolean>();
+        fixture.componentRef.setInput('beforeSave', () => allowed);
+        fixture.detectChanges();
+        const update = vi.spyOn(programmingExerciseService, 'updateProblemStatement');
+        comp.saveInstructions({ stopPropagation: () => {} } as Event);
+        expect(comp.savingInstructions()).toBe(true);
+        if (outcome === 'error') allowed.error(new Error('Revalidation failed'));
+        else if (outcome === 'destroyed') {
+            fixture.destroy();
+            allowed.next(true);
+        } else {
+            if (outcome === 'busy') {
+                fixture.componentRef.setInput('isGeneratingOrRefining', true);
+                fixture.detectChanges();
+            }
+            allowed.next(outcome !== 'denied');
+            allowed.complete();
+        }
+        expect(update).not.toHaveBeenCalled();
+        expect(comp.savingInstructions()).toBe(false);
+        expect(allowed.observed).toBe(false);
+    });
+
+    it('does not acknowledge a statement response after the exercise input changes', () => {
+        setRequiredInputs(fixture, exercise);
+        fixture.detectChanges();
+        const response = new Subject<HttpResponse<ProgrammingExercise>>();
+        vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(response);
+        const canonical = vi.spyOn(comp.canonicalProblemStatementSaved, 'emit');
+        comp.saveInstructions({ stopPropagation: () => {} } as Event);
+        setRequiredInputs(fixture, { ...exercise, id: 99 } as ProgrammingExercise);
+        fixture.detectChanges();
+        response.next(new HttpResponse({ body: exercise }));
+        expect(canonical).not.toHaveBeenCalled();
+    });
+
     it('does not persist through the save action while generation locks the editor', () => {
         fixture.componentRef.setInput('editMode', true);
         fixture.componentRef.setInput('isGeneratingOrRefining', true);

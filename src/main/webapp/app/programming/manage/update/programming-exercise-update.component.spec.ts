@@ -1,3 +1,8 @@
+import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
+import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
+import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
@@ -122,13 +127,36 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                     useValue: {
                         init: vi.fn().mockReturnValue({ doc: {}, text: { toString: () => '' }, awareness: {} }),
                         reset: vi.fn(),
+                        isAwaitingInitialSync: vi.fn(() => false),
+                        acknowledgeCanonicalSave: vi.fn(),
                         stateReplaced$: of(),
                         initialSyncFinalized$: of({ contentChangedDuringFinalize: false, contentDivergedFromFallback: false, finalContent: '' }),
                     },
                 },
                 MockProvider(DialogService),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(ProgrammingExerciseUpdateComponent, {
+                set: {
+                    providers: [
+                        TumAetUiConfirmationService,
+                        {
+                            provide: HyperionGenerationActivityFacade,
+                            useValue: {
+                                connect: vi.fn(),
+                                retryStatus: vi.fn(),
+                                generationCompleted: new Subject(),
+                                generationReverted: new Subject(),
+                                exerciseContentsInvalidated: new Subject(),
+                                running: signal(false),
+                                statusLoading: signal(false),
+                                statusLoadFailed: signal(false),
+                            },
+                        },
+                    ],
+                },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
         comp = fixture.componentInstance;
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
@@ -185,6 +213,250 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         comp.exerciseProblemComponent = (() => undefined) as unknown as typeof comp.exerciseProblemComponent;
         response.next(new HttpResponse({ body: { id: 42, problemStatement: 'saved by settings' } as ProgrammingExercise }));
         expect(acknowledge).toHaveBeenCalledExactlyOnceWith('saved by settings');
+    });
+
+    describe('generation content revalidation', () => {
+        function protectedSettings() {
+            comp.programmingExercise = Object.assign(new ProgrammingExercise(new Course(), undefined), {
+                id: 42,
+                title: 'Saved exercise',
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                projectType: ProjectType.PLAIN_GRADLE,
+                isAtLeastEditor: true,
+                problemStatement: 'Original statement',
+                assessmentType: AssessmentType.AUTOMATIC,
+            });
+            comp.backupExercise = deepClone(comp.programmingExercise);
+            comp.isSaving.set(false);
+            comp.isEdit = true;
+            vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+            comp['setupMetadataSync']();
+            return fixture.debugElement.injector.get(HyperionGenerationActivityFacade);
+        }
+
+        function savedExercise(statement: string) {
+            const exercise = deepClone(comp.backupExercise);
+            exercise.problemStatement = statement;
+            return new HttpResponse({ body: exercise });
+        }
+
+        it('revalidates before a category save even when the generation event was missed', () => {
+            protectedSettings();
+            comp.programmingExercise.categories = [new ExerciseCategory('Local category', '#ffffff')];
+            vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of(savedExercise('Generated statement')));
+            const update = vi.spyOn(programmingExerciseService, 'update');
+            const reload = vi.spyOn(comp as any, 'reloadSettings').mockImplementation(() => {});
+
+            comp.saveExercise();
+
+            expect(update).not.toHaveBeenCalled();
+            expect(comp.programmingExercise.problemStatement).toBe('Original statement');
+            expect(comp.programmingExercise.categories[0].category).toBe('Local category');
+            expect(comp.generationRefreshRequired()).toBe(true);
+            expect(reload).not.toHaveBeenCalled();
+        });
+
+        it.each(['generation', 'undo', 'invalidated'])('preserves dirty settings after remote %s until explicit reload confirmation', (change) => {
+            const activity = protectedSettings();
+            comp.programmingExercise.title = 'Unsaved title';
+            const find = vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of(savedExercise('Changed remotely')));
+            const reload = vi.spyOn(comp as any, 'reloadSettings').mockImplementation(() => {});
+            const confirmation = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
+            if (change === 'generation') activity.generationCompleted.next({ jobId: 'remote', liveExerciseChanged: true });
+            else if (change === 'undo') activity.generationReverted.next('2026-10-17');
+            else activity.exerciseContentsInvalidated.next('remote');
+
+            expect(find).toHaveBeenCalledWith(42);
+            expect(comp.programmingExercise.title).toBe('Unsaved title');
+            expect(comp.generationSaveBlocked()).toBe(true);
+            expect(reload).not.toHaveBeenCalled();
+            comp['reloadSavedSettings']();
+            expect(reload).not.toHaveBeenCalled();
+            confirmation.mock.calls[0][0].accept?.();
+            expect(reload).toHaveBeenCalledOnce();
+        });
+
+        it('keeps the persisted generation scope after a local language change', () => {
+            const activity = protectedSettings();
+            comp.programmingExercise.programmingLanguage = ProgrammingLanguage.PYTHON;
+            comp['setupMetadataSync']();
+            vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of(savedExercise('Generated statement')));
+            activity.generationCompleted.next({ jobId: 'remote', liveExerciseChanged: true });
+            expect(comp['generationExerciseId']()).toBe(42);
+            expect(comp.generationSaveBlocked()).toBe(true);
+            expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.PYTHON);
+        });
+
+        it('does not reload repeatedly for unchanged historical terminal state', () => {
+            const activity = protectedSettings();
+            vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of(savedExercise('Original statement')));
+            const reload = vi.spyOn(comp as any, 'reloadSettings').mockImplementation(() => {});
+            activity.generationCompleted.next({ jobId: 'historical', liveExerciseChanged: true });
+            expect(comp.generationSaveBlocked()).toBe(false);
+            expect(reload).not.toHaveBeenCalled();
+        });
+
+        it('revalidates changed metadata even if the remote statement did not change', () => {
+            const activity = protectedSettings();
+            const fresh = savedExercise('Original statement');
+            fresh.body!.maxPoints = 30;
+            vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of(fresh));
+            const reload = vi.spyOn(comp as any, 'reloadSettings').mockImplementation(() => {});
+            activity.generationCompleted.next({ jobId: 'remote', liveExerciseChanged: true });
+            expect(reload).toHaveBeenCalledOnce();
+        });
+
+        it('fails closed on a failed canonical read and ignores an old reload confirmation after another change', () => {
+            const activity = protectedSettings();
+            vi.spyOn(programmingExerciseService, 'find').mockReturnValue(throwError(() => new Error('offline')));
+            const update = vi.spyOn(programmingExerciseService, 'update');
+            const reload = vi.spyOn(comp as any, 'reloadSettings').mockImplementation(() => {});
+            const confirmation = vi.spyOn(fixture.debugElement.injector.get(TumAetUiConfirmationService), 'confirm');
+            comp.saveExercise();
+            comp['reloadSavedSettings']();
+            activity.exerciseContentsInvalidated.next('newer');
+            confirmation.mock.calls[0][0].accept?.();
+            comp.saveExercise();
+            expect(update).not.toHaveBeenCalled();
+            expect(reload).not.toHaveBeenCalled();
+            expect(comp.generationSaveBlocked()).toBe(true);
+        });
+
+        it.each([false, true])('keeps both save paths usable after its own asynchronous statement save (newer edit: %s)', async (editDuringSave) => {
+            protectedSettings();
+            route.data = of({ programmingExercise: comp.programmingExercise });
+            route.url = of([{ path: 'edit' } as UrlSegment]);
+            route.params = of({ courseId, exerciseId: 42 });
+            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: comp.programmingExercise.course! })));
+            const canonical = new Subject<HttpResponse<ProgrammingExercise>>();
+            const statementResponse = new Subject<HttpResponse<ProgrammingExercise>>();
+            const canonicalBeforeSave = savedExercise('Original statement');
+            const find = vi.spyOn(programmingExerciseService, 'find').mockReturnValueOnce(canonical);
+            const saveStatement = vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(statementResponse);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            const problem = fixture.debugElement.query(By.directive(ProgrammingExerciseProblemComponent)).componentInstance as ProgrammingExerciseProblemComponent;
+            const instructions = problem.editableInstructions()!;
+            expect(instructions).toBeInstanceOf(ProgrammingExerciseEditableInstructionComponent);
+            vi.spyOn(instructions, 'getCurrentContent').mockImplementation(() => comp.programmingExercise.problemStatement);
+            instructions.updateProblemStatement('Own saved statement');
+            const event = { stopPropagation: () => {} } as Event;
+
+            instructions.saveInstructions(event);
+            fixture.detectChanges();
+            expect(comp.generationRefreshPending()).toBe(true);
+            expect(instructions.isGeneratingOrRefining()).toBe(false);
+            expect(instructions.savingInstructions()).toBe(true);
+            instructions.saveInstructions(event);
+            expect(find).toHaveBeenCalledOnce();
+            canonical.next(canonicalBeforeSave);
+            expect(saveStatement).toHaveBeenCalledExactlyOnceWith(42, 'Own saved statement');
+            comp.saveExercise();
+            comp.save();
+            expect(find).toHaveBeenCalledOnce();
+            expect(comp.generationFullSaveBlocked()).toBe(true);
+            expect(comp.generationRefreshRequired()).toBe(false);
+            if (editDuringSave) instructions.updateProblemStatement('Newer unsaved statement');
+            statementResponse.next(savedExercise('Own saved statement'));
+            statementResponse.complete();
+            expect(comp.backupExercise.problemStatement).toBe('Own saved statement');
+            expect(comp.programmingExercise.problemStatement).toBe(editDuringSave ? 'Newer unsaved statement' : 'Own saved statement');
+            if (editDuringSave) expect(instructions.unsavedChangesValue()).toBe(true);
+            comp.programmingExercise.categories = [new ExerciseCategory('Local category', '#ffffff')];
+            find.mockReturnValue(of(savedExercise('Own saved statement')));
+            const update = vi.spyOn(programmingExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: comp.programmingExercise })));
+            vi.spyOn(comp as any, 'onSaveSuccess').mockImplementation(() => {});
+            comp.saveExercise();
+            expect(update).toHaveBeenCalledOnce();
+            expect(update.mock.calls[0][0].problemStatement).toBe(editDuringSave ? 'Newer unsaved statement' : 'Own saved statement');
+            expect(comp.generationRefreshRequired()).toBe(false);
+        });
+
+        it.each(['generation', 'statement'])('checks both delayed update-modal callbacks while %s is active', async (busy) => {
+            const activity = protectedSettings();
+            const savingInstructions = signal(false);
+            comp.exerciseProblemComponent = (() => ({ editableInstructions: () => ({ savingInstructions }) })) as unknown as typeof comp.exerciseProblemComponent;
+            const confirmed = new Subject<void>();
+            const reEvaluated = new Subject<void>();
+            vi.spyOn(comp['modalService'], 'hasOpenModals').mockReturnValue(true);
+            vi.spyOn(comp['popupService'], 'checkExerciseBeforeUpdate').mockResolvedValue({
+                componentInstance: { confirmed, reEvaluated, deleteFeedback: false },
+            } as Awaited<ReturnType<(typeof comp)['popupService']['checkExerciseBeforeUpdate']>>);
+            const find = vi.spyOn(programmingExerciseService, 'find');
+            const update = vi.spyOn(programmingExerciseService, 'update');
+            const reevaluate = vi.spyOn(programmingExerciseService, 'reevaluateAndUpdate');
+            comp.save();
+            await Promise.resolve();
+            if (busy === 'generation') activity.running.set(true);
+            else savingInstructions.set(true);
+            confirmed.next();
+            reEvaluated.next();
+            expect(find).not.toHaveBeenCalled();
+            expect(update).not.toHaveBeenCalled();
+            expect(reevaluate).not.toHaveBeenCalled();
+        });
+
+        it.each(['stale', 'failed'])('keeps dirty statement text editable while %s status blocks saving', async (state) => {
+            const activity = protectedSettings();
+            route.data = of({ programmingExercise: comp.programmingExercise });
+            route.url = of([{ path: 'edit' } as UrlSegment]);
+            route.params = of({ courseId, exerciseId: 42 });
+            vi.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: comp.programmingExercise.course! })));
+            const find = vi.spyOn(programmingExerciseService, 'find').mockReturnValue(of(savedExercise('Original statement')));
+            const saveStatement = vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(of(savedExercise('Copied draft')));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            const problem = fixture.debugElement.query(By.directive(ProgrammingExerciseProblemComponent)).componentInstance as ProgrammingExerciseProblemComponent;
+            const instructions = problem.editableInstructions()!;
+            vi.spyOn(instructions, 'getCurrentContent').mockImplementation(() => comp.programmingExercise.problemStatement);
+            instructions.updateProblemStatement('Copied draft');
+            if (state === 'failed') activity.statusLoadFailed.set(true);
+            else comp.generationRefreshRequired.set(true);
+            fixture.detectChanges();
+            const editor = fixture.debugElement.query(By.css('jhi-markdown-editor-monaco'));
+            expect(editor.nativeElement.hasAttribute('inert')).toBe(false);
+            expect(instructions.isGeneratingOrRefining()).toBe(false);
+            instructions.updateProblemStatement('Draft remains editable');
+            expect(comp.programmingExercise.problemStatement).toBe('Draft remains editable');
+            instructions.saveInstructions({ stopPropagation: () => {} } as Event);
+            expect(find).not.toHaveBeenCalled();
+            expect(saveStatement).not.toHaveBeenCalled();
+            if (state === 'failed') {
+                const retry = fixture.debugElement.query(By.css('[data-testid="hyperion-settings-retry-status"]'));
+                expect(retry).toBeTruthy();
+                expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.hyperion.generation.run.statusUnavailable"]'))).toBeTruthy();
+                retry.nativeElement.click();
+                expect(activity.retryStatus).toHaveBeenCalledOnce();
+                activity.statusLoadFailed.set(false);
+                fixture.detectChanges();
+                instructions.saveInstructions({ stopPropagation: () => {} } as Event);
+                expect(saveStatement).toHaveBeenCalledExactlyOnceWith(42, 'Draft remains editable');
+            }
+        });
+
+        it('does not change an unguarded settings baseline on statement acknowledgement', () => {
+            protectedSettings();
+            comp['generationExerciseId'].set(undefined);
+            comp['onCanonicalStatementSaved']('New statement');
+            expect(comp.backupExercise.problemStatement).toBe('Original statement');
+            comp['generationExerciseId'].set(99);
+            comp['onCanonicalStatementSaved']('Different exercise');
+            expect(comp.backupExercise.problemStatement).toBe('Original statement');
+        });
+
+        it('blocks save while generation status is active or unknown', () => {
+            const activity = protectedSettings();
+            const find = vi.spyOn(programmingExerciseService, 'find');
+            for (const state of [activity.running, activity.statusLoading, activity.statusLoadFailed]) {
+                state.set(true);
+                comp.saveExercise();
+                expect(comp.generationSaveBlocked()).toBe(true);
+                state.set(false);
+            }
+            expect(find).not.toHaveBeenCalled();
+        });
     });
 
     describe('initializeEditMode', () => {
