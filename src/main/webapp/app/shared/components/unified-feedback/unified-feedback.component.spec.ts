@@ -1052,7 +1052,12 @@ describe('UnifiedFeedbackComponent', () => {
             fixture.componentRef.setInput('feedback', linkedFeedback());
             fixture.detectChanges();
 
-            component.removeGradingInstructionLink();
+            // Through the chip's remove control, like the assessor: the first click arms it, the second one removes the link.
+            // The click also marks the OnPush view dirty, which calling the method directly would not.
+            const removeButton = chip()!.querySelector<HTMLButtonElement>('jhi-confirm-icon button')!;
+            removeButton.click();
+            fixture.detectChanges();
+            removeButton.click();
             fixture.detectChanges();
 
             expect(chip()).toBeNull();
