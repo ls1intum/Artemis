@@ -96,23 +96,44 @@ public interface AssessmentUploadParticipationRepository extends ArtemisJpaRepos
     Set<Long> findIdsOutsideExercise(@Param("exerciseId") final long exerciseId, @Param("participationIds") final Collection<Long> participationIds);
 
     /**
-     * Loads the participations needed during assessment-upload storage together with the participant reference used by result lifecycle callbacks.
+     * Loads the participations needed during assessment-upload storage: the participant reference used by result lifecycle callbacks, and each participation's latest submission
+     * with the results and feedback the storage path inspects to find the manual assessment it overwrites.
+     * <p>
+     * The submission is loaded here rather than by a second, submission-rooted query. {@code Submission.participation} is an eager to-one, and no transaction spans two
+     * repository calls, so a separate query would re-read every participation one select at a time — together with the whole eager exercise graph hanging off it. Selecting the
+     * participation means the submission's own reference to it resolves within this query instead, and a batch import stays independent of its size.
+     * <p>
+     * The fetched {@code submissions} collection is deliberately partial: it holds the latest submission alone, never the participation's full history. Nothing in the upload
+     * reads it back — the caller takes that one submission and the upload writes results and new submissions, never the collection — but a future caller must not mistake it for
+     * the complete set.
      * <p>
      * <b>Preconditions:</b> {@code exerciseId} identifies a persisted exercise and {@code participationIds} is non-{@code null}, non-empty, and contains persisted ids.
      * <p>
-     * <b>Postcondition:</b> every matching participation is returned with its student or team reference initialized.
+     * <b>Postcondition:</b> every matching participation is returned with its student or team reference initialized, and with its latest submission — if it has one — and that
+     * submission's results and their feedback initialized.
      *
      * @param exerciseId       target exercise id
      * @param participationIds participations included in the upload
-     * @return matching participations with the student or team reference initialized
+     * @return matching participations, each with the participant reference and its latest submission initialized
      */
     @Query("""
-            SELECT p
+            SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.student
                 LEFT JOIN FETCH p.team
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
             WHERE p.exercise.id = :exerciseId
                 AND p.id IN :participationIds
+                AND (
+                    s.id IS NULL
+                    OR s.id = (
+                        SELECT MAX(s2.id)
+                        FROM Submission s2
+                        WHERE s2.participation.id = p.id
+                    )
+                )
             """)
     List<StudentParticipation> findAllForAssessmentUpload(@Param("exerciseId") final long exerciseId, @Param("participationIds") final Collection<Long> participationIds);
 }

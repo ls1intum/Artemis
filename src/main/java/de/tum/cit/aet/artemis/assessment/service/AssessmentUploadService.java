@@ -456,8 +456,10 @@ public class AssessmentUploadService {
         // Enforce the shared assessment-availability gate (e.g. an exam that is not over for all students yet) for every target participation before touching any result.
         participationsById.values().forEach(participation -> submissionService.checkThatAssessmentIsPossibleElseThrow(exercise, participation));
 
-        final Map<Long, Submission> latestSubmissionsByParticipationId = submissionRepository.findLatestSubmissionsForAssessmentUpload(exercise.getId(), participationIds).stream()
-                .collect(Collectors.toMap(submission -> submission.getParticipation().getId(), Function.identity()));
+        // The participations above already carry their latest submission (and its results and feedback), so there is nothing left to read here.
+        final Map<Long, Submission> latestSubmissionsByParticipationId = participationsById.values().stream()
+                .flatMap(participation -> participation.getSubmissions().stream().map(submission -> Map.entry(participation.getId(), submission)))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         // First pass: find the manual assessment that already exists for each row, reading only the already existing latest submissions and without mutating anything yet. Only
         // the latest submission is assessed; a manual result on an older, superseded submission is intentionally left untouched — it never contributes to the score (the grade is
         // always taken from the latest submission) and is not the participation's latest result, exactly as the normal assessment editor behaves. A participation without a

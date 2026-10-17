@@ -381,14 +381,23 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectTextFileReusedBySuffixIdentifier() {
+        // The login cross-check resolves against the owner of the participation, so participation1's student has to carry the login that is a suffix of the other identifier.
+        // Restore it right after the import: the login is how addUsers finds and reuses the account between tests, and an account left renamed makes the next setup insert a
+        // second one with the same email, which the unique index on that column rejects.
         final var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         student1.setLogin(identifier2);
         userTestRepository.saveAndFlush(student1);
         final String identifierWithSuffixLogin = participation1.getId() + "-" + identifier2;
         final String csv = "Identifier,Overall points\n%s,80\n%s,60\n".formatted(identifierWithSuffixLogin, identifier2);
 
-        final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
-                buildZip(csv, Map.of(identifierWithSuffixLogin + ".txt", "feedback")));
+        final AssessmentUploadResultDTO result;
+        try {
+            result = assessmentUploadService.importAssessments(programmingExercise, buildZip(csv, Map.of(identifierWithSuffixLogin + ".txt", "feedback")));
+        }
+        finally {
+            student1.setLogin(TEST_PREFIX + "student1");
+            userTestRepository.saveAndFlush(student1);
+        }
 
         assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.AMBIGUOUS_TEXT_FILE);
         assertThat(getManualResults(participation1.getId())).isEmpty();
