@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
@@ -55,6 +55,7 @@ describe('ParticipationSubmissionComponent', () => {
     const modelingExercise = { id: 100, type: ExerciseType.MODELING } as Exercise;
     const fileUploadExercise = { id: 100, type: ExerciseType.FILE_UPLOAD } as Exercise;
     const textExercise = { id: 100, type: ExerciseType.TEXT } as Exercise;
+    const quizExercise = { id: 100, type: ExerciseType.QUIZ } as Exercise;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -244,6 +245,25 @@ describe('ParticipationSubmissionComponent', () => {
             expect(comp.submissions()).toHaveLength(1);
             expect(comp.submissions()[0].results).toHaveLength(1);
             expect(comp.submissions()[0].results![0].id).toBe(44);
+        });
+
+        it('should delete result of quizSubmission through the quiz result endpoint and close the dialog', () => {
+            const httpMock = TestBed.inject(HttpTestingController);
+            const { submission, participation } = createSubmissionFixture(77);
+            findAllSubmissionsOfParticipationStub.mockReturnValue(of({ body: [submission] }));
+            vi.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation })));
+            vi.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+            const dialogErrors: string[] = [];
+            comp.dialogError$.subscribe((dialogError) => dialogErrors.push(dialogError));
+            comp.ngOnInit();
+
+            comp.deleteResult(comp.submissions()[0], comp.submissions()[0].results![1]);
+            httpMock.expectOne({ method: 'DELETE', url: 'api/quiz/participations/1/quiz-submissions/77/results/45' }).flush(null);
+
+            expect(comp.submissions()[0].results!.map((result) => result.id)).toEqual([44]);
+            // an empty dialog error closes the delete dialog
+            expect(dialogErrors).toEqual(['']);
+            httpMock.verify();
         });
     });
 

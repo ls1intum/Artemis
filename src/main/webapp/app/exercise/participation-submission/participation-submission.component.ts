@@ -20,6 +20,7 @@ import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-u
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { EventManager } from 'app/foundation/service/event-manager.service';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
@@ -50,6 +51,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     private modelingAssessmentsService = inject(ModelingAssessmentService);
     private textAssessmentService = inject(TextAssessmentService);
     private programmingAssessmentService = inject(ProgrammingAssessmentManualResultService);
+    private quizExerciseService = inject(QuizExerciseService);
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
 
@@ -329,6 +331,12 @@ export class ParticipationSubmissionComponent implements OnInit {
                     break;
                 case ExerciseType.PROGRAMMING:
                     this.programmingAssessmentService.deleteAssessment(this._participationId, submission.id, result.id).subscribe({
+                        next: () => this.updateResults(submission, result),
+                        error: (error: HttpErrorResponse) => this.handleErrorResponse(error),
+                    });
+                    break;
+                case ExerciseType.QUIZ:
+                    this.quizExerciseService.deleteResult(this._participationId, submission.id, result.id).subscribe({
                         next: () => this.updateResults(submission, result),
                         error: (error: HttpErrorResponse) => this.handleErrorResponse(error),
                     });

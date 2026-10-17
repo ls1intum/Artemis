@@ -990,6 +990,40 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(actualSelectedOptionIds).containsExactlyInAnyOrderElementsOf(expectedSelectedOptionIds);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteQuizResult_asInstructor() throws Exception {
+        Submission quizSubmission = createSubmittedQuizSubmissionWithResult(TEST_PREFIX + "student1");
+        Result result = quizSubmission.getLatestResult();
+
+        request.delete(quizResultPath(quizSubmission, result), HttpStatus.OK);
+
+        assertThat(resultRepository.findById(result.getId())).isEmpty();
+        assertThat(submissionRepository.findById(quizSubmission.getId())).as("only the result is deleted, the student's answers stay").isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testDeleteQuizResult_asTutor_forbidden() throws Exception {
+        Submission quizSubmission = createSubmittedQuizSubmissionWithResult(TEST_PREFIX + "student1");
+        Result result = quizSubmission.getLatestResult();
+
+        request.delete(quizResultPath(quizSubmission, result), HttpStatus.FORBIDDEN);
+
+        assertThat(resultRepository.findById(result.getId())).isPresent();
+    }
+
+    private Submission createSubmittedQuizSubmissionWithResult(String login) {
+        QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
+        QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
+        participationUtilService.addSubmission(quizExercise, quizSubmission, login);
+        return participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+    }
+
+    private static String quizResultPath(Submission quizSubmission, Result result) {
+        return "/api/quiz/participations/" + quizSubmission.getParticipation().getId() + "/quiz-submissions/" + quizSubmission.getId() + "/results/" + result.getId();
+    }
+
     private List<MultipartFile> generateMultipartFilesFromQuizExercise(QuizExercise quizExercise) {
         return quizExercise.getQuizQuestions().stream().filter(quizQuestion -> quizQuestion instanceof DragAndDropQuestion).map(quizQuestion -> (DragAndDropQuestion) quizQuestion)
                 .flatMap(quizQuestion -> {
