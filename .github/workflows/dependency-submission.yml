@@ -1,0 +1,66 @@
+name: Dependency Submission (Gradle)
+
+# Submits the resolved Gradle dependency graph to GitHub. Gradle has no lockfile that GitHub can
+# parse, so this snapshot is what the dependency graph and Dependabot alerts know about the Java
+# dependencies. The JavaScript dependencies are read from pnpm-lock.yaml and need no submission.
+#
+# This replaces the repository setting "Automatic dependency submission", which runs on every push
+# to every branch and on every pull request update. Each of those runs takes about four minutes of
+# GitHub-hosted runner time (51 runs in 3.5 hours on 2026-10-12), and for any branch other than the
+# default branch GitHub discards the result: "The snapshot was accepted, but it is not for the
+# default branch. It will not update dependency results for the repository."
+#
+# Turn that setting off once this workflow is on develop (Settings > Advanced Security > Dependency
+# graph > Automatic dependency submission), otherwise both run.
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'gradle/**'
+      - '.github/workflows/dependency-submission.yml'
+  # Versions that are not pinned in the build files (ranges, plugin-resolved transitives) move
+  # without a commit, so the snapshot is refreshed weekly as well.
+  schedule:
+    - cron: '47 4 * * 1'
+  workflow_dispatch:
+
+# A newer snapshot of develop supersedes an older one, so there is nothing to wait for.
+concurrency:
+  group: dependency-submission-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}  # default-deny; the job grants only what the submission needs
+
+# Workflow-level node/java pins are drift-checked by ci-workflows.yml.
+env:
+  java: 25
+
+jobs:
+  submit-gradle:
+    name: Submit Gradle dependency snapshot
+    # Forks get their own `develop` pushes; there the submission would only populate the fork's
+    # graph and cost its owner the runner time.
+    if: github.repository_owner == 'ls1intum'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write  # the dependency submission API requires it; this job runs no pull request code
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.java }}
+      - name: Submit dependency snapshot
+        uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          # No workflow artifact: the snapshot is only needed by the dependency graph.
+          dependency-graph: generate-and-submit

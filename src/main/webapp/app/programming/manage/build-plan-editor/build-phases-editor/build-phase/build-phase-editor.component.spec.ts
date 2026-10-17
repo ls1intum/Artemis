@@ -9,6 +9,10 @@ import { MonacoEditorFitTextComponent } from '../monaco-editor-auto-size/monaco-
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import enGlobal from 'src/main/webapp/i18n/en/global.json';
+import deGlobal from 'src/main/webapp/i18n/de/global.json';
+import enProgrammingExercise from 'src/main/webapp/i18n/en/programmingExercise.json';
+import deProgrammingExercise from 'src/main/webapp/i18n/de/programmingExercise.json';
 
 describe('BuildPhaseEditorComponent', () => {
     let component: BuildPhaseEditorComponent;
@@ -354,6 +358,51 @@ describe('BuildPhaseEditorComponent', () => {
             fixture.detectChanges();
 
             expect(getDeletePhaseButton().disabled).toBe(true);
+        });
+    });
+
+    describe('expected tests before due date warning', () => {
+        const warningKey = 'artemisApp.programmingExercise.buildPhasesEditor.expectedTestsBeforeDueDateWarning';
+        const getTranslateKeys = () => fixture.debugElement.queryAll(By.directive(TranslateDirective)).map((element) => element.injector.get(TranslateDirective).jhiTranslate());
+
+        it('should show the instruction that points to the build plan editor on the read-only detail view in exam mode', () => {
+            fixture.componentRef.setInput('readonly', true);
+            fixture.componentRef.setInput('isExamMode', true);
+            fixture.detectChanges();
+
+            expect(getTranslateKeys()).toContain(warningKey);
+        });
+
+        it('should only show the short warning while editing, because the user is already in the build plan editor', () => {
+            fixture.componentRef.setInput('isExamMode', true);
+            fixture.detectChanges();
+
+            expect(getTranslateKeys()).not.toContain(warningKey);
+            expect(getTranslateKeys()).toContain('artemisApp.programmingExercise.buildPhasesEditor.expectedTestsBeforeDueDateEditorWarning');
+        });
+
+        it.each([
+            ['en', enGlobal, enProgrammingExercise],
+            ['de', deGlobal, deProgrammingExercise],
+        ])('should name the actual %s labels of the build plan editor in the instruction', (_language, global, programmingExercise) => {
+            const buildPhasesEditor = programmingExercise.artemisApp.programmingExercise.buildPhasesEditor;
+            const text = buildPhasesEditor.expectedTestsBeforeDueDateWarning;
+
+            expect(text).toContain(`"${global.entity.action.editBuildPlan}"`);
+            expect(text).toContain(`"${buildPhasesEditor.condition}"`);
+            expect(text).toContain(`"${buildPhasesEditor.conditions.afterDueDate}"`);
+        });
+
+        it.each([
+            ['en', enProgrammingExercise],
+            ['de', deProgrammingExercise],
+        ])('should not refer to the removed advanced mode of the exercise form in %s', (_language, programmingExercise) => {
+            const text = programmingExercise.artemisApp.programmingExercise.buildPhasesEditor.expectedTestsBeforeDueDateWarning.toLowerCase();
+
+            expect(text).not.toContain('advanced mode');
+            expect(text).not.toContain('erweiterten modus');
+            expect(text).not.toContain('customize build configuration');
+            expect(text).not.toContain('build konfiguration anpassen');
         });
     });
 });

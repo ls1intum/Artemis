@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
 import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -67,6 +68,9 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
 
     @Autowired
     private IngestionCoverageRepository coverageRepository;
+
+    @Autowired
+    private CourseTestRepository courseRepository;
 
     @Autowired
     private WeaviateService weaviateService;
@@ -137,7 +141,7 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
         missingExercise = exerciseRepository.save(TextExerciseFactory.generateTextExercise(past, future, farFuture, course));
         Lecture lecture = lectureUtilService.createLecture(course);
         pdfUnit = seedUnitWithAttachment(attachmentVideoUnitRepository, attachmentRepository, lecture, null, "attachments/attachment-unit/slides.pdf", AttachmentType.FILE);
-        videoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, lecture, null, "https://video.example/lecture");
+        videoUnit = seedUnitWithVideoSource(attachmentVideoUnitRepository, lecture, null, "https://www.youtube.com/watch?v=coverage001");
 
         // Metadata present in Weaviate: the course, one of the two exercises, both indexable units. The second exercise
         // is deliberately absent, so it must surface as a missing exercise.
@@ -208,19 +212,39 @@ class CoverageRecomputeServiceTest extends AbstractProgrammingIntegrationLocalCI
     }
 
     @Test
-    void aCourseWithIrisDisabledExpectsNoLectureContent() {
-        // Slides and transcript live in the Iris collections, which are only written for a course that has Iris
-        // enabled. Before the expected sets applied that rule, this course reported its PDF and its video missing on
-        // every recompute: a gap that no amount of re-ingesting could ever close.
+    void aCourseWithIrisDisabledStillExpectsLectureContent() {
+        // Global search uses the lecture content of every course, so it is ingested regardless of the course's Iris
+        // setting, which only switches off the Iris chat. Missing content is a real gap here.
         Course irisDisabled = courseUtilService.createCourse();
         Lecture lecture = lectureUtilService.createLecture(irisDisabled);
         seedUnitWithAttachment(attachmentVideoUnitRepository, attachmentRepository, lecture, null, "attachments/attachment-unit/slides.pdf", AttachmentType.FILE);
-        seedUnitWithVideoSource(attachmentVideoUnitRepository, lecture, null, "https://video.example/iris-disabled");
+        seedUnitWithVideoSource(attachmentVideoUnitRepository, lecture, null, "https://www.youtube.com/watch?v=irisDisabl1");
         disableIrisForCourse(irisDisabled.getId());
 
         await().atMost(TIMEOUT).untilAsserted(() -> {
             coverageRecomputeService.recomputeAllCourses();
             IngestionCoverageEntry entry = coverageRepository.findByCourseId(irisDisabled.getId()).orElseThrow();
+
+            assertThat(typeCount(entry, CoverageRecomputeService.TYPE_SLIDES)).isEqualTo(new IngestionTypeCountDTO(CoverageRecomputeService.TYPE_SLIDES, 1, 0, 1, 0));
+            assertThat(typeCount(entry, CoverageRecomputeService.TYPE_TRANSCRIPT)).isEqualTo(new IngestionTypeCountDTO(CoverageRecomputeService.TYPE_TRANSCRIPT, 1, 0, 1, 0));
+        });
+    }
+
+    @Test
+    void aCourseOutsideTheIngestionWindowExpectsNoLectureContent() {
+        // The ingestion path catches up on content only for courses that ended within the ingestion window. Expecting the
+        // content of an older course would report a gap that nothing is going to close.
+        Course oldCourse = courseUtilService.createCourse();
+        oldCourse.setStartDate(ZonedDateTime.now().minusYears(4));
+        oldCourse.setEndDate(ZonedDateTime.now().minusYears(3));
+        courseRepository.save(oldCourse);
+        Lecture lecture = lectureUtilService.createLecture(oldCourse);
+        seedUnitWithAttachment(attachmentVideoUnitRepository, attachmentRepository, lecture, null, "attachments/attachment-unit/slides.pdf", AttachmentType.FILE);
+        seedUnitWithVideoSource(attachmentVideoUnitRepository, lecture, null, "https://www.youtube.com/watch?v=oldCourse01");
+
+        await().atMost(TIMEOUT).untilAsserted(() -> {
+            coverageRecomputeService.recomputeAllCourses();
+            IngestionCoverageEntry entry = coverageRepository.findByCourseId(oldCourse.getId()).orElseThrow();
 
             assertThat(typeCount(entry, CoverageRecomputeService.TYPE_SLIDES)).isEqualTo(new IngestionTypeCountDTO(CoverageRecomputeService.TYPE_SLIDES, 0, 0, 0, 0));
             assertThat(typeCount(entry, CoverageRecomputeService.TYPE_TRANSCRIPT)).isEqualTo(new IngestionTypeCountDTO(CoverageRecomputeService.TYPE_TRANSCRIPT, 0, 0, 0, 0));

@@ -234,6 +234,22 @@ public class CourseService {
     }
 
     /**
+     * Returns the course of an exercise that was read from the database, for an update that does not trust the course the client names.
+     * <p>
+     * An exercise is loaded together with its course, so a course exercise already carries what {@link #retrieveCourseOverExerciseGroupOrCourseId(Exercise)} would read a second
+     * time. Only call this with an exercise loaded by the server; one built from a request has just the id of a course, which is what the other method is for.
+     *
+     * @param loadedExercise an exercise read from the database, with its course
+     * @return the course of the exercise
+     */
+    public Course retrieveCourseOfLoadedExercise(Exercise loadedExercise) {
+        if (loadedExercise.isExamExercise()) {
+            return retrieveCourseOverExerciseGroupOrCourseId(loadedExercise);
+        }
+        return loadedExercise.getCourseViaExerciseGroupOrCourseMemberElseThrow();
+    }
+
+    /**
      * Checks if learning paths are enabled for the given course. If not, a BadRequestException is thrown.
      * <p>
      * If fetching the course from the database is not necessary, prefer using the method {@link #checkLearningPathsEnabledElseThrow(long)} with the course id as parameter.

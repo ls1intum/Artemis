@@ -13,6 +13,7 @@ import org.redisson.client.codec.Codec;
 import org.redisson.client.handler.State;
 import org.redisson.codec.Kryo5Codec;
 
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import io.netty.buffer.ByteBuf;
 
 /**
@@ -22,6 +23,25 @@ import io.netty.buffer.ByteBuf;
 class BackwardCompatibleSerializationCodecTest {
 
     private final BackwardCompatibleSerializationCodec codec = new BackwardCompatibleSerializationCodec();
+
+    @Test
+    void testPreservesExistingFeatureMapKeyEncodings() throws IOException {
+        // Kryo writes enum ordinals plus one. These are the key bytes stored before PresentationAssessments existed.
+        assertFeatureKeyEncoding(Feature.GlobalSearchReconcile, 17);
+        assertFeatureKeyEncoding(Feature.GlobalSearchReconcileOrphan, 18);
+    }
+
+    private void assertFeatureKeyEncoding(Feature feature, int historicalOrdinalEncoding) throws IOException {
+        ByteBuf encoded = codec.getMapKeyEncoder().encode(feature);
+        try {
+            assertThat((int) encoded.getUnsignedByte(encoded.writerIndex() - 1)).as("persisted ordinal encoding of %s", feature).isEqualTo(historicalOrdinalEncoding);
+            assertThat(feature.ordinal()).isEqualTo(historicalOrdinalEncoding - 1);
+            assertThat(codec.getMapKeyDecoder().decode(encoded, new State())).isEqualTo(feature);
+        }
+        finally {
+            encoded.release();
+        }
+    }
 
     @Test
     void testReadsMapValuesAnOlderNodeWroteWithKryo() throws IOException {

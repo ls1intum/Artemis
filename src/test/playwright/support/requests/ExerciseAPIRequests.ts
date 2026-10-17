@@ -116,6 +116,8 @@ export class ExerciseAPIRequests {
         allowOnlineEditor?: boolean;
         /** Whether students may clone the repository and work in their own IDE; the server default of the template applies when omitted. */
         allowOfflineIde?: boolean;
+        /** Whether students may complain about an automatic result, which a tutor then answers manually; the server default of the template applies when omitted. */
+        allowComplaintsForAutomaticAssessments?: boolean;
     }): Promise<ProgrammingExercise> {
         const {
             course,
@@ -141,6 +143,7 @@ export class ExerciseAPIRequests {
             auxiliaryRepositories,
             allowOnlineEditor,
             allowOfflineIde,
+            allowComplaintsForAutomaticAssessments,
         } = options;
 
         let programmingExerciseTemplate = {};
@@ -167,6 +170,7 @@ export class ExerciseAPIRequests {
             ...(projectType ? { projectType } : {}),
             ...(allowOnlineEditor !== undefined ? { allowOnlineEditor } : {}),
             ...(allowOfflineIde !== undefined ? { allowOfflineIde } : {}),
+            ...(allowComplaintsForAutomaticAssessments !== undefined ? { allowComplaintsForAutomaticAssessments } : {}),
         } as ProgrammingExercise;
 
         if (!exerciseGroup) {

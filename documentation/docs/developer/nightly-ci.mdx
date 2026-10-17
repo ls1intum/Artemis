@@ -19,24 +19,26 @@ a moving target in another repository. Those run once a night against `develop` 
 
 </Callout>
 
-## The two nightly suites
+## The nightly suites
 
 | Suite | Workflow | Schedule | What it guards | Typical duration |
 | --- | --- | --- | --- | --- |
 | Iris E2E | [`nightly-iris-e2e.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/nightly-iris-e2e.yml) | 02:00 UTC daily | The Artemis to Pyris wire contract, across two repositories | 6 to 8 minutes |
 | LTI interop | [`nightly-lti-interop.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/nightly-lti-interop.yml) | 03:00 UTC daily | The LTI 1.3 launch against a real Moodle install | 6 to 7 minutes |
+| Hyperion E2E | [`nightly-hyperion-e2e.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/nightly-hyperion-e2e.yml) | 04:00 UTC daily | The AI exercise-variant generation suite, which no pull request run enables | Not yet measured |
 
-The two are deliberately an hour apart so a shared-infrastructure outage does not take both down in a way that looks
-like two unrelated failures.
+The suites are deliberately an hour apart so a shared-infrastructure outage does not take several down in a way that
+looks like unrelated failures.
 
-Both also accept a manual `workflow_dispatch`, which is how you re-run one after a fix without waiting for the next
-night, and how you verify a change to the workflow itself.
+All three also accept a manual `workflow_dispatch`, which is how you re-run one after a fix without waiting for the
+next night, and how you verify a change to the workflow itself.
 
 <Callout variant={CalloutVariant.info}>
 
-    Neither of these is the main Playwright suite. That one runs per pull request and on `develop`; see
+    None of these is the main Playwright suite. That one runs per pull request and on `develop`; see
     [Playwright E2E testing](./e2e-testing-playwright.mdx). The nightly suites are separate, much smaller, and
-    scoped to the two integrations that need a real external system.
+    scoped to the integrations that need a real external system or an optional AI module the per-pull-request
+    stacks do not run.
 
 </Callout>
 
@@ -64,6 +66,39 @@ edutelligence branch, dispatch the workflow manually and pass that ref as `edute
 builds the image itself, because no published image exists for an unmerged branch.
 
 [E2E Testing Iris](./e2e-testing-iris.mdx) documents the stack, the mock LLM, and how to run the same suite locally.
+
+## Hyperion E2E
+
+Hyperion is the optional module behind AI-assisted exercise authoring, such as generating a variant of an exercise.
+It talks to the language model directly through Spring AI, so unlike Iris there is no microservice and no second
+repository. The Playwright suite `ExerciseVariantGeneration.spec.ts` covers it end to end: the wizard, the job
+that runs on the server, the WebSocket event that reports it, and the navbar tray that tracks a job after the
+wizard is closed.
+
+That suite skips itself unless the server reports the `hyperion` module feature, and none of the per-pull-request
+stacks enables it. For a while it therefore ran nowhere, and a UI change broke one of its tests without anyone
+noticing. The nightly run closes that gap: it starts a small deterministic mock LLM
+(`src/test/playwright/support/hyperion-mock-llm/`, a bare Python process), enables Hyperion on the server pointed at
+it, and runs the suite. Only the model is faked.
+
+A skipped suite counts as a pass in Playwright, which would turn this monitor into one that is green while testing
+nothing. The workflow therefore has a step that reads the JUnit report and fails the run if no test ran or any was
+skipped.
+
+To run the same suite locally:
+
+```bash
+RUN_HYPERION=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --specs "e2e/exercise/ExerciseVariantGeneration.spec.ts"
+```
+
+<Callout variant={CalloutVariant.info}>
+
+    A nightly is the weaker answer here. Nothing about Hyperion needs an external system, so the better home for this
+    suite is the per-pull-request run, where a failure blocks the change that caused it. That needs the mock LLM and
+    the Hyperion properties added to the Docker Compose stacks the pull request job uses, which is a larger change
+    than this monitor. Until then the nightly is what keeps the suite from decaying again.
+
+</Callout>
 
 ## LTI interop
 
@@ -100,7 +135,7 @@ Docker has to be running, and the first execution spends a few minutes on Moodle
 
 ## What happens when one fails
 
-Nobody is watching at 02:00, so a failing nightly has to raise its own alarm. Both workflows call the local
+Nobody is watching at 02:00, so a failing nightly has to raise its own alarm. All three workflows call the local
 [`open-failure-issue`](https://github.com/ls1intum/Artemis/tree/develop/.github/actions/open-failure-issue)
 composite action, which:
 
@@ -108,13 +143,13 @@ composite action, which:
 2. if there is none, opens one, assigns it to a maintainer, and links the workflow run;
 3. if there is one, adds a `Still failing on <date>` comment instead.
 
-The titles are the deduplication keys and therefore stable: `Nightly Iris e2e failed` and
-`Nightly LTI interop failed (Moodle)`. A streak of bad nights collects as comments on one issue rather than as a pile
-of near-identical issues.
+The titles are the deduplication keys and therefore stable: `Nightly Iris e2e failed`,
+`Nightly Hyperion e2e failed` and `Nightly LTI interop failed (Moodle)`. A streak of bad nights collects as comments
+on one issue rather than as a pile of near-identical issues.
 
-Both workflows also upload their evidence with `if: always()`, so it is there whether the run passed or failed. The
-Iris run uploads the Playwright report, the test results, and the server and client logs; the LTI run uploads the
-JUnit reports.
+All three workflows also upload their evidence with `if: always()`, so it is there whether the run passed or failed.
+The Iris and Hyperion runs upload the Playwright report, the test results, and the server and client logs (Hyperion
+adds the mock LLM log); the LTI run uploads the JUnit reports.
 
 <Callout variant={CalloutVariant.warning}>
 
@@ -126,7 +161,8 @@ JUnit reports.
 
 ## Current status
 
-Both nightly suites are green. Checked on 4 September 2026 against the scheduled runs on `develop`:
+The Iris and LTI suites were green when last checked, on 4 September 2026, against the scheduled runs on `develop`.
+The Hyperion monitor is new and has no scheduled history yet.
 
 | Suite | Last 12 scheduled runs | Last failure |
 | --- | --- | --- |
@@ -157,7 +193,7 @@ Not everything on a schedule is a nightly test run. For completeness:
 ## Adding a nightly suite
 
 Reach for a nightly only when a per-pull-request run genuinely cannot do the job, because a suite nobody is forced to
-look at decays. The two that exist share a shape worth copying:
+look at decays. The ones that exist share a shape worth copying:
 
 - **A reason it cannot be a gate.** Either it is slow because it installs an external system, or it tests against
   something that moves independently of this repository, so a failure is not necessarily attributable to the
@@ -170,6 +206,8 @@ look at decays. The two that exist share a shape worth copying:
   title, and grant the job `issues: write`.
 - **Evidence uploaded with `if: always()`.** A nightly failure is usually debugged the next morning from artifacts
   alone, since the containers are long gone.
+- **A check that the suite ran.** A Playwright suite that skips itself still passes, so a nightly that gates on a
+  module being enabled has to fail when its tests were skipped, as the Hyperion workflow does.
 - **A `workflow_dispatch` trigger**, so the suite can be re-run on demand rather than only at night.
 - **A pinned external version.** The LTI suite pins Moodle to an exact image tag, so a Moodle release cannot turn
   into a surprise failure; bumping it is then a deliberate pull request.
@@ -177,6 +215,7 @@ look at decays. The two that exist share a shape worth copying:
 ## Related pages
 
 - [E2E Testing Iris](./e2e-testing-iris.mdx): the real-Pyris stack, the mock LLM, and running the Iris suite locally
+- [`hyperion-mock-llm`](https://github.com/ls1intum/Artemis/tree/develop/src/test/playwright/support/hyperion-mock-llm): the deterministic OpenAI-compatible mock the Hyperion suite runs against
 - [Playwright E2E testing](./e2e-testing-playwright.mdx): the per-pull-request E2E suite and the local runners
 - [Local Moodle setup for LTI](./local-moodle-setup-for-lti.mdx): a browser-driven Moodle for manual LTI work
 - [Server tests](./guidelines/server-tests.mdx): the per-pull-request server suite the LTI tag excludes itself from

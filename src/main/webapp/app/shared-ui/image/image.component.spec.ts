@@ -101,7 +101,7 @@ describe('ImageComponent', () => {
         expect(img.getAttribute('src')).toBe(testLocalImageURL);
     });
 
-    it('should have src and alt attributes unset while no value is available', () => {
+    it('should have an empty src and no alt attribute while no value is available', () => {
         const loadingStatusSpy = vi.fn();
         component.loadingStatus.subscribe(loadingStatusSpy);
 
@@ -113,8 +113,8 @@ describe('ImageComponent', () => {
 
         const img: HTMLImageElement = fixture.nativeElement.querySelector('img');
 
-        expect(img.hasAttribute('src')).toBeFalsy();
-        expect(img.getAttribute('src')).toBeNull();
+        // Since Angular 22.2.2 an undefined src on an img renders as an empty attribute instead of removing it. Either way the browser has nothing to load.
+        expect(img.getAttribute('src') ?? '').toBe('');
 
         expect(img.hasAttribute('alt')).toBeFalsy();
         expect(img.getAttribute('alt')).toBeNull();

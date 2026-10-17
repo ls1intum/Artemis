@@ -126,7 +126,8 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
     void setUp() {
         resource = new RepositoryProgrammingExerciseParticipationResource(userRepository, authCheckService, participationAuthCheckService, gitService, repositoryService,
                 participationService, programmingExerciseRepository, participationRepository, buildLogService, programmingSubmissionRepository, submissionPolicyRepository,
-                repositoryAccessService, Optional.of(localVCServletService), repositoryParticipationService);
+                repositoryAccessService, Optional.of(localVCServletService), repositoryParticipationService,
+                org.mockito.Mockito.mock(de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseMutationGuardService.class));
         exercise = new ProgrammingExercise();
         exercise.setId(EXERCISE_ID);
         participation = new ProgrammingExerciseStudentParticipation();
@@ -375,6 +376,21 @@ class RepositoryProgrammingExerciseParticipationResourceTest {
         assertThat(resource.pullChanges(PARTICIPATION_ID).getStatusCode()).isEqualTo(HttpStatus.OK);
         verify(repositoryService).pullChanges(repository);
         verify(repository).close();
+    }
+
+    @Test
+    void pullChangesAllowsReadOnlyAccessToTheSolutionRepository() throws Exception {
+        withAccessibleParticipation();
+        var solution = new SolutionProgrammingExerciseParticipation();
+        solution.setProgrammingExercise(exercise);
+        when(participationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(solution);
+        when(programmingExerciseRepository.getProgrammingExerciseFromParticipation(solution)).thenReturn(exercise);
+        lenient().doThrow(new AccessForbiddenException()).when(repositoryAccessService).checkAccessRepositoryElseThrow(solution, user, exercise, RepositoryActionType.WRITE);
+
+        assertThat(resource.pullChanges(PARTICIPATION_ID).getStatusCode()).isEqualTo(HttpStatus.OK);
+        verify(repositoryService).pullChanges(repository);
+        verify(repositoryAccessService, never()).checkAccessRepositoryElseThrow(solution, user, exercise, RepositoryActionType.WRITE);
+        verify(repositoryAccessService, org.mockito.Mockito.times(2)).checkAccessRepositoryElseThrow(solution, user, exercise, RepositoryActionType.READ);
     }
 
     @Test

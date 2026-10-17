@@ -29,7 +29,7 @@ class IngestionBrowserGapServiceBehaviourTest {
     @Test
     void preservesAMissingUnitWhenTheOptionalLectureModuleCannotResolveItsDeletedParent() {
         IngestionBrowserGapService service = gapService(false);
-        ExpectedSets expected = new ExpectedSets(Map.of(), Map.of(), Map.of(COURSE_ID, Set.of(7L)), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+        ExpectedSets expected = new ExpectedSets(Map.of(), Map.of(), Map.of(COURSE_ID, Set.of(7L)), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Set.of(COURSE_ID));
         PresentSets present = new PresentSets(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
 
         List<MissingEntityDTO> missing = service.missingEntities(COURSE_ID, expected, present);
@@ -44,7 +44,19 @@ class IngestionBrowserGapServiceBehaviourTest {
     @Test
     void doesNotReportIrisContentGapsWhenIrisIsDisabled() {
         IngestionBrowserGapService service = gapService(false);
-        ExpectedSets expected = new ExpectedSets(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(COURSE_ID, Set.of(7L)), Map.of(COURSE_ID, Set.of(8L)));
+        ExpectedSets expected = new ExpectedSets(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(COURSE_ID, Set.of(7L)), Map.of(COURSE_ID, Set.of(8L)),
+                Set.of(COURSE_ID));
+        PresentSets present = new PresentSets(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
+
+        assertThat(service.contentGaps(COURSE_ID, expected, present)).isEmpty();
+    }
+
+    @Test
+    void doesNotReportContentGapsForACourseOutsideTheIngestionWindow() {
+        // The ingestion path does not catch up on older courses, so their PDFs without slides are not a gap to fix.
+        IngestionBrowserGapService service = gapService(true);
+        ExpectedSets expected = new ExpectedSets(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of(COURSE_ID, Set.of(7L)), Map.of(COURSE_ID, Set.of(8L)),
+                Set.of());
         PresentSets present = new PresentSets(Map.of(), Map.of(), Map.of(), Map.of(), Map.of(), Map.of());
 
         assertThat(service.contentGaps(COURSE_ID, expected, present)).isEmpty();

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -58,7 +59,10 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
             new TestProvider("HASKELL?sequentialRuns=true&examMode=false", 3),
             new TestProvider("OCAML?examMode=false", 3),
             new TestProvider("SWIFT/PLAIN?examMode=false", 4),
-            new TestProvider("SWIFT/PLAIN?staticAnalysis=true&examMode=false", 5)
+            new TestProvider("SWIFT/PLAIN?staticAnalysis=true&examMode=false", 5),
+            new TestProvider("PYTHON?examMode=false", 2),
+            new TestProvider("PYTHON?sequentialRuns=true&examMode=false", 3),
+            new TestProvider("PYTHON?staticAnalysis=true&examMode=false", 3)
         ).map(provider -> Arguments.of(provider.templateKey(), provider.expectedPhases()));
         // @formatter:on
     }
@@ -92,6 +96,21 @@ class BuildPhasesTemplateResourceTest extends AbstractSpringIntegrationLocalCILo
         BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/C/GCC?examMode=true", HttpStatus.OK, BuildPlanPhasesDTO.class);
         assertThat(buildPlanPhases).isNotNull();
         assertThat(buildPlanPhases.dockerImage()).isEqualTo(C_DOCKER_IMAGE);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "PYTHON?examMode=false", "PYTHON?sequentialRuns=true&examMode=false", "PYTHON?staticAnalysis=true&examMode=false" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testPythonTemplatesOnlyCollectOfficialTestDirectories(String templateKey) throws Exception {
+        BuildPlanPhasesDTO buildPlanPhases = request.get("/api/localci/phases/templates/" + templateKey, HttpStatus.OK, BuildPlanPhasesDTO.class);
+        assertThat(buildPlanPhases).isNotNull();
+        var pytestScripts = buildPlanPhases.phases().stream().map(phase -> phase.script()).filter(script -> script.startsWith("pytest")).toList();
+        assertThat(pytestScripts).isNotEmpty();
+        // A bare "pytest" would also collect test files and conftest.py from the student submission in the "assignment" directory
+        // The default template runs both directories in one call, the sequential template runs one directory per phase
+        assertThat(pytestScripts).allSatisfy(script -> assertThat(script).containsPattern("^pytest (structural behavior|structural/\\*|behavior/\\*) "));
+        assertThat(pytestScripts).anyMatch(script -> script.contains("structural"));
+        assertThat(pytestScripts).anyMatch(script -> script.contains("behavior"));
     }
 
     void assertBuildPlanPhasesAreCorrect(BuildPlanPhasesDTO buildPlanPhases, int expectedPhases) {

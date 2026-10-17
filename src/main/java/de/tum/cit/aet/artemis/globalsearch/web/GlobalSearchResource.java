@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.web;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,16 +23,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.course.domain.Course;
+import de.tum.cit.aet.artemis.course.dto.CourseForSearchFilterDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
+import de.tum.cit.aet.artemis.globalsearch.service.GlobalSearchResultRanker;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityAccessFilterService;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -52,11 +54,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @FeatureUsage(UserFeature.GLOBAL_SEARCH)
 @RestController
 @RequestMapping("api/")
-@Tag(name = "Global Search Resource", description = "Weaviate-based semantic search across courses, exercises, lectures, lecture units, exams, FAQs, and public communication channels including their messages and replies")
+@Tag(name = "Global Search Resource", description = "Weaviate-based semantic search across courses, exercises, lectures, lecture units, exams, FAQs, and communication channels")
 public class GlobalSearchResource {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalSearchResource.class);
 
+    /**
+     * Every discriminator the collection holds, which is what {@code types} and {@code excludeTypes} accept. Posts and answer
+     * posts are among them but are not searchable (see {@link SearchableEntityAccessFilterService#SEARCHABLE_TYPES}): naming
+     * them matches nothing instead of failing the request, so a client built while they were searchable, which still sends
+     * them alongside {@code channel}, keeps getting its channels rather than a 400.
+     */
     private static final Set<String> VALID_TYPES = Set.of(SearchableEntitySchema.TypeValues.EXERCISE, SearchableEntitySchema.TypeValues.LECTURE,
             SearchableEntitySchema.TypeValues.LECTURE_UNIT, SearchableEntitySchema.TypeValues.EXAM, SearchableEntitySchema.TypeValues.FAQ,
             SearchableEntitySchema.TypeValues.CHANNEL, SearchableEntitySchema.TypeValues.COURSE, SearchableEntitySchema.TypeValues.POST,
@@ -69,6 +77,12 @@ public class GlobalSearchResource {
      */
     private static final int MAX_COURSE_ID_FILTERS = 100;
 
+    /** How many rows are read from Weaviate per requested result, so ranking and de-duplication still fill the limit. */
+    private static final int CANDIDATE_FACTOR = 4;
+
+    /** Upper bound on the rows read from Weaviate for one search. */
+    private static final int MAX_CANDIDATES = 100;
+
     private final SearchableEntityWeaviateService searchableEntityWeaviateService;
 
     private final SearchableEntityAccessFilterService accessFilterService;
@@ -79,16 +93,13 @@ public class GlobalSearchResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final ChannelRepository channelRepository;
-
     public GlobalSearchResource(SearchableEntityWeaviateService searchableEntityWeaviateService, SearchableEntityAccessFilterService accessFilterService,
-            CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository, ChannelRepository channelRepository) {
+            CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository) {
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.accessFilterService = accessFilterService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
-        this.channelRepository = channelRepository;
     }
 
     /**
@@ -98,8 +109,8 @@ public class GlobalSearchResource {
      * compound {@code OR}-of-{@code AND}s filter so access control cannot leak across types.
      *
      * @param query            the search query (may be empty to browse recent items)
-     * @param types            optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel,course,post,answer_post}
-     *                             or {@code all}; default {@code all})
+     * @param types            optional comma-separated list of types to include ({@code exercise,lecture,lecture_unit,exam,faq,channel,course}
+     *                             or {@code all}; default {@code all}); {@code post} and {@code answer_post} are accepted but match nothing
      * @param excludeTypes     optional comma-separated list of types to hide; a row whose type is listed is dropped
      *                             regardless of {@code types}
      * @param courseIds        optional course ids to scope the search to one or more courses (OR); inaccessible or unknown ids are ignored
@@ -112,14 +123,15 @@ public class GlobalSearchResource {
     @GetMapping("search")
     @EnforceAtLeastStudent
     @Operation(summary = "Perform a unified semantic search across entity types", description = """
-            Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels, courses, posts, answer posts)
-            with a consistent response format. When courseIds is not specified, the search is performed
+            Searches across multiple entity types (exercises, lectures, lecture units, exams, FAQs, channels, courses)
+            with a consistent response format. Messages and replies are not searchable; the types post and answer_post are
+            accepted for compatibility but match nothing. When courseIds is not specified, the search is performed
             globally across all courses the authenticated user has access to. Per-type access rules are
             enforced server-side via compound Weaviate filters.""")
     @ApiResponse(responseCode = "200", description = "Search results matching the query")
     @ApiResponse(responseCode = "400", description = "Unsupported entity type requested, or more course IDs than the endpoint accepts")
     public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") @Parameter(description = "Search query; can be empty to retrieve recent items") String query,
-            @RequestParam(value = "types", required = false) @Parameter(description = "Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel, course, post, answer_post) or 'all'; default 'all'") String types,
+            @RequestParam(value = "types", required = false) @Parameter(description = "Comma-separated entity type filter (exercise, lecture, lecture_unit, exam, faq, channel, course) or 'all'; default 'all'. post and answer_post are accepted but match nothing") String types,
             @RequestParam(value = "excludeTypes", required = false) @Parameter(description = "Comma-separated entity types to hide from the results; applied after 'types'") String excludeTypes,
             @RequestParam(value = "courseIds", required = false) @Parameter(description = "Course IDs to restrict the search to one or more courses (OR); inaccessible IDs are ignored") List<Long> courseIds,
             @RequestParam(value = "excludeCourseIds", required = false) @Parameter(description = "Course IDs to exclude from the search; results in these courses are hidden") List<Long> excludeCourseIds,
@@ -169,7 +181,11 @@ public class GlobalSearchResource {
             return ResponseEntity.ok(List.of());
         }
 
-        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), effectiveLimit);
+        // A search is over-fetched, because the ranking below moves rows of running courses up and drops older semester
+        // copies of an item; the limit applies after that. A browse without a query is returned in Weaviate's order.
+        boolean hasQuery = query != null && !query.isBlank();
+        int candidateLimit = hasQuery ? Math.min(MAX_CANDIDATES, effectiveLimit * CANDIDATE_FACTOR) : effectiveLimit;
+        List<Map<String, Object>> rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), candidateLimit);
 
         Map<Long, Course> coursesById;
         Set<Long> staffCourseIds;
@@ -188,18 +204,49 @@ public class GlobalSearchResource {
         }
         Map<Long, String> courseNameById = new HashMap<>();
         coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
+        List<Map<String, Object>> rankedResults = GlobalSearchResultRanker.rank(rawResults, hasQuery, coursesById, ZonedDateTime.now());
+        if (hasQuery && rankedResults.size() < effectiveLimit && rawResults.size() == candidateLimit && candidateLimit < MAX_CANDIDATES) {
+            // Merging semester copies shrank a cut-off candidate set below the limit, so more distinct matches may lie
+            // beyond it. Reading the larger set keeps a short result list meaning "no more matches", which is what the
+            // client relies on to offer more results.
+            rawResults = searchableEntityWeaviateService.searchSearchableEntities(query, filterResult.filter(), MAX_CANDIDATES);
+            if (filterResult.accessibleCoursesById() == null) {
+                coursesById = resolveCoursesById(rawResults);
+                courseNameById.clear();
+                coursesById.forEach((id, course) -> courseNameById.put(id, course.getTitle()));
+                staffCourseIds = coursesById.keySet();
+                editorCourseIds = coursesById.keySet();
+            }
+            rankedResults = GlobalSearchResultRanker.rank(rawResults, hasQuery, coursesById, ZonedDateTime.now());
+        }
+        rawResults = rankedResults.subList(0, Math.min(rankedResults.size(), effectiveLimit));
 
         Map<Long, Long> exerciseGroupIdByExerciseId = resolveExerciseGroupIds(rawResults);
-        Map<Long, String> channelNameById = resolveChannelNames(rawResults);
         List<GlobalSearchResultDTO> resultDTOs = new ArrayList<>();
         for (Map<String, Object> properties : rawResults) {
-            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds, editorCourseIds,
-                    channelNameById);
+            GlobalSearchResultDTO dto = GlobalSearchResultDTO.fromSearchableItemProperties(properties, courseNameById, exerciseGroupIdByExerciseId, staffCourseIds,
+                    editorCourseIds);
             if (dto != null) {
                 resultDTOs.add(dto);
             }
         }
         return ResponseEntity.ok(resultDTOs);
+    }
+
+    /**
+     * GET /api/search/course-options : the courses the user can scope a global search to.
+     * <p>
+     * Lists every course an unscoped search covers, past courses included, so the {@code course:} filter can narrow to
+     * any of them. The client ranks the active ones first.
+     *
+     * @return status 200 with the user's accessible courses and whether each is still active
+     */
+    @GetMapping("search/course-options")
+    @EnforceAtLeastStudent
+    @Operation(summary = "List the courses a global search can be scoped to", description = "Returns every course the user has access to, active and past, with an active flag.")
+    @ApiResponse(responseCode = "200", description = "The courses the user can filter the global search by")
+    public ResponseEntity<List<CourseForSearchFilterDTO>> getCourseFilterOptions() {
+        return ResponseEntity.ok(accessFilterService.findCourseFilterOptions(userRepository.getUserIdElseThrow()));
     }
 
     /**
@@ -234,7 +281,7 @@ public class GlobalSearchResource {
      */
     private static Set<String> parseTypes(String types) {
         if (types == null || types.isBlank() || "all".equalsIgnoreCase(types.trim())) {
-            return new LinkedHashSet<>(VALID_TYPES);
+            return new LinkedHashSet<>(SearchableEntityAccessFilterService.SEARCHABLE_TYPES);
         }
         Set<String> result = new LinkedHashSet<>();
         for (String token : types.split(",")) {
@@ -317,29 +364,6 @@ public class GlobalSearchResource {
         for (var dto : exerciseRepository.findExerciseAndGroupIdsByExerciseIds(examExerciseIds)) {
             result.put(dto.exerciseId(), dto.exerciseGroupId());
         }
-        return result;
-    }
-
-    /**
-     * Resolves channel names for all post and answer_post results in the Weaviate results.
-     */
-    private Map<Long, String> resolveChannelNames(List<Map<String, Object>> rawResults) {
-        Set<Long> channelIds = new HashSet<>();
-        for (Map<String, Object> properties : rawResults) {
-            Object type = properties.get(SearchableEntitySchema.Properties.TYPE);
-            if (!SearchableEntitySchema.TypeValues.POST.equals(type) && !SearchableEntitySchema.TypeValues.ANSWER_POST.equals(type)) {
-                continue;
-            }
-            Object rawId = properties.get(SearchableEntitySchema.Properties.CHANNEL_ID);
-            if (rawId instanceof Number number) {
-                channelIds.add(number.longValue());
-            }
-        }
-        if (channelIds.isEmpty()) {
-            return Map.of();
-        }
-        Map<Long, String> result = new HashMap<>();
-        channelRepository.findAllById(channelIds).forEach(channel -> result.put(channel.getId(), channel.getName()));
         return result;
     }
 }

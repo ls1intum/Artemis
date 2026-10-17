@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGE
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.ServerSocket;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -54,6 +55,8 @@ import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.hazelcast.spi.properties.ClusterProperty;
+import com.hazelcast.splitbrainprotection.SplitBrainProtectionFunction;
+import com.hazelcast.splitbrainprotection.SplitBrainProtectionOn;
 import com.hazelcast.spring.context.SpringManagedContext;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -418,6 +421,8 @@ public class HazelcastConfiguration {
         config.setClusterName("test-cluster-" + UUID.randomUUID());
 
         configureCacheMaps(config, artemisProperties);
+        configureMemberAttributes(config);
+        configureSplitBrainProtection(config);
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 
         // The build job queue must be configured here as well, otherwise it silently degrades to FIFO in tests while
@@ -804,31 +809,9 @@ public class HazelcastConfiguration {
     }
 
     /**
-     * Configures split-brain protection to handle network partitions.
+     * Keeps authoring ownership and short exercise writes unavailable unless every configured data member is present.
      *
-     * <p>
-     * <strong>What is Split-Brain:</strong> When a network partition occurs, cluster members
-     * can't communicate and may form separate sub-clusters. Each sub-cluster thinks it's the
-     * "real" cluster and continues operating independently. When the partition heals, data
-     * inconsistencies must be resolved.
-     *
-     * <p>
-     * <strong>Protection Mechanism:</strong> Split-brain protection defines a minimum cluster
-     * size (quorum) required for operations. With {@code minimumClusterSize=2}, a single
-     * isolated node cannot perform cluster operations, preventing inconsistent writes.
-     *
-     * <p>
-     * <strong>Merge Policy:</strong> The merge delay settings (30 seconds for first run,
-     * 30 seconds between subsequent runs) control how quickly Hazelcast attempts to merge
-     * sub-clusters after a partition heals. The delay prevents thrashing during unstable
-     * network conditions.
-     *
-     * <p>
-     * <strong>Trade-off:</strong> This configuration prioritizes consistency over availability.
-     * A single-node partition becomes read-only, which is acceptable for Artemis where data
-     * consistency is more important than availability during network issues.
-     *
-     * @param config the Hazelcast configuration to modify
+     * @param config the member configuration
      */
     private void configureSplitBrainProtection(Config config) {
         var splitBrainConfig = new SplitBrainProtectionConfig();
@@ -838,6 +821,30 @@ public class HazelcastConfiguration {
 
         config.setSplitBrainProtectionConfigs(new ConcurrentHashMap<>());
         config.addSplitBrainProtectionConfig(splitBrainConfig);
+        int expectedMembers = env.getProperty("jhipster.cache.hazelcast.expected-data-member-count", Integer.class, 1);
+        if (expectedMembers < 1) {
+            throw new IllegalArgumentException("Configure a positive Hazelcast expected-data-member-count");
+        }
+        String authoringProtection = "hyperion-live-save-complete-membership";
+        String countAttribute = "artemis.hyperion.expected-data-members";
+        String enabledAttribute = "artemis.hyperion.exercise-generation-enabled";
+        String configuredCount = Integer.toString(expectedMembers);
+        String configuredEnabled = Boolean.toString(env.getProperty("artemis.hyperion.exercise-generation.enabled", Boolean.class, false));
+        config.getMemberAttributeConfig().setAttribute(countAttribute, configuredCount).setAttribute(enabledAttribute, configuredEnabled);
+        // An intentional singleton works; missing, unexpected, or differently configured data members fail closed.
+        var authoringConfig = new SplitBrainProtectionConfig(authoringProtection, true).setProtectOn(SplitBrainProtectionOn.READ_WRITE)
+                .setFunctionImplementation((SplitBrainProtectionFunction & Serializable) members -> {
+                    var dataMembers = members.stream().filter(member -> !member.isLiteMember()).toList();
+                    return dataMembers.size() == expectedMembers && dataMembers.stream()
+                            .allMatch(member -> configuredCount.equals(member.getAttribute(countAttribute)) && configuredEnabled.equals(member.getAttribute(enabledAttribute)));
+                });
+        config.addSplitBrainProtectionConfig(authoringConfig);
+        for (String name : List.of(Constants.HYPERION_GENERATION_JOBS_MAP, Constants.HYPERION_LIVE_SAVE_COORDINATION_MAP)) {
+            var authoringMap = new MapConfig(name).setBackupCount(config.getMapConfig("default").getBackupCount())
+                    .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.NONE).setMaxSizePolicy(MaxSizePolicy.PER_NODE))
+                    .setSplitBrainProtectionName(authoringProtection);
+            config.addMapConfig(authoringMap);
+        }
         config.setProperty(ClusterProperty.MERGE_FIRST_RUN_DELAY_SECONDS.getName(), "30");
         config.setProperty(ClusterProperty.MERGE_NEXT_RUN_DELAY_SECONDS.getName(), "30");
     }

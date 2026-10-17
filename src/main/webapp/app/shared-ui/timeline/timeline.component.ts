@@ -1,9 +1,9 @@
 import { Component, Signal, WritableSignal, computed, effect, inject, input, output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
+import { TumAetUiDatePickerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { Dayjs } from 'dayjs/esm';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { DatePickerModule } from 'primeng/datepicker';
-import { TooltipModule } from 'primeng/tooltip';
-import dayjs, { Dayjs } from 'dayjs/esm';
 import { getCurrentLocaleSignal } from 'app/foundation/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -29,11 +29,12 @@ export interface TimelineStatus {
 }
 
 type InternalTimelineItem = TimelineItem & {
-    internalDate: Date | undefined;
     isInputRequiredButUndefined: boolean;
     hasInvalidDateOrder: boolean;
     isInvalidInput: boolean;
     isDisabled: boolean;
+    /** Whether the field is painted as an error. A missing required date only counts once the field was left. */
+    isInvalid: boolean;
     hasExternalError: boolean;
     hasWarning: boolean;
     tooltip: string | undefined;
@@ -41,18 +42,18 @@ type InternalTimelineItem = TimelineItem & {
 
 @Component({
     selector: 'jhi-timeline',
-    imports: [DatePickerModule, FormsModule, TooltipModule, TranslateDirective],
+    imports: [FaIconComponent, TumAetUiDatePickerComponent, TumAetUiTooltipDirective, TranslateDirective],
     templateUrl: './timeline.component.html',
     styleUrl: './timeline.component.scss',
 })
 export class TimelineComponent {
     private translateService = inject(TranslateService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
-    private readonly fullDateTimePattern = /^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}$/;
-    private readonly dateTimeFormat = 'DD.MM.YYYY HH:mm';
-    protected readonly Date = Date;
-    /** Label keys of items whose typed text is non-empty but not a valid date. Drives the invalid state. */
-    private invalidInputKeys = signal<Set<string>>(new Set());
+    protected readonly faCircleInfo = faCircleInfo;
+    /** Label keys of items whose typed text is non-empty but not a valid date, as reported by their date field. */
+    private readonly invalidInputKeys = signal<ReadonlySet<string>>(new Set());
+    /** Label keys of items that the user has left once, so that a missing required date is only flagged after that. */
+    private readonly touchedKeys = signal<ReadonlySet<string>>(new Set());
 
     timelineItems = input.required<TimelineItem[]>();
     internalTimelineItems = computed<InternalTimelineItem[]>(() => this.computeInternalTimelineItems());
@@ -66,68 +67,31 @@ export class TimelineComponent {
         });
     }
 
-    updateDate(item: TimelineItem, newInternalDate: Date | string | null) {
-        // A picked date or the clear icon replaces whatever text was flagged as invalid, even when the bound date stays as it was.
-        this.setInvalidInput(item, false);
-        const currentDate = item.date();
-        const newDate = newInternalDate instanceof Date ? dayjs(newInternalDate) : undefined;
-        const oldAndNewDateUndefined = currentDate === undefined && newDate === undefined;
-        const oldAndNewDatesAreTheSame = currentDate !== undefined && newDate !== undefined && currentDate.isSame(newDate);
-        if (oldAndNewDateUndefined || oldAndNewDatesAreTheSame) return;
-        item.date.set(newDate);
+    protected setInputValidity(item: TimelineItem, valid: boolean) {
+        this.invalidInputKeys.update((keys) => this.withMembership(keys, item.labelStringKey, !valid));
     }
 
-    handleManualInput(item: TimelineItem, event: Event) {
-        const value = (event.target as HTMLInputElement).value;
-        const parsedDate = this.parseManualInput(value);
-        if (parsedDate !== undefined) {
-            this.setDateIfChanged(item, parsedDate);
-            this.setInvalidInput(item, false);
-        } else if (value === '') {
-            this.setDateIfChanged(item, undefined);
-            this.setInvalidInput(item, false);
+    protected markTouched(item: TimelineItem) {
+        this.touchedKeys.update((keys) => this.withMembership(keys, item.labelStringKey, true));
+    }
+
+    /** Returns the set with the key added or removed, or the same set if nothing changes. */
+    private withMembership(keys: ReadonlySet<string>, key: string, member: boolean): ReadonlySet<string> {
+        if (keys.has(key) === member) {
+            return keys;
         }
-        // A not-yet-parseable value is left alone while typing and only flagged on blur (see handleBlur).
-    }
-
-    handleBlur(item: TimelineItem, event: Event) {
-        const input = (event.target as HTMLInputElement).value;
-        const inputWasCleared = input === '';
-        const currentInputIsInvalidDate = this.parseManualInput(input) === undefined;
-        // Keep the entered text (keepInvalid) and flag it instead of silently reverting it (PR #13009 review).
-        this.setInvalidInput(item, currentInputIsInvalidDate && !inputWasCleared);
-    }
-
-    private setDateIfChanged(item: TimelineItem, newDate?: Dayjs) {
-        const currentDate = item.date();
-        if (currentDate?.isSame(newDate)) return;
-        item.date.set(newDate);
-    }
-
-    /** Adds or removes the item's label key from the invalid-input set (no-op if already in that state). */
-    private setInvalidInput(item: TimelineItem, invalid: boolean) {
-        this.invalidInputKeys.update((keys) => {
-            if (invalid === keys.has(item.labelStringKey)) {
-                return keys;
-            }
-            const next = new Set(keys);
-            if (invalid) {
-                next.add(item.labelStringKey);
-            } else {
-                next.delete(item.labelStringKey);
-            }
-            return next;
-        });
-    }
-
-    private parseManualInput(value: string): Dayjs | undefined {
-        if (!this.fullDateTimePattern.test(value)) return undefined;
-        const parsedDate = dayjs(value, this.dateTimeFormat, true);
-        return parsedDate.isValid() ? parsedDate : undefined;
+        const next = new Set(keys);
+        if (member) {
+            next.add(key);
+        } else {
+            next.delete(key);
+        }
+        return next;
     }
 
     private computeInternalTimelineItems(): InternalTimelineItem[] {
         const invalidInputKeys = this.invalidInputKeys();
+        const touchedKeys = this.touchedKeys();
         return this.timelineItems().map((item, index, items) => {
             this.currentLocale();
             const date = item.date();
@@ -145,6 +109,7 @@ export class TimelineComponent {
             const hasExternalError = errorStringKey !== undefined;
             const warningStringKey = item.warningStringKey?.();
             const hasWarning = !hasInternalError && !hasExternalError && warningStringKey !== undefined;
+            const isInvalid = isInvalidInput || hasInvalidDateOrder || hasExternalError || (touchedKeys.has(item.labelStringKey) && isInputRequiredButUndefined);
             let tooltip: string | undefined;
             if (isInvalidInput) {
                 tooltip = this.translateService.instant('artemisApp.exercise.timelineDateInvalidTooltip');
@@ -162,11 +127,11 @@ export class TimelineComponent {
                 kind: item.kind,
                 labelStringKey: item.labelStringKey,
                 date: item.date,
-                internalDate: date?.toDate(),
                 isInputRequiredButUndefined,
                 hasInvalidDateOrder,
                 isInvalidInput,
                 isDisabled,
+                isInvalid,
                 hasExternalError,
                 // Carried through so the invalid-item reason can reuse the key the tooltip already shows.
                 errorStringKey: item.errorStringKey,

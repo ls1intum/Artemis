@@ -2,8 +2,10 @@ package de.tum.cit.aet.artemis.globalsearch.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -79,4 +81,20 @@ public interface IngestionCoverageExpectedIdsRepository extends ArtemisJpaReposi
                 AND (channel.isCourseWide = TRUE OR channel.isPublic = TRUE)
             """)
     List<CourseEntityIdDTO> findIndexableChannelIdCourseIdPairsForCourses(@Param("courseIds") Collection<Long> courseIds);
+
+    /**
+     * The given courses that are still running or ended at or after the cutoff: the courses whose lecture content the
+     * ingestion path processes (see {@code artemis.iris.ingestion.course-window}).
+     *
+     * @param courseIds the courses to check
+     * @param cutoff    the earliest end date that still counts
+     * @return the ids of the courses within the ingestion window
+     */
+    @Query("""
+            SELECT c.id
+            FROM Course c
+            WHERE c.id IN :courseIds
+                AND (c.endDate IS NULL OR c.endDate >= :cutoff)
+            """)
+    Set<Long> findCourseIdsEndedSince(@Param("courseIds") Collection<Long> courseIds, @Param("cutoff") ZonedDateTime cutoff);
 }

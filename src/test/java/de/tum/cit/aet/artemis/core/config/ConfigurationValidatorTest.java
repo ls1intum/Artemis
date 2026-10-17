@@ -43,8 +43,14 @@ class ConfigurationValidatorTest {
 
     private ConfigurationValidator createValidator(boolean weaviateEnabled, String weaviateHost, int weaviatePort, int weaviateGrpcPort, String weaviateScheme,
             String vectorizerModule, String openAiBaseUrl, String gpuApiKey) {
+        return createValidator(weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule, openAiBaseUrl, gpuApiKey, "test-embedding-model");
+    }
+
+    private ConfigurationValidator createValidator(boolean weaviateEnabled, String weaviateHost, int weaviatePort, int weaviateGrpcPort, String weaviateScheme,
+            String vectorizerModule, String openAiBaseUrl, String gpuApiKey, String embeddingModel) {
         Environment mockEnvironment = mock(Environment.class);
         when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
+        when(mockEnvironment.getProperty("artemis.weaviate.open-ai-embedding-model")).thenReturn(embeddingModel);
         return new ConfigurationValidator(mockEnvironment, false, null, null, weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule,
                 openAiBaseUrl, gpuApiKey, false, "http://localhost");
     }
@@ -340,9 +346,29 @@ class ConfigurationValidatorTest {
             }
 
             @Test
-            void testText2vecTransformersShouldPassValidation() {
+            void testRemovedText2vecTransformersShouldFailWithMigrationHint() {
                 ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
-                        SupportedVectorizer.TEXT2VEC_TRANSFORMERS.configValue());
+                        SupportedVectorizer.REMOVED_TEXT2VEC_TRANSFORMERS);
+
+                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class).hasMessageContaining("is no longer supported")
+                        .hasMessageContaining("text2vec-openai");
+            }
+
+            @ParameterizedTest
+            @NullAndEmptySource
+            @ValueSource(strings = { " " })
+            void testText2vecOpenAiWithoutEmbeddingModelShouldFailValidation(String embeddingModel) {
+                ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
+                        SupportedVectorizer.TEXT2VEC_OPENAI.configValue(), "http://localhost:11434", "dummy", embeddingModel);
+
+                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class)
+                        .hasMessageContaining("artemis.weaviate.open-ai-embedding-model");
+            }
+
+            @Test
+            void testNoneDoesNotRequireEmbeddingModel() {
+                ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
+                        WeaviateConfigurationProperties.DEFAULT_VECTORIZER_MODULE, null, null, null);
 
                 assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
             }

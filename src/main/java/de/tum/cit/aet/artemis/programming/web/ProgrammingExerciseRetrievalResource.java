@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -197,9 +196,9 @@ public class ProgrammingExerciseRetrievalResource {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         }
         if (programmingExercise.isCourseExercise()) {
-            Channel channel = channelRepository.findChannelByExerciseId(programmingExercise.getId());
-            if (channel != null) {
-                programmingExercise.setChannelName(channel.getName());
+            String channelName = channelRepository.findChannelNameByExerciseId(programmingExercise.getId());
+            if (channelName != null) {
+                programmingExercise.setChannelName(channelName);
             }
         }
 

@@ -118,7 +118,8 @@ public class ParticipationUpdateResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, existingParticipation.getExercise(), null);
 
         Course course = existingParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        boolean hideParticipant = !authCheckService.isAtLeastInstructorInCourse(course, user) && !authCheckService.isOwnerOfParticipation(existingParticipation);
+        boolean hideParticipant = !authCheckService.isAtLeastInstructorInCourse(course, user) && !authCheckService.isOwnerOfParticipation(existingParticipation)
+                && exerciseDateService.isAssessmentAnonymizationActive(existingParticipation.getExercise());
         String participantLabel = hideParticipant ? existingParticipation.getId().toString() : existingParticipation.getParticipant().getName();
         Double newPresentationScore = dto.presentationScore();
 

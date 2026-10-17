@@ -62,7 +62,14 @@ export class ConversationThreadSidebarComponent {
             untracked(() => {
                 if (activePost) {
                     this.post.set(activePost);
-                    this.createdAnswerPost.set(this.createEmptyAnswerPost());
+                    const replyBeingWritten = this.createdAnswerPost();
+                    if (replyBeingWritten && replyBeingWritten.post?.id === activePost.id) {
+                        // The post of the open thread was updated, for example because a reply arrived. Replacing the reply input would reset
+                        // the editor and move the cursor of a user who is typing to the start, so only point it to the updated post.
+                        replyBeingWritten.post = activePost;
+                    } else {
+                        this.createdAnswerPost.set(this.createEmptyAnswerPost());
+                    }
                     // After the DOM renders the new post, pin the current pixel width
                     // so that removing or replacing content (e.g. rejecting / editing an
                     // Iris reply) never changes the sidebar width mid-session.

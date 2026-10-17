@@ -1,5 +1,5 @@
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faBook, faCalendarCheck, faComments, faCube, faGraduationCap, faPhotoFilm, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faCalendarCheck, faCube, faGraduationCap, faHashtag, faPhotoFilm, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { SearchEntityType } from './searchable-entity.model';
 import { TypeFacetValue } from './search-token.model';
 import { LECTURE_CONTENT_TYPE } from './lecture-content-result.util';
@@ -36,12 +36,8 @@ export const TYPE_FACETS: Record<TypeFacetValue, TypeFacetMeta> = {
         icon: faBook,
         serverTypes: ['lecture', 'lecture_unit'],
     },
-    communication: {
-        labelKey: 'global.search.entities.communicationTitle',
-        descriptionKey: 'global.search.entities.communicationDescription',
-        icon: faComments,
-        serverTypes: ['channel', 'post', 'answer_post'],
-    },
+    // Channels only: messages and replies are indexed but not searchable, so the server never returns them.
+    channel: { labelKey: 'global.search.entities.channelsTitle', descriptionKey: 'global.search.entities.channelsDescription', icon: faHashtag, serverTypes: ['channel'] },
     [LECTURE_CONTENT_TYPE]: {
         labelKey: 'global.search.entities.slidesAndVideosTitle',
         descriptionKey: 'global.search.entities.slidesAndVideosDescription',
@@ -54,7 +50,7 @@ export const TYPE_FACETS: Record<TypeFacetValue, TypeFacetMeta> = {
 };
 
 /** Start-page card order, unchanged from present day. */
-export const TYPE_FACET_ORDER: TypeFacetValue[] = ['course', 'exercise', 'lecture', LECTURE_CONTENT_TYPE, 'communication', 'faq', 'exam'];
+export const TYPE_FACET_ORDER: TypeFacetValue[] = ['course', 'exercise', 'lecture', LECTURE_CONTENT_TYPE, 'channel', 'faq', 'exam'];
 
 /** True when the value searches lecture content (slides and video transcripts) rather than entity metadata. */
 export function isContentSearchValue(value: string): boolean {

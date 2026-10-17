@@ -24,6 +24,7 @@ import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.servic
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExercisePlantUmlService } from 'app/programming/shared/instructions-render/services/programming-exercise-plant-uml.service';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -71,6 +72,9 @@ type InstructionInternals = Omit<
 };
 
 const internals = (c: ProgrammingExerciseInstructionComponent): InstructionInternals => c as unknown as InstructionInternals;
+
+/** The container IDs have the form plantUml-{exerciseId}-{instanceId}-{index}; the instance part differs per test run, so it is dropped for comparisons. */
+const withoutInstanceId = (containerId: string): string => containerId.replace(/^(plantUml-\d+)-\d+-(\d+)$/, '$1-$2');
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
@@ -512,7 +516,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         // first test should be green (successful), second red (failed)
         const expectedUML = '@startuml\nclass Policy {\n<color:green>+configure()</color>\n<color:red>+testWithParenthesis()</color>}\n@enduml';
-        expect(injectSpy).toHaveBeenCalledWith(expectedUML, `plantUml-${exercise.id}-0`);
+        expect(injectSpy).toHaveBeenCalledWith(expectedUML, expect.stringMatching(new RegExp(`^plantUml-${exercise.id}-\\d+-0$`)));
     });
 
     it('should update the markdown and set the correct problem statement if renderUpdatedProblemStatement is called', () => {
@@ -656,7 +660,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
 
         await new Promise((resolve) => setTimeout(resolve, 10));
 
-        const targetedIds: string[] = injectSpy.mock.calls.map((call) => call[1] as string);
+        const targetedIds: string[] = injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string));
 
         const uniqueIds = new Set(targetedIds);
         expect(uniqueIds.size).toBe(6);
@@ -699,7 +703,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         instanceB.comp.updateMarkdown();
         await new Promise((resolve) => setTimeout(resolve, 10));
 
-        const targetedIds: string[] = injectSpy.mock.calls.map((call) => call[1] as string);
+        const targetedIds: string[] = injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string));
         const uniqueIds = new Set(targetedIds);
 
         expect(uniqueIds.size).toBe(4);
@@ -737,7 +741,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         instanceA.comp.updateMarkdown();
         await new Promise((resolve) => setTimeout(resolve, 10));
 
-        const firstRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1] as string).filter((id) => (id as string).startsWith('plantUml-10-')));
+        const firstRenderIds = new Set(injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string)).filter((id) => (id as string).startsWith('plantUml-10-')));
         expect(firstRenderIds).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
 
         injectSpy.mockClear();
@@ -753,7 +757,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         instanceA.comp.forceReRenderProblemStatement();
         await new Promise((resolve) => setTimeout(resolve, 10));
 
-        const secondRenderIds = new Set(injectSpy.mock.calls.map((call) => call[1] as string).filter((id) => (id as string).startsWith('plantUml-10-')));
+        const secondRenderIds = new Set(injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string)).filter((id) => (id as string).startsWith('plantUml-10-')));
 
         expect(secondRenderIds).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
 
@@ -777,7 +781,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         // Initial render injects both diagrams of exercise A.
         instance.comp.updateMarkdown();
         await new Promise((resolve) => setTimeout(resolve, 10));
-        expect(new Set(injectSpy.mock.calls.map((call) => call[1] as string))).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
+        expect(new Set(injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string)))).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
 
         // Mark the component as past its initial render (as it is after the first processInputChanges in production),
         // so the "unchanged problem statement" optimization in updateMarkdown is active.
@@ -794,7 +798,7 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         injectSpy.mockClear();
         instance.comp.forceReRenderProblemStatement();
         await new Promise((resolve) => setTimeout(resolve, 10));
-        expect(new Set(injectSpy.mock.calls.map((call) => call[1] as string))).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
+        expect(new Set(injectSpy.mock.calls.map((call) => withoutInstanceId(call[1] as string)))).toEqual(new Set(['plantUml-10-0', 'plantUml-10-1']));
 
         instance.comp.ngOnDestroy();
     });
@@ -862,6 +866,46 @@ describe('ProgrammingExerciseInstructionComponent - PlantUML exam mode isolation
         expect(internals(instance.comp).taskComponentRefs).toHaveLength(0);
 
         instance.comp.ngOnDestroy();
+    });
+
+    it('should inject the PlantUML diagram into its own component when two components show the same exercise', async () => {
+        // Regression test for #12439: the exercise details page and the online editor sidebar render the same exercise at the
+        // same time. Both used the container ID plantUml-<exerciseId>-<index>, so document.getElementById always found the
+        // container of the first component and the diagram never appeared in the other one.
+        vi.spyOn(TestBed.inject(ProgrammingExercisePlantUmlService), 'getPlantUmlSvg').mockReturnValue(of('<svg><title>diagram</title></svg>'));
+        vi.spyOn(TestBed.inject(ProgrammingExerciseParticipationService), 'getLatestResultWithFeedback').mockReturnValue(of(undefined as unknown as Result));
+
+        const hiddenInstance = createComponentInstance();
+        const visibleInstance = createComponentInstance();
+        const exercise = createExercise(10, exerciseB_problemStatement);
+
+        // TestBed only keeps the root element of the most recently created fixture in the document, but in the application both components are in the DOM at the same time.
+        document.body.append(hiddenInstance.fixture.nativeElement, visibleInstance.fixture.nativeElement);
+
+        for (const { fixture, comp } of [hiddenInstance, visibleInstance]) {
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('participation', { id: 110 });
+            internals(comp).setupMarkdownSubscriptions();
+        }
+
+        // The first change detection runs ngOnInit, which loads the result and then renders the markdown and injects the diagrams.
+        hiddenInstance.fixture.detectChanges();
+        visibleInstance.fixture.detectChanges();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        hiddenInstance.fixture.detectChanges();
+        visibleInstance.fixture.detectChanges();
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        const hiddenContainers = hiddenInstance.fixture.nativeElement.querySelectorAll('[id^="plantUml-"]');
+        const visibleContainers = visibleInstance.fixture.nativeElement.querySelectorAll('[id^="plantUml-"]');
+        expect(hiddenContainers).toHaveLength(1);
+        expect(visibleContainers).toHaveLength(1);
+        expect(hiddenContainers[0].querySelector('svg')).not.toBeNull();
+        expect(visibleContainers[0].querySelector('svg')).not.toBeNull();
+        expect(hiddenContainers[0].id).not.toBe(visibleContainers[0].id);
+
+        hiddenInstance.comp.ngOnDestroy();
+        visibleInstance.comp.ngOnDestroy();
     });
 
     it('should call setExerciseId with the exercise ID before each render', async () => {

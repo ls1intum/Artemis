@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType
 import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.INT;
 import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.NUMBER;
 import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.TEXT;
+import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateDataType.TEXT_ARRAY;
 import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition.filterable;
 import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition.nonSearchable;
 import static de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinition.searchable;
@@ -144,6 +145,12 @@ public final class SearchableEntitySchema {
 
         public static final String UNIT_TYPE = "unit_type";
 
+        /**
+         * The title of the lecture a lecture unit belongs to (lecture_unit rows only). Part of the header of the
+         * unit's embedding inputs, so the chunks can be rebuilt from the stored row.
+         */
+        public static final String LECTURE_TITLE = "lecture_title";
+
         // Post-specific properties
         public static final String CHANNEL_ID = "channel_id";
 
@@ -173,6 +180,20 @@ public final class SearchableEntitySchema {
          * unverified, and a reconcile pass rewrites it once to bring it under verification.
          */
         public static final String CONTENT_HASH = "content_hash";
+
+        /**
+         * Operational (non-display): SHA-256 of each embedding input of the row, in the order of the row's vectors. A
+         * write reuses a stored vector only for a chunk with the same hash, and the answer path checks the hash before
+         * it shows a re-derived chunk as the matched passage. Part of the content hash, so a changed chunk makes the
+         * drift pass rewrite the row.
+         */
+        public static final String CHUNK_HASHES = "chunk_hashes";
+
+        /**
+         * Operational (non-display): the {@code SearchableEntityChunker} version the row's chunks were made with. A
+         * stored vector is reused only for the same version.
+         */
+        public static final String CHUNKER_VERSION = "chunker_version";
 
         private Properties() {
         }
@@ -222,6 +243,7 @@ public final class SearchableEntitySchema {
             nonSearchable(Properties.DUE_DATE, DATE, "The due date (exercises only)"),
             filterable(Properties.LECTURE_ID, INT, "The ID of the parent lecture (lecture_unit rows only, used for bulk delete on lecture deletion)"),
             nonSearchable(Properties.UNIT_TYPE, TEXT, "The lecture unit type: text, attachment_video, online (lecture_unit rows only)"),
+            nonSearchable(Properties.LECTURE_TITLE, TEXT, "The title of the parent lecture (lecture_unit rows only), part of the embedding input header"),
 
             // Post-specific properties
             filterable(Properties.CHANNEL_ID, INT, "The ID of the channel the post belongs to (only set for type 'post' and 'answer_post', null for all other types)"),
@@ -234,5 +256,9 @@ public final class SearchableEntitySchema {
 
             // Operational field (present on every upserted row): stored, but never indexed or filtered on. A reconcile pass
             // reads it back by projection while scanning the collection, so it needs no inverted index of its own.
-            nonSearchable(Properties.CONTENT_HASH, TEXT, "The versioned content hash of the data this row was written from; a reconcile pass compares it to detect index drift")));
+            nonSearchable(Properties.CONTENT_HASH, TEXT, "The versioned content hash of the data this row was written from; a reconcile pass compares it to detect index drift"),
+
+            // Operational fields of the embedding inputs: one hash per chunk, in vector order, and the chunker version
+            nonSearchable(Properties.CHUNK_HASHES, TEXT_ARRAY, "SHA-256 of each embedding input of the row, in the order of its vectors"),
+            nonSearchable(Properties.CHUNKER_VERSION, INT, "The chunker version the row's embedding inputs were made with")));
 }

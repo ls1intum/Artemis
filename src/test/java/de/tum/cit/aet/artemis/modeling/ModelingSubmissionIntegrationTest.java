@@ -13,9 +13,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -38,6 +42,7 @@ import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -46,6 +51,7 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -74,6 +80,9 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @Autowired
     private ModelingSubmissionTestRepository modelingSubmissionRepo;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
     private SubmissionVersionRepository submissionVersionRepository;
@@ -318,6 +327,161 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         userUtilService.changeUser(TEST_PREFIX + "student2");
         Optional<SubmissionVersion> newVersion = submissionVersionRepository.findLatestVersion(returnedSubmission.id());
         assertThat(newVersion.orElseThrow().getId()).as("submission version was not created").isEqualTo(version.get().getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2")
+    void saveAndSubmitModelingSubmission_afterDueDate_practiceParticipationOfTeamExercise_savedIndividually() throws Exception {
+        useCaseExercise.setMode(ExerciseMode.TEAM);
+        useCaseExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        useCaseExercise = exerciseRepository.save(useCaseExercise);
+        Team team = new Team();
+        team.setName("Team");
+        team.setShortName(TEST_PREFIX + "practiceteam");
+        team.setExercise(useCaseExercise);
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
+        teamRepository.save(useCaseExercise, team);
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(useCaseExercise, TEST_PREFIX + "student2");
+
+        String emptyUseCaseModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        ModelingSubmissionResponseDTO returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(),
+                ParticipationFactory.generateModelingSubmission(emptyUseCaseModel, false));
+
+        // the submission is the student's own, saved against the practice participation, which is reported with the student instead of the team
+        assertThat(returnedSubmission.participation().id()).isEqualTo(practiceParticipation.getId());
+        assertThat(returnedSubmission.participation().testRun()).isTrue();
+        assertThat(returnedSubmission.participation().team()).isNull();
+        assertThat(returnedSubmission.participation().student().login()).isEqualTo(TEST_PREFIX + "student2");
+        modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedSubmission.id(), emptyUseCaseModel);
+        assertThat(submissionRepository.findAllByParticipationId(practiceParticipation.getId())).extracting(Submission::getId).contains(returnedSubmission.id());
+        assertThat(submissionRepository.findAllByParticipationId(teamParticipation.getId())).as("the team's graded participation is not touched").isEmpty();
+        assertThat(submissionVersionRepository.findLatestVersion(returnedSubmission.id())).as("an individual practice submission has no team versions").isEmpty();
+    }
+
+    static Stream<Arguments> workingPeriodOfTheTeamIsOpen() {
+        return Stream.of(Arguments.of("the due date is in the future", 1L, null), Arguments.of("the due date is over but the team has an extension", -1L, 2L),
+                Arguments.of("the exercise has no due date", null, null));
+    }
+
+    /**
+     * The practice participation takes over only when the working period is over. As long as the team can still work, the student's submission belongs to the team, also for a
+     * student who has started the practice mode before.
+     *
+     * @param scenario         the description of the scenario
+     * @param dueDateHours     the due date of the exercise in hours from now, or null for none
+     * @param extensionInHours the extension of the team participation in hours from now, or null for none
+     */
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("workingPeriodOfTheTeamIsOpen")
+    @WithMockUser(username = TEST_PREFIX + "student2")
+    void saveAndSubmitModelingSubmission_teamExerciseWithPracticeParticipation_workingPeriodOpen_savedToTheTeam(String scenario, Long dueDateHours, Long extensionInHours)
+            throws Exception {
+        useCaseExercise.setMode(ExerciseMode.TEAM);
+        useCaseExercise.setDueDate(dueDateHours == null ? null : ZonedDateTime.now().plusHours(dueDateHours));
+        useCaseExercise = exerciseRepository.save(useCaseExercise);
+        Team team = createTeamOfStudents("workingperiod", TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
+        if (extensionInHours != null) {
+            teamParticipation.setIndividualDueDate(ZonedDateTime.now().plusHours(extensionInHours));
+            teamParticipation = studentParticipationRepository.save(teamParticipation);
+        }
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(useCaseExercise, TEST_PREFIX + "student2");
+
+        String emptyUseCaseModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        ModelingSubmissionResponseDTO returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(),
+                ParticipationFactory.generateModelingSubmission(emptyUseCaseModel, false));
+
+        assertThat(returnedSubmission.participation().id()).as(scenario).isEqualTo(teamParticipation.getId());
+        assertThat(returnedSubmission.participation().testRun()).isFalse();
+        assertThat(returnedSubmission.participation().team()).as("the graded participation is reported with the team").isNotNull();
+        assertThat(submissionRepository.findAllByParticipationId(teamParticipation.getId())).extracting(Submission::getId).containsExactly(returnedSubmission.id());
+        assertThat(submissionRepository.findAllByParticipationId(practiceParticipation.getId())).as("the practice participation is not touched").isEmpty();
+        Optional<SubmissionVersion> version = submissionVersionRepository.findLatestVersion(returnedSubmission.id());
+        assertThat(version).as("the team's submission is versioned").isNotEmpty();
+        assertThat(version.orElseThrow().getAuthor().getLogin()).isEqualTo(TEST_PREFIX + "student2");
+    }
+
+    /**
+     * The extension of the team is over as well, so the practice participation takes over, and the effective due date is the one of the team's participation.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2")
+    void saveAndSubmitModelingSubmission_afterTeamExtensionOver_practiceParticipationOfTeamExercise_savedIndividually() throws Exception {
+        useCaseExercise.setMode(ExerciseMode.TEAM);
+        useCaseExercise.setDueDate(ZonedDateTime.now().minusHours(3));
+        useCaseExercise = exerciseRepository.save(useCaseExercise);
+        Team team = createTeamOfStudents("extensionover", TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
+        teamParticipation.setIndividualDueDate(ZonedDateTime.now().minusMinutes(30));
+        studentParticipationRepository.save(teamParticipation);
+        StudentParticipation practiceParticipation = participationUtilService.createAndSavePracticeParticipationForExercise(useCaseExercise, TEST_PREFIX + "student2");
+
+        String emptyUseCaseModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        ModelingSubmissionResponseDTO returnedSubmission = performInitialModelSubmission(useCaseExercise.getId(),
+                ParticipationFactory.generateModelingSubmission(emptyUseCaseModel, false));
+
+        assertThat(returnedSubmission.participation().id()).isEqualTo(practiceParticipation.getId());
+        assertThat(returnedSubmission.participation().testRun()).isTrue();
+        assertThat(submissionRepository.findAllByParticipationId(teamParticipation.getId())).isEmpty();
+    }
+
+    /**
+     * Practice is private: a teammate who has not started the practice mode must not end up in the practice participation of the other member, and must not write into the
+     * team's participation either once the working period is over.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void saveAndSubmitModelingSubmission_afterDueDate_teammateWithoutPracticeParticipation_forbidden() throws Exception {
+        useCaseExercise.setMode(ExerciseMode.TEAM);
+        useCaseExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        useCaseExercise = exerciseRepository.save(useCaseExercise);
+        Team team = createTeamOfStudents("teammate", TEST_PREFIX + "student1", TEST_PREFIX + "student2");
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
+        // the team started before the due date, a participation that starts afterwards may still submit late
+        teamParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        studentParticipationRepository.save(teamParticipation);
+        StudentParticipation practiceParticipationOfStudent2 = participationUtilService.createAndSavePracticeParticipationForExercise(useCaseExercise, TEST_PREFIX + "student2");
+
+        String emptyUseCaseModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        request.postWithResponseBody("/api/modeling/exercises/" + useCaseExercise.getId() + "/modeling-submissions",
+                toRequest(ParticipationFactory.generateModelingSubmission(emptyUseCaseModel, false)), ModelingSubmissionResponseDTO.class, HttpStatus.FORBIDDEN);
+
+        assertThat(submissionRepository.findAllByParticipationId(practiceParticipationOfStudent2.getId())).as("the practice work of the teammate stays private").isEmpty();
+        assertThat(submissionRepository.findAllByParticipationId(teamParticipation.getId())).as("the working period of the team is over").isEmpty();
+    }
+
+    /**
+     * Without a practice participation, the working period of the team is over, so the save is rejected, like for the text counterpart.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student2")
+    void saveAndSubmitModelingSubmission_afterDueDate_teamExerciseWithoutPracticeParticipation_forbidden() throws Exception {
+        useCaseExercise.setMode(ExerciseMode.TEAM);
+        useCaseExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        useCaseExercise = exerciseRepository.save(useCaseExercise);
+        Team team = createTeamOfStudents("nopractice", TEST_PREFIX + "student2");
+        StudentParticipation teamParticipation = participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
+        teamParticipation.setInitializationDate(ZonedDateTime.now().minusDays(2));
+        studentParticipationRepository.save(teamParticipation);
+
+        String emptyUseCaseModel = TestResourceUtils.loadFileFromResources("test-data/model-submission/empty-use-case-diagram.json");
+        request.postWithResponseBody("/api/modeling/exercises/" + useCaseExercise.getId() + "/modeling-submissions",
+                toRequest(ParticipationFactory.generateModelingSubmission(emptyUseCaseModel, false)), ModelingSubmissionResponseDTO.class, HttpStatus.FORBIDDEN);
+
+        assertThat(submissionRepository.findAllByParticipationId(teamParticipation.getId())).isEmpty();
+    }
+
+    private Team createTeamOfStudents(String shortName, String... logins) {
+        Team team = new Team();
+        team.setName("Team " + shortName);
+        team.setShortName(TEST_PREFIX + shortName);
+        team.setExercise(useCaseExercise);
+        for (String login : logins) {
+            team.addStudents(userTestRepository.findOneByLogin(login).orElseThrow());
+        }
+        return teamRepository.save(useCaseExercise, team);
     }
 
     @Test

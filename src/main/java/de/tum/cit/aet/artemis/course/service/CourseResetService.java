@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageRequestRepository;
 import de.tum.cit.aet.artemis.admin.repository.LLMTokenUsageTraceRepository;
+import de.tum.cit.aet.artemis.assessment.repository.PresentationAssessmentInstanceRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.communication.service.ConversationDataCleanupService;
@@ -92,6 +93,10 @@ import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
  * <td>Iris chat sessions, LLM token usage traces</td>
  * </tr>
  * <tr>
+ * <td>Presentation Assessments</td>
+ * <td>Presentation assessment instances, including scores, remarks, dates, and student links</td>
+ * </tr>
+ * <tr>
  * <td>Tutorial Groups</td>
  * <td>Tutorial group registrations (student assignments to groups)</td>
  * </tr>
@@ -108,7 +113,7 @@ public class CourseResetService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseResetService.class);
 
-    private static final int TOTAL_RESET_STEPS = 11;
+    private static final int TOTAL_RESET_STEPS = 12;
 
     private final ExerciseDeletionService exerciseDeletionService;
 
@@ -138,6 +143,8 @@ public class CourseResetService {
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
+    private final PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository;
+
     private final CourseOperationProgressService progressService;
 
     private final CourseAdminService courseAdminService;
@@ -154,8 +161,9 @@ public class CourseResetService {
             CourseNotificationRepository courseNotificationRepository, UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
             UserCourseNotificationSettingSpecificationRepository userCourseNotificationSettingSpecificationRepository,
             LLMTokenUsageRequestRepository llmTokenUsageRequestRepository, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository,
-            CourseOperationProgressService progressService, CourseAdminService courseAdminService, ParticipationRepository participationRepository,
-            SubmissionRepository submissionRepository, UserCourseRoleRepository userCourseRoleRepository) {
+            PresentationAssessmentInstanceRepository presentationAssessmentInstanceRepository, CourseOperationProgressService progressService,
+            CourseAdminService courseAdminService, ParticipationRepository participationRepository, SubmissionRepository submissionRepository,
+            UserCourseRoleRepository userCourseRoleRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.exerciseRepository = exerciseRepository;
         this.examDeletionApi = examDeletionApi;
@@ -170,6 +178,7 @@ public class CourseResetService {
         this.userCourseNotificationSettingSpecificationRepository = userCourseNotificationSettingSpecificationRepository;
         this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
+        this.presentationAssessmentInstanceRepository = presentationAssessmentInstanceRepository;
         this.progressService = progressService;
         this.courseAdminService = courseAdminService;
         this.participationRepository = participationRepository;
@@ -208,8 +217,10 @@ public class CourseResetService {
             List<ExamDeletionInfoDTO> examInfoList = examRepositoryApi.map(api -> api.findDeletionInfoByCourseId(courseId)).orElse(List.of());
             double actualExamWeight = examInfoList.stream()
                     .mapToDouble(info -> CourseOperationWeights.calculateExamWeight(info.studentExamCount(), info.programmingExerciseCount()) * 0.5).sum();
+            long presentationAssessmentInstanceCount = presentationAssessmentInstanceRepository.countByPresentationAssessmentCourseId(courseId);
+            double presentationAssessmentInstanceWeight = presentationAssessmentInstanceCount * CourseOperationWeights.getWeightPerPresentationAssessmentInstance();
 
-            totalWeight = CourseOperationWeights.calculateResetTotalWeight(summary, actualExamWeight);
+            totalWeight = CourseOperationWeights.calculateResetTotalWeight(summary, actualExamWeight) + presentationAssessmentInstanceWeight;
 
             // Step 1: Reset exercises (with per-exercise progress updates)
             completedWeight = resetExercisesWithWeightedProgress(courseId, stepsCompleted, operationClaim, completedWeight, totalWeight, failedItems);
@@ -268,14 +279,21 @@ public class CourseResetService {
             completedWeight += llmWeight;
             stepsCompleted++;
 
-            // Step 10: Delete tutorial group registrations
+            // Step 10: Delete presentation assessment instances
+            progressService.updateProgress(operationClaim, "Deleting presentation assessment instances", stepsCompleted, TOTAL_RESET_STEPS,
+                    calculateProgressPercent(completedWeight, totalWeight));
+            deletePresentationAssessmentInstances(courseId);
+            completedWeight += presentationAssessmentInstanceWeight;
+            stepsCompleted++;
+
+            // Step 11: Delete tutorial group registrations
             progressService.updateProgress(operationClaim, "Deleting tutorial group registrations", stepsCompleted, TOTAL_RESET_STEPS,
                     calculateProgressPercent(completedWeight, totalWeight));
             deleteTutorialGroupRegistrations(courseId);
             completedWeight += CourseOperationWeights.getWeightTutorialRegistrations();
             stepsCompleted++;
 
-            // Step 11: Unenroll students, tutors, and editors
+            // Step 12: Unenroll students, tutors, and editors
             long usersToUnenroll = summary.numberOfStudents() + summary.numberOfTutors() + summary.numberOfEditors();
             double unenrollWeight = usersToUnenroll * CourseOperationWeights.getWeightPerUserUnenroll();
             progressService.updateProgress(operationClaim, "Unenrolling users", stepsCompleted, TOTAL_RESET_STEPS, calculateProgressPercent(completedWeight, totalWeight));
@@ -487,6 +505,15 @@ public class CourseResetService {
         // Delete requests first to avoid foreign key constraint violations
         llmTokenUsageRequestRepository.deleteAllByTraceCourseId(courseId);
         llmTokenUsageTraceRepository.deleteAllByCourseId(courseId);
+    }
+
+    /**
+     * Deletes all presentation assessment instances for the course while preserving the presentation assessment definitions.
+     *
+     * @param courseId the ID of the course whose presentation assessment instances should be deleted
+     */
+    private void deletePresentationAssessmentInstances(long courseId) {
+        presentationAssessmentInstanceRepository.deleteAllByCourseId(courseId);
     }
 
     /**

@@ -312,7 +312,7 @@ export class ExerciseHeaderActionsComponent {
     }
 
     isStartPracticeAvailable(): boolean {
-        return !this.examMode() && isStartPracticeAvailable(this.exercise(), this._practiceParticipation());
+        return !this.examMode() && isStartPracticeAvailable(this.exercise(), this._practiceParticipation(), this._gradedParticipation());
     }
 
     /**

@@ -21,6 +21,15 @@
         <a th:with="url=(@{|${baseUrl}/account/activate?key=${user.activationKey}|})" th:href="${url}" th:text="${url}">Activation link</a>
     </p>
 
+    <th:block th:if="${activationDeadlineAmount != null}">
+        <p th:if="${activationDeadlineInHours}" th:text="#{email.activation.deadlineHours(${activationDeadlineAmount})}">
+            If you do not activate your account within 2 hours, it will be deleted automatically.
+        </p>
+        <p th:unless="${activationDeadlineInHours}" th:text="#{email.activation.deadlineMinutes(${activationDeadlineAmount})}">
+            If you do not activate your account within 45 minutes, it will be deleted automatically.
+        </p>
+    </th:block>
+
     <th:block th:replace="~{mail/notification/fragments :: farewell}" />
 </div>
 

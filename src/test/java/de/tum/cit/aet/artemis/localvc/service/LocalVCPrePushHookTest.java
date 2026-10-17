@@ -121,6 +121,27 @@ class LocalVCPrePushHookTest {
 
         assertThat(first.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
         assertThat(first.getMessage()).isEqualTo("You cannot push multiple refs at once.");
+        assertThat(second.getResult()).as("all subsequent commands must also be rejected to prevent bypass attacks").isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(second.getMessage()).isEqualTo("You cannot push multiple refs at once.");
+    }
+
+    @Test
+    void onPreReceive_pushingMultipleRefsIncludingMaliciousRefs_allAreRejected() throws Exception {
+        // F-017: Verify that multi-ref push with many refs all get rejected, not just the first.
+        // Attack scenario: git push origin main refs/heads/attacker-branch refs/heads/another-branch
+        // Previously, only the first ref would be checked, allowing subsequent refs to bypass all guards.
+        ReceiveCommand main = receive(commitWithRegularFile("Main.java", "class Main {}".getBytes(StandardCharsets.UTF_8)), DEFAULT_REF);
+        ReceiveCommand feature = receive(commitWithRegularFile("Feature.java", "class Feature {}".getBytes(StandardCharsets.UTF_8)), Constants.R_HEADS + "attacker-branch");
+        ReceiveCommand develop = receive(commitWithRegularFile("Dev.java", "class Dev {}".getBytes(StandardCharsets.UTF_8)), Constants.R_HEADS + "develop");
+
+        run(main, feature, develop);
+
+        assertThat(main.getResult()).isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(main.getMessage()).isEqualTo("You cannot push multiple refs at once.");
+        assertThat(feature.getResult()).as("second ref must be rejected").isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(feature.getMessage()).isEqualTo("You cannot push multiple refs at once.");
+        assertThat(develop.getResult()).as("third ref must also be rejected").isEqualTo(ReceiveCommand.Result.REJECTED_OTHER_REASON);
+        assertThat(develop.getMessage()).isEqualTo("You cannot push multiple refs at once.");
     }
 
     @Test

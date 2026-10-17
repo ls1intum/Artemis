@@ -33,16 +33,29 @@
                     <div class="mb-3 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.customName" for="field_customName"></label>
+                            <span class="text-state-danger">*</span>
                             <jhi-help-icon text="artemisApp.lti.edit.customNameIdTooltip" />
                         </div>
-                        <input type="text" tumAetUiInput class="w-full" name="customName" id="field_customName" formControlName="customName" />
+                        <input
+                            type="text"
+                            tumAetUiInput
+                            class="w-full"
+                            name="customName"
+                            id="field_customName"
+                            formControlName="customName"
+                            [maxlength]="customNameMaxLength"
+                            [tumAetUiInputInvalid]="isFieldInvalid('customName')"
+                        />
+                        @if (isFieldInvalid('customName')) {
+                            <small class="text-state-danger" jhiTranslate="artemisApp.lti.validation.customNameRequired"></small>
+                        }
                     </div>
                     <div class="mb-3 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
                             <label jhiTranslate="artemisApp.lti.toolUrl" for="field_toolUrl"></label>
                             <jhi-help-icon text="artemisApp.lti.edit.originalUrlTooltip" />
                         </div>
-                        <input type="text" tumAetUiInput class="w-full" name="originalUrl" id="field_toolUrl" formControlName="originalUrl" />
+                        <input type="text" tumAetUiInput class="w-full" name="originalUrl" id="field_toolUrl" formControlName="originalUrl" [maxlength]="fieldMaxLength" />
                     </div>
                     <div class="mb-3 flex flex-col gap-2">
                         <div class="flex items-center gap-1">
@@ -57,6 +70,7 @@
                             name="clientId"
                             id="field_clientId"
                             formControlName="clientId"
+                            [maxlength]="fieldMaxLength"
                             [tumAetUiInputInvalid]="isFieldInvalid('clientId')"
                         />
                         @if (isFieldInvalid('clientId')) {
@@ -76,6 +90,7 @@
                             name="authorizationUri"
                             id="field_authorizationUri"
                             formControlName="authorizationUri"
+                            [maxlength]="fieldMaxLength"
                             [tumAetUiInputInvalid]="isFieldInvalid('authorizationUri')"
                         />
                         @if (isFieldInvalid('authorizationUri')) {
@@ -95,6 +110,7 @@
                             name="tokenUri"
                             id="field_tokenUri"
                             formControlName="tokenUri"
+                            [maxlength]="fieldMaxLength"
                             [tumAetUiInputInvalid]="isFieldInvalid('tokenUri')"
                         />
                         @if (isFieldInvalid('tokenUri')) {
@@ -114,6 +130,7 @@
                             name="jwkSetUri"
                             id="field_jwkSetUri"
                             formControlName="jwkSetUri"
+                            [maxlength]="fieldMaxLength"
                             [tumAetUiInputInvalid]="isFieldInvalid('jwkSetUri')"
                         />
                         @if (isFieldInvalid('jwkSetUri')) {

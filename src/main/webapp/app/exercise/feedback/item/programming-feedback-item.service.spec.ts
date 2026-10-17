@@ -261,6 +261,20 @@ describe('ProgrammingFeedbackItemService', () => {
         });
     });
 
+    it('should not show a code reference for AI feedback that refers to line 0', () => {
+        const feedback = {
+            id: 1,
+            type: FeedbackType.AUTOMATIC,
+            text: `${NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER}File src/main/java/Example.java at line 0`,
+            detailText: 'The loop condition is incorrect.',
+            reference: 'file:src/main/java/Example.java_line:0',
+        } as Feedback;
+
+        const item = service.create([feedback], false)[0];
+
+        expect(item.codeReference).toBeUndefined();
+    });
+
     it('should strip the adapted-suggestion prefix from a feedback suggestion title', () => {
         const feedback = {
             id: 1,

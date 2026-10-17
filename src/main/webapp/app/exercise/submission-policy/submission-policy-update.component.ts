@@ -1,5 +1,5 @@
 import { Component, effect, input, output, signal, untracked } from '@angular/core';
-import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicy, SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -196,7 +196,6 @@ export class SubmissionPolicyUpdateComponent {
             this.policyFormInitialized = false;
         }
         const submissionPolicy = programmingExercise.submissionPolicy;
-        this.applySubmissionPolicyType(submissionPolicy?.type ?? SubmissionPolicyType.NONE);
         if (!this.form) {
             this.form = new FormGroup({
                 submissionLimit: new FormControl({ value: submissionPolicy?.submissionLimit, disabled: !this.editable() }, [
@@ -220,6 +219,8 @@ export class SubmissionPolicyUpdateComponent {
                 exceedingPenalty: { value: submissionPolicy?.exceedingPenalty, disabled: !this.editable() },
             });
         }
+        // After the form took the exercise's values: the controls are the fallback for a policy without them.
+        this.applySubmissionPolicyType(submissionPolicy?.type ?? SubmissionPolicyType.NONE);
         if (submissionPolicy && submissionPolicy.type !== SubmissionPolicyType.NONE) {
             this.policyFormInitialized = true;
         }
@@ -291,35 +292,45 @@ export class SubmissionPolicyUpdateComponent {
             }
         } else if (submissionPolicyType === SubmissionPolicyType.LOCK_REPOSITORY) {
             const newPolicy = new LockRepositoryPolicy();
-            if (programmingExercise.submissionPolicy) {
-                newPolicy.id = programmingExercise.submissionPolicy.id;
-                newPolicy.active = programmingExercise.submissionPolicy.active;
-                newPolicy.submissionLimit = programmingExercise.submissionPolicy.submissionLimit;
-            }
+            this.carryOverPolicyValues(programmingExercise.submissionPolicy, newPolicy);
             programmingExercise.submissionPolicy = newPolicy;
         } else if (submissionPolicyType === SubmissionPolicyType.SUBMISSION_PENALTY) {
             const newPolicy = new SubmissionPenaltyPolicy();
-            if (programmingExercise.submissionPolicy) {
-                newPolicy.id = programmingExercise.submissionPolicy.id;
-                newPolicy.active = programmingExercise.submissionPolicy.active;
-                newPolicy.submissionLimit = programmingExercise.submissionPolicy.submissionLimit;
-
-                if (programmingExercise.submissionPolicy?.exceedingPenalty) {
-                    newPolicy.exceedingPenalty = programmingExercise.submissionPolicy?.exceedingPenalty;
-                } else if (this.exceedingPenaltyControl) {
-                    // restore value when penalty has been set previously and was valid
-                    if (this.exceedingPenaltyControl.invalid) {
-                        this.exceedingPenaltyControl.setValue(undefined);
-                    } else {
-                        newPolicy.exceedingPenalty = this.exceedingPenaltyControl.value as number;
-                    }
-                }
-            }
+            this.carryOverPolicyValues(programmingExercise.submissionPolicy, newPolicy);
+            newPolicy.exceedingPenalty = this.resolveExceedingPenalty(programmingExercise.submissionPolicy);
             programmingExercise.submissionPolicy = newPolicy;
         }
         this.setAuxiliaryBooleansOnSubmissionPolicyChange(submissionPolicyType);
         this.submissionPolicyTypeChange.emit();
         return submissionPolicyType;
+    }
+
+    /**
+     * Seeds a policy created by a type switch. The previous policy is gone once the exercise was saved with
+     * type none (the server deletes it), while the form keeps showing the values the user typed, so the form
+     * controls are the fallback for what the new policy would otherwise lose.
+     */
+    private carryOverPolicyValues(previousPolicy: SubmissionPolicy | undefined, newPolicy: SubmissionPolicy) {
+        if (previousPolicy) {
+            newPolicy.id = previousPolicy.id;
+            newPolicy.active = previousPolicy.active;
+        }
+        newPolicy.submissionLimit = previousPolicy?.submissionLimit ?? this.submissionLimitControl?.value ?? undefined;
+    }
+
+    private resolveExceedingPenalty(previousPolicy: SubmissionPolicy | undefined): number | undefined {
+        if (previousPolicy?.exceedingPenalty) {
+            return previousPolicy.exceedingPenalty;
+        }
+        if (!this.exceedingPenaltyControl) {
+            return undefined;
+        }
+        // restore value when penalty has been set previously and was valid
+        if (this.exceedingPenaltyControl.invalid) {
+            this.exceedingPenaltyControl.setValue(undefined);
+            return undefined;
+        }
+        return (this.exceedingPenaltyControl.value as number | null) ?? undefined;
     }
 
     /**

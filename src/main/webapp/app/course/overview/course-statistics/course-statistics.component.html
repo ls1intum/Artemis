@@ -72,18 +72,19 @@
                     </div>
                     <div class="row d-flex justify-content-center align-items-start">
                         <div class="chart-container col-md-6" #doughnutref>
-                            <div class="chart-text">
-                                <h2 class="text-center">{{ currentRelativeScore() }} %</h2>
-                                <h4 class="text-center">{{ overallPoints() }} / {{ reachablePoints() }} Pts</h4>
-                            </div>
+                            <div class="doughnut-wrapper" data-testid="total-score-doughnut">
+                                <div class="chart-text">
+                                    <h2 class="text-center">{{ currentRelativeScore() }} %</h2>
+                                    <h4 class="text-center">{{ overallPoints() }} / {{ reachablePoints() }} Pts</h4>
+                                </div>
 
-                            <tumaet-ui-doughnut-chart
-                                class="h-[350px] w-[350px]"
-                                [labels]="doughnutData().labels"
-                                [series]="doughnutData().series"
-                                [config]="doughnutConfig"
-                                [ariaLabel]="'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate"
-                            />
+                                <tumaet-ui-doughnut-chart
+                                    [labels]="doughnutData().labels"
+                                    [series]="doughnutData().series"
+                                    [config]="doughnutConfig"
+                                    [ariaLabel]="'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate"
+                                />
+                            </div>
                         </div>
                         <div class="col-md-3 d-flex flex-column align-self-end color-legend-container">
                             @for (entry of doughnutChartEntries(); track $index) {

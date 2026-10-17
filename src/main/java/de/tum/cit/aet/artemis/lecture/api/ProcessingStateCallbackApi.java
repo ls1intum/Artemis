@@ -77,8 +77,8 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
      *
      * @param lectureUnitId      the claimed unit
      * @param jobToken           the registered Pyris job token
-     * @param targetPhase        the in-flight phase determined at claim time
-     * @param contentFingerprint the fingerprint computed at claim time
+     * @param targetPhase        the in-flight phase the run enters
+     * @param contentFingerprint the fingerprint the prepared payload carries, confirmed when the run succeeds
      * @param workerBootId       boot id of the worker executing the run
      * @param claimToken         identity of the claim being activated, from {@link ClaimedIngestionUnitDTO#claimToken()}
      * @return true if the unit still held this exact claim and was activated; false if the claim was already
@@ -109,6 +109,17 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
      */
     public void failClaimedUnitPreparation(long lectureUnitId, String claimToken) {
         processingStateCallbackService.failClaimedUnitPreparation(lectureUnitId, claimToken);
+    }
+
+    /**
+     * Charge a retryable failure to a claimed unit whose only content is a video that cannot be resolved right now, but only while it still holds this
+     * claim.
+     *
+     * @param lectureUnitId the claimed unit
+     * @param claimToken    identity of the claim, from {@link ClaimedIngestionUnitDTO#claimToken()}
+     */
+    public void failClaimedUnitVideoUnavailable(long lectureUnitId, String claimToken) {
+        processingStateCallbackService.failClaimedUnitVideoUnavailable(lectureUnitId, claimToken);
     }
 
     /**

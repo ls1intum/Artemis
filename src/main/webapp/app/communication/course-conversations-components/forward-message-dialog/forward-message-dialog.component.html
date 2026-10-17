@@ -31,6 +31,7 @@
                 [(ngModel)]="searchTerm"
                 (input)="filterItems($event)"
                 (focus)="onInputFocus()"
+                (click)="onInputClick()"
                 (blur)="onInputBlur()"
             />
         </div>

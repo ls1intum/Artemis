@@ -38,6 +38,6 @@
         #createAnswerPostModal
         [posting]="createdAnswerPost()"
         [createEditAnswerPostContainerRef]="containerRef()"
-        (onCreate)="createdAnswerPost.set(createEmptyAnswerPost()); showAnswers()"
+        (onCreate)="onAnswerPostCreated()"
     />
 </div>

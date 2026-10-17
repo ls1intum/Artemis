@@ -14,6 +14,7 @@ import { AlertService } from 'app/foundation/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { LTI_PLATFORM_CUSTOM_NAME_MAX_LENGTH, LTI_PLATFORM_FIELD_MAX_LENGTH } from 'app/foundation/constants/input.constants';
 
 describe('EditLtiConfigurationComponent', () => {
     let component: EditLtiConfigurationComponent;
@@ -89,6 +90,7 @@ describe('EditLtiConfigurationComponent', () => {
             fixture.detectChanges();
 
             component.platformConfigurationForm.patchValue({
+                customName: 'Test platform',
                 clientId: 'test-client',
                 authorizationUri: 'https://example.com/auth',
                 tokenUri: 'https://example.com/token',
@@ -96,6 +98,51 @@ describe('EditLtiConfigurationComponent', () => {
             });
 
             expect(component.platformConfigurationForm.valid).toBe(true);
+        });
+
+        it('should mark customName as required', () => {
+            fixture.detectChanges();
+
+            const customNameControl = component.platformConfigurationForm.get('customName');
+            expect(customNameControl?.errors?.['required']).toBe(true);
+
+            customNameControl?.setValue('   ');
+            expect(customNameControl?.invalid).toBe(true);
+
+            customNameControl?.setValue('Moodle');
+            expect(customNameControl?.errors).toBeNull();
+        });
+
+        it('should reject a custom name that is longer than the server accepts', () => {
+            fixture.detectChanges();
+
+            const customNameControl = component.platformConfigurationForm.get('customName');
+            customNameControl?.setValue('n'.repeat(LTI_PLATFORM_CUSTOM_NAME_MAX_LENGTH));
+            expect(customNameControl?.errors).toBeNull();
+
+            customNameControl?.setValue('n'.repeat(LTI_PLATFORM_CUSTOM_NAME_MAX_LENGTH + 1));
+            expect(customNameControl?.errors?.['maxlength']).toBeDefined();
+        });
+
+        it('should show the custom name error only once the field was touched', () => {
+            fixture.detectChanges();
+            const element: HTMLElement = fixture.nativeElement;
+            expect(element.querySelector('[jhiTranslate="artemisApp.lti.validation.customNameRequired"]')).toBeNull();
+
+            component.platformConfigurationForm.get('customName')?.markAsTouched();
+            fixture.detectChanges();
+
+            expect(element.querySelector('[jhiTranslate="artemisApp.lti.validation.customNameRequired"]')).not.toBeNull();
+        });
+
+        it('should limit the length of the inputs to what the server accepts', () => {
+            fixture.detectChanges();
+            const element: HTMLElement = fixture.nativeElement;
+
+            expect(element.querySelector('#field_customName')?.getAttribute('maxlength')).toBe(String(LTI_PLATFORM_CUSTOM_NAME_MAX_LENGTH));
+            for (const id of ['field_toolUrl', 'field_clientId', 'field_authorizationUri', 'field_tokenUri', 'field_jwkSetUri']) {
+                expect(element.querySelector(`#${id}`)?.getAttribute('maxlength'), id).toBe(String(LTI_PLATFORM_FIELD_MAX_LENGTH));
+            }
         });
 
         it('should mark clientId as required', () => {
@@ -182,6 +229,7 @@ describe('EditLtiConfigurationComponent', () => {
                 fixture.detectChanges();
 
                 component.platformConfigurationForm.patchValue({
+                    customName: 'Test platform',
                     clientId: 'test-client',
                     authorizationUri: 'https://example.com/auth',
                     tokenUri: 'https://example.com/token',
@@ -201,6 +249,7 @@ describe('EditLtiConfigurationComponent', () => {
                 fixture.detectChanges();
 
                 component.platformConfigurationForm.patchValue({
+                    customName: 'Test platform',
                     clientId: 'test-client',
                     authorizationUri: 'https://example.com/auth',
                     tokenUri: 'https://example.com/token',

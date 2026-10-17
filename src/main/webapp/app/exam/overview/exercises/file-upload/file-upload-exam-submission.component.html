@@ -37,12 +37,12 @@
                     </div>
                 </div>
             }
-            @if (submittedFileName() && studentSubmission()?.filePathUrl) {
+            @if (submittedFileName() && submittedFileUrl()) {
                 <div class="mt-3!">
                     <h6 jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName() }"></h6>
                     <a
                         class="cursor-pointer text-primary"
-                        (click)="downloadFile(studentSubmission()!.filePathUrl!)"
+                        (click)="downloadFile(submittedFileUrl()!)"
                         jhiTranslate="artemisApp.fileUploadSubmission.download"
                         #keyboardAction53
                         role="button"

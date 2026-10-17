@@ -8,7 +8,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MarkdownCache, TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
@@ -63,7 +62,6 @@ describe('TextUnitFormComponent', () => {
                 FontAwesomeTestingModule,
                 TextUnitFormComponent,
                 MockComponent(MarkdownEditorMonacoComponent),
-                FormDateTimePickerComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CompetencySelectionComponent),
             ],

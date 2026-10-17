@@ -121,6 +121,7 @@ export interface CourseManagementDTO {
     athenaGradingFeedbackEnabled: boolean;
     athenaFormativeFeedbackEnabled: boolean;
     learningPathsEnabled: boolean;
+    presentationAssessmentsEnabled: boolean;
     trainingEnabled: boolean;
     numberOfStudents?: number;
     numberOfTeachingAssistants?: number;

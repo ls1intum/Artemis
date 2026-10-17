@@ -87,6 +87,16 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
                 .isTrue();
     }
 
+    /**
+     * The programming tutor assessment page answers with a narrowed course (see ProgrammingSubmissionForTutorAssessmentDTO.CourseDTO): it gates the
+     * feedback suggestions on the grading flag and has no request-feedback button, so the formative flag is deliberately not part of the response.
+     */
+    private void assertGradingFlagPresent(JsonNode course) {
+        assertThat(course).as("the response has to carry the course").isNotNull();
+        assertThat(course.get("athenaGradingFeedbackEnabled").asBoolean())
+                .as("athenaGradingFeedbackEnabled must reach the client; the assessment views gate feedback suggestions on it").isTrue();
+    }
+
     private static LinkedMultiValueMap<String, String> lockParams() {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("lock", "true");
@@ -163,7 +173,7 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
     void programmingAssessmentEditorCarriesTheAthenaFlags() throws Exception {
         ProgrammingSubmission submission = assessableProgrammingSubmission();
         JsonNode response = request.get("/api/programming/programming-submissions/" + submission.getId() + "/lock", HttpStatus.OK, JsonNode.class);
-        assertBothFlagsPresent(response.get("participation").get("exercise").get("course"));
+        assertGradingFlagPresent(response.get("participation").get("exercise").get("course"));
     }
 
     @Test
@@ -172,7 +182,7 @@ class AthenaConfigWireContractTest extends AbstractSpringIntegrationIndependentT
         ProgrammingExercise exercise = (ProgrammingExercise) assessableProgrammingSubmission().getParticipation().getExercise();
         JsonNode response = request.get("/api/programming/exercises/" + exercise.getId() + "/programming-submission-without-assessment", HttpStatus.OK, JsonNode.class,
                 lockParams());
-        assertBothFlagsPresent(response.get("participation").get("exercise").get("course"));
+        assertGradingFlagPresent(response.get("participation").get("exercise").get("course"));
     }
 
     /**

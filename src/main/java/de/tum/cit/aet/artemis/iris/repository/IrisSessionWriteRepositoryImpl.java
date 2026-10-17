@@ -52,6 +52,12 @@ public class IrisSessionWriteRepositoryImpl implements IrisSessionWriteRepositor
     }
 
     @Override
+    public void appendQuestionAndAnswer(long sessionId, IrisMessage question, IrisMessage answer) {
+        appendInCurrentTransaction(sessionId, question, IrisMessageSender.USER);
+        appendInCurrentTransaction(sessionId, answer, IrisMessageSender.LLM);
+    }
+
+    @Override
     public @Nullable IrisMessage switchContextAndAppendMarker(long sessionId, IrisChatMode newMode, long newEntityId, long expectedCourseId, String entityName) {
         var sessions = irisSessionRepository.getObject();
         // Marker append and context update under one session write lock. If the append were the only holder it would

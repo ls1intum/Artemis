@@ -24,6 +24,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -846,13 +847,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @ParameterizedTest(name = "title=\"{0}\"")
-    @NullSource
     @ValueSource(strings = { "", "   " })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testImportExam_failsWithMissingOrBlankTitle(String title) throws Exception {
+    void testImportExam_failsWithBlankTitle(String title) throws Exception {
         ObjectNode examJson = examBodyWithTitle(ExamImportDTO.of(exam1, course1.getId()), title);
 
         request.postAndExpectError("/api/exam/courses/" + course1.getId() + "/exam-import", examJson, HttpStatus.BAD_REQUEST, "examTitleEmpty");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExam_failsWithMissingTitle() throws Exception {
+        // a missing title is already refused by the bean validation of the import body, before the explicit title check runs
+        ObjectNode examJson = examBodyWithTitle(ExamImportDTO.of(exam1, course1.getId()), null);
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", examJson, HttpStatus.BAD_REQUEST, null);
     }
 
     /**
@@ -1994,6 +2003,20 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetExamStatistics_tutorReceivesComplaintCounts() throws Exception {
+        ExamChecklistDTO actualStatistics = examService.getStatsForChecklist(exam1, false);
+        ExamChecklistDTO returnedStatistics = request.get("/api/exam/courses/" + exam1.getCourse().getId() + "/exams/" + exam1.getId() + "/statistics", HttpStatus.OK,
+                ExamChecklistDTO.class);
+        // without the complaint counts the exam status of a tutor would claim that 100% of the complaints are done
+        assertThat(returnedStatistics.numberOfAllComplaints()).isNotNull().isEqualTo(actualStatistics.numberOfAllComplaints());
+        assertThat(returnedStatistics.numberOfAllComplaintsDone()).isNotNull().isEqualTo(actualStatistics.numberOfAllComplaintsDone());
+        // the remaining instructor-only values stay hidden from tutors
+        assertThat(returnedStatistics.numberOfGeneratedStudentExams()).isNull();
+        assertThat(returnedStatistics.numberOfExamsStarted()).isNull();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamStatistics_considersOnlyInitializedParticipationsForPreparedExercises() throws Exception {
         ExerciseGroup exerciseGroup = exam2.getExerciseGroups().getFirst();
@@ -2777,6 +2800,73 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         assertThat(imported.getPresentationScoreEnabled()).isTrue();
         assertThat(imported.getSecondCorrectionEnabled()).isTrue();
         assertThat(imported.getAllowComplaintsForAutomaticAssessments()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExerciseGroup_rejectsExerciseWithoutSourceIdAndPersistsNothing() throws Exception {
+        Exam targetExam = examUtilService.addExam(course1);
+        int exerciseGroupsBefore = examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups().size();
+
+        // an exercise that names no source exercise cannot be imported, so the whole request has to be refused
+        List<ExerciseGroupImportDTO> body = List.of(new ExerciseGroupImportDTO("g", true, List.of(new ExerciseImportDTO(null, ExerciseType.TEXT, "x", null, null, null))));
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group", body, HttpStatus.BAD_REQUEST, null);
+
+        assertThat(examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups()).hasSize(exerciseGroupsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExerciseGroup_rejectsNullElementsAndPersistsNothing() throws Exception {
+        Exam targetExam = examUtilService.addExam(course1);
+        int exerciseGroupsBefore = examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups().size();
+        String path = "/api/exam/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group";
+
+        // a null group or a null exercise is a malformed request, not a server error
+        request.postWithoutLocation(path, Arrays.asList((ExerciseGroupImportDTO) null), HttpStatus.BAD_REQUEST, null);
+        request.postWithoutLocation(path, List.of(new ExerciseGroupImportDTO("g", true, Arrays.asList((ExerciseImportDTO) null))), HttpStatus.BAD_REQUEST, null);
+
+        assertThat(examRepository.findByIdWithExerciseGroupsElseThrow(targetExam.getId()).getExerciseGroups()).hasSize(exerciseGroupsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExam_rejectsNullElementsAndPersistsNothing() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        int examsBefore = examRepository.findByCourseId(course1.getId()).size();
+
+        for (List<ExerciseGroupImportDTO> malformedGroups : List.of(Arrays.asList((ExerciseGroupImportDTO) null),
+                List.of(new ExerciseGroupImportDTO("g", true, Arrays.asList((ExerciseImportDTO) null))))) {
+            ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.testExam(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
+                    importDTO.endDate(), importDTO.publishResultsDate(), importDTO.examStudentReviewStart(), importDTO.examStudentReviewEnd(), importDTO.gracePeriod(),
+                    importDTO.workingTime(), importDTO.startText(), importDTO.endText(), importDTO.confirmationStartText(), importDTO.confirmationEndText(),
+                    importDTO.examMaxPoints(), importDTO.randomizeExerciseOrder(), importDTO.numberOfExercisesInExam(), importDTO.numberOfCorrectionRoundsInExam(),
+                    importDTO.examiner(), importDTO.moduleNumber(), importDTO.courseName(), importDTO.exampleSolutionPublicationDate(), importDTO.examSummaryPublicationDate(),
+                    importDTO.channelName(), importDTO.courseId(), malformedGroups);
+            request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", body, HttpStatus.BAD_REQUEST, null);
+        }
+
+        assertThat(examRepository.findByCourseId(course1.getId())).hasSize(examsBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportExam_rejectsExerciseWithoutSourceIdAndPersistsNothing() throws Exception {
+        Exam exam = ExamFactory.generateExamWithExerciseGroup(course1, true);
+        ExamImportDTO importDTO = ExamImportDTO.of(exam, course1.getId());
+        ExerciseGroupImportDTO malformedGroup = new ExerciseGroupImportDTO("g", true, List.of(new ExerciseImportDTO(null, ExerciseType.TEXT, "x", null, null, null)));
+        ExamImportDTO body = new ExamImportDTO(importDTO.title(), importDTO.testExam(), importDTO.examWithAttendanceCheck(), importDTO.visibleDate(), importDTO.startDate(),
+                importDTO.endDate(), importDTO.publishResultsDate(), importDTO.examStudentReviewStart(), importDTO.examStudentReviewEnd(), importDTO.gracePeriod(),
+                importDTO.workingTime(), importDTO.startText(), importDTO.endText(), importDTO.confirmationStartText(), importDTO.confirmationEndText(), importDTO.examMaxPoints(),
+                importDTO.randomizeExerciseOrder(), importDTO.numberOfExercisesInExam(), importDTO.numberOfCorrectionRoundsInExam(), importDTO.examiner(), importDTO.moduleNumber(),
+                importDTO.courseName(), importDTO.exampleSolutionPublicationDate(), importDTO.examSummaryPublicationDate(), importDTO.channelName(), importDTO.courseId(),
+                List.of(malformedGroup));
+        int examsBefore = examRepository.findByCourseId(course1.getId()).size();
+
+        request.postWithoutLocation("/api/exam/courses/" + course1.getId() + "/exam-import", body, HttpStatus.BAD_REQUEST, null);
+
+        assertThat(examRepository.findByCourseId(course1.getId())).hasSize(examsBefore);
     }
 
     @Test

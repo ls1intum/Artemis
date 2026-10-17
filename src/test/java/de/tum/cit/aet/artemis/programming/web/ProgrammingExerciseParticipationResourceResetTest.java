@@ -241,6 +241,34 @@ class ProgrammingExerciseParticipationResourceResetTest {
     @Test
     void theCommitHistoryOfAParticipationIsReadFromItsRepository() throws Exception {
         when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
+        // the participant information is visible, which is what lets a tutor see the history while the support window is open
+        when(participationAuthCheckService.canSeeParticipantInformation(participation)).thenReturn(true);
+        var commit = new CommitInfoDTO("hash", "message", java.time.ZonedDateTime.now(), "Anna", "anna@example.com");
+        when(programmingExerciseParticipationService.getCommitInfos(any(LocalVCRepositoryUri.class))).thenReturn(List.of(commit));
+
+        var response = resource.getCommitHistoryForParticipationRepo(PARTICIPATION_ID);
+
+        assertThat(response.getBody()).containsExactly(commit);
+    }
+
+    @Test
+    void theCommitHistoryIsRefusedToATutorWhileParticipantInformationIsHidden() throws Exception {
+        when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
+        participation.setExercise(exercise);
+        when(participationAuthCheckService.canSeeParticipantInformation(participation)).thenReturn(false);
+        when(authCheckService.isAtLeastEditorForExercise(exercise)).thenReturn(false);
+
+        assertThatExceptionOfType(AccessForbiddenException.class).isThrownBy(() -> resource.getCommitHistoryForParticipationRepo(PARTICIPATION_ID));
+
+        verify(programmingExerciseParticipationService, never()).getCommitInfos(any());
+    }
+
+    @Test
+    void theCommitHistoryStaysReadableForAnEditorWhileParticipantInformationIsHidden() throws Exception {
+        when(programmingExerciseStudentParticipationRepository.findByIdElseThrow(PARTICIPATION_ID)).thenReturn(participation);
+        participation.setExercise(exercise);
+        when(participationAuthCheckService.canSeeParticipantInformation(participation)).thenReturn(false);
+        when(authCheckService.isAtLeastEditorForExercise(exercise)).thenReturn(true);
         var commit = new CommitInfoDTO("hash", "message", java.time.ZonedDateTime.now(), "Anna", "anna@example.com");
         when(programmingExerciseParticipationService.getCommitInfos(any(LocalVCRepositoryUri.class))).thenReturn(List.of(commit));
 

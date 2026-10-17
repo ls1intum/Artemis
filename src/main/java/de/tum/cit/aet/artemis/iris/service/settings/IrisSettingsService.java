@@ -192,6 +192,17 @@ public class IrisSettingsService {
     }
 
     /**
+     * Returns the IDs of all courses whose Iris course settings are disabled. A course without a settings row counts as enabled, see
+     * {@link #filterCourseIdsWithIrisEnabled}. Reads every settings row, because the flag lives in the JSON payload; only an unscoped
+     * request by an administrator needs this, since every other caller has a bounded course list to filter instead.
+     *
+     * @return the IDs of the courses with Iris disabled
+     */
+    public List<Long> findCourseIdsWithIrisDisabled() {
+        return irisCourseSettingsRepository.findAll().stream().filter(entity -> !entity.getSettings().enabled()).map(IrisCourseSettingsEntity::getCourseId).toList();
+    }
+
+    /**
      * Ensures Iris is enabled for the supplied course, otherwise throws an access exception.
      *
      * @param course the course

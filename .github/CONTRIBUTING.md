@@ -33,7 +33,10 @@ contribution.
    title follows the
    [pull request naming conventions](https://docs.artemis.tum.de/developer/development-process#pr-naming-conventions),
    because it becomes part of the release notes. Fill in the template, including the steps for testing,
-   and mark the pull request as ready for review once everything applicable is checked.
+   complete applicable author tasks and remove inapplicable tasks and empty sections. Set the PR milestone
+   to the intended release, then leave draft and verify the `ready for review` label. Applicable review
+   tasks stay open until verified. Follow
+   [PR readiness](https://docs.artemis.tum.de/developer/development-process#pull-request-readiness).
 7. **Participate in review.** Respond to comments, push updates, and re-request review. See
    [Pull request review](#pull-request-review).
 
@@ -82,7 +85,9 @@ What to expect:
 - The maintainer responsible for the affected feature or module approves the change within their scope.
 - An Artemis maintainer performs the final review and merges into `develop`.
 - A pull request is ready to merge once it has approvals from at least four reviewers, every applicable
-  checklist item is checked, and every review thread is resolved.
+  checklist item is checked, every review thread is resolved, required checks pass, no merge conflicts
+  remain, and the intended release milestone is set. Replace `ready for review` with `ready to merge`
+  once these requirements hold; remove it if later changes invalidate readiness.
 - Keep pull requests focused and short-lived. A pull request without activity for 7 days is marked
   `stale` and is closed after 21 days of inactivity.
 

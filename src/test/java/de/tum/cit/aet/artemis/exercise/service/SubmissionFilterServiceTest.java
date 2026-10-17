@@ -310,6 +310,47 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentBa
         assertThat(submission.get().getFirstResult()).isEqualTo(secondResult);
     }
 
+    /**
+     * When a tutor starts assessing, an empty manual result without a rating and completion date is created for the submission.
+     * It must not hide the rated automatic result of the submission from the student, neither before nor after the assessment due date.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void shouldFindLatestAutomaticProgrammingSubmission_whileManualAssessmentIsInProgress(boolean hasAssessmentDueDate) {
+        var programmingExercise = exerciseByType.get(ExerciseType.PROGRAMMING);
+        programmingExercise.setAssessmentDueDate(hasAssessmentDueDate ? ZonedDateTime.now().plusHours(3) : null);
+
+        var submission = new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusDays(1));
+        submission.setId(1L);
+        var automaticResult = new Result().rated(true).score(0.0).completionDate(ZonedDateTime.now().minusHours(5)).assessmentType(AssessmentType.AUTOMATIC);
+        automaticResult.setId(1L);
+        var emptyManualResult = new Result().assessmentType(AssessmentType.MANUAL);
+        emptyManualResult.setId(2L);
+
+        submission.setResults(Set.of(automaticResult, emptyManualResult));
+        submission.setParticipation(new StudentParticipation().exercise(programmingExercise));
+        var latestSubmission = submissionFilterService.getLatestSubmissionWithResult(Set.of(submission), false);
+        assertThat(latestSubmission).isPresent().get().isEqualTo(submission);
+        assertThat(latestSubmission.get().getResults()).containsExactly(automaticResult);
+    }
+
+    @Test
+    void shouldNotFindProgrammingSubmission_whileManualAssessmentIsInProgress_AutomaticResultNotRated() {
+        var programmingExercise = exerciseByType.get(ExerciseType.PROGRAMMING);
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusHours(3));
+
+        var submission = new ProgrammingSubmission().submissionDate(ZonedDateTime.now().minusDays(1));
+        submission.setId(1L);
+        var automaticResult = new Result().rated(false).score(0.0).completionDate(ZonedDateTime.now().minusHours(5)).assessmentType(AssessmentType.AUTOMATIC);
+        automaticResult.setId(1L);
+        var emptyManualResult = new Result().assessmentType(AssessmentType.MANUAL);
+        emptyManualResult.setId(2L);
+
+        submission.setResults(Set.of(automaticResult, emptyManualResult));
+        submission.setParticipation(new StudentParticipation().exercise(programmingExercise));
+        assertThat(submissionFilterService.getLatestSubmissionWithResult(Set.of(submission), false)).isEmpty();
+    }
+
     @Test
     void shouldNotFindProgrammingSubmission_beforeAssessmentDueDate_AutomaticResultDeleted() {
         var programmingExercise = exerciseByType.get(ExerciseType.PROGRAMMING);

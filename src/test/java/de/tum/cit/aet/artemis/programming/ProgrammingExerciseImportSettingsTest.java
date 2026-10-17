@@ -53,7 +53,7 @@ class ProgrammingExerciseImportSettingsTest {
                     "Goes together with the team assignment configuration, which the course material fetch does not load: the exam and variant imports copy the mode, the course material import leaves it out"),
             Map.entry("teamAssignmentConfig", "Goes together with the mode, see there"), Map.entry("course", "The target of the import, which each caller names"),
             Map.entry("exerciseGroup", "The target of the import, which each caller names"),
-            Map.entry("exerciseVariantGroup", "A variant joins its group after the import, no other caller has one"),
+            Map.entry("exerciseVariantGroup", "A new exercise is always stored outside any group, a variant joins its group after the import"),
             Map.entry("competencyLinks", "They point at competencies of the source course, so a caller supplies links to competencies of the target"),
             Map.entry("submissionPolicy",
                     "A separate entity that no import fetch loads: the course material import copies it itself, and the import service only saves the one a skeleton carries"),

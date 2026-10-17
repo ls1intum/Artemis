@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,11 +53,20 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
 
     private Course course;
 
+    private Object originalServiceMap;
+
     @BeforeEach
     void setUp() {
+        // The notification service is shared by every test of the Spring context, so the channels replaced below have to be put back
+        originalServiceMap = ReflectionTestUtils.getField(courseNotificationService, "serviceMap");
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         course = courseUtilService.createEnrolledCourse(TEST_PREFIX);
+    }
+
+    @AfterEach
+    void restoreServiceMap() {
+        ReflectionTestUtils.setField(courseNotificationService, "serviceMap", originalServiceMap);
     }
 
     @Test
@@ -122,12 +132,18 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
         mockServiceMap.put(NotificationChannelOption.PUSH, noopService);
         mockServiceMap.put(NotificationChannelOption.EMAIL, noopService);
 
-        ReflectionTestUtils.setField(courseNotificationService, "serviceMap", mockServiceMap);
+        var originalServiceMap = ReflectionTestUtils.getField(courseNotificationService, "serviceMap");
+        try {
+            ReflectionTestUtils.setField(courseNotificationService, "serviceMap", mockServiceMap);
 
-        var notification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), 1L, "test test", "test test", "Test Author", "image.url", 1L,
-                1L);
+            var notification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), 1L, "test test", "test test", "Test Author", "image.url",
+                    1L, 1L);
 
-        courseNotificationService.sendCourseNotification(notification, List.of(user));
+            courseNotificationService.sendCourseNotification(notification, List.of(user));
+        }
+        finally {
+            ReflectionTestUtils.setField(courseNotificationService, "serviceMap", originalServiceMap);
+        }
     }
 
     @Test

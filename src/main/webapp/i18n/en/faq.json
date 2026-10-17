@@ -9,7 +9,6 @@
                 "reject": "Reject FAQ",
                 "filterLabel": "Filter",
                 "createOrEditLabel": "Create or edit FAQ",
-                "ingestLabel": "Send FAQs to Iris",
                 "empty": {
                     "title": "No FAQs yet",
                     "noMatchingTitle": "No matching FAQs",
@@ -32,7 +31,6 @@
                 "question": "Are you sure you want to permanently delete the FAQ <strong>{{ title }}</strong>? This action can NOT be undone!",
                 "typeNameToConfirm": "Please type in the name of the FAQ to confirm."
             },
-
             "table": {
                 "questionTitle": "Question title",
                 "questionAnswer": "Question answer",
@@ -41,7 +39,30 @@
             },
             "course": "Course",
             "noExisting": "Currently, there is no FAQ available for this course.",
-            "noMatching": "There is no FAQ that matches the combination of filter and search criteria."
+            "noMatching": "There is no FAQ that matches the combination of filter and search criteria.",
+            "import": {
+                "title": "Import FAQs",
+                "description": "Reuse FAQs from your other courses. Search, preview answers, and select the FAQs to copy into this course.",
+                "searchLabel": "Search FAQs",
+                "searchPlaceholder": "Search by question, answer, or course name",
+                "loading": "Searching accessible FAQs…",
+                "searchError": "FAQs could not be loaded. Please try again.",
+                "retry": "Try again",
+                "emptyTitle": "No matching FAQs",
+                "emptyDescription": "Try another search. Only FAQs you can access in other courses appear here.",
+                "selectPage": "Select all on this page",
+                "preview": "Preview answer",
+                "selected": "{{ count }} selected across all pages",
+                "clearSelection": "Clear selection",
+                "importSelected": "Import selected ({{ count }})",
+                "importError": "FAQs could not be imported. Access may have changed. Check your selection and try again.",
+                "success": "Successfully imported {{ count }} FAQs.",
+                "state": {
+                    "ACCEPTED": "Accepted",
+                    "PROPOSED": "Proposed",
+                    "REJECTED": "Rejected"
+                }
+            }
         }
     }
 }

@@ -261,7 +261,8 @@ export class AttachmentVideoUnitFormComponent {
         releaseDate: [undefined as dayjs.Dayjs | undefined],
         videoSource: [undefined as string | undefined, this.videoSourceUrlValidator],
         urlHelper: [undefined as string | undefined, this.videoSourceTransformUrlValidator],
-        updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
+        // The longest text a notification delivers to students, see GroupNotificationService on the server.
+        updateNotificationText: [undefined as string | undefined, [Validators.maxLength(255)]],
         competencyLinks: [undefined as CompetencyLectureUnitLink[] | undefined],
     });
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');

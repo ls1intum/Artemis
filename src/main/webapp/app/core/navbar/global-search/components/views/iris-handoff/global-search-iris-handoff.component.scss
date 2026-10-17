@@ -1,0 +1,80 @@
+// A strip across the foot of the answer card: a prompt naming where the chat opens, and the one clickable action with its shortcut on the right.
+:host {
+    display: block;
+}
+
+.iris-handoff-row {
+    // As compact as the card's header, so the card stays balanced top and bottom.
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.5rem 0.3rem 0.75rem;
+    border-top: 1px solid color-mix(in srgb, var(--bs-primary) 14%, transparent);
+    border-radius: 0 0 0.75rem 0.75rem;
+    color: var(--bs-body-color);
+    font-size: 0.8rem;
+}
+
+.iris-handoff-icon {
+    flex-shrink: 0;
+    color: var(--bs-primary);
+}
+
+.iris-handoff-prompt {
+    // Wraps rather than truncates, so the destination stays readable when zoomed in or on a narrow screen.
+    min-width: 0;
+}
+
+// Body colour, not blue: only the action is clickable, and blue text would read as a link.
+.iris-handoff-target {
+    font-weight: 600;
+}
+
+.iris-handoff-action {
+    // A text action with a keycap chip. The blue is mixed towards the body colour so the small label keeps 4.5:1 contrast in
+    // both themes (darker in light, lighter in dark). Hover reads like a link coming alive, with no background block: the
+    // label underlines, the keycap's outline turns blue. The transparent border shows up in Windows high contrast mode.
+    --iris-handoff-accent: color-mix(in srgb, var(--bs-primary) 70%, var(--bs-body-color));
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.45rem;
+    margin-left: auto;
+    padding: 0.15rem 0.25rem;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+    background: transparent;
+    color: var(--iris-handoff-accent);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+
+    &:hover:not([aria-disabled='true']),
+    &:focus-visible {
+        .iris-handoff-action-label {
+            text-decoration: underline;
+            text-underline-offset: 0.2em;
+        }
+
+        .iris-handoff-kbd {
+            border-color: var(--iris-handoff-accent);
+        }
+    }
+
+    &[aria-disabled='true'] {
+        cursor: default;
+        opacity: 0.55;
+    }
+}
+
+.iris-handoff-kbd {
+    padding: 0 0.35rem;
+    border: 1px solid color-mix(in srgb, var(--bs-primary) 30%, transparent);
+    border-radius: 0.3rem;
+    // Transparent, so the keycap takes the card's colour instead of the page background, which is darker in Artemis.
+    background: transparent;
+    font-size: 0.7rem;
+    font-weight: 500;
+}

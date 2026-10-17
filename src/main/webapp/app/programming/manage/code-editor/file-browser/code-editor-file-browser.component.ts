@@ -144,6 +144,11 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
     editorState = input<EditorState>(EditorState.CLEAN);
     commitState = input<CommitState>(CommitState.UNDEFINED);
     isTutorAssessment = input<boolean>(false);
+    /**
+     * The full hash of the commit that is shown. If set, the files are read from exactly this commit and the repository status is not queried: the working copy on the server is
+     * shared with the student and may contain edits that were never submitted, so it must not influence what is shown for a submission.
+     */
+    commitId = input<string | undefined>(undefined);
     highlightFileChanges = input<boolean>(false);
     fileBadges = input<{ [path: string]: FileBadge[] }>({});
     allowHiddenFiles = input<boolean>(false);
@@ -272,7 +277,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
         this.isLoadingFiles.set(true);
         // We need to make sure to not trigger multiple requests on the git repo at the same time.
         // This is why we first wait until the repository state was checked and then load the files.
-        this.checkIfRepositoryIsClean()
+        // A fixed commit is, by definition, a submitted state, so there is no working copy status to check (and no way to end up in a conflict).
+        const repositoryState$ = this.commitId() ? of(CommitState.CLEAN) : this.checkIfRepositoryIsClean();
+        repositoryState$
             .pipe(
                 tap((commitState) => {
                     currentCommitState = commitState;
@@ -662,7 +669,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
      * Files that are not relevant for the conduction of the exercise are removed from result.
      */
     loadFiles = (): Observable<{ [fileName: string]: FileType }> => {
-        return this.repositoryFileService.getRepositoryContent().pipe(
+        return this.repositoryFileService.getRepositoryContent(undefined, this.commitId()).pipe(
             rxMap((files) =>
                 fromPairs(
                     toPairs(files)
@@ -676,7 +683,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
     };
 
     loadFilesWithInformationAboutChange(): Observable<{ [fileName: string]: boolean }> {
-        return this.repositoryFileService.getFilesWithInformationAboutChange().pipe(
+        return this.repositoryFileService.getFilesWithInformationAboutChange(undefined, this.commitId()).pipe(
             rxMap((files) =>
                 fromPairs(toPairs(files).filter(([filename]) => this.allowHiddenFiles() || CodeEditorFileBrowserComponent.shouldDisplayFile(filename, FileType.FILE))),
             ),

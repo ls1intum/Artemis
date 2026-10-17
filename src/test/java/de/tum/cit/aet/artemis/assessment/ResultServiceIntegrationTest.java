@@ -443,7 +443,11 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 // The build and test date has not passed, due date has not passed, normal student submission => rated result.
                 Arguments.of(true, dateInFuture, SubmissionType.MANUAL, dateInFuture, now),
                 // The build and test date has not passed, due date has passed, normal student submission => unrated result.
-                Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast, now));
+                Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast, now),
+                // The submission has no submission date (empty participation), the due date has passed => rated result, a missing submission cannot be late.
+                Arguments.of(true, null, SubmissionType.MANUAL, dateInPast, null),
+                // The submission has no submission date (empty participation) and no due date is set => rated result.
+                Arguments.of(true, null, SubmissionType.MANUAL, null, null));
     }
 
     @Test
@@ -773,6 +777,53 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         var result = new ExternalSubmissionResultDTO(null, false, null);
         request.postWithResponseBody("/api/assessment/exercises/" + this.examModelingExercise.getId() + "/external-submission-results?studentLogin=student1", result,
                 ResultDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createResultForExternalSubmissionExam_endedExamWithStudentExam() throws Exception {
+        endExamOfExamModelingExercise();
+        var exam = examRepository.findByIdElseThrow(examModelingExercise.getExerciseGroup().getExam().getId());
+        var studentExam = examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
+        examUtilService.addExerciseToStudentExam(studentExam, examModelingExercise);
+
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(examModelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.CREATED);
+
+        assertThat(studentParticipationRepository.findByExerciseId(examModelingExercise.getId())).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createResultForExternalSubmissionExam_studentWithoutStudentExam() throws Exception {
+        endExamOfExamModelingExercise();
+
+        // the student is part of the course but has no student exam, so there is no working period to attach the result to
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(examModelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(studentParticipationRepository.findByExerciseId(examModelingExercise.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createResultForExternalSubmissionExam_exerciseNotInStudentExam() throws Exception {
+        endExamOfExamModelingExercise();
+        var exam = examRepository.findByIdElseThrow(examModelingExercise.getExerciseGroup().getExam().getId());
+        // the student exam exists, but it was assigned other exercises, so a result for this one would be left out of the exam result
+        examUtilService.addStudentExamWithUser(exam, TEST_PREFIX + "student1");
+
+        var result = new ExternalSubmissionResultDTO(null, false, null);
+        request.postWithResponseBody(externalResultPath(examModelingExercise.getId(), TEST_PREFIX + "student1"), result, ResultDTO.class, HttpStatus.BAD_REQUEST);
+
+        assertThat(studentParticipationRepository.findByExerciseId(examModelingExercise.getId())).isEmpty();
+    }
+
+    private void endExamOfExamModelingExercise() {
+        var exam = examRepository.findByIdElseThrow(examModelingExercise.getExerciseGroup().getExam().getId());
+        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        exam.setEndDate(ZonedDateTime.now().minusHours(1));
+        examRepository.save(exam);
     }
 
     private String externalResultPath(long exerciseId, String studentLogin) {

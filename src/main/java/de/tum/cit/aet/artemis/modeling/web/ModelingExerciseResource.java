@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -426,9 +425,9 @@ public class ModelingExerciseResource {
         exerciseService.checkExerciseIfStructuredGradingInstructionFeedbackUsed(gradingCriteria, modelingExercise);
 
         if (modelingExercise.isCourseExercise()) {
-            Channel channel = channelRepository.findChannelByExerciseId(modelingExercise.getId());
-            if (channel != null) {
-                modelingExercise.setChannelName(channel.getName());
+            String channelName = channelRepository.findChannelNameByExerciseId(modelingExercise.getId());
+            if (channelName != null) {
+                modelingExercise.setChannelName(channelName);
             }
         }
 

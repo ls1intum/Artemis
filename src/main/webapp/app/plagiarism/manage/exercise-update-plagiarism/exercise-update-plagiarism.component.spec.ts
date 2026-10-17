@@ -154,6 +154,31 @@ describe('Exercise Update Plagiarism Component', () => {
         expect(comp.isFormValid()).toBe(false);
     });
 
+    it('should name the invalid controls, also when another one takes the place of the first', () => {
+        comp.ngOnInit();
+        expect(comp.invalidControlNames()).toEqual([]);
+
+        comp.form.patchValue({ continuousPlagiarismControlEnabled: true, similarityThreshold: 101 });
+        expect(comp.invalidControlNames()).toEqual(['similarityThreshold']);
+
+        // The form stays invalid throughout, so only the names tell this step apart from the last one.
+        comp.form.patchValue({ similarityThreshold: 50, minimumScore: -1 });
+        expect(comp.invalidControlNames()).toEqual(['minimumScore']);
+
+        comp.form.patchValue({ minimumScore: 0 });
+        expect(comp.invalidControlNames()).toEqual([]);
+    });
+
+    it('should not name the controls it disables while continuous plagiarism control is off', () => {
+        comp.ngOnInit();
+        comp.form.patchValue({ continuousPlagiarismControlEnabled: true, similarityThreshold: 101 });
+        expect(comp.invalidControlNames()).toEqual(['similarityThreshold']);
+
+        comp.form.patchValue({ continuousPlagiarismControlEnabled: false });
+
+        expect(comp.invalidControlNames()).toEqual([]);
+    });
+
     it('should mark form invalid for out-of-range minimumScore', () => {
         comp.ngOnInit();
 

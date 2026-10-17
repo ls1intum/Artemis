@@ -3,7 +3,7 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TumAetUiButtonDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonDirective, TumAetUiDatePickerComponent, TumAetUiTooltipDirective } from '@tumaet/ui-angular';
 import { QuizReEvaluateWarningComponent } from './warning/quiz-re-evaluate-warning.component';
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
@@ -22,7 +22,6 @@ import { ReEvaluateDragAndDropQuestionComponent } from 'app/quiz/manage/re-evalu
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { ReEvaluateShortAnswerQuestionComponent } from './short-answer-question/re-evaluate-short-answer-question.component';
 import { JsonPipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -42,7 +41,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
         NgbTooltip,
         TumAetUiButtonDirective,
         TumAetUiTooltipDirective,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
         IncludedInOverallScorePickerComponent,
         ReEvaluateDragAndDropQuestionComponent,
         ReEvaluateShortAnswerQuestionComponent,

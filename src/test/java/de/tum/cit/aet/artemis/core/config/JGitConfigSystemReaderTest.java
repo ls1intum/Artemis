@@ -46,6 +46,18 @@ class JGitConfigSystemReaderTest {
     }
 
     @Test
+    void runtimeFileSystemSettingsCanBeSavedWithoutAMachineConfigFile() throws Exception {
+        SystemReader reader = repositoryOnlyReader();
+        for (FileBasedConfig config : new FileBasedConfig[] { reader.openUserConfig(null, FS.DETECTED), reader.openSystemConfig(null, FS.DETECTED),
+                reader.openJGitConfig(null, FS.DETECTED) }) {
+            config.setLong("filesystem", "test", "timestampResolution", 42);
+            config.save();
+            assertThat(config.getLong("filesystem", "test", "timestampResolution", 0)).isEqualTo(42);
+            assertThat(config.getFile()).isNull();
+        }
+    }
+
+    @Test
     @DisplayName("A user config that does exist is ignored, so nodes cannot drift apart")
     void aPresentUserConfigIsIgnored(@TempDir Path home) throws Exception {
         FileUtils.writeStringToFile(home.resolve(".gitconfig").toFile(), "[core]\n\tautocrlf = true\n", StandardCharsets.UTF_8);

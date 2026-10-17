@@ -345,3 +345,39 @@ describe('QuizStatisticsFooterComponent', () => {
         });
     });
 });
+
+describe('QuizStatisticsFooterComponent layout', () => {
+    let fixture: ComponentFixture<QuizStatisticsFooterComponent>;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            providers: [
+                { provide: Router, useClass: MockRouter },
+                { provide: ActivatedRoute, useValue: { params: of({}) } },
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(QuizStatisticsFooterComponent);
+        fixture.detectChanges();
+    });
+
+    afterEach(() => {
+        fixture.destroy();
+    });
+
+    it('should reserve space in the page flow for the fixed footer so that it does not cover the content above it', () => {
+        const element: HTMLElement = fixture.nativeElement;
+        const footer = element.querySelector('.quiz-statistic-footer');
+        const spacer = element.querySelector('[data-testid="quiz-statistic-footer-spacer"]');
+
+        expect(footer).not.toBeNull();
+        expect(spacer).not.toBeNull();
+        // The spacer takes up the footer's height in the normal flow and is not announced to assistive technology.
+        expect(spacer!.getAttribute('aria-hidden')).toBe('true');
+        expect(footer!.nextElementSibling).toBe(spacer);
+    });
+});

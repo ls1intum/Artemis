@@ -1,7 +1,7 @@
 import { Component, computed, effect, input, output, signal } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { startWith } from 'rxjs';
-import { TumAetUiCheckboxComponent } from '@tumaet/ui-angular';
+import { TumAetUiCheckboxComponent, TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -9,7 +9,7 @@ import { SelectModule } from 'primeng/select';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { DatePickerControlDirective } from 'app/shared-ui/date-picker-control/date-picker-control.directive';
 import { SHORT_NAME_PATTERN } from 'app/foundation/constants/input.constants';
 import { generateCourseShortName } from 'app/foundation/util/semester-utils';
 
@@ -20,7 +20,8 @@ import { generateCourseShortName } from 'app/foundation/util/semester-utils';
         ReactiveFormsModule,
         TranslateDirective,
         ArtemisTranslatePipe,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
+        DatePickerControlDirective,
         ButtonModule,
         InputTextModule,
         TextareaModule,
@@ -82,6 +83,17 @@ export class CourseRequestFormComponent {
         const gradeRelevant = this.form().get('gradeRelevant');
         gradeRelevant?.setValue(checked);
         gradeRelevant?.markAsDirty();
+    }
+
+    /**
+     * Whether a required date is missing once the user touched the field or tried to submit. Text the picker cannot parse also
+     * leaves the control without a date, but the picker explains that case itself, so it does not count as missing here.
+     *
+     * @param controlName the name of the date control in the form
+     */
+    protected isDateMissing(controlName: 'startDate' | 'endDate'): boolean {
+        const control = this.form().get(controlName);
+        return !!control?.touched && !!control.hasError('required') && !control.hasError('invalidDate');
     }
 
     generateShortName(): void {

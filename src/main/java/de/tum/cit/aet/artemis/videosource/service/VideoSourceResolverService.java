@@ -70,10 +70,13 @@ public class VideoSourceResolverService {
         }
         if (tumLiveApi.isPresent()) {
             try {
-                Optional<String> resolved = tumLiveApi.get().getTumLivePlaylistLink(videoSource);
-                if (resolved.isPresent()) {
+                TumLivePlaylistLookup lookup = tumLiveApi.get().lookUpPlaylist(videoSource);
+                if (lookup.outcome() == TumLivePlaylistLookup.Outcome.RESOLVED) {
                     log.info("Resolved TUM Live URL to HLS playlist for video source resolution");
-                    return new ResolvedVideo(resolved.get(), VideoSourceType.TUM_LIVE, null);
+                    return new ResolvedVideo(lookup.playlistUrl(), VideoSourceType.TUM_LIVE, null);
+                }
+                if (lookup.outcome() != TumLivePlaylistLookup.Outcome.NOT_APPLICABLE) {
+                    log.info("TUM Live video source cannot be resolved right now: {}", lookup.outcome());
                 }
             }
             catch (RuntimeException e) {

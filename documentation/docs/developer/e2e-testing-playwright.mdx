@@ -435,21 +435,19 @@ template literal, so change detection does not hand the component a fresh object
 
 ```typescript
 protected readonly passThrough = {
-    root: { 'data-testid': 'date-picker' },
-    panel: { 'data-testid': 'date-picker-panel' },
-    day: { 'data-testid': 'date-picker-day' },
+    listContainer: { 'data-testid': 'taxonomy-select-overlay' },
+    option: { 'data-testid': 'taxonomy-select-option' },
 };
 ```
 
 ```html
-<p-datepicker [pt]="passThrough" ... />
+<p-select [pt]="passThrough" ... />
 ```
 
 Two details are worth knowing. A section whose name starts with `pc` forwards to a whole PrimeNG component, so the
 attribute belongs on that component's root: `{ pcToggleButton: { root: { 'data-testid': 'example-solution-toggle' } } }`.
 And where one section renders more than one element, PrimeNG's own structural attributes tell them apart, without
-reaching for a class: the date picker's calendar and clear affordances are both `inputIcon`, and are found as
-`[data-p-icon="calendar"]` and `[data-p-icon="times"]`.
+reaching for a class: icons carry a `data-p-icon` attribute that names them.
 
 For a helper that means "whichever dialog is currently open", ask for the role instead of naming a framework:
 `page.getByRole('dialog')` matches the PrimeNG and the ng-bootstrap dialog alike.
@@ -463,16 +461,15 @@ Monaco classes, and say in a comment why the class is there.
 
 The rule above is about _finding_ elements. Asserting that an element carries a state class is a different thing, and
 it is fine when the library exposes that state in no other way. Find the element by its own hook first, then assert
-the class on it:
-
-```typescript
-// As of PrimeNG 21.1.9 the day cell carries `data-date` but marks the selection only with a class: no attribute
-// and no ARIA state says which day is selected. Re-check this when PrimeNG is upgraded.
-await expect(panel.locator(`[data-testid="date-picker-day"][data-date="${key}"]`)).toHaveClass(/p-datepicker-day-selected/);
-```
+the class on it, and re-check the assertion when the library is upgraded, since the class is an implementation detail.
 
 For markup Artemis owns, do not settle for that: give the element an attribute that says what the test wants to know,
-such as `data-selected` or `data-invalid`, and assert on it.
+such as `data-selected` or `data-invalid`, and assert on it. The TUM AET UI date picker does this: its calendar marks the
+selected day with `aria-selected` and gives every day button its date, so a test asserts on those:
+
+```typescript
+await expect(dialog.locator('td[role="gridcell"][aria-selected="true"] button')).toHaveAttribute('data-date', '2026-12-20');
+```
 
 ### Consider actionability of elements
 

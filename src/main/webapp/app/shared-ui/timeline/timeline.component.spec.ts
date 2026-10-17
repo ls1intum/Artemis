@@ -2,8 +2,7 @@ import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
-import { DatePicker } from 'primeng/datepicker';
-import { vi } from 'vitest';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 
 import { TimelineComponent, TimelineItem, TimelineStatus } from './timeline.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -12,6 +11,20 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 describe('ExerciseTimeline', () => {
     let component: TimelineComponent;
     let fixture: ComponentFixture<TimelineComponent>;
+
+    const pickers = () => fixture.debugElement.queryAll(By.directive(TumAetUiDatePickerComponent));
+    const picker = (index: number) => pickers()[index].componentInstance as TumAetUiDatePickerComponent;
+    const inputOf = (index: number) => fixture.nativeElement.querySelector(`#datepicker-${index}`) as HTMLInputElement;
+    const typeInto = (index: number, text: string) => {
+        const input = inputOf(index);
+        input.value = text;
+        input.dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+    };
+    const blur = (index: number) => {
+        inputOf(index).dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -41,7 +54,6 @@ describe('ExerciseTimeline', () => {
         expect(internalTimelineItems[0]).toMatchObject({
             kind: 'optional',
             labelStringKey: 'release',
-            internalDate: releaseDate.toDate(),
             hasInvalidDateOrder: false,
             isInputRequiredButUndefined: false,
             tooltip: undefined,
@@ -49,7 +61,6 @@ describe('ExerciseTimeline', () => {
         expect(internalTimelineItems[1]).toMatchObject({
             kind: 'required',
             labelStringKey: 'due',
-            internalDate: dueDate.toDate(),
             hasInvalidDateOrder: true,
             isInputRequiredButUndefined: false,
             tooltip: 'artemisApp.exercise.timelineDateStrictOrderTooltip',
@@ -57,7 +68,6 @@ describe('ExerciseTimeline', () => {
         expect(internalTimelineItems[2]).toMatchObject({
             kind: 'required',
             labelStringKey: 'assessment',
-            internalDate: undefined,
             hasInvalidDateOrder: false,
             isInputRequiredButUndefined: true,
             tooltip: 'artemisApp.exercise.timelineDateRequiredTooltip',
@@ -110,221 +120,226 @@ describe('ExerciseTimeline', () => {
         expect(component.timelineStatus().valid).toBe(false);
     });
 
-    it('should update timeline item date', () => {
-        const initialDate = dayjs('2026-01-01T10:00:00Z');
-        const newDate = new Date('2026-01-02T10:00:00Z');
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate) };
-        const setSpy = vi.spyOn(item.date, 'set');
+    it('should render one date picker per item with stable ids and labels', () => {
+        fixture.componentRef.setInput('timelineItems', [
+            { kind: 'optional', labelStringKey: 'release', date: signal(undefined) },
+            { kind: 'required', labelStringKey: 'due', date: signal(undefined) },
+        ] satisfies TimelineItem[]);
+        fixture.detectChanges();
 
-        component.updateDate(item, initialDate.toDate());
-
-        expect(setSpy).not.toHaveBeenCalled();
-
-        component.updateDate(item, newDate);
-
-        expect(item.date()?.isSame(dayjs(newDate))).toBe(true);
-
-        component.updateDate(item, null);
-
-        expect(item.date()).toBeUndefined();
+        expect(pickers().map((debugElement) => (debugElement.componentInstance as TumAetUiDatePickerComponent).inputId())).toEqual(['datepicker-0', 'datepicker-1']);
+        const labels = Array.from(fixture.nativeElement.querySelectorAll('label.label')) as HTMLLabelElement[];
+        expect(labels.map((label) => label.htmlFor)).toEqual(['datepicker-0', 'datepicker-1']);
+        expect(inputOf(0)).not.toBeNull();
+        expect(inputOf(1).getAttribute('aria-required')).toBe('true');
+        expect(inputOf(0).getAttribute('aria-required')).toBeNull();
     });
 
-    it('should not update timeline item date for partial manual input', () => {
-        const initialDate = dayjs('2026-01-01T11:11:00');
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate) };
-        const input = { value: '01.01.2026 11:1' } as HTMLInputElement;
+    it('should show the bound date and disable the picker of a disabled item', () => {
+        const date = dayjs('2026-01-01T11:11:00');
+        fixture.componentRef.setInput('timelineItems', [
+            { kind: 'optional', labelStringKey: 'release', date: signal(date), disabled: true },
+            { kind: 'optional', labelStringKey: 'due', date: signal(undefined) },
+        ] satisfies TimelineItem[]);
+        fixture.detectChanges();
+
+        expect(picker(0).value()?.isSame(date)).toBe(true);
+        expect(inputOf(0).value).toBe('01.01.2026 11:11');
+        expect(picker(0).disabled()).toBe(true);
+        expect(inputOf(0).disabled).toBe(true);
+        expect(picker(1).disabled()).toBe(false);
+    });
+
+    it('should write a picked date to the item', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
         fixture.componentRef.setInput('timelineItems', [item]);
+        fixture.detectChanges();
 
-        component.handleManualInput(item, { target: input } as unknown as Event);
+        const newDate = dayjs('2026-01-02T12:30:00');
+        picker(0).value.set(newDate);
+        fixture.detectChanges();
 
-        expect(item.date()).toBe(initialDate);
-        expect(component.internalTimelineItems()[0].internalDate).toEqual(initialDate.toDate());
+        expect(item.date()?.isSame(newDate)).toBe(true);
     });
 
-    it('should update timeline item date for complete valid manual input', () => {
+    it('should update the item date for complete valid manual input', () => {
         const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T11:11:00')) };
         fixture.componentRef.setInput('timelineItems', [item]);
+        fixture.detectChanges();
 
-        component.handleManualInput(item, { target: { value: '02.01.2026 12:30' } } as unknown as Event);
+        typeInto(0, '02.01.2026 12:30');
 
         expect(item.date()?.isSame(dayjs('2026-01-02T12:30:00'))).toBe(true);
-        expect(component.internalTimelineItems()[0].internalDate).toEqual(item.date()?.toDate());
+        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
     });
 
-    it('should clear timeline item date for empty manual input', () => {
+    it('should clear the item date for emptied manual input', () => {
         const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T11:11:00')) };
         fixture.componentRef.setInput('timelineItems', [item]);
+        fixture.detectChanges();
 
-        component.handleManualInput(item, { target: { value: '' } } as unknown as Event);
+        typeInto(0, '');
 
         expect(item.date()).toBeUndefined();
-        expect(component.internalTimelineItems()[0].internalDate).toBeUndefined();
+        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
     });
 
-    it('should keep incomplete manual input on blur and flag the field invalid (no silent revert)', () => {
+    it('should keep the bound date and flag the field invalid for text that is not a date', () => {
         const initialDate = dayjs('2026-06-06T16:23:00');
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate) };
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: signal(initialDate) };
         fixture.componentRef.setInput('timelineItems', [item]);
-        const input = { value: '0.06.2026 16:23' } as HTMLInputElement;
+        fixture.detectChanges();
 
-        component.handleBlur(item, { target: input } as unknown as Event);
+        typeInto(0, '00.06.2026 16:23');
 
-        // The entered text is kept (not reverted), the bound date is left untouched, and the field is
-        // flagged invalid so the user is notified and saving is blocked (PR #13009 review).
-        expect(input.value).toBe('0.06.2026 16:23');
+        // The entered text is kept (no silent revert), the bound date is untouched and saving is blocked.
+        expect(inputOf(0).value).toBe('00.06.2026 16:23');
         expect(item.date()).toBe(initialDate);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
-        expect(component.timelineStatus().valid).toBe(false);
+        expect(component.internalTimelineItems()[0]).toMatchObject({ isInvalidInput: true, isInvalid: true, tooltip: 'artemisApp.exercise.timelineDateInvalidTooltip' });
+        expect(component.timelineStatus()).toEqual({
+            valid: false,
+            empty: false,
+            invalidItems: [
+                {
+                    labelStringKey: 'artemisApp.exercise.releaseDate',
+                    reasonKey: 'artemisApp.exercise.form.timeline.invalidInput',
+                    dateName: 'artemisApp.exercise.releaseDate',
+                },
+            ],
+        });
+        expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon')).not.toBeNull();
+        expect(inputOf(0).getAttribute('aria-invalid')).toBe('true');
     });
 
-    it('should keep complete-but-invalid manual input on blur and flag the field invalid', () => {
-        const initialDate = dayjs('2026-06-06T16:23:00');
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(initialDate) };
-        fixture.componentRef.setInput('timelineItems', [item]);
-        const input = { value: '00.06.2026 16:23' } as HTMLInputElement;
-
-        component.handleBlur(item, { target: input } as unknown as Event);
-
-        expect(input.value).toBe('00.06.2026 16:23');
-        expect(item.date()).toBe(initialDate);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
-    });
-
-    it('should flag invalid manual input on blur even without a current date value', () => {
+    it('should flag invalid text even without a bound date', () => {
         const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
         fixture.componentRef.setInput('timelineItems', [item]);
-        const input = { value: '0.06.2026 16:23' } as HTMLInputElement;
+        fixture.detectChanges();
 
-        component.handleBlur(item, { target: input } as unknown as Event);
+        typeInto(0, '0.06.2026 16:23');
 
-        expect(input.value).toBe('0.06.2026 16:23');
         expect(item.date()).toBeUndefined();
         expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
     });
 
-    it('should clear the invalid flag and set the date when a valid date is entered after an invalid one', () => {
+    it('should clear the invalid flag when a valid date is typed after an invalid text', () => {
         const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
         fixture.componentRef.setInput('timelineItems', [item]);
-
-        component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
+        fixture.detectChanges();
+        typeInto(0, 'error');
         expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
 
-        component.handleManualInput(item, { target: { value: '02.01.2026 12:30' } } as unknown as Event);
+        typeInto(0, '02.01.2026 12:30');
 
         expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
         expect(item.date()?.isSame(dayjs('2026-01-02T12:30:00'))).toBe(true);
-    });
-
-    it('should clear the invalid flag when the field is emptied after an invalid entry', () => {
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T11:11:00')) };
-        fixture.componentRef.setInput('timelineItems', [item]);
-
-        component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
-
-        component.handleManualInput(item, { target: { value: '' } } as unknown as Event);
-
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
-        expect(item.date()).toBeUndefined();
-    });
-
-    it('should clear the invalid flag when a date is picked after an invalid entry', () => {
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
-        fixture.componentRef.setInput('timelineItems', [item]);
-
-        component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
-
-        component.updateDate(item, new Date('2026-01-02T12:30:00'));
-
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
-        expect(component.timelineStatus().valid).toBe(true);
-        expect(item.date()?.isSame(dayjs('2026-01-02T12:30:00'))).toBe(true);
-    });
-
-    it('should clear the invalid flag when an empty field is cleared with the clear icon after an invalid entry', () => {
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
-        fixture.componentRef.setInput('timelineItems', [item]);
-
-        component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
-
-        component.updateDate(item, null);
-
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
         expect(component.timelineStatus().valid).toBe(true);
     });
 
-    it('should clear the invalid flag when the picked date equals the date that is already bound', () => {
-        const boundDate = dayjs('2026-01-02T12:30:00');
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(boundDate) };
+    it('should clear the invalid flag when the field is emptied after an invalid text', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T11:11:00')) };
         fixture.componentRef.setInput('timelineItems', [item]);
-        // the date picker keeps the bound date while the user types something that cannot be parsed
-        component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
+        fixture.detectChanges();
+        typeInto(0, 'error');
         expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
-        expect(component.timelineStatus().valid).toBe(false);
 
-        component.updateDate(item, new Date('2026-01-02T12:30:00'));
+        typeInto(0, '');
 
         expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
-        expect(component.timelineStatus()).toEqual({ valid: true, empty: false, invalidItems: [] });
-        // the unchanged date is not replaced
-        expect(item.date()).toBe(boundDate);
+        expect(item.date()).toBeUndefined();
+    });
+
+    it('should clear the invalid flag when a date is picked after an invalid text', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
+        const emittedStatuses: TimelineStatus[] = [];
+        component.timelineStatusChange.subscribe((status) => emittedStatuses.push(status));
+        fixture.componentRef.setInput('timelineItems', [item]);
+        fixture.detectChanges();
+        typeInto(0, 'error');
+        expect(emittedStatuses.at(-1)?.valid).toBe(false);
+
+        picker(0).value.set(dayjs('2026-01-02T12:30:00'));
+        fixture.detectChanges();
+
+        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
+        expect(emittedStatuses.at(-1)).toEqual({ valid: true, empty: false, invalidItems: [] });
+    });
+
+    it('should clear the invalid flag when the clear button is used after an invalid text', () => {
+        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T11:11:00')) };
+        fixture.componentRef.setInput('timelineItems', [item]);
+        fixture.detectChanges();
+        typeInto(0, 'error');
+        expect(component.timelineStatus().valid).toBe(false);
+
+        const clearButton = fixture.nativeElement.querySelector('.tumaet-ui-date-picker button[type="button"]') as HTMLButtonElement;
+        clearButton.click();
+        fixture.detectChanges();
+
+        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
+        expect(component.timelineStatus().valid).toBe(true);
+        expect(item.date()).toBeUndefined();
     });
 
     it('should clear only the invalid flag of the item whose date was picked', () => {
         const release: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
         const due: TimelineItem = { kind: 'optional', labelStringKey: 'due', date: signal(undefined) };
         fixture.componentRef.setInput('timelineItems', [release, due]);
-        component.handleBlur(release, { target: { value: 'error' } } as unknown as Event);
-        component.handleBlur(due, { target: { value: 'oops' } } as unknown as Event);
+        fixture.detectChanges();
+        typeInto(0, 'error');
+        typeInto(1, 'oops');
         expect(component.internalTimelineItems().map((item) => item.isInvalidInput)).toEqual([true, true]);
 
-        component.updateDate(release, new Date('2026-01-02T12:30:00'));
+        picker(0).value.set(dayjs('2026-01-02T12:30:00'));
+        fixture.detectChanges();
 
         expect(component.internalTimelineItems().map((item) => item.isInvalidInput)).toEqual([false, true]);
-        expect(component.timelineStatus().valid).toBe(false);
         expect(component.timelineStatus().invalidItems.map((invalidItem) => invalidItem.labelStringKey)).toEqual(['due']);
-        expect(release.date()?.isSame(dayjs('2026-01-02T12:30:00'))).toBe(true);
         expect(due.date()).toBeUndefined();
     });
 
-    it('should clear the invalid flag and the bound date when the picker reports a value that is not a date', () => {
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-01-01T11:11:00')) };
+    it('should only paint a missing required date as an error after the field was left', () => {
+        const item: TimelineItem = { kind: 'required', labelStringKey: 'due', date: signal(undefined) };
         fixture.componentRef.setInput('timelineItems', [item]);
-        component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(true);
-
-        component.updateDate(item, '01.02.2026');
-
-        expect(component.internalTimelineItems()[0].isInvalidInput).toBe(false);
-        expect(item.date()).toBeUndefined();
-    });
-
-    it('should emit a valid timeline status after a date was picked following an invalid entry', () => {
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(undefined) };
-        const emittedStatuses: TimelineStatus[] = [];
-        component.timelineStatusChange.subscribe((status) => emittedStatuses.push(status));
-        fixture.componentRef.setInput('timelineItems', [item]);
-        component.handleBlur(item, { target: { value: 'error' } } as unknown as Event);
-        fixture.detectChanges();
-        expect(emittedStatuses.at(-1)?.valid).toBe(false);
-
-        component.updateDate(item, new Date('2026-01-02T12:30:00'));
         fixture.detectChanges();
 
-        expect(emittedStatuses.at(-1)).toEqual({ valid: true, empty: false, invalidItems: [] });
+        // Always part of the status, so that saving stays blocked ...
+        expect(component.timelineStatus().valid).toBe(false);
+        // ... but not painted before the user had a chance to fill it in.
+        expect(component.internalTimelineItems()[0].isInvalid).toBe(false);
+        expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon')).toBeNull();
+        expect(picker(0).invalid()).toBe(false);
+
+        blur(0);
+
+        expect(component.internalTimelineItems()[0]).toMatchObject({ isInvalid: true, tooltip: 'artemisApp.exercise.timelineDateRequiredTooltip' });
+        expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon')).not.toBeNull();
+        expect(picker(0).invalid()).toBe(true);
     });
 
-    it('should keep valid manual input unchanged on blur', () => {
-        const item: TimelineItem = { kind: 'optional', labelStringKey: 'release', date: signal(dayjs('2026-06-06T16:23:00')) };
-        const input = { value: '07.06.2026 17:24' } as HTMLInputElement;
+    it('should not paint an empty optional date as an error after the field was left', () => {
+        fixture.componentRef.setInput('timelineItems', [{ kind: 'optional', labelStringKey: 'release', date: signal(undefined) }] satisfies TimelineItem[]);
+        fixture.detectChanges();
 
-        component.handleManualInput(item, { target: input } as unknown as Event);
-        component.handleBlur(item, { target: input } as unknown as Event);
+        blur(0);
 
-        expect(input.value).toBe('07.06.2026 17:24');
-        expect(item.date()?.isSame(dayjs('2026-06-07T17:24:00'))).toBe(true);
+        expect(component.internalTimelineItems()[0].isInvalid).toBe(false);
+        expect(component.timelineStatus().valid).toBe(true);
+    });
+
+    it('should paint a date that is not after an earlier date as an error with an accessible tooltip', () => {
+        fixture.componentRef.setInput('timelineItems', [
+            { kind: 'required', labelStringKey: 'release', date: signal(dayjs('2026-01-10T10:00:00Z')) },
+            { kind: 'required', labelStringKey: 'due', date: signal(dayjs('2026-01-05T10:00:00Z')) },
+        ] satisfies TimelineItem[]);
+        fixture.detectChanges();
+
+        expect(picker(0).invalid()).toBe(false);
+        expect(picker(1).invalid()).toBe(true);
+        const infoIcon = fixture.nativeElement.querySelector('#datepicker-1-info') as HTMLElement;
+        expect(infoIcon.getAttribute('role')).toBe('img');
+        expect(infoIcon.getAttribute('aria-label')).toBe('artemisApp.exercise.timelineDateStrictOrderTooltip');
+        expect(inputOf(1).getAttribute('aria-describedby')).toContain('datepicker-1-info');
     });
 
     it('should display a reactive warning without invalidating the timeline', () => {
@@ -344,9 +359,11 @@ describe('ExerciseTimeline', () => {
         });
         expect(component.timelineStatus()).toEqual({ valid: true, empty: false, invalidItems: [] });
 
-        const datePicker = fixture.debugElement.query(By.directive(DatePicker)).componentInstance as DatePicker;
-        expect(datePicker.inputStyle?.['border-color']).toBe('var(--warning)');
-        expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon.warning')).not.toBeNull();
+        expect(picker(0).invalid()).toBe(false);
+        expect(fixture.nativeElement.querySelector('.timeline-datepicker.warning')).not.toBeNull();
+        const infoIcon = fixture.nativeElement.querySelector('.timeline-datepicker-info-icon.warning') as HTMLElement;
+        expect(infoIcon).not.toBeNull();
+        expect(infoIcon.getAttribute('aria-label')).toBe('timeline.warning');
 
         warningStringKey.set(undefined);
         fixture.detectChanges();
@@ -355,7 +372,7 @@ describe('ExerciseTimeline', () => {
             hasWarning: false,
             tooltip: undefined,
         });
-        expect(datePicker.inputStyle?.['border-color']).toBeUndefined();
+        expect(fixture.nativeElement.querySelector('.timeline-datepicker.warning')).toBeNull();
         expect(fixture.nativeElement.querySelector('.timeline-datepicker-info-icon')).toBeNull();
     });
 
@@ -381,8 +398,8 @@ describe('ExerciseTimeline', () => {
 
         const secondRow = fixture.nativeElement.querySelectorAll('.timeline-item-row')[1] as HTMLElement;
         const infoIcon = secondRow.querySelector('.timeline-datepicker-info-icon') as HTMLElement;
-        const secondDatePicker = fixture.debugElement.queryAll(By.directive(DatePicker))[1].componentInstance as DatePicker;
-        expect(secondDatePicker.inputStyle?.['border-color']).toBeUndefined();
+        expect(secondRow.querySelector('.timeline-datepicker.warning')).toBeNull();
+        expect(picker(1).invalid()).toBe(true);
         expect(infoIcon.classList.contains('warning')).toBe(false);
     });
 
@@ -465,8 +482,9 @@ describe('ExerciseTimeline', () => {
     it('should report a malformed manual date entry as an invalid item', () => {
         const item: TimelineItem = { kind: 'optional', labelStringKey: 'artemisApp.exercise.releaseDate', date: signal(dayjs('2026-06-06T16:23:00')) };
         fixture.componentRef.setInput('timelineItems', [item]);
+        fixture.detectChanges();
 
-        component.handleBlur(item, { target: { value: '00.06.2026 16:23' } } as unknown as Event);
+        typeInto(0, '00.06.2026 16:23');
 
         expect(component.timelineStatus().invalidItems).toEqual([
             {

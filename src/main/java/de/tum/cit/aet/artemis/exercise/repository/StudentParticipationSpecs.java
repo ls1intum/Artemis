@@ -6,8 +6,10 @@ import java.util.Arrays;
 import java.util.List;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Predicate;
@@ -104,6 +106,22 @@ public class StudentParticipationSpecs {
     }
 
     /**
+     * Matches the participations the management view lists. An individual exercise lists the participations of students. A team exercise lists the participations of teams and
+     * the practice participations of single students, which are the only student participations a team exercise has to show.
+     *
+     * @param teamMode whether the exercise uses teams
+     * @return specification matching the participations the management view lists for the given mode
+     */
+    @NonNull
+    public static Specification<StudentParticipation> forManagementMode(boolean teamMode) {
+        if (!teamMode) {
+            return hasStudent();
+        }
+        return (root, query, cb) -> cb.or(cb.isNotNull(root.get(StudentParticipation_.TEAM)),
+                cb.and(cb.isNotNull(root.get(StudentParticipation_.STUDENT)), cb.equal(root.get(Participation_.TEST_RUN), true)));
+    }
+
+    /**
      * Searches participations by student login/name or team name/shortName.
      *
      * @param searchTerm the search term (may be null or blank to skip)
@@ -112,40 +130,79 @@ public class StudentParticipationSpecs {
      */
     @NonNull
     public static Specification<StudentParticipation> searchByName(@Nullable String searchTerm, boolean teamMode) {
-        if (searchTerm == null || searchTerm.isBlank()) {
-            return noOp();
-        }
-        List<String> tokens = Arrays.stream(searchTerm.split(",")).map(String::trim).filter(t -> !t.isBlank()).toList();
+        List<String> tokens = searchTokens(searchTerm);
         if (tokens.isEmpty()) {
             return noOp();
         }
         if (teamMode) {
             return (root, query, cb) -> {
-                List<Predicate> tokenPredicates = tokens.stream().map(token -> {
-                    String pattern = "%" + StringUtil.escapeForLikeLowerCase(token) + "%";
-                    Predicate teamNameMatch = cb.or(cb.like(cb.lower(root.get(StudentParticipation_.TEAM).get(Team_.NAME)), pattern, '\\'),
-                            cb.like(cb.lower(root.get(StudentParticipation_.TEAM).get(Team_.SHORT_NAME)), pattern, '\\'));
-
-                    Subquery<Long> studentSub = query.subquery(Long.class);
-                    Root<Team> teamRoot = studentSub.from(Team.class);
-                    Join<Team, User> studentJoin = teamRoot.join(Team_.STUDENTS);
-                    studentSub.select(cb.literal(1L));
-                    studentSub.where(cb.equal(teamRoot.get(DomainObject_.ID), root.get(StudentParticipation_.TEAM).get(DomainObject_.ID)),
-                            cb.or(cb.like(cb.lower(studentJoin.get(User_.LOGIN)), pattern, '\\'), cb.like(cb.lower(fullName(cb, studentJoin)), pattern, '\\')));
-
-                    return cb.or(teamNameMatch, cb.exists(studentSub));
-                }).toList();
+                List<Predicate> tokenPredicates = tokens.stream().map(token -> teamMatches(root.get(StudentParticipation_.TEAM), query, cb, likePattern(token))).toList();
                 return cb.or(tokenPredicates.toArray(new Predicate[0]));
             };
         }
         return (root, query, cb) -> {
+            List<Predicate> tokenPredicates = tokens.stream().map(token -> studentMatches(cb, root.get(StudentParticipation_.STUDENT), likePattern(token))).toList();
+            return cb.or(tokenPredicates.toArray(new Predicate[0]));
+        };
+    }
+
+    /**
+     * Searches the participations of the management view by student login/name or team name/shortName. A team exercise lists the participations of teams and the practice
+     * participations of single students, which have no team, so its search matches the team of a team participation and the student of a practice participation. The team and
+     * the student are left-joined, so a participation of one kind is never dropped for the missing association of the other kind.
+     *
+     * @param searchTerm the search term (may be null or blank to skip)
+     * @param teamMode   whether the exercise uses teams
+     * @return specification, or a no-op if the search term is blank
+     */
+    @NonNull
+    public static Specification<StudentParticipation> searchForManagement(@Nullable String searchTerm, boolean teamMode) {
+        List<String> tokens = searchTokens(searchTerm);
+        if (!teamMode || tokens.isEmpty()) {
+            return searchByName(searchTerm, teamMode);
+        }
+        return (root, query, cb) -> {
+            Join<StudentParticipation, Team> team = root.join(StudentParticipation_.TEAM, JoinType.LEFT);
+            Join<StudentParticipation, User> student = root.join(StudentParticipation_.STUDENT, JoinType.LEFT);
             List<Predicate> tokenPredicates = tokens.stream().map(token -> {
-                String pattern = "%" + StringUtil.escapeForLikeLowerCase(token) + "%";
-                return cb.or(cb.like(cb.lower(root.get(StudentParticipation_.STUDENT).get(User_.LOGIN)), pattern, '\\'),
-                        cb.like(cb.lower(fullName(cb, root.get(StudentParticipation_.STUDENT))), pattern, '\\'));
+                String pattern = likePattern(token);
+                return cb.or(teamMatches(team, query, cb, pattern), studentMatches(cb, student, pattern));
             }).toList();
             return cb.or(tokenPredicates.toArray(new Predicate[0]));
         };
+    }
+
+    private static List<String> searchTokens(@Nullable String searchTerm) {
+        if (searchTerm == null || searchTerm.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(searchTerm.split(",")).map(String::trim).filter(t -> !t.isBlank()).toList();
+    }
+
+    private static String likePattern(String token) {
+        return "%" + StringUtil.escapeForLikeLowerCase(token) + "%";
+    }
+
+    /**
+     * Matches a student whose login or full name contains the pattern.
+     */
+    private static Predicate studentMatches(CriteriaBuilder cb, Path<User> student, String pattern) {
+        return cb.or(cb.like(cb.lower(student.get(User_.LOGIN)), pattern, '\\'), cb.like(cb.lower(fullName(cb, student)), pattern, '\\'));
+    }
+
+    /**
+     * Matches a team whose name or short name contains the pattern, or that has a member whose login or full name contains it.
+     */
+    private static Predicate teamMatches(Path<Team> team, CriteriaQuery<?> query, CriteriaBuilder cb, String pattern) {
+        Predicate teamNameMatch = cb.or(cb.like(cb.lower(team.get(Team_.NAME)), pattern, '\\'), cb.like(cb.lower(team.get(Team_.SHORT_NAME)), pattern, '\\'));
+
+        Subquery<Long> studentSub = query.subquery(Long.class);
+        Root<Team> teamRoot = studentSub.from(Team.class);
+        Join<Team, User> studentJoin = teamRoot.join(Team_.STUDENTS);
+        studentSub.select(cb.literal(1L));
+        studentSub.where(cb.equal(teamRoot.get(DomainObject_.ID), team.get(DomainObject_.ID)), studentMatches(cb, studentJoin, pattern));
+
+        return cb.or(teamNameMatch, cb.exists(studentSub));
     }
 
     /**
@@ -513,18 +570,28 @@ public class StudentParticipationSpecs {
                     orders.add(asc ? cb.asc(expr) : cb.desc(expr));
                 }
                 case "participantName" -> {
+                    Expression<String> expr;
                     if (teamMode) {
-                        Expression<?> expr = root.get(StudentParticipation_.TEAM).get(Team_.NAME);
-                        orders.add(asc ? cb.asc(expr) : cb.desc(expr));
+                        // A practice participation of a student has no team, so its name is the student's. The left joins keep the rows of the other kind.
+                        Join<StudentParticipation, Team> team = root.join(StudentParticipation_.TEAM, JoinType.LEFT);
+                        Join<StudentParticipation, User> student = root.join(StudentParticipation_.STUDENT, JoinType.LEFT);
+                        expr = cb.coalesce(team.get(Team_.NAME), fullName(cb, student));
                     }
                     else {
-                        Expression<String> fullName = cb.concat(cb.concat(cb.coalesce(root.get(StudentParticipation_.STUDENT).get(User_.FIRST_NAME), ""), " "),
-                                cb.coalesce(root.get(StudentParticipation_.STUDENT).get(User_.LAST_NAME), ""));
-                        orders.add(asc ? cb.asc(fullName) : cb.desc(fullName));
+                        expr = fullName(cb, root.get(StudentParticipation_.STUDENT));
                     }
+                    orders.add(asc ? cb.asc(expr) : cb.desc(expr));
                 }
                 case "participantIdentifier" -> {
-                    Expression<?> expr = teamMode ? root.get(StudentParticipation_.TEAM).get(Team_.SHORT_NAME) : root.get(StudentParticipation_.STUDENT).get(User_.LOGIN);
+                    Expression<String> expr;
+                    if (teamMode) {
+                        Join<StudentParticipation, Team> team = root.join(StudentParticipation_.TEAM, JoinType.LEFT);
+                        Join<StudentParticipation, User> student = root.join(StudentParticipation_.STUDENT, JoinType.LEFT);
+                        expr = cb.coalesce(team.get(Team_.SHORT_NAME), student.get(User_.LOGIN));
+                    }
+                    else {
+                        expr = root.get(StudentParticipation_.STUDENT).get(User_.LOGIN);
+                    }
                     orders.add(asc ? cb.asc(expr) : cb.desc(expr));
                 }
                 case "submissionCount" -> {

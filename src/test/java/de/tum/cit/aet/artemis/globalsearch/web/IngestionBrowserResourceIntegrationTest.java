@@ -142,7 +142,7 @@ class IngestionBrowserResourceIntegrationTest extends AbstractProgrammingIntegra
     void mapsEveryExpectedMetadataTypeIndependentlyOfIrisContentEligibility() {
         long courseId = course.getId();
         ExpectedSets expected = new ExpectedSets(Map.of(), Map.of(), Map.of(), Map.of(courseId, Set.of(10L)), Map.of(courseId, Set.of(11L)), Map.of(courseId, Set.of(12L)),
-                Map.of(), Map.of());
+                Map.of(), Map.of(), Set.of(courseId));
 
         assertThat(isExpected(courseId, indexedEntity(SearchableEntitySchema.TypeValues.EXAM, 10L), expected)).isTrue();
         assertThat(isExpected(courseId, indexedEntity(SearchableEntitySchema.TypeValues.FAQ, 11L), expected)).isTrue();

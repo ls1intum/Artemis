@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -52,7 +53,8 @@ class SearchableEntityMissingSweepTest {
 
     @BeforeEach
     void setUp() {
-        when(enqueueService.canEnqueue()).thenReturn(true);
+        // Room for one page per sweep by default; the tests of the work-driven loop give more.
+        when(enqueueService.remainingCapacity()).thenReturn(1000, 0);
         when(enqueueService.enqueueUpsert(anyString(), anyLong(), any())).thenReturn(true);
         when(reconcileStateRepository.findByPass(ReconcilePass.MISSING)).thenReturn(Optional.empty());
         when(syncStateRepository.findSyncedEntityIds(anyString(), any())).thenReturn(Set.of());
@@ -114,7 +116,7 @@ class SearchableEntityMissingSweepTest {
 
     @Test
     void testNothingIsQueuedWhileTheOutboxIsAtItsDepthLimit() {
-        when(enqueueService.canEnqueue()).thenReturn(false);
+        when(enqueueService.remainingCapacity()).thenReturn(0);
 
         sweep.sweep();
 
@@ -215,6 +217,61 @@ class SearchableEntityMissingSweepTest {
         sweep.sweep();
 
         verify(idEnumerator).nextIndexableIds(COURSE, 0L, 100);
+    }
+
+    /**
+     * Keeps the saved state like the database does, so consecutive pages of one tick continue from each other.
+     */
+    private void storeStateLikeTheDatabase() {
+        AtomicReference<SearchableEntityReconcileState> stored = new AtomicReference<>();
+        when(reconcileStateRepository.findByPass(ReconcilePass.MISSING)).thenAnswer(_ -> Optional.ofNullable(stored.get()));
+        when(reconcileStateRepository.save(any())).thenAnswer(invocation -> {
+            stored.set(invocation.getArgument(0));
+            return invocation.getArgument(0);
+        });
+    }
+
+    @Test
+    void testPagesContinueWithinOneTickWhileTheyFindMissingEntities() {
+        // After a rebuild the ledger is empty, so every page finds work: the pass keeps going while the outbox has room.
+        storeStateLikeTheDatabase();
+        when(enqueueService.remainingCapacity()).thenReturn(1000);
+        when(idEnumerator.nextIndexableIds(eq(COURSE), eq(0L), anyInt())).thenReturn(Optional.of(List.of(1L, 2L)));
+        when(idEnumerator.nextIndexableIds(eq(COURSE), eq(2L), anyInt())).thenReturn(Optional.of(List.of(3L, 4L)));
+        when(idEnumerator.nextIndexableIds(eq(COURSE), eq(4L), anyInt())).thenReturn(Optional.of(List.of()));
+
+        sweep.sweep();
+
+        for (long id = 1; id <= 4; id++) {
+            verify(enqueueService).enqueueUpsert(COURSE, id, WeaviateOutboxOrigin.RECONCILE_MISSING);
+        }
+        // The wrap into a new cycle ends the tick, so the first page is not read again.
+        verify(idEnumerator).nextIndexableIds(COURSE, 0L, 100);
+    }
+
+    @Test
+    void testAPageWithNothingMissingEndsTheTick() {
+        // A complete index costs one page per tick.
+        storeStateLikeTheDatabase();
+        when(enqueueService.remainingCapacity()).thenReturn(1000);
+        when(idEnumerator.nextIndexableIds(eq(COURSE), anyLong(), anyInt())).thenReturn(Optional.of(List.of(1L, 2L)));
+        when(syncStateRepository.findSyncedEntityIds(COURSE, List.of(1L, 2L))).thenReturn(Set.of(1L, 2L));
+        when(indexScanService.existingEntityIds(COURSE, List.of(1L, 2L))).thenReturn(Set.of(1L, 2L));
+
+        sweep.sweep();
+
+        verify(idEnumerator).nextIndexableIds(anyString(), anyLong(), anyInt());
+        verify(enqueueService, never()).enqueueUpsert(anyString(), anyLong(), any());
+    }
+
+    @Test
+    void testAPageNeverAdmitsMoreThanTheRemainingOutboxCapacity() {
+        when(enqueueService.remainingCapacity()).thenReturn(7, 0);
+        when(idEnumerator.nextIndexableIds(eq(COURSE), eq(0L), anyInt())).thenReturn(Optional.of(List.of(1L)));
+
+        sweep.sweep();
+
+        verify(idEnumerator).nextIndexableIds(COURSE, 0L, 7);
     }
 
     private SearchableEntityReconcileState savedState() {

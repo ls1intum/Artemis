@@ -310,6 +310,23 @@ class GitServiceRepositoryStateTest {
         }
     }
 
+    @Test
+    void ordinaryCloneFollowsRemoteHeadWhileAuthoringRequiresItsSelectedBranch() throws Exception {
+        String slug = "abc-branch-selection";
+        try (Repository repository = checkoutOf(slug); Git git = new Git(repository)) {
+            git.branchCreate().setName("release").call();
+            git.push().setRefSpecs(new RefSpec("refs/heads/release:refs/heads/release")).call();
+        }
+        var uri = uriFor(slug);
+        try (Repository ordinary = gitService.getOrCheckoutRepository(uri, uri, baseDir.resolve("ordinary"), false, "not-in-source", false)) {
+            assertThat(ordinary.getBranch()).isEqualTo(DEFAULT_BRANCH);
+        }
+        try (Repository selected = gitService.getOrCheckoutRepositoryOnBranch(uri, baseDir.resolve("selected"), "release")) {
+            assertThat(selected.getBranch()).isEqualTo("release");
+        }
+        assertThatExceptionOfType(GitException.class).isThrownBy(() -> gitService.getOrCheckoutRepositoryOnBranch(uri, baseDir.resolve("missing-branch"), "not-in-source"));
+    }
+
     /**
      * A symbolic link inside a repository points at whatever the pusher chose, which may be anywhere on the server.
      * Listing must therefore never hand one out, neither as a file nor as a directory to descend into.

@@ -32,7 +32,6 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -198,9 +197,9 @@ public class TextExerciseResource {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
         }
         if (textExercise.isCourseExercise()) {
-            Channel channel = channelRepository.findChannelByExerciseId(textExercise.getId());
-            if (channel != null) {
-                textExercise.setChannelName(channel.getName());
+            String channelName = channelRepository.findChannelNameByExerciseId(textExercise.getId());
+            if (channelName != null) {
+                textExercise.setChannelName(channelName);
             }
         }
 

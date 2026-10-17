@@ -13,9 +13,12 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LsRemoteCommand;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
+import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -26,6 +29,8 @@ import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevSort;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -319,6 +324,33 @@ public abstract class AbstractGitService {
     }
 
     /**
+     * Gets the last commit hash of a specific remote branch without relying on the repository's symbolic {@code HEAD}.
+     *
+     * @param repoUri the repository to inspect
+     * @param branch  the short branch name
+     * @return the branch head, or {@code null} when the repository or branch does not exist
+     * @throws EntityNotFoundException if querying the remote repository fails
+     */
+    @Nullable
+    public String getLastCommitHash(@Nullable LocalVCRepositoryUri repoUri, String branch) throws EntityNotFoundException {
+        if (repoUri == null || repoUri.getURI() == null) {
+            return null;
+        }
+        try {
+            log.debug("getLastCommitHash {} branch {}", repoUri, branch);
+            Ref branchRef = lsRemoteCommand().setRemote(getGitUriAsString(repoUri)).callAsMap().get(Constants.R_HEADS + branch);
+            if (branchRef == null) {
+                return null;
+            }
+            ObjectId objectId = branchRef.getObjectId();
+            return objectId != null ? objectId.getName() : null;
+        }
+        catch (GitAPIException | URISyntaxException ex) {
+            throw new EntityNotFoundException("Could not retrieve the last commit hash for branch " + branch + " of repoUri " + repoUri + " due to the following exception: " + ex);
+        }
+    }
+
+    /**
      * Retrieves the hash of the first commit in a bare Git repository whose commit message contains
      * a given search string. The method iterates commits in chronological order (oldest to newest)
      * to ensure that the earliest matching commit is returned.
@@ -442,6 +474,51 @@ public abstract class AbstractGitService {
         }
         catch (IOException e) {
             log.warn("Could not delete the renamed repository folder {} of {}: {}", renamedPath, repoPath, e.getMessage());
+        }
+    }
+
+    /**
+     * Returns the checked-out repository's current local HEAD. Unlike {@link #getLastCommitHash(LocalVCRepositoryUri)}, this reads the exact working copy after checkout/pull and
+     * after a local commit, avoiding a second remote read that could observe an unrelated concurrent push.
+     *
+     * @param repository the checked-out repository
+     * @return the local HEAD commit hash, or {@code null} when the repository has no HEAD yet
+     * @throws IOException if HEAD cannot be resolved
+     */
+    public String getLocalHeadHash(Repository repository) throws IOException {
+        ObjectId head = repository.resolve(Constants.HEAD);
+        return head == null ? null : head.name();
+    }
+
+    protected static void assertPushAccepted(Iterable<PushResult> pushResults, String remoteRef) throws TransportException {
+        boolean foundTargetRef = false;
+        for (PushResult pushResult : pushResults) {
+            for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
+                if (!remoteRef.equals(update.getRemoteName())) {
+                    continue;
+                }
+                foundTargetRef = true;
+                if (update.getStatus() != RemoteRefUpdate.Status.OK && update.getStatus() != RemoteRefUpdate.Status.UP_TO_DATE) {
+                    throw new TransportException("Leased push of " + remoteRef + " was rejected with status " + update.getStatus() + ": " + update.getMessage());
+                }
+            }
+        }
+        if (!foundTargetRef) {
+            throw new TransportException("Push result did not contain an update for " + remoteRef);
+        }
+    }
+
+    /**
+     * Checks if no differences exist between the working-tree, the index, and the current HEAD.
+     *
+     * @param repo Local Repository Object.
+     * @return True if the status is clean
+     * @throws GitAPIException if the state of the repository could not be retrieved.
+     */
+    public boolean isWorkingCopyClean(Repository repo) throws GitAPIException {
+        try (Git git = new Git(repo)) {
+            Status status = git.status().call();
+            return status.isClean();
         }
     }
 

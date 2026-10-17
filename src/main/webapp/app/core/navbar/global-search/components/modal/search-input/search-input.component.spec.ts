@@ -56,6 +56,22 @@ describe('SearchInputComponent', () => {
         expect(fixture.nativeElement.querySelector('.tok-value-text.tok-strike')).toBeTruthy();
     });
 
+    describe('highlighted chip announcement', () => {
+        it('names the keyboard-highlighted chip for screen readers and nothing otherwise', () => {
+            fixture.componentRef.setInput('chips', [chip('Exercises'), chip('Lectures')]);
+            expect(component['selectedChipLabel']()).toBeUndefined();
+
+            fixture.componentRef.setInput('chips', [chip('Exercises'), { ...chip('Lectures'), selected: true }]);
+
+            expect(component['selectedChipLabel']()).toBe('type Lectures');
+        });
+
+        it('keeps the polite live region in the DOM even without a highlighted chip', () => {
+            const region = fixture.nativeElement.querySelector('[data-testid="global-search-chip-announcement"]');
+            expect(region?.getAttribute('aria-live')).toBe('polite');
+        });
+    });
+
     describe('value-menu combobox a11y', () => {
         it('wires the input as a combobox pointing aria-activedescendant at the highlighted option', () => {
             // The menu listbox renders in the results pane (a sibling component); the input references it by id.
@@ -154,16 +170,16 @@ describe('SearchInputComponent', () => {
         expect(spy).not.toHaveBeenCalled();
     });
 
-    it('should emit backspaceOnEmpty when Backspace is pressed on empty input', () => {
-        const spy = vi.spyOn(component.backspaceOnEmpty, 'emit');
+    it('should emit backspaceAtStart when Backspace is pressed on empty input', () => {
+        const spy = vi.spyOn(component.backspaceAtStart, 'emit');
         fixture.detectChanges();
         const event = new KeyboardEvent('keydown', { key: 'Backspace' });
         component['onKeyDown'](event);
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledWith(event);
     });
 
-    it('should not emit backspaceOnEmpty when Backspace is pressed with cursor not at beginning', () => {
-        const spy = vi.spyOn(component.backspaceOnEmpty, 'emit');
+    it('should not emit backspaceAtStart when Backspace is pressed with cursor not at beginning', () => {
+        const spy = vi.spyOn(component.backspaceAtStart, 'emit');
         const inputEl = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
         inputEl.value = 'a';
         inputEl.selectionStart = 1;
@@ -173,19 +189,19 @@ describe('SearchInputComponent', () => {
         expect(spy).not.toHaveBeenCalled();
     });
 
-    it('should emit backspaceOnEmpty when Backspace is pressed with cursor at beginning of non-empty input', () => {
-        const spy = vi.spyOn(component.backspaceOnEmpty, 'emit');
+    it('should emit backspaceAtStart when Backspace is pressed with cursor at beginning of non-empty input', () => {
+        const spy = vi.spyOn(component.backspaceAtStart, 'emit');
         const inputEl = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
         inputEl.value = 'hello';
         inputEl.selectionStart = 0;
         inputEl.selectionEnd = 0;
         const event = new KeyboardEvent('keydown', { key: 'Backspace' });
         component['onKeyDown'](event);
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledWith(event);
     });
 
-    it('should not emit backspaceOnEmpty when Backspace is pressed with text selected from beginning', () => {
-        const spy = vi.spyOn(component.backspaceOnEmpty, 'emit');
+    it('should not emit backspaceAtStart when Backspace is pressed with text selected from beginning', () => {
+        const spy = vi.spyOn(component.backspaceAtStart, 'emit');
         const inputEl = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
         inputEl.value = 'hello';
         inputEl.selectionStart = 0;

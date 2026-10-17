@@ -25,14 +25,14 @@ runs:
   steps:
     - name: Download test results
       if: ${{ !cancelled() }}
-      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
       with:
         name: ${{ inputs.artifact-name }}
         path: ${{ inputs.download-path }}
 
     - name: Generate Test Report
       id: test-report
-      uses: mikepenz/action-junit-report@3a81627bfac62268172037048872e8ebd4207e6d  # v6.4.1
+      uses: mikepenz/action-junit-report@6ef3fdcfcd5f0b5d14df3e659ef19b8c6820f93d  # v6.6.1
       if: ${{ !cancelled() }}
       with:
         commit: ${{ inputs.commit-sha }}

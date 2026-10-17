@@ -6,8 +6,15 @@
         'is-saved': !isConsecutive() && posting()?.isSaved,
         'non-consecutive': !isConsecutive(),
         'unverified-iris': isUnverifiedIris(),
+        'resolves-post': posting()?.resolvesPost,
     }"
 >
+    @if (posting()?.resolvesPost) {
+        <div class="resolving-answer-marker post-content-padding fs-xx-small py-1" data-testid="resolving-answer-marker">
+            <fa-icon [icon]="faCheck" aria-hidden="true" />
+            <span class="fw-semibold" jhiTranslate="artemisApp.communication.answerPost.resolvesPost"></span>
+        </div>
+    }
     @if (posting()?.isSaved) {
         <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting()?.isSaved }">
             <div class="post-is-saved-message-content">

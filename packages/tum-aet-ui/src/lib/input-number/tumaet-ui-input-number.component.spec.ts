@@ -250,7 +250,7 @@ describe('TumAetUiInputNumberComponent (ngModel + formatting)', () => {
 });
 
 @Component({
-    template: `<tumaet-ui-input-number [formControl]="control" [min]="1" [max]="5000" [showButtons]="true" />`,
+    template: `<tumaet-ui-input-number [formControl]="control" [min]="1" [max]="5000" [showButtons]="true" locale="en" />`,
     imports: [TumAetUiInputNumberComponent, ReactiveFormsModule, FontAwesomeTestingModule],
 })
 class ReactiveHostComponent {

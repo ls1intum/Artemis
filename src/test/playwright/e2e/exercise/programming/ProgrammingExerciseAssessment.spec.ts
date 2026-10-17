@@ -48,8 +48,7 @@ test.describe('Programming exercise assessment', { tag: '@slow' }, () => {
         }
     });
 
-    // TODO re-enable after locked editor is active again. See: code-editor-student.integration.spec.ts
-    test.skip('Assesses the programming exercise submission and verifies it', async ({
+    test('Assesses the programming exercise submission and verifies it', async ({
         login,
         page,
         courseManagement,

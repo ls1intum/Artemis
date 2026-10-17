@@ -39,6 +39,8 @@ import de.tum.cit.aet.artemis.core.dto.PasswordResetKeyDTO;
 import de.tum.cit.aet.artemis.core.service.featureusage.ProductArea;
 import de.tum.cit.aet.artemis.notification.dto.DataExportEmailDTO;
 import de.tum.cit.aet.artemis.notification.dto.MailRecipientDTO;
+import de.tum.cit.aet.artemis.notification.service.TestAccountEmailService;
+import de.tum.cit.aet.artemis.notification.service.notifications.MailRetryQueueService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.notification.service.notifications.MailService;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
@@ -59,6 +61,12 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
 
     @Autowired
     private SpringTemplateEngine templateEngine;
+
+    @Autowired
+    private MailRetryQueueService mailRetryQueue;
+
+    @Autowired
+    private TestAccountEmailService testAccountEmailPolicy;
 
     private MailSendingService testMailSendingService;
 
@@ -87,7 +95,7 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         var mailEnabledProperties = new ArtemisProperties();
         mailEnabledProperties.getMail().setFrom("test@greenmail.test");
 
-        testMailSendingService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine);
+        testMailSendingService = new MailSendingService(mailEnabledProperties, greenMailSender, mainMessageSource, testTemplateEngine, mailRetryQueue, testAccountEmailPolicy);
         ReflectionTestUtils.setField(testMailSendingService, "artemisServerUrl", URI.create("http://localhost:9000").toURL());
 
         testMailService = new MailService(mainMessageSource, testTemplateEngine, testMailSendingService);
@@ -123,6 +131,62 @@ class MailServiceEmailIntegrationTest extends AbstractSpringIntegrationIndepende
         String body = getDeliveredEmailBody();
         assertThat(body).contains("de-activation-key-456");
         assertThat(body).contains("account/activate");
+    }
+
+    @Test
+    void activationEmail_shouldStateTheConfiguredDeadlineInMinutesInEnglish() throws Exception {
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 45L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
+
+        assertThat(getDeliveredEmailBody()).contains("within 45 minutes").contains("deleted automatically");
+    }
+
+    @Test
+    void activationEmail_shouldStateTheConfiguredDeadlineInHoursInEnglish() throws Exception {
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 120L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
+
+        assertThat(getDeliveredEmailBody()).contains("within 2 hours");
+    }
+
+    @Test
+    void activationEmail_shouldUseTheSingularForOneHour() throws Exception {
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 60L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
+
+        assertThat(getDeliveredEmailBody()).contains("within 1 hour,");
+    }
+
+    @Test
+    void activationEmail_shouldStateTheConfiguredDeadlineInGerman() throws Exception {
+        recipient.setLangKey("de");
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 90L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "de-activation-key-456"));
+
+        assertThat(getDeliveredEmailBody()).contains("innerhalb von 90 Minuten").contains("automatisch gelöscht");
+    }
+
+    @Test
+    void activationEmail_shouldStateTheConfiguredDeadlineInHoursInGerman() throws Exception {
+        recipient.setLangKey("de");
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 180L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "de-activation-key-456"));
+
+        assertThat(getDeliveredEmailBody()).contains("innerhalb von 3 Stunden");
+    }
+
+    @Test
+    void activationEmail_shouldNotMentionADeadlineWhenCleanupIsDisabled() throws Exception {
+        ReflectionTestUtils.setField(testMailService, "nonActivatedUserCleanupMinutes", 0L);
+
+        testMailService.sendActivationEmail(MailRecipientDTO.withActivationKeyFrom(recipient, "abc123-activation-key"));
+
+        assertThat(getDeliveredEmailBody()).contains("abc123-activation-key").doesNotContain("deleted automatically");
     }
 
     // -- Password reset email --

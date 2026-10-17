@@ -2,7 +2,7 @@
     [courseId]="courseId()"
     [lectureUnit]="lectureUnit()"
     [icon]="getAttachmentIcon()"
-    [showViewIsolatedButton]="hasAttachment()"
+    [showViewIsolatedButton]="hasDownloadableFile()"
     [showOriginalVersionButton]="!!lectureUnit().attachment?.studentVersion"
     [showFullscreenButton]="hasFullscreenContent()"
     [viewIsolatedButtonLabel]="'artemisApp.attachmentVideoUnit.download'"

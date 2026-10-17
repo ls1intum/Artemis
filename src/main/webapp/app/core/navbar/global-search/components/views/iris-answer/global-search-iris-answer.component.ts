@@ -3,16 +3,18 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { faChevronUp, faCircleInfo, faFile, faFilePdf, faFileVideo, faVideo } from '@fortawesome/free-solid-svg-icons';
 import { Router, RouterLink } from '@angular/router';
+import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
 import { IrisSearchAnswerService } from 'app/core/navbar/global-search/services/iris-search-answer.service';
 import { EntitySearchSource } from 'app/core/navbar/global-search/models/entity-search-source.model';
-import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
 import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
 import { IrisSearchStatusUpdate } from 'app/core/navbar/global-search/models/iris-search-status-update.model';
 import { iconForEntityType } from 'app/core/navbar/global-search/util/entity-type-icons.util';
 import { isInsideProtectedSegment, parseCitationNumbers, renderCitationMarkers } from 'app/core/navbar/global-search/util/iris-citation-markers.util';
+import { CitedSources, citedEntitySource, citedLectureSource, markerNumbersForType } from 'app/core/navbar/global-search/util/iris-cited-sources.util';
+import { GlobalSearchIrisHandoffComponent } from 'app/core/navbar/global-search/components/views/iris-handoff/global-search-iris-handoff.component';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { SEARCH_DEBOUNCE_MS, SHORT_QUERY_MAX_LENGTH } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { catchError, of, switchMap, timer } from 'rxjs';
@@ -92,7 +94,7 @@ function sameIds(first: number[], second: number[]): boolean {
     selector: 'jhi-global-search-iris-answer',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, RouterLink, ArtemisTranslatePipe, IrisLogoComponent, MarkdownDirective],
+    imports: [FaIconComponent, RouterLink, ArtemisTranslatePipe, IrisLogoComponent, MarkdownDirective, GlobalSearchIrisHandoffComponent],
     templateUrl: './global-search-iris-answer.component.html',
     styleUrls: ['./global-search-iris-answer.component.scss'],
 })
@@ -110,6 +112,8 @@ export class GlobalSearchIrisAnswerComponent {
     private readonly answerBody = viewChild<ElementRef<HTMLElement>>('answerBody');
 
     protected readonly irisResult = signal<IrisSearchResult | undefined>(undefined);
+    /** The run that produced the finished answer, handed to the chat so its citations stay pinned to the material the answer was written from. */
+    protected readonly answerRunId = signal<string | undefined>(undefined);
     protected readonly phase = signal<IrisAnswerPhase>('idle');
     private readonly currentRunId = signal<string | undefined>(undefined);
     protected readonly isExpanded = signal(false);
@@ -118,10 +122,16 @@ export class GlobalSearchIrisAnswerComponent {
     protected readonly sources = computed(() => (this.irisResult()?.sources ?? []).map(normalizeLectureSearchResultQueryParams));
     /** Entity sources (course information); their citation numbers may interleave with the lecture sources'. */
     protected readonly entitySources = computed(() => this.irisResult()?.entitySources ?? []);
+    /** Both source lists together with how the answer's `[n]` markers number them. */
+    protected readonly citedSources = computed<CitedSources>(() => ({
+        sources: this.sources(),
+        entitySources: this.entitySources(),
+        citationSourceTypes: this.irisResult()?.citationSourceTypes,
+    }));
     /** Marker number (matching the answer's `[n]` citation numbers) for each entry of `sources()`, by index. */
-    private readonly lectureMarkerNumbers = computed(() => this.markerNumbersForType('lecture'));
+    private readonly lectureMarkerNumbers = computed(() => markerNumbersForType(this.citedSources(), 'lecture'));
     /** Marker number for each entry of `entitySources()`, by index. */
-    private readonly entityMarkerNumbers = computed(() => this.markerNumbersForType('entity'));
+    private readonly entityMarkerNumbers = computed(() => markerNumbersForType(this.citedSources(), 'entity'));
     /** Per-chip display fields precomputed once per change, so the template's `@for` does not call methods on every render. */
     protected readonly entityChipViews = computed(() => {
         const markers = this.entityMarkerNumbers();
@@ -235,6 +245,8 @@ export class GlobalSearchIrisAnswerComponent {
     });
     /** Whether the answer is complete and fully shown; gates the clamp, the sources and the toggle. */
     protected readonly isSettled = computed(() => !this.isStreaming());
+    /** Only a finished answer can be continued in Iris: never a half-written one, and not while its words are still being revealed. */
+    protected readonly canContinueInIris = computed(() => this.phase() === 'answering' && this.streamComplete() && this.isSettled());
     /** The card is a slim strip until there is something to show inside it. */
     protected readonly isOpen = computed(() => this.phase() === 'answering' || this.phase() === 'noAnswer' || this.phase() === 'failed');
     /**
@@ -373,12 +385,15 @@ export class GlobalSearchIrisAnswerComponent {
                     return timer(IRIS_ANSWER_DEBOUNCE_MS).pipe(
                         switchMap(() =>
                             this.irisSearchAnswerService.ask(query, 5, courseIds, excludeCourseIds).pipe(
-                                catchError(() => {
-                                    // A failure is worth saying out loud: it is the one ending the reader can act on.
+                                catchError((error: unknown) => {
                                     // A reveal timer scheduled by an earlier partial on this same run must not keep
                                     // firing against a run the UI has already moved past.
                                     this.clearTimers();
-                                    this.phase.set('failed');
+                                    // Forbidden means Iris is off in every course in scope: there is nothing to answer, so the
+                                    // card stays hidden instead of reporting a problem the reader cannot fix with a retry.
+                                    const irisUnavailable = error instanceof HttpErrorResponse && error.status === HttpStatusCode.Forbidden;
+                                    // Any other failure is worth saying out loud: it is the one ending the reader can act on.
+                                    this.phase.set(irisUnavailable ? 'idle' : 'failed');
                                     return of(undefined);
                                 }),
                             ),
@@ -403,6 +418,7 @@ export class GlobalSearchIrisAnswerComponent {
     private resetRun(): void {
         this.clearTimers();
         this.irisResult.set(undefined);
+        this.answerRunId.set(undefined);
         this.phase.set('idle');
         this.currentRunId.set(undefined);
         this.revealedLength.set(0);
@@ -553,6 +569,7 @@ export class GlobalSearchIrisAnswerComponent {
         this.phase.set('answering');
         this.streamComplete.set(true);
         this.irisResult.set({ answer: update.answer, sources: update.sources ?? [], entitySources: update.entitySources ?? [], citationSourceTypes: update.citationSourceTypes });
+        this.answerRunId.set(update.runId);
         if (this.progressiveReveal()) {
             this.scheduleReveal();
         }
@@ -665,7 +682,7 @@ export class GlobalSearchIrisAnswerComponent {
             return;
         }
         const sourceNumber = parseCitationNumbers(chip.dataset.n)[0] ?? 0;
-        const lectureSource = this.citedLectureSource(sourceNumber);
+        const lectureSource = citedLectureSource(this.citedSources(), sourceNumber);
         if (lectureSource) {
             void this.router.navigate([lectureSource.lectureUnit.link], {
                 queryParams: lectureSource.lectureUnit.queryParams,
@@ -673,7 +690,7 @@ export class GlobalSearchIrisAnswerComponent {
             });
             return;
         }
-        const entitySource = sourceNumber > 0 ? this.citedEntitySource(sourceNumber) : undefined;
+        const entitySource = sourceNumber > 0 ? citedEntitySource(this.citedSources(), sourceNumber) : undefined;
         if (entitySource) {
             this.openEntitySource(entitySource);
         }
@@ -710,67 +727,6 @@ export class GlobalSearchIrisAnswerComponent {
         this.activeCitations.set(new Set([sourceNumber]));
     }
 
-    /**
-     * The citation marker number (matching the answer's `[n]` numbers) for the i-th entry of
-     * `sources()` (type 'lecture') or `entitySources()` (type 'entity'). `citationSourceTypes` lists
-     * every marker 1..N in order with which array it resolves into; the i-th entry of a given type in
-     * that list is exactly the i-th entry of that type's own array, since `sources()`/`entitySources()`
-     * are each built server-side to preserve their own subsequence of that same reading order. Falls
-     * back to the old fixed block-order numbering (every lecture marker, then every entity marker) when
-     * the terminal update carries no `citationSourceTypes` at all (an older Iris), the wire format's
-     * only implicit contract before this field existed.
-     */
-    private markerNumbersForType(type: 'lecture' | 'entity'): number[] {
-        const types = this.irisResult()?.citationSourceTypes;
-        if (!types || types.length === 0) {
-            const count = type === 'lecture' ? this.sources().length : this.entitySources().length;
-            const offset = type === 'lecture' ? 0 : this.sources().length;
-            return Array.from({ length: count }, (_, i) => offset + i + 1);
-        }
-        const numbers: number[] = [];
-        types.forEach((t, i) => {
-            if (t === type) {
-                numbers.push(i + 1);
-            }
-        });
-        return numbers;
-    }
-
-    /**
-     * Resolves a citation marker number to which array it belongs to and its position within that
-     * array's own ordering — the inverse of {@link markerNumbersForType}: counting occurrences of the
-     * marker's own type up to its position in `citationSourceTypes` recovers the right index, since
-     * that is exactly how the index was assigned in the first place. Falls back to the old fixed
-     * block-order assumption when the terminal update carries no `citationSourceTypes` (an older Iris).
-     */
-    private resolveCitation(sourceNumber: number): { type: 'lecture' | 'entity'; index: number } | undefined {
-        const types = this.irisResult()?.citationSourceTypes;
-        if (!types || types.length === 0) {
-            return sourceNumber <= this.sources().length ? { type: 'lecture', index: sourceNumber - 1 } : { type: 'entity', index: sourceNumber - this.sources().length - 1 };
-        }
-        const type = types[sourceNumber - 1];
-        if (!type) {
-            return undefined;
-        }
-        let index = 0;
-        for (let i = 0; i < sourceNumber - 1; i++) {
-            if (types[i] === type) {
-                index++;
-            }
-        }
-        return { type, index };
-    }
-
-    private citedLectureSource(sourceNumber: number): LectureSearchResult | undefined {
-        const resolved = this.resolveCitation(sourceNumber);
-        return resolved?.type === 'lecture' ? this.sources()[resolved.index] : undefined;
-    }
-
-    private citedEntitySource(sourceNumber: number): EntitySearchSource | undefined {
-        const resolved = this.resolveCitation(sourceNumber);
-        return resolved?.type === 'entity' ? this.entitySources()[resolved.index] : undefined;
-    }
-
     /** The translation key for an entity type label, e.g. `global.search.entityType.exercise`. */
     protected entityTypeLabelKey(entityType: string): string {
         return 'global.search.entityType.' + entityType;
@@ -798,7 +754,7 @@ export class GlobalSearchIrisAnswerComponent {
         const cardRect = card.getBoundingClientRect();
         const left = chipRect.left - cardRect.left + chipRect.width / 2;
         const top = chipRect.top - cardRect.top;
-        const lectureSource = this.citedLectureSource(sourceNumber);
+        const lectureSource = citedLectureSource(this.citedSources(), sourceNumber);
         if (lectureSource) {
             this.citationPopover.set({
                 left,
@@ -809,7 +765,7 @@ export class GlobalSearchIrisAnswerComponent {
             });
             return;
         }
-        const entitySource = this.citedEntitySource(sourceNumber);
+        const entitySource = citedEntitySource(this.citedSources(), sourceNumber);
         if (entitySource) {
             this.citationPopover.set({
                 left,

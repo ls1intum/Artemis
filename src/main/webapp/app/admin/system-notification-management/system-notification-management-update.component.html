@@ -15,23 +15,29 @@
                     <label for="type" class="font-bold" jhiTranslate="artemisApp.systemNotification.type"></label>
                     <tumaet-ui-select inputId="type" [options]="systemNotificationTypes" optionLabel="name" optionValue="value" formControlName="type" class="w-full" />
                 </div>
-                <div class="mb-3">
-                    <jhi-date-time-picker
-                        [labelName]="'artemisApp.systemNotification.notificationDate' | artemisTranslate"
+                <div class="mb-3 flex flex-col gap-2">
+                    <label for="notificationDate" class="font-bold" jhiTranslate="artemisApp.systemNotification.notificationDate"></label>
+                    <tumaet-ui-date-picker
+                        inputId="notificationDate"
+                        [hideLabelName]="true"
                         formControlName="notificationDate"
                         [shouldDisplayTimeZoneWarning]="false"
-                        name="notificationDate"
+                        [ariaRequired]="true"
                     />
                 </div>
-                <div class="mb-3">
-                    <jhi-date-time-picker
-                        [labelName]="'artemisApp.systemNotification.expireDate' | artemisTranslate"
+                <div class="mb-3 flex flex-col gap-2">
+                    <label for="expireDate" class="font-bold" jhiTranslate="artemisApp.systemNotification.expireDate"></label>
+                    <tumaet-ui-date-picker
+                        inputId="expireDate"
+                        [hideLabelName]="true"
                         formControlName="expireDate"
                         [shouldDisplayTimeZoneWarning]="false"
-                        name="expireDate"
+                        [invalid]="!!expireDate?.errors?.expireMustBeAfterNotification"
+                        [ariaRequired]="true"
+                        [ariaDescribedBy]="expireDate?.errors?.expireMustBeAfterNotification ? 'expireDate-order-error' : undefined"
                     />
                     @if (expireDate?.errors?.expireMustBeAfterNotification) {
-                        <small class="text-state-danger text-sm" jhiTranslate="error.systemNotificationNeedsNotificationBeforeExpiration"></small>
+                        <small id="expireDate-order-error" class="text-state-danger text-sm" jhiTranslate="error.systemNotificationNeedsNotificationBeforeExpiration"></small>
                     }
                 </div>
                 @if (!form.get('id')?.value) {

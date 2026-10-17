@@ -5,7 +5,6 @@ import {
     LectureUnitDTOS,
     LectureUnitInformationDTO,
 } from 'app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -16,7 +15,7 @@ import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/ser
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockAttachmentVideoUnitsService } from 'test/helpers/mocks/service/mock-attachment-video-units.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
@@ -80,7 +79,6 @@ describe('AttachmentVideoUnitsComponent', () => {
                 FaIconComponent,
                 AttachmentVideoUnitsComponent,
                 LectureUnitLayoutStubComponent,
-                MockComponent(FormDateTimePickerComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,

@@ -135,6 +135,8 @@ export class SearchResultItemComponent {
     result = input.required<GlobalSearchResult>();
     icon = input.required<IconDefinition>();
     isSelected = input.required<boolean>();
+    /** DOM id of the option, so the search input can point at the selected row. */
+    optionId = input<string | undefined>(undefined);
 
     resultClick = output<GlobalSearchResult>();
 

@@ -119,11 +119,94 @@ describe('CourseWideSearchComponent', () => {
         component.course = course;
         fixture.componentRef.setInput('courseWideSearchConfig', courseWideSearchConfig);
         fixture.changeDetectorRef.detectChanges();
+        component.isFetchingPosts.set(false);
     });
 
     afterEach(() => {
         vi.useRealTimers();
         vi.clearAllMocks();
+    });
+
+    it('should leave the oldest search result reachable when all pages are loaded', () => {
+        const container = component.content()!.nativeElement;
+        container.scrollTop = 0;
+        const fetchPosts = vi.spyOn(component, 'fetchPosts');
+        component.totalNumberOfPosts.set(component.posts().length);
+
+        component.fetchNextPage();
+
+        expect(container.scrollTop).toBe(0);
+        expect(fetchPosts).not.toHaveBeenCalled();
+    });
+
+    it('retries the same older page after a failed request', () => {
+        component.totalNumberOfPosts.set(100);
+        const request = vi.spyOn(communicationService, 'getFilteredPosts');
+        component.fetchNextPage();
+        expect(request.mock.calls.at(-1)![0].page).toBe(1);
+        request.mock.calls.at(-1)![3]!.complete(false);
+        expect(component.isFetchingPosts()).toBe(false);
+        expect(component.page).toBe(1);
+
+        component.fetchNextPage();
+        expect(request).toHaveBeenCalledTimes(2);
+        expect(request.mock.calls.at(-1)![0].page).toBe(1);
+        request.mock.calls.at(-1)![3]!.complete(true);
+        expect(component.page).toBe(2);
+    });
+
+    it('should preserve scrolling performed during a pending search page and ignore duplicate loads', () => {
+        vi.runAllTimers();
+        const container = component.content()!.nativeElement;
+        Object.defineProperty(container, 'scrollHeight', { value: 1000, configurable: true });
+        container.scrollTop = 20;
+        component.totalNumberOfPosts.set(100);
+        const fetchPosts = vi.spyOn(component, 'fetchPosts');
+        const request = vi.spyOn(communicationService, 'getFilteredPosts');
+
+        component.fetchNextPage();
+        const callbacks = request.mock.calls.at(-1)?.[3];
+        expect(callbacks).toBeDefined();
+        // A cache/WebSocket emission must neither finish the request nor consume its anchor.
+        component.setPosts([examplePost]);
+        component.handleScrollOnNewMessage();
+        vi.runAllTimers();
+        expect(component.isFetchingPosts()).toBe(true);
+        expect(container.scrollTop).toBe(20);
+        component.fetchNextPage();
+        expect(fetchPosts).toHaveBeenCalledOnce();
+        expect(container.scrollTop).toBe(20);
+
+        container.scrollTop = 220; // The reader moves while the response is pending.
+        callbacks!.beforeApply();
+        component.setPosts([{ id: 2 } as Post, examplePost]);
+        Object.defineProperty(container, 'scrollHeight', { value: 1600, configurable: true });
+        callbacks!.complete(true);
+        vi.runAllTimers();
+        expect(container.scrollTop).toBe(820);
+
+        container.scrollTop = 0;
+        component.handleScrollOnNewMessage();
+        vi.runAllTimers();
+        expect(container.scrollTop).toBe(0);
+    });
+
+    it('should cancel an old positioning frame before starting a new search', () => {
+        component.handleScrollOnNewMessage();
+        component.onSearch();
+        vi.runAllTimers();
+        expect(component['initialScrollPositioned']).toBe(false);
+    });
+
+    it('should reset pagination when changing the search or its filters', () => {
+        fixture.componentRef.setInput('courseWideSearchConfig', new CourseWideSearchConfig());
+        fixture.detectChanges();
+        component.page = 3;
+        component.onSearch();
+        expect(component.currentPostContextFilter?.page).toBe(0);
+        component.page = 4;
+        component.onChangeSortDir();
+        expect(component.currentPostContextFilter?.page).toBe(0);
     });
 
     it('should create', () => {
@@ -194,7 +277,7 @@ describe('CourseWideSearchComponent', () => {
     it('should fetch posts on next page fetch', () => {
         const getFilteredPostSpy = vi.spyOn(communicationService, 'getFilteredPosts');
         fixture.componentRef.setInput('courseWideSearchConfig', courseWideSearchConfig);
-        component.totalNumberOfPosts = 10;
+        component.totalNumberOfPosts.set(10);
         component.fetchNextPage();
         expect(getFilteredPostSpy).toHaveBeenCalledOnce();
     });

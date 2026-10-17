@@ -12,23 +12,25 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * When Weaviate is enabled, all properties must be explicitly configured.
  * Validation is performed in {@link WeaviateClientConfiguration} and {@link de.tum.cit.aet.artemis.core.config.ConfigurationValidator#validateWeaviateConfiguration}.
  *
- * @param enabled              whether Weaviate integration is enabled
- * @param httpHost             the Weaviate server HTTP host
- * @param httpPort             the Weaviate HTTP port
- * @param grpcPort             the Weaviate gRPC port
- * @param scheme               the HTTP scheme (http/https) - determines secure connection type
- * @param collectionPrefix     prefix prepended to all Weaviate collection names to avoid naming conflicts (e.g. with Pyris collections)
- * @param vectorizerModule     the vectorizer module to use: "none" for self-provided vectors, "text2vec-transformers" for automatic embeddings, "text2vec-openai" for
- *                                 OpenAI-compatible APIs (e.g. Ollama)
- * @param openAiEmbeddingModel the embedding model name (e.g. "qwen3-embedding:8b"), optional when using text2vec-openai; if omitted, the server's default model is used
- * @param openAiBaseUrl        the base URL for the OpenAI-compatible API (e.g. Ollama), required when using text2vec-openai
- * @param gpuApiKey            the API key for the OpenAI-compatible GPU server, required when using text2vec-openai (can be a dummy value for Ollama)
- * @param apiKey               the API key for authenticating against the Weaviate server itself (optional; when set, anonymous access should be disabled on the server)
+ * @param enabled                whether Weaviate integration is enabled
+ * @param httpHost               the Weaviate server HTTP host
+ * @param httpPort               the Weaviate HTTP port
+ * @param grpcPort               the Weaviate gRPC port
+ * @param scheme                 the HTTP scheme (http/https) - determines secure connection type
+ * @param collectionPrefix       prefix prepended to all Weaviate collection names to avoid naming conflicts (e.g. with Pyris collections)
+ * @param vectorizerModule       the embedding mode (see {@link SupportedVectorizer}): "none" for keyword search only, "text2vec-openai" for hybrid search with
+ *                                   vectors that Artemis computes through an OpenAI-compatible embedding API (e.g. Logos or Ollama)
+ * @param openAiEmbeddingModel   the embedding model name (e.g. "Qwen/Qwen3-Embedding-8B"), required when using text2vec-openai; changing it rebuilds the index
+ * @param openAiBaseUrl          the base URL of the OpenAI-compatible API without the "/v1" suffix, required when using text2vec-openai
+ * @param gpuApiKey              the API key for the OpenAI-compatible GPU server, required when using text2vec-openai (can be a dummy value for Ollama)
+ * @param apiKey                 the API key for authenticating against the Weaviate server itself (optional; when set, anonymous access should be disabled on the server)
+ * @param openAiQueryInstruction text Artemis puts in front of every search query before embedding it (optional; some embedding models, such as
+ *                                   Qwen3-Embedding, expect a task instruction on the query side only)
  */
 @ConfigurationProperties(prefix = "artemis.weaviate")
 public record WeaviateConfigurationProperties(boolean enabled, String httpHost, @DefaultValue(DEFAULT_HTTP_PORT) int httpPort, @DefaultValue(DEFAULT_GRPC_PORT) int grpcPort,
         String scheme, @DefaultValue(DEFAULT_COLLECTION_PREFIX) String collectionPrefix, @DefaultValue(DEFAULT_VECTORIZER_MODULE) String vectorizerModule,
-        String openAiEmbeddingModel, String openAiBaseUrl, String gpuApiKey, String apiKey) {
+        String openAiEmbeddingModel, String openAiBaseUrl, String gpuApiKey, String apiKey, String openAiQueryInstruction) {
 
     public static final String DEFAULT_HTTP_PORT = "8001";
 

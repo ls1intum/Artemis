@@ -379,9 +379,16 @@ public class CoverageRecomputeService {
         counts.add(diff(SearchableEntitySchema.TypeValues.CHANNEL, expected.channels().get(courseId), presentMetadata.get(SearchableEntitySchema.TypeValues.CHANNEL)));
         // The course itself is always expected to be indexed as a single object.
         counts.add(diff(SearchableEntitySchema.TypeValues.COURSE, Set.of(courseId), presentMetadata.get(SearchableEntitySchema.TypeValues.COURSE)));
-        // Content: slides and transcript are diffed; summaries are present-only.
-        counts.add(diff(TYPE_SLIDES, expected.pdfUnits().get(courseId), present.slides().get(courseId)));
-        counts.add(diff(TYPE_TRANSCRIPT, expected.videoUnits().get(courseId), present.transcript().get(courseId)));
+        // Content: slides and transcript are diffed for a course within the ingestion window; for an older one they are
+        // optional, so only content of a unit that no longer has a PDF or video counts against it. Summaries are present-only.
+        if (expected.requiresContent(courseId)) {
+            counts.add(diff(TYPE_SLIDES, expected.pdfUnits().get(courseId), present.slides().get(courseId)));
+            counts.add(diff(TYPE_TRANSCRIPT, expected.videoUnits().get(courseId), present.transcript().get(courseId)));
+        }
+        else {
+            counts.add(presentOnly(TYPE_SLIDES, present.slides().get(courseId), expected.pdfUnits().get(courseId)));
+            counts.add(presentOnly(TYPE_TRANSCRIPT, present.transcript().get(courseId), expected.videoUnits().get(courseId)));
+        }
         counts.add(presentOnly(TYPE_SEGMENT_SUMMARY, present.segmentSummaries().get(courseId), expected.lectureUnits().get(courseId)));
         counts.add(presentOnly(TYPE_UNIT_SUMMARY, present.unitSummaries().get(courseId), expected.lectureUnits().get(courseId)));
         return counts;
@@ -434,8 +441,8 @@ public class CoverageRecomputeService {
     }
 
     /**
-     * Present-only type (e.g. summaries): never reported missing, because a summary can legitimately exist without the
-     * content it summarises and nothing requires one to be there.
+     * Present-only type (e.g. summaries, or the slides and transcript of a course outside the ingestion window): never
+     * reported missing, because the object can legitimately exist or not and nothing requires one to be there.
      * <p>
      * A summary for a lecture unit the database no longer has is a different thing. Nothing will ever summarise that
      * unit again, so the object is stale rather than optional, and it is reported orphaned like any other leftover.

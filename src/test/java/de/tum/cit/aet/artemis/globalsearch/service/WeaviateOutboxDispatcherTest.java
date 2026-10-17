@@ -17,8 +17,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -43,6 +45,8 @@ import org.mockito.MockedStatic;
 import org.springframework.context.ApplicationEventPublisher;
 
 import de.tum.cit.aet.artemis.core.util.JsonObjectMapper;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEmbeddingProperties;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateMigrationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
@@ -52,6 +56,7 @@ import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOperation;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxOrigin;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.embedding.SearchableEntityEmbeddingClient;
 
 /**
  * Unit tests for {@link WeaviateOutboxDispatcher}.
@@ -60,6 +65,9 @@ import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
  * keep the row with an incremented attempt count and a backed-off next attempt on failure, and process rows
  * in id order so multiple pending rows for the same entity apply latest-wins. The outcome writes are plain
  * repository calls, so the orchestration is exercised directly against the mocked repositories.
+ * <p>
+ * Writes of users ({@code LIVE} rows) always go before background work, which runs in small steps within a per-minute
+ * budget; the dispatcher never waits for that budget.
  */
 class WeaviateOutboxDispatcherTest {
 
@@ -76,21 +84,42 @@ class WeaviateOutboxDispatcherTest {
 
     private final SearchableEntityWeaviateService searchableEntityWeaviateService = mock(SearchableEntityWeaviateService.class);
 
+    private final SearchableEntityEmbeddingClient embeddingClient = mock(SearchableEntityEmbeddingClient.class);
+
+    private final SearchableEntityIndexRebuildService rebuildService = mock(SearchableEntityIndexRebuildService.class);
+
+    /** Checks the index at the first drain; retries a failed check after one second. */
+    private static final WeaviateMigrationProperties CHECK_AT_ONCE = new WeaviateMigrationProperties(0, 5, 1);
+
     private WeaviateOutboxDispatcher dispatcher;
 
     @BeforeEach
     void setUp() {
         // Construct with the production default tuning values.
-        var outboxProperties = new WeaviateOutboxProperties(5, 100, 10, 300);
+        when(embeddingClient.maxInputsPerRequest()).thenReturn(32);
+        dispatcher = dispatcher(searchableEntityWeaviateService, new WeaviateOutboxProperties(5, 100, 10, 300), DEFAULT_EMBEDDING_PROPERTIES);
+    }
+
+    private static final WeaviateEmbeddingProperties DEFAULT_EMBEDDING_PROPERTIES = new WeaviateEmbeddingProperties(600, 30, 32, Duration.ofSeconds(3), Duration.ofSeconds(60));
+
+    private WeaviateOutboxDispatcher dispatcher(SearchableEntityWeaviateService service, WeaviateOutboxProperties outboxProperties,
+            WeaviateEmbeddingProperties embeddingProperties) {
         var reconcileProperties = new WeaviateReconcileProperties(false, false, false, List.of(COURSE, "lecture", "lecture_unit", "exam", "exercise", "faq", "channel"), 500, 100,
                 200, 1000, 5, 100, 100, 0.25);
-        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, outboxProperties, reconcileProperties);
+        return new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, service, outboxProperties, reconcileProperties, embeddingProperties, embeddingClient,
+                rebuildService, CHECK_AT_ONCE);
+    }
+
+    private SearchableEntityWeaviateService realService(WeaviateService weaviateService, SearchableEntityResolver resolver) {
+        return new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, JsonObjectMapper.get(), new SearchableEntityContentHasher(JsonObjectMapper.get()),
+                mock(ApplicationEventPublisher.class), mock(SearchableEntityVectorWriter.class), embeddingClient, Runnable::run);
     }
 
     @Test
     void testDrainUpsert_writesWeaviateRefreshesLedgerAndDeletesRow() {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        entry.setId(101L);
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 1L)).thenReturn(Optional.empty());
         when(searchableEntityWeaviateService.applyOutboxEntry(entry)).thenReturn(Optional.of(HASH));
 
@@ -109,7 +138,8 @@ class WeaviateOutboxDispatcherTest {
     @Test
     void testDrainFailedWrite_keepsRowWithBackoffThenLaterRunSucceeds() {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        entry.setId(102L);
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         doThrow(new RuntimeException("weaviate unavailable")).when(searchableEntityWeaviateService).applyOutboxEntry(entry);
 
         ZonedDateTime before = ZonedDateTime.now();
@@ -134,8 +164,9 @@ class WeaviateOutboxDispatcherTest {
     @EnumSource(value = WeaviateOutboxOrigin.class, names = { "RECONCILE_DRIFT", "RECONCILE_ORPHAN" })
     void testDrainFailedReconcileDelete_keepsTheRowUnacknowledgedForRetry(WeaviateOutboxOrigin origin) {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forDeleteEntity(COURSE, 1L, origin);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
-        doThrow(new IllegalStateException("resolver unavailable")).when(searchableEntityWeaviateService).applyOutboxEntry(entry);
+        entry.setId(103L);
+        when(outboxRepository.findDueBackgroundForDispatch(any(), anyInt())).thenReturn(List.of(entry), List.of());
+        doThrow(new IllegalStateException("resolver unavailable")).when(searchableEntityWeaviateService).prepareOutboxEntry(entry);
 
         dispatcher.drain();
 
@@ -148,12 +179,11 @@ class WeaviateOutboxDispatcherTest {
 
     @Test
     void testDrainMalformedBulkParamsLeavesTheRowForRetryInsteadOfAcknowledgingIt() {
-        SearchableEntityWeaviateService realService = new SearchableEntityWeaviateService(mock(WeaviateService.class), outboxRepository, mock(SearchableEntityResolver.class),
-                JsonObjectMapper.get(), new SearchableEntityContentHasher(JsonObjectMapper.get()), mock(ApplicationEventPublisher.class));
-        WeaviateOutboxDispatcher realDispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, realService, new WeaviateOutboxProperties(5, 100, 10, 300),
-                new WeaviateReconcileProperties(false, false, false, List.of(COURSE), 500, 100, 200, 1000, 5, 100, 100, 0.25));
+        WeaviateOutboxDispatcher realDispatcher = dispatcher(realService(mock(WeaviateService.class), mock(SearchableEntityResolver.class)),
+                new WeaviateOutboxProperties(5, 100, 10, 300), DEFAULT_EMBEDDING_PROPERTIES);
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, "{not-json", WeaviateOutboxOrigin.LIVE);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry), List.of());
+        entry.setId(104L);
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(entry), List.of());
 
         realDispatcher.drain();
 
@@ -168,12 +198,10 @@ class WeaviateOutboxDispatcherTest {
     void testDrainHashProviderFailureKeepsTheUpsertForRetryWithoutWritingOrAcknowledging() {
         WeaviateService weaviateService = mock(WeaviateService.class);
         SearchableEntityResolver resolver = mock(SearchableEntityResolver.class);
-        SearchableEntityWeaviateService realService = new SearchableEntityWeaviateService(weaviateService, outboxRepository, resolver, JsonObjectMapper.get(),
-                new SearchableEntityContentHasher(JsonObjectMapper.get()), mock(ApplicationEventPublisher.class));
-        WeaviateOutboxDispatcher realDispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, realService, new WeaviateOutboxProperties(5, 100, 10, 300),
-                new WeaviateReconcileProperties(false, false, false, List.of(COURSE), 500, 100, 200, 1000, 5, 100, 100, 0.25));
+        WeaviateOutboxDispatcher realDispatcher = dispatcher(realService(weaviateService, resolver), new WeaviateOutboxProperties(5, 100, 10, 300), DEFAULT_EMBEDDING_PROPERTIES);
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry), List.of());
+        entry.setId(105L);
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(entry), List.of());
         when(resolver.resolve(COURSE, 1L)).thenReturn(Optional.of(Map.of(SearchableEntitySchema.Properties.TYPE, COURSE, SearchableEntitySchema.Properties.ENTITY_ID, 1L)));
 
         try (MockedStatic<MessageDigest> messageDigest = mockStatic(MessageDigest.class, CALLS_REAL_METHODS)) {
@@ -197,8 +225,10 @@ class WeaviateOutboxDispatcherTest {
     @Test
     void testDrain_processesRowsInIdOrderSoLatestWins() {
         WeaviateOutboxEntry older = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
+        older.setId(106L);
         WeaviateOutboxEntry newer = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(older, newer));
+        newer.setId(107L);
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(older, newer));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 1L)).thenReturn(Optional.empty());
         when(searchableEntityWeaviateService.applyOutboxEntry(any())).thenReturn(Optional.of(HASH));
 
@@ -214,7 +244,8 @@ class WeaviateOutboxDispatcherTest {
     @Test
     void testDrainDeleteEntity_clearsSyncLedgerRow() {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forDeleteEntity(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        entry.setId(108L);
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(entry));
 
         dispatcher.drain();
 
@@ -233,7 +264,8 @@ class WeaviateOutboxDispatcherTest {
     @Test
     void testDrainUpsertOfAnUnmanagedType_neverTouchesTheLedger() {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(POST, 1L, WeaviateOutboxOrigin.LIVE);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        entry.setId(109L);
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         when(searchableEntityWeaviateService.applyOutboxEntry(entry)).thenReturn(Optional.of(HASH));
 
         dispatcher.drain();
@@ -247,7 +279,8 @@ class WeaviateOutboxDispatcherTest {
     @Test
     void testDrainDeleteEntityOfAnUnmanagedType_neverTouchesTheLedger() {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forDeleteEntity(POST, 1L, WeaviateOutboxOrigin.LIVE);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        entry.setId(110L);
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(entry));
 
         dispatcher.drain();
 
@@ -260,7 +293,7 @@ class WeaviateOutboxDispatcherTest {
     void testDrainPerEntitySuccess_collapsesOlderRowsForSameEntity() {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 42L, WeaviateOutboxOrigin.LIVE);
         entry.setId(10L);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(entry));
         when(syncStateRepository.findByEntityTypeAndEntityId(COURSE, 42L)).thenReturn(Optional.empty());
         when(searchableEntityWeaviateService.applyOutboxEntry(entry)).thenReturn(Optional.of(HASH));
 
@@ -274,7 +307,7 @@ class WeaviateOutboxDispatcherTest {
     void testDrainBulkDelete_doesNotCollapse() {
         WeaviateOutboxEntry entry = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, "{\"courseId\":7}", WeaviateOutboxOrigin.LIVE);
         entry.setId(10L);
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenReturn(List.of(entry));
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenReturn(List.of(entry));
 
         dispatcher.drain();
 
@@ -317,8 +350,7 @@ class WeaviateOutboxDispatcherTest {
         List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
         Map<String, String> weaviate = new HashMap<>();
         wireInMemoryOutbox(table, weaviate);
-        dispatcher = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, new WeaviateOutboxProperties(5, 2, 10, 300),
-                new WeaviateReconcileProperties(false, false, false, List.of(COURSE), 500, 100, 200, 1000, 5, 100, 100, 0.25));
+        dispatcher = dispatcher(searchableEntityWeaviateService, new WeaviateOutboxProperties(5, 2, 10, 300), DEFAULT_EMBEDDING_PROPERTIES);
 
         WeaviateOutboxEntry first = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
         first.setId(1L);
@@ -374,52 +406,68 @@ class WeaviateOutboxDispatcherTest {
                 Future<?> nudge = executor.submit(() -> dispatcher.onOutboxEnqueued(new WeaviateOutboxEnqueuedEvent()));
                 nudge.get(5, TimeUnit.SECONDS);
                 throw new IllegalStateException("database unavailable");
-            }).when(outboxRepository).findDueForDispatch(any(), anyInt());
+            }).when(outboxRepository).findDueLiveForDispatch(any(), anyInt());
 
             dispatcher.drain();
         }
 
-        verify(outboxRepository, times(1)).findDueForDispatch(any(), anyInt());
+        verify(outboxRepository, times(1)).findDueLiveForDispatch(any(), anyInt());
         verify(searchableEntityWeaviateService, never()).applyOutboxEntry(any());
     }
 
     @Test
-    void testDrain_nudgeDuringPausedMigrationWaitsForLaterDrain() throws Exception {
+    void testDrain_rebuildsTheIndexUnderTheDrainLockBeforeTheFirstWrite() throws Exception {
         List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
         Map<String, String> weaviate = new HashMap<>();
         wireInMemoryOutbox(table, weaviate);
-        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(COURSE, 1L, WeaviateOutboxOrigin.LIVE);
-        entry.setId(1L);
-        table.add(entry);
+        table.add(entry(1L, COURSE, 1L, WeaviateOutboxOrigin.LIVE));
 
-        CountDownLatch migrationPaused = new CountDownLatch(1);
-        CountDownLatch releaseMigration = new CountDownLatch(1);
+        CountDownLatch rebuildRunning = new CountDownLatch(1);
+        CountDownLatch releaseRebuild = new CountDownLatch(1);
+        when(rebuildService.ensureIndexMatchesConfiguration()).thenAnswer(_ -> {
+            rebuildRunning.countDown();
+            if (!releaseRebuild.await(5, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("test did not release the rebuild");
+            }
+            return true;
+        });
         try (var executor = Executors.newSingleThreadExecutor()) {
-            Future<?> pausedMigration = executor.submit(() -> dispatcher.runWithDrainsPaused(() -> {
-                migrationPaused.countDown();
-                try {
-                    if (!releaseMigration.await(5, TimeUnit.SECONDS)) {
-                        throw new IllegalStateException("test did not release the paused migration");
-                    }
-                }
-                catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    throw new IllegalStateException(e);
-                }
-            }));
-            assertThat(migrationPaused.await(5, TimeUnit.SECONDS)).isTrue();
+            Future<?> firstDrain = executor.submit(dispatcher::drain);
+            assertThat(rebuildRunning.await(5, TimeUnit.SECONDS)).isTrue();
 
+            // A nudge while the collection is replaced writes nothing; the drain holding the lock picks the row up afterwards.
             dispatcher.onOutboxEnqueued(new WeaviateOutboxEnqueuedEvent());
-
             verify(searchableEntityWeaviateService, never()).applyOutboxEntry(any());
-            assertThat(table).containsExactly(entry);
-            releaseMigration.countDown();
-            pausedMigration.get(5, TimeUnit.SECONDS);
+
+            releaseRebuild.countDown();
+            firstDrain.get(5, TimeUnit.SECONDS);
         }
 
-        assertThat(table).containsExactly(entry);
+        assertThat(weaviate).containsEntry(COURSE + ":1", "1");
+        assertThat(table).isEmpty();
+        verify(rebuildService).ensureIndexMatchesConfiguration();
+    }
+
+    @Test
+    void testDrain_aFailedIndexCheckKeepsEveryWriteQueuedAndIsRetriedAfterTheDelay() throws Exception {
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        Map<String, String> weaviate = new HashMap<>();
+        wireInMemoryOutbox(table, weaviate);
+        table.add(entry(1L, COURSE, 1L, WeaviateOutboxOrigin.LIVE));
+        when(rebuildService.ensureIndexMatchesConfiguration()).thenThrow(new IOException("connection refused")).thenReturn(false);
+
+        dispatcher.drain();
+        // Within the retry delay, a drain does not ask Weaviate again.
         dispatcher.drain();
 
+        verify(rebuildService, times(1)).ensureIndexMatchesConfiguration();
+        verify(outboxRepository, never()).findDueLiveForDispatch(any(), anyInt());
+        assertThat(table).hasSize(1);
+
+        Thread.sleep(1_100);
+        dispatcher.drain();
+
+        verify(rebuildService, times(2)).ensureIndexMatchesConfiguration();
         assertThat(weaviate).containsEntry(COURSE + ":1", "1");
         assertThat(table).isEmpty();
     }
@@ -428,11 +476,8 @@ class WeaviateOutboxDispatcherTest {
      * Backs the outbox and Weaviate mocks with in-memory state so a full drain can be exercised end to end.
      */
     private void wireInMemoryOutbox(List<WeaviateOutboxEntry> table, Map<String, String> weaviate) {
-        when(outboxRepository.findDueForDispatch(any(), anyInt())).thenAnswer(invocation -> {
-            ZonedDateTime now = invocation.getArgument(0);
-            int limit = invocation.getArgument(1);
-            return table.stream().filter(entry -> !entry.getNextAttemptAt().isAfter(now)).sorted(Comparator.comparing(WeaviateOutboxEntry::getId)).limit(limit).toList();
-        });
+        when(outboxRepository.findDueLiveForDispatch(any(), anyInt())).thenAnswer(invocation -> due(table, invocation.getArgument(0), invocation.getArgument(1), true));
+        when(outboxRepository.findDueBackgroundForDispatch(any(), anyInt())).thenAnswer(invocation -> due(table, invocation.getArgument(0), invocation.getArgument(1), false));
         doAnswer(invocation -> {
             table.remove(invocation.<WeaviateOutboxEntry>getArgument(0));
             return null;
@@ -457,6 +502,322 @@ class WeaviateOutboxDispatcherTest {
             }
             return Optional.empty();
         }).when(searchableEntityWeaviateService).applyOutboxEntry(any(WeaviateOutboxEntry.class));
+        doAnswer(invocation -> new SearchableEntityWeaviateService.PreparedOther(invocation.getArgument(0))).when(searchableEntityWeaviateService)
+                .prepareOutboxEntry(any(WeaviateOutboxEntry.class));
+        doAnswer(invocation -> {
+            SearchableEntityWeaviateService.PreparedEntry prepared = invocation.getArgument(0);
+            weaviate.put(prepared.entry().getEntityType() + ":" + prepared.entry().getEntityId(), String.valueOf(prepared.entry().getId()));
+            return Optional.of(HASH);
+        }).when(searchableEntityWeaviateService).applyPrepared(any(), any());
         when(syncStateRepository.findByEntityTypeAndEntityId(anyString(), any())).thenReturn(Optional.empty());
+    }
+
+    private static List<WeaviateOutboxEntry> due(List<WeaviateOutboxEntry> table, ZonedDateTime now, int limit, boolean live) {
+        return table.stream().filter(entry -> !entry.getNextAttemptAt().isAfter(now)).filter(entry -> (entry.getOrigin() == WeaviateOutboxOrigin.LIVE) == live)
+                .sorted(Comparator.comparing(WeaviateOutboxEntry::getId)).limit(limit).toList();
+    }
+
+    private static WeaviateOutboxEntry entry(long id, String type, long entityId, WeaviateOutboxOrigin origin) {
+        WeaviateOutboxEntry entry = WeaviateOutboxEntry.forUpsert(type, entityId, origin);
+        entry.setId(id);
+        return entry;
+    }
+
+    /**
+     * Prepares background upserts with the given chunks still to embed (none reused) and records every embedding request.
+     */
+    private List<List<String>> wirePreparedUpserts(Map<Long, List<String>> chunksByEntryId) {
+        doAnswer(invocation -> {
+            WeaviateOutboxEntry entry = invocation.getArgument(0);
+            List<String> chunks = chunksByEntryId.getOrDefault(entry.getId(), List.of());
+            var row = new SearchableEntityVectorWriter.PreparedRow("uuid-" + entry.getId(), Map.of(), chunks, new float[chunks.size()][]);
+            return new SearchableEntityWeaviateService.PreparedUpsert(entry, row, HASH);
+        }).when(searchableEntityWeaviateService).prepareOutboxEntry(any(WeaviateOutboxEntry.class));
+        List<List<String>> requests = new CopyOnWriteArrayList<>();
+        when(embeddingClient.embedDocuments(any())).thenAnswer(invocation -> {
+            List<String> inputs = List.copyOf(invocation.getArgument(0));
+            requests.add(inputs);
+            return inputs.stream().map(_ -> new float[] { 1f, 0f }).toList();
+        });
+        return requests;
+    }
+
+    @Test
+    void testDrainBeforeTheInitialDelay_neitherChecksTheIndexNorWrites() throws Exception {
+        var notReady = new WeaviateOutboxDispatcher(outboxRepository, syncStateRepository, searchableEntityWeaviateService, new WeaviateOutboxProperties(5, 100, 10, 300),
+                new WeaviateReconcileProperties(false, false, false, List.of(COURSE), 500, 100, 200, 1000, 5, 100, 100, 0.25), DEFAULT_EMBEDDING_PROPERTIES, embeddingClient,
+                rebuildService, new WeaviateMigrationProperties(30, 5, 120));
+
+        notReady.drain();
+
+        verify(rebuildService, never()).ensureIndexMatchesConfiguration();
+        verify(outboxRepository, never()).findDueLiveForDispatch(any(), anyInt());
+        verify(outboxRepository, never()).findDueBackgroundForDispatch(any(), anyInt());
+    }
+
+    @Test
+    void testDrain_appliesWritesOfUsersBeforeBackgroundWork() {
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        Map<String, String> weaviate = new HashMap<>();
+        wireInMemoryOutbox(table, weaviate);
+        WeaviateOutboxEntry background = entry(1L, COURSE, 1L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+        WeaviateOutboxEntry live = entry(2L, COURSE, 2L, WeaviateOutboxOrigin.LIVE);
+        table.add(background);
+        table.add(live);
+
+        dispatcher.drain();
+
+        InOrder inOrder = inOrder(searchableEntityWeaviateService);
+        inOrder.verify(searchableEntityWeaviateService).applyOutboxEntry(live);
+        inOrder.verify(searchableEntityWeaviateService).applyPrepared(any(), any());
+        assertThat(weaviate).containsEntry(COURSE + ":1", "1").containsEntry(COURSE + ":2", "2");
+        assertThat(table).isEmpty();
+    }
+
+    @Test
+    void testDrain_skipsABackgroundRowWhoseEntityHadANewerWriteInTheSameTurn() {
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        Map<String, String> weaviate = new HashMap<>();
+        wireInMemoryOutbox(table, weaviate);
+        // The reconcile row is older than the user's edit, but the edit is applied first; the reconcile row must not
+        // overwrite it afterwards.
+        WeaviateOutboxEntry staleReconcile = entry(1L, COURSE, 7L, WeaviateOutboxOrigin.RECONCILE_DRIFT);
+        WeaviateOutboxEntry userEdit = entry(2L, COURSE, 7L, WeaviateOutboxOrigin.LIVE);
+        table.add(staleReconcile);
+        table.add(userEdit);
+        // The collapse would also remove the older row; disable it to exercise the in-memory guard on its own.
+        doAnswer(_ -> null).when(outboxRepository).deleteSupersededByEntity(anyString(), anyLong(), anyLong());
+
+        dispatcher.drain();
+
+        verify(searchableEntityWeaviateService, never()).prepareOutboxEntry(staleReconcile);
+        verify(searchableEntityWeaviateService, never()).applyPrepared(any(), any());
+        assertThat(weaviate).containsEntry(COURSE + ":7", "2");
+        assertThat(table).isEmpty();
+    }
+
+    @Test
+    void testBackgroundStep_embedsTheChunksOfSeveralRowsTogetherAndSplitsByTheInputLimit() {
+        when(embeddingClient.maxInputsPerRequest()).thenReturn(2);
+        dispatcher = dispatcher(searchableEntityWeaviateService, new WeaviateOutboxProperties(5, 100, 10, 300), DEFAULT_EMBEDDING_PROPERTIES);
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        wireInMemoryOutbox(table, new HashMap<>());
+        table.add(entry(1L, COURSE, 1L, WeaviateOutboxOrigin.RECONCILE_MISSING));
+        table.add(entry(2L, COURSE, 2L, WeaviateOutboxOrigin.RECONCILE_MISSING));
+        // Row 2 shares chunk "b" with row 1, which is embedded only once.
+        List<List<String>> requests = wirePreparedUpserts(Map.of(1L, List.of("a", "b", "c"), 2L, List.of("b", "d", "e")));
+
+        dispatcher.drain();
+
+        assertThat(requests).containsExactly(List.of("a", "b"), List.of("c", "d"), List.of("e"));
+        ArgumentCaptor<Map<String, float[]>> embedded = ArgumentCaptor.captor();
+        verify(searchableEntityWeaviateService, times(2)).applyPrepared(any(), embedded.capture());
+        assertThat(embedded.getValue()).containsOnlyKeys("a", "b", "c", "d", "e");
+        assertThat(table).isEmpty();
+    }
+
+    @Test
+    void testBackgroundStep_leavesRowsUntouchedWhenTheRequestBudgetIsUsedUpAndStillAppliesWritesOfUsers() {
+        // One embedding request per minute, one input per request: the first row's chunk uses the whole budget.
+        when(embeddingClient.maxInputsPerRequest()).thenReturn(1);
+        dispatcher = dispatcher(searchableEntityWeaviateService, new WeaviateOutboxProperties(5, 100, 10, 300),
+                new WeaviateEmbeddingProperties(600, 1, 1, Duration.ofSeconds(3), Duration.ofSeconds(60)));
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        Map<String, String> weaviate = new HashMap<>();
+        wireInMemoryOutbox(table, weaviate);
+        WeaviateOutboxEntry first = entry(1L, COURSE, 1L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+        WeaviateOutboxEntry second = entry(2L, COURSE, 2L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+        table.add(first);
+        table.add(second);
+        List<List<String>> requests = wirePreparedUpserts(Map.of(1L, List.of("a"), 2L, List.of("b")));
+
+        long start = System.nanoTime();
+        dispatcher.drain();
+
+        assertThat(requests).containsExactly(List.of("a"));
+        assertThat(table).containsExactly(second);
+        assertThat(second.getAttempts()).as("a row left for later is not a failure").isZero();
+        verify(outboxRepository, never()).save(second);
+
+        // A user's write that arrives while the budget is used up is applied right away.
+        WeaviateOutboxEntry live = entry(3L, COURSE, 3L, WeaviateOutboxOrigin.LIVE);
+        table.add(live);
+        dispatcher.onOutboxEnqueued(new WeaviateOutboxEnqueuedEvent());
+
+        assertThat(weaviate).containsEntry(COURSE + ":3", "3");
+        assertThat(table).containsExactly(second);
+        assertThat(Duration.ofNanos(System.nanoTime() - start)).as("the dispatcher never waits for the budget").isLessThan(Duration.ofSeconds(5));
+    }
+
+    @Test
+    void testBackgroundStep_aRowNeedingMoreRequestsThanTheBudgetHoldsCompletesOverSeveralStepsWithoutRepeatingRequests() throws Exception {
+        // 600 requests per minute (10 per second), one chunk per request, and a row of 605 chunks: the first step uses the
+        // whole budget, the next one finishes the row with the vectors kept from the first.
+        when(embeddingClient.maxInputsPerRequest()).thenReturn(1);
+        dispatcher = dispatcher(searchableEntityWeaviateService, new WeaviateOutboxProperties(5, 100, 10, 300),
+                new WeaviateEmbeddingProperties(600, 600, 1, Duration.ofSeconds(3), Duration.ofSeconds(60)));
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        wireInMemoryOutbox(table, new HashMap<>());
+        WeaviateOutboxEntry entry = entry(1L, COURSE, 1L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+        table.add(entry);
+        List<String> chunks = java.util.stream.IntStream.range(0, 605).mapToObj(i -> "chunk " + i).toList();
+        List<List<String>> requests = wirePreparedUpserts(Map.of(1L, chunks));
+
+        dispatcher.drain();
+
+        // The budget refills while the first step runs, so the exact number depends on the speed of the machine.
+        assertThat(requests).hasSizeGreaterThanOrEqualTo(600);
+        if (requests.size() < 605) {
+            assertThat(table).as("not complete yet, and not a failure").containsExactly(entry);
+            Thread.sleep(1_100);
+            dispatcher.drain();
+        }
+        assertThat(entry.getAttempts()).isZero();
+
+        assertThat(requests).hasSize(605);
+        assertThat(requests.stream().flatMap(List::stream).distinct()).hasSize(605);
+        assertThat(table).isEmpty();
+    }
+
+    @Test
+    void testBackgroundStep_appliesWritesOfUsersBetweenTwoEmbeddingRequests() {
+        when(embeddingClient.maxInputsPerRequest()).thenReturn(1);
+        dispatcher = dispatcher(searchableEntityWeaviateService, new WeaviateOutboxProperties(5, 100, 10, 300), DEFAULT_EMBEDDING_PROPERTIES);
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        Map<String, String> weaviate = new HashMap<>();
+        wireInMemoryOutbox(table, weaviate);
+        table.add(entry(1L, COURSE, 1L, WeaviateOutboxOrigin.RECONCILE_MISSING));
+        wirePreparedUpserts(Map.of(1L, List.of("a", "b")));
+        WeaviateOutboxEntry live = entry(2L, COURSE, 2L, WeaviateOutboxOrigin.LIVE);
+        // A user edits something while the first request of the background row is running.
+        doAnswer(invocation -> {
+            List<String> inputs = invocation.getArgument(0);
+            if (inputs.equals(List.of("a"))) {
+                table.add(live);
+            }
+            return inputs.stream().map(_ -> new float[] { 1f, 0f }).toList();
+        }).when(embeddingClient).embedDocuments(any());
+
+        dispatcher.drain();
+
+        InOrder inOrder = inOrder(embeddingClient, searchableEntityWeaviateService);
+        inOrder.verify(embeddingClient).embedDocuments(List.of("a"));
+        inOrder.verify(searchableEntityWeaviateService).applyOutboxEntry(live);
+        inOrder.verify(embeddingClient).embedDocuments(List.of("b"));
+        inOrder.verify(searchableEntityWeaviateService).applyPrepared(any(), any());
+        assertThat(table).isEmpty();
+    }
+
+    @Test
+    void testBackgroundStep_aRowSupersededByAUserDeleteIsNotRetriedWhenItsEmbeddingFailed() {
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        Map<String, String> weaviate = new HashMap<>();
+        wireInMemoryOutbox(table, weaviate);
+        WeaviateOutboxEntry background = entry(1L, COURSE, 7L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+        table.add(background);
+        wirePreparedUpserts(Map.of(1L, List.of("a")));
+        WeaviateOutboxEntry userDelete = WeaviateOutboxEntry.forDeleteEntity(COURSE, 7L, WeaviateOutboxOrigin.LIVE);
+        userDelete.setId(2L);
+        // The embedding request fails, and meanwhile a user deletes the same entity.
+        doAnswer(_ -> {
+            table.add(userDelete);
+            throw new IllegalStateException("embedding endpoint unavailable");
+        }).when(embeddingClient).embedDocuments(any());
+
+        dispatcher.drain();
+
+        verify(searchableEntityWeaviateService).applyOutboxEntry(userDelete);
+        verify(outboxRepository, never()).save(background);
+        assertThat(background.getAttempts()).isZero();
+        assertThat(table).isEmpty();
+    }
+
+    @Test
+    void testBackgroundStep_aRowPreparedBeforeABulkDeleteIsReadAgainInsteadOfWritten() {
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        Map<String, String> weaviate = new HashMap<>();
+        wireInMemoryOutbox(table, weaviate);
+        WeaviateOutboxEntry background = entry(1L, COURSE, 7L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+        table.add(background);
+        wirePreparedUpserts(Map.of(1L, List.of("a")));
+        WeaviateOutboxEntry courseDeletion = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, "{\"courseId\":7}", WeaviateOutboxOrigin.LIVE);
+        courseDeletion.setId(2L);
+        // While the background row waits for its embedding, an instructor deletes the course.
+        AtomicInteger embeddingRequests = new AtomicInteger();
+        doAnswer(invocation -> {
+            if (embeddingRequests.getAndIncrement() == 0) {
+                table.add(courseDeletion);
+            }
+            return invocation.<List<String>>getArgument(0).stream().map(_ -> new float[] { 1f, 0f }).toList();
+        }).when(embeddingClient).embedDocuments(any());
+
+        dispatcher.drain();
+
+        verify(searchableEntityWeaviateService).applyOutboxEntry(courseDeletion);
+        verify(searchableEntityWeaviateService, never()).applyPrepared(any(), any());
+        assertThat(table).as("the row stays due, to be derived again from the database").containsExactly(background);
+        assertThat(background.getAttempts()).isZero();
+
+        // The next step reads the row again and reuses the vector computed before.
+        dispatcher.drain();
+
+        verify(searchableEntityWeaviateService, times(2)).prepareOutboxEntry(background);
+        verify(searchableEntityWeaviateService).applyPrepared(any(), any());
+        assertThat(embeddingRequests).hasValue(1);
+        assertThat(table).isEmpty();
+    }
+
+    @Test
+    void testBackgroundStep_aBulkDeleteWhoseAcknowledgementFailsStillStopsWaitingRows() {
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        wireInMemoryOutbox(table, new HashMap<>());
+        WeaviateOutboxEntry background = entry(1L, COURSE, 7L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+        table.add(background);
+        wirePreparedUpserts(Map.of(1L, List.of("a")));
+        WeaviateOutboxEntry courseDeletion = WeaviateOutboxEntry.forBulkDelete(WeaviateOutboxOperation.DELETE_ALL_FOR_COURSE, "{\"courseId\":7}", WeaviateOutboxOrigin.LIVE);
+        courseDeletion.setId(2L);
+        doAnswer(invocation -> {
+            table.add(courseDeletion);
+            return invocation.<List<String>>getArgument(0).stream().map(_ -> new float[] { 1f, 0f }).toList();
+        }).when(embeddingClient).embedDocuments(any());
+        // Weaviate applies the delete, but removing its outbox row fails (the database is briefly unavailable).
+        doThrow(new IllegalStateException("database unavailable")).when(outboxRepository).delete(courseDeletion);
+
+        dispatcher.drain();
+
+        verify(searchableEntityWeaviateService).applyOutboxEntry(courseDeletion);
+        verify(searchableEntityWeaviateService, never()).applyPrepared(any(), any());
+        assertThat(table).contains(background);
+    }
+
+    @Test
+    void testBackgroundStep_aRowWhoseVectorsAreAllReusedNeedsNoEmbeddingRequest() {
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        wireInMemoryOutbox(table, new HashMap<>());
+        table.add(entry(1L, COURSE, 1L, WeaviateOutboxOrigin.RECONCILE_DRIFT));
+        wirePreparedUpserts(Map.of(1L, List.of()));
+
+        dispatcher.drain();
+
+        verify(embeddingClient, never()).embedDocuments(any());
+        verify(searchableEntityWeaviateService).applyPrepared(any(), any());
+        assertThat(table).isEmpty();
+    }
+
+    @Test
+    void testBackgroundStep_aFailedEmbeddingRequestRetriesItsRowsWithBackoff() {
+        List<WeaviateOutboxEntry> table = new CopyOnWriteArrayList<>();
+        wireInMemoryOutbox(table, new HashMap<>());
+        WeaviateOutboxEntry entry = entry(1L, COURSE, 1L, WeaviateOutboxOrigin.RECONCILE_MISSING);
+        table.add(entry);
+        wirePreparedUpserts(Map.of(1L, List.of("a")));
+        doThrow(new IllegalStateException("embedding endpoint unavailable")).when(embeddingClient).embedDocuments(any());
+        doThrow(new IllegalStateException("chunk without vector")).when(searchableEntityWeaviateService).applyPrepared(any(), any());
+
+        dispatcher.drain();
+
+        assertThat(entry.getAttempts()).isEqualTo(1);
+        verify(outboxRepository).save(entry);
+        assertThat(table).containsExactly(entry);
     }
 }

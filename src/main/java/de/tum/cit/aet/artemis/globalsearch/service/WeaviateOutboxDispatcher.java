@@ -2,9 +2,16 @@ package de.tum.cit.aet.artemis.globalsearch.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
+import java.time.Clock;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
@@ -20,13 +27,18 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateDispatcherExecutorConfiguration;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEmbeddingProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateMigrationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateOutboxProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateReconcileProperties;
 import de.tum.cit.aet.artemis.globalsearch.domain.SearchableEntitySyncState;
 import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
+import de.tum.cit.aet.artemis.globalsearch.exception.EmbeddingFailedException;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntitySyncStateRepository;
 import de.tum.cit.aet.artemis.globalsearch.repository.WeaviateOutboxRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.embedding.SearchableEntityEmbeddingClient;
 
 /**
  * Single-writer dispatcher that drains the {@code weaviate_outbox} and performs the actual writes to the
@@ -88,6 +100,61 @@ public class WeaviateOutboxDispatcher {
 
     private final WeaviateReconcileProperties reconcileProperties;
 
+    private final SearchableEntityEmbeddingClient embeddingClient;
+
+    /**
+     * Pace of background work (reconcile rows); writes for user actions are not limited by it.
+     */
+    private final BackgroundWriteBudget backgroundBudget;
+
+    /**
+     * Rows of one background step.
+     */
+    static final int BACKGROUND_STEP_ROWS = 25;
+
+    /**
+     * Vectors computed for rows that a step could not complete before its request budget ran out, by chunk text; the next
+     * step starts with them. It holds at most the chunks of one step's rows and is only used by the drain thread.
+     */
+    private final Map<String, float[]> carriedVectors = new HashMap<>();
+
+    /**
+     * Number of bulk deletes confirmed so far. A bulk delete has no entity key, so the per-entity guard cannot tell which
+     * waiting background rows it supersedes; a row prepared before it is therefore not written but re-read later.
+     */
+    private long confirmedBulkDeletes;
+
+    /**
+     * A background row waiting for its embeddings, with the number of bulk deletes confirmed when it was prepared.
+     */
+    private record WaitingRow(SearchableEntityWeaviateService.PreparedEntry prepared, long bulkDeletesAtPrepare) {
+    }
+
+    /**
+     * Checks the index against the configuration and rebuilds it when needed; runs before the first write.
+     */
+    private final SearchableEntityIndexRebuildService rebuildService;
+
+    /**
+     * Failed index checks that log a warning; later ones log an error.
+     */
+    private final int indexCheckWarnAttempts;
+
+    private final long indexCheckRetryDelayMillis;
+
+    /**
+     * Whether the index has been checked against the configuration. Until then nothing is written, so no row lands in a
+     * collection that is about to be rebuilt. Only the drain thread reads and writes it, under {@link #drainLock}.
+     */
+    private boolean indexReady;
+
+    /**
+     * Earliest time of the next index check, in epoch milliseconds.
+     */
+    private long nextIndexCheckAt;
+
+    private int failedIndexChecks;
+
     /**
      * Serializes drains on this node so the scheduled tick and the after-commit nudge never overlap.
      */
@@ -100,12 +167,21 @@ public class WeaviateOutboxDispatcher {
     private final AtomicBoolean drainPending = new AtomicBoolean();
 
     public WeaviateOutboxDispatcher(WeaviateOutboxRepository outboxRepository, SearchableEntitySyncStateRepository syncStateRepository,
-            SearchableEntityWeaviateService searchableEntityWeaviateService, WeaviateOutboxProperties outboxProperties, WeaviateReconcileProperties reconcileProperties) {
+            SearchableEntityWeaviateService searchableEntityWeaviateService, WeaviateOutboxProperties outboxProperties, WeaviateReconcileProperties reconcileProperties,
+            WeaviateEmbeddingProperties embeddingProperties, SearchableEntityEmbeddingClient embeddingClient, SearchableEntityIndexRebuildService rebuildService,
+            WeaviateMigrationProperties migrationProperties) {
         this.outboxRepository = outboxRepository;
         this.syncStateRepository = syncStateRepository;
         this.searchableEntityWeaviateService = searchableEntityWeaviateService;
         this.outboxProperties = outboxProperties;
         this.reconcileProperties = reconcileProperties;
+        this.embeddingClient = embeddingClient;
+        this.backgroundBudget = new BackgroundWriteBudget(embeddingProperties.backgroundMaxRowsPerMinute(), embeddingProperties.backgroundMaxRequestsPerMinute(),
+                Clock.systemUTC());
+        this.rebuildService = rebuildService;
+        this.indexCheckWarnAttempts = migrationProperties.maxAttempts();
+        this.indexCheckRetryDelayMillis = migrationProperties.retryDelaySeconds() * 1000;
+        this.nextIndexCheckAt = System.currentTimeMillis() + migrationProperties.initialDelaySeconds() * 1000;
     }
 
     /**
@@ -125,12 +201,12 @@ public class WeaviateOutboxDispatcher {
      * Nudge so an enqueue made on this node is applied promptly, keeping freshness comparable to the previous
      * fire-and-forget write. Runs asynchronously off the caller's thread. The enqueue saves its outbox row through
      * a repository call, whose transaction has committed by the time the call returns and the event is published,
-     * so the row is already visible to {@link #drainBatch} when this listener runs. Should a caller ever publish
+     * so the row is already visible to the drain when this listener runs. Should a caller ever publish
      * from inside a transaction of its own, the nudge simply sees no row yet and the scheduled tick drains it.
      *
      * @param event the marker event published by {@code SearchableEntityWeaviateService} after an enqueue
      */
-    @Async
+    @Async(WeaviateDispatcherExecutorConfiguration.EXECUTOR_NAME)
     @EventListener
     public void onOutboxEnqueued(WeaviateOutboxEnqueuedEvent event) {
         drain();
@@ -148,6 +224,9 @@ public class WeaviateOutboxDispatcher {
                 return;
             }
             try {
+                if (!ensureIndexReady()) {
+                    return;
+                }
                 // Give the drain thread an authorization context, matching the previous @Async write behavior.
                 SecurityUtils.setAuthorizationObject();
                 while (drainPending.getAndSet(false)) {
@@ -168,78 +247,275 @@ public class WeaviateOutboxDispatcher {
     }
 
     /**
-     * Drains complete due batches. A full batch may have more rows behind it, while a short batch completes the
-     * current pass and lets {@link #drain()} check whether a concurrent trigger recorded more work.
+     * One drain turn. Writes for user actions ({@code LIVE} rows) always go first: all due ones are applied, then one
+     * small background step runs, then due {@code LIVE} rows again, and so on. The turn ends when no background row is
+     * due or a background budget is exhausted; the turn never waits for a budget, so a {@code LIVE} row arriving later is
+     * applied on the next nudge without delay.
+     * <p>
+     * {@code confirmedInTurn} records, per entity, the highest outbox id confirmed in this turn. An older entry for the
+     * same entity that is still in memory (read before the newer one was confirmed) is skipped and removed as superseded,
+     * so it can never overwrite the newer write or lower its {@code source_seq}.
      */
     private void drainAllDueRows() {
-        int processed;
-        do {
-            processed = drainBatch();
-        }
-        while (processed == outboxProperties.batchSize());
-    }
-
-    /**
-     * Runs the given work while no drain can apply anything, waiting first for an in-flight drain to finish.
-     * <p>
-     * The V0→V1 migration is the only code that writes the collection without going through the outbox: it checks
-     * that an exercise is absent, loads it from the database, then batch-inserts it. A drain landing inside that
-     * sequence would be overwritten with the older content the migration loaded, and the ledger would then vouch for a
-     * row that no longer holds it. Holding the drain lock for the migration keeps this dispatcher the collection's only
-     * concurrent writer: every change made meanwhile stays queued and is applied afterwards, re-derived from the
-     * database, so it always lands on top of the migration's write. A drain triggered in the meantime returns at once
-     * ({@link #drain()} only tries the lock), and the next tick after the work finishes picks up the backlog.
-     *
-     * @param work the work to run exclusively with respect to drains; its exceptions propagate
-     */
-    public void runWithDrainsPaused(Runnable work) {
-        drainLock.lock();
-        try {
-            work.run();
-        }
-        finally {
-            drainLock.unlock();
-        }
-    }
-
-    /**
-     * Reads one batch of due rows (no transaction, no lock) and processes each.
-     *
-     * @return the number of rows read (equal to the configured batch size while more may remain)
-     */
-    private int drainBatch() {
-        ZonedDateTime now = ZonedDateTime.now();
-        List<WeaviateOutboxEntry> batch = outboxRepository.findDueForDispatch(now, outboxProperties.batchSize());
-        for (WeaviateOutboxEntry entry : batch) {
-            processEntry(entry, now);
-        }
-        return batch.size();
-    }
-
-    /**
-     * Applies a single outbox entry to Weaviate outside any transaction, then records the outcome:
-     * {@link #confirmWrite} on success, {@link #scheduleRetry} on failure.
-     */
-    private void processEntry(WeaviateOutboxEntry entry, ZonedDateTime now) {
-        try {
-            Optional<String> writtenContentHash = searchableEntityWeaviateService.applyOutboxEntry(entry);
-            logApplied(entry, writtenContentHash);
-            if (entry.getAttempts() > 0) {
-                log.info("Weaviate outbox entry {} succeeded after {} failed attempt(s)", entry.getId(), entry.getAttempts());
+        Map<String, Long> confirmedInTurn = new HashMap<>();
+        while (true) {
+            applyDueLiveRows(confirmedInTurn);
+            if (!runBackgroundStep(confirmedInTurn)) {
+                return;
             }
-            confirmWrite(entry, now, writtenContentHash);
+        }
+    }
+
+    private void applyDueLiveRows(Map<String, Long> confirmedInTurn) {
+        List<WeaviateOutboxEntry> batch;
+        do {
+            ZonedDateTime now = ZonedDateTime.now();
+            batch = outboxRepository.findDueLiveForDispatch(now, outboxProperties.batchSize());
+            for (WeaviateOutboxEntry entry : batch) {
+                if (!skipIfSuperseded(entry, confirmedInTurn)) {
+                    processEntry(entry, now, confirmedInTurn);
+                }
+            }
+        }
+        while (batch.size() == outboxProperties.batchSize());
+    }
+
+    /**
+     * Applies up to {@link #BACKGROUND_STEP_ROWS} due background rows. Each row takes one row budget unit. The new chunks
+     * of the rows are collected and embedded together, {@code max-inputs-per-request} per request, and each request takes
+     * one request budget unit. Between two requests, due {@code LIVE} rows are applied, so a write for a user action waits
+     * for at most one embedding request. A row is written as soon as all its chunks have vectors; a write for the same
+     * entity confirmed meanwhile supersedes it.
+     * <p>
+     * When the request budget runs out, the step ends: rows that are not complete stay due, untouched, and the vectors
+     * already computed for them are kept for the next step ({@link #carriedVectors}), so a row that needs more requests
+     * than one minute allows still completes over several steps.
+     *
+     * @return whether the step used its whole page within the budget and another step may follow in this turn
+     */
+    private boolean runBackgroundStep(Map<String, Long> confirmedInTurn) {
+        if (!backgroundBudget.hasRowCapacity()) {
+            return false;
+        }
+        ZonedDateTime now = ZonedDateTime.now();
+        List<WeaviateOutboxEntry> rows = outboxRepository.findDueBackgroundForDispatch(now, BACKGROUND_STEP_ROWS);
+        Map<String, float[]> embedded = new HashMap<>(carriedVectors);
+        carriedVectors.clear();
+        Set<String> failedChunks = new HashSet<>();
+        Set<String> pendingChunks = new LinkedHashSet<>();
+        List<WaitingRow> waiting = new ArrayList<>();
+        boolean rowBudgetExhausted = false;
+        boolean requestBudgetExhausted = false;
+        for (WeaviateOutboxEntry entry : rows) {
+            if (skipIfSuperseded(entry, confirmedInTurn)) {
+                continue;
+            }
+            if (!backgroundBudget.tryAcquireRow()) {
+                rowBudgetExhausted = true;
+                break;
+            }
+            try {
+                SearchableEntityWeaviateService.PreparedEntry prepared = searchableEntityWeaviateService.prepareOutboxEntry(entry);
+                missingChunks(prepared).stream().filter(chunk -> !embedded.containsKey(chunk)).forEach(pendingChunks::add);
+                waiting.add(new WaitingRow(prepared, confirmedBulkDeletes));
+            }
+            catch (Exception e) {
+                recordFailure(entry, e);
+                continue;
+            }
+            while (pendingChunks.size() >= embeddingClient.maxInputsPerRequest() && !requestBudgetExhausted) {
+                requestBudgetExhausted = !embedNextRequest(pendingChunks, embedded, failedChunks, confirmedInTurn);
+                applyCompleteRows(waiting, embedded, failedChunks, now, confirmedInTurn);
+            }
+            if (requestBudgetExhausted) {
+                break;
+            }
+        }
+        // The rows taken so far are embedded even when the row budget ran out; only the request budget stops this.
+        while (!pendingChunks.isEmpty() && !requestBudgetExhausted) {
+            requestBudgetExhausted = !embedNextRequest(pendingChunks, embedded, failedChunks, confirmedInTurn);
+        }
+        applyCompleteRows(waiting, embedded, failedChunks, now, confirmedInTurn);
+        waiting.forEach(row -> carryVectors(row, embedded));
+        return !rowBudgetExhausted && !requestBudgetExhausted && rows.size() == BACKGROUND_STEP_ROWS;
+    }
+
+    private static List<String> missingChunks(SearchableEntityWeaviateService.PreparedEntry prepared) {
+        return prepared instanceof SearchableEntityWeaviateService.PreparedUpsert upsert ? upsert.row().missingChunks() : List.of();
+    }
+
+    /**
+     * Sends one embedding request for the first {@code max-inputs-per-request} pending chunks, then applies the due
+     * {@code LIVE} rows. A failed request marks its chunks as failed, so their rows are retried with backoff.
+     *
+     * @return false if the request budget is used up (nothing was sent)
+     */
+    private boolean embedNextRequest(Set<String> pendingChunks, Map<String, float[]> embedded, Set<String> failedChunks, Map<String, Long> confirmedInTurn) {
+        if (!backgroundBudget.tryAcquireRequest()) {
+            return false;
+        }
+        List<String> batch = pendingChunks.stream().limit(embeddingClient.maxInputsPerRequest()).toList();
+        batch.forEach(pendingChunks::remove);
+        try {
+            List<float[]> vectors = embeddingClient.embedDocuments(batch);
+            for (int i = 0; i < batch.size(); i++) {
+                embedded.put(batch.get(i), vectors.get(i));
+            }
         }
         catch (Exception e) {
-            int attempt = entry.getAttempts() + 1;
-            // Compute the retry time now, not from the batch-start timestamp: a slow write could otherwise make the backoff already due.
-            ZonedDateTime nextAttempt = ZonedDateTime.now().plusSeconds(backoffSeconds(attempt));
-            scheduleRetry(entry, nextAttempt);
-            if (attempt <= MAX_WARN_ATTEMPTS) {
-                log.warn("Failed to apply Weaviate outbox entry {} (attempt {}), retrying after {}: {}", entry.getId(), attempt, nextAttempt, e.getMessage());
+            failedChunks.addAll(batch);
+            log.warn("Embedding request for {} chunks failed: {}", batch.size(), e.getMessage());
+        }
+        applyDueLiveRows(confirmedInTurn);
+        return true;
+    }
+
+    /**
+     * Drops every waiting row that a confirmed write for the same entity superseded, leaves every waiting row prepared
+     * before a confirmed bulk delete due for a later step, writes every waiting row whose chunks all have vectors, and
+     * records a failure for every row with a failed chunk; all of them leave the waiting list.
+     */
+    private void applyCompleteRows(List<WaitingRow> waiting, Map<String, float[]> embedded, Set<String> failedChunks, ZonedDateTime now, Map<String, Long> confirmedInTurn) {
+        var iterator = waiting.iterator();
+        while (iterator.hasNext()) {
+            WaitingRow row = iterator.next();
+            SearchableEntityWeaviateService.PreparedEntry prepared = row.prepared();
+            List<String> missing = missingChunks(prepared);
+            // A write for the same entity confirmed meanwhile (for example a user's delete) makes the row obsolete,
+            // whether or not its chunks could be embedded.
+            if (skipIfSuperseded(prepared.entry(), confirmedInTurn)) {
+                iterator.remove();
+            }
+            else if (row.bulkDeletesAtPrepare() != confirmedBulkDeletes) {
+                // A bulk delete applied meanwhile may have removed this entity; leave the row due so it is re-derived
+                // from the database in a later step, and keep its vectors so nothing is embedded twice.
+                iterator.remove();
+                carryVectors(row, embedded);
+            }
+            else if (missing.stream().anyMatch(failedChunks::contains)) {
+                iterator.remove();
+                recordFailure(prepared.entry(), new EmbeddingFailedException("An embedding request for the row failed"));
+            }
+            else if (missing.stream().allMatch(embedded::containsKey)) {
+                iterator.remove();
+                applyPrepared(prepared, embedded, now, confirmedInTurn);
+            }
+        }
+    }
+
+    private void carryVectors(WaitingRow row, Map<String, float[]> embedded) {
+        missingChunks(row.prepared()).stream().filter(embedded::containsKey).forEach(chunk -> carriedVectors.put(chunk, embedded.get(chunk)));
+    }
+
+    /**
+     * Skips an entry whose entity already had a newer write confirmed in this turn, and removes it as superseded.
+     *
+     * @return whether the entry was skipped
+     */
+    private boolean skipIfSuperseded(WeaviateOutboxEntry entry, Map<String, Long> confirmedInTurn) {
+        if (entry.getEntityId() == null) {
+            return false;
+        }
+        Long confirmed = confirmedInTurn.get(entityKey(entry));
+        if (confirmed == null || confirmed < entry.getId()) {
+            return false;
+        }
+        outboxRepository.delete(entry);
+        return true;
+    }
+
+    private static String entityKey(WeaviateOutboxEntry entry) {
+        return entry.getEntityType() + ":" + entry.getEntityId();
+    }
+
+    /**
+     * Makes sure the index matches the configuration before anything is written: the first drain after the initial delay
+     * ({@code artemis.weaviate.migration.initial-delay-seconds}) runs {@link SearchableEntityIndexRebuildService}, which
+     * rebuilds the collection if its signature does not match. It runs under the drain lock, so no write can land in a
+     * collection while it is replaced; changes made meanwhile stay queued and are applied afterwards, re-derived from the
+     * database. A failed check (for example, Weaviate being unavailable) is retried every
+     * {@code retry-delay-seconds} until it succeeds; until then the outbox keeps every write.
+     *
+     * @return whether the index is ready for writes
+     */
+    private boolean ensureIndexReady() {
+        if (indexReady) {
+            return true;
+        }
+        long now = System.currentTimeMillis();
+        if (now < nextIndexCheckAt) {
+            return false;
+        }
+        try {
+            rebuildService.ensureIndexMatchesConfiguration();
+            indexReady = true;
+            return true;
+        }
+        catch (Exception exception) {
+            failedIndexChecks++;
+            nextIndexCheckAt = now + indexCheckRetryDelayMillis;
+            if (failedIndexChecks < indexCheckWarnAttempts) {
+                log.warn("Global search index check attempt {} failed; retrying in {}s. Index writes stay queued until it succeeds.", failedIndexChecks,
+                        indexCheckRetryDelayMillis / 1000, exception);
             }
             else {
-                log.debug("Failed to apply Weaviate outbox entry {} (attempt {}), retrying after {}: {}", entry.getId(), attempt, nextAttempt, e.getMessage());
+                log.error("Global search index check attempt {} failed; retrying in {}s. Index writes stay queued until it succeeds. Check that Weaviate is reachable.",
+                        failedIndexChecks, indexCheckRetryDelayMillis / 1000, exception);
             }
+            return false;
+        }
+    }
+
+    /**
+     * Applies a single outbox entry to Weaviate outside any transaction, embedding its missing chunks right away, then
+     * records the outcome: {@link #confirmWrite} on success, {@link #scheduleRetry} on failure.
+     */
+    private void processEntry(WeaviateOutboxEntry entry, ZonedDateTime now, Map<String, Long> confirmedInTurn) {
+        try {
+            Optional<String> writtenContentHash = searchableEntityWeaviateService.applyOutboxEntry(entry);
+            recordSuccess(entry, now, writtenContentHash, confirmedInTurn);
+        }
+        catch (Exception e) {
+            recordFailure(entry, e);
+        }
+    }
+
+    private void applyPrepared(SearchableEntityWeaviateService.PreparedEntry prepared, Map<String, float[]> embedded, ZonedDateTime now, Map<String, Long> confirmedInTurn) {
+        try {
+            Optional<String> writtenContentHash = searchableEntityWeaviateService.applyPrepared(prepared, embedded);
+            recordSuccess(prepared.entry(), now, writtenContentHash, confirmedInTurn);
+        }
+        catch (Exception e) {
+            recordFailure(prepared.entry(), e);
+        }
+    }
+
+    private void recordSuccess(WeaviateOutboxEntry entry, ZonedDateTime now, Optional<String> writtenContentHash, Map<String, Long> confirmedInTurn) {
+        logApplied(entry, writtenContentHash);
+        if (entry.getAttempts() > 0) {
+            log.info("Weaviate outbox entry {} succeeded after {} failed attempt(s)", entry.getId(), entry.getAttempts());
+        }
+        // Record the write in memory first: Weaviate already holds it, so waiting background rows must respect it even if
+        // acknowledging the outbox row below fails and is retried.
+        if (entry.getEntityId() != null) {
+            confirmedInTurn.merge(entityKey(entry), entry.getId(), Math::max);
+        }
+        else {
+            confirmedBulkDeletes++;
+        }
+        confirmWrite(entry, now, writtenContentHash);
+    }
+
+    private void recordFailure(WeaviateOutboxEntry entry, Exception e) {
+        int attempt = entry.getAttempts() + 1;
+        // Compute the retry time now, not from the batch-start timestamp: a slow write could otherwise make the backoff already due.
+        ZonedDateTime nextAttempt = ZonedDateTime.now().plusSeconds(backoffSeconds(attempt));
+        scheduleRetry(entry, nextAttempt);
+        if (attempt <= MAX_WARN_ATTEMPTS) {
+            log.warn("Failed to apply Weaviate outbox entry {} (attempt {}), retrying after {}: {}", entry.getId(), attempt, nextAttempt, e.getMessage());
+        }
+        else {
+            log.debug("Failed to apply Weaviate outbox entry {} (attempt {}), retrying after {}: {}", entry.getId(), attempt, nextAttempt, e.getMessage());
         }
     }
 

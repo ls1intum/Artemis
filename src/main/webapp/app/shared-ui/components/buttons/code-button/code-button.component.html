@@ -112,6 +112,10 @@
                     [routerLink]="routerLinkForRepositoryView()"
                     target="_blank"
                     rel="noopener noreferrer"
+                    [attr.aria-label]="'artemisApp.exerciseActions.openRepositoryReadOnly' | artemisTranslate"
+                    [pTooltip]="'artemisApp.exerciseActions.openRepositoryReadOnly' | artemisTranslate"
+                    tooltipPosition="top"
+                    appendTo="body"
                 >
                     <fa-icon [icon]="faExternalLink" />
                 </a>

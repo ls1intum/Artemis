@@ -53,6 +53,7 @@
                 "lecture": "Vortrag",
                 "channel": "Kanal",
                 "user": "Benutzer",
+                "allMembers": "Alle Mitglieder dieses Gruppenchats benachrichtigen",
                 "faq": "FAQ",
                 "emoji": "Emoji"
             },
@@ -170,6 +171,7 @@
                 "created": "Antwort erfolgreich erstellt",
                 "deleted": "Antwort erfolgreich gelöscht",
                 "deleteAnswer": "Antwort löschen",
+                "resolvesPost": "Hat die Frage gelöst",
                 "unverifiedIris": {
                     "badge": "Wartet auf Tutorprüfung",
                     "approve": "Freigeben",

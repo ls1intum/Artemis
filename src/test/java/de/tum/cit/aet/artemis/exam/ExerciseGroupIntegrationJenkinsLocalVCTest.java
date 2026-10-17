@@ -376,6 +376,10 @@ class ExerciseGroupIntegrationJenkinsLocalVCTest extends AbstractSpringIntegrati
         exercise1.setTitle("duplicated title");
         exercise2.setTitle("duplicated title");
         examRepository.save(exam);
+        // The import names the exercises it takes over by id and refuses a request without one. The check of the titles runs before the
+        // source exercises are read, so the ids only have to be there; the exercises themselves are not stored.
+        exercise1.setId(1_000_001L);
+        exercise2.setId(1_000_002L);
 
         var response = request.postWithoutResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group",
                 List.of(ExerciseGroupImportDTO.of(exerciseGroup)), HttpStatus.BAD_REQUEST, null);

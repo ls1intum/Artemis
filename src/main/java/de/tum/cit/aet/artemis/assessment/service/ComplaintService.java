@@ -150,6 +150,9 @@ public class ComplaintService {
         // When a student complains, a tutor has to manually correct the submission, so it is no longer automatic
         if (originalResult.getAssessmentType() == AssessmentType.AUTOMATIC) {
             originalResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+            // An automatic result holds no correction round, but a manual one has to: the tutor opens the complaint through the result of round 0,
+            // and a manual result without a round is found by nobody, so the submission would be handed out without any result at all.
+            originalResult.setCorrectionRound(0);
         }
         Complaint complaint = new Complaint();
         complaint.setComplaintText(complaintRequest.complaintText());

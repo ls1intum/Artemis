@@ -56,8 +56,9 @@ public class NewAnswerNotification extends CourseNotification {
 
     @Override
     public String getRelativeWebAppUrl() {
-        return "/courses/" + courseId + "/communication?conversationId=" + payload.channelId() + "&focusPostId=" + payload.postId() + "&openThreadOnFocus=1&postInThread="
-                + payload.replyId();
+        // messageId is the parent post that seeds the thread; focusReplyId highlights the reply within it.
+        return "/courses/" + courseId + "/communication?conversationId=" + payload.channelId() + "&focusPostId=" + payload.postId() + "&openThreadOnFocus=1&messageId="
+                + payload.postId() + "&focusReplyId=" + payload.replyId();
     }
 
     @Override

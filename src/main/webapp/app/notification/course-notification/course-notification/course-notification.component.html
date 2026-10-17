@@ -43,11 +43,7 @@
 
             <div class="course-notification-content-wrap w-full">
                 <strong [jhiTranslate]="'artemisApp.courseNotification.' + notificationType() + '.title'" [translateValues]="notificationParameters()"></strong>
-                <div
-                    class="course-notification-content"
-                    [jhiTranslate]="'artemisApp.courseNotification.' + notificationType() + '.content'"
-                    [translateValues]="notificationParameters()"
-                ></div>
+                <div class="course-notification-content" [jhiTranslate]="notificationContentKey()" [translateValues]="notificationParameters()"></div>
             </div>
 
             @if (!isHideTime()) {

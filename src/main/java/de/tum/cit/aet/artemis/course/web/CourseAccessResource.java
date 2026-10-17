@@ -216,11 +216,14 @@ public class CourseAccessResource {
      *
      * @param courseId    the id of the course
      * @param loginOrName the login or name by which to search users
-     * @return the ResponseEntity with status 200 (OK) and with body all users
+     * @param page        the page number to retrieve
+     * @param size        the number of users per page
+     * @return the ResponseEntity with status 200 (OK) and with a page of matching users
      */
     @GetMapping("courses/{courseId}/students/search")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<UserDTO>> searchStudentsInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName) {
+    public ResponseEntity<List<UserDTO>> searchStudentsInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName,
+            @RequestParam(defaultValue = "0") @Min(0) int page, @RequestParam(defaultValue = "25") @Min(1) @Max(100) int size) {
         log.debug("REST request to search for students in course : {} with login or name : {}", courseId, loginOrName);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
@@ -228,10 +231,10 @@ public class CourseAccessResource {
         if (loginOrName.length() < 3) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer.");
         }
-        final Page<UserDTO> page = userRepository.searchUsersByLoginOrNameInCourseWithRolesAndConvertToDTO(PageRequest.of(0, 25), loginOrName, courseId,
+        final Page<UserDTO> resultPage = userRepository.searchUsersByLoginOrNameInCourseWithRolesAndConvertToDTO(PageRequest.of(page, size), loginOrName, courseId,
                 Set.of(CourseRole.STUDENT));
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), resultPage);
+        return new ResponseEntity<>(resultPage.getContent(), headers, HttpStatus.OK);
     }
 
     /**

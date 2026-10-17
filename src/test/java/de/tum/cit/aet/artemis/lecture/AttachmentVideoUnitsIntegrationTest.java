@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.lecture;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,9 +25,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.ResourceUtils;
@@ -165,6 +170,15 @@ class AttachmentVideoUnitsIntegrationTest extends AbstractSpringIntegrationIndep
         var filePartWord = createLectureFile(false);
         request.postWithMultipartFile("/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/upload", null, "upload", filePartWord,
                 LectureUnitSplitInformationDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void uploadSlidesForProcessing_corruptedPdf_shouldReturnBadRequest() throws Exception {
+        var corruptedPdf = new MockMultipartFile("file", "corrupted.pdf", MediaType.APPLICATION_PDF_VALUE, "This is plain text, not a PDF document".getBytes());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units/upload").file(corruptedPdf);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("invalidPdf"));
     }
 
     @Test

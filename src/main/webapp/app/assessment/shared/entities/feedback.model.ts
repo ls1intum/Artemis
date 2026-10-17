@@ -228,6 +228,9 @@ export class Feedback implements BaseEntity {
      * Get the referenced line range for referenced programming feedbacks, or undefined.
      * Typical reference format for programming feedback: `file:src/com/example/package/MyClass.java_line:13-15`.
      * Example output in this case: `{ start: 13, end: 15 }`
+     *
+     * Line 0 is a valid line: the online code editor stores the line of an inline feedback 0-based, so a feedback on the
+     * first line of a file has the reference `file:<path>_line:0`.
      */
     public static getReferenceLineRange(feedback: Feedback): { start: number; end: number } | undefined {
         if (!feedback.reference?.startsWith(this.PROGRAMMING_REFERENCE_PREFIX)) {
@@ -240,10 +243,14 @@ export class Feedback implements BaseEntity {
         if (indexOfLine <= this.PROGRAMMING_REFERENCE_PREFIX.length || !filePath.trim()) {
             return undefined;
         }
+        // The pattern only admits non-negative integers, so there is no lower bound to check beyond it
         const lineRange = feedback.reference.substring(indexOfLine + this.PROGRAMMING_REFERENCE_LINE_SEPERATOR.length).match(/^(\d+)(?:-(\d+))?$/);
-        const start = Number(lineRange?.[1]);
-        const end = Number(lineRange?.[2] ?? lineRange?.[1]);
-        if (!lineRange || start <= 0 || end <= 0 || end < start) {
+        if (!lineRange) {
+            return undefined;
+        }
+        const start = Number(lineRange[1]);
+        const end = Number(lineRange[2] ?? lineRange[1]);
+        if (end < start) {
             return undefined;
         }
         return { start, end };

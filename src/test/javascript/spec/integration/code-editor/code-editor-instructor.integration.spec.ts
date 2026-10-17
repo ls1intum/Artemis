@@ -78,7 +78,6 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService } from 'primeng/dynamicdialog';
 import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
-import { mockCodeEditorMonacoViewChildren } from 'test/helpers/mocks/mock-instance.helper';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -108,9 +107,6 @@ describe('CodeEditorInstructorIntegration', () => {
     let routeSubject: Subject<Params>;
 
     const mockProfileInfo = { activeModuleFeatures: ['iris'] } as ProfileInfo;
-
-    // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
-    mockCodeEditorMonacoViewChildren();
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({

@@ -175,6 +175,8 @@ public class CourseOverviewExerciseService {
         }
         if (!teamExerciseIds.isEmpty()) {
             rows.addAll(studentParticipationRepository.findTeamRowsForCourseOverview(studentId, teamExerciseIds));
+            // The student practices a team exercise on their own: that participation is keyed by the student, not by the team, and is the only one of the student in the exercise.
+            rows.addAll(studentParticipationRepository.findIndividualRowsForCourseOverview(studentId, teamExerciseIds, true));
         }
 
         Map<Long, ExerciseForCourseOverviewDTO> detailsById = exerciseDetails.stream().collect(Collectors.toMap(ExerciseForCourseOverviewDTO::id, Function.identity()));

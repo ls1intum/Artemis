@@ -12,6 +12,8 @@ import javax.sql.DataSource;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -78,6 +80,39 @@ class CourseConfigurationUpdateIntegrationTest extends AbstractSpringIntegration
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/course/courses/" + courseId).file(coursePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
         MvcResult result = request.performMvcRequest(builder).andExpect(status().isOk()).andReturn();
         return mapper.readValue(result.getResponse().getContentAsString(), CourseManagementDTO.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCoursePersistsPresentationAssessmentsEnabled(boolean enabled) throws Exception {
+        var configuration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
+        configuration.setPresentationAssessmentsEnabled(!enabled);
+        courseConfigurationRepository.save(configuration);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.put("presentationAssessmentsEnabled", enabled);
+
+        updateCourse(course.getId(), update);
+
+        assertThat(courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow().isPresentationAssessmentsEnabled()).isEqualTo(enabled);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateCoursePreservesOmittedPresentationAssessmentsEnabled(boolean enabled) throws Exception {
+        var configuration = courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow();
+        configuration.setPresentationAssessmentsEnabled(enabled);
+        courseConfigurationRepository.save(configuration);
+        CourseManagementDTO loaded = request.get("/api/course/courses/" + course.getId(), HttpStatus.OK, CourseManagementDTO.class);
+        ObjectNode update = request.getObjectMapper().valueToTree(loaded);
+        update.remove("presentationAssessmentsEnabled");
+        update.put("description", "Unrelated change preserving presentation settings");
+
+        updateCourse(course.getId(), update);
+
+        assertThat(courseConfigurationRepository.findByCourseId(course.getId()).orElseThrow().isPresentationAssessmentsEnabled()).isEqualTo(enabled);
     }
 
     @Test

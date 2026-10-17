@@ -79,27 +79,24 @@ public class SubmissionFilterService {
             Optional<ZonedDateTime> optionalDueDate = ExerciseDateService.getDueDate(participation);
             return optionalDueDate.map(dueDate -> programmingSubmission.getSubmissionDate() != null && programmingSubmission.getSubmissionDate().isBefore(dueDate)).orElse(true);
         }
-        // if the result is not rated, we don't consider it
-        if (!latestResult.isRated()) {
-            return false;
-        }
-        // the latest rated automatic (or athena based) result can always be chosen
+        // the latest automatic (or athena based) result can always be chosen if it is rated, a result that is not rated is not considered
         if (!latestResult.isManual()) {
-            return true;
+            return latestResult.isRated();
         }
-        // a manual result may only be shared if its assessment is complete and the assessment due date has passed
+        // a manual result may only be shared if it is rated, its assessment is complete and the assessment due date has passed
         boolean isAssessmentPeriodOverOrIgnored = ignoreAssessmentDueDate || ExerciseDateService.isAfterAssessmentDueDate(exercise);
         if (isAssessmentPeriodOverOrIgnored && latestResult.isAssessmentComplete()) {
-            return true;
+            return latestResult.isRated();
         }
         /*
          * The last submission of manually graded programming exercises can contain automatic and manual results:
          * The first result is automatic, because that is the code that the student submitted and is evaluated by the automatic tests.
          * There can also be multiple automatic results, e.g. when the instructor triggers the tests manually.
-         * Sometimes we cannot show the last submission because the assessment due date has not yet passed,
-         * but we should still show the student the latest automatically determined score.
+         * Sometimes we cannot show the last submission because the assessment due date has not yet passed or the tutor is still assessing it
+         * (this already creates an empty manual result which is neither rated nor complete), but we should still show the student the latest
+         * automatically determined score.
          */
-        var latestAutomaticResult = programmingSubmission.getAutomaticResults().stream().max(Comparator.comparing(Result::getId));
+        var latestAutomaticResult = programmingSubmission.getAutomaticResults().stream().filter(Result::isRated).max(Comparator.comparing(Result::getId));
         if (latestAutomaticResult.isPresent()) {
             programmingSubmission.setResults(Set.of(latestAutomaticResult.get()));
             return true;

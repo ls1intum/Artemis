@@ -45,6 +45,28 @@ A `CONFLICTING` pull request starts no `pull_request` workflow run at all.
 conflicts. Note that a stacked pull request has a base other than develop, so check `baseRefName`
 before merging develop into it, or you create exactly this state.
 
+## Latest PR run is pending behind an obsolete E2E run
+
+**Symptom.** The latest CI run is `pending` with no jobs, while an older revision of the same PR
+is still running or waiting for an E2E runner.
+
+**Tell.** Compare both runs' `head_sha` values with the current PR head. Both share the umbrella's
+`ci-pr-<number>` concurrency group. A job-level `always()` in the older workflow can keep its E2E
+job alive despite `cancel-in-progress`, holding the group and delaying the current revision.
+
+**What to do.** Verify that the blocking run belongs to the same PR and has been superseded before
+cancelling it. If ordinary cancellation does not stop it, use GitHub's force-cancel endpoint:
+
+```bash
+gh api --method POST repos/ls1intum/Artemis/actions/runs/<obsolete-run-id>/force-cancel
+```
+
+Confirm that the old run is completed/cancelled and that jobs appear on the current run. A rerun
+of the pending revision is unnecessary. In workflow changes, use job-level `!cancelled()` for
+phases and reporters that must evaluate failed or skipped dependencies. Preserve explicit result
+checks and bounded step-level cleanup; do not replace the condition with implicit `success()`.
+See the [workflow cancellation policy](../../../.github/workflows/README.md#cancellation-of-superseded-pull-request-runs).
+
 ## Checks never appear after a push
 
 **Symptom.** A push landed, the branch is not conflicting, and still nothing starts.
@@ -114,6 +136,20 @@ same topology, so a failure that reproduces only in one of them is expected rath
 
 **What to do.** Compare against develop and against other open pull requests before attributing the
 failure to the branch. See `skills/e2e-pr-check/SKILL.md` for how to run a targeted local check.
+
+## Helios is unavailable or rejects the E2E credential
+
+**Symptom.** The log warns that Helios flakiness history is unavailable, for example with HTTP 401.
+Failed tests are classified as `unknown` and the final verdict uses the Playwright result.
+
+**Tell.** Passing tests, including tests recovered by Playwright's existing retries, still pass.
+Failures after retries remain blocking without being labelled confirmed regressions. A known-flaky
+failure in another phase cannot exonerate an unknown failure. Phase 2 does not start after an unknown
+Phase 1 failure.
+
+**What to do.** Inspect the failing tests and the matching base-branch run, as usual. Restore the
+Helios service or correct `HELIOS_REPO_SECRET` to regain history-based classification; the suite
+can run without it. Do not treat missing history as evidence of either flakiness or a regression.
 
 ## E2E job red although Playwright reports 0 failed
 

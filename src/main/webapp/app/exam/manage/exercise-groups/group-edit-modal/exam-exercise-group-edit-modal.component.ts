@@ -1,4 +1,4 @@
-import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { ChangeDetectionStrategy, Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -19,7 +19,16 @@ const MAX_TITLE_LENGTH = 255;
 @Component({
     selector: 'jhi-exam-exercise-group-edit-modal',
     templateUrl: './exam-exercise-group-edit-modal.component.html',
-    imports: [FormsModule, TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiButtonComponent, TumAetUiCheckboxComponent, ArtemisTranslatePipe, TranslateDirective],
+    imports: [
+        FormsModule,
+        TumAetUiDialogComponent,
+        TumAetUiInputDirective,
+        TumAetUiButtonComponent,
+        TumAetUiCheckboxComponent,
+        TumAetUiMessageComponent,
+        ArtemisTranslatePipe,
+        TranslateDirective,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExamExerciseGroupEditModalComponent {
@@ -42,6 +51,14 @@ export class ExamExerciseGroupEditModalComponent {
     readonly isTitleValid = computed(() => {
         const title = this.draftTitle().trim();
         return title.length > 0 && title.length <= MAX_TITLE_LENGTH;
+    });
+
+    /** The translation key explaining why the title is invalid, or undefined while it is valid. */
+    readonly titleErrorKey = computed(() => {
+        if (this.isTitleValid()) {
+            return undefined;
+        }
+        return this.draftTitle().trim().length === 0 ? 'artemisApp.examManagement.exerciseGroup.titleRequired' : 'artemisApp.examManagement.exerciseGroup.titleTooLong';
     });
 
     constructor() {

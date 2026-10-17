@@ -232,7 +232,9 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     private getAiFeedbackCodeReference(feedback: Feedback): FeedbackItemCodeReference | undefined {
         const filePath = Feedback.getReferenceFilePath(feedback);
         const lineRange = Feedback.getReferenceLineRange(feedback);
-        if (!filePath || !lineRange) {
+        // AI feedback numbers its lines from 1 (the server and the Athena service only create references with a line above 0),
+        // unlike the 0-based inline feedback of the code editor, so line 0 is no line of an AI feedback
+        if (!filePath || !lineRange || lineRange.start < 1) {
             return undefined;
         }
         const legacyLineEnd = Feedback.isNonGradedFeedbackSuggestion(feedback) ? this.getLegacyAiFeedbackLineEnd(feedback, filePath, lineRange.start) : undefined;

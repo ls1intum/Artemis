@@ -185,8 +185,8 @@ public class ProcessingStateCallbackService {
 
     // Fail a dispatch that never reached Pyris, bound to the claim that produced it: the caller holds the
     // pre-dispatch snapshot, so committing it wholesale would overwrite a requeue or newer claim landed since.
-    private void failDispatchIfStillClaimed(LectureUnitProcessingState state, String claimToken) {
-        LectureIngestionFailureClassifier.FailureComputation computation = LectureIngestionFailureClassifier.computeFailure(state, null);
+    private void failDispatchIfStillClaimed(LectureUnitProcessingState state, String claimToken, @Nullable String errorCode) {
+        LectureIngestionFailureClassifier.FailureComputation computation = LectureIngestionFailureClassifier.computeFailure(state, errorCode);
         int updated = processingStateRepository.failDispatchIfStillClaimed(state.getId(), claimToken, computation.retryCount(), computation.errorKey(),
                 computation.retryEligibleAt(), computation.now());
         if (updated == 0) {
@@ -211,7 +211,8 @@ public class ProcessingStateCallbackService {
     /**
      * The dispatch-ready description of a claimed state, which the worker claim returns to the worker.
      */
-    private record PreparedDispatch(LectureUnitProcessingState state, AttachmentVideoUnit unit, ProcessingPhase targetPhase, String contentFingerprint) {
+    private record PreparedDispatch(LectureUnitProcessingState state, AttachmentVideoUnit unit, ProcessingPhase targetPhase, String contentFingerprint,
+            String fingerprintWithoutVideo) {
     }
 
     /**
@@ -242,9 +243,9 @@ public class ProcessingStateCallbackService {
 
         ProcessingPhase targetPhase = hasVideo && !hasCompletedTranscription ? ProcessingPhase.TRANSCRIBING : ProcessingPhase.INGESTING;
 
-        String contentFingerprint;
+        LectureUnitContentFingerprintService.ContentFingerprints fingerprints;
         try {
-            contentFingerprint = contentFingerprintService.computeFingerprint(attachmentUnit);
+            fingerprints = contentFingerprintService.computeFingerprints(attachmentUnit);
         }
         catch (RuntimeException e) {
             if (FilePathConverter.getFileUploadPath() == null) {
@@ -264,7 +265,7 @@ public class ProcessingStateCallbackService {
             }
             return null;
         }
-        return new PreparedDispatch(state, attachmentUnit, targetPhase, contentFingerprint);
+        return new PreparedDispatch(state, attachmentUnit, targetPhase, fingerprints.full(), fingerprints.withoutVideo());
     }
 
     // -------------------- Pull-Based Worker Dispatch --------------------
@@ -333,7 +334,8 @@ public class ProcessingStateCallbackService {
             String claimToken = state.getClaimToken();
             PreparedDispatch prepared = prepareClaimedState(state, claimToken);
             if (prepared != null) {
-                result.add(new ClaimedIngestionUnitDTO(prepared.unit().getId(), prepared.contentFingerprint(), state.isForceReingest(), prepared.targetPhase(), claimToken));
+                result.add(new ClaimedIngestionUnitDTO(prepared.unit().getId(), prepared.contentFingerprint(), prepared.fingerprintWithoutVideo(), state.isForceReingest(),
+                        prepared.targetPhase(), claimToken));
             }
         }
         if (!result.isEmpty()) {
@@ -401,7 +403,19 @@ public class ProcessingStateCallbackService {
      * @param claimToken    identity of the claim, from {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimToken()}
      */
     public void failClaimedUnitPreparation(long lectureUnitId, String claimToken) {
-        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(state -> failDispatchIfStillClaimed(state, claimToken));
+        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(state -> failDispatchIfStillClaimed(state, claimToken, null));
+    }
+
+    /**
+     * Charge a failure to a claimed unit whose only content is a video that cannot be resolved right now, bound to that claim like
+     * {@link #failClaimedUnitPreparation}. The failure keeps its own retryable error key, so the outage pause of the background intake ignores it.
+     *
+     * @param lectureUnitId the claimed unit
+     * @param claimToken    identity of the claim, from {@link de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO#claimToken()}
+     */
+    public void failClaimedUnitVideoUnavailable(long lectureUnitId, String claimToken) {
+        processingStateRepository.findByLectureUnit_Id(lectureUnitId)
+                .ifPresent(state -> failDispatchIfStillClaimed(state, claimToken, LectureIngestionFailureClassifier.VIDEO_SOURCE_UNAVAILABLE));
     }
 
     /**

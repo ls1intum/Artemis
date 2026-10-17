@@ -92,8 +92,9 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
     Optional<AttachmentVideoUnit> findWithAttachmentById(@Param("attachmentVideoUnitId") long attachmentVideoUnitId);
 
     /**
-     * Find AttachmentVideoUnits from active, non-test courses that don't have a processing state yet.
-     * Used by the backfill scheduler to process legacy units that existed before the processing pipeline was deployed.
+     * Find AttachmentVideoUnits from active, non-test courses that don't have a processing state yet, newest courses first
+     * (the same order as {@link #findReconcileCourseIdsNewestFirst}). Used by the backfill scheduler to process legacy units
+     * that existed before the processing pipeline was deployed.
      *
      * @param now      the current time for determining active courses
      * @param pageable pagination to limit results
@@ -115,7 +116,7 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
                     OR
                     (attachment IS NOT NULL AND LOWER(attachment.link) LIKE '%.pdf')
                 )
-            ORDER BY avu.id
+            ORDER BY c.endDate DESC, c.startDate DESC, c.id DESC, avu.id
             """)
     List<AttachmentVideoUnit> findUnprocessedUnitsFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
 
@@ -167,8 +168,9 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
     List<AttachmentVideoUnit> findUnitsMissingIrisSyncStateFromActiveCourses(@Param("now") ZonedDateTime now, Pageable pageable);
 
     /**
-     * Find the next non-test course ids, ordered by id, starting after the given cursor. Drives the ingestion reconciler's
-     * round-robin walk over all courses, including inactive and archived ones.
+     * Find all non-test course ids, newest first: by end date and then start date, latest first, so running courses come
+     * before the ones that ended. Drives the ingestion reconciler's walk over all courses, including inactive and archived ones, so
+     * recent material is ingested before older material.
      * <p>
      * Deliberately not limited to courses that still hold attachment video units: the walk is also what garbage-collects a
      * course's Iris rows through {@code deleteOrphanedIndexRows}, and a course whose last unit was deleted while Iris was
@@ -176,17 +178,14 @@ public interface AttachmentVideoUnitRepository extends ArtemisJpaRepository<Atta
      * via {@link #findTutorialLectureUnitIdentities}; the per-unit reconcile loop excludes them from re-ingestion through
      * {@link #findAllWithAttachmentByCourseId}.
      *
-     * @param courseId the course id to continue after (exclusive); pass 0 to start from the beginning
-     * @param pageable pagination to limit the number of courses per walk
-     * @return the next course ids after the cursor
+     * @return the ids of all non-test courses, newest first
      */
     @Query("""
             SELECT c.id FROM Course c
-            WHERE c.id > :courseId
-                AND c.testCourse = FALSE
-            ORDER BY c.id
+            WHERE c.testCourse = FALSE
+            ORDER BY c.endDate DESC, c.startDate DESC, c.id DESC
             """)
-    List<Long> findReconcileCourseIdsAfter(@Param("courseId") long courseId, Pageable pageable);
+    List<Long> findReconcileCourseIdsNewestFirst();
 
     /**
      * Find every attachment video unit of a course with its attachment, lecture, and course fetched.

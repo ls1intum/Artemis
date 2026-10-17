@@ -532,30 +532,29 @@ describe('@tumaet/ui-angular integration contract', () => {
         }
     });
 
-    it('keeps Artemis filled, alert, and tinted state colors readable', () => {
-        const themes = {
-            light: compiledThemeProperties('src/main/webapp/content/scss/themes/theme-default.scss'),
-            dark: compiledThemeProperties('src/main/webapp/content/scss/themes/theme-dark.scss'),
-        };
+    it.each([
+        ['light', 'src/main/webapp/content/scss/themes/theme-default.scss'],
+        ['dark', 'src/main/webapp/content/scss/themes/theme-dark.scss'],
+    ])('keeps %s Artemis filled, alert, and tinted state colors readable', (theme, file) => {
+        const properties = compiledThemeProperties(file);
 
-        const light = themes.light;
-        for (const [state, contrast] of [
-            ['danger', '#fff'],
-            ['success', '#000'],
-            ['warning', '#000'],
-            ['info', '#000'],
-        ]) {
-            expect(contrastRatio(light[`--${state}`], contrast), `light: filled ${state}`).toBeGreaterThanOrEqual(4.5);
+        if (theme === 'light') {
+            for (const [state, contrast] of [
+                ['danger', '#fff'],
+                ['success', '#000'],
+                ['warning', '#000'],
+                ['info', '#000'],
+            ]) {
+                expect(contrastRatio(properties[`--${state}`], contrast), `light: filled ${state}`).toBeGreaterThanOrEqual(4.5);
+            }
         }
 
-        for (const [theme, properties] of Object.entries(themes)) {
-            for (const state of ['danger', 'success', 'warning', 'info']) {
-                const color = properties[`--artemis-alert-${state}-color`];
-                const contrast = properties[`--artemis-alert-${state}-background`];
-                const tagBackground = mixColors(color, properties['--module-bg'], 0.2);
-                expect(contrastRatio(color, contrast), `${theme}: filled ${state}`).toBeGreaterThanOrEqual(4.5);
-                expect(contrastRatio(color, tagBackground), `${theme}: tinted ${state}`).toBeGreaterThanOrEqual(4.5);
-            }
+        for (const state of ['danger', 'success', 'warning', 'info']) {
+            const color = properties[`--artemis-alert-${state}-color`];
+            const contrast = properties[`--artemis-alert-${state}-background`];
+            const tagBackground = mixColors(color, properties['--module-bg'], 0.2);
+            expect(contrastRatio(color, contrast), `${theme}: filled ${state}`).toBeGreaterThanOrEqual(4.5);
+            expect(contrastRatio(color, tagBackground), `${theme}: tinted ${state}`).toBeGreaterThanOrEqual(4.5);
         }
     });
 

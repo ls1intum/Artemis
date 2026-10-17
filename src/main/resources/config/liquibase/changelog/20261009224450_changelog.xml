@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!--
+        A student has at most one instance of a presentation. The tables were introduced in this release, so only test servers that ran
+        an earlier, unmerged version of the presentation assessment feature can contain a student twice for one presentation, for example
+        after adding the same student in two requests. They keep the earliest instance and lose the later ones once. Every other database
+        has no such rows, and the delete does nothing.
+    -->
+    <changeSet id="20261009224450-01-remove-duplicate-presentation-assessment-instances" author="krusche">
+        <sql>
+            DELETE FROM presentation_assessment_instance
+            WHERE id NOT IN (
+                SELECT kept.keep_id FROM (
+                    SELECT MIN(id) AS keep_id FROM presentation_assessment_instance GROUP BY presentation_assessment_id, student_id
+                ) kept
+            )
+        </sql>
+        <rollback/>
+    </changeSet>
+
+    <changeSet id="20261009224450-02-add-unique-presentation-assessment-instance-per-student" author="krusche">
+        <createIndex indexName="uc_presentation_instance_assessment_student" tableName="presentation_assessment_instance" unique="true">
+            <column name="presentation_assessment_id"/>
+            <column name="student_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

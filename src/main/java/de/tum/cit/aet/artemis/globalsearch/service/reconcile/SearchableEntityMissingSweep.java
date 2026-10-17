@@ -50,6 +50,11 @@ public class SearchableEntityMissingSweep {
 
     private final ReconcileEnqueueService enqueueService;
 
+    /**
+     * How long one tick may keep examining pages; the tick runs every minute.
+     */
+    static final Duration TICK_TIME_BUDGET = Duration.ofSeconds(20);
+
     private final WeaviateReconcileProperties reconcileProperties;
 
     private final SearchableEntityIndexScanService indexScanService;
@@ -66,10 +71,12 @@ public class SearchableEntityMissingSweep {
     }
 
     /**
-     * Examines one page of ids and queues whatever the ledger has no record of, then saves where it got to.
+     * Examines pages of ids and queues whatever the ledger has no record of, saving where it got to after each page.
      * <p>
-     * One page per tick is the whole budget. That keeps the cost of this pass a constant the operator chooses,
-     * rather than something that grows with the size of the corpus.
+     * While pages find missing entities, the pass continues as long as the outbox has room and the tick's time budget
+     * lasts: each page admits at most the remaining outbox capacity (and {@code missing-batch-size}), so the queued
+     * background work stays bounded while a rebuild or a large gap refills as fast as the dispatcher drains it. A page
+     * that finds nothing missing ends the tick, so a complete index costs one page per tick.
      */
     public void sweep() {
         String runId = ReconcileRunId.next();
@@ -77,9 +84,21 @@ public class SearchableEntityMissingSweep {
         if (types.isEmpty()) {
             return;
         }
-        if (!enqueueService.canEnqueue()) {
-            return;
+        long deadline = System.nanoTime() + TICK_TIME_BUDGET.toNanos();
+        while (System.nanoTime() < deadline) {
+            int capacity = enqueueService.remainingCapacity();
+            if (capacity <= 0 || !sweepPage(runId, types, Math.min(capacity, reconcileProperties.missingBatchSize()))) {
+                return;
+            }
         }
+    }
+
+    /**
+     * Examines one page of ids.
+     *
+     * @return whether the pass may continue with another page in this tick: only if this page queued something
+     */
+    private boolean sweepPage(String runId, List<String> types, int pageSize) {
 
         SearchableEntityReconcileState state = reconcileStateRepository.findByPass(ReconcilePass.MISSING)
                 .orElseGet(() -> new SearchableEntityReconcileState(ReconcilePass.MISSING));
@@ -87,21 +106,21 @@ public class SearchableEntityMissingSweep {
         // Read after resolving, since falling back to another type also discards the watermark.
         long afterId = state.getPositionEntityId() == null ? 0L : state.getPositionEntityId();
 
-        Optional<List<Long>> page = idEnumerator.nextIndexableIds(currentType, afterId, reconcileProperties.missingBatchSize());
+        Optional<List<Long>> page = idEnumerator.nextIndexableIds(currentType, afterId, pageSize);
         if (page.isEmpty()) {
             // The module owning this type is disabled, so nothing is known about it. Skipping is the only safe
             // reading: concluding "nothing exists" here would queue a repair for every indexed row of this type.
             log.debug("[missing {}] skipping {}: its module is disabled", runId, currentType);
-            advanceToNextType(runId, state, currentType, types);
+            boolean wrapped = advanceToNextType(runId, state, currentType, types);
             reconcileStateRepository.save(state);
-            return;
+            return !wrapped;
         }
 
         List<Long> candidateIds = page.get();
         if (candidateIds.isEmpty()) {
-            advanceToNextType(runId, state, currentType, types);
+            boolean wrapped = advanceToNextType(runId, state, currentType, types);
             reconcileStateRepository.save(state);
-            return;
+            return !wrapped;
         }
 
         Set<Long> alreadySynced = syncStateRepository.findSyncedEntityIds(currentType, candidateIds);
@@ -129,6 +148,7 @@ public class SearchableEntityMissingSweep {
         if (enqueued > 0) {
             log.info("[missing {}] queued {} of {} {} entities the index had no record of", runId, enqueued, candidateIds.size(), currentType);
         }
+        return enqueued > 0;
     }
 
     /**
@@ -151,17 +171,20 @@ public class SearchableEntityMissingSweep {
 
     /**
      * Moves to the next configured type, or wraps around and starts a fresh cycle after the last one.
+     *
+     * @return whether the pass wrapped around; it then stops for this tick, so a settled corpus is checked once per tick
      */
-    private void advanceToNextType(String runId, SearchableEntityReconcileState state, String currentType, List<String> types) {
+    private boolean advanceToNextType(String runId, SearchableEntityReconcileState state, String currentType, List<String> types) {
         int nextIndex = types.indexOf(currentType) + 1;
         if (nextIndex < types.size()) {
             state.setPositionEntityType(types.get(nextIndex));
             state.setPositionEntityId(null);
-            return;
+            return false;
         }
         logCycleSummary(runId, state);
         state.startNewCycle();
         state.setPositionEntityType(types.getFirst());
+        return true;
     }
 
     private void logCycleSummary(String runId, SearchableEntityReconcileState state) {

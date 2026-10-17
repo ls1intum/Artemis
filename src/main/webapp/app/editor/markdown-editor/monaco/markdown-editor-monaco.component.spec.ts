@@ -120,6 +120,47 @@ describe('MarkdownEditorMonacoComponent', () => {
         expect(comp.currentMarkdown()).toBe(text);
     });
 
+    it('should not replay an acknowledged change over newer typing', () => {
+        fixture.componentRef.setInput('markdown', 'initial');
+        fixture.detectChanges();
+        comp.onTextChanged({ text: 'initial edit', fileName: 'message.md' });
+        const editor = comp.monacoEditor()!;
+        vi.spyOn(editor, 'getText').mockReturnValue('initial edit continued');
+        const setText = vi.spyOn(editor, 'setText');
+
+        // The parent acknowledges the debounced event after another keystroke has already reached Monaco.
+        fixture.componentRef.setInput('markdown', 'initial edit');
+        fixture.detectChanges();
+
+        expect(setText).not.toHaveBeenCalled();
+        expect(editor.getText()).toBe('initial edit continued');
+    });
+
+    it('should still apply an external draft reset after acknowledging an edit', () => {
+        fixture.componentRef.setInput('markdown', 'initial');
+        fixture.detectChanges();
+        comp.onTextChanged({ text: 'edited', fileName: 'message.md' });
+        fixture.componentRef.setInput('markdown', 'edited');
+        fixture.detectChanges();
+        const setText = vi.spyOn(comp.monacoEditor()!, 'setText');
+
+        fixture.componentRef.setInput('markdown', 'another channel draft');
+        fixture.detectChanges();
+        expect(setText).toHaveBeenCalledWith('another channel draft');
+        fixture.componentRef.setInput('markdown', '');
+        fixture.detectChanges();
+        expect(setText).toHaveBeenLastCalledWith('');
+    });
+
+    it('should flush the debounced text change of the Monaco editor', () => {
+        fixture.detectChanges();
+        const flushSpy = vi.spyOn(comp.monacoEditor()!, 'flushPendingTextChange');
+
+        comp.flushPendingTextChange();
+
+        expect(flushSpy).toHaveBeenCalledOnce();
+    });
+
     it('should notify when switching to preview mode', () => {
         const emitSpy = vi.spyOn(comp.onPreviewSelect, 'emit');
         fixture.detectChanges();

@@ -24,6 +24,16 @@ class SignalFormHostComponent {
     readonly date = form(this.model, (path) => required(path));
 }
 
+@Component({
+    imports: [TumAetUiDatePickerComponent],
+    template: `<tumaet-ui-date-picker labelName="Release" [hideLabelName]="hideLabel()" inputId="release-date">
+        <span tumAetUiDatePickerLabelAddon data-testid="label-addon">?</span>
+    </tumaet-ui-date-picker>`,
+})
+class LabelAddonHostComponent {
+    readonly hideLabel = signal(false);
+}
+
 describe('TumAetUiDatePickerComponent', () => {
     let component: TumAetUiDatePickerComponent;
     let fixture: ComponentFixture<TumAetUiDatePickerComponent>;
@@ -72,6 +82,29 @@ describe('TumAetUiDatePickerComponent', () => {
         expect(input().value).toBe('13.06.2026 08:30xx');
     });
 
+    it('defers text errors until blur without allowing an incomplete date to be submitted', () => {
+        fixture.componentRef.setInput('validateOnBlur', true);
+        fixture.detectChanges();
+        input().value = '13.06.';
+        input().dispatchEvent(new Event('input'));
+        fixture.detectChanges();
+        expect(component.isValid()).toBe(false);
+        expect(input().getAttribute('aria-invalid')).toBe('false');
+        expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+
+        input().dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+        expect(input().getAttribute('aria-invalid')).toBe('true');
+        expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
+
+        input().value = '13.06.2026 09:15';
+        input().dispatchEvent(new Event('input'));
+        input().dispatchEvent(new Event('blur'));
+        fixture.detectChanges();
+        expect(component.isValid()).toBe(true);
+        expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+    });
+
     it('clears the value and the displayed text', () => {
         fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
         fixture.detectChanges();
@@ -104,6 +137,52 @@ describe('TumAetUiDatePickerComponent', () => {
         fixture.detectChanges();
         expect(component.isValid()).toBe(false);
         expect(input().value).toBe('13.06.2026 08:30xx');
+    });
+
+    describe('replaceValue', () => {
+        function type(text: string) {
+            input().value = text;
+            input().dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+        }
+
+        it('discards invalid text even when the new value displays like the current one', () => {
+            fixture.componentRef.setInput('value', dayjs('2026-06-13T08:30'));
+            fixture.detectChanges();
+            type('13.06.2026 08:30xx');
+            expect(component.isValid()).toBe(false);
+
+            component.replaceValue(dayjs('2026-06-13T08:30'));
+            fixture.detectChanges();
+
+            expect(component.isValid()).toBe(true);
+            expect(input().value).toBe('13.06.2026 08:30');
+        });
+
+        it('discards invalid text typed into an empty picker when it is emptied again', () => {
+            type('garbage');
+            expect(component.isValid()).toBe(false);
+
+            component.replaceValue(undefined);
+            fixture.detectChanges();
+
+            expect(component.isValid()).toBe(true);
+            expect(input().value).toBe('');
+            expect(component.value()).toBeUndefined();
+        });
+
+        it('shows and reports a different value', () => {
+            const emitted: boolean[] = [];
+            component.inputValidityChange.subscribe((valid) => emitted.push(valid));
+            type('garbage');
+
+            component.replaceValue(dayjs('2026-08-01T10:00'));
+            fixture.detectChanges();
+
+            expect(input().value).toBe('01.08.2026 10:00');
+            expect(component.value()?.format('YYYY-MM-DD HH:mm')).toBe('2026-08-01 10:00');
+            expect(emitted.at(-1)).toBe(true);
+        });
     });
 
     it('exposes external invalid state to assistive technology', () => {
@@ -175,6 +254,101 @@ describe('TumAetUiDatePickerComponent', () => {
         fixture.detectChanges();
         expect(document.querySelector('tumaet-ui-calendar')).toBeNull();
         expect(document.activeElement).toBe(trigger);
+    });
+
+    describe('startAt', () => {
+        function openedMonthLabel(): string | undefined {
+            fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement.click();
+            fixture.detectChanges();
+            return document.querySelector('tumaet-ui-calendar [role="grid"]')?.getAttribute('aria-label') ?? undefined;
+        }
+
+        it('opens the calendar on the current month when nothing is set', () => {
+            expect(openedMonthLabel()).toContain('July');
+        });
+
+        it('opens an empty picker on the month startAt names', () => {
+            fixture.componentRef.setInput('startAt', dayjs('2026-12-24T10:00'));
+            fixture.detectChanges();
+            expect(openedMonthLabel()).toContain('December');
+        });
+
+        it('lets a held value win over startAt', () => {
+            fixture.componentRef.setInput('startAt', dayjs('2026-12-24T10:00'));
+            fixture.componentRef.setInput('value', dayjs('2026-03-02T10:00'));
+            fixture.detectChanges();
+            expect(openedMonthLabel()).toContain('March');
+        });
+    });
+
+    describe('min and max', () => {
+        const openCalendar = () => {
+            fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement.click();
+            fixture.detectChanges();
+        };
+        const dayButton = (iso: string) => document.querySelector(`tumaet-ui-calendar button[data-date="${iso}"]`) as HTMLButtonElement;
+
+        it('limits the days of the calendar to the range', () => {
+            fixture.componentRef.setInput('min', dayjs('2026-07-20'));
+            fixture.componentRef.setInput('max', dayjs('2026-07-25'));
+            fixture.detectChanges();
+            openCalendar();
+
+            expect(dayButton('2026-07-19').getAttribute('aria-disabled')).toBe('true');
+            expect(dayButton('2026-07-20').getAttribute('aria-disabled')).toBeNull();
+            expect(dayButton('2026-07-26').getAttribute('aria-disabled')).toBe('true');
+
+            dayButton('2026-07-19').click();
+            fixture.detectChanges();
+            expect(component.value()).toBeUndefined();
+
+            dayButton('2026-07-22').click();
+            fixture.detectChanges();
+            expect(component.value()?.format('YYYY-MM-DD')).toBe('2026-07-22');
+        });
+
+        it('opens an empty picker on the month of min when today lies before it', () => {
+            fixture.componentRef.setInput('min', dayjs('2026-11-03'));
+            fixture.detectChanges();
+            openCalendar();
+
+            expect(document.querySelector('tumaet-ui-calendar [role="grid"]')?.getAttribute('aria-label')).toContain('November');
+        });
+
+        it('opens an empty picker on the month of max when today lies after it', () => {
+            fixture.componentRef.setInput('max', dayjs('2026-02-10'));
+            fixture.detectChanges();
+            openCalendar();
+
+            expect(document.querySelector('tumaet-ui-calendar [role="grid"]')?.getAttribute('aria-label')).toContain('February');
+        });
+
+        it('does not reject text typed outside the range, which is the consumer to judge', () => {
+            fixture.componentRef.setInput('min', dayjs('2026-07-20'));
+            fixture.detectChanges();
+
+            input().value = '01.07.2026 10:00';
+            input().dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+
+            expect(component.value()?.format('YYYY-MM-DD')).toBe('2026-07-01');
+        });
+    });
+
+    it('closes only the calendar on Escape, so a dialog around the field stays open', () => {
+        const reachedDocument = vi.fn();
+        document.addEventListener('keydown', reachedDocument);
+        const trigger = fixture.debugElement.query(By.css('button[aria-haspopup="dialog"]')).nativeElement as HTMLButtonElement;
+        trigger.click();
+        fixture.detectChanges();
+        expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+
+        document.querySelector('[role="dialog"]')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        fixture.detectChanges();
+        document.removeEventListener('keydown', reachedDocument);
+
+        expect(document.querySelector('[role="dialog"]')).toBeNull();
+        expect(reachedDocument).not.toHaveBeenCalled();
     });
 
     it('keeps the calendar icon out of the tab order because the input opens the same dialog', () => {
@@ -291,6 +465,67 @@ describe('TumAetUiDatePickerComponent', () => {
         timeField('Minute').dispatchEvent(new Event('change'));
         expect(component.value()?.format('YYYY-MM-DD')).toBe(dayjs().format('YYYY-MM-DD'));
         expect(component.value()?.format('HH:mm')).toBe('10:45');
+    });
+
+    it('accepts a non-breaking space between date and time and shows the text the way the picker writes it', () => {
+        input().value = '13.06.2026\u00a009:15';
+        input().dispatchEvent(new Event('input'));
+        input().dispatchEvent(new FocusEvent('blur'));
+        fixture.detectChanges();
+
+        expect(component.isValid()).toBe(true);
+        expect(component.value()?.format('DD.MM.YYYY HH:mm')).toBe('13.06.2026 09:15');
+        expect(input().value).toBe('13.06.2026 09:15');
+    });
+
+    it('rewrites text that only differs in whitespace from the committed value', () => {
+        fixture.componentRef.setInput('value', dayjs('2026-06-13T09:15'));
+        fixture.detectChanges();
+        input().value = '  13.06.2026 09:15 ';
+        input().dispatchEvent(new Event('input'));
+        input().dispatchEvent(new FocusEvent('blur'));
+        fixture.detectChanges();
+
+        expect(component.isValid()).toBe(true);
+        expect(input().value).toBe('13.06.2026 09:15');
+    });
+
+    it('marks the host with its mode, so the minimum width of a date or time field follows its text', () => {
+        const host = fixture.nativeElement as HTMLElement;
+        expect(host.classList.contains('tumaet-ui-date-picker--date-only')).toBe(false);
+        fixture.componentRef.setInput('dateOnly', true);
+        fixture.detectChanges();
+        expect(host.classList.contains('tumaet-ui-date-picker--date-only')).toBe(true);
+        fixture.componentRef.setInput('dateOnly', false);
+        fixture.componentRef.setInput('timeOnly', true);
+        fixture.detectChanges();
+        expect(host.classList.contains('tumaet-ui-date-picker--time-only')).toBe(true);
+        fixture.componentRef.setInput('timeOnly', false);
+        fixture.componentRef.setInput('inline', true);
+        fixture.detectChanges();
+        expect(host.classList.contains('tumaet-ui-date-picker--inline')).toBe(true);
+    });
+
+    describe('label addon', () => {
+        it('shows the projected element on the label row, before the time-zone indicator', () => {
+            const hostFixture = TestBed.createComponent(LabelAddonHostComponent);
+            hostFixture.detectChanges();
+
+            const addon = hostFixture.debugElement.query(By.css('[data-testid="label-addon"]')).nativeElement as HTMLElement;
+            const label = hostFixture.debugElement.query(By.css('label')).nativeElement as HTMLLabelElement;
+            const zone = hostFixture.debugElement.query(By.css('[role="img"][tabindex="0"]')).nativeElement as HTMLElement;
+            expect(addon.parentElement).toBe(label.parentElement);
+            expect(label.nextElementSibling).toBe(addon);
+            expect(addon.nextElementSibling).toBe(zone);
+        });
+
+        it('drops the projected element together with a hidden label', () => {
+            const hostFixture = TestBed.createComponent(LabelAddonHostComponent);
+            hostFixture.componentInstance.hideLabel.set(true);
+            hostFixture.detectChanges();
+
+            expect(hostFixture.debugElement.query(By.css('[data-testid="label-addon"]'))).toBeNull();
+        });
     });
 
     it('renders the timezone warning by default and hides it when disabled', () => {

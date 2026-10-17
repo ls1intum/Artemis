@@ -5,6 +5,7 @@
     (keydown.enter)="onClick()"
     (keydown.space)="$event.preventDefault(); onClick()"
     [attr.aria-selected]="isSelected()"
+    [attr.id]="optionId()"
     role="option"
     tabindex="-1"
 >

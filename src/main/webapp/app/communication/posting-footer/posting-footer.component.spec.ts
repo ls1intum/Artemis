@@ -16,6 +16,7 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { User } from 'app/account/user/user.model';
 import dayjs from 'dayjs/esm';
 import { signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -119,6 +120,24 @@ describe('PostingFooterComponent', () => {
             // If no modal rendered, ngOnDestroy should not fail
             component.ngOnDestroy();
         }
+    });
+
+    it('should reopen the reply input after an answer was created so that the user can reply again', () => {
+        fixture.componentRef.setInput('posting', post);
+        fixture.componentRef.setInput('sortedAnswerPosts', [unApprovedAnswerPost1]);
+        fixture.componentRef.setInput('showAnswers', true);
+        fixture.detectChanges();
+
+        const modalDebugElement = fixture.debugElement.query(By.directive(AnswerPostCreateEditModalComponent));
+        const modal = modalDebugElement.componentInstance as AnswerPostCreateEditModalComponent;
+        const openSpy = vi.spyOn(modal, 'open');
+        const previousDraft = component.createdAnswerPost();
+
+        modalDebugElement.triggerEventHandler('onCreate', unApprovedAnswerPost2);
+
+        expect(openSpy).toHaveBeenCalledOnce();
+        expect(component.createdAnswerPost()).not.toBe(previousDraft);
+        expect(component.createdAnswerPost().content).toBe('');
     });
 
     it('should return the ID of the post in trackPostByFn', () => {

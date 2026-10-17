@@ -6,13 +6,15 @@ import { PostContentValidationPattern } from 'app/communication/communication.ut
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',
     templateUrl: './answer-post-create-edit-modal.component.html',
     styleUrls: ['answer-post-create-edit-modal.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent],
+    imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, TumAetUiButtonComponent, ArtemisTranslatePipe],
 })
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
     createEditAnswerPostContainerRef = input<ViewContainerRef>();
@@ -66,8 +68,9 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup();
                 this.isLoading.set(false);
-                this.onCreate.emit(answerPost);
+                // clear before emitting so that a parent can reopen the editor in its onCreate handler
                 this.createEditAnswerPostContainerRef()?.clear();
+                this.onCreate.emit(answerPost);
             },
             error: () => {
                 this.isLoading.set(false);

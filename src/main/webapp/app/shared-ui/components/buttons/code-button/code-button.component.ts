@@ -15,6 +15,7 @@ import dayjs from 'dayjs/esm';
 
 import { faCode, faExternalLink, faLaptopCode } from '@fortawesome/free-solid-svg-icons';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
+import { TooltipModule } from 'primeng/tooltip';
 import { ExerciseActionButtonComponent } from 'app/shared-ui/components/buttons/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/foundation/feature-toggle/feature-toggle.directive';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
@@ -61,6 +62,7 @@ export enum RepositoryAuthenticationMethod {
         HelpIconComponent,
         ArtemisTranslatePipe,
         SafeUrlPipe,
+        TooltipModule,
     ],
 })
 export class CodeButtonComponent implements OnInit {

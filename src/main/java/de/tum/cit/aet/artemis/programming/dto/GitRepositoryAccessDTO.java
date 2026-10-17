@@ -6,6 +6,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * @param startDate       when participation opens, for a course exercise
  * @param releaseDate     the fallback for {@code startDate}, for a course exercise
  * @param dueDate         when submissions close, for a course exercise
+ * @param assessmentType  whether the exercise requires manual assessment
  * @param examId          the exam, or {@code null} for a course exercise
  * @param examStartDate   when the exam starts, or {@code null} for a course exercise
  * @param testExam        whether the exam may be taken repeatedly, {@code null} for a course exercise, since the
@@ -36,7 +38,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GitRepositoryAccessDTO(long exerciseId, long courseId, ExerciseMode mode, @Nullable Boolean allowOfflineIde, @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime dueDate, @Nullable Long examId, @Nullable ZonedDateTime examStartDate, @Nullable Boolean testExam) {
+        @Nullable ZonedDateTime releaseDate, @Nullable ZonedDateTime dueDate, @Nullable AssessmentType assessmentType, @Nullable Long examId, @Nullable ZonedDateTime examStartDate,
+        @Nullable Boolean testExam) {
 
     /**
      * Builds the projection from an exercise that is already loaded.
@@ -56,7 +59,8 @@ public record GitRepositoryAccessDTO(long exerciseId, long courseId, ExerciseMod
             throw new IllegalStateException("Cannot build the repository access projection for exercise " + exercise.getId() + ": no course is reachable from it.");
         }
         return new GitRepositoryAccessDTO(exercise.getId(), course.getId(), exercise.getMode(), exercise.isAllowOfflineIde(), exercise.getStartDate(), exercise.getReleaseDate(),
-                exercise.getDueDate(), exam == null ? null : exam.getId(), exam == null ? null : exam.getStartDate(), exam == null ? null : exam.isTestExam());
+                exercise.getDueDate(), exercise.getAssessmentType(), exam == null ? null : exam.getId(), exam == null ? null : exam.getStartDate(),
+                exam == null ? null : exam.isTestExam());
     }
 
     /**

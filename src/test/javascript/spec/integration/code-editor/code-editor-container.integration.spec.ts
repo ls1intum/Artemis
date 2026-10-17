@@ -319,7 +319,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.monacoEditor()!.loadingCount()).toBe(0);
         expect(container.monacoEditor()!.fileSession()).toHaveProperty(selectedFile);
         expect(getFileStub).toHaveBeenCalledOnce();
-        expect(getFileStub).toHaveBeenCalledWith(selectedFile);
+        expect(getFileStub).toHaveBeenCalledWith(selectedFile, undefined, undefined);
 
         containerFixture.changeDetectorRef.detectChanges();
         expect(container.getText()).toBe(fileContent);
@@ -337,7 +337,7 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.changeDetectorRef.detectChanges();
 
         expect(getFileStub).toHaveBeenCalledOnce();
-        expect(getFileStub).toHaveBeenCalledWith(selectedFile);
+        expect(getFileStub).toHaveBeenCalledWith(selectedFile, undefined, undefined);
         expect(container.unsavedFiles).toEqual({ [selectedFile]: newFileContent });
         expect(container.fileBrowser()!.unsavedFiles()).toEqual([selectedFile]);
         expect(container.editorState).toBe(EditorState.UNSAVED_CHANGES);

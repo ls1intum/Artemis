@@ -5,8 +5,10 @@ sidebar_label: FAQs
 ---
 
 import Image, {ImageSize} from "../../../src/components/Image/Image";
-import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 import instructorViewImg from './assets/faq/instructor-view.png';
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
+import importDesktopImg from './assets/faq/import-desktop-light.png';
+import importMobileImg from './assets/faq/import-mobile-dark.png';
 
 ## What Are FAQs in Artemis?
 
@@ -24,9 +26,11 @@ The FAQ overview provides a user-friendly interface for managing questions.
 At the top of the page, instructors can search for specific FAQs or filter them by topic. Below that, a list of all existing FAQs is shown in a table, making it easy to view and edit entries.
 
 There is also a button to create new FAQs.
-If the **IRIS** feature is enabled, an additional button allows all FAQs to be added to IRIS. This enables the virtual tutor to include FAQ content when answering student questions.
+When Iris is enabled for the course, accepted FAQs are synchronized automatically in the background when you create or edit them. Deleted FAQs are removed from Iris in the background. Saving and deleting FAQs does not wait for Iris to respond.
 
-<Image src={instructorViewImg} alt={"Instructor View"} size={ImageSize.large} />
+If Iris is temporarily unavailable, you can continue managing FAQs. Artemis checks for missing, changed, and removed FAQs every 10 minutes and retries synchronization. Larger backlogs can take several runs to process.
+
+<Image src={instructorViewImg} alt="FAQ management with search, category filters, and three accepted questions" size={ImageSize.large} />
 
 ## FAQ Table Details
 
@@ -56,6 +60,28 @@ The question is shown as a heading, and the answer is presented as a formatted p
 - The **title** is entered in a plain text field.
 - The **answer** supports the full Markdown editor used in Artemis.
 - The **categories** field allows instructors to assign the FAQ to one or two topics, which helps students find relevant questions more easily.
+
+## Importing FAQs
+
+Instructors can reuse existing FAQs by selecting **Import FAQs** on the FAQ management page.
+Search by question, answer, or course name to find FAQs from other courses you can access.
+Each result shows its source course and status; expand **Preview answer** to read the answer before selecting it.
+
+Select one or more FAQs using the checkboxes, or use **Select all on this page**.
+Your selection is retained when you search again or move to another page.
+The selection count includes FAQs selected on all pages; **Clear selection** removes the entire selection.
+Choose **Import selected** to copy the selected FAQs into the current course.
+The imported FAQs retain their questions, answers, categories, and statuses; the source FAQs remain unchanged.
+
+Search results follow the normal FAQ visibility rules: published FAQs are visible to course members,
+while unpublished FAQs require teaching staff access in the source course.
+Access is checked again when importing.
+
+<Image src={importDesktopImg} alt="FAQ import dialog with source courses, answer preview, and multiple selected FAQs" size={ImageSize.large} />
+
+The dialog also supports narrow screens and dark mode:
+
+<Image src={importMobileImg} alt="FAQ import dialog in dark mode on a phone, with the selection count and import action visible" size={ImageSize.small} />
 
 ## Additional IRIS Features: Automatic FAQ Rewriting
 

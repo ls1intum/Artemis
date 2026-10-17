@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
  * Spring Data JPA repository for {@link WeaviateOutboxEntry}.
  * <p>
  * The enqueue side ({@code SearchableEntityWeaviateService}) only calls {@code save}. The dispatcher on the
- * scheduling node reads due rows with {@link #findDueForDispatch(ZonedDateTime, int)} and deletes them once
+ * scheduling node reads due rows with {@link #findDueLiveForDispatch(ZonedDateTime, int)} and deletes them once
  * their Weaviate write is confirmed.
  */
 @Conditional(WeaviateEnabled.class)
@@ -28,10 +28,10 @@ import de.tum.cit.aet.artemis.globalsearch.domain.WeaviateOutboxEntry;
 public interface WeaviateOutboxRepository extends ArtemisJpaRepository<WeaviateOutboxEntry, Long> {
 
     /**
-     * Reads due outbox rows for dispatch, oldest enqueue first. This is a plain read with no {@code FOR UPDATE}:
-     * the dispatcher runs on the single scheduling node, so there is no concurrent claimer to lock rows against,
-     * and the read is not held in a transaction across the Weaviate write. Rows whose backoff has not elapsed
-     * ({@code next_attempt_at > now}) are excluded; ordering by {@code id} preserves enqueue order.
+     * Reads due outbox rows written for user actions ({@code LIVE}), oldest enqueue first. The dispatcher applies these
+     * before any background row. This is a plain read with no {@code FOR UPDATE}: the dispatcher runs on the single
+     * scheduling node, so there is no concurrent claimer to lock rows against, and the read is not held in a transaction
+     * across the Weaviate write. Rows whose backoff has not elapsed ({@code next_attempt_at > now}) are excluded.
      *
      * @param now   the current time; rows with {@code next_attempt_at <= now} are eligible
      * @param limit the maximum number of rows to read in one batch
@@ -40,10 +40,28 @@ public interface WeaviateOutboxRepository extends ArtemisJpaRepository<WeaviateO
     @Query(value = """
             SELECT * FROM weaviate_outbox
             WHERE next_attempt_at <= :now
+                AND origin = 'LIVE'
             ORDER BY id ASC
             LIMIT :limit
             """, nativeQuery = true)
-    List<WeaviateOutboxEntry> findDueForDispatch(@Param("now") ZonedDateTime now, @Param("limit") int limit);
+    List<WeaviateOutboxEntry> findDueLiveForDispatch(@Param("now") ZonedDateTime now, @Param("limit") int limit);
+
+    /**
+     * Reads due outbox rows written by reconcile passes, oldest enqueue first. The dispatcher applies them in small,
+     * budgeted steps after all due {@code LIVE} rows. See {@link #findDueLiveForDispatch} for the read semantics.
+     *
+     * @param now   the current time; rows with {@code next_attempt_at <= now} are eligible
+     * @param limit the maximum number of rows to read in one step
+     * @return the due rows, detached
+     */
+    @Query(value = """
+            SELECT * FROM weaviate_outbox
+            WHERE next_attempt_at <= :now
+                AND origin <> 'LIVE'
+            ORDER BY id ASC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<WeaviateOutboxEntry> findDueBackgroundForDispatch(@Param("now") ZonedDateTime now, @Param("limit") int limit);
 
     /**
      * Whether a row is already queued for {@code (entityType, entityId)}. Rows are deleted once their write is

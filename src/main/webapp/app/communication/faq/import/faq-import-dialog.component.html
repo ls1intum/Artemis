@@ -1,0 +1,122 @@
+<tumaet-ui-dialog
+    [(visible)]="visible"
+    [header]="'artemisApp.faq.import.title' | artemisTranslate"
+    size="large"
+    [closable]="!importing()"
+    [closeOnEscape]="!importing()"
+    ariaDescribedBy="faq-import-description"
+>
+    <div class="flex flex-col gap-4!" data-testid="faq-import-dialog">
+        <p id="faq-import-description" class="m-0! text-muted-color" jhiTranslate="artemisApp.faq.import.description"></p>
+        <div class="flex flex-col gap-2">
+            <label for="faq-import-search" class="font-medium" jhiTranslate="artemisApp.faq.import.searchLabel"></label>
+            <div class="relative">
+                <fa-icon [icon]="faSearch" class="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted-color" />
+                <input
+                    tumAetUiInput
+                    id="faq-import-search"
+                    data-testid="faq-import-search"
+                    type="search"
+                    class="w-full pl-10!"
+                    maxlength="200"
+                    [placeholder]="'artemisApp.faq.import.searchPlaceholder' | artemisTranslate"
+                    [ngModel]="searchTerm()"
+                    (ngModelChange)="changeSearch($event)"
+                    [disabled]="importing()"
+                />
+            </div>
+        </div>
+
+        <div [attr.aria-busy]="loading()" class="min-h-64">
+            @if (loading()) {
+                <div class="flex min-h-64 items-center justify-center text-muted-color" role="status" jhiTranslate="artemisApp.faq.import.loading"></div>
+            } @else if (searchFailed()) {
+                <div class="flex min-h-64 flex-col items-center justify-center gap-4!" role="alert">
+                    <p class="m-0! text-state-danger" jhiTranslate="artemisApp.faq.import.searchError"></p>
+                    <tumaet-ui-button severity="secondary" variant="outlined" (clicked)="loadPage(page())">
+                        <span jhiTranslate="artemisApp.faq.import.retry"></span>
+                    </tumaet-ui-button>
+                </div>
+            } @else if (faqs().length === 0) {
+                <tumaet-ui-empty-state
+                    [icon]="faSearch"
+                    [title]="'artemisApp.faq.import.emptyTitle' | artemisTranslate"
+                    [description]="'artemisApp.faq.import.emptyDescription' | artemisTranslate"
+                />
+            } @else {
+                <div class="flex items-center gap-3! border-b border-surface pb-3!">
+                    <tumaet-ui-checkbox
+                        inputId="faq-import-select-page"
+                        [checked]="allOnPageSelected()"
+                        [indeterminate]="someOnPageSelected()"
+                        (checkedChange)="togglePage($event)"
+                        [disabled]="importing()"
+                    />
+                    <label for="faq-import-select-page" class="cursor-pointer text-sm font-medium" jhiTranslate="artemisApp.faq.import.selectPage"></label>
+                </div>
+                <ul class="m-0! list-none p-0!" data-testid="faq-import-results">
+                    @for (faq of faqs(); track faq.id) {
+                        <li class="flex items-start gap-3! border-b border-surface py-4!" [attr.data-testid]="'faq-import-row-' + faq.id">
+                            <tumaet-ui-checkbox
+                                [inputId]="'faq-import-select-' + faq.id"
+                                [ariaLabel]="faq.questionTitle"
+                                [checked]="selectedIds().has(faq.id)"
+                                (checkedChange)="toggleFaq(faq.id, $event)"
+                                [disabled]="importing()"
+                            />
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-baseline justify-between gap-x-4! gap-y-1">
+                                    <label [for]="'faq-import-select-' + faq.id" class="cursor-pointer font-semibold wrap-anywhere">{{ faq.questionTitle }}</label>
+                                    <span class="text-xs text-muted-color" [jhiTranslate]="'artemisApp.faq.import.state.' + faq.faqState"></span>
+                                </div>
+                                <p class="mt-1! mb-0! text-sm text-muted-color wrap-anywhere">
+                                    {{ faq.courseTitle }}
+                                    @if (faq.courseSemester) {
+                                        · {{ faq.courseSemester }}
+                                    }
+                                </p>
+                                <details class="mt-2! text-sm">
+                                    <summary class="cursor-pointer text-primary" jhiTranslate="artemisApp.faq.import.preview"></summary>
+                                    <div class="pt-2! wrap-anywhere" [jhiMarkdown]="faq.questionAnswer ?? ''"></div>
+                                </details>
+                            </div>
+                        </li>
+                    }
+                </ul>
+                @if (totalElements() > 10) {
+                    <tumaet-ui-paginator
+                        [totalRecords]="totalElements()"
+                        [page]="page()"
+                        [pageSize]="10"
+                        [showRowsPerPage]="false"
+                        [disabled]="importing()"
+                        (pageChange)="loadPage($event)"
+                    />
+                }
+            }
+        </div>
+        @if (importFailed()) {
+            <p class="m-0! text-state-danger" role="alert" data-testid="faq-import-error" jhiTranslate="artemisApp.faq.import.importError"></p>
+        }
+    </div>
+    <ng-template #footer>
+        <div class="flex w-full flex-wrap items-center justify-between gap-4!">
+            <div class="flex items-center gap-2" role="status" aria-live="polite">
+                <span class="text-sm font-medium" jhiTranslate="artemisApp.faq.import.selected" [translateValues]="{ count: selectedCount() }"></span>
+                @if (selectedCount() > 0) {
+                    <tumaet-ui-button severity="secondary" variant="text" size="small" [disabled]="importing()" (clicked)="clearSelection()">
+                        <span jhiTranslate="artemisApp.faq.import.clearSelection"></span>
+                    </tumaet-ui-button>
+                }
+            </div>
+            <div class="flex items-center gap-2">
+                <tumaet-ui-button severity="secondary" variant="outlined" [disabled]="importing()" (clicked)="visible.set(false)">
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </tumaet-ui-button>
+                <tumaet-ui-button [icon]="faFileImport" [disabled]="selectedCount() === 0" [loading]="importing()" (clicked)="importSelected()" data-testid="faq-import-submit">
+                    <span jhiTranslate="artemisApp.faq.import.importSelected" [translateValues]="{ count: selectedCount() }"></span>
+                </tumaet-ui-button>
+            </div>
+        </div>
+    </ng-template>
+</tumaet-ui-dialog>

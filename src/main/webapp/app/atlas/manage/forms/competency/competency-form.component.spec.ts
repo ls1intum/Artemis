@@ -12,6 +12,7 @@ import dayjs from 'dayjs/esm';
 import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 import { By } from '@angular/platform-browser';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
 import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/common-course-competency-form.component';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -123,6 +124,55 @@ describe('CompetencyFormComponent', () => {
         expect(competencyFormComponent.descriptionControl?.value).toEqual(formData.description);
         expect(competencyFormComponent.softDueDateControl?.value).toEqual(formData.softDueDate);
         expect(competencyFormComponent.optionalControl?.value).toEqual(formData.optional);
+    });
+
+    describe('soft due date picker', () => {
+        const pickerInput = () => competencyFormComponentFixture.nativeElement.querySelector('tumaet-ui-date-picker#softDueDate input#softDueDate-input') as HTMLInputElement;
+
+        it('should show the soft due date of the form as a date without time', () => {
+            competencyFormComponentFixture.detectChanges();
+            competencyFormComponent.softDueDateControl!.setValue(dayjs('2030-05-17T10:30'));
+            competencyFormComponentFixture.detectChanges();
+
+            expect(pickerInput().value).toBe('17.05.2030');
+        });
+
+        it('should write a typed date to the soft due date control', () => {
+            competencyFormComponentFixture.detectChanges();
+
+            pickerInput().value = '15.06.2030';
+            pickerInput().dispatchEvent(new Event('input'));
+            competencyFormComponentFixture.detectChanges();
+
+            expect(competencyFormComponent.softDueDateControl!.value?.format('YYYY-MM-DD')).toBe('2030-06-15');
+            expect(competencyFormComponent.softDueDateControl!.dirty).toBe(true);
+        });
+
+        it('should hand the picker the translation key of its label, which the picker translates itself', () => {
+            competencyFormComponentFixture.detectChanges();
+
+            const picker = competencyFormComponentFixture.debugElement.query(By.directive(TumAetUiDatePickerComponent));
+            expect(picker.componentInstance.labelName()).toBe('artemisApp.competency.create.softDueDate');
+        });
+
+        it('should describe the input with the always visible hint', () => {
+            competencyFormComponentFixture.detectChanges();
+
+            const hint = competencyFormComponentFixture.nativeElement.querySelector('#softDueDate-hint');
+            expect(hint).not.toBeNull();
+            expect(pickerInput().getAttribute('aria-describedby')).toBe('softDueDate-hint');
+        });
+
+        it('should block the form while the soft due date holds text that is not a date', () => {
+            competencyFormComponentFixture.detectChanges();
+
+            pickerInput().value = '15.06.';
+            pickerInput().dispatchEvent(new Event('input'));
+            competencyFormComponentFixture.detectChanges();
+
+            expect(competencyFormComponent.softDueDateControl!.hasError('invalidDate')).toBe(true);
+            expect(competencyFormComponent.form.invalid).toBe(true);
+        });
     });
 
     it('should suggest taxonomy when title changes', () => {

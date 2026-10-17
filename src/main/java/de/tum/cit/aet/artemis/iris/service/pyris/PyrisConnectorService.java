@@ -25,6 +25,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
+import de.tum.cit.aet.artemis.communication.dto.FaqCensusDTO;
 import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -468,8 +469,43 @@ public class PyrisConnectorService {
             return objectMapper.readTree(ex.getResponseBodyAsString()).required("detail").required("errorMessage").asString();
         }
         catch (JacksonException | IllegalArgumentException e) {
-            log.error("Failed to parse error message from Pyris", e);
+            // Pyris or a proxy in front of it can answer 400 or 500 with a body that is not the error JSON, e.g. a plain-text "Internal Server Error".
+            // The caller turns the status into an IrisException, so a warning is enough.
+            log.warn("Pyris answered with status {} and a body that is not the expected error JSON: {}", ex.getStatusCode(), e.getMessage());
             return "";
+        }
+    }
+
+    /**
+     * Fetch the FAQ census of this Artemis instance: every FAQ row the Iris index holds for it, plus legacy rows without an instance.
+     *
+     * @return the census, or {@code null} when it is unavailable (an older Pyris without the endpoint, an error, or a timeout); the caller then
+     *         skips reconciliation
+     */
+    @Nullable
+    public FaqCensusDTO getFaqCensus() {
+        try {
+            // Built as a URI and passed as one, so the base URL is encoded exactly once (see getIngestionCensus)
+            URI url = UriComponentsBuilder.fromUriString(pyrisUrl).path("/api/v1/faq-census").queryParam("base_url", "{baseUrl}").encode().buildAndExpand(artemisBaseUrl).toUri();
+            var response = censusRestTemplate.getForEntity(url, FaqCensusDTO.class);
+            if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
+                log.warn("FAQ census returned status {} without a usable body", response.getStatusCode());
+                return null;
+            }
+            return response.getBody();
+        }
+        catch (HttpStatusCodeException e) {
+            if (e.getStatusCode().value() == 404) {
+                log.debug("Pyris does not offer the FAQ census endpoint (404), skipping FAQ reconciliation");
+            }
+            else {
+                log.warn("FAQ census failed with status {}", e.getStatusCode());
+            }
+            return null;
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.warn("FAQ census failed: {}", e.getMessage());
+            return null;
         }
     }
 

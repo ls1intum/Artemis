@@ -105,6 +105,15 @@ class RateLimitConfigurationServiceTest {
     }
 
     @Test
+    void testGetEffectiveRpm_ContentSearch_UsesTheCustomValueOrTheDefault() {
+        when(properties.getContentSearchRequestsPerMinute()).thenReturn(40);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.CONTENT_SEARCH)).isEqualTo(40);
+
+        when(properties.getContentSearchRequestsPerMinute()).thenReturn(null);
+        assertThat(configurationService.getEffectiveRpm(RateLimitType.CONTENT_SEARCH)).isEqualTo(RateLimitType.CONTENT_SEARCH.getDefaultRpm());
+    }
+
+    @Test
     void testGetEffectiveRpm_StruggleIntervention_WithCustomValue_ShouldReturnCustomValue() {
         when(properties.getStruggleInterventionRequestsPerMinute()).thenReturn(50);
 

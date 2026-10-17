@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Subject } from 'rxjs';
+import { Subject, firstValueFrom } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -19,6 +19,7 @@ import { User } from 'app/account/user/user.model';
 import { MODULE_FEATURE_PASSKEY } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { TumAetUiButtonComponent } from '@tumaet/ui-angular';
+import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 
 describe('SetupPasskeyModalComponent', () => {
     let component: SetupPasskeyModalComponent;
@@ -227,5 +228,123 @@ describe('SetupPasskeyModalComponent', () => {
             authenticationState.next({ askToSetupPasskey: true } as User);
             expect(component.visible()).toBe(false);
         });
+    });
+});
+
+/**
+ * Round trip through the real {@link LocalStorageService} and the browser's localStorage. A page reload is simulated by throwing away the
+ * whole testing module (and with it the component and every service) while the storage survives, which is what a refresh does.
+ * The specs above exercise the component and the storage service separately, with the storage replaced by a map.
+ */
+describe('SetupPasskeyModalComponent reminder across page reloads', () => {
+    let authenticationState: Subject<User | undefined>;
+
+    beforeEach(() => {
+        vi.unstubAllGlobals();
+        localStorage.clear();
+        sessionStorage.clear();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        localStorage.clear();
+        sessionStorage.clear();
+    });
+
+    /** Boots a fresh "page": new injector, new component, and the authentication state of a logged-in user who has not set up a passkey yet. */
+    async function loadPage() {
+        TestBed.resetTestingModule();
+        await TestBed.configureTestingModule({
+            imports: [SetupPasskeyModalComponent, MockPipe(TranslatePipe), MockDirective(TranslateDirective)],
+            providers: [
+                MockProvider(AlertService),
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        })
+            .overrideComponent(SetupPasskeyModalComponent, {
+                remove: { imports: [TranslatePipe] },
+                add: { imports: [MockPipe(TranslatePipe)] },
+            })
+            .compileComponents();
+
+        vi.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_PASSKEY] } as unknown as ProfileInfo);
+        const accountService = TestBed.inject(AccountService);
+        accountService.userIdentity.set({ askToSetupPasskey: true } as User);
+        authenticationState = new Subject<User | undefined>();
+        vi.spyOn(accountService, 'getAuthenticationState').mockReturnValue(authenticationState.asObservable());
+
+        const fixture = TestBed.createComponent(SetupPasskeyModalComponent);
+        fixture.detectChanges();
+        // the application announces the logged-in user once the account has been loaded
+        authenticationState.next({ askToSetupPasskey: true } as User);
+        return fixture.componentInstance;
+    }
+
+    it('should ask again on a page without a stored reminder', async () => {
+        const component = await loadPage();
+
+        expect(component.visible()).toBe(true);
+    });
+
+    it('should stay closed after a reload when the user chose "Remind me in 30 days"', async () => {
+        const firstPage = await loadPage();
+        expect(firstPage.visible()).toBe(true);
+
+        firstPage.remindMeIn30Days();
+        expect(firstPage.visible()).toBe(false);
+
+        const reloadedPage = await loadPage();
+        expect(reloadedPage.visible()).toBe(false);
+
+        // and again on every further reload
+        const reloadedAgain = await loadPage();
+        expect(reloadedAgain.visible()).toBe(false);
+    });
+
+    it('should stay closed after the user logged out and back in again', async () => {
+        const firstPage = await loadPage();
+        firstPage.remindMeIn30Days();
+
+        // logging out clears the caches, which must keep the reminder
+        await firstValueFrom(TestBed.inject(AuthServerProvider).clearCaches());
+        expect(localStorage.getItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY)).not.toBeNull();
+
+        const pageAfterLogin = await loadPage();
+        expect(pageAfterLogin.visible()).toBe(false);
+    });
+
+    it('should not store the reminder when the user only chose "Set up later"', async () => {
+        const firstPage = await loadPage();
+        firstPage.closeModal();
+        expect(localStorage.getItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY)).toBeNull();
+
+        const reloadedPage = await loadPage();
+        expect(reloadedPage.visible()).toBe(true);
+    });
+
+    it('should ask again once the 30 days are over', async () => {
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(new Date('2026-06-18T10:00:00.000Z'));
+        const firstPage = await loadPage();
+        firstPage.remindMeIn30Days();
+
+        vi.setSystemTime(new Date('2026-07-17T10:00:00.000Z'));
+        expect((await loadPage()).visible()).toBe(false);
+
+        vi.setSystemTime(new Date('2026-07-19T10:00:00.000Z'));
+        expect((await loadPage()).visible()).toBe(true);
+    });
+
+    it('should keep the reminder independent of the time zone offset in the stored value', async () => {
+        // a date that is already past must not suppress the prompt, whatever the offset of the browser is
+        localStorage.setItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, JSON.stringify(new Date(Date.now() - 1000)));
+        expect((await loadPage()).visible()).toBe(true);
+
+        localStorage.setItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, JSON.stringify(new Date(Date.now() + 24 * 60 * 60 * 1000)));
+        expect((await loadPage()).visible()).toBe(false);
     });
 });

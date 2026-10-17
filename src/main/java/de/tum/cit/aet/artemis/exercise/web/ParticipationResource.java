@@ -199,7 +199,13 @@ public class ParticipationResource {
         log.debug("REST request to practice Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithAuthorities();
-        Optional<StudentParticipation> optionalGradedStudentParticipation = participationService.findOneGradedByExerciseAndParticipant(exercise, user);
+        // A team exercise is practiced individually and always from the template: the graded participation belongs to the team, so it is neither the baseline of the practice
+        // repository nor changed by it. It is only consulted for its individual due date, so that practice does not start while an extension of the team is running.
+        boolean teamExercise = exercise.isTeamMode();
+        Optional<StudentParticipation> optionalGradedStudentParticipation = teamExercise ? Optional.empty()
+                : participationService.findOneGradedByExerciseAndParticipant(exercise, user);
+        Optional<StudentParticipation> optionalParticipationDefiningDueDate = teamExercise ? participationService.findOneByExerciseAndStudentAnyState(exercise, user)
+                : optionalGradedStudentParticipation;
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         if (exercise.isExamExercise()) {
@@ -207,9 +213,6 @@ public class ParticipationResource {
         }
         if (exercise instanceof FileUploadExercise) {
             throw new NotImplementedAlertException("Unsupported exercise type", "participation", "dueDateOver.unsupportedExerciseType");
-        }
-        if (exercise.isTeamMode()) {
-            throw new NotImplementedAlertException("The practice mode is not yet supported for team exercises", ENTITY_NAME, "dueDateOver.notSupportedForTeams");
         }
         if (exercise instanceof ProgrammingExercise && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
             throw new ServiceUnavailableAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "dueDateOver.programmingExercisesDisabled");
@@ -219,7 +222,7 @@ public class ParticipationResource {
                     "dueDateOver.athenaNotEnabled");
         }
         if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate())
-                || (optionalGradedStudentParticipation.isPresent() && exerciseDateService.isBeforeDueDate(optionalGradedStudentParticipation.get()))) {
+                || (optionalParticipationDefiningDueDate.isPresent() && exerciseDateService.isBeforeDueDate(optionalParticipationDefiningDueDate.get()))) {
             throw new AccessForbiddenException("The practice mode can only be started after the due date");
         }
         if (useGradedParticipation && optionalGradedStudentParticipation.isEmpty()) {

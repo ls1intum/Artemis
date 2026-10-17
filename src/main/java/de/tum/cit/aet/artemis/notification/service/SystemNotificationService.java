@@ -114,6 +114,7 @@ public class SystemNotificationService {
     public void sendMaintenanceEmails(SystemNotification notification) {
         validateDatesElseThrow(notification);
 
+        // The query leaves out whoever switched the notification off, and a test user that never switched it on. The count above uses the same rule.
         var recipients = maintenanceEmailRecipientRepository.findInstructorRecipientsForMaintenanceEmail(ZonedDateTime.now());
         log.info("Sending maintenance emails to {} instructor(s)", recipients.size());
 
@@ -129,7 +130,8 @@ public class SystemNotificationService {
             try {
                 String langKey = (recipient.langKey() != null && !recipient.langKey().isBlank()) ? recipient.langKey().strip() : "en";
 
-                var mailRecipient = new MailRecipientDTO(recipient.email(), langKey, null, recipient.firstName(), recipient.lastName());
+                var mailRecipient = new MailRecipientDTO(recipient.email(), langKey, recipient.login(), recipient.firstName(), recipient.lastName(), null, null,
+                        recipient.testUser());
 
                 String[] formattedDates = formattedDatesByLocale.computeIfAbsent(langKey, lk -> {
                     Locale locale = Locale.forLanguageTag(lk);

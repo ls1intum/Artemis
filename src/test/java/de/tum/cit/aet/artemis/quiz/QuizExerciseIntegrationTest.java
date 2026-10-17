@@ -32,6 +32,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -255,6 +256,66 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(loadedQuiz.getQuizQuestions()).as("Questions loadable from DB after creation with competencies").hasSize(3);
         // Verify competency links are saved
         assertThat(loadedQuiz.getCompetencyLinks()).as("Competency links saved").hasSize(1);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false,255,CREATED", "false,256,BAD_REQUEST", "true,255,CREATED", "true,256,BAD_REQUEST" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuizExercise_DragItemTextLength(boolean examQuiz, int textLength, HttpStatus expectedStatus) throws Exception {
+        QuizExercise quizExercise;
+        if (examQuiz) {
+            ExerciseGroup exerciseGroup = examUtilService.createAndSaveActiveExerciseGroup(createEmptyCourse(), true);
+            quizExercise = QuizExerciseFactory.createQuizForExam(exerciseGroup);
+            quizExercise.setDuration(3600);
+        }
+        else {
+            quizExercise = quizExerciseUtilService.createEnrolledQuiz(TEST_PREFIX, ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        }
+        String text = "a".repeat(textLength);
+        textDragItem(quizExercise).setText(text);
+
+        QuizExercise createdQuiz = createQuizExerciseWithFiles(quizExercise, expectedStatus, true);
+        if (expectedStatus == HttpStatus.CREATED) {
+            assertThat(textDragItem(createdQuiz).getText()).isEqualTo(text);
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "255,OK", "256,BAD_REQUEST" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateQuizExercise_DragItemTextLength(int textLength, HttpStatus expectedStatus) throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        String originalText = textDragItem(quizExercise).getText();
+        String text = "a".repeat(textLength);
+        textDragItem(quizExercise).setText(text);
+
+        updateQuizExerciseWithFiles(quizExercise, List.of(), expectedStatus);
+
+        QuizExercise reloadedQuiz = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
+        assertThat(textDragItem(reloadedQuiz).getText()).isEqualTo(expectedStatus == OK ? text : originalText);
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "255,OK", "256,BAD_REQUEST" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReevaluateQuizExercise_DragItemTextLength(int textLength, HttpStatus expectedStatus) throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
+        quizExerciseService.endQuiz(quizExercise);
+        quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
+        String originalText = textDragItem(quizExercise).getText();
+        String text = "a".repeat(textLength);
+        textDragItem(quizExercise).setText(text);
+
+        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), expectedStatus);
+
+        QuizExercise reloadedQuiz = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId(), OK, QuizExercise.class);
+        assertThat(textDragItem(reloadedQuiz).getText()).isEqualTo(expectedStatus == OK ? text : originalText);
+    }
+
+    private static DragItem textDragItem(QuizExercise quizExercise) {
+        return quizExercise.getQuizQuestions().stream().filter(DragAndDropQuestion.class::isInstance).map(DragAndDropQuestion.class::cast)
+                .flatMap(question -> question.getDragItems().stream()).filter(item -> item.getPictureFilePath() == null).findFirst().orElseThrow();
     }
 
     @Test

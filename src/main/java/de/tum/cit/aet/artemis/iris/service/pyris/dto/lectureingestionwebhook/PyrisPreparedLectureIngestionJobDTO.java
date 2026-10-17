@@ -13,4 +13,24 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisPreparedLectureIngestionJobDTO(String jobToken, PyrisWebhookLectureIngestionExecutionDTO executionDTO) {
+
+    /**
+     * The fingerprint the payload actually carries, which Iris stamps into the index. The claim activates with this value, so the fingerprint Artemis
+     * confirms on success is the one the index holds, also when the video was left out.
+     *
+     * @return the content fingerprint sent to Iris
+     */
+    public String contentFingerprint() {
+        return executionDTO.pyrisLectureUnit().contentFingerprint();
+    }
+
+    /**
+     * Whether the payload carries a video for Iris to transcribe.
+     *
+     * @return true if a video link is sent
+     */
+    public boolean includesVideo() {
+        String videoLink = executionDTO.pyrisLectureUnit().videoLink();
+        return videoLink != null && !videoLink.isBlank();
+    }
 }

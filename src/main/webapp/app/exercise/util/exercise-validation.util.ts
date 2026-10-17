@@ -2,6 +2,7 @@ import { Exercise, ExerciseMode, IncludedInOverallScore, ValidationReason } from
 import { TimelineStatus } from 'app/shared-ui/timeline/timeline.component';
 import type { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { TranslateService } from '@ngx-translate/core';
+import { validateStrictDateSequence } from 'app/exercise/util/exercise.utils';
 
 /** Tooltips and aria-describedby targets both need resolved strings rather than keys. */
 export function translateValidationReasons(reasons: readonly ValidationReason[], translateService: TranslateService): string[] {
@@ -27,24 +28,38 @@ export interface ExerciseValidationViewState {
 
 /** The checks every exercise type shares; type-specific ones are added by the calling component. */
 export function getCommonExerciseInvalidReasons(exercise: Exercise, viewState: ExerciseValidationViewState): ValidationReason[] {
-    const reasons: ValidationReason[] = [];
+    return [...getGeneralSectionInvalidReasons(exercise, viewState), ...getModeSectionInvalidReasons(exercise), ...getGradingSectionInvalidReasons(exercise, viewState)];
+}
 
+/** The title and the channel name, which make up the general section of every form. */
+export function getGeneralSectionInvalidReasons(exercise: Exercise, viewState: ExerciseValidationViewState): ValidationReason[] {
+    const reasons: ValidationReason[] = [];
     validateTitle(exercise, viewState, reasons);
     validateChannelName(exercise, viewState, reasons);
+    return reasons;
+}
+
+/** The team size, the only part of the mode section that can be invalid. */
+export function getModeSectionInvalidReasons(exercise: Exercise): ValidationReason[] {
+    const reasons: ValidationReason[] = [];
     validateTeamSize(exercise, reasons);
+    return reasons;
+}
+
+/** The points, the bonus points and, outside exams, the timeline. */
+export function getGradingSectionInvalidReasons(exercise: Exercise, viewState: ExerciseValidationViewState): ValidationReason[] {
+    const reasons: ValidationReason[] = [];
     validatePoints(exercise, reasons);
     validateBonusPoints(exercise, reasons);
-
     if (!viewState.isExamMode) {
         validateExampleSolutionPublicationDate(exercise, reasons);
         reasons.push(...getTimelineInvalidReasons(viewState.timelineStatus));
     }
-
     return reasons;
 }
 
 export function getPlagiarismInvalidReasons(plagiarismComponent: ExerciseUpdatePlagiarismComponent | undefined): ValidationReason[] {
-    if (!plagiarismComponent || plagiarismComponent.isFormValid()) {
+    if (!plagiarismComponent) {
         return [];
     }
 
@@ -56,10 +71,11 @@ export function getPlagiarismInvalidReasons(plagiarismComponent: ExerciseUpdateP
             'artemisApp.exercise.form.continuousPlagiarismControl.continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod.pattern',
     };
 
-    const controls = plagiarismComponent.form.controls;
-    return Object.entries(controlMessageMap)
-        .filter(([controlName]) => controls[controlName as keyof typeof controls]?.invalid)
-        .map(([, translateKey]) => ({ translateKey, translateValues: {} }));
+    // Read from a signal, so that a computed() calling this follows which control is invalid, not only whether one is.
+    return plagiarismComponent
+        .invalidControlNames()
+        .filter((controlName) => controlName in controlMessageMap)
+        .map((controlName) => ({ translateKey: controlMessageMap[controlName], translateValues: {} }));
 }
 
 function getTimelineInvalidReasons(timelineStatus: TimelineStatus): ValidationReason[] {
@@ -137,8 +153,10 @@ function validateBonusPoints(exercise: Exercise, reasons: ValidationReason[]): v
     }
 }
 
+/** Derived from the dates rather than read off the flag {@link ExerciseService.validateDate} sets, so that it cannot lag behind them. */
 function validateExampleSolutionPublicationDate(exercise: Exercise, reasons: ValidationReason[]): void {
-    if (exercise.exampleSolutionPublicationDateError) {
+    const precedingDates = [exercise.releaseDate, exercise.startDate, exercise.dueDate, exercise.assessmentDueDate];
+    if (!validateStrictDateSequence(precedingDates, exercise.exampleSolutionPublicationDate, [])) {
         reasons.push({ translateKey: 'artemisApp.exercise.exampleSolutionPublicationDateError', translateValues: {} });
     }
 }

@@ -1,4 +1,6 @@
 artemis:
+    aiworker:
+        enabled: false
     atlas:
         enabled: true
         atlasml:

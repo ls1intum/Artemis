@@ -1,7 +1,7 @@
-import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, signal, viewChildren } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, signal, viewChild, viewChildren } from '@angular/core';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { CourseTabRefreshService } from 'app/course/overview/services/course-tab-refresh.service';
-import { debounceTime, map } from 'rxjs/operators';
+import { debounceTime, filter, map } from 'rxjs/operators';
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared-ui/components/buttons/button/button.component';
@@ -40,15 +40,19 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-cate
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
+    private router = inject(Router);
     private courseTabRefreshService = inject(CourseTabRefreshService);
     private faqService = inject(FaqService);
     private alertService = inject(AlertService);
     private renderer = inject(Renderer2);
 
     faqElements = viewChildren<ElementRef>('faqElement');
+    private readonly searchFilter = viewChild(SearchFilterComponent);
 
     courseId!: number; // set in ngOnInit() from the parent route paramMap
-    referencedFaqId!: number; // set in ngOnInit() from the route queryParamMap
+    /** The FAQ named by the `faqId` query parameter; follows the parameter while the page stays open. */
+    // Every reference notifies, also a repeated one with the same id, so the FAQ is scrolled to again.
+    readonly referencedFaqId = signal<number | undefined>(undefined, { equal: () => false });
     readonly faqs = signal<Faq[]>([]);
     faqState = FaqState.ACCEPTED;
 
@@ -65,18 +69,28 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     readonly faFilter = faFilter;
 
     private tabReselectionSubscription?: Subscription;
+    private queryParamSubscription?: Subscription;
+    private navigationSubscription?: Subscription;
 
     constructor() {
         effect(() => {
-            if (this.referencedFaqId) {
-                this.scrollToFaq(this.referencedFaqId);
+            const referencedFaqId = this.referencedFaqId();
+            if (referencedFaqId) {
+                this.scrollToFaq(referencedFaqId);
             }
         });
     }
 
     ngOnInit(): void {
         this.courseId = Number(this.route.parent!.snapshot.paramMap.get('courseId'));
-        this.referencedFaqId = Number(this.route.snapshot.queryParamMap.get('faqId'));
+        // The router reuses this page when only the query changes, for example when global search opens another FAQ from
+        // here, so the parameter is followed rather than read once.
+        this.queryParamSubscription = this.route.queryParamMap.subscribe((params) => this.showReferencedFaq(Number(params.get('faqId')) || undefined));
+        // Opening the FAQ that is already referenced (for example from global search) does not change the query, so it is
+        // seen only as another navigation to the same URL, which the router reports because it reloads on same-URL navigation.
+        this.navigationSubscription = this.router.events
+            .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+            .subscribe(() => this.showReferencedFaq(Number(this.route.snapshot.queryParamMap.get('faqId')) || undefined));
 
         this.loadFaqs();
         this.loadCourseExerciseCategories(this.courseId);
@@ -90,6 +104,21 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
             this.loadFaqs();
             this.loadCourseExerciseCategories(this.courseId);
         });
+    }
+
+    /**
+     * Shows the FAQ a link points to. On a page that stays open, the category and text filters set earlier could hide
+     * it, so they are cleared when they do; the scroll effect then finds the rendered FAQ.
+     */
+    private showReferencedFaq(faqId: number | undefined): void {
+        const hidden = faqId !== undefined && this.faqs().some((faq) => faq.id === faqId) && !this.filteredFaqs().some((faq) => faq.id === faqId);
+        if (hidden && (this.activeFilters().size > 0 || this.searchInput.getValue())) {
+            this.activeFilters.set(new Set<string>());
+            this.searchFilter()?.resetSearchValue();
+            this.searchInput.next('');
+            this.applyFilters();
+        }
+        this.referencedFaqId.set(faqId);
     }
 
     private loadCourseExerciseCategories(courseId: number) {
@@ -114,6 +143,8 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.tabReselectionSubscription?.unsubscribe();
+        this.queryParamSubscription?.unsubscribe();
+        this.navigationSubscription?.unsubscribe();
         this.searchInput.complete();
     }
 

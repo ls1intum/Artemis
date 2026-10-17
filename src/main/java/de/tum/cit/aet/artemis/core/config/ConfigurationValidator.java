@@ -537,8 +537,14 @@ public class ConfigurationValidator {
         if (weaviateVectorizerModule == null || weaviateVectorizerModule.isBlank()) {
             invalidProperties.add("artemis.weaviate.vectorizer-module (must be configured when Weaviate is enabled)");
         }
+        else if (SupportedVectorizer.REMOVED_TEXT2VEC_TRANSFORMERS.equals(weaviateVectorizerModule)) {
+            invalidProperties.add("artemis.weaviate.vectorizer-module ('" + SupportedVectorizer.REMOVED_TEXT2VEC_TRANSFORMERS
+                    + "' is no longer supported: use 'text2vec-openai' with a local OpenAI-compatible embedding server, e.g. Ollama, as described in the admin documentation"
+                    + " 'Global Search & Weaviate Setup')");
+        }
         else if (!SupportedVectorizer.isSupported(weaviateVectorizerModule)) {
-            invalidProperties.add("artemis.weaviate.vectorizer-module (must be one of " + Arrays.toString(SupportedVectorizer.values()) + ")");
+            invalidProperties
+                    .add("artemis.weaviate.vectorizer-module (must be one of " + Arrays.stream(SupportedVectorizer.values()).map(SupportedVectorizer::configValue).toList() + ")");
         }
 
         boolean shouldValidateOpenAiSpecificProperties = TEXT2VEC_OPENAI.configValue().equals(weaviateVectorizerModule);
@@ -564,6 +570,10 @@ public class ConfigurationValidator {
             if (!StringUtils.hasText(weaviateGpuApiKey)) {
                 invalidProperties
                         .add("artemis.weaviate.gpu-api-key (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer, use a dummy value for Ollama)");
+            }
+            if (!StringUtils.hasText(environment.getProperty("artemis.weaviate.open-ai-embedding-model"))) {
+                invalidProperties.add("artemis.weaviate.open-ai-embedding-model (must be configured when using " + TEXT2VEC_OPENAI.configValue()
+                        + " vectorizer: Artemis computes the embeddings and sends the model name with every request)");
             }
         }
 

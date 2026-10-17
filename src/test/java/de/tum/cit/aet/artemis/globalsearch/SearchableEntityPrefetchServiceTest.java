@@ -14,6 +14,7 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,7 +56,11 @@ class SearchableEntityPrefetchServiceTest {
         course.setTitle("Patterns in Software Engineering");
         when(accessFilterService.buildSearchableItemFilter(any(), any(), any(), anySet()))
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, true, Map.of(9L, course), staffCourseIds, editorCourseIds));
-        when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt())).thenReturn(rows);
+        when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt())).thenReturn(withoutPassages(rows));
+    }
+
+    private static List<SearchableEntityWeaviateService.AnswerCandidate> withoutPassages(List<Map<String, Object>> rows) {
+        return rows.stream().map(row -> new SearchableEntityWeaviateService.AnswerCandidate(row, null)).toList();
     }
 
     private static Map<String, Object> examRow() {
@@ -94,6 +99,19 @@ class SearchableEntityPrefetchServiceTest {
     }
 
     @Test
+    void passesTheMatchedPassageOfEachHitToTheCandidate() {
+        Map<String, Object> row = new HashMap<>(Map.of(SearchableEntitySchema.Properties.TYPE, "exercise", SearchableEntitySchema.Properties.ENTITY_ID, 42L,
+                SearchableEntitySchema.Properties.COURSE_ID, 9L, SearchableEntitySchema.Properties.TITLE, "Flyweight"));
+        givenAccessibleRows(List.of(row));
+        when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt()))
+                .thenReturn(List.of(new SearchableEntityWeaviateService.AnswerCandidate(row, "Share intrinsic state between many objects.")));
+
+        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "flyweight", 10, null, List.of());
+
+        assertThat(candidates).singleElement().extracting(SearchableEntityCandidateDTO::passage).isEqualTo("Share intrinsic state between many objects.");
+    }
+
+    @Test
     void buildsTypeSpecificLinks() {
         Map<String, Object> unit = new HashMap<>(Map.of(SearchableEntitySchema.Properties.TYPE, "lecture_unit", SearchableEntitySchema.Properties.ENTITY_ID, 5L,
                 SearchableEntitySchema.Properties.COURSE_ID, 9L, SearchableEntitySchema.Properties.LECTURE_ID, 44L));
@@ -108,20 +126,18 @@ class SearchableEntityPrefetchServiceTest {
     }
 
     @Test
-    void buildsFocusedLinksForPostsAndReplies() {
-        // Mirrors the palette's own click handler (GlobalSearchNavigationViewComponent), which opens a
-        // post via focusPostId and a reply via messageId (the parent post) + focusReplyId. Without these
-        // query params the citation opens the channel but not the specific cited message.
-        Map<String, Object> post = new HashMap<>(Map.of(SearchableEntitySchema.Properties.TYPE, "post", SearchableEntitySchema.Properties.ENTITY_ID, 77L,
-                SearchableEntitySchema.Properties.COURSE_ID, 9L, SearchableEntitySchema.Properties.CHANNEL_ID, 61L));
-        Map<String, Object> answerPost = new HashMap<>(Map.of(SearchableEntitySchema.Properties.TYPE, "answer_post", SearchableEntitySchema.Properties.ENTITY_ID, 88L,
-                SearchableEntitySchema.Properties.COURSE_ID, 9L, SearchableEntitySchema.Properties.CHANNEL_ID, 61L, SearchableEntitySchema.Properties.POST_ID, 77L));
-        givenAccessibleRows(List.of(post, answerPost));
+    void requestsTheSearchableTypesAndNeverPostsOrReplies() {
+        // Posts and answer posts are indexed but stale, so they must never reach Pyris as answer candidates: the
+        // answer path asks for exactly the palette's searchable types.
+        givenAccessibleRows(List.of());
 
-        List<SearchableEntityCandidateDTO> candidates = prefetchService.prefetchCandidates(new User(), "q", 10, null, List.of());
+        prefetchService.prefetchCandidates(new User(), "q", 10, null, List.of());
 
-        assertThat(candidates).extracting(SearchableEntityCandidateDTO::link).containsExactly("/courses/9/communication?conversationId=61&focusPostId=77",
-                "/courses/9/communication?conversationId=61&messageId=77&focusReplyId=88");
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Set<String>> requestedTypes = ArgumentCaptor.forClass(Set.class);
+        verify(accessFilterService).buildSearchableItemFilter(any(), any(), any(), requestedTypes.capture());
+        assertThat(requestedTypes.getValue()).isEqualTo(SearchableEntityAccessFilterService.SEARCHABLE_TYPES).doesNotContain(SearchableEntitySchema.TypeValues.POST,
+                SearchableEntitySchema.TypeValues.ANSWER_POST);
     }
 
     @Test
@@ -195,7 +211,7 @@ class SearchableEntityPrefetchServiceTest {
                 Map.of(SearchableEntitySchema.Properties.TYPE, "exercise", SearchableEntitySchema.Properties.ENTITY_ID, 13L, SearchableEntitySchema.Properties.COURSE_ID, 99L));
         when(accessFilterService.buildSearchableItemFilter(any(), any(), any(), anySet()))
                 .thenReturn(new SearchableEntityAccessFilterService.FilterBuildResult(null, true, null, null, null));
-        when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt())).thenReturn(List.of(secondCourse, firstCourse, deletedCourse));
+        when(weaviateService.searchEntityCandidatesForAnswer(any(), any(), anyInt())).thenReturn(withoutPassages(List.of(secondCourse, firstCourse, deletedCourse)));
 
         var first = new de.tum.cit.aet.artemis.course.domain.Course();
         first.setId(9L);

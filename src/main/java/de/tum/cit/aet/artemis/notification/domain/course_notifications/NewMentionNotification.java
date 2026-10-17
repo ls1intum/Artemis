@@ -57,7 +57,8 @@ public class NewMentionNotification extends CourseNotification {
         String returnUrl = "/courses/" + courseId + "/communication?conversationId=" + payload.channelId() + "&focusPostId=" + payload.postId();
 
         if (payload.replyId() != null) {
-            returnUrl += "&openThreadOnFocus=1&postInThread=" + payload.replyId();
+            // messageId is the parent post that seeds the thread; focusReplyId highlights the reply within it.
+            returnUrl += "&openThreadOnFocus=1&messageId=" + payload.postId() + "&focusReplyId=" + payload.replyId();
         }
 
         return returnUrl;

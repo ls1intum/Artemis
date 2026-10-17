@@ -90,6 +90,7 @@
             </h4>
         }
         <div style="flex: 1; min-height: 0">
+            <jhi-participation-access-notice [exercise]="exercise()!" />
             <jhi-table-view
                 [cols]="columns()"
                 [vals]="participations()"
@@ -166,32 +167,35 @@
 <ng-template #actionsTemplate let-dto>
     <div class="btn-group gap-1">
         @if (exercise()!.type === ExerciseType.PROGRAMMING) {
-            @if (dto.repositoryUri) {
-                <jhi-code-button
-                    [smallButtons]="true"
-                    [hideLabelMobile]="true"
-                    [hideLabelBreakpoint]="'xl'"
-                    [exerciseId]="exercise()?.id"
-                    [participationId]="dto.participationId"
-                    [repositoryUri]="dto.repositoryUri"
-                    [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, dto.participationId]"
-                />
-            }
             @if (dto.buildPlanId && !localCIEnabled()) {
                 <a [href]="getBuildPlanUrl(dto)" target="_blank" rel="noreferrer" class="btn btn-primary btn-sm">
                     <fa-icon [icon]="farFileCode" />
                     <span class="d-none d-xl-inline ms-1">Build plan</span>
                 </a>
             }
-            <a
-                [routerLink]="['/courses', course()!.id, 'exercises', 'programming-exercises', exercise()!.id, 'code-editor', dto.participationId]"
-                class="btn btn-info btn-sm"
-                [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
-            >
-                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                <span class="d-none d-xl-inline ms-1">Online editor</span>
-            </a>
+            @if (canAccessLiveRepository()) {
+                <a
+                    [routerLink]="['/courses', course()!.id, 'exercises', 'programming-exercises', exercise()!.id, 'code-editor', dto.participationId]"
+                    class="btn btn-info btn-sm"
+                    [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
+                >
+                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
+                    <span class="d-none d-xl-inline ms-1">Online editor</span>
+                </a>
+            }
         }
         <jhi-manage-assessment-buttons [course]="course()!" [exercise]="exercise()!" [participation]="toParticipation(dto)" [isLoading]="isLoading()" (refresh)="refresh()" />
     </div>
+</ng-template>
+
+<ng-template #repositoryCellTemplate let-cell>
+    @if (cell.data.repositoryUri) {
+        <jhi-code-button
+            [smallButtons]="true"
+            [exerciseId]="exercise()?.id"
+            [participationId]="cell.data.participationId"
+            [repositoryUri]="cell.data.repositoryUri"
+            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, cell.data.participationId]"
+        />
+    }
 </ng-template>

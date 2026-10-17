@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.IrisLectureUnitSyncStateRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitProcessingStateRepository;
+import de.tum.cit.aet.artemis.lecture.service.LectureUnitContentFingerprintService.ContentFingerprints;
 import de.tum.cit.aet.artemis.videosource.service.VideoSourceResolverService;
 
 /**
@@ -65,7 +66,7 @@ class ProcessingStateWorkerDispatchTest {
         AttachmentRepository attachmentRepository = mock(AttachmentRepository.class);
         websocketMessagingService = mock(WebsocketMessagingService.class);
         LectureUnitContentFingerprintService contentFingerprintService = mock(LectureUnitContentFingerprintService.class);
-        when(contentFingerprintService.computeFingerprint(any())).thenReturn("v1:test-fingerprint");
+        when(contentFingerprintService.computeFingerprints(any())).thenReturn(new ContentFingerprints("v1:test-fingerprint", "v1:test-fingerprint-without-video"));
 
         videoSourceResolver = mock(VideoSourceResolverService.class);
         featureToggleService = mock(FeatureToggleService.class);

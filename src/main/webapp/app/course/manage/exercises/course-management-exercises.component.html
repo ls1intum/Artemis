@@ -136,11 +136,11 @@
         >
             <ng-container tumAetUiEmptyStateActions>
                 @if (!search() && course()?.isAtLeastEditor) {
-                    <tumaet-ui-button [icon]="faPlus" (clicked)="openCreateModal()">
-                        <span jhiTranslate="artemisApp.exerciseManagement.empty.create"></span>
-                    </tumaet-ui-button>
                     <tumaet-ui-button [icon]="faFileImport" variant="outlined" (clicked)="openImportModal()">
                         <span jhiTranslate="artemisApp.exerciseManagement.empty.import"></span>
+                    </tumaet-ui-button>
+                    <tumaet-ui-button [icon]="faPlus" (clicked)="openCreateModal()">
+                        <span jhiTranslate="artemisApp.exerciseManagement.empty.create"></span>
                     </tumaet-ui-button>
                 }
             </ng-container>

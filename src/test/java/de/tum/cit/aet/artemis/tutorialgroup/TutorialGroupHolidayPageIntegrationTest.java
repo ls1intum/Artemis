@@ -351,6 +351,14 @@ class TutorialGroupHolidayPageIntegrationTest extends AbstractTutorialGroupInteg
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void sessionCounts_asEditor_shouldReturnOk() throws Exception {
+        request.getList(sessionCountsPath(), HttpStatus.OK, TutorialGroupSessionCountDTO.class, span(MONDAY, MONDAY.plusDays(6)));
+        request.getList(countsPerPeriodPath(), HttpStatus.OK, TutorialGroupFreePeriodSessionCountDTO.class);
+        request.get(overlapCountPath(), HttpStatus.OK, Long.class, span(MONDAY.atTime(9, 0), MONDAY.atTime(10, 0)));
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getSessionCounts_asTutor_shouldReturnForbidden() throws Exception {
         request.getList(sessionCountsPath(), HttpStatus.FORBIDDEN, TutorialGroupSessionCountDTO.class, span(MONDAY, MONDAY.plusDays(6)));

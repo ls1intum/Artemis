@@ -110,6 +110,7 @@ export class ExamExerciseGroupCreationPage {
                     exerciseGroup,
                     title,
                     assessmentType: additionalData.progExerciseAssessmentType,
+                    allowComplaintsForAutomaticAssessments: additionalData.allowComplaintsForAutomaticAssessments,
                     programmingLanguage: additionalData.programmingLanguage,
                     buildAndTestStudentSubmissionsAfterDueDate,
                 });

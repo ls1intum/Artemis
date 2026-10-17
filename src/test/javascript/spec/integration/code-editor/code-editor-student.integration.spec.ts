@@ -49,7 +49,6 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockInstance as NgMockInstance, MockModule, MockPipe } from 'ng-mocks';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
-import { mockCodeEditorMonacoViewChildren } from 'test/helpers/mocks/mock-instance.helper';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockCodeEditorBuildLogService } from 'test/helpers/mocks/service/mock-code-editor-build-log.service';
 import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
@@ -80,8 +79,6 @@ describe('CodeEditorStudentIntegration', () => {
 
     const result: Result = { id: 3, successful: false, completionDate: dayjs().subtract(2, 'days') };
 
-    // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
-    mockCodeEditorMonacoViewChildren();
     NgMockInstance(CodeEditorGridComponent, () => ({ buildOutputIsCollapsed: signal(false) }));
 
     beforeEach(async () => {

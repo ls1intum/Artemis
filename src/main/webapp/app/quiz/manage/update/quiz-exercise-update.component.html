@@ -153,10 +153,9 @@
                                 </div>
                                 <span class="subsection-header-title" jhiTranslate="artemisApp.quizExercise.sections.schedule"></span>
                             </div>
-                            <div class="row">
-                                <div class="col-lg-4 col-sm-12">
-                                    <div class="form-group">
-                                        <label class="form-control-label" jhiTranslate="artemisApp.quizExercise.duration"></label>
+                            <div class="quiz-schedule-grid">
+                                <div>
+                                    <tumaet-ui-form-field [label]="'artemisApp.quizExercise.duration' | artemisTranslate" controlId="quiz-duration-hours">
                                         <div class="d-flex align-items-center gap-2 flex-wrap">
                                             <label for="quiz-duration-hours" class="visually-hidden" jhiTranslate="artemisApp.quizExercise.hours"></label>
                                             <p-inputnumber
@@ -191,10 +190,41 @@
                                             />
                                             <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
                                         </div>
-                                    </div>
-                                    <div class="form-group mt-2">
-                                        <label for="quizMode" class="form-control-label" jhiTranslate="artemisApp.quizExercise.quizMode.title"></label>
-                                        <jhi-help-icon text="artemisApp.quizExercise.quizMode.explanation" />
+                                    </tumaet-ui-form-field>
+                                </div>
+                                <div>
+                                    @if (variantLock.locked()) {
+                                        <jhi-exercise-group-date-notice class="mb-3" (editGroupDates)="variantLock.openModal()" />
+                                    }
+                                    <!-- releaseDate works similar to Exam.visibleDate -->
+                                    <tumaet-ui-form-field
+                                        #releaseDateField
+                                        id="pick-releaseDate"
+                                        class="form-element mb-3"
+                                        [label]="'artemisApp.quizExercise.releaseDate' | artemisTranslate"
+                                        controlId="pick-releaseDate-input"
+                                    >
+                                        <fa-icon
+                                            tumAetUiFormFieldLabel
+                                            [icon]="faQuestionCircle"
+                                            class="text-muted-color"
+                                            [tumAetUiTooltip]="'artemisApp.quizExercise.releaseDateExplanation.' + quizExercise().quizMode | artemisTranslate"
+                                        />
+                                        <tumaet-ui-date-picker
+                                            inputId="pick-releaseDate-input"
+                                            [hideLabelName]="true"
+                                            [shouldDisplayTimeZoneWarning]="false"
+                                            [ariaLabelledBy]="releaseDateField.labelId()"
+                                            [ariaDescribedBy]="releaseDateField.describedBy()"
+                                            [value]="quizExercise().releaseDate"
+                                            [disabled]="variantLock.locked()"
+                                            (valueChange)="onReleaseDateChange($event)"
+                                        />
+                                    </tumaet-ui-form-field>
+                                </div>
+                                <div>
+                                    <tumaet-ui-form-field [label]="'artemisApp.quizExercise.quizMode.title' | artemisTranslate" controlId="quizMode">
+                                        <jhi-help-icon tumAetUiFormFieldLabel text="artemisApp.quizExercise.quizMode.explanation" />
                                         <p-select
                                             inputId="quizMode"
                                             [options]="quizModeOptions()"
@@ -206,89 +236,78 @@
                                             styleClass="w-100"
                                             appendTo="body"
                                         />
-                                    </div>
-                                </div>
-                                <div class="col-lg-4 col-sm-12">
-                                    <div class="form-group">
-                                        <!-- releaseDate works similar to Exam.visibleDate -->
-                                        <jhi-date-time-picker
-                                            id="pick-releaseDate"
-                                            class="form-element"
-                                            labelName="{{ 'artemisApp.quizExercise.releaseDate' | artemisTranslate }}"
-                                            labelTooltip="{{ 'artemisApp.quizExercise.releaseDateExplanation.' + quizExercise().quizMode | artemisTranslate }}"
-                                            [(ngModel)]="quizExercise().releaseDate"
-                                            (valueChange)="cacheValidation()"
-                                            [error]="false"
-                                            name="releaseDate"
-                                            [lockedToGroup]="variantLock.locked()"
-                                            (lockedClick)="variantLock.openModal()"
-                                        />
-                                        @if (quizExercise().quizMode !== QuizMode.SYNCHRONIZED) {
-                                            <jhi-date-time-picker
-                                                id="pick-dueDate"
-                                                class="form-element"
-                                                name="dueDate"
-                                                [error]="!!quizExercise().dueDateError"
-                                                labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
-                                                (valueChange)="cacheValidation()"
-                                                [(ngModel)]="quizExercise().dueDate"
-                                                [lockedToGroup]="variantLock.locked()"
-                                                (lockedClick)="variantLock.openModal()"
+                                    </tumaet-ui-form-field>
+                                    @if (quizExercise().quizMode === QuizMode.SYNCHRONIZED) {
+                                        <div class="d-flex align-items-center gap-2 mt-2 mb-2">
+                                            <p-checkbox
+                                                inputId="cbScheduleQuizStart"
+                                                [(ngModel)]="scheduleQuizStart"
+                                                (ngModelChange)="cacheValidation()"
+                                                [binary]="true"
+                                                name="scheduleQuizStart"
                                             />
-                                            @if (quizExercise().dueDateError) {
-                                                <span class="invalid-feedback" jhiTranslate="artemisApp.quizExercise.dueDateError"></span>
-                                            }
-                                        }
-                                        @if (quizExercise().quizMode === QuizMode.SYNCHRONIZED) {
-                                            <div class="d-flex align-items-center gap-2 mt-2">
-                                                <p-checkbox
-                                                    inputId="cbScheduleQuizStart"
-                                                    [(ngModel)]="scheduleQuizStart"
-                                                    (ngModelChange)="cacheValidation()"
-                                                    [binary]="true"
-                                                    name="scheduleQuizStart"
-                                                />
-                                                <label for="cbScheduleQuizStart" jhiTranslate="artemisApp.quizExercise.setStartTime"></label>
-                                                <jhi-help-icon text="artemisApp.quizExercise.startTimeExplanation" />
-                                            </div>
-                                        }
-                                        @if (quizExercise().quizMode === QuizMode.BATCHED && false) {
-                                            <div class="form-check custom-control custom-checkbox">
-                                                <!-- no scheduled batched mode yet -->
-                                                <jhi-button (click)="addQuizBatch()" [btnType]="ButtonType.DEFAULT" title="artemisApp.quizExercise.addBatch" />
-                                            </div>
-                                        }
-                                        @if (quizExercise().quizBatches && quizExercise().quizMode === QuizMode.SYNCHRONIZED) {
-                                            <!-- Change "quizExercise().quizMode === QuizMode.SYNCHRONIZED" above to "quizExercise().quizMode !== QuizMode.INDIVIDUAL" when scheduled batched mode is active -->
-                                            @for (quizBatch of quizExercise().quizBatches; track quizBatch; let first = $first) {
-                                                <div>
-                                                    <!-- startTime works similar to Exam.startDate -->
-                                                    <jhi-date-time-picker
-                                                        class="form-element"
-                                                        name="startTime"
-                                                        [shouldDisplayTimeZoneWarning]="first"
-                                                        labelName="{{ 'artemisApp.quizExercise.startTime' | artemisTranslate }}"
-                                                        [error]="quizBatch.startTimeError ?? false"
-                                                        (valueChange)="cacheValidation()"
-                                                        [(ngModel)]="quizBatch.startTime"
+                                            <label for="cbScheduleQuizStart" jhiTranslate="artemisApp.quizExercise.setStartTime"></label>
+                                            <jhi-help-icon text="artemisApp.quizExercise.startTimeExplanation" />
+                                        </div>
+                                    }
+                                </div>
+                                <div>
+                                    @if (quizExercise().quizMode !== QuizMode.SYNCHRONIZED) {
+                                        <tumaet-ui-form-field
+                                            #dueDateField
+                                            id="pick-dueDate"
+                                            class="form-element mb-3"
+                                            [label]="'artemisApp.exercise.dueDate' | artemisTranslate"
+                                            controlId="pick-dueDate-input"
+                                            [invalid]="!!quizExercise().dueDateError"
+                                            [error]="'artemisApp.quizExercise.dueDateError' | artemisTranslate"
+                                        >
+                                            <tumaet-ui-date-picker
+                                                inputId="pick-dueDate-input"
+                                                [hideLabelName]="true"
+                                                [shouldDisplayTimeZoneWarning]="false"
+                                                [ariaLabelledBy]="dueDateField.labelId()"
+                                                [ariaDescribedBy]="dueDateField.describedBy()"
+                                                [value]="quizExercise().dueDate"
+                                                [invalid]="!!quizExercise().dueDateError"
+                                                [disabled]="variantLock.locked()"
+                                                (valueChange)="onDueDateChange($event)"
+                                            />
+                                        </tumaet-ui-form-field>
+                                    }
+                                    @if (quizExercise().quizBatches && quizExercise().quizMode === QuizMode.SYNCHRONIZED) {
+                                        <!-- Change "quizExercise().quizMode === QuizMode.SYNCHRONIZED" above to "quizExercise().quizMode !== QuizMode.INDIVIDUAL" when scheduled batched mode is active -->
+                                        @for (quizBatch of quizExercise().quizBatches; track quizBatch) {
+                                            <div>
+                                                <!-- startTime works similar to Exam.startDate -->
+                                                <tumaet-ui-form-field
+                                                    #startTimeField
+                                                    class="form-element mb-3"
+                                                    [label]="'artemisApp.quizExercise.startTime' | artemisTranslate"
+                                                    [controlId]="'quiz-batch-start-time-' + $index"
+                                                    [invalid]="quizBatch.startTimeError ?? false"
+                                                    [error]="
+                                                        (quizExercise().quizMode === QuizMode.SYNCHRONIZED
+                                                            ? 'artemisApp.quizExercise.startTimeErrorSynchronized'
+                                                            : 'artemisApp.quizExercise.startTimeError'
+                                                        ) | artemisTranslate
+                                                    "
+                                                >
+                                                    <tumaet-ui-date-picker
+                                                        [inputId]="'quiz-batch-start-time-' + $index"
+                                                        [hideLabelName]="true"
+                                                        [shouldDisplayTimeZoneWarning]="false"
+                                                        [ariaLabelledBy]="startTimeField.labelId()"
+                                                        [ariaDescribedBy]="startTimeField.describedBy()"
+                                                        [value]="quizBatch.startTime"
+                                                        [invalid]="quizBatch.startTimeError ?? false"
+                                                        (valueChange)="onBatchStartTimeChange(quizBatch, $event)"
                                                     />
-                                                    @if (quizBatch.startTimeError) {
-                                                        <span class="invalid-feedback">{{
-                                                            (quizExercise().quizMode === QuizMode.SYNCHRONIZED
-                                                                ? 'artemisApp.quizExercise.startTimeErrorSynchronized'
-                                                                : 'artemisApp.quizExercise.startTimeError'
-                                                            ) | artemisTranslate
-                                                        }}</span>
-                                                    }
-                                                    <!-- no scheduled batched mode yet -->
-                                                    <!-- Change *ngIf="false" below to "quizExercise().quizMode === QuizMode.BATCHED" when scheduled batched mode is active -->
-                                                    @if (false) {
-                                                        <jhi-button (click)="removeQuizBatch(quizBatch)" [btnType]="ButtonType.ERROR" [icon]="faXmark" />
-                                                    }
-                                                </div>
-                                            }
+                                                </tumaet-ui-form-field>
+                                            </div>
                                         }
-                                    </div>
+                                    }
+                                    <p class="mb-0 text-sm text-muted-color" jhiTranslate="entity.timeZoneWarning" [translateValues]="{ timeZone: currentTimeZone }"></p>
                                 </div>
                             </div>
                         }

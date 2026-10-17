@@ -266,9 +266,8 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsLoc
         createdProjectKey = programming.getProjectKey();
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
-        request.performMvcRequest(
-                post("/api/exam/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
-                .andExpect(status().isBadRequest())
+        request.performMvcRequest(post("/api/exam/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(ExamImportDTO.of(exam, course1.getId())))).andExpect(status().isBadRequest())
                 .andExpect(result -> assertThat(result.getResolvedException()).hasMessage("Exam contains programming exercise(s) with invalid short name."));
     }
 

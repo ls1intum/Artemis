@@ -5,7 +5,8 @@ import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAU
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { Subscription, merge } from 'rxjs';
-import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { DatePickerControlDirective } from 'app/shared-ui/date-picker-control/date-picker-control.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -19,7 +20,8 @@ import { MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco
     imports: [
         NgbDropdownModule,
         ReactiveFormsModule,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
+        DatePickerControlDirective,
         TaxonomySelectComponent,
         MarkdownEditorMonacoComponent,
         HelpIconComponent,
@@ -39,7 +41,6 @@ export class CommonCourseCompetencyFormComponent {
     onTitleOrDescriptionChange = output<void>();
 
     protected readonly competencyValidators = CourseCompetencyValidators;
-    protected readonly DateTimePickerType = DateTimePickerType;
 
     readonly suggestedTaxonomies = signal<string[]>([]);
 

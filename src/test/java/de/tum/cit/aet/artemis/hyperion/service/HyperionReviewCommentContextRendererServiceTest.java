@@ -96,6 +96,30 @@ class HyperionReviewCommentContextRendererServiceTest {
         assertThat(comments.get(maxSerializedComments - 1).path("text").asString()).isEqualTo("comment-13-" + (maxSerializedComments + 1));
     }
 
+    @Test
+    void captureWholeExerciseSelectedFeedback_freezesTheSameBoundedCommentsAsTheWorkerPrompt() throws Exception {
+        CommentThread selected = createThread(11L, CommentThreadLocationType.SOLUTION_REPO, 2);
+        CommentThread resolved = createThread(12L, CommentThreadLocationType.TEST_REPO, 1);
+        resolved.setResolved(true);
+        CommentThread outdated = createThread(13L, CommentThreadLocationType.TEMPLATE_REPO, 1);
+        outdated.setOutdated(true);
+        when(commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(9L, List.of(11L, 12L, 13L))).thenReturn(List.of(selected, resolved, outdated));
+
+        var snapshot = contextRendererService.captureWholeExerciseSelectedFeedback(9L, List.of(11L, 12L, 13L));
+        JsonNode workerThreads = OBJECT_MAPPER.readTree(snapshot.prompt().substring(snapshot.prompt().indexOf('{'))).path("threads");
+        assertThat(workerThreads).hasSize(1);
+        assertThat(snapshot.feedback()).singleElement().satisfies(feedback -> {
+            assertThat(feedback.targetType()).isEqualTo("SOLUTION_REPO");
+            assertThat(feedback.filePath()).isEqualTo("src/test/File11.java");
+            assertThat(feedback.lineNumber()).isEqualTo(10);
+            assertThat(feedback.comments()).containsExactly("comment-11-0", "comment-11-1");
+            assertThat(workerThreads.get(0).path("comments").get(0).path("text").asText()).isEqualTo(feedback.comments().getFirst());
+        });
+
+        selected.getComments().clear();
+        assertThat(snapshot.feedback().getFirst().comments()).containsExactly("comment-11-0", "comment-11-1");
+    }
+
     private CommentThread createThread(long threadId, CommentThreadLocationType targetType, int commentCount) {
         CommentThread thread = new CommentThread();
         thread.setId(threadId);

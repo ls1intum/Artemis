@@ -13,7 +13,8 @@ import { ProgrammingAssessmentRepoExportService } from 'app/programming/manage/a
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
+import { TumAetUiDatePickerComponent } from '@tumaet/ui-angular';
+import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -53,7 +54,6 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         };
 
         return TestBed.configureTestingModule({
-            imports: [FormDateTimePickerComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 SessionStorageService,
@@ -204,6 +204,73 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         fixture.detectChanges();
 
         expect(exportButton.getAttribute('disabled')).toBe('');
+    });
+
+    describe('late submissions date picker', () => {
+        let picker: TumAetUiDatePickerComponent;
+        let exportButton: HTMLButtonElement;
+
+        beforeEach(async () => {
+            fixture.detectChanges();
+            await fixture.whenStable();
+            picker = fixture.debugElement.query(By.directive(TumAetUiDatePickerComponent)).componentInstance;
+            exportButton = fixture.nativeElement.querySelector('button[type="submit"]');
+        });
+
+        it('should only be editable while late submissions are filtered', () => {
+            expect(picker.disabled()).toBe(true);
+
+            comp.repositoryExportOptions.filterLateSubmissions = true;
+            fixture.detectChanges();
+
+            expect(picker.disabled()).toBe(false);
+        });
+
+        it('should write the picked date to the export options', () => {
+            const date = dayjs('2030-06-01T12:00:00');
+
+            picker.value.set(date);
+            fixture.detectChanges();
+
+            expect(comp.repositoryExportOptions.filterLateSubmissionsDate).toBe(date);
+
+            picker.value.set(undefined);
+
+            expect(comp.repositoryExportOptions.filterLateSubmissionsDate).toBeUndefined();
+        });
+
+        it('should block the export while the typed date is not a date', async () => {
+            comp.repositoryExportOptions.filterLateSubmissions = true;
+            fixture.detectChanges();
+            const input: HTMLInputElement = fixture.nativeElement.querySelector('#filterLateSubmissionsDate');
+
+            input.value = 'not a date';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(comp.hasInvalidFilterDate()).toBe(true);
+            expect(exportButton.disabled).toBe(true);
+
+            input.value = '01.06.2030 12:00';
+            input.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+
+            expect(comp.hasInvalidFilterDate()).toBe(false);
+            expect(exportButton.disabled).toBe(false);
+            expect(comp.repositoryExportOptions.filterLateSubmissionsDate!.isSame(dayjs('2030-06-01T12:00:00'))).toBe(true);
+        });
+
+        it('should ignore a text that is not a date while late submissions are not filtered', () => {
+            comp.isFilterDateTextValid.set(false);
+            fixture.detectChanges();
+
+            expect(comp.hasInvalidFilterDate()).toBe(false);
+            expect(exportButton.disabled).toBe(false);
+        });
     });
 
     it('Should not change the ExportOptions during export', async () => {

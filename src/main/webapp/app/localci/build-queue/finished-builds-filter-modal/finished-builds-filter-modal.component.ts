@@ -4,13 +4,13 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import dayjs from 'dayjs/esm';
 import { HttpParams } from '@angular/common/http';
 import { FinishedBuildJob } from 'app/localci/shared/entities/build-job.model';
-import { FormDateTimePickerComponent } from 'app/shared-ui/date-time-picker/date-time-picker.component';
 import { FormsModule } from '@angular/forms';
 import { hydrate } from 'app/foundation/util/deep-clone.util';
 import {
     TumAetUiAutoCompleteComponent,
     TumAetUiAutoCompleteSearchEvent,
     TumAetUiButtonComponent,
+    TumAetUiDatePickerComponent,
     TumAetUiDialogComponent,
     TumAetUiInputDirective,
     TumAetUiRadioButtonComponent,
@@ -122,7 +122,7 @@ export enum FinishedBuildJobFilterKey {
     imports: [
         ArtemisTranslatePipe,
         TranslateDirective,
-        FormDateTimePickerComponent,
+        TumAetUiDatePickerComponent,
         FormsModule,
         TumAetUiDialogComponent,
         TumAetUiButtonComponent,
@@ -172,6 +172,13 @@ export class FinishedBuildsFilterModalComponent {
 
     /** Available status values for the status filter dropdown */
     readonly buildStatusFilterValues: string[] = Object.values(BuildJobStatusFilter);
+
+    /**
+     * Whether the text typed into each date picker is a date. A picker keeps its last valid date while its text is not one,
+     * so an invalid text is tracked here and dropped from the filter when it is applied.
+     */
+    protected readonly isFromTextValid = signal(true);
+    protected readonly isToTextValid = signal(true);
 
     /** Suggestions shown in the build agent address autocomplete dropdown */
     readonly buildAgentAddressSuggestions = signal<string[]>([]);
@@ -246,6 +253,18 @@ export class FinishedBuildsFilterModalComponent {
         this.commitFinishedBuildJobFilter();
     }
 
+    /** Takes over the date picked in the from picker; no date means it was cleared. */
+    onFromDateChange(date: dayjs.Dayjs | undefined) {
+        this.finishedBuildJobFilter.buildSubmissionDateFilterFrom = date;
+        this.filterDateChanged();
+    }
+
+    /** Takes over the date picked in the to picker; no date means it was cleared. */
+    onToDateChange(date: dayjs.Dayjs | undefined) {
+        this.finishedBuildJobFilter.buildSubmissionDateFilterTo = date;
+        this.filterDateChanged();
+    }
+
     /**
      * Method to remove the build start date filter and store the selected build start date in the local store if required.
      */
@@ -301,6 +320,14 @@ export class FinishedBuildsFilterModalComponent {
     }
 
     confirm() {
+        // A date whose text is not a date is no filter: the picker still holds its previous date, which must not be applied.
+        if (!this.isFromTextValid()) {
+            this.finishedBuildJobFilter.buildSubmissionDateFilterFrom = undefined;
+        }
+        if (!this.isToTextValid()) {
+            this.finishedBuildJobFilter.buildSubmissionDateFilterTo = undefined;
+        }
+        this.filterDateChanged();
         this.confirmed.emit(this.finishedBuildJobFilter);
         this.visible.set(false);
     }

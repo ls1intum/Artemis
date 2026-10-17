@@ -55,13 +55,16 @@ public class SearchableEntityReconcileScheduler {
 
     private final SearchableEntityOrphanSweep orphanSweep;
 
+    private final SearchableEntityRefillSweep refillSweep;
+
     public SearchableEntityReconcileScheduler(WeaviateReconcileProperties reconcileProperties, FeatureToggleService featureToggleService, SearchableEntityMissingSweep missingSweep,
-            SearchableEntityDriftSweep driftSweep, SearchableEntityOrphanSweep orphanSweep) {
+            SearchableEntityDriftSweep driftSweep, SearchableEntityOrphanSweep orphanSweep, SearchableEntityRefillSweep refillSweep) {
         this.reconcileProperties = reconcileProperties;
         this.featureToggleService = featureToggleService;
         this.missingSweep = missingSweep;
         this.driftSweep = driftSweep;
         this.orphanSweep = orphanSweep;
+        this.refillSweep = refillSweep;
     }
 
     /**
@@ -90,9 +93,17 @@ public class SearchableEntityReconcileScheduler {
     /**
      * Queues a write for entities the index has never confirmed holding.
      */
-    @Scheduled(cron = "${artemis.scheduling.weaviate-reconcile-missing-time:0 */10 * * * *}")
+    @Scheduled(cron = "${artemis.scheduling.weaviate-reconcile-missing-time:0 * * * * *}")
     public void reconcileMissing() {
         runPass(ReconcilePass.MISSING, featureToggleService.isFeatureEnabled(Feature.GlobalSearchReconcile), missingSweep::sweep);
+    }
+
+    /**
+     * After a rebuild of the index, queues posts and answer posts, which the other passes do not manage. Idle otherwise.
+     */
+    @Scheduled(cron = "${artemis.scheduling.weaviate-reconcile-refill-time:30 * * * * *}")
+    public void reconcileRefill() {
+        runPass(ReconcilePass.REFILL, featureToggleService.isFeatureEnabled(Feature.GlobalSearchReconcile), refillSweep::sweep);
     }
 
     /**

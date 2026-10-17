@@ -17,7 +17,6 @@ import org.jspecify.annotations.Nullable;
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.cit.aet.artemis.account.domain.Authority;
-import de.tum.cit.aet.artemis.account.domain.Authority_;
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.domain.User_;
 import de.tum.cit.aet.artemis.core.domain.CourseRole;
@@ -57,21 +56,17 @@ public class UserSpecs {
      * This method creates the specification that matches the specified authorities.
      * Each user must match all the specified authorities.
      * Users with more than the required authorities are also returned.
+     * <p>
+     * Uses one {@code MEMBER OF} check per authority instead of {@code GROUP BY ... HAVING}: the derived count query of a grouped
+     * query returns one row per user, which the distinct projection collapses into a single row, so the total count was wrong.
      *
      * @param authorities set of possible authorities
      * @return specification used to chain database operations
      */
     @NonNull
     public static Specification<User> getAllUsersMatchingAuthorities(Set<String> authorities) {
-        return (root, query, criteriaBuilder) -> {
-            Join<User, Authority> joinedAuthorities = root.join(User_.AUTHORITIES, JoinType.LEFT);
-            joinedAuthorities.on(criteriaBuilder.in(joinedAuthorities.get(Authority_.NAME)).value(authorities));
-
-            if (query != null) {
-                query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(joinedAuthorities), authorities.size()));
-            }
-            return criteriaBuilder.conjunction();
-        };
+        return (root, query, criteriaBuilder) -> criteriaBuilder
+                .and(authorities.stream().map(authority -> criteriaBuilder.isMember(new Authority(authority), root.get(User_.AUTHORITIES))).toArray(Predicate[]::new));
     }
 
     /**

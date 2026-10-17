@@ -213,7 +213,7 @@ describe('GlobalSearchFilterService', () => {
                 { facet: 'type', value: 'course', negate: true },
                 { facet: 'type', value: 'exercise', negate: true },
                 { facet: 'type', value: 'lecture', negate: true },
-                { facet: 'type', value: 'communication', negate: true },
+                { facet: 'type', value: 'channel', negate: true },
                 { facet: 'type', value: 'faq', negate: true },
             ]);
             service.searchQuery.set('-type:');
@@ -426,16 +426,55 @@ describe('GlobalSearchFilterService', () => {
             expect(service.selectedChip()).toBe(-1);
         });
 
-        it('does not remove a filter on backspace over the empty input (removal needs chip navigation)', () => {
-            service.tokens.set([
-                { facet: 'type', value: 'exercise' },
-                { facet: 'type', value: 'lecture' },
-            ]);
+        describe('selectLastChipOnBackspace', () => {
+            const backspace = (repeat = false) => new KeyboardEvent('keydown', { key: 'Backspace', repeat, cancelable: true });
 
-            service.onBackspaceRemoveFilter();
+            beforeEach(() => {
+                service.tokens.set([
+                    { facet: 'type', value: 'exercise' },
+                    { facet: 'type', value: 'lecture' },
+                ]);
+            });
 
-            expect(applyTokens).not.toHaveBeenCalled();
-            expect(service.tokens()).toHaveLength(2);
+            it('selects the last chip without removing it and marks the event as handled', () => {
+                const event = backspace();
+
+                expect(service.selectLastChipOnBackspace(event)).toBe(true);
+
+                expect(service.selectedChip()).toBe(1);
+                expect(event.defaultPrevented).toBe(true);
+                expect(applyTokens).not.toHaveBeenCalled();
+                expect(service.tokens()).toHaveLength(2);
+            });
+
+            it('leaves an already selected chip for the modal to remove', () => {
+                service.selectedChip.set(0);
+                const event = backspace();
+
+                expect(service.selectLastChipOnBackspace(event)).toBe(false);
+
+                expect(service.selectedChip()).toBe(0);
+                expect(event.defaultPrevented).toBe(false);
+            });
+
+            it('selects on a held key too', () => {
+                expect(service.selectLastChipOnBackspace(backspace(true))).toBe(true);
+                expect(service.selectedChip()).toBe(1);
+            });
+
+            it('does nothing without chips', () => {
+                service.tokens.set([]);
+
+                expect(service.selectLastChipOnBackspace(backspace())).toBe(false);
+                expect(service.selectedChip()).toBe(-1);
+            });
+
+            it('does nothing while the filter menu is open', () => {
+                service.filterPickerOpen.set(true);
+
+                expect(service.selectLastChipOnBackspace(backspace())).toBe(false);
+                expect(service.selectedChip()).toBe(-1);
+            });
         });
 
         it('starts re-picking a chip: opens its facet operator and marks it as edited', () => {
@@ -456,6 +495,44 @@ describe('GlobalSearchFilterService', () => {
 
             expect(service.searchQuery()).toBe('linear regression type:');
             expect(service.searchText()).toBe('linear regression');
+        });
+
+        it('replaces the pending operator when another chip is clicked, instead of stacking a second one', () => {
+            // Each click used to append, so two chips clicked in turn left "this is course: type: course:" in the
+            // input, and everything in front of the last operator was sent to the server as the search term.
+            service.tokens.set([
+                { facet: 'course', value: '10' },
+                { facet: 'type', value: 'lecture' },
+            ]);
+            service.searchQuery.set('this is');
+
+            service.onChipSelected(0);
+            service.onChipSelected(1);
+            service.onChipSelected(0);
+            service.onChipSelected(1);
+
+            expect(service.searchQuery()).toBe('this is type:');
+            expect(service.searchText()).toBe('this is');
+            expect(service.editingChip()).toBe(1);
+        });
+
+        it('replaces a half-typed value when a chip is clicked', () => {
+            mockCourseStorageService.getCourses.mockReturnValue([{ id: 7, title: 'Databases' }]);
+            service.tokens.set([{ facet: 'type', value: 'lecture' }]);
+            service.searchQuery.set('this is course:dat');
+
+            service.onChipSelected(0);
+
+            expect(service.searchQuery()).toBe('this is type:');
+        });
+
+        it('keeps a value that matches nothing as search text when a chip is clicked', () => {
+            service.tokens.set([{ facet: 'type', value: 'lecture' }]);
+            service.searchQuery.set('ratio course:nothing like this');
+
+            service.onChipSelected(0);
+
+            expect(service.searchQuery()).toBe('ratio course:nothing like this type:');
         });
     });
 
@@ -662,6 +739,66 @@ describe('GlobalSearchFilterService', () => {
             expect(service.deadEnd()).toBe(false);
             expect(service.menuOptions().map((option) => option.id)).toEqual(['type', 'course', 'exclude']);
         });
+
+        it('opens a fresh operator after an accepted literal and closes it without touching the literal', () => {
+            service.searchQuery.set('nsjkfncs type:candle');
+            service.onOptionSelected(0);
+            service.tokens.set([{ facet: 'course', value: '10' }]);
+
+            service.onChipSelected(0);
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle course:');
+            expect(service.operator()?.facet).toBe('course');
+            expect(service.searchText()).toBe('nsjkfncs type:candle');
+
+            // A second click does not stack, and stepping back removes only the live operator.
+            service.onChipSelected(0);
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle course:');
+            service.back();
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle');
+            expect(service.filterMenuOpen()).toBe(true);
+            expect(service.menuOptions().map((option) => option.id)).toEqual(['type', 'course', 'exclude']);
+        });
+
+        it('keeps an accepted literal that ended in whitespace after an operator was opened and backed out', () => {
+            // Appending an operator trims the trailing space, so a marker that kept it would stop matching and the
+            // literal's type:candle would be read as a live operator again once the course operator is gone.
+            service.searchQuery.set('nsjkfncs type:candle ');
+            service.onOptionSelected(0);
+            service.tokens.set([{ facet: 'course', value: '10' }]);
+            service.onChipSelected(0);
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle course:');
+
+            service.back();
+
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle');
+            expect(service.operator()).toBeUndefined();
+            expect(service.searchText()).toBe('nsjkfncs type:candle');
+        });
+
+        it('keeps an accepted literal when Escape steps back from the exclude level', () => {
+            service.searchQuery.set('nsjkfncs type:candle');
+            service.onOptionSelected(0);
+            service.openFilterPicker();
+            service.excludeMode.set(true);
+
+            service.handleMenuKey(keydown('Escape'));
+
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle');
+            expect(service.excludeMode()).toBe(false);
+            expect(service.filterPickerOpen()).toBe(true);
+        });
+
+        it('leaves the filter menu over an accepted literal with a live operator by dropping only the operator', () => {
+            service.searchQuery.set('nsjkfncs type:candle');
+            service.onOptionSelected(0);
+            service.tokens.set([{ facet: 'course', value: '10' }]);
+            service.onChipSelected(0);
+
+            service.leaveFilterMenu();
+
+            expect(service.searchQuery()).toBe('nsjkfncs type:candle');
+            expect(service.filterMenuOpen()).toBe(false);
+        });
     });
 
     describe('deriveContextTokens', () => {
@@ -669,11 +806,8 @@ describe('GlobalSearchFilterService', () => {
             expect(service.deriveContextTokens('/courses/42')).toEqual([{ facet: 'course', value: '42' }]);
         });
 
-        it('adds a type token for a known tab segment', () => {
-            expect(service.deriveContextTokens('/course-management/7/exercises')).toEqual([
-                { facet: 'course', value: '7' },
-                { facet: 'type', value: 'exercise' },
-            ]);
+        it('adds no type token for a tab segment, so results of other types stay visible', () => {
+            expect(service.deriveContextTokens('/course-management/7/exercises')).toEqual([{ facet: 'course', value: '7' }]);
         });
 
         it('returns undefined for a non course-scoped URL', () => {

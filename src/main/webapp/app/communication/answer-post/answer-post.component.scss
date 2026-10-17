@@ -66,6 +66,20 @@
         }
     }
 
+    &.resolves-post {
+        background-color: color-mix(in srgb, var(--success) 8%, transparent);
+        box-shadow: inset 3px 0 0 var(--success);
+
+        &:hover {
+            background-color: color-mix(in srgb, var(--success) 14%, transparent);
+        }
+
+        .resolving-answer-marker {
+            color: var(--artemis-alert-success-color);
+            padding-left: 3.67rem;
+        }
+    }
+
     &.highlight-reply {
         animation: highlight-fade 2s ease-in-out;
     }

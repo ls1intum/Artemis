@@ -27,6 +27,9 @@ Use `reference/known-failure-patterns.md` to distinguish timeouts, architecture 
 missing workflow runs, and known harness failures from application defects. A single failure
 is not evidence of flakiness; compare logs and execution conditions.
 
+A latest PR run that is pending with no jobs can be waiting for an obsolete run to release its
+concurrency slot. Follow the cancellation entry in the reference before rerunning or cancelling jobs.
+
 ## Re-run when justified
 
 - **Server Tests: never use `gh run rerun --failed`.** The suite's sharding and reporting mean a

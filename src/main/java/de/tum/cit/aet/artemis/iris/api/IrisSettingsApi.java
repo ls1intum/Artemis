@@ -44,19 +44,18 @@ public class IrisSettingsApi extends AbstractIrisApi {
         return irisSettingsService.getCourseSettingsWithRateLimit(courseId);
     }
 
-    public boolean isIrisEnabledForCourse(long courseId) {
-        return irisSettingsService.isEnabledForCourse(courseId);
-    }
-
     /**
-     * Keeps only the course IDs whose Iris course settings are enabled. Resolved in a single query, so a caller asking
-     * about many courses does not turn into one lookup per course.
+     * Keeps only the course IDs whose Iris course settings are enabled; a course without a settings row counts as enabled.
      *
      * @param courseIds the course IDs to filter
-     * @return the subset whose Iris settings are enabled, in the order of the input
+     * @return the subset whose Iris settings are enabled
      */
     public List<Long> filterCourseIdsWithIrisEnabled(Collection<Long> courseIds) {
         return irisSettingsService.filterCourseIdsWithIrisEnabled(courseIds);
+    }
+
+    public boolean isIrisEnabledForCourse(long courseId) {
+        return irisSettingsService.isEnabledForCourse(courseId);
     }
 
     /**

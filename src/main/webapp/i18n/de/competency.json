@@ -213,6 +213,7 @@
                 "importLecturesTooltip": "Importiert alle Vorlesungen, die mit den importierten Kompetenzen verknüpft sind oder verknüpft sie, wenn eine Vorlesung mit diesem Namen bereits existiert",
                 "referenceDateLabel": "Referenzdatum",
                 "referenceDateTooltip": "Das Referenzdatum wird verwendet, um alle Daten der importierten Resourcen zu setzen. Das früheste Datum dieses Typs wird auf das Referenzdatum gesetzt und alle anderen Daten werden relativ dazu gesetzt.",
+                "referenceDateTextInvalid": "Das Referenzdatum enthält einen Text, der kein Datum ist. Bitte korrigiere oder lösche ihn, bevor du einen Kurs auswählst.",
                 "referenceDateTypeLabel": "Referenzdatumstyp",
                 "referenceDateTypeTooltip": "'Veröffentlichungsdatum' bezieht sich auf das Veröffentlichungsdatum von Aufgaben und Vorlesungseinheiten sowie das Sichtbarkeitsdatum von Vorlesungen. 'Fälligkeitsdatum' bezieht sich auf das Fälligkeitsdatum von Aufgaben und Kompetenzen sowie Das Enddatum von Vorlesungen.",
                 "referenceDateType": {

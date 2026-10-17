@@ -130,6 +130,7 @@ when it hands over the generated password — so an activated account never carr
 An account that is not activated within `registration.cleanup-time-minutes` (default 60) is
 **deleted**. The removal is scheduled when the account is registered and cancelled when it is
 activated, so the timer applies only to self-registration — no other provisioning path schedules it.
+The activation mail states this deadline in minutes, or in hours when the value is a whole number of hours.
 
 ### Deactivation versus deletion
 

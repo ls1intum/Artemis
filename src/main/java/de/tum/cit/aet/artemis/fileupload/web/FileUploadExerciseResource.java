@@ -44,7 +44,6 @@ import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -404,7 +403,7 @@ public class FileUploadExerciseResource {
         validateCourseAndExerciseGroupExclusivity(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate);
 
         // Retrieve the course over the exerciseGroup or the given courseId
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(fileUploadExerciseBeforeUpdate);
+        Course course = courseService.retrieveCourseOfLoadedExercise(fileUploadExerciseBeforeUpdate);
         validateCourseId(updateFileUploadExerciseDTO, fileUploadExerciseBeforeUpdate, course);
 
         // Check that the user is authorized to update the exercise
@@ -620,9 +619,9 @@ public class FileUploadExerciseResource {
         teamAssignmentConfigRepository.attachTo(exercise);
         plagiarismDetectionConfigRepository.attachTo(exercise);
         if (exercise.isCourseExercise()) {
-            Channel channel = channelRepository.findChannelByExerciseId(exercise.getId());
-            if (channel != null) {
-                exercise.setChannelName(channel.getName());
+            String channelName = channelRepository.findChannelNameByExerciseId(exercise.getId());
+            if (channelName != null) {
+                exercise.setChannelName(channelName);
             }
         }
 
@@ -722,7 +721,7 @@ public class FileUploadExerciseResource {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FileUploadExercise not found"));
 
         validateCourseAndExerciseGroupExclusivity(updateFileUploadExerciseDTO, existingExercise);
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(existingExercise);
+        Course course = courseService.retrieveCourseOfLoadedExercise(existingExercise);
         validateCourseId(updateFileUploadExerciseDTO, existingExercise, course);
 
         var user = userRepository.getUserWithAuthorities();

@@ -13,8 +13,9 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import englishNotification from 'src/main/webapp/i18n/en/notification.json';
 
 describe('CourseNotificationComponent', () => {
     let component: CourseNotificationComponent;
@@ -221,5 +222,96 @@ describe('CourseNotificationComponent', () => {
 
         const loadingIndicator = fixture.debugElement.query(By.css('.course-notification-loading-indicator'));
         expect(loadingIndicator).toBeNull();
+    });
+
+    it('should show the generic content of a notification without a message of its editor', () => {
+        fixture.componentRef.setInput('courseNotification', createMockNotification(3, 101, 'exerciseUpdatedNotification', { exerciseTitle: 'Essay' }));
+        fixture.detectChanges();
+
+        expect(componentAsAny.notificationContentKey()).toBe('artemisApp.courseNotification.exerciseUpdatedNotification.content');
+    });
+
+    it('should show the content with the message of its editor, escaped, when the notification carries one', () => {
+        fixture.componentRef.setInput(
+            'courseNotification',
+            createMockNotification(3, 101, 'attachmentChangedNotification', { unitName: 'Lecture 1', notificationText: 'Use <b>v2</b> & re-download' }),
+        );
+        fixture.detectChanges();
+
+        expect(componentAsAny.notificationContentKey()).toBe('artemisApp.courseNotification.attachmentChangedNotification.contentWithNotificationText');
+        expect(componentAsAny.notificationParameters().notificationText).toBe('Use &lt;b&gt;v2&lt;/b&gt; &amp; re-download');
+        expect(componentAsAny.notificationParameters().unitName).toBe('Lecture 1');
+    });
+
+    it('should show the generic content when the message of the editor is blank', () => {
+        fixture.componentRef.setInput('courseNotification', createMockNotification(3, 101, 'exerciseUpdatedNotification', { exerciseTitle: 'Essay', notificationText: '  ' }));
+        fixture.detectChanges();
+
+        expect(componentAsAny.notificationContentKey()).toBe('artemisApp.courseNotification.exerciseUpdatedNotification.content');
+    });
+});
+
+describe('CourseNotificationComponent rendering the message of an editor', () => {
+    let fixture: ComponentFixture<CourseNotificationComponent>;
+
+    const renderContent = (notificationType: string, payload: Record<string, unknown>): HTMLElement => {
+        const notification = new CourseNotification(
+            1,
+            101,
+            notificationType,
+            CourseNotificationCategory.GENERAL,
+            CourseNotificationViewingStatus.UNSEEN,
+            dayjs(),
+            'Test Course',
+            undefined,
+            payload,
+            '/courses/101',
+        );
+        fixture.componentRef.setInput('courseNotification', notification);
+        fixture.detectChanges();
+        return fixture.nativeElement.querySelector('.course-notification-content');
+    };
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [CourseNotificationComponent, MockComponent(ProfilePictureComponent)],
+            providers: [
+                provideTranslateService(),
+                {
+                    provide: CourseNotificationService,
+                    useValue: {
+                        getIconFromType: vi.fn().mockReturnValue(faComment),
+                        getDateTranslationKey: vi.fn().mockReturnValue('artemisApp.courseNotification.temporal.now'),
+                        getDateTranslationParams: vi.fn().mockReturnValue({}),
+                    },
+                },
+            ],
+        });
+        // The real English translations, so a missing or misspelled key fails here instead of showing up as a key in the app.
+        const translateService = TestBed.inject(TranslateService);
+        translateService.setTranslation('en', englishNotification);
+        translateService.use('en');
+        fixture = TestBed.createComponent(CourseNotificationComponent);
+    });
+
+    it('should show the message an editor wrote about an exercise update, next to the exercise', () => {
+        const content = renderContent('exerciseUpdatedNotification', { exerciseTitle: 'Essay on sorting', notificationText: 'Task 2 now asks for 300 words' });
+
+        expect(content.textContent).toBe('Essay on sorting: Task 2 now asks for 300 words');
+    });
+
+    it('should show the message an editor wrote about an attachment as text, never as markup', () => {
+        const content = renderContent('attachmentChangedNotification', {
+            unitName: 'Sorting algorithms',
+            notificationText: 'Slide 4 was <b>corrected</b> & <img src=x onerror="alert(1)">',
+        });
+
+        expect(content.textContent).toBe('Sorting algorithms: Slide 4 was <b>corrected</b> & <img src=x onerror="alert(1)">');
+        expect(content.querySelector('b, img')).toBeNull();
+    });
+
+    it('should show the generic content of notifications stored without a message', () => {
+        expect(renderContent('exerciseUpdatedNotification', { exerciseTitle: 'Essay on sorting' }).textContent).toBe('Essay on sorting was updated.');
+        expect(renderContent('attachmentChangedNotification', { unitName: 'Sorting algorithms' }).textContent).toBe('An attachment in Sorting algorithms changed.');
     });
 });

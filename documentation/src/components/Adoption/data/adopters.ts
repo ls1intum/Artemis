@@ -137,7 +137,7 @@ export const adopters: Adopter[] = [
         id: 'thm',
         name: 'Technische Hochschule Mittelhessen',
         country: 'Germany',
-        status: INTERESTED,
+        status: USING,
         contact: { name: 'Christian Prause', href: 'https://www.thm.de/iem/christian-prause' },
     },
     {

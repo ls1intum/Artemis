@@ -16,6 +16,9 @@ import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 @Component
 public class HyperionWebsocketTopics implements WebsocketTopicProvider {
 
+    /** Live progress and file changes of an exercise generation job. */
+    public static final WebsocketUserTopic EXERCISE_GENERATION_JOB = WebsocketUserTopic.of("/topic/hyperion/exercise-generation/jobs/{jobId}");
+
     /**
      * Events of a code generation job.
      */

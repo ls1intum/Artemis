@@ -119,6 +119,15 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
                 .getId();
     }
 
+    private void switchContinuousPlagiarismControl(long exerciseId, boolean enabled) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        exercise.setDueDate(ZonedDateTime.now().plusDays(5));
+        exerciseRepository.save(exercise);
+        PlagiarismDetectionConfig config = plagiarismDetectionConfigRepository.findByExerciseId(exerciseId).orElseThrow();
+        config.setContinuousPlagiarismControlEnabled(enabled);
+        plagiarismDetectionConfigRepository.save(config);
+    }
+
     private <E extends Exercise> E withConfig(E exercise, int similarityThreshold) {
         PlagiarismDetectionConfig config = PlagiarismDetectionConfig.createDefault();
         config.setSimilarityThreshold(similarityThreshold);
@@ -189,24 +198,33 @@ class ExercisePlagiarismDetectionConfigLoadProfileTest extends AbstractSpringInt
 
     @Test
     void theSchedulerQueryFiltersOnTheConfigurationAndLeavesTheSlotsEmptyUntilTheyAreAttached() throws Exception {
-        TextExercise exercise = textExerciseRepository.findById(textExerciseId).orElseThrow();
-        exercise.setDueDate(ZonedDateTime.now().plusDays(5));
-        textExerciseRepository.save(exercise);
-        PlagiarismDetectionConfig config = plagiarismDetectionConfigRepository.findByExerciseId(textExerciseId).orElseThrow();
-        config.setContinuousPlagiarismControlEnabled(true);
-        plagiarismDetectionConfigRepository.save(config);
+        long secondTextExerciseId = withConfig(textExerciseUtilService.createSampleTextExercise(courseRepository.findByIdElseThrow(courseId)), 50).getId();
+        // an exercise of another course, as another test class leaves behind in the shared database
+        long foreignExerciseId = withConfig(textExerciseUtilService.createSampleTextExercise(courseUtilService.createCourse()), 40).getId();
+        List<Long> switchedOn = List.of(textExerciseId, secondTextExerciseId, foreignExerciseId);
+        switchedOn.forEach(exerciseId -> switchContinuousPlagiarismControl(exerciseId, true));
 
-        var scheduled = exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue();
+        try {
+            var scheduled = exerciseRepository.findAllExercisesWithDueDateOnOrAfterYesterdayAndContinuousPlagiarismControlEnabledIsTrue();
 
-        // only the exercise whose configuration switches the control on is returned, although the query does not fetch it
-        assertThat(scheduled).extracting(Exercise::getId).containsExactly(textExerciseId);
-        assertThat(scheduled).allSatisfy(returned -> assertThat(returned.getPlagiarismDetectionConfig()).as("nothing fills the slot by itself").isNull());
+            // The query is not scoped to a course, so it returns the exercises of every test that switched the control on. Which
+            // other exercises the shared database holds depends on the tests that ran before, so only this test's own can be asserted on.
+            assertThat(scheduled).extracting(Exercise::getId).contains(foreignExerciseId);
+            List<Long> ownExerciseIds = List.of(textExerciseId, secondTextExerciseId, modelingExerciseId, fileUploadExerciseId, programmingExerciseId, examExerciseId);
+            // exactly the exercises whose configuration switches the control on are returned, although the query does not fetch it
+            assertThat(scheduled).extracting(Exercise::getId).filteredOn(ownExerciseIds::contains).containsExactlyInAnyOrder(textExerciseId, secondTextExerciseId);
+            assertThat(scheduled).allSatisfy(returned -> assertThat(returned.getPlagiarismDetectionConfig()).as("nothing fills the slot by itself").isNull());
 
-        assertThatDb(() -> {
-            plagiarismDetectionConfigRepository.attachTo(scheduled);
-            return scheduled;
-        }).hasBeenCalledTimes(1);
-        assertThat(scheduled).allSatisfy(returned -> assertThat(returned.getPlagiarismDetectionConfig().isContinuousPlagiarismControlEnabled()).isTrue());
+            assertThatDb(() -> {
+                plagiarismDetectionConfigRepository.attachTo(scheduled);
+                return scheduled;
+            }).hasBeenCalledTimes(1);
+            assertThat(scheduled).allSatisfy(returned -> assertThat(returned.getPlagiarismDetectionConfig().isContinuousPlagiarismControlEnabled()).isTrue());
+        }
+        finally {
+            // leave nothing behind that a query like the scheduler's would return to the tests that run after this one
+            switchedOn.forEach(exerciseId -> switchContinuousPlagiarismControl(exerciseId, false));
+        }
     }
 
     @Test

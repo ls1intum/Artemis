@@ -274,7 +274,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
         ModelingExerciseResponseDTO returnedModelingExercise = request.putWithResponseBodyAndParams("/api/modeling/modeling-exercises", updateModelingExerciseDTO,
                 ModelingExerciseResponseDTO.class, HttpStatus.OK, params);
         assertThat(returnedModelingExercise.gradingCriteria()).hasSameSizeAs(gradingCriteria);
-        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any());
+        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), eq(notificationText));
         verify(examLiveEventsService, never()).createAndSendProblemStatementUpdateEvent(any(), eq(notificationText));
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of()), any());
 
@@ -307,7 +307,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
                 ModelingExerciseResponseDTO.class, HttpStatus.OK, params);
 
         assertThat(returnedModelingExercise.exerciseGroupId()).isNotNull();
-        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any());
+        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
         verify(examLiveEventsService, times(1)).createAndSendProblemStatementUpdateEvent(any(), eq(notificationText));
     }
 

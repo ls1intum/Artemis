@@ -19,7 +19,8 @@ import { ExerciseVariantAiWizard } from '../../support/pageobjects/exercises/Exe
  *
  * These tests require Hyperion to be enabled on the server. Run them with:
  *     RUN_HYPERION=true ./supporting_scripts/e2e/run-e2e-tests-local-fast.sh --filter "Variant"
- * When Hyperion is NOT enabled (the default), the suite skips itself, so it is a no-op in normal CI runs.
+ * When Hyperion is NOT enabled (the default), the suite skips itself, so it is a no-op in the per-pull-request CI runs.
+ * The nightly workflow `nightly-hyperion-e2e.yml` enables Hyperion and runs it, and fails when the suite skipped itself.
  *
  * Note: one manual multi-node sanity run before the PR (the job map is Hazelcast-backed and the WebSocket
  * event must reach the user regardless of which node runs the job):

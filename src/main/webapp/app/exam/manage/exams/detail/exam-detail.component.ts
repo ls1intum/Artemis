@@ -162,7 +162,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Reset an exam with examId by deleting all studentExams and participations
+     * Reset an exam with examId by deleting all studentExams and participations and unregistering all students
      */
     resetExam(): void {
         this.examManagementService.reset(this.exam().course!.id!, this.exam().id!).subscribe({

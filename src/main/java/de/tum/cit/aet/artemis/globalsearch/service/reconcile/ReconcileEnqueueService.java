@@ -60,14 +60,26 @@ public class ReconcileEnqueueService {
      * @return true if the queue is below the configured depth
      */
     public boolean canEnqueue() {
-        boolean roomAvailable = outboxRepository.count() < reconcileProperties.maxOutboxDepth();
+        return remainingCapacity() > 0;
+    }
+
+    /**
+     * How many more rows a reconcile pass may queue before the outbox reaches its depth limit. A pass admits at most this
+     * many ids per page, so the limit holds within a tick and not only between ticks. Writes for user actions are not
+     * bounded by it.
+     *
+     * @return the remaining capacity, zero when the queue is full
+     */
+    public int remainingCapacity() {
+        long depth = outboxRepository.count();
+        boolean roomAvailable = depth < reconcileProperties.maxOutboxDepth();
         if (!roomAvailable && blocked.compareAndSet(false, true)) {
             log.warn("Global search reconcile paused: the outbox is at its depth limit of {}. It resumes as the dispatcher drains it.", reconcileProperties.maxOutboxDepth());
         }
         else if (roomAvailable && blocked.compareAndSet(true, false)) {
             log.info("Global search reconcile resumed: the outbox has drained below its depth limit");
         }
-        return roomAvailable;
+        return (int) Math.max(0, reconcileProperties.maxOutboxDepth() - depth);
     }
 
     /**

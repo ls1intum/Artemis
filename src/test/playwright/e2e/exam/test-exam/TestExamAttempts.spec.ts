@@ -67,11 +67,18 @@ test.describe('Test exam attempts', { tag: '@slow' }, () => {
             await expectStoredAnswers(summary, [{ ...exercise, additionalData: { textFixture: answers[index] } }], { [ExerciseType.TEXT]: true });
         }
 
-        // The exam page lists both attempts.
+        // The course sidebar includes attempts from other exams running in parallel. Check this exam's two links, not its global count.
         await page.goto(`/courses/${course.id}/exams/${exam.id}`);
-        await expect(page.getByText('Test Exam Attempts (2)')).toBeVisible();
-        await expect(page.getByText('Attempt 1', { exact: true })).toBeVisible();
-        await expect(page.getByText('Attempt 2', { exact: true })).toBeVisible();
+        const attemptsHeader = page.locator('#test-accordion-item-header-attempt');
+        await expect(attemptsHeader).toContainText('Test Exam Attempts');
+        if ((await attemptsHeader.getAttribute('aria-expanded')) !== 'true') {
+            await attemptsHeader.click();
+        }
+        for (const [index, attemptId] of attemptIds.entries()) {
+            const attemptLink = page.locator(`a[href$="/exams/${exam.id}/test-exam/${attemptId}"]`);
+            await expect(attemptLink.getByTestId('sidebar-card-title')).toHaveText(exam.title!);
+            await expect(attemptLink.getByText(`Attempt ${index + 1}`, { exact: true })).toBeVisible();
+        }
     });
 
     test('A student registers themselves by starting a test exam, and an attempt lasts the working time', async ({

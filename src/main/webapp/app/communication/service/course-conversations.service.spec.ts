@@ -159,6 +159,46 @@ describe('CourseConversationsService', () => {
         });
     });
 
+    it('should load the conversations again and open a course-wide channel that was created after they were loaded', () => {
+        // Nobody is told about a new course-wide channel, so the cache of a user who already has the page open does not know it.
+        // The notification about it links to it, and following that link must not claim that the user is not a member.
+        const newChannel = generateExampleChannelDTO({ id: 10, isCourseWide: true } as ChannelDTO);
+        return new Promise((done) => {
+            courseConversationsService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+                    vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel, newChannel] })));
+
+                    courseConversationsService.setActiveConversation(newChannel.id);
+
+                    expect(addAlertSpy).not.toHaveBeenCalled();
+                    courseConversationsService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                        expect(activeConversation?.id).toBe(newChannel.id);
+                        done({});
+                    });
+                },
+            });
+        });
+    });
+
+    it('should ask the server only once before warning that the user is not a member', () => {
+        return new Promise((done) => {
+            courseConversationsService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    const addAlertSpy = vi.spyOn(alertService, 'addAlert');
+                    const getConversationsOfUserSpy = vi.spyOn(conversationService, 'getConversationsOfUser');
+                    getConversationsOfUserSpy.mockClear();
+
+                    courseConversationsService.setActiveConversation(4);
+
+                    expect(getConversationsOfUserSpy).toHaveBeenCalledOnce();
+                    expect(addAlertSpy).toHaveBeenCalledOnce();
+                    done({});
+                },
+            });
+        });
+    });
+
     it('should get conversations of users again if force refresh is called', () => {
         return new Promise((done) => {
             courseConversationsService.setUpConversationService(course).subscribe({
@@ -248,6 +288,57 @@ describe('CourseConversationsService', () => {
 
             conversationsResponse.next(new HttpResponse({ body: [groupChat, oneToOneChat, channel] }));
             conversationsResponse.complete();
+        });
+    });
+
+    it('should not open a refreshed channel after the user selected another conversation meanwhile', () => {
+        const newChannel = generateExampleChannelDTO({ id: 10, isCourseWide: true } as ChannelDTO);
+        const refreshResponse = new Subject<HttpResponse<ConversationDTO[]>>();
+        return new Promise((done) => {
+            courseConversationsService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(refreshResponse.asObservable());
+                    courseConversationsService.setActiveConversation(newChannel.id);
+
+                    // the user picks a cached conversation while the refresh for the channel is still running
+                    courseConversationsService.setActiveConversation(groupChat);
+                    refreshResponse.next(new HttpResponse({ body: [groupChat, oneToOneChat, channel, newChannel] }));
+                    refreshResponse.complete();
+
+                    courseConversationsService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                        expect(activeConversation?.id).toBe(groupChat.id);
+                        done({});
+                    });
+                },
+            });
+        });
+    });
+
+    it('should only open the latest selection when refreshes for two uncached channels finish out of order', () => {
+        const olderChannel = generateExampleChannelDTO({ id: 10, isCourseWide: true } as ChannelDTO);
+        const newerChannel = generateExampleChannelDTO({ id: 11, isCourseWide: true } as ChannelDTO);
+        const olderRefresh = new Subject<HttpResponse<ConversationDTO[]>>();
+        const newerRefresh = new Subject<HttpResponse<ConversationDTO[]>>();
+        const allConversations = new HttpResponse({ body: [groupChat, oneToOneChat, channel, olderChannel, newerChannel] });
+        return new Promise((done) => {
+            courseConversationsService.setUpConversationService(course).subscribe({
+                complete: () => {
+                    vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValueOnce(olderRefresh.asObservable()).mockReturnValueOnce(newerRefresh.asObservable());
+                    courseConversationsService.setActiveConversation(olderChannel.id);
+                    courseConversationsService.setActiveConversation(newerChannel.id);
+
+                    // the answer for the newer selection arrives first, the older one afterwards
+                    newerRefresh.next(allConversations);
+                    newerRefresh.complete();
+                    olderRefresh.next(allConversations);
+                    olderRefresh.complete();
+
+                    courseConversationsService.activeConversation$.pipe(take(1)).subscribe((activeConversation) => {
+                        expect(activeConversation?.id).toBe(newerChannel.id);
+                        done({});
+                    });
+                },
+            });
         });
     });
 

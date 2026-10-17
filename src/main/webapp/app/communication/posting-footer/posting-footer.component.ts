@@ -149,6 +149,14 @@ export class PostingFooterComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Prepares an empty draft and reopens the reply input, so that the user can answer the thread multiple times in a row
+     */
+    onAnswerPostCreated(): void {
+        this.createdAnswerPost.set(this.createEmptyAnswerPost());
+        this.openCreateAnswerPostModal();
+    }
+
+    /**
      * Open create answer modal
      */
     openCreateAnswerPostModal() {

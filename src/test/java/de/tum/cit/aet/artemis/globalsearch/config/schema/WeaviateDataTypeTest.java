@@ -22,6 +22,7 @@ class WeaviateDataTypeTest {
     void getWeaviateName_returnsExpectedValues() {
         assertThat(WeaviateDataType.INT.getWeaviateName()).isEqualTo("int");
         assertThat(WeaviateDataType.TEXT.getWeaviateName()).isEqualTo("text");
+        assertThat(WeaviateDataType.TEXT_ARRAY.getWeaviateName()).isEqualTo("text[]");
         assertThat(WeaviateDataType.NUMBER.getWeaviateName()).isEqualTo("number");
         assertThat(WeaviateDataType.BOOLEAN.getWeaviateName()).isEqualTo("boolean");
         assertThat(WeaviateDataType.DATE.getWeaviateName()).isEqualTo("date");

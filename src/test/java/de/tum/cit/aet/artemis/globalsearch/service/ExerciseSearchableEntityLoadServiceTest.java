@@ -18,12 +18,9 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.ExerciseSearchab
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
- * Unit tests for {@link ExerciseSearchableEntityLoadService}, focused on the differing error semantics of its two
- * loading paths. The migration-oriented batch {@link ExerciseSearchableEntityLoadService#loadExerciseDtos} skips an
- * exercise it cannot map so one bad row cannot abort a backfill. The strict single-entity
- * {@link ExerciseSearchableEntityLoadService#loadExerciseDtoForResolve}, used by the outbox dispatcher, must instead
- * return empty only when the row is absent and let loading or mapping failures propagate, so a failure is retried
- * rather than mistaken for a deletion of a valid index row.
+ * Unit tests for {@link ExerciseSearchableEntityLoadService}: {@link ExerciseSearchableEntityLoadService#loadExerciseDtoForResolve},
+ * used by the outbox dispatcher, must return empty only when the row is absent and let loading or mapping failures
+ * propagate, so a failure is retried rather than mistaken for a deletion of a valid index row.
  */
 class ExerciseSearchableEntityLoadServiceTest {
 
@@ -68,14 +65,6 @@ class ExerciseSearchableEntityLoadServiceTest {
         when(exerciseRepository.findAllForSearchMigrationWithCourseAndExam(List.of(9L))).thenThrow(new RuntimeException("database unavailable"));
 
         assertThatThrownBy(() -> service.loadExerciseDtoForResolve(9L)).isInstanceOf(RuntimeException.class).hasMessageContaining("database unavailable");
-    }
-
-    @Test
-    void loadExerciseDtos_skipsUnmappableExerciseForMigration() {
-        // Contrast with the strict path: the batch migration deliberately swallows a single unmappable exercise.
-        when(exerciseRepository.findAllForSearchMigrationWithCourseAndExam(List.of(7L))).thenReturn(List.of(unmappableExercise(7L)));
-
-        assertThat(service.loadExerciseDtos(List.of(7L))).isEmpty();
     }
 
     private static Exercise mappableExercise(long exerciseId, long courseId) {

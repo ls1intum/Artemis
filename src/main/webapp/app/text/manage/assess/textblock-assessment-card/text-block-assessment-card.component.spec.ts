@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ErrorHandler } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
 import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
@@ -137,6 +138,57 @@ describe('TextblockAssessmentCardComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(didSelectSpy).toHaveBeenCalledWith(textBlockRef);
+    });
+
+    it('should focus the feedback editor once it is rendered when focusFeedback is set', async () => {
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.initFeedback();
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.detectChanges();
+        const focusSpy = vi.spyOn(fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent)).componentInstance, 'focus');
+        const handledSpy = vi.spyOn(component.didHandleFocusFeedback, 'emit');
+        expect(focusSpy).not.toHaveBeenCalled();
+
+        fixture.componentRef.setInput('focusFeedback', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(focusSpy).toHaveBeenCalledOnce();
+        expect(handledSpy).toHaveBeenCalledExactlyOnceWith(textBlockRef);
+    });
+
+    it('should not focus the feedback editor when focusFeedback is set on a read-only card', async () => {
+        const textBlockRef = TextBlockRef.new();
+        textBlockRef.initFeedback();
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.detectChanges();
+        const focusSpy = vi.spyOn(fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent)).componentInstance, 'focus');
+        const handledSpy = vi.spyOn(component.didHandleFocusFeedback, 'emit');
+
+        fixture.componentRef.setInput('focusFeedback', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(focusSpy).not.toHaveBeenCalled();
+        // the request is used up, so it cannot move the focus once the card becomes editable again
+        expect(handledSpy).toHaveBeenCalledExactlyOnceWith(textBlockRef);
+    });
+
+    it('should hand over the focus request without an error when the card has no feedback editor', async () => {
+        const handleErrorSpy = vi.spyOn(TestBed.inject(ErrorHandler), 'handleError');
+        const textBlockRef = TextBlockRef.new();
+        fixture.componentRef.setInput('textBlockRef', textBlockRef);
+        fixture.detectChanges();
+        expect(fixture.debugElement.query(By.directive(TextBlockFeedbackEditorComponent))).toBeNull();
+        const handledSpy = vi.spyOn(component.didHandleFocusFeedback, 'emit');
+
+        fixture.componentRef.setInput('focusFeedback', true);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(handleErrorSpy).not.toHaveBeenCalled();
+        expect(handledSpy).toHaveBeenCalledExactlyOnceWith(textBlockRef);
     });
 
     it('should expose selected state only while the block is interactive', () => {

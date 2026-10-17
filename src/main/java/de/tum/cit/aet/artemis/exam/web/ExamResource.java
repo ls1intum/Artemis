@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.validation.Valid;
 import jakarta.ws.rs.BadRequestException;
 
 import org.jspecify.annotations.NonNull;
@@ -511,7 +512,7 @@ public class ExamResource {
      */
     @PostMapping("courses/{courseId}/exam-import")
     @EnforceAtLeastInstructor
-    public ResponseEntity<ExamImportResultDTO> importExamWithExercises(@PathVariable Long courseId, @RequestBody ExamImportDTO examImportDTO,
+    public ResponseEntity<ExamImportResultDTO> importExamWithExercises(@PathVariable Long courseId, @Valid @RequestBody ExamImportDTO examImportDTO,
             @RequestParam(required = false) String importId) throws URISyntaxException, IOException {
         log.debug("REST request to import an exam : {}", examImportDTO);
         checkExamTitleIsPresentElseThrow(examImportDTO.title());
@@ -1086,7 +1087,8 @@ public class ExamResource {
 
     /**
      * DELETE /courses/{courseId}/exams/{examId}/reset : Reset the exam with the given id.
-     * The reset operation deletes all studentExams, participations, submissions and feedback.
+     * The reset operation deletes all studentExams, participations, submissions and feedback and unregisters all students from the exam.
+     * The exam itself, its exercise groups and exercises are kept, and so are the students in the course.
      *
      * @param courseId the course to which the exam belongs
      * @param examId   the id of the exam to reset

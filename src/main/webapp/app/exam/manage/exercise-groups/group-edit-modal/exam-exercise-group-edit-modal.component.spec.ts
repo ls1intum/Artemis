@@ -1,4 +1,4 @@
-import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiInputDirective } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiInputDirective, TumAetUiMessageComponent } from '@tumaet/ui-angular';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
@@ -29,6 +29,7 @@ describe('ExamExerciseGroupEditModalComponent', () => {
                         TumAetUiInputDirective,
                         TumAetUiButtonComponent,
                         TumAetUiCheckboxComponent,
+                        TumAetUiMessageComponent,
                         ArtemisTranslatePipe,
                         TranslateDirective,
                     ],
@@ -85,6 +86,27 @@ describe('ExamExerciseGroupEditModalComponent', () => {
 
         component.draftTitle.set('x'.repeat(255));
         expect(component.isTitleValid()).toBe(true);
+    });
+
+    it('explains why a blank or too long title is invalid and shows nothing for a valid one', () => {
+        fixture.componentRef.setInput('group', buildGroup());
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        const shownMessage = () => document.body.querySelector('[data-testid="group-title-error"]')?.textContent?.trim();
+
+        expect(shownMessage()).toBeUndefined();
+
+        component.draftTitle.set('   ');
+        fixture.detectChanges();
+        expect(shownMessage()).toBe('artemisApp.examManagement.exerciseGroup.titleRequired');
+
+        component.draftTitle.set('x'.repeat(256));
+        fixture.detectChanges();
+        expect(shownMessage()).toBe('artemisApp.examManagement.exerciseGroup.titleTooLong');
+
+        component.draftTitle.set('x'.repeat(255));
+        fixture.detectChanges();
+        expect(shownMessage()).toBeUndefined();
     });
 
     it('closes without emitting saved when saving without any changes', () => {

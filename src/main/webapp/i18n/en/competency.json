@@ -213,6 +213,7 @@
                 "importLecturesTooltip": "Imports all related lecture content of the course competencies or links them to the imported course competency if a lecture content with that name already exists",
                 "referenceDateLabel": "Reference date",
                 "referenceDateTooltip": "The reference date is used to calculate the dates of the imported resources. The earliest date of this type is set to the reference date and all other dates are set relative to this date.",
+                "referenceDateTextInvalid": "The reference date contains text that is not a date. Please correct or clear it before selecting a course.",
                 "referenceDateTypeLabel": "Reference date type",
                 "referenceDateTypeTooltip": "'Release date' refers to the release date of exercises and lecture content as well as the visible date of lectures. 'Due date' refers to the due date of exercises and competencies as well as the end date of lectures.",
                 "referenceDateType": {

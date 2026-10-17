@@ -131,8 +131,11 @@ function parseArgs() {
                     process.exit(1);
                 }
                 options.clientModules = validateModuleNames(
-                    args[++i].split(',').map((m) => m.trim()).filter(Boolean),
-                    '--client-modules'
+                    args[++i]
+                        .split(',')
+                        .map((m) => m.trim())
+                        .filter(Boolean),
+                    '--client-modules',
                 );
                 break;
             case '--server-modules':
@@ -141,8 +144,11 @@ function parseArgs() {
                     process.exit(1);
                 }
                 options.serverModules = validateModuleNames(
-                    args[++i].split(',').map((m) => m.trim()).filter(Boolean),
-                    '--server-modules'
+                    args[++i]
+                        .split(',')
+                        .map((m) => m.trim())
+                        .filter(Boolean),
+                    '--server-modules',
                 );
                 break;
             case '--changed-files':
@@ -155,7 +161,11 @@ function parseArgs() {
                     process.exit(1);
                 }
                 options.changedFiles = Object.fromEntries(
-                    args[++i].split(',').map((f) => f.trim()).filter(Boolean).map((f) => [f, 'modified'])
+                    args[++i]
+                        .split(',')
+                        .map((f) => f.trim())
+                        .filter(Boolean)
+                        .map((f) => [f, 'modified']),
                 );
                 break;
             case '--skip-tests':
@@ -442,11 +452,14 @@ async function runClientTests(modules, options) {
             const pnpmCmd = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
             // Build coverage include patterns for only the modules being tested
             // This prevents measuring coverage for unrelated modules
-            const coverageIncludes = vitestModules.map(m => `src/main/webapp/app/${m}/**/*.ts`);
+            const coverageIncludes = vitestModules.map((m) => `src/main/webapp/app/${m}/**/*.ts`);
             const vitestArgs = [
-                'exec', 'vitest', 'run', '--coverage',
+                'exec',
+                'vitest',
+                'run',
+                '--coverage',
                 // Override coverage.include to only measure the modules being tested
-                ...coverageIncludes.map(pattern => `--coverage.include=${pattern}`),
+                ...coverageIncludes.map((pattern) => `--coverage.include=${pattern}`),
                 // Disable global thresholds since we're only testing a subset
                 '--coverage.thresholds.lines=0',
                 '--coverage.thresholds.statements=0',
@@ -544,7 +557,8 @@ function printFailedTestsSummary(failedTests) {
     console.log('\n' + '─'.repeat(60));
     error(`${failedTests.length} test(s) failed:`);
     console.log('');
-    for (const test of failedTests.slice(0, 20)) { // Limit to first 20
+    for (const test of failedTests.slice(0, 20)) {
+        // Limit to first 20
         console.log(`  ❌ ${test}`);
     }
     if (failedTests.length > 20) {
@@ -573,12 +587,7 @@ async function runServerTests(modules, options) {
     try {
         // Use spawnSync with argument array for safety
         // maxBuffer is set to 50MB to handle large test outputs (default is 1MB which can cause the process to be killed)
-        const gradleResult = spawnSync(gradleWrapper, [
-            'test',
-            `-DincludeModules=${modulesArg}`,
-            'jacocoTestReport',
-            '-x', 'webapp'
-        ], {
+        const gradleResult = spawnSync(gradleWrapper, ['test', `-DincludeModules=${modulesArg}`, 'jacocoTestReport', '-x', 'webapp'], {
             cwd: PROJECT_ROOT,
             stdio: options.verbose ? 'inherit' : 'pipe',
             encoding: 'utf-8',
@@ -645,13 +654,13 @@ function getClientFileCoverage(filePath, vitestCoverageSummary = null) {
  * Uses the <sourcefile> element which aggregates coverage across all classes
  * in the file (including inner classes and anonymous classes).
  */
-function getServerFileCoverage(filePath, moduleName) {
-    // Extract just the filename (e.g., "BuildJobContainerService.java")
+export function getServerFileCoverage(filePath, moduleName, coverageDir = SERVER_COVERAGE_DIR) {
     const parts = filePath.split('/');
-    const fileName = parts[parts.length - 1];
+    const fileName = parts.pop();
+    const packageName = parts.join('/');
 
-    // Try module-specific report first, then aggregated
-    const reportPaths = [path.join(SERVER_COVERAGE_DIR, moduleName, 'jacocoTestReport.xml'), path.join(SERVER_COVERAGE_DIR, 'aggregated', 'jacocoTestReport.xml')];
+    // Try module-specific report first, then aggregated.
+    const reportPaths = [path.join(coverageDir, moduleName, 'jacocoTestReport.xml'), path.join(coverageDir, 'aggregated', 'jacocoTestReport.xml')];
 
     for (const reportPath of reportPaths) {
         if (!fs.existsSync(reportPath)) {
@@ -660,41 +669,36 @@ function getServerFileCoverage(filePath, moduleName) {
 
         try {
             const xmlContent = fs.readFileSync(reportPath, 'utf-8');
+            // JaCoCo identifies a source file by its package and name, not its basename alone.
+            const packageRegex = new RegExp(`<package\\s+name="${escapeRegex(packageName)}"\\s*>([\\s\\S]*?)</package>`);
+            const packageMatch = xmlContent.match(packageRegex);
+            if (!packageMatch) {
+                continue;
+            }
 
-            // Search for <sourcefile name="FileName.java"> element which contains
-            // aggregated coverage for the entire source file (all classes within it)
-            const sourceFileRegex = new RegExp(`<sourcefile[^>]*name="${escapeRegex(fileName)}"[^>]*>([\\s\\S]*?)</sourcefile>`, 'gi');
+            // Match self-closing entries separately so an empty interface cannot consume the
+            // following source file's LINE counter (possibly even from another package).
+            const sourceFileRegex = new RegExp(`<sourcefile\\s+name="${escapeRegex(fileName)}"\\s*(?:/\\s*>|>([\\s\\S]*?)</sourcefile>)`);
+            const sourceFileMatch = packageMatch[1].match(sourceFileRegex);
+            if (!sourceFileMatch) {
+                continue;
+            }
 
-            const match = xmlContent.match(sourceFileRegex);
-            if (match && match.length > 0) {
-                // Use the first (and typically only) sourcefile match
-                const sourceFileContent = match[0];
+            const lineCounter = sourceFileMatch[1]?.match(/<counter\b[^>]*\btype="LINE"[^>]*\/>/);
+            if (!lineCounter) {
+                return 'N/A (no executable lines)';
+            }
 
-                // Find the sourcefile-level LINE counter (the LAST one, after all line entries)
-                const lineCounterRegex = /<counter[^>]*type="LINE"[^>]*\/?>/gi;
-                const allLineCounters = sourceFileContent.match(lineCounterRegex);
-
-                if (allLineCounters && allLineCounters.length > 0) {
-                    // The sourcefile-level counter is the LAST one
-                    const sourceFileLevelCounter = allLineCounters[allLineCounters.length - 1];
-
-                    // Extract missed and covered values
-                    const missedMatch = sourceFileLevelCounter.match(/missed="(\d+)"/);
-                    const coveredMatch = sourceFileLevelCounter.match(/covered="(\d+)"/);
-
-                    if (missedMatch && coveredMatch) {
-                        const missed = parseInt(missedMatch[1], 10);
-                        const covered = parseInt(coveredMatch[1], 10);
-                        const total = missed + covered;
-                        if (total > 0) {
-                            const percentage = (covered / total) * 100;
-                            return `${percentage.toFixed(2)}%`;
-                        }
-                    }
-                }
+            const missedMatch = lineCounter[0].match(/\bmissed="(\d+)"/);
+            const coveredMatch = lineCounter[0].match(/\bcovered="(\d+)"/);
+            if (missedMatch && coveredMatch) {
+                const missed = Number(missedMatch[1]);
+                const covered = Number(coveredMatch[1]);
+                const total = missed + covered;
+                return total > 0 ? `${((covered / total) * 100).toFixed(2)}%` : 'N/A (no executable lines)';
             }
         } catch (err) {
-            // Continue to next report
+            // Continue to next report.
         }
     }
 
@@ -1131,10 +1135,7 @@ async function main() {
 
     // Step 1: Always get changed files (needed for coverage report filtering). An explicit
     // --changed-files list (e.g. from CI) bypasses the git diff so no PR checkout is needed.
-    const changedFiles = options.changedFiles ?? (
-        info(`Comparing against ${options.baseBranch}...`),
-        getChangedFiles(options.baseBranch, options)
-    );
+    const changedFiles = options.changedFiles ?? (info(`Comparing against ${options.baseBranch}...`), getChangedFiles(options.baseBranch, options));
 
     const totalChanges = Object.keys(changedFiles).length;
     if (totalChanges === 0) {
@@ -1224,7 +1225,9 @@ async function main() {
     console.log('');
 }
 
-main().catch((err) => {
-    error(err.message);
-    process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === __filename) {
+    main().catch((err) => {
+        error(err.message);
+        process.exit(1);
+    });
+}

@@ -150,6 +150,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     filterItems(event: Event): void {
         this.searchTerm = (event.target as HTMLInputElement).value;
         this.filterOptions();
+        this.showDropdown.set(true);
     }
 
     /**
@@ -277,9 +278,13 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         return content.length <= this.maxContentLength;
     }
 
-    /** Sets input focus and opens dropdown */
+    /** Remembers the input focus. The dropdown is not opened here, because the input is also focused programmatically when the dialog opens. */
     onInputFocus(): void {
         this.isInputFocused = true;
+    }
+
+    /** Opens the dropdown when the user clicks into the search input */
+    onInputClick(): void {
         this.showDropdown.set(true);
     }
 

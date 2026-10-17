@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureSearchabl
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.LectureUnitSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.dto.searchableentity.PostSearchableEntityDTO;
 import de.tum.cit.aet.artemis.globalsearch.repository.SearchableEntityPostRepository;
+import de.tum.cit.aet.artemis.globalsearch.service.embedding.SearchableEntityChunker;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 
@@ -81,6 +83,22 @@ public class SearchableEntityResolver {
     }
 
     /**
+     * The channel of an exercise or exam, whose row carries the date from which students may see it and therefore has
+     * to be written again when that date changes.
+     *
+     * @param type     {@code exercise} or {@code exam}
+     * @param entityId the exercise or exam id
+     * @return the channel id, or empty if the item has no channel or another type was given
+     */
+    public Optional<Long> findChannelIdOf(String type, long entityId) {
+        return Optional.ofNullable(switch (type) {
+            case SearchableEntitySchema.TypeValues.EXERCISE -> channelRepository.findChannelIdByExerciseId(entityId);
+            case SearchableEntitySchema.TypeValues.EXAM -> channelRepository.findChannelIdByExamId(entityId);
+            default -> null;
+        });
+    }
+
+    /**
      * Resolves the current property map an entity should have in the {@code SearchableEntities} collection.
      *
      * @param type     the {@code SearchableEntitySchema.TypeValues} discriminator
@@ -88,6 +106,21 @@ public class SearchableEntityResolver {
      * @return the current property map if the entity exists and is indexable, otherwise {@link Optional#empty()}
      */
     public Optional<Map<String, Object>> resolve(String type, long entityId) {
+        return resolveEntity(type, entityId).map(SearchableEntityResolver::withChunkMetadata);
+    }
+
+    /**
+     * Adds the hashes of the entity's embedding inputs and the chunker version. Every write and every drift check goes
+     * through {@link #resolve(String, long)}, so both always see the same chunk metadata and therefore the same hash.
+     */
+    private static Map<String, Object> withChunkMetadata(Map<String, Object> properties) {
+        Map<String, Object> withMetadata = new HashMap<>(properties);
+        withMetadata.put(SearchableEntitySchema.Properties.CHUNK_HASHES, SearchableEntityChunker.chunk(properties).stream().map(SearchableEntityChunker::hash).toList());
+        withMetadata.put(SearchableEntitySchema.Properties.CHUNKER_VERSION, SearchableEntityChunker.CHUNKER_VERSION);
+        return withMetadata;
+    }
+
+    private Optional<Map<String, Object>> resolveEntity(String type, long entityId) {
         return switch (type) {
             case SearchableEntitySchema.TypeValues.COURSE -> courseRepository.findById(entityId).map(course -> CourseSearchableEntityDTO.fromCourse(course).toPropertyMap());
             case SearchableEntitySchema.TypeValues.EXERCISE -> exerciseLoadService.loadExerciseDtoForResolve(entityId).map(ExerciseSearchableEntityDTO::toPropertyMap);

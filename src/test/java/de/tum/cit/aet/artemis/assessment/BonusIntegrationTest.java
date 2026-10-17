@@ -288,6 +288,25 @@ class BonusIntegrationTest extends AbstractSpringIntegrationIndependentBatchTest
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateBonusResponseIncludesBonusStrategy() throws Exception {
+        BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
+        assertThat(foundBonus.bonusStrategy()).isEqualTo(BonusStrategy.GRADES_CONTINUOUS);
+
+        // The strategy is stored on the bonusTo grading scale and not on the bonus, so it has to be put on the saved bonus for the response.
+        BonusResponseDTO updatedBonus = request.putWithResponseBody(bonusesUrl() + "/" + foundBonus.id(),
+                bonusRequest(foundBonus.id(), foundBonus.weight(), BonusStrategy.POINTS, foundBonus.sourceGradingScale().id()), BonusResponseDTO.class, HttpStatus.OK);
+
+        assertThat(updatedBonus.bonusStrategy()).isEqualTo(BonusStrategy.POINTS);
+        assertThat(updatedBonus.bonusToGradingScale().bonusStrategy()).isEqualTo(BonusStrategy.POINTS);
+
+        // the update response has the same strategy as the get response
+        BonusResponseDTO reloadedBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);
+        assertThat(updatedBonus.id()).isEqualTo(reloadedBonus.id());
+        assertThat(updatedBonus.bonusStrategy()).isEqualTo(reloadedBonus.bonusStrategy());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateBonusWithChangingSourceGradingScale() throws Exception {
 
         BonusResponseDTO foundBonus = request.get(bonusesUrl(), HttpStatus.OK, BonusResponseDTO.class);

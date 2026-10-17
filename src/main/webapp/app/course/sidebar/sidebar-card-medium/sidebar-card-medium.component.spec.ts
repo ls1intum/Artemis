@@ -47,6 +47,15 @@ describe('SidebarCardMediumComponent', () => {
         expect(element.className).not.toContain('border-variant-group');
     });
 
+    it('should draw the difficulty stripe on the start side only', () => {
+        fixture.componentRef.setInput('sidebarItem', { ...component.sidebarItem(), difficulty: DifficultyLevel.EASY });
+        fixture.changeDetectorRef.detectChanges();
+        const classList = (fixture.nativeElement.querySelector('#test-sidebar-card-medium') as HTMLElement).classList;
+        expect(classList.contains('border-s-5')).toBe(true);
+        // Tailwind generates `border-5` as a solid border on all four sides, which turned the whole card outline into the difficulty colour
+        expect(classList.contains('border-5')).toBe(false);
+    });
+
     it('should have success border class for easy difficulty', () => {
         fixture.componentRef.setInput('sidebarItem', { ...component.sidebarItem(), difficulty: DifficultyLevel.EASY });
         fixture.changeDetectorRef.detectChanges();

@@ -85,6 +85,8 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     readonly readOnlyManualFeedback = input<boolean>(false);
     readonly highlightDifferences = input<boolean>(false);
     readonly isTutorAssessment = input<boolean>(false);
+    /** The full hash of the commit to show. If set, files are read from exactly this commit instead of the working copy on the server. */
+    readonly commitId = input<string | undefined>(undefined);
     readonly disableActions = input<boolean>(false);
     readonly selectedFile = input<string>();
     readonly selectedRepository = input<RepositoryType>();
@@ -134,7 +136,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
      */
     readonly feedbackForSelectedFile = computed<Feedback[]>(() => this.filterFeedbackForSelectedFile(this.feedbackInternal()));
 
-    /** The 0-based editor line a referenced feedback belongs to; -1 for the (unreachable, since already filtered by reference) fallback case. */
+    /** The 0-based editor line a referenced feedback belongs to; -1 for the (unreachable, since {@link filterFeedbackForSelectedFile} requires a line) fallback case. */
     protected getFeedbackLine = (feedback: Feedback): number => {
         return Feedback.getReferenceLine(feedback) ?? -1;
     };
@@ -336,9 +338,9 @@ export class CodeEditorMonacoComponent implements OnDestroy {
                 let fileContent = '';
                 let loadingError = false;
                 try {
-                    fileContent = await firstValueFrom(this.repositoryFileService.getFile(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT))).then(
-                        (fileObj) => fileObj.fileContent,
-                    );
+                    fileContent = await firstValueFrom(
+                        this.repositoryFileService.getFile(fileName, undefined, this.commitId()).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT)),
+                    ).then((fileObj) => fileObj.fileContent);
                 } catch (error) {
                     loadingError = true;
                     const message = error instanceof Error || error instanceof HttpErrorResponse ? error.message : String(error);
@@ -373,7 +375,7 @@ export class CodeEditorMonacoComponent implements OnDestroy {
         this.binaryFileSelected.set(false);
         this.imagePreviewError.set(false);
         try {
-            const blob = await firstValueFrom(this.repositoryFileService.getFileAsBlob(fileName).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT)));
+            const blob = await firstValueFrom(this.repositoryFileService.getFileAsBlob(fileName, undefined, this.commitId()).pipe(timeout(CodeEditorMonacoComponent.FILE_TIMEOUT)));
             // The user may have switched files while the request was in flight.
             if (this.selectedFile() !== fileName) {
                 return;
@@ -909,14 +911,16 @@ export class CodeEditorMonacoComponent implements OnDestroy {
     }
 
     /**
-     * Returns the feedbacks that refer to the currently selected file, or an empty array if no file is selected.
+     * Returns the feedbacks that refer to a line of the currently selected file, or an empty array if no file is selected.
+     * A feedback whose line cannot be resolved is left out: it has no line to render a widget at, and letting it through
+     * would abort {@link renderFeedbackWidgets} before the inline feedback after it in the file is placed.
      * @param feedbacks The feedbacks to filter.
      */
     filterFeedbackForSelectedFile(feedbacks: Feedback[]): Feedback[] {
         if (!this.selectedFile()) {
             return [];
         }
-        return feedbacks.filter((feedback) => feedback.reference && Feedback.getReferenceFilePath(feedback) === this.selectedFile());
+        return feedbacks.filter((feedback) => Feedback.getReferenceFilePath(feedback) === this.selectedFile() && Feedback.getReferenceLine(feedback) !== undefined);
     }
 
     /**
