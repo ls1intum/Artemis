@@ -91,13 +91,7 @@
             }
             @if (showRating()) {
                 @defer (on idle) {
-                    <jhi-rating
-                        class="assessment-feedback-section"
-                        [result]="latestRatedResult()!"
-                        [participation]="gradedStudentParticipation()!"
-                        starSize="18"
-                        layout="inline"
-                    />
+                    <jhi-rating class="assessment-feedback-section" [result]="latestRatedResult()!" [participation]="gradedStudentParticipation()!" starSize="18" layout="inline" />
                 }
             }
             @if (showComplaintView()) {

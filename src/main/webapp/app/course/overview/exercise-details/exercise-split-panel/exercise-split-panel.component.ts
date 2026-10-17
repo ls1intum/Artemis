@@ -240,11 +240,7 @@ export class ExerciseSplitPanelComponent {
 
     readonly showRating = computed(() => {
         const result = this.latestRatedResult();
-        return (
-            !!this.gradedStudentParticipation() &&
-            !!result &&
-            (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC)
-        );
+        return !!this.gradedStudentParticipation() && !!result && (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC);
     });
 
     constructor() {
