@@ -1,0 +1,28 @@
+<!-- The upper content is declared once and rendered in whichever branch is active, so it is not duplicated. -->
+<ng-template #top><ng-content select="[feedbackSplitTop]" /></ng-template>
+
+@if (hasBottom()) {
+    <p-splitter
+        class="feedback-split"
+        [class.feedback-split--collapsed]="!expanded()"
+        [class.feedback-split--panel-gutter]="gutterStyle() === 'panel'"
+        layout="vertical"
+        [panelSizes]="sizes()"
+        [minSizes]="minSizes()"
+        [gutterSize]="gutterSize"
+        [pt]="passThrough()"
+        [stateKey]="storageKey()"
+        stateStorage="local"
+        (onResizeEnd)="onResizeEnd($event)"
+        data-testid="feedback-split"
+    >
+        <ng-template #panel>
+            <div class="feedback-split__top"><ng-container [ngTemplateOutlet]="top" /></div>
+        </ng-template>
+        <ng-template #panel>
+            <div class="feedback-split__bottom"><ng-container [ngTemplateOutlet]="bottomTemplate() ?? null" /></div>
+        </ng-template>
+    </p-splitter>
+} @else {
+    <div class="feedback-split__top feedback-split__top--alone"><ng-container [ngTemplateOutlet]="top" /></div>
+}
