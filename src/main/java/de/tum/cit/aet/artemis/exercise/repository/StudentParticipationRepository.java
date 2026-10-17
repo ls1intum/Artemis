@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -2174,14 +2175,20 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param pageable        pagination information
      * @param sortOrder       ascending or descending
      * @param sortedColumn    the column to sort by
+     * @param teamOwnerId     restrict results to teams owned by this tutor, or null for all teams
+     * @param excludePractice whether practice participations must be excluded
      * @return a page of participation IDs
      */
     default Page<Long> findParticipationIdsForScores(long exerciseId, boolean teamMode, String searchTerm, String filterProp, Integer scoreRangeLower, Integer scoreRangeUpper,
-            Pageable pageable, SortingOrder sortOrder, String sortedColumn) {
+            Pageable pageable, SortingOrder sortOrder, String sortedColumn, @Nullable Long teamOwnerId, boolean excludePractice) {
         Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forMode(teamMode))
-                .and(StudentParticipationSpecs.searchByName(searchTerm, teamMode)).and(StudentParticipationSpecs.scoresFilter(filterProp))
-                .and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
+                .and(StudentParticipationSpecs.ownedByTeamTutor(teamOwnerId)).and(StudentParticipationSpecs.searchByName(searchTerm, teamMode))
+                .and(StudentParticipationSpecs.scoresFilter(filterProp)).and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
                 .and(StudentParticipationSpecs.orderedForScores(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
+
+        if (excludePractice) {
+            spec = spec.and(StudentParticipationSpecs.isNotPracticeMode());
+        }
 
         // Use unsorted pageable since ordering is applied via the specification
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());

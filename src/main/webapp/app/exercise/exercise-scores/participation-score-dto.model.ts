@@ -1,4 +1,5 @@
 import dayjs from 'dayjs/esm';
+import { TeamStudentDTO } from 'app/exercise/participation/participation-management-dto.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 export interface ParticipationScoreDTO {
@@ -9,6 +10,7 @@ export interface ParticipationScoreDTO {
     participantIdentifier?: string;
     studentId?: number;
     teamId?: number;
+    teamStudents?: TeamStudentDTO[];
     resultId?: number;
     score?: number;
     successful?: boolean;
@@ -25,6 +27,7 @@ export interface ParticipationScoreDTO {
     passedTestCaseCount?: number;
     codeIssueCount?: number;
     correctionRoundResults?: CorrectionRoundResultDTO[];
+    assessableCorrectionRounds?: number[];
 }
 
 /**
@@ -37,4 +40,5 @@ export interface CorrectionRoundResultDTO {
     assessmentType?: AssessmentType;
     completionDate?: dayjs.Dayjs;
     hasComplaint?: boolean;
+    ownedByCurrentUser?: boolean;
 }

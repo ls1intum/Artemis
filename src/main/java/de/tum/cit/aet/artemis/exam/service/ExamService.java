@@ -1004,7 +1004,8 @@ public class ExamService {
         if (latestSubmissionIds.isEmpty()) {
             return Map.of();
         }
-        return resultRepository.findCorrectionRoundResultsBySubmissionIds(latestSubmissionIds).stream().collect(Collectors.groupingBy(CorrectionRoundResultDTO::submissionId));
+        return resultRepository.findCorrectionRoundResultsBySubmissionIds(latestSubmissionIds, SecurityUtils.getCurrentUserLogin().orElse(null)).stream()
+                .collect(Collectors.groupingBy(CorrectionRoundResultDTO::submissionId));
     }
 
     private double calculateFirstCorrectionPoints(StudentParticipation participation, Exam exam, ExamGradeScoreDTO examGrade, double plagiarismPointDeductionPercentage,

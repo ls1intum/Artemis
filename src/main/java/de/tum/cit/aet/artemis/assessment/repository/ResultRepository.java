@@ -522,13 +522,16 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * {@link de.tum.cit.aet.artemis.exercise.domain.Submission#getManualResults()} and keeps a result whose assessment
      * type is not set yet.
      *
-     * @param submissionIds the submissions whose manual results should be read
+     * @param submissionIds    the submissions whose manual results should be read
+     * @param currentUserLogin the user whose correction-round ownership should be included
      * @return the manual results of those submissions, in no particular order
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exercise.dto.CorrectionRoundResultDTO(
-                result.submission.id, result.id, result.correctionRound, result.assessmentType, result.completionDate, result.hasComplaint, result.score)
+                result.submission.id, result.id, result.correctionRound, result.assessmentType, result.completionDate, result.hasComplaint, result.score,
+                CASE WHEN assessor.login = :currentUserLogin THEN TRUE ELSE FALSE END)
             FROM Result result
+            LEFT JOIN result.assessor assessor
             WHERE result.submission.id IN :submissionIds
                 AND (result.assessmentType IS NULL
                     OR result.assessmentType NOT IN (
@@ -536,7 +539,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                         de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA
                     ))
             """)
-    List<CorrectionRoundResultDTO> findCorrectionRoundResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds);
+    List<CorrectionRoundResultDTO> findCorrectionRoundResultsBySubmissionIds(@Param("submissionIds") Set<Long> submissionIds, @Param("currentUserLogin") String currentUserLogin);
 
     /**
      * Returns true if there is at least one result for the given exercise.

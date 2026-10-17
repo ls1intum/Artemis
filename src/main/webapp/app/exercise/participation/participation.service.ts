@@ -134,6 +134,18 @@ export class ParticipationService {
     }
 
     searchParticipationScores(exerciseId: number, search: ParticipationScoreSearch): Observable<PageableResult<ParticipationScoreDTO>> {
+        return this.searchParticipationResults(exerciseId, search, 'participations/scores');
+    }
+
+    searchAssessmentQueue(exerciseId: number, search: ParticipationScoreSearch): Observable<PageableResult<ParticipationScoreDTO>> {
+        return this.searchParticipationResults(exerciseId, search, 'assessment-queue');
+    }
+
+    private searchParticipationResults(
+        exerciseId: number,
+        search: ParticipationScoreSearch,
+        resource: 'participations/scores' | 'assessment-queue',
+    ): Observable<PageableResult<ParticipationScoreDTO>> {
         const params: Record<string, string | number> = {
             page: search.page,
             pageSize: search.pageSize,
@@ -141,6 +153,9 @@ export class ParticipationService {
             sortedColumn: search.sortedColumn,
             searchTerm: search.searchTerm,
         };
+        if (resource === 'assessment-queue' && search.ownTeams) {
+            params['ownTeams'] = 'true';
+        }
         if (search.filterProp) {
             params['filterProp'] = search.filterProp;
         }
@@ -151,7 +166,7 @@ export class ParticipationService {
             params['scoreRangeUpper'] = search.scoreRangeUpper;
         }
         return this.http
-            .get<ParticipationScoreDTO[]>(`api/exercise/exercises/${exerciseId}/participations/scores`, {
+            .get<ParticipationScoreDTO[]>(`api/exercise/exercises/${exerciseId}/${resource}`, {
                 params,
                 observe: 'response',
             })
@@ -161,6 +176,9 @@ export class ParticipationService {
                     content.forEach((dto) => {
                         dto.initializationDate = convertDateFromServer(dto.initializationDate);
                         dto.completionDate = convertDateFromServer(dto.completionDate);
+                        dto.correctionRoundResults?.forEach((result) => {
+                            result.completionDate = convertDateFromServer(result.completionDate);
+                        });
                     });
                     return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
                 }),

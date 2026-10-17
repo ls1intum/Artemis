@@ -5,7 +5,6 @@
     [submitBusy]="submitBusy()"
     [cancelBusy]="cancelBusy()"
     [nextSubmissionBusy]="nextSubmissionBusy()"
-    [isTeamMode]="isTeamMode()"
     [isAssessor]="isAssessor()"
     [isTestRun]="isTestRun()"
     [exerciseDashboardLink]="exerciseDashboardLink()"
@@ -43,7 +42,6 @@
         [complaint]="complaint"
         [exercise]="exercise()"
         [isAssessor]="isAssessor()"
-        [submission]="submission()"
         [isTestRun]="isTestRun()"
         (updateAssessmentAfterComplaint)="updateAssessmentAfterComplaint.emit($event)"
     />

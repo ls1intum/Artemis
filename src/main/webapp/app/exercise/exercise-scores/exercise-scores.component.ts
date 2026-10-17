@@ -33,15 +33,14 @@ import { CodeButtonComponent } from 'app/shared-ui/components/buttons/code-butto
 import { FeatureToggleLinkDirective } from 'app/foundation/feature-toggle/feature-toggle-link.directive';
 import { ManageAssessmentButtonsComponent } from './manage-assessment-buttons/manage-assessment-buttons.component';
 import { ResultComponent } from '../result/result.component';
-import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/foundation/pipes/artemis-duration-from-seconds.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { scoreDtoToParticipation, scoreDtoToResult } from './participation-score.util';
 import { ParticipationScoreDTO } from './participation-score-dto.model';
 import { ParticipationScoreSearch } from 'app/foundation/pagination/pageable-table';
 import { TableLazyLoadEvent } from 'primeng/table';
@@ -58,6 +57,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ParticipationPrivacyService } from 'app/exercise/participation/participation-privacy.service';
 import { ParticipationAccessNoticeComponent } from 'app/exercise/participation/participation-access-notice.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 /**
  * Filter properties for a result
@@ -78,6 +78,7 @@ export enum FilterProp {
     providers: [ExerciseCacheService],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        TumAetUiButtonDirective,
         TranslateDirective,
         ParticipationAccessNoticeComponent,
         FaIconComponent,
@@ -461,77 +462,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.loadPage();
     }
 
-    /**
-     * Builds a Result object from the flat DTO fields for use with jhi-result.
-     */
     toResult(dto: ParticipationScoreDTO): Result | undefined {
-        if (!dto.resultId) return undefined;
-        const result = new Result();
-        result.id = dto.resultId;
-        result.score = dto.score;
-        result.successful = dto.successful;
-        result.completionDate = dto.completionDate;
-        result.assessmentType = dto.assessmentType;
-        result.testCaseCount = dto.testCaseCount;
-        result.passedTestCaseCount = dto.passedTestCaseCount;
-        result.codeIssueCount = dto.codeIssueCount;
-        result.correctionRound = dto.correctionRoundResults?.find((roundResult) => roundResult.resultId === dto.resultId)?.correctionRound;
-        return result;
+        return scoreDtoToResult(dto);
     }
 
-    /**
-     * Builds the results the submission row works with: the newest one, which carries the score the table shows, and
-     * one per correction round, which is what the assessment actions of each round act on. The newest result is often
-     * one of the rounds itself, so it is not added twice.
-     */
-    private toResults(dto: ParticipationScoreDTO): Result[] {
-        const latestResult = this.toResult(dto);
-        const roundResults = (dto.correctionRoundResults ?? [])
-            .filter((roundResult) => roundResult.resultId !== dto.resultId)
-            .map((roundResult) => {
-                const result = new Result();
-                result.id = roundResult.resultId;
-                result.correctionRound = roundResult.correctionRound;
-                result.assessmentType = roundResult.assessmentType;
-                result.completionDate = roundResult.completionDate;
-                result.hasComplaint = roundResult.hasComplaint;
-                return result;
-            });
-        return latestResult ? [latestResult, ...roundResults] : roundResults;
-    }
-
-    /**
-     * Builds a minimal Participation-like object from the flat DTO so that
-     * manage-assessment-buttons can render assessment links and cancel buttons.
-     */
     toParticipation(dto: ParticipationScoreDTO): Participation {
-        const ex = this.exercise();
-        return {
-            id: dto.participationId,
-            type: ex?.type === ExerciseType.PROGRAMMING ? ParticipationType.PROGRAMMING : ParticipationType.STUDENT,
-            exercise: ex,
-            submissionCount: dto.submissionCount,
-            submissions: dto.submissionId ? [this.toSubmission(dto)] : [],
-        };
-    }
-
-    /**
-     * Builds the minimal submission that {@link toParticipation} embeds.
-     *
-     * Programming exercises get a real {@link ProgrammingSubmission}, which is where `buildFailed` is declared and
-     * which sets `submissionExerciseType` in its constructor. The previous conditional spread smuggled `buildFailed`
-     * into a plain Submission literal, which only type-checked because spreads skip excess-property checking.
-     */
-    private toSubmission(dto: ParticipationScoreDTO): Submission {
-        const results = this.toResults(dto);
-        if (this.exercise()?.type === ExerciseType.PROGRAMMING) {
-            const submission = new ProgrammingSubmission();
-            submission.id = dto.submissionId;
-            submission.results = results;
-            submission.buildFailed = dto.buildFailed;
-            return submission;
-        }
-        return { id: dto.submissionId, results };
+        return scoreDtoToParticipation(dto, this.exercise());
     }
 
     /**

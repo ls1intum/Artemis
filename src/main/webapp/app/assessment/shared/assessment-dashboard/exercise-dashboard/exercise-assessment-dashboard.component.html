@@ -251,14 +251,7 @@
             </div>
         }
 
-        @if (
-            tutorParticipationStatus() === NOT_PARTICIPATED &&
-            exercise().isAtLeastInstructor &&
-            exam()?.numberOfCorrectionRoundsInExam &&
-            exam()?.numberOfCorrectionRoundsInExam! > 1 &&
-            isExamMode() &&
-            !isTestRun()
-        ) {
+        @if (exercise().isAtLeastInstructor && exam()?.numberOfCorrectionRoundsInExam && exam()?.numberOfCorrectionRoundsInExam! > 1 && isExamMode() && !isTestRun()) {
             <div class="mb-3 flex w-full items-center justify-between gap-2" data-testid="correction-round-1">
                 <div class="flex items-center gap-1">
                     <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam" [translateValues]="{ round: 2 }"></h4>
@@ -382,215 +375,20 @@
                             }
                         </div>
                     }
-                    @if (submissionLockLimitReached() && tutorParticipationStatus() !== REVIEWED_INSTRUCTIONS) {
-                        <div class="alert alert-danger" jhiTranslate="artemisApp.submission.lockedSubmissionsLimitReached"></div>
-                    }
                     @if (assessmentNotPossibleYetReason(); as assessmentNotPossibleYet) {
                         <p-message severity="info" id="assessment-not-possible-yet" class="flex items-center gap-1 mb-3">
                             <span [jhiTranslate]="assessmentNotPossibleYet.translationKey" [translateValues]="{ date: assessmentNotPossibleYet.date | artemisDate }"></span>
                         </p-message>
                     }
-                    @for (correctionRound of correctionRoundIndices(); track correctionRound) {
-                        <div [attr.data-testid]="'correction-round-' + correctionRound">
-                            @if ((tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED) && !isTestRun()) {
-                                <div class="mb-3 flex w-full items-center justify-between gap-2" data-testid="correction-round-header">
-                                    <div class="flex items-center gap-1">
-                                        @if (!isExamMode()) {
-                                            <h4 class="m-0" jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissions"></h4>
-                                        }
-                                        @if (isExamMode()) {
-                                            <h4
-                                                class="m-0"
-                                                jhiTranslate="artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam"
-                                                [translateValues]="{ round: correctionRound + 1 }"
-                                            ></h4>
-                                        }
-                                        @if (correctionRound > 0) {
-                                            <fa-icon
-                                                class="text-muted-color"
-                                                [icon]="faQuestionCircle"
-                                                ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
-                                            />
-                                        }
-                                    </div>
-                                    @if (
-                                        correctionRound === 1 &&
-                                        exercise().isAtLeastInstructor &&
-                                        exam()?.numberOfCorrectionRoundsInExam &&
-                                        exam()?.numberOfCorrectionRoundsInExam! > 1 &&
-                                        isExamMode()
-                                    ) {
-                                        <jhi-second-correction-enable-button
-                                            data-testid="toggle-second-correction"
-                                            (ngModelChange)="toggleSecondCorrection()"
-                                            [secondCorrectionEnabled]="secondCorrectionEnabled()"
-                                            [togglingSecondCorrectionButton]="togglingSecondCorrectionButton()"
-                                        />
-                                    }
-                                </div>
-                            }
-                            @if (numberOfCorrectionRoundsEnabled() > correctionRound && numberOfAssessmentsOfCorrectionRounds().length > correctionRound) {
-                                @if (isTestRun()) {
-                                    <h4 jhiTranslate="artemisApp.exerciseAssessmentDashboard.testRunSubmissions"></h4>
-                                }
-                                @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun()) {
-                                    <div class="table-responsive">
-                                        @if (showSubmissionsForRound(correctionRound)) {
-                                            <table class="table exercise-table">
-                                                <thead>
-                                                    <tr
-                                                        jhiSort
-                                                        [(predicate)]="sortPredicates[0]"
-                                                        [(ascending)]="reverseOrders[0]"
-                                                        (sortChange)="sortSubmissionRows(correctionRound)"
-                                                    >
-                                                        <th jhiSortBy="id">
-                                                            <a class="th-link">Id</a>
-                                                            <fa-icon [icon]="faSort" />
-                                                        </th>
-                                                        <th jhiSortBy="submissionDate">
-                                                            <a class="th-link" jhiTranslate="artemisApp.exerciseAssessmentDashboard.submissionDate"></a>
-                                                            <fa-icon [icon]="faSort" />
-                                                        </th>
-                                                        <th jhiSortBy="results.correctionRound.score">
-                                                            <a class="th-link" jhiTranslate="artemisApp.exerciseAssessmentDashboard.result"></a>
-                                                            <fa-icon [icon]="faSort" />
-                                                        </th>
-                                                        @if (exercise().type === ExerciseType.TEXT) {
-                                                            <th jhiSortBy="language">
-                                                                <a class="th-link" jhiTranslate="artemisApp.exerciseAssessmentDashboard.language"></a>
-                                                                <fa-icon [icon]="faSort" />
-                                                            </th>
-                                                        }
-                                                        <th jhiTranslate="artemisApp.exerciseAssessmentDashboard.action"></th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @if (unassessedSubmissionByRound()[correctionRound]?.id && !exercise().teamMode && !isTestRun()) {
-                                                        <tr>
-                                                            <td></td>
-                                                            <td>{{ unassessedSubmissionByRound()[correctionRound]!.submissionDate | artemisDate }}</td>
-                                                            <td></td>
-                                                            @if (exercise().type === ExerciseType.TEXT) {
-                                                                <td>
-                                                                    <jhi-language-table-cell [submission]="unassessedSubmissionByRound()[correctionRound]!" />
-                                                                </td>
-                                                            }
-                                                            <td>
-                                                                <span [pTooltip]="assessmentNotPossibleYetTooltip()">
-                                                                    <a
-                                                                        data-testid="start-new-assessment"
-                                                                        class="btn btn-success btn-sm"
-                                                                        [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink('new')"
-                                                                        [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                                        [class.disabled]="openingAssessmentEditorForNewSubmission() || !!assessmentNotPossibleYetReason()"
-                                                                        [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
-                                                                        [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
-                                                                    >
-                                                                        @if (openingAssessmentEditorForNewSubmission()) {
-                                                                            <fa-icon [icon]="faSpinner" animation="spin" />
-                                                                        }
-                                                                        <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                                                        {{ 'artemisApp.exerciseAssessmentDashboard.startAssessment' | artemisTranslate }}
-                                                                    </a>
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    }
-                                                    @for (submission of assessedSubmissionsByRound()[correctionRound]; track submission; let i = $index) {
-                                                        <tr>
-                                                            <td>{{ submission.id }}</td>
-                                                            <td>{{ submission.submissionDate | artemisDate }}</td>
-                                                            <td>
-                                                                <jhi-result
-                                                                    [result]="getSubmissionResultByCorrectionRound(submission, correctionRound)"
-                                                                    [participation]="submission.participation!"
-                                                                    [exercise]="exercise()"
-                                                                    [isOwnParticipation]="false"
-                                                                />
-                                                            </td>
-                                                            @if (exercise().type === ExerciseType.TEXT) {
-                                                                <td>
-                                                                    <jhi-language-table-cell [submission]="submission" />
-                                                                </td>
-                                                            }
-                                                            <td>
-                                                                @if ((isTestRun() && complaints().length === 0) || !isTestRun()) {
-                                                                    <span [pTooltip]="assessmentNotPossibleYetTooltip()">
-                                                                        @if (submission && calculateSubmissionStatusIsDraft(submission, correctionRound)) {
-                                                                            <a
-                                                                                [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink(submission)"
-                                                                                [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                                                class="btn btn-warning btn-sm"
-                                                                                id="continue-assessment"
-                                                                                [class.disabled]="!!assessmentNotPossibleYetReason()"
-                                                                                [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
-                                                                                [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
-                                                                            >
-                                                                                <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />&nbsp;{{
-                                                                                    'artemisApp.exerciseAssessmentDashboard.continueAssessment' | artemisTranslate
-                                                                                }}
-                                                                            </a>
-                                                                        } @else {
-                                                                            @if (!!getSubmissionResultByCorrectionRound(submission, correctionRound)) {
-                                                                                <a
-                                                                                    [routerLink]="assessmentNotPossibleYetReason() ? null : getAssessmentLink(submission)"
-                                                                                    [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                                                    class="btn btn-primary btn-sm"
-                                                                                    data-testid="open-assessment"
-                                                                                    [class.disabled]="!!assessmentNotPossibleYetReason()"
-                                                                                    [attr.aria-disabled]="!!assessmentNotPossibleYetReason() || null"
-                                                                                    [attr.tabindex]="assessmentNotPossibleYetReason() ? -1 : null"
-                                                                                >
-                                                                                    <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                                                                                    &nbsp;{{ 'artemisApp.exerciseAssessmentDashboard.openAssessment' | artemisTranslate }}
-                                                                                </a>
-                                                                            }
-                                                                        }
-                                                                    </span>
-                                                                    <!--                                                                    </ng-container>-->
-                                                                }
-                                                            </td>
-                                                        </tr>
-                                                    }
-                                                </tbody>
-                                            </table>
-                                        } @else {
-                                            <jhi-assessment-warning [exercise]="exercise()" />
-                                            @if (!exercise().teamMode) {
-                                                <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissions"></div>
-                                            } @else {
-                                                <div class="alert alert-warning" jhiTranslate="artemisApp.exerciseAssessmentDashboard.startAssessmentFromTeamPages"></div>
-                                            }
-                                        }
-                                        @if (
-                                            isExamMode() &&
-                                            (!unassessedSubmissionByRound()[correctionRound]?.id || exercise().teamMode || isTestRun()) &&
-                                            numberOfSubmissions().inTime !== numberOfAssessmentsOfCorrectionRounds()[correctionRound].inTime
-                                        ) {
-                                            <div class="alert alert-info">
-                                                <span
-                                                    jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsInfo"
-                                                    [translateValues]="{
-                                                        notYetAssessed: notYetAssessed[correctionRound],
-                                                        lockedSubmissionsByOtherTutor: lockedSubmissionsByOtherTutor[correctionRound],
-                                                    }"
-                                                ></span>
-                                                @if (correctionRound === 1) {
-                                                    <span
-                                                        jhiTranslate="artemisApp.exerciseAssessmentDashboard.noSubmissionsInfoSecondCorrection"
-                                                        [translateValues]="{ firstRoundAssessments: firstRoundAssessments() }"
-                                                    ></span>
-                                                }
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                            }
-                            @if (numberOfCorrectionRoundsEnabled() <= correctionRound) {
-                                <div class="alert alert-info" jhiTranslate="artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled"></div>
-                            }
-                        </div>
+                    @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun()) {
+                        <jhi-assessment-queue
+                            class="mb-4 block"
+                            [exercise]="exercise()"
+                            [isTestRun]="isTestRun()"
+                            [assessmentDisabled]="!!assessmentNotPossibleYetReason()"
+                            [assessmentDisabledTooltip]="assessmentNotPossibleYetTooltip()"
+                            [correctionRoundsEnabled]="isTestRun() ? 1 : numberOfCorrectionRoundsEnabled()"
+                        />
                     }
                     <!-- Complaints -->
                     @if (tutorParticipationStatus() === TRAINED || exercise().isAtLeastInstructor || tutorParticipationStatus() === COMPLETED || isTestRun()) {

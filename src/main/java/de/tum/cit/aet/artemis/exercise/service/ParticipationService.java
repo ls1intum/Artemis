@@ -15,8 +15,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.hibernate.Hibernate;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +39,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exam.dto.ExamSubmissionGateDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -116,6 +119,8 @@ public class ParticipationService {
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
+    private final SubmissionAssessmentEligibilityService assessmentEligibilityService;
+
     private final Optional<HyperionExerciseMutationApi> liveSaveApi;
 
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
@@ -123,7 +128,8 @@ public class ParticipationService {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
             ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            Optional<HyperionExerciseMutationApi> liveSaveApi) {
+            SubmissionAssessmentEligibilityService assessmentEligibilityService, Optional<HyperionExerciseMutationApi> liveSaveApi) {
+        this.assessmentEligibilityService = assessmentEligibilityService;
         this.liveSaveApi = liveSaveApi;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -1292,13 +1298,27 @@ public class ParticipationService {
      * @return a page of ParticipationScoreDTO
      */
     public Page<ParticipationScoreDTO> findParticipationScoresForExercise(Exercise exercise, ParticipationScoreSearchDTO search) {
+        return findParticipationScoresForExercise(exercise, search, null, false);
+    }
+
+    /**
+     * Loads score rows for an assessment queue or the scores page, optionally restricting team ownership and excluding practice participations.
+     *
+     * @param exercise        the exercise to query
+     * @param search          pagination, sorting and filtering parameters
+     * @param teamOwnerId     only include teams owned by this tutor, or null for all teams
+     * @param excludePractice whether practice participations must be excluded
+     * @return the requested page with results and correction-round information
+     */
+    public Page<ParticipationScoreDTO> findParticipationScoresForExercise(Exercise exercise, ParticipationScoreSearchDTO search, @Nullable Long teamOwnerId,
+            boolean excludePractice) {
         SortingOrder sortOrder = search.sortingOrder() != null ? search.sortingOrder() : SortingOrder.ASCENDING;
         Pageable pageable = PageRequest.of(search.page(), search.pageSize());
         boolean teamMode = exercise.isTeamMode();
 
         // Step 1: Get paginated participation IDs with filters
         Page<Long> idPage = studentParticipationRepository.findParticipationIdsForScores(exercise.getId(), teamMode, search.searchTerm(), search.filterProp(),
-                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn());
+                search.scoreRangeLower(), search.scoreRangeUpper(), pageable, sortOrder, search.sortedColumn(), teamOwnerId, excludePractice);
         List<Long> ids = idPage.getContent();
         if (ids.isEmpty()) {
             return new PageImpl<>(List.of(), pageable, idPage.getTotalElements());
@@ -1317,8 +1337,8 @@ public class ParticipationService {
         if (!submissionIds.isEmpty()) {
             Set<Result> results = resultRepository.findLatestResultsWithAssessmentNoteBySubmissionIds(submissionIds);
             resultBySubmissionId = results.stream().collect(Collectors.toMap(result -> result.getSubmission().getId(), Function.identity()));
-            correctionRoundResultsBySubmissionId = resultRepository.findCorrectionRoundResultsBySubmissionIds(submissionIds).stream()
-                    .collect(Collectors.groupingBy(CorrectionRoundResultDTO::submissionId));
+            correctionRoundResultsBySubmissionId = resultRepository.findCorrectionRoundResultsBySubmissionIds(submissionIds, SecurityUtils.getCurrentUserLogin().orElse(null))
+                    .stream().collect(Collectors.groupingBy(CorrectionRoundResultDTO::submissionId));
         }
 
         // Load submission counts for these IDs
@@ -1329,13 +1349,13 @@ public class ParticipationService {
         final Map<Long, Result> finalResultMap = resultBySubmissionId;
         final Map<Long, List<CorrectionRoundResultDTO>> finalCorrectionRoundResults = correctionRoundResultsBySubmissionId;
         List<ParticipationScoreDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull)
-                .map(p -> mapToDTO(p, exercise instanceof QuizExercise, submissionCountMap, finalResultMap, finalCorrectionRoundResults)).toList();
+                .map(p -> mapToDTO(p, exercise, submissionCountMap, finalResultMap, finalCorrectionRoundResults, excludePractice)).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
-    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, boolean quizExercise, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
-            Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId) {
+    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, Exercise exercise, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
+            Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId, boolean assessmentQueue) {
         // Participant info
         String participantName;
         String participantIdentifier;
@@ -1373,7 +1393,7 @@ public class ParticipationService {
         // Duration in seconds. A quiz practice participation is reused for every attempt and the start of a single attempt is not recorded, so the time since the
         // participation was created would include the pauses between the attempts and is not the duration of the latest one.
         Long durationInSeconds = null;
-        boolean durationUnknown = quizExercise && participation.isPracticeMode();
+        boolean durationUnknown = exercise instanceof QuizExercise && participation.isPracticeMode();
         if (!durationUnknown && completionDate != null && participation.getInitializationDate() != null) {
             durationInSeconds = Duration.between(participation.getInitializationDate(), completionDate).getSeconds();
         }
@@ -1403,7 +1423,13 @@ public class ParticipationService {
 
         return new ParticipationScoreDTO(participation.getId(), participation.getInitializationDate(), submissionCount, participantName, participantIdentifier, studentId, teamId,
                 resultId, score, successful, completionDate, assessmentType, assessmentNote, durationInSeconds, submissionId, buildFailed, buildPlanId, repositoryUri,
-                participation.isTestRun(), testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults);
+                participation.isTestRun(), testCaseCount, passedTestCaseCount, codeIssueCount, correctionRoundResults,
+                participation.getTeam().map(team -> team.getStudents().stream().map(student -> new UserNameAndLoginDTO(student.getName(), student.getLogin())).toList())
+                        .orElse(null),
+                assessmentQueue
+                        ? IntStream.range(0, exercise.getNumberOfCorrectionRounds())
+                                .filter(round -> latestSubmission != null && assessmentEligibilityService.canStartAssessment(latestSubmission, exercise, round)).boxed().toList()
+                        : null);
     }
 
     /**
