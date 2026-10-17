@@ -254,6 +254,42 @@ describe('GradingComponent', () => {
             expect(comp.viewMode()).toBe(GradingViewMode.INTERVAL);
         });
 
+        it.each([
+            [GradingViewMode.INTERVAL, 5],
+            [GradingViewMode.DETAILED, 6],
+        ] as const)('preserves special grades and the add action in the %s view', async (mode, cells) => {
+            fixture.detectChanges();
+            comp.gradeStepsModel.update((model) => ({ ...model, plagiarismGrade: 'P', noParticipationGrade: 'N' }));
+            comp.setViewMode(mode);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            const rows = Array.from(fixture.nativeElement.querySelectorAll('tbody tr')) as HTMLTableRowElement[];
+            const inputs = rows.slice(0, 2).map((row) => row.querySelector('input')!);
+            expect(rows[0].cells).toHaveLength(cells);
+            expect(rows[1].cells).toHaveLength(cells);
+            expect(inputs.map((input) => input.value)).toEqual(['P', 'N']);
+            inputs[0].value = 'Plagiarism';
+            inputs[1].value = 'Absent';
+            inputs.forEach((input) => input.dispatchEvent(new Event('input')));
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            comp.setViewMode(mode === GradingViewMode.INTERVAL ? GradingViewMode.DETAILED : GradingViewMode.INTERVAL);
+            fixture.detectChanges();
+            await fixture.whenStable();
+            const values = Array.from(fixture.nativeElement.querySelectorAll('tbody tr input[type="text"]') as NodeListOf<HTMLInputElement>).map((input) => input.value);
+            expect(values.slice(0, 2)).toEqual(['Plagiarism', 'Absent']);
+            expect(comp.gradingScale.plagiarismGrade).toBe('Plagiarism');
+            expect(comp.gradingScale.noParticipationGrade).toBe('Absent');
+
+            const addLabels = fixture.nativeElement.querySelectorAll('[jhiTranslate="artemisApp.gradingSystem.add"]') as NodeListOf<HTMLElement>;
+            expect(addLabels).toHaveLength(1);
+            const before = comp.gradeStepsModel().gradeSteps.length;
+            addLabels[0].closest('button')!.click();
+            expect(comp.gradeStepsModel().gradeSteps.length).toBeGreaterThan(before);
+        });
+
         it('announces the selected grading view after keyboard activation', () => {
             fixture.detectChanges();
             const interval = fixture.nativeElement.querySelector('.tab-item.interval') as HTMLElement;
