@@ -6,6 +6,7 @@ import { Course } from 'app/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { TypeaheadScrollActiveOptionDirective } from 'app/shared-ui/directives/typeahead-scroll-active-option.directive';
 import { orderBy } from 'lodash-es';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { FormsModule } from '@angular/forms';
@@ -14,7 +15,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 @Component({
     selector: 'jhi-team-exercise-search',
     templateUrl: './team-exercise-search.component.html',
-    imports: [FormsModule, NgbTypeahead, ArtemisTranslatePipe],
+    imports: [FormsModule, NgbTypeahead, TypeaheadScrollActiveOptionDirective, ArtemisTranslatePipe],
 })
 export class TeamExerciseSearchComponent {
     private courseService = inject(CourseManagementService);

@@ -11,6 +11,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { TypeaheadScrollActiveOptionDirective } from 'app/shared-ui/directives/typeahead-scroll-active-option.directive';
 
 let selectorId = 0;
 
@@ -38,7 +39,7 @@ export type SearchRoleGroup = 'tutors' | 'students' | 'instructors';
         },
     ],
     encapsulation: ViewEncapsulation.None,
-    imports: [NgbTypeahead, ProfilePictureComponent, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
+    imports: [NgbTypeahead, TypeaheadScrollActiveOptionDirective, ProfilePictureComponent, TranslateDirective, FaIconComponent, ArtemisTranslatePipe],
 })
 export class CourseUsersSelectorComponent implements ControlValueAccessor, OnInit, OnDestroy {
     private courseManagementService = inject(CourseManagementService);
