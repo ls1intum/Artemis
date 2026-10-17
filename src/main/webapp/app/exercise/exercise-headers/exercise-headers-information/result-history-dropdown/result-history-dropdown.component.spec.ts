@@ -513,14 +513,14 @@ describe('ResultHistoryDropdownComponent', () => {
         });
 
         it('should return false for PROGRAMMING exercises without the online editor, which has nowhere to show a result', () => {
-            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false, course: { id: 1 } } as Exercise);
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: false, course: { id: 1 } } as unknown as Exercise);
             fixture.detectChanges();
 
             expect(component.isRowClickable()).toBe(false);
         });
 
         it('should return true for PROGRAMMING exercises with the online editor, except for unfinished AI feedback', () => {
-            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true, course: { id: 1 } } as Exercise);
+            fixture.componentRef.setInput('exercise', { id: 1, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true, course: { id: 1 } } as unknown as Exercise);
             fixture.detectChanges();
 
             expect(component.isRowClickable()).toBe(true);
@@ -554,7 +554,7 @@ describe('ResultHistoryDropdownComponent', () => {
         });
 
         it('should open the online editor at the submission and result of a programming row', () => {
-            fixture.componentRef.setInput('exercise', { id: 10, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true, course: { id: 5 } } as Exercise);
+            fixture.componentRef.setInput('exercise', { id: 10, type: ExerciseType.PROGRAMMING, allowOnlineEditor: true, course: { id: 5 } } as unknown as Exercise);
             fixture.detectChanges();
 
             const participation: Participation = { id: 2 } as Participation;
