@@ -339,7 +339,8 @@ describe('ModelingAssessmentComponent', () => {
         fixture.detectChanges();
 
         const assessment = Object.values(comp.apollonEditor!.model.assessments)[0];
-        expect(assessment.dropInfo).toBe(mockFeedbackWithGradingInstruction.gradingInstruction);
+        // The editor gets a copy, which also carries the title of the instruction's criterion for the linked criterion chip.
+        expect(assessment.dropInfo).toEqual(mockFeedbackWithGradingInstruction.gradingInstruction);
     });
 
     it("should show an Athena suggestion's own title, stripped of its state prefix", () => {
@@ -564,7 +565,8 @@ describe('ModelingAssessmentComponent', () => {
         it('attaches the grading instruction the tutor dropped on an element, and detaches it once removed', () => {
             const instruction = { id: 7 } as any;
             comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo: instruction })]);
-            expect(comp.elementFeedback.get(PACKAGE_ID)!.gradingInstruction).toBe(instruction);
+            // A copy without the criterion title Apollon carries for display, so the title is never saved with the feedback.
+            expect(comp.elementFeedback.get(PACKAGE_ID)!.gradingInstruction).toEqual(instruction);
 
             comp.generateFeedbackFromAssessment([assessmentFor({ dropInfo: undefined })]);
             expect(comp.elementFeedback.get(PACKAGE_ID)!.gradingInstruction).toBeUndefined();
