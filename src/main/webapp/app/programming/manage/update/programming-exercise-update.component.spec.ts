@@ -11,7 +11,7 @@ import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/
 import { IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SessionStorageService } from 'app/foundation/service/session-storage.service';
 import { WebsocketService } from 'app/foundation/service/websocket.service';
-import { Subject, of, throwError } from 'rxjs';
+import { Subject, map, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/programming/manage/update/programming-exercise-update.component';
@@ -266,7 +266,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             else if (change === 'undo') activity.generationReverted.next('2026-10-17');
             else activity.exerciseContentsInvalidated.next('remote');
 
-            expect(find).toHaveBeenCalledWith(42);
+            expect(find).toHaveBeenCalledWith(42, true);
             expect(comp.programmingExercise.title).toBe('Unsaved title');
             expect(comp.generationSaveBlocked()).toBe(true);
             expect(reload).not.toHaveBeenCalled();
@@ -324,6 +324,17 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         it.each([false, true])('keeps both save paths usable after its own asynchronous statement save (newer edit: %s)', async (editDuringSave) => {
             protectedSettings();
+            const plagiarismDetectionConfig = {
+                id: 514,
+                continuousPlagiarismControlEnabled: false,
+                continuousPlagiarismControlPostDueDateChecksEnabled: false,
+                continuousPlagiarismControlPlagiarismCaseStudentResponsePeriod: 7,
+                similarityThreshold: 90,
+                minimumScore: 0,
+                minimumSize: 50,
+            };
+            comp.programmingExercise.plagiarismDetectionConfig = plagiarismDetectionConfig;
+            comp.backupExercise = deepClone(comp.programmingExercise);
             route.data = of({ programmingExercise: comp.programmingExercise });
             route.url = of([{ path: 'edit' } as UrlSegment]);
             route.params = of({ courseId, exerciseId: 42 });
@@ -331,7 +342,13 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             const canonical = new Subject<HttpResponse<ProgrammingExercise>>();
             const statementResponse = new Subject<HttpResponse<ProgrammingExercise>>();
             const canonicalBeforeSave = savedExercise('Original statement');
-            const find = vi.spyOn(programmingExerciseService, 'find').mockReturnValueOnce(canonical);
+            const withoutPlagiarismConfig = savedExercise('Original statement');
+            withoutPlagiarismConfig.body!.plagiarismDetectionConfig = undefined;
+            const find = vi
+                .spyOn(programmingExerciseService, 'find')
+                .mockImplementation((_exerciseId, withPlagiarismDetectionConfig) =>
+                    canonical.pipe(map((response) => (withPlagiarismDetectionConfig ? response : withoutPlagiarismConfig))),
+                );
             const saveStatement = vi.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(statementResponse);
             fixture.detectChanges();
             await fixture.whenStable();
@@ -352,6 +369,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             expect(find).toHaveBeenCalledOnce();
             canonical.next(canonicalBeforeSave);
             expect(saveStatement).toHaveBeenCalledExactlyOnceWith(42, 'Own saved statement');
+            expect(find).toHaveBeenCalledExactlyOnceWith(42, true);
             comp.saveExercise();
             comp.save();
             expect(find).toHaveBeenCalledOnce();
