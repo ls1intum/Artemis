@@ -74,7 +74,7 @@ public class IngestionCoverageResource {
             IngestionCoverageWeaviateReadService.LECTURE_TRANSCRIPTIONS_COLLECTION, IngestionCoverageWeaviateReadService.LECTURE_UNIT_SEGMENTS_COLLECTION,
             IngestionCoverageWeaviateReadService.LECTURE_UNITS_COLLECTION);
 
-    private final WeaviateHealthIndicator weaviateHealthIndicator;
+    private final Optional<WeaviateHealthIndicator> weaviateHealthIndicator;
 
     private final IngestionCoverageWeaviateReadService weaviateReadService;
 
@@ -86,7 +86,7 @@ public class IngestionCoverageResource {
 
     private final Optional<IrisHealthApi> irisHealthApi;
 
-    public IngestionCoverageResource(WeaviateHealthIndicator weaviateHealthIndicator, IngestionCoverageWeaviateReadService weaviateReadService,
+    public IngestionCoverageResource(Optional<WeaviateHealthIndicator> weaviateHealthIndicator, IngestionCoverageWeaviateReadService weaviateReadService,
             CoverageRecomputeService coverageRecomputeService, Environment environment, Optional<IrisHealthApi> irisHealthApi) {
         this.weaviateHealthIndicator = weaviateHealthIndicator;
         this.weaviateReadService = weaviateReadService;
@@ -103,7 +103,7 @@ public class IngestionCoverageResource {
      */
     @GetMapping("index/overview")
     public ResponseEntity<IndexOverviewDTO> getIndexOverview() {
-        Health health = weaviateHealthIndicator.health();
+        Health health = weaviateHealthIndicator.orElseThrow().health();
         boolean reachable = health.getStatus() == Status.UP;
         String address = String.valueOf(health.getDetails().get("Address"));
         boolean irisEnabled = artemisConfigHelper.isIrisEnabled(environment);

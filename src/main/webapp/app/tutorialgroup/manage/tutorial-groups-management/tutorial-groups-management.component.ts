@@ -1,9 +1,8 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, TrackByFunction, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, TrackByFunction, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { merge } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { faGear, faPlus, faUmbrellaBeach, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -26,8 +25,8 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MeetingPatternPipe } from 'app/tutorialgroup/shared/pipe/meeting-pattern.pipe';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
-import { TutorialGroupApi } from 'app/openapi/api/tutorial-group-api';
-import { convertTutorialGroupArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
+import { getTutorialGroupsForCourseResource } from 'app/openapi/api/tutorial-group-resources';
+import { convertTutorialGroupSummariesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 import { tutorialGroupUtilization } from 'app/tutorialgroup/shared/util/tutorial-group-utilization';
 import { TutorialGroupsImportButtonComponent } from './tutorial-groups-import-button/tutorial-groups-import-button.component';
 import { TutorialGroupsExportButtonComponent } from './tutorial-groups-export-button.component/tutorial-groups-export-button.component';
@@ -139,10 +138,8 @@ function compareRows(a: TutorialGroupRow, b: TutorialGroupRow, field: SortableFi
     ],
 })
 export class TutorialGroupsManagementComponent {
-    private readonly tutorialGroupApiService = inject(TutorialGroupApi);
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly alertService = inject(AlertService);
-    private readonly destroyRef = inject(DestroyRef);
     private readonly translateService = inject(TranslateService);
 
     readonly course = signal<Course | undefined>(undefined);
@@ -151,8 +148,11 @@ export class TutorialGroupsManagementComponent {
     readonly isAtLeastEditor = computed(() => this.course()?.isAtLeastEditor ?? false);
     readonly configuration = computed(() => this.course()?.tutorialGroupsConfiguration);
 
-    readonly isLoading = signal(false);
-    readonly tutorialGroups = signal<TutorialGroup[]>([]);
+    private readonly tutorialGroupsResource = getTutorialGroupsForCourseResource(this.courseId);
+    readonly isLoading = this.tutorialGroupsResource.isLoading;
+    readonly tutorialGroups = computed<TutorialGroup[]>(() =>
+        this.tutorialGroupsResource.hasValue() ? convertTutorialGroupSummariesFromServer(this.tutorialGroupsResource.value()) : [],
+    );
     readonly searchTerm = signal('');
 
     private readonly table = viewChild(TumAetUiTableComponent<TutorialGroupRow>);
@@ -258,28 +258,18 @@ export class TutorialGroupsManagementComponent {
         this.activatedRoute.data.pipe(takeUntilDestroyed()).subscribe(({ course }) => {
             if (course) {
                 this.course.set(course);
-                this.loadTutorialGroups();
+            }
+        });
+        effect(() => {
+            const error = this.tutorialGroupsResource.error();
+            if (error instanceof HttpErrorResponse) {
+                onError(this.alertService, error);
             }
         });
     }
 
     loadTutorialGroups(): void {
-        const courseId = this.courseId();
-        if (courseId === undefined) {
-            return;
-        }
-        this.isLoading.set(true);
-        this.tutorialGroupApiService
-            .getTutorialGroupsForCourse(courseId)
-            .pipe(
-                map((tutorialGroups: TutorialGroup[]) => convertTutorialGroupArrayDatesFromServer(tutorialGroups)),
-                finalize(() => this.isLoading.set(false)),
-                takeUntilDestroyed(this.destroyRef),
-            )
-            .subscribe({
-                next: (tutorialGroups: TutorialGroup[]) => this.tutorialGroups.set(tutorialGroups),
-                error: (response: HttpErrorResponse) => onError(this.alertService, response),
-            });
+        this.tutorialGroupsResource.reload();
     }
 
     /** Filtering happens outside the table, so the reader must not be left on a page of the previous result set. */
