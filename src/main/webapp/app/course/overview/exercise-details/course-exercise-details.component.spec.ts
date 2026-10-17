@@ -510,6 +510,41 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledWith(error.message);
     });
 
+    it('should not take requested AI feedback as the latest rated result, so complaints stay about the tests', () => {
+        vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as EntityResponseType));
+        const testResult = { id: 1, rated: true, assessmentType: AssessmentType.AUTOMATIC, completionDate: dayjs().subtract(2, 'hours') } as Result;
+        const athenaResult = { id: 2, rated: true, assessmentType: AssessmentType.AUTOMATIC_ATHENA, completionDate: dayjs().subtract(1, 'hours') } as Result;
+        const gradedParticipation = { submissions: [{ id: 55, results: [testResult, athenaResult] }], testRun: false } as StudentParticipation;
+        vi.spyOn(participationService, 'getSpecificStudentParticipation').mockImplementation((participations, testRun) => {
+            return participations?.find((p) => p.testRun === testRun);
+        });
+
+        comp.studentParticipations = [gradedParticipation];
+        comp.sortedHistoryResults = [testResult, athenaResult];
+        comp.exercise = { ...exercise, type: ExerciseType.PROGRAMMING };
+
+        comp.loadComplaintAndLatestRatedResult();
+
+        expect(comp.latestRatedResult()).toBe(testResult);
+    });
+
+    it.each([ExerciseType.MODELING, ExerciseType.TEXT])('should load the latest rated result of a %s exercise for the rating and the complaint', (type) => {
+        vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as EntityResponseType));
+        const manualResult = { id: 1, rated: true, assessmentType: AssessmentType.MANUAL, completionDate: dayjs().subtract(1, 'hours') } as Result;
+        const gradedParticipation = { submissions: [{ id: 55, results: [manualResult] }], testRun: false } as StudentParticipation;
+        vi.spyOn(participationService, 'getSpecificStudentParticipation').mockImplementation((participations, testRun) => {
+            return participations?.find((p) => p.testRun === testRun);
+        });
+
+        comp.studentParticipations = [gradedParticipation];
+        comp.sortedHistoryResults = [manualResult];
+        comp.exercise = { ...exercise, type };
+
+        comp.loadComplaintAndLatestRatedResult();
+
+        expect(comp.latestRatedResult()).toBe(manualResult);
+    });
+
     it('should handle participation update', async () => {
         vi.useFakeTimers();
         const submissionId = 55;
@@ -1375,15 +1410,6 @@ describe('CourseExerciseDetailsComponent', () => {
 
             expect(convertSpy).not.toHaveBeenCalled();
             expect(comp.complaint()).toBeUndefined();
-        });
-
-        it('should not look for the latest rated result of a text exercise', () => {
-            comp.exercise = { ...exercise, type: ExerciseType.TEXT } as unknown as Exercise;
-            vi.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: null } as unknown as EntityResponseType));
-
-            comp.loadComplaintAndLatestRatedResult();
-
-            expect(comp.latestRatedResult()).toBeUndefined();
         });
 
         it('should load nothing without a graded submission or results to show', () => {

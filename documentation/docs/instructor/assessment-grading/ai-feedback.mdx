@@ -31,9 +31,10 @@ takes effect as soon as you set it. See
 There is no per-exercise switch: an exercise gets AI feedback because its course has it on and because its type
 supports it. Two restrictions follow from the type rather than from a setting.
 
-- A **programming** exercise takes formative feedback requests only where it is assessed semi-automatically — that
-  is, where manual assessment is enabled alongside the tests. With purely automatic assessment there is nothing for
-  Athena to be formative about.
+- A **programming** exercise gets grading suggestions only where it is assessed semi-automatically — that is, where
+  manual assessment is enabled alongside the tests, since a suggestion drafts that manual assessment. Formative
+  feedback requests do not depend on it: students can request them on an automatically assessed exercise too, where
+  the response explains what the tests report and keeps the score the tests gave.
 - An **exam** exercise is outside this entirely. Exam feedback follows the exam's own review and publication dates.
 
 <Callout variant={CalloutVariant.info}>
