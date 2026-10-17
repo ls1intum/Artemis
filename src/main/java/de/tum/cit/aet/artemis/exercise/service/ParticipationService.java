@@ -59,11 +59,13 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.localvc.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.programming.domain.OnlineIdeExperienceLevel;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -71,10 +73,10 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.exception.VersionControlException;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.OnlineIdeConfigurationService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -116,14 +118,17 @@ public class ParticipationService {
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
-    private final OnlineIdeConfigurationService onlineIdeConfigurationService;
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
+
+    private final Optional<HyperionExerciseMutationApi> liveSaveApi;
 
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
             ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            OnlineIdeConfigurationService onlineIdeConfigurationService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<HyperionExerciseMutationApi> liveSaveApi) {
+        this.liveSaveApi = liveSaveApi;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
@@ -136,7 +141,7 @@ public class ParticipationService {
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.resultRepository = resultRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
-        this.onlineIdeConfigurationService = onlineIdeConfigurationService;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
     }
 
     /**
@@ -376,8 +381,8 @@ public class ParticipationService {
         Supplier<ProgrammingExercise> exerciseWithTemplateParticipation = memoize(() -> programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(exercise.getId()));
         Supplier<String> branch = memoize(() -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()));
         // Step 1a) create the student repository (based on the template repository).
-        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateParticipation.get()), branch::get,
-                () -> onlineIdeConfigurationService.getFilesForStudentRepository(exercise), participation);
+        participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exerciseWithTemplateParticipation.get()), branch::get, () -> getOnlineIdeFiles(exercise),
+                participation);
         return startProgrammingParticipation(participation);
     }
 
@@ -488,7 +493,7 @@ public class ParticipationService {
         }
         else {
             participation = copyRepository(exercise, () -> resolveTemplateRepositoryUri(exercise), () -> programmingExerciseRepository.findBranchByExerciseId(exercise.getId()),
-                    () -> onlineIdeConfigurationService.getFilesForStudentRepository(exercise), participation);
+                    () -> getOnlineIdeFiles(exercise), participation);
         }
 
         // For practice mode 1 is always set. For more information see Participation.class
@@ -623,8 +628,8 @@ public class ParticipationService {
             programmingParticipation.setProgrammingExercise(programmingExercise);
             // Note: we need a repository, otherwise the student would not be possible to click resume (in case they want to further participate after the due date)
             programmingParticipation = copyRepository(programmingExercise, () -> resolveTemplateRepositoryUri(programmingExercise),
-                    () -> programmingExerciseRepository.findBranchByExerciseId(programmingExercise.getId()),
-                    () -> onlineIdeConfigurationService.getFilesForStudentRepository(programmingExercise), programmingParticipation);
+                    () -> programmingExerciseRepository.findBranchByExerciseId(programmingExercise.getId()), () -> getOnlineIdeFiles(programmingExercise),
+                    programmingParticipation);
             programmingParticipation = configureRepository(programmingParticipation);
             participation = programmingParticipation;
         }
@@ -695,38 +700,57 @@ public class ParticipationService {
             Supplier<String> templateBranchSupplier, Supplier<Map<String, byte[]>> additionalFilesSupplier, ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
-            LocalVCRepositoryUri sourceUri = sourceUriSupplier.get();
-            if (sourceUri == null) {
-                // fail fast with a meaningful message instead of a NullPointerException deep in the git checkout (see issue #12840)
-                throw new VersionControlException("The source repository URI for copying the repository of participation " + participation.getId() + " of exercise "
-                        + programmingExercise.getId() + " is missing");
-            }
-            final var projectKey = programmingExercise.getProjectKey();
-            // An exam test run is flagged from its first insert, but its repository never carried the practice prefix. Its slug is told apart from the
-            // graded one by the attempt instead, which copyRepositoryWithoutHistory appends. The build plan name has no attempt, so it keeps the prefix.
-            final var repoName = programmingExercise.isExamExercise() ? participation.getParticipantIdentifier()
-                    : participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
-            // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
-            final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceUri);
-            VersionControlService vcs = versionControlService.orElseThrow();
-            String templateBranch = templateBranchSupplier.get();
-            // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
-            var newRepoUri = vcs.copyRepositoryWithoutHistory(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt(),
-                    additionalFilesSupplier.get());
-            // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
-            if (participation.getStudent().isPresent()) {
-                newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
-            }
-            // After copying the repository, the new participation uses the default branch
-            participation.setBranch(defaultBranch);
-            participation.setRepositoryUri(newRepoUri.toString());
-            participation.setInitializationState(InitializationState.REPO_COPIED);
+            try (var reservation = programmingExercise.isExamExercise() ? null : liveSaveApi.map(api -> api.reserveParticipation(programmingExercise.getId())).orElse(null)) {
+                LocalVCRepositoryUri sourceUri = sourceUriSupplier.get();
+                if (sourceUri == null) {
+                    // fail fast with a meaningful message instead of a NullPointerException deep in the git checkout (see issue #12840)
+                    throw new VersionControlException("The source repository URI for copying the repository of participation " + participation.getId() + " of exercise "
+                            + programmingExercise.getId() + " is missing");
+                }
+                final var projectKey = programmingExercise.getProjectKey();
+                // An exam test run is flagged from its first insert, but its repository never carried the practice prefix. Its slug is told apart from the
+                // graded one by the attempt instead, which copyRepositoryWithoutHistory appends. The build plan name has no attempt, so it keeps the prefix.
+                final var repoName = programmingExercise.isExamExercise() ? participation.getParticipantIdentifier()
+                        : participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
+                // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
+                final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceUri);
+                VersionControlService vcs = versionControlService.orElseThrow();
+                String templateBranch = templateBranchSupplier.get();
+                // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
+                var newRepoUri = vcs.copyRepositoryWithoutHistory(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt(),
+                        additionalFilesSupplier.get());
+                // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
+                if (participation.getStudent().isPresent()) {
+                    newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
+                }
+                // After copying the repository, the new participation uses the default branch
+                participation.setBranch(defaultBranch);
+                participation.setRepositoryUri(newRepoUri.toString());
+                participation.setInitializationState(InitializationState.REPO_COPIED);
 
-            return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+                return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+            }
         }
         else {
             return participation;
         }
+    }
+
+    /**
+     * Gets the files that configure the online IDE (EduIDE) for a student repository created from the template of the given exercise.
+     * <p>
+     * EduIDE only applies the level in the file to students who have not chosen a level themselves, so it sets where a student starts, not
+     * where they have to stay.
+     *
+     * @param programmingExercise the exercise the student repository belongs to
+     * @return the files by repository-relative path; empty unless the online IDE is allowed and an experience level was selected
+     */
+    private Map<String, byte[]> getOnlineIdeFiles(ProgrammingExercise programmingExercise) {
+        if (!programmingExercise.isAllowOnlineIde()) {
+            return Map.of();
+        }
+        OnlineIdeExperienceLevel level = programmingExerciseBuildConfigRepository.getOnlineIdeExperienceLevelByProgrammingExerciseId(programmingExercise.getId());
+        return level == null ? Map.of() : Map.of(OnlineIdeExperienceLevel.EDU_IDE_CONFIGURATION_PATH, level.toEduIdeConfiguration());
     }
 
     private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExerciseStudentParticipation participation) {

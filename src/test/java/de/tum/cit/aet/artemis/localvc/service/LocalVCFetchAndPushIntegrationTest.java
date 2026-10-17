@@ -62,7 +62,6 @@ import de.tum.cit.aet.artemis.programming.domain.OnlineIdeExperienceLevel;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.dto.CreateProgrammingExerciseDTO;
-import de.tum.cit.aet.artemis.programming.service.OnlineIdeConfigurationService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 /**
@@ -590,7 +589,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
             String student1RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student1.getLogin();
             try (Git git = cloneRepository(student1.getLogin(), projectKey, student1RepoSlug)) {
-                Path configuration = git.getRepository().getWorkTree().toPath().resolve(OnlineIdeConfigurationService.EDU_IDE_CONFIGURATION_PATH);
+                Path configuration = git.getRepository().getWorkTree().toPath().resolve(OnlineIdeExperienceLevel.EDU_IDE_CONFIGURATION_PATH);
                 assertThat(configuration).as("the student repository carries the selected level").exists();
                 assertThat(Files.readString(configuration)).contains("\"level\": \"advanced\"");
                 assertThat(git.log().call()).as("the configuration is part of the initial commit").hasSize(1);
@@ -606,7 +605,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
             String student2RepoSlug = projectKey.toLowerCase(Locale.ROOT) + "-" + student2.getLogin();
             try (Git git = cloneRepository(student2.getLogin(), projectKey, student2RepoSlug)) {
-                assertThat(git.getRepository().getWorkTree().toPath().resolve(OnlineIdeConfigurationService.EDU_IDE_CONFIGURATION_PATH)).doesNotExist();
+                assertThat(git.getRepository().getWorkTree().toPath().resolve(OnlineIdeExperienceLevel.EDU_IDE_CONFIGURATION_PATH)).doesNotExist();
             }
         }
 

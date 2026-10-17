@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 /**
@@ -26,9 +27,28 @@ public enum OnlineIdeExperienceLevel {
     EXPERT;
 
     /**
+     * The path of the EduIDE configuration file, relative to the repository root. EduIDE reads it from the workspace root, which is where the
+     * student repository is cloned.
+     */
+    public static final String EDU_IDE_CONFIGURATION_PATH = ".vscode/eduide.json";
+
+    /**
      * @return the value EduIDE expects in the {@code level} key of {@code .vscode/eduide.json}
      */
     public String toEduIdeValue() {
         return name().toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * @return the content of {@code .vscode/eduide.json} that makes students start at this level
+     */
+    public byte[] toEduIdeConfiguration() {
+        return """
+                // Created by Artemis from the settings of this exercise.
+                // The experience level you start at in the online IDE. Once you choose a level yourself, this file no longer applies.
+                {
+                    "level": "%s"
+                }
+                """.formatted(toEduIdeValue()).getBytes(StandardCharsets.UTF_8);
     }
 }
