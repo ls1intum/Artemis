@@ -26,7 +26,7 @@
                 "noConflicts": "Konflikte konnten nicht geladen werden",
                 "conflictsResolved": "Es wurden alle Konflikte bearbeitet.",
                 "feedbackTextTooLong": "Bewertung konnte nicht gespeichert werden. Feedback-Text darf nicht länger als 500 Zeichen sein.",
-                "loadFeedbackSuggestionsFailed": "Laden der automatisch generierten Feedback-Vorschläge ist fehlgeschlagen."
+                "loadFeedbackSuggestionsFailed": "Laden der KI-Feedback-Vorschläge ist fehlgeschlagen."
             }
         }
     }
