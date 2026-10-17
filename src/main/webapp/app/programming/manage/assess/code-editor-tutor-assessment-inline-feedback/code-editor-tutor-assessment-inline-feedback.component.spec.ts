@@ -189,7 +189,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         expect(textToBeDisplayed).toEqual(expectedTextToBeDisplayed);
     });
 
-    it('should not display a points pill for non-graded feedback suggestions', () => {
+    it('should display a points pill for non-graded feedback suggestions, such as preliminary feedback', () => {
         fixture.componentRef.setInput('feedback', {
             type: FeedbackType.AUTOMATIC,
             text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'feedback',
@@ -197,7 +197,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         fixture.detectChanges();
 
         const pointsElement = fixture.debugElement.query(By.css('.unified-feedback-points'));
-        expect(pointsElement).toBeNull();
+        expect(pointsElement).not.toBeNull();
     });
 
     it('should display a points pill for graded feedback', () => {
