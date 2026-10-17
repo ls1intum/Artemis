@@ -5,6 +5,52 @@ Build-output
 .build-output {
     height: inherit;
 
+    /* Spaces the title from its icon in every language, which the translation used to do with a non-breaking space */
+    .card-title > fa-icon {
+        margin-right: 0.35rem;
+    }
+
+    /* The collapse arrow is a cell at the end of the header, set off by a border like the collapse button of the other panels. The header
+       has no padding on that side, and the cell takes back the padding above and below it, so it runs the height of the header. */
+    .card-header,
+    .card-second-header {
+        padding-right: 0;
+    }
+
+    /* The header itself does nothing when it is clicked, so it is not a pointer */
+    .card-header {
+        cursor: default;
+    }
+
+    &__chevron {
+        display: flex;
+        width: 2.5rem;
+        padding: 0;
+        align-items: center;
+        justify-content: center;
+        align-self: stretch;
+        color: inherit;
+        background: transparent;
+        border: 0;
+        border-left: var(--bs-border-width) solid var(--bs-border-color);
+        cursor: pointer;
+    }
+
+    .card-header &__chevron {
+        margin-block: -0.5rem;
+    }
+
+    &__chevron:hover,
+    &__chevron:focus-visible {
+        color: var(--bs-primary);
+        background: var(--hover-slightly-darker-body-bg);
+    }
+
+    /* In a tab of the assessment's feedback panel, which frames it already */
+    &--embedded {
+        border: 0 !important;
+    }
+
     &__content {
         font-family: Menlo, Monaco, 'Courier New', monospace;
         font-size: 11px;

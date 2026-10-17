@@ -17,8 +17,10 @@ import { faChevronDown, faCircleNotch, faTerminal } from '@fortawesome/free-soli
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ResultService } from 'app/exercise/result/result.service';
+import { CollapsedPanelRailComponent } from 'app/shared-ui/components/collapsed-panel-rail/collapsed-panel-rail.component';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
@@ -27,7 +29,7 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     templateUrl: './code-editor-build-output.component.html',
     styleUrls: ['./code-editor-build-output.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, ArtemisDatePipe],
+    imports: [FaIconComponent, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, CollapsedPanelRailComponent],
 })
 export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
     private buildLogService = inject(CodeEditorBuildLogService);
@@ -38,6 +40,8 @@ export class CodeEditorBuildOutputComponent implements OnInit, OnDestroy {
     participation = input.required<Participation>();
     secondaryHeader = input<boolean>(false);
     readonly collapsed = input(false);
+    /** Whether it shows its collapsible header. Off in a tab of the assessment's feedback panel, which names it already. */
+    readonly showHeader = input(true);
 
     onAnnotations = output<Array<Annotation>>();
     onToggleCollapse = output<{ event: MouseEvent; horizontal: boolean }>();

@@ -1,0 +1,49 @@
+// The page fills the viewport like the text and modeling assessments: the code editor grid splits it into the file browser,
+// the editor, and the instructions above the feedback panel, and each of them scrolls on its own instead of the whole page.
+:host {
+    display: block;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+// The score tags lead the title bar's actions, spaced like them
+.programming-assessment-score {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-right: 0.5rem;
+}
+
+.programming-assessment-page {
+    height: 100%;
+    min-height: 0;
+
+    &__layout.assessment-container {
+        display: flex;
+        flex-flow: column nowrap;
+        height: 100%;
+        min-height: 0;
+        padding-bottom: 0;
+        overflow: hidden;
+    }
+
+    &__editor {
+        display: block;
+        min-width: 0;
+        min-height: 0;
+        flex: 1;
+    }
+}
+
+// The build output, general feedback, notes and complaint panel under the file browser and the editor. The shared feedback panel of the
+// code editor frames it, puts its header on the line and scrolls its content, so the tabs stay in reach.
+.programming-assessment-details__header {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    // The tabs run down to the line below the header, so the indicator of the selected tab sits on it
+    align-items: stretch;
+}

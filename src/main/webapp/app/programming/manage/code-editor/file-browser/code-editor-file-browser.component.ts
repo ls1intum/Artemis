@@ -7,18 +7,7 @@ import { fromPairs, toPairs } from 'lodash-es';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/programming/manage/code-editor/file-browser/delete/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
-import {
-    faAngleDoubleDown,
-    faAngleDoubleUp,
-    faChevronLeft,
-    faChevronRight,
-    faCircleNotch,
-    faFile,
-    faFolder,
-    faFolderOpen,
-    faListAlt,
-    faPlus,
-} from '@fortawesome/free-solid-svg-icons';
+import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faCircleNotch, faFile, faFolder, faFolderOpen, faListAlt, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { TEXT_FILE_EXTENSIONS } from 'app/foundation/constants/file-extensions.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -27,6 +16,7 @@ import { CodeEditorFileBrowserFolderComponent } from './folder/code-editor-file-
 import { CodeEditorFileBrowserFileComponent } from './file/code-editor-file-browser-file.component';
 import { CodeEditorFileBrowserProblemStatementComponent } from './problem-statement/code-editor-file-browser-problem-statement.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
+import { CollapsedPanelRailComponent } from 'app/shared-ui/components/collapsed-panel-rail/collapsed-panel-rail.component';
 import { TreeItem, TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { TreeViewComponent } from 'app/programming/shared/code-editor/treeview/components/tree-view/tree-view.component';
 import { CodeEditorStatusComponent } from 'app/programming/shared/code-editor/status/code-editor-status.component';
@@ -77,6 +67,7 @@ export interface FileTreeItem extends TreeItem<string> {
         CodeEditorFileBrowserFolderComponent,
         CodeEditorFileBrowserFileComponent,
         ArtemisTranslatePipe,
+        CollapsedPanelRailComponent,
     ],
 })
 export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileDeleteDelegate {
@@ -192,7 +183,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
     faPlus = faPlus;
     faFolderOpen = faFolderOpen;
     faFolder = faFolder;
-    faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
     faCircleNotch = faCircleNotch;
     faFile = faFile;
@@ -538,6 +528,13 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnDestroy, IFileD
      * Calls the parent (editorComponent) toggleCollapse method
      * @param event
      */
+    /** Collapses the panel to its strip, e.g. when its splitter was dragged to its narrowest; a collapsed panel stays as it is. */
+    collapse() {
+        if (!this.collapsed()) {
+            this.toggleEditorCollapse(new MouseEvent('click'));
+        }
+    }
+
     toggleEditorCollapse(event: MouseEvent) {
         this.collapsed.update((value) => !value);
         this.onToggleCollapse.emit({ event, horizontal: true });

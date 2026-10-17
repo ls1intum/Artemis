@@ -7,6 +7,7 @@ import { TranslateDirective } from 'app/foundation/language/translate.directive'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',
@@ -22,12 +23,12 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
 })
 export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private translateService = inject(TranslateService);
     // Needed for the outer editor to access the DOM node of this component
     public elementRef = inject(ElementRef);
 
     protected readonly faSave = faSave;
     protected readonly faPencilAlt = faPencilAlt;
-    protected readonly Feedback = Feedback;
     protected readonly MANUAL = FeedbackType.MANUAL;
 
     readonly feedback = input<Feedback>();
@@ -57,6 +58,24 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     readonly selectedFile = input.required<string>();
 
     readonly codeLine = input.required<number>();
+
+    /** The last line (0-based) of a new feedback that spans several lines; a stored feedback reads its range from its reference. */
+    readonly codeLineEnd = input<number | undefined>(undefined);
+
+    /** The lines (0-based) the feedback refers to: the range in its reference, or the lines a new feedback was opened on. */
+    protected readonly lineRange = computed(() => {
+        const feedback = this.feedback();
+        const storedRange = feedback && Feedback.getReferenceLineRange(feedback);
+        return storedRange ?? { start: this.codeLine(), end: Math.max(this.codeLineEnd() ?? this.codeLine(), this.codeLine()) };
+    });
+
+    /** Names the line(s) a feedback refers to, e.g. "Line 7" or "Lines 7–11", shown as the reference above the feedback. */
+    protected readonly lineRangeLabel = computed(() => {
+        const { start, end } = this.lineRange();
+        return end > start
+            ? this.translateService.instant('artemisApp.programmingAssessment.lineRange', { from: start + 1, to: end + 1 })
+            : this.translateService.instant('artemisApp.programmingAssessment.line', { line: start + 1 });
+    });
 
     readonly readOnly = input.required<boolean>();
     readonly highlightDifferences = input<boolean>(false);
@@ -93,29 +112,25 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
     readonly oldFeedback = linkedSignal<Feedback>(() => deepClone(this.feedback() ?? new Feedback()));
 
     /**
-     * The auto-generated title for a manually created (non-suggestion) inline feedback. Computed live so it already
-     * reflects the current file/line while the feedback is being edited, not only after {@link commitFeedback}
-     * writes the same string into `feedback.text` on commit - otherwise the title falls back to the generic,
-     * points-derived placeholder for that in-between period.
-     */
-    protected readonly derivedTitle = computed(() => `File ${this.selectedFile()} at line ${this.codeLine() + 1}`);
-
-    /**
-     * Finalizes and emits the current feedback: assigns its reference and derived title (unless it is an
-     * already-accepted suggestion, whose title is the suggestion's own) and marks it positive when it awards credit.
+     * Finalizes and emits the current feedback: assigns its reference, gives it the points-based default title if
+     * the tutor left the title empty (the same rule as for suggestions; the file and line are shown from the
+     * reference) and marks it positive when it awards credit.
      */
     private commitFeedback(): void {
         const feedback = this.currentFeedback();
         feedback.type = this.MANUAL;
-        feedback.reference = `file:${this.selectedFile()}_line:${this.codeLine()}`;
+        // Keep the whole range: rewriting only the first line would drop the end of an Athena suggestion's range on its first edit.
+        const { start, end } = this.lineRange();
+        feedback.reference = `file:${this.selectedFile()}_line:${start}${end > start ? `-${end}` : ''}`;
         // The unified card's own title/detail/credits handlers already rewrite an accepted suggestion's prefix to
         // adapted, but the SGI-drop path (updateFeedbackOnDrop) mutates the feedback directly and commits here
         // without going through those handlers, so it needs the same rewrite before the suggestion check below.
         if (feedback.text) {
             feedback.text = Feedback.markAdaptedIfAcceptedSuggestion(feedback.text);
         }
-        if (!Feedback.isFeedbackSuggestion(feedback) && !feedback.text) {
-            feedback.text = this.derivedTitle();
+        if (!feedback.text) {
+            // Writes through the unified card's two-way title binding, so it also keeps following the points.
+            this.unifiedFeedback()?.applyDefaultTitleIfEmpty();
         }
         feedback.positive = (feedback.credits ?? 0) > 0;
         this.onUpdateFeedback.emit(feedback);
