@@ -816,5 +816,4 @@ describe('FileUploadSubmissionComponent', () => {
             expect(downloadSection).toBeTruthy();
         });
     });
-
 });
