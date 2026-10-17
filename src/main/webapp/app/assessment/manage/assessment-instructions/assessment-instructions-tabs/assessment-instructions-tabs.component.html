@@ -1,0 +1,12 @@
+@let source = instructions();
+<tumaet-ui-tabs size="small" selectedColor="text" surface="muted" [value]="source.selectedTab()" (valueChange)="source.selectTab($event)">
+    <!-- The panel header draws the line below the tabs, so the tab list's own line would double it. -->
+    <tumaet-ui-tab-list style="border-bottom: 0" [attr.aria-label]="'artemisApp.exercise.instructions' | artemisTranslate">
+        @for (tab of source.tabs(); track tab.id) {
+            <tumaet-ui-tab [value]="tab.id" [attr.data-testid]="'assessment-instructions-tab-' + tab.id">
+                <fa-icon [icon]="tab.icon" aria-hidden="true" />
+                <span [jhiTranslate]="tab.labelKey"></span>
+            </tumaet-ui-tab>
+        }
+    </tumaet-ui-tab-list>
+</tumaet-ui-tabs>

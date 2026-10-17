@@ -734,6 +734,21 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.disposeAndClear(this.lineHighlights);
     }
 
+    /**
+     * Dispose all line highlights whose IDs start with the given prefix, leaving unrelated highlights in place.
+     */
+    disposeLineHighlightsByPrefix(prefix: string): void {
+        const remaining: MonacoEditorLineHighlight[] = [];
+        for (const highlight of this.lineHighlights) {
+            if (highlight.getId().startsWith(prefix)) {
+                highlight.dispose();
+            } else {
+                remaining.push(highlight);
+            }
+        }
+        this.lineHighlights = remaining;
+    }
+
     disposeActions(): void {
         this.disposeAndClear(this.actions);
     }
@@ -792,9 +807,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param lineNumber The line after which the widget should be rendered.
      * @param id The ID to use for the widget.
      * @param domNode The content to display in the editor.
+     * @param alignWithCode Whether the widget starts where the code does, leaving the line numbers uncovered. By default it spans the editor.
      */
-    addLineWidget(lineNumber: number, id: string, domNode: HTMLElement) {
-        const lineWidget = new MonacoEditorLineWidget(this.getActiveEditor(), id, domNode, lineNumber);
+    addLineWidget(lineNumber: number, id: string, domNode: HTMLElement, alignWithCode = false) {
+        const lineWidget = new MonacoEditorLineWidget(this.getActiveEditor(), id, domNode, lineNumber, alignWithCode);
         lineWidget.addToEditor();
         this.lineWidgets.push(lineWidget);
     }
@@ -856,9 +872,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @param endLine The number of the last line to highlight.
      * @param className The CSS class to use for highlighting the line itself, or undefined if none should be used.
      * @param marginClassName The CSS class to use for highlighting the margin, or undefined if none should be used.
+     * @param id The ID of the highlight, so a group of highlights can be removed via {@link disposeLineHighlightsByPrefix}.
      */
-    highlightLines(startLine: number, endLine: number, className?: string, marginClassName?: string) {
-        const highlight = new MonacoEditorLineHighlight(this.getActiveEditor(), 'line-highlight', startLine, endLine, className, marginClassName);
+    highlightLines(startLine: number, endLine: number, className?: string, marginClassName?: string, id = 'line-highlight') {
+        const highlight = new MonacoEditorLineHighlight(this.getActiveEditor(), id, startLine, endLine, className, marginClassName);
         highlight.addToEditor();
         this.lineHighlights.push(highlight);
     }

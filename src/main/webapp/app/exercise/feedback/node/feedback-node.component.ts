@@ -1,5 +1,6 @@
 import { roundValueSpecifiedByCourseSettings } from 'app/foundation/util/utils';
-import { Component, OnInit, input, signal } from '@angular/core';
+import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/course/shared/entities/course.model';
 import { faAngleDown, faAngleUp, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
@@ -20,6 +21,8 @@ import hljs from 'app/foundation/util/highlight-languages.util';
     imports: [FaIconComponent, MessageModule, TooltipModule, FeedbackCollapseComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class FeedbackNodeComponent implements OnInit {
+    private readonly translateService = inject(TranslateService);
+
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     readonly feedbackItemNode = input<FeedbackNode>(undefined!);
@@ -83,6 +86,25 @@ export class FeedbackNodeComponent implements OnInit {
     toggleFeedbackItemGroupOpen(): void {
         const group = this.feedbackItemGroup();
         group.open = !group.open;
+    }
+
+    /**
+     * The heading of a feedback item: its category, its title and, for feedback on code, where it points to, e.g.
+     * "Reviewer · Missing null check · src/Foo.java at line 7". A legacy title that already names the file and line
+     * (e.g. "File src/Foo.java at line 7", written before feedback had a title of its own) is not followed by the
+     * location again.
+     */
+    headerText(item: FeedbackItem): string {
+        const parts = [item.name, item.title];
+        const reference = item.codeReference;
+        if (reference && !item.title?.startsWith(`File ${reference.filePath} at line`)) {
+            const lineText =
+                reference.lineEnd === undefined
+                    ? this.translateService.instant('artemisApp.result.detail.codeIssue.line', { line: reference.line })
+                    : this.translateService.instant('artemisApp.result.detail.codeIssue.lines', { from: reference.line, to: reference.lineEnd });
+            parts.push(`${reference.filePath} ${lineText}`);
+        }
+        return parts.filter((part) => !!part).join(' · ');
     }
 
     highlightCode(code: string | undefined, filePath: string): string {

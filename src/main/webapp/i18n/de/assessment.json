@@ -2,13 +2,19 @@
     "artemisApp": {
         "assessment": {
             "assessment": "Bewertung",
-            "feedbackAndNotes": "Feedback und Notizen",
+            "assessmentOfSubmission": "Bewertung der Abgabe",
+            "feedbackAndNotes": "Allgemeines Feedback und Notizen",
             "assessmentNote": "Interne Notiz",
             "testRunAssessment": "Bewertungstestlauf",
             "additionalFeedback": "Zusätzliches Feedback",
+            "generalFeedback": "Allgemeines Feedback",
+            "toggleGeneralFeedback": "Allgemeines Feedback ein- oder ausblenden",
             "feedback": "Feedback",
-            "feedbackHint": "Dieses Feedback ist mit einer Bewertungsanweisung verbunden. Du kannst zusätzliches Feedback für dieses Abgabeelement geben. Der/Die Studierende sieht das kombinierte Feedback während der Überprüfung.",
-            "feedbackCommentPlaceholder": "Du kannst hier ein Feedback abgeben...",
+            "linkedCriterion": "Verknüpft mit",
+            "linkedCriterionFallback": "Bewertungskriterium",
+            "linkedCriterionSuffix": "Kriterium",
+            "removeCriterionLink": "Verknüpfung mit dem Bewertungskriterium entfernen",
+            "feedbackCommentPlaceholder": "Kommentar hinzufügen...",
             "additionalFeedbackCommentPlaceholder": "Du kannst hier zusätzliches Feedback abgeben...",
             "suggestion": {
                 "suggested": "KI-Feedback-Vorschlag",
@@ -44,8 +50,14 @@
                 "control": "Strg"
             },
             "detail": {
-                "feedback": "Feedback",
                 "assessmentNote": "Private Notizen für Tutor:innen",
+                "notesTab": "Notizen",
+                "notesTabHasNote": "Die private Notiz enthält Text",
+                "complaintTabAwaitsResponse": "Wartet auf deine Antwort",
+                "studentComplaintTab": "Studierendenbeschwerde",
+                "studentRequestTab": "Studierendenanfrage",
+                "addGeneralFeedback": "Allgemeines Feedback hinzufügen",
+                "generalFeedbackAddHint": "Füge über die Schaltfläche + in der Tab-Leiste allgemeines Feedback hinzu oder ziehe eine Bewertungsanweisung hierher.",
                 "assessmentNoteInfo": "Nur Tutor:innen können diese Notizen sehen. Sie werden Studierenden niemals angezeigt.",
                 "feedbackWithColon": "Feedback:",
                 "scoreFor": "Bewertung für",
@@ -54,7 +66,6 @@
                     "one": "{{points}} Punkt",
                     "many": "{{points}} Punkte"
                 },
-                "otherFeedback": "Weiteres Feedback",
                 "baseAward": "Vergebene Punkte",
                 "deductions": "Abzüge",
                 "finalScore": "Gesamt",
