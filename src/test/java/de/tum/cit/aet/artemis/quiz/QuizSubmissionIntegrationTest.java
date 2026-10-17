@@ -6,7 +6,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -993,19 +995,43 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteQuizResult_asInstructor() throws Exception {
-        Submission quizSubmission = createSubmittedQuizSubmissionWithResult(TEST_PREFIX + "student1");
+        QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
+        Submission quizSubmission = createSubmittedQuizSubmissionWithResult(quizExercise, TEST_PREFIX + "student1");
         Result result = quizSubmission.getLatestResult();
 
         request.delete(quizResultPath(quizSubmission, result), HttpStatus.OK);
 
         assertThat(resultRepository.findById(result.getId())).isEmpty();
         assertThat(submissionRepository.findById(quizSubmission.getId())).as("only the result is deleted, the student's answers stay").isPresent();
+        // open statistics pages reload when they are notified
+        verify(websocketMessagingService, timeout(5000)).sendMessage(topic("/topic/statistic/" + quizExercise.getId()), eq(quizExercise.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testReEvaluateRemovingAnsweredQuestion_afterDeletingTheOnlyResult() throws Exception {
+        QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
+        Submission quizSubmission = createSubmittedQuizSubmissionWithResult(quizExercise, TEST_PREFIX + "student1");
+        request.delete(quizResultPath(quizSubmission, quizSubmission.getLatestResult()), HttpStatus.OK);
+
+        QuizExercise originalQuizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndBatchesElseThrow(quizExercise.getId());
+        long removedQuestionId = originalQuizExercise.getQuizQuestions().getFirst().getId();
+        assertThat(answeredQuestionIds(quizSubmission.getId())).as("the submission answers the question that is removed").contains(removedQuestionId);
+        QuizExerciseReEvaluateDTO allQuestions = QuizExerciseReEvaluateDTO.of(originalQuizExercise);
+        QuizExerciseReEvaluateDTO withoutFirstQuestion = new QuizExerciseReEvaluateDTO(allQuestions.title(), allQuestions.includedInOverallScore(),
+                allQuestions.randomizeQuestionOrder(), allQuestions.quizQuestions().subList(1, allQuestions.quizQuestions().size()));
+
+        quizExerciseService.reEvaluate(withoutFirstQuestion, originalQuizExercise, List.of());
+
+        QuizExercise reEvaluatedQuizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndBatchesElseThrow(quizExercise.getId());
+        assertThat(reEvaluatedQuizExercise.getQuizQuestions()).extracting(QuizQuestion::getId).doesNotContain(removedQuestionId);
+        assertThat(answeredQuestionIds(quizSubmission.getId())).as("the answer to the removed question is removed with it").isNotEmpty().doesNotContain(removedQuestionId);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteQuizResult_asTutor_forbidden() throws Exception {
-        Submission quizSubmission = createSubmittedQuizSubmissionWithResult(TEST_PREFIX + "student1");
+        Submission quizSubmission = createSubmittedQuizSubmissionWithResult(quizExerciseService.save(setupQuizExerciseParameters()), TEST_PREFIX + "student1");
         Result result = quizSubmission.getLatestResult();
 
         request.delete(quizResultPath(quizSubmission, result), HttpStatus.FORBIDDEN);
@@ -1013,11 +1039,15 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(resultRepository.findById(result.getId())).isPresent();
     }
 
-    private Submission createSubmittedQuizSubmissionWithResult(String login) {
-        QuizExercise quizExercise = quizExerciseService.save(setupQuizExerciseParameters());
+    private Submission createSubmittedQuizSubmissionWithResult(QuizExercise quizExercise, String login) {
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
         participationUtilService.addSubmission(quizExercise, quizSubmission, login);
         return participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+    }
+
+    private Set<Long> answeredQuestionIds(long submissionId) {
+        return quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(submissionId).getSubmittedAnswers().stream().map(answer -> answer.getQuizQuestion().getId())
+                .collect(Collectors.toSet());
     }
 
     private static String quizResultPath(Submission quizSubmission, Result result) {

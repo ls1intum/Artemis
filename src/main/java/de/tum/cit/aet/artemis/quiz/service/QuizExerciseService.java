@@ -597,19 +597,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         List<QuizSubmission> submissions = new ArrayList<>();
         Map<Long, StudentParticipation> affectedParticipations = new LinkedHashMap<>();
         for (Result result : results) {
-
-            Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
             QuizSubmission quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
             result.setSubmission(quizSubmission);
-
-            for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-                // Delete all references to question and question-elements if the question was changed
-                submittedAnswer.checkAndDeleteReferences(quizExercise);
-                if (!quizExercise.getQuizQuestions().contains(submittedAnswer.getQuizQuestion())) {
-                    submittedAnswersToDelete.add(submittedAnswer);
-                }
-            }
-            quizSubmission.getSubmittedAnswers().removeAll(submittedAnswersToDelete);
+            removeOutdatedAnswerReferences(quizSubmission, quizExercise);
 
             // recalculate existing score
             quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
@@ -624,11 +614,36 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
             submissions.add(quizSubmission);
         }
+        // A submission without a result, e.g. after an instructor deleted it, is not reached through the results, but its answers still reference the questions.
+        // They have to be updated as well, otherwise removing an answered question violates the foreign key of the answers.
+        for (QuizSubmission quizSubmission : quizSubmissionRepository.findWithEagerSubmittedAnswersWithoutResultsByExerciseId(quizExercise.getId())) {
+            removeOutdatedAnswerReferences(quizSubmission, quizExercise);
+            quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
+            submissions.add(quizSubmission);
+        }
         // save the updated submissions and results
         quizSubmissionRepository.saveAll(submissions);
         resultRepository.saveAll(results);
         ltiApi.ifPresent(api -> affectedParticipations.values().forEach(api::onNewResult));
         log.info("{} results have been updated successfully for quiz re-evaluate", results.size());
+    }
+
+    /**
+     * Removes the references of the submitted answers to changed question elements, and the answers to removed questions.
+     *
+     * @param quizSubmission the submission with its submitted answers
+     * @param quizExercise   the changed quiz exercise
+     */
+    private static void removeOutdatedAnswerReferences(QuizSubmission quizSubmission, QuizExercise quizExercise) {
+        Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
+        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+            // Delete all references to question and question-elements if the question was changed
+            submittedAnswer.checkAndDeleteReferences(quizExercise);
+            if (!quizExercise.getQuizQuestions().contains(submittedAnswer.getQuizQuestion())) {
+                submittedAnswersToDelete.add(submittedAnswer);
+            }
+        }
+        quizSubmission.getSubmittedAnswers().removeAll(submittedAnswersToDelete);
     }
 
     /**

@@ -19,8 +19,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.quiz.service.QuizStatisticsService;
 
 /**
  * REST controller for managing the results of quiz submissions.
@@ -34,10 +36,13 @@ public class QuizAssessmentResource extends AssessmentResource {
 
     private static final String ENTITY_NAME = "quizAssessment";
 
+    private final QuizStatisticsService quizStatisticsService;
+
     public QuizAssessmentResource(AuthorizationCheckService authCheckService, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AssessmentService assessmentService, ResultRepository resultRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository) {
+            SubmissionRepository submissionRepository, QuizStatisticsService quizStatisticsService) {
         super(authCheckService, userRepository, exerciseRepository, assessmentService, resultRepository, exampleSubmissionRepository, submissionRepository);
+        this.quizStatisticsService = quizStatisticsService;
     }
 
     /**
@@ -54,6 +59,16 @@ public class QuizAssessmentResource extends AssessmentResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteAssessment(@PathVariable Long participationId, @PathVariable Long submissionId, @PathVariable Long resultId) {
         return super.deleteAssessment(participationId, submissionId, resultId);
+    }
+
+    /**
+     * The statistics of a quiz are calculated from its results, so open statistics pages have to reload.
+     *
+     * @param exercise the quiz exercise of the deleted result
+     */
+    @Override
+    protected void onAssessmentDeleted(Exercise exercise) {
+        quizStatisticsService.notifyStatisticsChanged(exercise.getId());
     }
 
     @Override
