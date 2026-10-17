@@ -57,6 +57,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ParticipationPrivacyService } from 'app/exercise/participation/participation-privacy.service';
 import { ParticipationAccessNoticeComponent } from 'app/exercise/participation/participation-access-notice.component';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { TumAetUiButtonDirective } from '@tumaet/ui-angular';
 
 /**
  * Filter properties for a result
@@ -77,6 +78,7 @@ export enum FilterProp {
     providers: [ExerciseCacheService],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        TumAetUiButtonDirective,
         TranslateDirective,
         ParticipationAccessNoticeComponent,
         FaIconComponent,

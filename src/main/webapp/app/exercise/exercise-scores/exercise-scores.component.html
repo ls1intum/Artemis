@@ -165,22 +165,25 @@
 </ng-template>
 
 <ng-template #actionsTemplate let-dto>
-    <div class="btn-group gap-1">
+    <div class="flex flex-wrap items-center justify-end gap-1">
         @if (exercise()!.type === ExerciseType.PROGRAMMING) {
             @if (dto.buildPlanId && !localCIEnabled()) {
-                <a [href]="getBuildPlanUrl(dto)" target="_blank" rel="noreferrer" class="btn btn-primary btn-sm">
+                <a tumAetUiButton size="small" [href]="getBuildPlanUrl(dto)" target="_blank" rel="noreferrer" aria-label="Build plan">
                     <fa-icon [icon]="farFileCode" />
-                    <span class="d-none d-xl-inline ms-1">Build plan</span>
+                    <span class="hidden xl:inline">Build plan</span>
                 </a>
             }
             @if (canAccessLiveRepository()) {
                 <a
                     [routerLink]="['/courses', course()!.id, 'exercises', 'programming-exercises', exercise()!.id, 'code-editor', dto.participationId]"
-                    class="btn btn-info btn-sm"
+                    tumAetUiButton
+                    size="small"
+                    severity="info"
+                    aria-label="Online editor"
                     [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
                 >
                     <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                    <span class="d-none d-xl-inline ms-1">Online editor</span>
+                    <span class="hidden xl:inline">Online editor</span>
                 </a>
             }
         }
