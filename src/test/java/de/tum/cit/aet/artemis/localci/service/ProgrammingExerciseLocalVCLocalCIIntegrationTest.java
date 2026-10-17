@@ -1173,9 +1173,10 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         var params = new LinkedMultiValueMap<String, String>();
         params.add("emptyRepositories", String.valueOf(emptyRepositories));
         // Create the exercise and verify status code 201. The query cap guards against the response mapping pulling
-        // additional sub-graphs into the creation flow. Default SCA categories are inserted in one statement,
-        // irrespective of the programming language's category count (Python has 60).
-        int queryLimit = (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) ? 77 : 76) + newExercise.getAuxiliaryRepositories().size();
+        // additional sub-graphs into the creation flow. An SCA-enabled exercise also inserts its default
+        // category entities (Python has 60); auxiliary repositories add one insert each. These caps cover
+        // PostgreSQL (73/133 statements) and MySQL (74/134 statements).
+        int queryLimit = (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) ? 134 : 74) + newExercise.getAuxiliaryRepositories().size();
         var response = assertThatDb(() -> request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
                 ProgrammingExerciseResponseDTO.class, params, HttpStatus.CREATED)).hasBeenCalledAtMostTimes(queryLimit);
         assertCreationResponseReadContract(response, newExercise);

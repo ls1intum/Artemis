@@ -15,13 +15,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import tools.jackson.databind.json.JsonMapper;
-
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
-import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisCategoryDTO;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 
 @Profile(PROFILE_CORE)
@@ -35,11 +32,8 @@ public class StaticCodeAnalysisService {
 
     private final ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService;
 
-    private final JsonMapper jsonMapper;
-
     public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService, JsonMapper jsonMapper) {
-        this.jsonMapper = jsonMapper;
+            ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService) {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
     }
@@ -60,8 +54,9 @@ public class StaticCodeAnalysisService {
         }
 
         // Create new static code analysis using the default configuration as a template
-        var categories = defaultConfiguration.stream().map(category -> category.toStaticCodeAnalysisCategory(programmingExercise)).map(StaticCodeAnalysisCategoryDTO::of).toList();
-        staticCodeAnalysisCategoryRepository.insertDefaultCategories(programmingExercise.getId(), jsonMapper.writeValueAsString(categories));
+        List<StaticCodeAnalysisCategory> newCategoriesWithDefaultConfiguration = defaultConfiguration.stream()
+                .map(category -> category.toStaticCodeAnalysisCategory(programmingExercise)).toList();
+        staticCodeAnalysisCategoryRepository.saveAll(newCategoriesWithDefaultConfiguration);
     }
 
     /**
