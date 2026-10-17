@@ -249,6 +249,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
 
+    /**
+     * The id of an element that describes the editor's content (for example a form validation error),
+     * forwarded to the inner Monaco textarea as `aria-describedby`. Only the textarea is a tab stop
+     * and screen readers announce `aria-describedby` from the focused control, so setting the attribute
+     * on the host wrapper would not reach the editing control.
+     */
+    readonly ariaDescribedBy = input<string | undefined>(undefined);
+
+    /** Forwards `aria-invalid` to the inner Monaco textarea. */
+    readonly ariaInvalid = input<boolean>(false);
+
     readonly isButtonLoading = input<boolean>(false);
     readonly isAiLoading = input<boolean>(false);
     readonly isFormGroupValid = input<boolean>(false);
@@ -414,6 +425,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.reviewCommentManager?.tryUpdateThreadInputs(threads);
         });
 
+        // Forward `aria-describedby` / `aria-invalid` to the inner Monaco textarea once it exists so screen readers
+        // announce the described content (such as a form validation error) when focus lands on the editing control.
+        effect(() => {
+            // Depend on the signals so the sync re-runs when either input changes; the sync method reads them again
+            // so a direct call from the mode-change callback (where the new diff-mode textarea has just appeared)
+            // picks up the current values too.
+            this.ariaDescribedBy();
+            this.ariaInvalid();
+            this.monacoEditor();
+            this.syncAriaAttributes();
+        });
+
         // Adjust editor dimensions when mode changes (e.g. entering/leaving diff mode).
         // Skip the initial run: the editor is already laid out by ngAfterViewInit, and an
         // extra layout() call in tests triggers Monaco's monospace-font-assumption scheduler.
@@ -426,6 +449,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                         () => {
                             if (this.monacoEditor()) {
                                 this.adjustEditorDimensions();
+                                // Mode changes do not touch the ARIA inputs, so the aria effect does not re-run; a diff
+                                // editor materialised here needs the current values pushed into its new textarea.
+                                this.syncAriaAttributes();
                             }
                         },
                         { injector: this.injector },
@@ -434,6 +460,18 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             }
             lastObservedMode = currentMode;
         });
+    }
+
+    /**
+     * Pushes the current `ariaDescribedBy` / `ariaInvalid` inputs into the active Monaco editor's inner textarea
+     * (the editing control that actually receives focus and that screen readers describe). Safe to call before the
+     * editor exists; it just no-ops in that case.
+     */
+    private syncAriaAttributes(): void {
+        const textarea = this.monacoEditor()?.getActiveEditor()?.getDomNode()?.querySelector<HTMLTextAreaElement>('textarea');
+        if (textarea) {
+            this.applyAriaAttributesToTextarea(textarea, this.ariaDescribedBy(), this.ariaInvalid());
+        }
     }
 
     /**
@@ -772,6 +810,20 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     private applyMarkdownToEditor(value: string | undefined): void {
         this.monacoEditor()?.setText(value ?? '');
+    }
+
+    /**
+     * Applies the given accessibility attributes to Monaco's inner input textarea so screen readers
+     * reach them when focus is on the editing control (the host wrapper would be ignored). Exposed
+     * for direct unit testing because the hosting effect depends on Monaco having been initialized.
+     */
+    applyAriaAttributesToTextarea(textarea: HTMLTextAreaElement, describedBy: string | undefined, invalid: boolean): void {
+        if (describedBy) {
+            textarea.setAttribute('aria-describedby', describedBy);
+        } else {
+            textarea.removeAttribute('aria-describedby');
+        }
+        textarea.setAttribute('aria-invalid', invalid ? 'true' : 'false');
     }
 
     readonly showTextStyleActions = signal<boolean>(true);
