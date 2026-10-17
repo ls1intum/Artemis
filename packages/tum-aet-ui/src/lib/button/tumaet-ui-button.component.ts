@@ -2,14 +2,13 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiDisabledReasonDirective } from '../disabled-reason/tumaet-ui-disabled-reason.directive';
 import { TumAetUiButtonSeverity, TumAetUiButtonSize, TumAetUiButtonVariant, tumAetUiButtonClasses } from './tumaet-ui-button.variants';
 
 @Component({
     selector: 'tumaet-ui-button',
     templateUrl: './tumaet-ui-button.component.html',
     styleUrl: './tumaet-ui-button.component.scss',
-    imports: [FaIconComponent, TumAetUiDisabledReasonDirective],
+    imports: [FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TumAetUiButtonComponent {
@@ -18,8 +17,6 @@ export class TumAetUiButtonComponent {
 
     readonly variant = input<TumAetUiButtonVariant>('solid');
     readonly disabled = input(false, { transform: booleanAttribute });
-    /** Keep the button focusable and explain why it cannot be used. */
-    readonly disabledReason = input<string | undefined>(undefined);
 
     readonly rounded = input(false, { transform: booleanAttribute });
 

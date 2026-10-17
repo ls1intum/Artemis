@@ -1,6 +1,8 @@
+import { HyperionStatusState } from 'app/hyperion/shared/status/hyperion-status.component';
+import { HyperionStatusComponent } from 'app/hyperion/shared/status/hyperion-status.component';
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { TumAetUiMessageComponent, TumAetUiMessageSeverity, TumAetUiPanelComponent, TumAetUiStatusDotComponent, TumAetUiStatusDotState } from '@tumaet/ui-angular';
+import { TumAetUiMessageComponent, TumAetUiMessageSeverity, TumAetUiPanelComponent } from '@tumaet/ui-angular';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -18,7 +20,6 @@ export interface HyperionRunOutcomeView {
     titleKey: string;
     bodyKey: string;
     /** Interpolation for the body; the saved outcome names the number of tests. */
-    bodyParams?: Record<string, number>;
     /** Translated cause of a failure or cancellation, from the terminal event's termination reason. */
     terminationReasonKey?: string;
     checks: readonly HyperionRunOutcomeCheck[];
@@ -39,7 +40,7 @@ export interface HyperionRunOutcomeView {
 /** A check reads as a state word and a sentence; the dot is what makes the state visible without being the only signal. */
 interface OutcomeCheckLine {
     labelKey: string;
-    dotState: TumAetUiStatusDotState;
+    dotState: HyperionStatusState;
     stateKey: string;
 }
 
@@ -58,7 +59,7 @@ interface OutcomeCheckLine {
     templateUrl: './hyperion-run-outcome.component.html',
     styleUrl: './hyperion-run-outcome.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ArtemisTranslatePipe, TranslateDirective, TumAetUiMessageComponent, TumAetUiPanelComponent, TumAetUiStatusDotComponent],
+    imports: [ArtemisTranslatePipe, TranslateDirective, TumAetUiMessageComponent, TumAetUiPanelComponent, HyperionStatusComponent],
 })
 export class HyperionRunOutcomeComponent {
     private readonly translateService = inject(TranslateService);

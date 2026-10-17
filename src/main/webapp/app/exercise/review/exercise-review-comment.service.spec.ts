@@ -125,7 +125,7 @@ describe('ExerciseReviewCommentService', () => {
     it('reloadThreads should retain feedback after a failed reload until an authoritative response', () => {
         service.setExercise(2);
         service.threads.set([{ id: 99 } as any]);
-        service.selectThreadAsFeedback(99);
+        service.toggleThreadFeedbackSelection(99);
 
         service.reloadThreads();
 
@@ -416,14 +416,6 @@ describe('ExerciseReviewCommentService', () => {
         expect(service.selectedFeedbackThreadIds()).toEqual([]);
     });
 
-    it('selectThreadAsFeedback should add a thread once and be idempotent', () => {
-        service.selectThreadAsFeedback(5);
-        service.selectThreadAsFeedback(5);
-        service.selectThreadAsFeedback(7);
-
-        expect(service.selectedFeedbackThreadIds()).toEqual([5, 7]);
-    });
-
     it('clearSelectedFeedback should remove all selected feedback ids', () => {
         service.selectedFeedbackThreadIds.set([5, 7]);
 
@@ -448,53 +440,6 @@ describe('ExerciseReviewCommentService', () => {
             expect(service.adaptationOffered()).toBe(true);
             blockedReason.set('artemisApp.review.adaptExercise.runInProgress');
             expect(service.adaptationBlockedReason()).toBe('artemisApp.review.adaptExercise.runInProgress');
-        });
-
-        it('offers legacy feedback independently of whole-exercise adaptation', () => {
-            const feedbackOffered = signal(true);
-            service.connectAdaptation({ offered: signal(false), feedbackOffered, blockedReason: signal(undefined) });
-            expect(service.feedbackSelectionOffered()).toBe(true);
-            expect(service.adaptationOffered()).toBe(false);
-            feedbackOffered.set(false);
-            expect(service.feedbackSelectionOffered()).toBe(false);
-        });
-
-        it('requestAdaptation should be a no-op when adaptation is not offered', () => {
-            const requests: unknown[] = [];
-            service.adaptationRequests.subscribe((request) => requests.push(request));
-
-            service.requestAdaptation(5);
-
-            expect(requests).toEqual([]);
-            expect(service.selectedFeedbackThreadIds()).toEqual([]);
-        });
-
-        it('requestAdaptation should be a no-op while adaptation is blocked', () => {
-            service.connectAdaptation({ offered: signal(true), blockedReason: signal('artemisApp.review.adaptExercise.runInProgress') });
-            const requests: unknown[] = [];
-            service.adaptationRequests.subscribe((request) => requests.push(request));
-
-            service.requestAdaptation(5);
-
-            expect(requests).toEqual([]);
-            expect(service.selectedFeedbackThreadIds()).toEqual([]);
-        });
-
-        it('requestAdaptation should select the thread and emit whether it was already selected', () => {
-            service.connectAdaptation({ offered: signal(true), blockedReason: signal(undefined) });
-            const requests: unknown[] = [];
-            service.adaptationRequests.subscribe((request) => requests.push(request));
-
-            service.requestAdaptation(5);
-            expect(service.selectedFeedbackThreadIds()).toEqual([5]);
-            expect(requests).toEqual([{ threadId: 5, wasAlreadySelected: false }]);
-
-            service.requestAdaptation(5);
-            expect(service.selectedFeedbackThreadIds()).toEqual([5]);
-            expect(requests).toEqual([
-                { threadId: 5, wasAlreadySelected: false },
-                { threadId: 5, wasAlreadySelected: true },
-            ]);
         });
     });
 

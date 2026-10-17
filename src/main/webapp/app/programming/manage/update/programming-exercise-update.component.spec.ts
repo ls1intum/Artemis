@@ -1,7 +1,10 @@
+import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
 import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
+import { NgForm } from '@angular/forms';
 import { deepClone } from 'app/foundation/util/deep-clone.util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -230,6 +233,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.isSaving.set(false);
             comp.isEdit = true;
             vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+            vi.spyOn(TestBed.inject(HyperionExerciseGenerationApi), 'getGenerationCapabilities').mockReturnValue(
+                of({ supported: true, canGenerate: true, canAdapt: true, canCreateVariant: true }),
+            );
             comp['setupMetadataSync']();
             return fixture.debugElement.injector.get(HyperionGenerationActivityFacade);
         }
@@ -951,6 +957,100 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             expect(footerComponent.revalidate()).toBe(comp.revalidate);
             expect(footerComponent.invalidReasons()).toEqual(comp.getInvalidReasons());
+        });
+
+        it('offers a saved-source variant entry and blocks unsaved settings', () => {
+            comp.programmingExercise.id = 123;
+            comp.backupExercise = deepClone(comp.programmingExercise);
+            fixture.detectChanges();
+            const action = fixture.debugElement.query(By.directive(CreateVariantWithAiButtonComponent));
+            expect(action).not.toBeNull();
+            expect(action.componentInstance.exercise()).toBe(comp.programmingExercise);
+            expect(action.componentInstance.disabledReason()).toBeUndefined();
+
+            const form = fixture.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
+            form.form.markAsDirty();
+            fixture.detectChanges();
+            expect(action.componentInstance.disabledReason()).toBe('artemisApp.hyperion.generation.blocker.saveBeforeVariant');
+            form.form.markAsPristine();
+            comp.hasUnsavedChanges = true;
+            fixture.detectChanges();
+            expect(action.componentInstance.disabledReason()).toBe('artemisApp.hyperion.generation.blocker.saveBeforeVariant');
+            comp.hasUnsavedChanges = false;
+            comp.isSaving.set(true);
+            fixture.detectChanges();
+            expect(action.componentInstance.disabledReason()).toBe('artemisApp.hyperion.generation.blocker.saveBeforeVariant');
+        });
+
+        it('keeps a route-loaded saved source available after hydration and blocks a real nested title edit', async () => {
+            fixture.destroy();
+            const saved = new ProgrammingExercise(new Course(), undefined);
+            saved.id = 123;
+            saved.title = 'Saved title';
+            saved.assessmentType = AssessmentType.AUTOMATIC;
+            saved.course!.id = courseId;
+            saved.programmingLanguage = ProgrammingLanguage.JAVA;
+            saved.projectType = ProjectType.PLAIN_GRADLE;
+            saved.buildConfig = { checkoutSolutionRepository: false, sequentialTestRuns: false, allowBranching: false, branchRegex: '.*' };
+            saved.staticCodeAnalysisEnabled = false;
+            route.data = of({ programmingExercise: saved });
+            route.url = of([{ path: 'edit' } as UrlSegment]);
+            route.params = of({ courseId, exerciseId: saved.id });
+            vi.spyOn(courseService, 'find').mockReturnValue(
+                of(new HttpResponse({ body: Object.assign(new Course(), { id: courseId, title: 'Hydrated course', description: 'Loaded separately' }) })),
+            );
+            fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
+            comp = fixture.componentInstance;
+            fixture.detectChanges();
+            await fixture.whenStable();
+            fixture.detectChanges();
+            const action = fixture.debugElement.query(By.directive(CreateVariantWithAiButtonComponent)).componentInstance;
+            expect(comp.programmingExercise.course?.title).toBe('Hydrated course');
+            expect(comp.backupExercise.course?.title).toBeUndefined();
+            expect(comp.programmingExercise.categories).toEqual([]);
+            expect(comp.backupExercise.categories).toBeUndefined();
+            expect(comp.variantSourceHasUnsavedChanges).toBe(false);
+            expect(action.disabledReason()).toBeUndefined();
+            const title = fixture.nativeElement.querySelector('#field_title') as HTMLInputElement;
+            title.value = 'Unsaved title';
+            title.dispatchEvent(new Event('input'));
+            await fixture.whenStable();
+            fixture.detectChanges();
+            expect(comp.programmingExercise.title).toBe('Unsaved title');
+            expect(comp.variantSourceHasUnsavedChanges).toBe(true);
+            expect(action.disabledReason()).toBe('artemisApp.hyperion.generation.blocker.saveBeforeVariant');
+        });
+
+        it.each(['statement', 'points', 'date', 'buildConfig', 'gradingCriteria'])('still blocks an unsaved %s change', (field) => {
+            comp.backupExercise = deepClone(comp.programmingExercise);
+            switch (field) {
+                case 'statement':
+                    comp.programmingExercise.problemStatement = 'Unsaved problem statement';
+                    break;
+                case 'points':
+                    comp.programmingExercise.maxPoints = 20;
+                    break;
+                case 'date':
+                    comp.programmingExercise.releaseDate = dayjs('2030-01-01');
+                    break;
+                case 'buildConfig':
+                    comp.programmingExercise.buildConfig!.timeoutSeconds = 300;
+                    break;
+                case 'gradingCriteria':
+                    comp.programmingExercise.gradingCriteria = [{ title: 'Unsaved grading criterion', structuredGradingInstructions: [] }];
+                    break;
+                default:
+                    throw new Error('Unknown test field');
+            }
+            expect(comp.variantSourceHasUnsavedChanges).toBe(true);
+        });
+
+        it('does not offer a settings variant entry for an unsaved source or import', () => {
+            expect(fixture.debugElement.query(By.directive(CreateVariantWithAiButtonComponent))).toBeNull();
+            comp.programmingExercise.id = 123;
+            comp.isImportFromExistingExercise = true;
+            fixture.detectChanges();
+            expect(fixture.debugElement.query(By.directive(CreateVariantWithAiButtonComponent))).toBeNull();
         });
 
         // what a user has to fill in to get a valid exercise, written into the exercise the page edits

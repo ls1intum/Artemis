@@ -1,5 +1,5 @@
+import { HyperionStepState } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 import { describe, expect, it } from 'vitest';
-import { TumAetUiStepState } from '@tumaet/ui-angular';
 
 import {
     HYPERION_STAGES,
@@ -22,12 +22,12 @@ function event(partial: Partial<HyperionGenerationEvent> & Pick<HyperionGenerati
 }
 
 /** The ladder for a trace, keyed by stage so an assertion names the stage it is about. */
-function ladder(events: readonly HyperionGenerationEvent[]): Record<HyperionStageKey, TumAetUiStepState> {
+function ladder(events: readonly HyperionGenerationEvent[]): Record<HyperionStageKey, HyperionStepState> {
     const stages = stageStates(events, runOutcome(events));
-    return Object.fromEntries(stages.map((stage) => [stage.key, stage.state])) as Record<HyperionStageKey, TumAetUiStepState>;
+    return Object.fromEntries(stages.map((stage) => [stage.key, stage.state])) as Record<HyperionStageKey, HyperionStepState>;
 }
 
-function count(events: readonly HyperionGenerationEvent[], state: TumAetUiStepState): number {
+function count(events: readonly HyperionGenerationEvent[], state: HyperionStepState): number {
     return stageStates(events, runOutcome(events)).filter((stage) => stage.state === state).length;
 }
 
@@ -37,9 +37,9 @@ function activity(partial: Partial<HyperionGenerationActivity> = {}): HyperionGe
 }
 
 /** The design stage's substeps for a trace, keyed by substep. */
-function substeps(events: readonly HyperionGenerationEvent[]): Record<HyperionSubstepKey, TumAetUiStepState> | undefined {
+function substeps(events: readonly HyperionGenerationEvent[]): Record<HyperionSubstepKey, HyperionStepState> | undefined {
     const design = stageStates(events, runOutcome(events)).find((stage) => stage.key === 'design');
-    return design?.substeps ? (Object.fromEntries(design.substeps.map((substep) => [substep.key, substep.state])) as Record<HyperionSubstepKey, TumAetUiStepState>) : undefined;
+    return design?.substeps ? (Object.fromEntries(design.substeps.map((substep) => [substep.key, substep.state])) as Record<HyperionSubstepKey, HyperionStepState>) : undefined;
 }
 
 describe('hyperion generation stages', () => {

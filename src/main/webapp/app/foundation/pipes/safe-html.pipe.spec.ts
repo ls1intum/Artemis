@@ -43,4 +43,26 @@ describe('SafeHtmlPipe', () => {
         expect(unwrap(pipe.transform(undefined))).toBe('');
         expect(unwrap(pipe.transform(null))).toBe('');
     });
+
+    it('applies a stricter forbidden-tag policy when a caller needs it', () => {
+        const result = unwrap(pipe.transform('<p>Keep this</p><img src="https://example.invalid/pixel">', ['img']));
+        expect(result).toContain('<p>Keep this</p>');
+        expect(result).not.toContain('<img');
+    });
+
+    it('keeps XSS sanitization active with a stricter forbidden-tag policy', () => {
+        const result = unwrap(
+            pipe.transform('<p onclick="alert(1)"><strong>Keep this</strong></p><script>alert(2)</script><a href="javascript:alert(3)">Link</a><img src="x" onerror="alert(4)">', [
+                'img',
+            ]),
+        );
+        expect(result).toContain('<p><strong>Keep this</strong></p>');
+        expect(result).toContain('Link');
+        expect(result).not.toContain('onclick');
+        expect(result).not.toContain('<script');
+        expect(result).not.toContain('alert(2)');
+        expect(result).not.toContain('javascript:');
+        expect(result).not.toContain('<img');
+        expect(result).not.toContain('onerror');
+    });
 });

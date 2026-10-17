@@ -1,5 +1,6 @@
 import { createExerciseMetadataHandlers } from 'app/exercise/synchronization/metadata/exercise-metadata-handlers';
 import { isEqual } from 'lodash-es';
+import { CreateVariantWithAiButtonComponent } from 'app/hyperion/variants/create-variant-with-ai-button.component';
 import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { TumAetUiButtonDirective, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -102,6 +103,7 @@ const GRADING_FIELD_REASON_KEYS = new Set([
     imports: [
         TumAetUiButtonDirective,
         TumAetUiConfirmDialogComponent,
+        CreateVariantWithAiButtonComponent,
         TranslateDirective,
         DocumentationButtonComponent,
         FormStatusBarComponent,
@@ -248,6 +250,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private readonly settingsMetadataFields = createExerciseMetadataHandlers(ExerciseType.PROGRAMMING);
 
     /** Compare editable metadata, not hydrated course, participation, result or presentation state. */
+    get variantSourceHasUnsavedChanges(): boolean {
+        if (this.hasUnsavedChanges || !this.backupExercise) return true;
+        return this.editableSettingsDiffer(this.programmingExercise, this.backupExercise);
+    }
+
     private editableSettingsDiffer(current: ProgrammingExercise, baseline: ProgrammingExercise): boolean {
         if (current.problemStatement !== baseline.problemStatement) return true;
         if (

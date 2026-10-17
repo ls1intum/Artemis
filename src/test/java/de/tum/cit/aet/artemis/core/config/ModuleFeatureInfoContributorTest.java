@@ -130,7 +130,7 @@ class ModuleFeatureInfoContributorTest {
     }
 
     @Test
-    void testGenerationDoesNotReportDisabledWorkerCoordinator() {
+    void testGenerationReportsAiWorkerWithoutSeparateOptIn() {
         for (String key : modulePropertyNames) {
             mockProperty(key, false);
         }
@@ -142,7 +142,7 @@ class ModuleFeatureInfoContributorTest {
         new ModuleFeatureInfoContributor(mockEnv).contribute(builder);
 
         assertThat(((List<?>) builder.build().get(ACTIVE_MODULE_FEATURES)).stream().map(Object::toString)).containsExactlyInAnyOrder(Constants.MODULE_FEATURE_HYPERION,
-                Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION);
+                Constants.MODULE_FEATURE_HYPERION_EXERCISE_GENERATION, Constants.MODULE_FEATURE_AIWORKER);
     }
 
     private void testContribution(boolean propertyEnabled, boolean passkeyAdminRequired, List<String> expectedReportFeatures) {

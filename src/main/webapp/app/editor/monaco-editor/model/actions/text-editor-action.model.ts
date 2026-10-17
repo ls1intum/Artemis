@@ -7,10 +7,10 @@ import { TextEditorRange } from 'app/editor/monaco-editor/model/actions/adapter/
 import { TextEditorPosition } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-position.model';
 import { TextEditorCompletionItem } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
 import { TextEditorKeybinding } from 'app/editor/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
-import RewritingVariant from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
-import { ArtemisIntelligenceService } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
+import RewritingVariant from 'app/hyperion/editor/artemis-intelligence/rewriting-variant';
+import { ArtemisIntelligenceService } from 'app/hyperion/editor/artemis-intelligence/artemis-intelligence.service';
 import { WritableSignal } from '@angular/core';
-import { RewriteResult } from 'app/editor/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
+import { RewriteResult } from 'app/hyperion/editor/artemis-intelligence/rewriting-result';
 
 /** Instantiated (subclassed) and populated after construction; the definite-assignment (!) marker below is set later. */
 export abstract class TextEditorAction implements Disposable {

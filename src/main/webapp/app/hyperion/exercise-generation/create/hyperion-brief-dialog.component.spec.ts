@@ -140,7 +140,7 @@ describe('HyperionBriefDialogComponent', () => {
         expect(start).toHaveBeenCalledExactlyOnceWith(42, { mode: 'GENERATE', prompt: BRIEF });
         expect(created).toHaveBeenCalledExactlyOnceWith(CREATED_EXERCISE);
         expect(registry.track).toHaveBeenCalledWith({ jobId: 'job-1', exerciseId: 42, courseId: COURSE_ID, exerciseTitle: CREATED_EXERCISE.title, mode: 'GENERATE' });
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', COURSE_ID, 'programming-exercises', 42, 'generation']);
+        expect(navigateSpy).toHaveBeenCalledWith([], { queryParams: { aiRun: 'authoring:42:job-1' }, queryParamsHandling: 'merge' });
         expect(component.visible()).toBe(false);
     });
 
@@ -167,7 +167,7 @@ describe('HyperionBriefDialogComponent', () => {
         expect(suggestMetadataSpy).toHaveBeenCalledTimes(1);
         expect(start).toHaveBeenCalledWith(42, { mode: 'GENERATE', prompt: BRIEF });
         expect(vi.mocked(programmingExerciseService.automaticSetup).mock.calls[0][0].course?.id).toBe(COURSE_ID);
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', COURSE_ID, 'programming-exercises', 42, 'generation']);
+        expect(navigateSpy).toHaveBeenCalledWith([], { queryParams: { aiRun: 'authoring:42:job-1' }, queryParamsHandling: 'merge' });
     });
 
     it('does not create anything when metadata cannot be obtained, and preserves the brief for retry', () => {

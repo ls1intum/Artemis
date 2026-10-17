@@ -1,5 +1,5 @@
 import { ExerciseGenerationFileChange, HyperionGenerationEvent } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
-import { displayFileChangePath, newestFileChange } from 'app/hyperion/exercise-generation/hyperion-generation-activity.utils';
+import { displayFileChangePath, isExerciseDesignChange, newestFileChange } from 'app/hyperion/exercise-generation/hyperion-generation-activity.utils';
 import { HyperionRunOutcome } from 'app/hyperion/exercise-generation/model/hyperion-generation-stages';
 
 /** How many past messages the stepper keeps in view. Long enough to see a pattern, short enough not to become a log. */
@@ -142,7 +142,7 @@ export function activityView(
         .map<HyperionActivityMessage>((event, index) => ({ key: `${event.timestamp}|${index}`, time: formatClockTime(event.timestamp), message: event.message! }));
     const liveness = ended ? undefined : livenessOf(events);
     // A finished run's files are listed in full elsewhere; singling one out would only claim it is still being written.
-    const newestFile = ended ? undefined : newestFileChange(files);
+    const newestFile = ended ? undefined : newestFileChange(files.filter((file) => !isExerciseDesignChange(file)));
     const latestFile = newestFile ? displayFileChangePath(newestFile) : undefined;
     return {
         liveness,

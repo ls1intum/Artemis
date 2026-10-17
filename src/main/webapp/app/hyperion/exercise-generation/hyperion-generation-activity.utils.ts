@@ -64,6 +64,11 @@ export function displayFileChangePath(fileChange: ExerciseGenerationFileChange):
     return fileChange.path.startsWith(prefix) ? fileChange.path.slice(prefix.length) : fileChange.path;
 }
 
+/** SPEC.md is the instructor-only design shown in its own tab, not a repository file to review. */
+export function isExerciseDesignChange(fileChange: ExerciseGenerationFileChange): boolean {
+    return fileChange.repo === 'other' && displayFileChangePath(fileChange) === 'SPEC.md';
+}
+
 export function fileChangeKey(fileChange: Pick<ExerciseGenerationFileChange, 'repo' | 'path'>): string {
     return `${fileChange.repo}\0${fileChange.path}`;
 }

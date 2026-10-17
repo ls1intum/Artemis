@@ -44,4 +44,15 @@ describe('HyperionRunInputComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-input-prompt"]')).toBeNull();
         expect(fixture.nativeElement.textContent).toContain('Clarify the edge cases.');
     });
+    it('keeps an embedded brief collapsed until the user opens it', () => {
+        fixture.componentRef.setInput('context', { prompt: 'Implement a stack.' });
+        fixture.componentRef.setInput('collapsed', true);
+        fixture.detectChanges();
+        const toggle = fixture.nativeElement.querySelector('button');
+        expect(toggle.getAttribute('aria-expanded')).toBe('false');
+        toggle.click();
+        fixture.detectChanges();
+        expect(toggle.getAttribute('aria-expanded')).toBe('true');
+        expect(fixture.nativeElement.textContent).toContain('Implement a stack.');
+    });
 });

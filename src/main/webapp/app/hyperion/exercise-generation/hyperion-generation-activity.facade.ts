@@ -1,3 +1,4 @@
+import { AuthoringRun } from 'app/openapi/model/authoring-run';
 import { ExerciseGenerationInput } from 'app/openapi/model/exercise-generation-input';
 import { DestroyRef, Injectable, Signal, computed, effect, inject, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -72,6 +73,7 @@ class DelayedCall {
 export interface HyperionGenerationActivityInputs {
     exerciseId: Signal<number | undefined>;
     refreshingEditor: Signal<boolean>;
+    runId?: Signal<string | undefined>;
 }
 
 export interface HyperionGenerationCompletedEvent {
@@ -91,6 +93,10 @@ export class HyperionGenerationActivityFacade {
     private readonly destroyRef = inject(DestroyRef);
 
     private readonly inputs = signal<HyperionGenerationActivityInputs>({ exerciseId: signal(undefined), refreshingEditor: signal(false) });
+
+    private readonly pinnedRunId = computed(() => this.inputs().runId?.());
+    readonly run = signal<AuthoringRun | undefined>(undefined);
+    private confirmedRevertJobId?: string;
 
     readonly exerciseId = computed(() => this.inputs().exerciseId());
     readonly refreshingEditor = computed(() => this.inputs().refreshingEditor());
@@ -113,8 +119,6 @@ export class HyperionGenerationActivityFacade {
     readonly completionStatus = signal<HyperionGenerationCompletionStatus | undefined>(undefined);
     readonly liveExerciseChanged = signal<boolean | undefined>(undefined);
     readonly revertAvailable = signal<boolean>(false);
-    private confirmedRevertJobId?: string;
-
     readonly revertJobId = signal<string | undefined>(undefined);
     readonly revertMode = signal<HyperionGenerationMode | undefined>(undefined);
     readonly ownedByCaller = signal<boolean>(true);
@@ -176,12 +180,13 @@ export class HyperionGenerationActivityFacade {
         // Track only exercise changes, not state read while handling a synchronous status response.
         effect(() => {
             const id = this.exerciseId();
+            const runId = this.pinnedRunId();
             untracked(() => {
                 this.closeExerciseState();
                 this.reset();
                 if (id !== undefined) {
                     this.openExerciseState(id);
-                    this.loadStatus(id);
+                    this.loadStatus(id, runId);
                 }
             });
         });
@@ -383,10 +388,13 @@ export class HyperionGenerationActivityFacade {
                         this.cancellationStatusRefresh.cancel();
                         this.running.set(false);
                     }
+                    if (this.pinnedRunId() && status.jobId !== this.pinnedRunId()) return;
                     const sameJob = this.jobId() === status.jobId;
                     if (!sameJob) {
                         this.resetRevertState();
                     }
+                    this.run.set(status.run);
+                    this.reverted.set(!!status.run?.revertedAt);
                     const wasActivelyObserved = sameJob && this.running();
                     this.jobId.set(status.jobId);
                     this.mode.set(status.mode ?? this.mode());
@@ -475,7 +483,10 @@ export class HyperionGenerationActivityFacade {
      * poll makes still need counting, because those decide when the panel reports the status as unavailable.
      */
     private requestStatus(exerciseId: number, background: boolean): Observable<HyperionGenerationStatus | null> {
-        const request = defer(() => this.service.getStatus(exerciseId)).pipe(timeout(STATUS_REQUEST_TIMEOUT_MS));
+        const request = defer(() => {
+            const runId = this.pinnedRunId();
+            return runId ? this.service.getRunStatus(exerciseId, runId) : this.service.getStatus(exerciseId);
+        }).pipe(timeout(STATUS_REQUEST_TIMEOUT_MS));
         return background
             ? request
             : request.pipe(
@@ -539,6 +550,10 @@ export class HyperionGenerationActivityFacade {
     private handleExerciseState(state: HyperionExerciseGenerationState): void {
         const exerciseId = this.exerciseId();
         if (this.destroyRef.destroyed || exerciseId === undefined || state.exerciseId !== exerciseId) {
+            return;
+        }
+        if (this.pinnedRunId() && state.jobId !== this.pinnedRunId()) {
+            this.loadStatus(exerciseId, this.pinnedRunId(), true);
             return;
         }
         this.cancelStatusRequest();
@@ -770,16 +785,17 @@ export class HyperionGenerationActivityFacade {
     }
 
     private resetRevertState(): void {
+        this.confirmedRevertJobId = undefined;
         this.revertAvailabilityRefresh.cancel();
         this.reverting.set(false);
         this.reverted.set(false);
         this.revertedMode.set(undefined);
         this.revertPartialRepositories.set(undefined);
-        this.confirmedRevertJobId = undefined;
         this.confirmRevertVisible.set(false);
     }
 
     private reset(): void {
+        this.run.set(undefined);
         this.cancelStatusRequest();
         this.closeStream();
         this.streamLossRefresh.cancel();

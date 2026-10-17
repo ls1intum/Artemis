@@ -12,7 +12,7 @@ import { ExerciseGenerationInput } from 'app/openapi/model/exercise-generation-i
     template: `
         <tumaet-ui-panel
             toggleable
-            [collapsed]="false"
+            [collapsed]="collapsed()"
             [header]="(adapting() ? 'artemisApp.hyperion.generation.run.adaptationInput' : 'artemisApp.hyperion.generation.run.generationInput') | artemisTranslate"
             data-testid="hyperion-run-input"
         >
@@ -48,4 +48,5 @@ import { ExerciseGenerationInput } from 'app/openapi/model/exercise-generation-i
 export class HyperionRunInputComponent {
     readonly context = input.required<ExerciseGenerationInput>();
     readonly adapting = input(false);
+    readonly collapsed = input(false);
 }

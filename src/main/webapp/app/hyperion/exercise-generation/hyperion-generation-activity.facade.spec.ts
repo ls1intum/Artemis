@@ -59,6 +59,10 @@ class MockService {
         return of(this.status ? normalizeStatus(this.status) : null);
     }
 
+    getRunStatus(_exerciseId: number, _runId: string) {
+        return this.getStatus();
+    }
+
     cancel(exerciseId: number, jobId: string): Observable<void> {
         this.cancelCalls.push([exerciseId, jobId]);
         return of(undefined);
@@ -66,7 +70,7 @@ class MockService {
 
     revertCalls: number[] = [];
 
-    revertExerciseGeneration(exerciseId: number, _runId: string): Observable<ExerciseGenerationRevertResult> {
+    revertExerciseGeneration(exerciseId: number): Observable<ExerciseGenerationRevertResult> {
         this.revertCalls.push(exerciseId);
         return of({ fullyReverted: true, revertedRepositories: ['template', 'solution', 'tests'], completedAt: '2026-07-10T20:00:00Z' });
     }
@@ -90,8 +94,9 @@ class RunStateHost {
     readonly facade = inject(HyperionGenerationActivityFacade);
     readonly exerciseId = input<number>();
     readonly refreshingEditor = input(false);
+    readonly runId = input<string>();
     constructor() {
-        this.facade.connect({ exerciseId: this.exerciseId, refreshingEditor: this.refreshingEditor });
+        this.facade.connect({ exerciseId: this.exerciseId, runId: this.runId, refreshingEditor: this.refreshingEditor });
     }
 }
 describe('HyperionGenerationActivityFacade', () => {
@@ -619,6 +624,7 @@ describe('HyperionGenerationActivityFacade', () => {
         const successSpy = vi.spyOn(alertService, 'success');
 
         component.confirmRevert();
+        component.confirmRevert();
         component.acceptRevert();
         component.running.set(true);
         component.cancel();
@@ -837,6 +843,21 @@ describe('HyperionGenerationActivityFacade', () => {
             expect(component.canRevert()).toBe(true);
         }
     });
+    it('discards the confirmed undo target when REST polling adopts another run', async () => {
+        vi.useFakeTimers();
+        const fixture = createWith({ jobId: 'old', fileChanges: [], running: false, events: [], revertAvailable: true });
+        const component = fixture.componentInstance.facade;
+        component.confirmRevert();
+        expect(component.confirmRevertVisible()).toBe(true);
+        service.status = { jobId: 'current', fileChanges: [], running: false, events: [], revertAvailable: true };
+
+        await vi.advanceTimersByTimeAsync(15_000);
+        component.acceptRevert();
+
+        expect(component.jobId()).toBe('current');
+        expect(component.confirmRevertVisible()).toBe(false);
+        expect(service.revertCalls).toEqual([]);
+    });
     it('clears pending undo state when another job replaces the observed run', () => {
         const fixture = createWith({ jobId: 'old', fileChanges: [], running: false, events: [], revertAvailable: true });
         const component = fixture.componentInstance.facade;
@@ -901,6 +922,7 @@ describe('HyperionGenerationActivityFacade', () => {
 
         component.confirmRevert();
         expect(component.confirmRevertVisible()).toBe(true);
+        component.confirmRevert();
         component.acceptRevert();
 
         expect(service.revertCalls).toEqual([42]);
@@ -1015,6 +1037,15 @@ describe('HyperionGenerationActivityFacade', () => {
             completedAt: '',
         });
     });
+    it('stops running on a CANCELLED terminal event from the stream', () => {
+        const fixture = createWith({ jobId: 'j1', running: true, mode: 'ADAPT', events: [], fileChanges: [] });
+        const component = fixture.componentInstance.facade;
+
+        service.stream$.next({ type: 'CANCELLED', message: 'Cancelled by user' });
+        expect(component.running()).toBe(false);
+        expect(component.verdict()).toBeUndefined();
+        expect(component.canRevert()).toBe(false);
+    });
     it('keeps undo bound to the run shown when confirmation opened', () => {
         const fixture = createWith({ jobId: 'old', running: false, events: [], fileChanges: [], revertAvailable: true });
         const component = fixture.componentInstance.facade;
@@ -1032,15 +1063,22 @@ describe('HyperionGenerationActivityFacade', () => {
         expect(revert).not.toHaveBeenCalled();
     });
 
-    it('stops running on a CANCELLED terminal event from the stream', () => {
-        const fixture = createWith({ jobId: 'j1', running: true, mode: 'ADAPT', events: [], fileChanges: [] });
-        const component = fixture.componentInstance.facade;
-
-        service.stream$.next({ type: 'CANCELLED', message: 'Cancelled by user' });
-        expect(component.running()).toBe(false);
-        expect(component.verdict()).toBeUndefined();
-        expect(component.canRevert()).toBe(false);
+    it('keeps canonical inspection on the selected run when another run starts on the exercise', () => {
+        const fixture = createWith({ jobId: 'old', running: false, events: [], fileChanges: [] });
+        const exact = vi.spyOn(service, 'getRunStatus');
+        fixture.componentRef.setInput('runId', 'old');
+        fixture.detectChanges();
+        service.exerciseState$.next({ exerciseId: 42, jobId: 'new', running: true });
+        expect(exact).toHaveBeenLastCalledWith(42, 'old');
+        expect(fixture.componentInstance.facade.jobId()).toBe('old');
+        expect(fixture.componentInstance.facade.running()).toBe(false);
+        fixture.componentRef.setInput('runId', 'second');
+        service.status = { jobId: 'second', running: false, events: [], fileChanges: [] };
+        fixture.detectChanges();
+        expect(exact).toHaveBeenLastCalledWith(42, 'second');
+        expect(fixture.componentInstance.facade.jobId()).toBe('second');
     });
+
     it('refreshes a prior adaptation undo after a later generation stops', () => {
         vi.useFakeTimers();
         const fixture = createWith(null);
@@ -1062,7 +1100,7 @@ describe('HyperionGenerationActivityFacade', () => {
             .fn()
             .mockReturnValueOnce(of(runningStatus))
             .mockReturnValueOnce(of(stoppedStatus))
-            .mockReturnValueOnce(of({ ...stoppedStatus, revertAvailable: true, revertJobId: 'prior-adaptation' }));
+            .mockReturnValueOnce(of({ ...stoppedStatus, revertAvailable: true, revertJobId: 'earlier-adaptation' }));
         component.attachToJob('later-run', 'GENERATE');
 
         service.stream$.next({ type: 'CANCELLED', message: 'Cancelled' });

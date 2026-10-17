@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.criti
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutant;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.orchestration.GenerationProgressSink.Phase;
+import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.AgentVerifyReport.TestFailureEvidence;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessOutcome;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.DifferentialVerifier;
 import de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.SeededStructuralTests;
@@ -909,10 +910,7 @@ class GenerationAttemptLoop {
             SpecFidelityReport report = adaptationChanges == null
                     ? specFidelityCritic.critique(reviewBrief, problemStatement, testNames, producedFilesByType, usageSink, cancelled, previousReport, specSnapshotForReview,
                             repairDelta, testPlanSnapshot,
-                            verification.templateFailureEvidence().stream()
-                                    .map(evidence -> new de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.AgentVerifyReport.TestFailureEvidence(
-                                            evidence.testName(), evidence.message()))
-                                    .toList())
+                            verification.templateFailureEvidence().stream().map(evidence -> new TestFailureEvidence(evidence.testName(), evidence.message())).toList())
                     : specFidelityCritic.critiqueAdaptation(reviewBrief, problemStatement, testNames, adaptationChanges, producedFilesByType, usageSink, cancelled, previousReport);
             report = GenerationReviewSupport.completeReview(report, adaptationChanges != null && adaptationChanges.contains(GenerationOrchestrator.CHANGE_SUMMARY_TRUNCATED),
                     specFidelityCritic.detectMessagelessAssertions(producedFilesByType.getOrDefault(RepositoryRole.TESTS, Map.of())),

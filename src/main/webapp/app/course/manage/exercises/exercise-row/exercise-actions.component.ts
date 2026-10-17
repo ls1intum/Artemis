@@ -1,3 +1,4 @@
+import { injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -23,8 +24,8 @@ import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-togg
 import { MODULE_FEATURE_HYPERION, PROFILE_LOCALCI } from 'app/app.constants';
 import { ExerciseActionBarComponent } from 'app/exercise/exercise-action-bar/exercise-action-bar.component';
 import { ActionItem } from 'app/exercise/exercise-action-bar/exercise-action-bar.model';
-import { ExerciseVariantAiModalWizardComponent } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal-wizard.component';
-import { supportsAiVariantGeneration } from 'app/course/manage/exercises/create-variant-modal/exercise-variant-ai-modal.utils';
+import { ExerciseVariantAiModalWizardComponent } from 'app/hyperion/variants/exercise-variant-ai-modal-wizard.component';
+import { supportsAiVariantGeneration } from 'app/hyperion/variants/exercise-variant-ai-modal.utils';
 
 /**
  * Builds the course-exercise `ActionItem[]` (course-scoped routes, role and feature-toggle gates, delete wiring) and
@@ -62,6 +63,11 @@ export class ExerciseActionsComponent {
      * non-quiz rows. The table floors the shared column at the max across its rows (see exercise-table).
      */
     readonly quizActionsMinWidth = output<number>();
+
+    private readonly generationCapabilities = injectGenerationCapabilities(
+        this.exercise,
+        computed(() => this.exercise().isAtLeastEditor ?? false),
+    );
 
     private readonly localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     /** Variant generation runs in Hyperion; without the module its endpoints are not registered. */
@@ -207,9 +213,13 @@ export class ExerciseActionsComponent {
             });
         }
         // Sits between the info/success-colored buttons above and the warning-colored edit buttons below, matching its
-        // own warning color. Only offered when Hyperion is enabled and for exercise types the generator supports; the
-        // server rejects other types.
-        if (this.hyperionEnabled && ex.isAtLeastEditor && supportsAiVariantGeneration(ex)) {
+        // own warning color. Programming exercises also require the server's generation capability.
+        if (
+            this.hyperionEnabled &&
+            ex.isAtLeastEditor &&
+            supportsAiVariantGeneration(ex) &&
+            (ex.type !== ExerciseType.PROGRAMMING || this.generationCapabilities.value()?.canCreateVariant === true)
+        ) {
             items.push({
                 id: 'create-variant-ai',
                 labelKey: 'artemisApp.exerciseManagement.action.createVariantWithAi',
