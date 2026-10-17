@@ -1,6 +1,6 @@
 <div class="resizable-container" [style.display]="isBeingPrinted() ? 'block' : 'flex'">
     <!--region LEFT SIDE-->
-    <div class="left card" data-testid="resizeable-container-left" [class.border-0]="isExerciseParticipation()">
+    <div class="left card" data-testid="resizeable-container-left" [class.border-0]="isExerciseParticipation()" [class.left--scrolls]="showRightPanel()">
         @if (!isExerciseParticipation()) {
             <div class="card-header bg-primary text-white">
                 <ng-content select="span[left-header]" />

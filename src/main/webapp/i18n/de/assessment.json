@@ -68,7 +68,14 @@
                 "pointsShort": "{{points}} Pkt.",
                 "pointsOfShort": "{{points}} / {{maxPoints}} Pkt.",
                 "decreasePoints": "Punkte verringern",
-                "increasePoints": "Punkte erhöhen"
+                "increasePoints": "Punkte erhöhen",
+                "addGeneralFeedback": "Allgemeines Feedback hinzufügen",
+                "complaintTabAwaitsResponse": "Wartet auf deine Antwort",
+                "generalFeedbackAddHint": "Füge über die Schaltfläche + in der Tab-Leiste allgemeines Feedback hinzu oder ziehe eine Bewertungsanweisung hierher.",
+                "notesTab": "Notizen",
+                "notesTabHasNote": "Die private Notiz enthält Text",
+                "studentComplaintTab": "Studierendenbeschwerde",
+                "studentRequestTab": "Studierendenanfrage"
             },
             "useAsExampleSubmissionVerificationQuestion": "Bist du dir sicher, dass du diese Abgabe als Beispielabgabe importieren möchtest?",
             "messages": {

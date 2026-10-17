@@ -1,0 +1,18 @@
+// The tabs run down to the line below the header of the panel, so the indicator of the selected tab sits on it
+:host {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    align-items: stretch;
+    // The header draws a line below the tabs; they lay their indicator over it
+    margin-bottom: -1px;
+}
+
+tumaet-ui-tabs {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+tumaet-ui-tab-list {
+    flex: 1 1 auto;
+}
