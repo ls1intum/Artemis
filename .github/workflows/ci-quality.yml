@@ -251,6 +251,10 @@ jobs:
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.14'
+      - name: Query checker tests
+        run: |
+          python supporting_scripts/test_find_slow_queries.py
+          python supporting_scripts/test_format_slow_query_report.py
       - name: Query quality check
         run: |
           set -Eeuo pipefail
