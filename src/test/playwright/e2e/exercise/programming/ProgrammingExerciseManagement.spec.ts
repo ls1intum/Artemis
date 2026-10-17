@@ -33,6 +33,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createProgrammingExercise();
             await page.waitForURL('**/programming-exercises/new**');
+            await expect(page.getByRole('button', { name: /generate with ai/i })).toHaveCount(0);
             const exerciseTitle = 'Programming exercise ' + generateUUID();
             await programmingExerciseCreation.changeEditMode();
             await programmingExerciseCreation.setProgrammingLanguage(ProgrammingLanguage.C);

@@ -1,3 +1,4 @@
+import { HyperionRunLinkComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-link.component';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
@@ -77,6 +78,7 @@ import { parseBuildPlanPhases } from 'app/programming/shared/entities/build-plan
     styleUrls: ['./programming-exercise-detail.component.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        HyperionRunLinkComponent,
         TranslateDirective,
         DocumentationButtonComponent,
         RouterLink,

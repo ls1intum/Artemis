@@ -45,3 +45,4 @@ api/legacy-calendar-resources.ts
 api/admin-hyperion-generation-resources.ts
 api/admin-hyperion-generation-monitoring-resources.ts
 api/hyperion-exercise-generation-resources.ts
+api/admin-ai-worker-resources.ts

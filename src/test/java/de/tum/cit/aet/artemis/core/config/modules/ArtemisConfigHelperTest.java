@@ -138,6 +138,21 @@ class ArtemisConfigHelperTest {
         assertThat(artemisConfigHelper.isHyperionExerciseGenerationEnabled(mockEnv)).isFalse();
     }
 
+    @Test
+    void testAiWorkerRequiresCoreAndExplicitOptIn() {
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+        when(mockEnv.getProperty(Constants.AIWORKER_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(true);
+        assertThat(artemisConfigHelper.isAiWorkerEnabled(mockEnv)).isTrue();
+
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(false);
+        assertThat(artemisConfigHelper.isAiWorkerEnabled(mockEnv)).isFalse();
+
+        when(mockEnv.acceptsProfiles(any(Profiles.class))).thenReturn(true);
+        when(mockEnv.getProperty(Constants.AIWORKER_ENABLED_PROPERTY_NAME, Boolean.class, false)).thenReturn(false);
+        assertThat(artemisConfigHelper.isAiWorkerEnabled(mockEnv)).isFalse();
+
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { "aiworker", "prod,aiworker" })
     void workerDoesNotLoadServerModulesEvenWithInheritedFeatureFlags(String profiles) {

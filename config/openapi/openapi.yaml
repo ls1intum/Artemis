@@ -1567,7 +1567,7 @@ paths:
         schema: {type: string}
       responses:
         '200': {description: OK}
-  /api/hyperion/programming-exercises/{exerciseId}/generate-exercise/revert:
+  /api/hyperion/programming-exercises/{exerciseId}/generation/runs/{runId}/revert:
     post:
       tags: [hyperion-exercise-generation]
       operationId: revertExerciseGeneration
@@ -1576,6 +1576,10 @@ paths:
         in: path
         required: true
         schema: {type: integer, format: int64}
+      - name: runId
+        in: path
+        required: true
+        schema: {type: string}
       responses:
         '200':
           description: OK
@@ -1597,6 +1601,18 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ExerciseGenerationStatus'}
+  /api/aiworker/admin/workers:
+    get:
+      tags: [admin-ai-worker]
+      operationId: getWorkers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: {$ref: '#/components/schemas/WorkerStatus'}
 components:
   schemas:
     QuizBatchWithPassword:
@@ -1897,7 +1913,7 @@ components:
         jobId: {type: string}
         repositoryType:
           type: string
-          enum: [exercise, solution, tests, auxiliary, user]
+          enum: [TEMPLATE, SOLUTION, TESTS, AUXILIARY, USER]
     QuizQuestionRefinementRequest:
       type: object
       description: Request to refine an existing quiz question using a user prompt
@@ -2532,7 +2548,7 @@ components:
       properties:
         repositoryType:
           type: string
-          enum: [exercise, solution, tests, auxiliary, user]
+          enum: [TEMPLATE, SOLUTION, TESTS, AUXILIARY, USER]
         initialAutoGeneration: {type: boolean}
         selectedFeedbackThreadIds:
           type: array
@@ -3640,3 +3656,34 @@ components:
         ownerNodeId: {type: string}
         startedAt: {type: string, format: date-time}
         ownerLeftCluster: {type: boolean}
+    WorkerStatus:
+      type: object
+      properties:
+        workerId: {type: string}
+        state:
+          type: string
+          enum: [OFFLINE, NOT_READY, AVAILABLE, RESERVED, BUSY]
+        lastHeartbeat: {type: string, format: date-time}
+        imageDigest: {type: string}
+        incarnation: {type: string, format: uuid}
+        activeExecution: {type: string, format: uuid}
+        leaseHeld: {type: boolean}
+        capacity: {type: integer, format: int32}
+        availableSlots: {type: integer, format: int32}
+        executions:
+          type: array
+          items: {$ref: '#/components/schemas/WorkerExecution'}
+        capability: {$ref: '#/components/schemas/WorkloadCapability'}
+    WorkerExecution:
+      type: object
+      properties:
+        slot: {type: integer, format: int32}
+        executionId: {type: string, format: uuid}
+        jobId: {type: string}
+        resourceId: {type: string}
+    WorkloadCapability:
+      type: object
+      properties:
+        workload: {type: string}
+        version: {type: integer, format: int32}
+        profile: {type: string}
