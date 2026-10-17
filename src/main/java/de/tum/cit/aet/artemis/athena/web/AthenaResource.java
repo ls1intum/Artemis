@@ -124,8 +124,10 @@ public class AthenaResource {
 
         final var submission = submissionFetcher.apply(submissionId);
         final var user = userRepository.getUser();
-        // The assessor's own AI Experience consent gates every graded feedback-suggestion request: submission content
-        // must never reach Athena for an assessor who has not opted into AI usage, regardless of what the client sends.
+        // The assessor's own AI Experience consent gates every graded feedback-suggestion request: the submission must not be
+        // sent to Athena for suggestions when the assessor has not opted into AI usage, regardless of what the client sends. The
+        // assessor's Cloud or Local choice is forwarded to Athena with the request. Other Athena flows (sending submitted
+        // assessments, sending submissions at the due date) are not covered by this check.
         // Same errorKey as the student-facing non-graded check in AthenaFeedbackSuggestionsService.extractSelectedLLMUsage,
         // so the client can react to either one identically; skipAlert since the assessment editors react to it locally
         // (re-showing the AI Experience opt-in hint) instead of a generic "not authorized" toast.
