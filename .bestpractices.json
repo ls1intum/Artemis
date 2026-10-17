@@ -143,8 +143,8 @@
     "hardened_site_justification": "The 2026-10-16 HTTPS response from https://artemis.tum.de included HSTS but omitted Content-Security-Policy, X-Content-Type-Options and X-Frame-Options. Assess all project/documentation/download sites and coordinate required headers with operators.",
     "security_review_status": "?",
     "security_review_justification": "Obtain the date, reviewers, scope, findings and remediation record for a human security review within the preceding five years that covers requirements and trust boundaries. An AI-written assurance case or automated scanner run is not that human review. https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md#security-audits-and-open-source-transparency",
-    "dynamic_analysis_status": "?",
-    "dynamic_analysis_justification": "Tests and browser automation run in CI, but verify and document a qualifying dynamic-analysis check before every major release, including what it measures and how results are reviewed. Fuzzing is not being introduced by this change.",
-    "dynamic_analysis_enable_assertions_status": "?",
-    "dynamic_analysis_enable_assertions_justification": "Confirm which runtime assertions are enabled during the selected dynamic-analysis checks and how failures are reviewed. Do not confuse unit-test assertions with enabled production runtime assertions."
+    "dynamic_analysis_status": "Unmet",
+    "dynamic_analysis_justification": "// CI provides integration tests and runtime coverage, but the server branch-coverage baseline is 74.85% and a qualifying dynamic-analysis check before every major release has not yet been demonstrated. This remains a Gold gap; fuzzing is outside the current scope. https://github.com/ls1intum/Artemis/actions/runs/38921395454",
+    "dynamic_analysis_enable_assertions_status": "Unmet",
+    "dynamic_analysis_enable_assertions_justification": "// Tests use assertions, but the project has not established that many assertions in the delivered software are enabled and reviewed during qualifying dynamic analysis. Record the assertion configuration and release-check evidence before marking Met. https://github.com/ls1intum/Artemis/pull/14258"
 }
