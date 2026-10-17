@@ -79,7 +79,8 @@ public class AssessmentUploadResultService {
      * its submission's {@code results} collection (via {@link Submission#addResult}) with the submission reference set; every result in {@code updatedResults} is a persisted
      * result whose feedback was replaced in place. Empty collections are permitted and produce an empty result.
      * <p>
-     * <b>Postcondition:</b> every supplied result is stored as a manual result and its notification has been sent.
+     * <b>Postcondition:</b> every supplied result is stored as a manual result and its notification has been sent. The results are written by a single repository call and are
+     * therefore stored all or not at all; an exception from this method means none of them was written, which is what lets the caller compensate for what it created before.
      *
      * @param newResults     newly created results, each attached to its submission's results collection
      * @param updatedResults existing persisted results that were edited in place
@@ -109,11 +110,22 @@ public class AssessmentUploadResultService {
         // Write every result explicitly. There is no surrounding transaction, so the results the caller edited are detached and nothing would be written by dirty checking.
         // Saving an existing result merges those edits, and its feedback association (cascade ALL with orphan removal) both persists the replacement feedback and deletes the
         // feedback the upload removed; saving a new result inserts it together with its feedback.
-        final List<Long> resultIds = assessmentUploadResultRepository.saveAll(results).stream().map(Result::getId).toList();
-        final List<Result> savedResults = assessmentUploadResultRepository.findAllWithSubmissionAndFeedbackAndTeamStudentsByIds(resultIds);
-        // Each save has already committed, so "after the results are stored" is simply the next statement.
-        savedResults.forEach(this::notifyAboutNewResultSafely);
-        return savedResults;
+        final List<Result> storedResults = assessmentUploadResultRepository.saveAll(results);
+
+        // Past this point the assessments are stored: saveAll is one repository call and therefore one transaction, so it either wrote every result or none. Announcing them is
+        // a separate concern that must not turn a stored upload into a failed one — the caller treats an exception from this method as "nothing was written" and compensates
+        // accordingly — so the reload and the notifications are isolated here, exactly as notifyAboutNewResultSafely isolates a single notification.
+        try {
+            final List<Long> resultIds = storedResults.stream().map(Result::getId).toList();
+            final List<Result> reloadedResults = assessmentUploadResultRepository.findAllWithSubmissionAndFeedbackAndTeamStudentsByIds(resultIds);
+            // Each save has already committed, so "after the results are stored" is simply the next statement.
+            reloadedResults.forEach(this::notifyAboutNewResultSafely);
+            return reloadedResults;
+        }
+        catch (final RuntimeException e) {
+            log.warn("Stored {} uploaded assessment result(s) but could not reload them to announce them", storedResults.size(), e);
+            return storedResults;
+        }
     }
 
     /**

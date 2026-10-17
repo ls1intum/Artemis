@@ -503,22 +503,37 @@ public class AssessmentUploadService {
         // results) intact and mirrors how the assessment editor updates an existing assessment.
         final List<Result> newResults = new ArrayList<>();
         final List<Result> updatedResults = new ArrayList<>();
-        for (final ValidatedRow row : validatedRows) {
-            final Result existingManualResult = existingManualResultsByParticipationId.get(row.participationId());
-            if (existingManualResult != null) {
-                updateManualResult(existingManualResult, exercise, row);
-                updatedResults.add(existingManualResult);
-                continue;
+        // Undo log for the submissions created below. Each is committed by its own repository call, so without this a failure part-way through the loop — or in the result
+        // write that follows — would leave submitted external submissions carrying no assessment behind, for participants the upload then reports as not stored. They would
+        // also be picked up as the latest submission by a re-run, which would assess that submission instead of creating a fresh one.
+        final List<Submission> createdSubmissions = new ArrayList<>();
+        try {
+            for (final ValidatedRow row : validatedRows) {
+                final Result existingManualResult = existingManualResultsByParticipationId.get(row.participationId());
+                if (existingManualResult != null) {
+                    updateManualResult(existingManualResult, exercise, row);
+                    updatedResults.add(existingManualResult);
+                    continue;
+                }
+                final StudentParticipation participation = Optional.ofNullable(participationsById.get(row.participationId()))
+                        .orElseThrow(() -> new IllegalStateException("Validated participation %d is no longer available".formatted(row.participationId())));
+                final Submission submission = Optional.ofNullable(latestSubmissionsByParticipationId.get(row.participationId())).orElseGet(() -> {
+                    final Submission createdSubmission = initializeSubmittedExternalSubmission(participation);
+                    createdSubmissions.add(createdSubmission);
+                    return createdSubmission;
+                });
+                final Result manualResult = buildManualResult(exercise, submission, row);
+                submission.addResult(manualResult);
+                newResults.add(manualResult);
             }
-            final StudentParticipation participation = Optional.ofNullable(participationsById.get(row.participationId()))
-                    .orElseThrow(() -> new IllegalStateException("Validated participation %d is no longer available".formatted(row.participationId())));
-            final Submission submission = Optional.ofNullable(latestSubmissionsByParticipationId.get(row.participationId()))
-                    .orElseGet(() -> initializeSubmittedExternalSubmission(participation));
-            final Result manualResult = buildManualResult(exercise, submission, row);
-            submission.addResult(manualResult);
-            newResults.add(manualResult);
+            // Writes every result in one repository call, so it stores all of them or none. Reaching the catch below therefore means no assessment was written and the
+            // submissions created above are the only trace of this upload; the in-place edits made in the loop were never flushed.
+            assessmentUploadResultService.saveManualResults(newResults, updatedResults, true);
         }
-        assessmentUploadResultService.saveManualResults(newResults, updatedResults, true);
+        catch (final RuntimeException failure) {
+            removeSubmissionsCreatedBeforeFailure(createdSubmissions, exercise);
+            throw failure;
+        }
 
         final List<String> createdIdentifiers = validatedRows.stream().map(ValidatedRow::identifier).toList();
         log.info("Stored {} manual assessments ({} newly created, {} overwritten) for programming exercise {} from an upload", createdIdentifiers.size(), newResults.size(),
@@ -542,6 +557,36 @@ public class AssessmentUploadService {
         assert validatedRows != null && participationsWithComplaint != null && !participationsWithComplaint.isEmpty() : "rows and blocked participations must be present";
         return validatedRows.stream().filter(row -> participationsWithComplaint.contains(row.participationId())).map(ValidatedRow::identifier).sorted()
                 .map(identifier -> AssessmentUploadErrorDTO.of(identifier, AssessmentUploadErrorType.EXISTING_COMPLAINT)).toList();
+    }
+
+    /**
+     * Removes the submissions an upload created before it failed, so a failed upload leaves the exercise as it found it.
+     * <p>
+     * This is the compensation that replaces the transaction the storage path is not allowed to open: the submissions were committed one repository call at a time, and the
+     * result write that would have given them an assessment never happened. Deleting them also removes the results attached to them, since a submission cascades to its
+     * results, but there is nothing to undo for a participant whose existing assessment was only edited in memory.
+     * <p>
+     * <b>Precondition:</b> {@code createdSubmissions} are the persisted submissions this upload created, and no assessment of this upload was stored.
+     * <p>
+     * <b>Postcondition:</b> the submissions are deleted, or the failure to delete them is logged; nothing propagates, so the original failure reaches the caller unchanged.
+     *
+     * @param createdSubmissions the submissions this upload created, in creation order
+     * @param exercise           the exercise being imported into, for the log message
+     */
+    private void removeSubmissionsCreatedBeforeFailure(final List<Submission> createdSubmissions, final ProgrammingExercise exercise) {
+        assert createdSubmissions != null && exercise != null : "createdSubmissions and exercise must not be null";
+        if (createdSubmissions.isEmpty()) {
+            return;
+        }
+        try {
+            submissionRepository.deleteAll(createdSubmissions);
+            log.info("Removed {} submission(s) created by a failed assessment upload for programming exercise {}", createdSubmissions.size(), exercise.getId());
+        }
+        catch (final RuntimeException cleanupFailure) {
+            // Swallowed on purpose: the upload is failing already, and the caller must see why it failed rather than why the cleanup did.
+            log.error("Could not remove the {} submission(s) created by a failed assessment upload for programming exercise {}. They are submitted submissions without an "
+                    + "assessment and will be assessed instead of a fresh one if the upload is retried.", createdSubmissions.size(), exercise.getId(), cleanupFailure);
+        }
     }
 
     /**
