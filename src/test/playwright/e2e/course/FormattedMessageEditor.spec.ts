@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { test as artemisTest } from '../../support/fixtures';
 import { admin, studentOne, studentTwo, studentThree, studentFour } from '../../support/users';
 import { generateUUID, readResponseJson } from '../../support/utils';
-import { expectNoHorizontalOverflow, expectNoHorizontalScrollAround, expectWithinViewport, forEachViewport } from '../../support/layout';
+import { expectAligned, expectBelow, expectNoHorizontalOverflow, expectNoHorizontalScrollAround, expectWithinViewport, forEachViewport } from '../../support/layout';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -922,11 +922,11 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
 test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
     test.use({ expandedToolbar: false });
 
-    test('shows basic controls by default and reveals advanced controls without overflow at every viewport', async ({ page, composer }) => {
+    test('shows basic controls by default and expands inline or wraps to fit each viewport', async ({ page, composer }) => {
         const host = page.locator('jhi-message-editor').filter({ has: composer.editor });
         const toggle = host.getByTestId('message-toolbar-toggle');
         const advanced = host.getByTestId('message-advanced-toolbar');
-        await forEachViewport(page, async () => {
+        await forEachViewport(page, async (viewport) => {
             await host.scrollIntoViewIfNeeded();
             await expect(toggle).toHaveAttribute('aria-expanded', 'false');
             await expect(toggle).toHaveAccessibleName('More options');
@@ -956,6 +956,16 @@ test.describe('Compact formatted message toolbar', { tag: '@fast' }, () => {
             ]) {
                 await expect(host.getByTestId(id)).toBeVisible();
                 await expectWithinViewport(host.getByTestId(id), ['left', 'right'], { name: id });
+            }
+            if (viewport.width === 1728) {
+                await expectAligned([host.getByTestId('message-format-strong'), ...(await advanced.getByRole('button').all())], 'top', {
+                    name: 'all expanded formatting and resource controls share the basic toolbar row when space permits',
+                });
+            }
+            if (viewport.width === 480) {
+                await expectBelow([host.getByTestId('message-format-ins'), host.getByTestId('message-emoji-button')], toggle, {
+                    name: 'expanded controls wrap below the basic toolbar on a narrow screen',
+                });
             }
             await expectNoHorizontalOverflow(page, [host], { name: 'expanded message composer' });
             await expectNoHorizontalScrollAround(host, { name: 'expanded message composer' });
