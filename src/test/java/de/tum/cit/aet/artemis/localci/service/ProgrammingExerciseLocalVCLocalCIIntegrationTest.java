@@ -39,6 +39,7 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -62,6 +63,7 @@ import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.dto.CreateExerciseVariantGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupAssignmentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseVariantGroupDTO;
@@ -96,6 +98,7 @@ import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResponseDTO;
 import de.tum.cit.aet.artemis.programming.dto.TemplateSolutionParticipationDTO;
 import de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseImportTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseImportTestService.ImportFileResult;
@@ -169,6 +172,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Autowired
     private SubmissionPolicyRepository submissionPolicyRepository;
+
+    @Autowired
+    private ProgrammingSubmissionService programmingSubmissionService;
 
     @Autowired
     private ExerciseVariantGroupRepository exerciseVariantGroupRepository;
@@ -1097,6 +1103,14 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(templateParticipation));
         verify(localCITriggerService, timeout(5000).times(1)).triggerBuild(eq(solutionParticipation));
+        // File import skips the first build setup; only the setup after importing the repositories creates submissions.
+        for (var participation : List.of(templateParticipation, solutionParticipation)) {
+            assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId())).singleElement().satisfies(submission -> {
+                assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
+                assertThat(submission.getCommitHash()).isNotBlank();
+                assertThat(submission.getSubmissionDate()).isNotNull();
+            });
+        }
     }
 
     /**
@@ -1118,6 +1132,32 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 templateBuildTestResults, solutionBuildTestResults);
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void createInitialSubmissions_persistsEachSubmissionOnce(boolean commitAvailable) {
+        programmingExercise = programmingExerciseRepository.findForCreationByIdElseThrow(programmingExercise.getId());
+        var participations = List.of(programmingExercise.getTemplateParticipation(), programmingExercise.getSolutionParticipation());
+        if (!commitAvailable) {
+            participations.forEach(participation -> participation.setRepositoryUri((String) null));
+        }
+
+        assertThatDb(() -> {
+            programmingSubmissionService.createInitialSubmissions(programmingExercise);
+            return null;
+        }).hasBeenCalledTimes(2);
+
+        for (var participation : participations) {
+            String expectedHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
+            assertThat(expectedHash != null).isEqualTo(commitAvailable);
+            assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId())).singleElement().satisfies(submission -> {
+                assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
+                assertThat(submission.getCommitHash()).isEqualTo(expectedHash);
+                assertThat(submission.getSubmissionDate() != null).isEqualTo(commitAvailable);
+            });
+            assertThat(participation.getSubmissions()).singleElement().satisfies(submission -> assertThat(submission.getId()).isNotNull());
+        }
+    }
+
     /**
      * Creates a programming exercise through the setup endpoint, the way an instructor does, and returns it with the repositories the server filled in place.
      */
@@ -1133,13 +1173,38 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         var params = new LinkedMultiValueMap<String, String>();
         params.add("emptyRepositories", String.valueOf(emptyRepositories));
         // Create the exercise and verify status code 201. The query cap guards against the response mapping pulling
-        // additional sub-graphs into the creation flow. It leaves room for the creations that do the most work inside
-        // the request: an SCA-enabled exercise also inserts its default category rows (Python: 174 queries, 60 of them one insert per category).
+        // additional sub-graphs into the creation flow. An SCA-enabled exercise also inserts its default
+        // category entities (Python has 60); auxiliary repositories add one insert each. These caps cover
+        // PostgreSQL (73/133 statements) and MySQL (74/134 statements).
+        int queryLimit = (Boolean.TRUE.equals(newExercise.isStaticCodeAnalysisEnabled()) ? 134 : 74) + newExercise.getAuxiliaryRepositories().size();
         var response = assertThatDb(() -> request.postWithResponseBody("/api/programming/programming-exercises/setup", CreateProgrammingExerciseDTO.of(newExercise, buildConfig),
-                ProgrammingExerciseResponseDTO.class, params, HttpStatus.CREATED)).hasBeenCalledAtMostTimes(174);
+                ProgrammingExerciseResponseDTO.class, params, HttpStatus.CREATED)).hasBeenCalledAtMostTimes(queryLimit);
         assertCreationResponseReadContract(response, newExercise);
+        assertThat(programmingExerciseUtilService.buildConfigOf(programmingExerciseRepository.findByIdElseThrow(response.id())).getBranch()).isEqualTo(defaultBranch);
         ProgrammingExercise createdExercise = programmingExerciseRepository.findWithAllParticipationsById(response.id()).orElseThrow();
         createdExercisesToCleanUp.add(createdExercise);
+        assertThat(createdExercise.getProjectKey()).isEqualTo(response.projectKey());
+        assertThat(createdExercise.getTestRepositoryUri()).isEqualTo(response.testRepositoryUri());
+        assertThat(createdExercise.getTemplateParticipation().getId()).isEqualTo(response.templateParticipation().id());
+        assertThat(createdExercise.getSolutionParticipation().getId()).isEqualTo(response.solutionParticipation().id());
+        var storedAuxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(createdExercise.getId());
+        for (var storedRepository : storedAuxiliaryRepositories) {
+            assertThat(response.auxiliaryRepositories()).anySatisfy(repository -> {
+                assertThat(repository.id()).isEqualTo(storedRepository.getId());
+                assertThat(repository.repositoryUri()).isEqualTo(storedRepository.getRepositoryUri());
+                assertThat(repository.checkoutDirectory()).isEqualTo(storedRepository.getCheckoutDirectory());
+                assertThat(repository.description()).isEqualTo(storedRepository.getDescription());
+            });
+        }
+        for (var participation : List.of(createdExercise.getTemplateParticipation(), createdExercise.getSolutionParticipation())) {
+            String expectedCommitHash = gitService.getLastCommitHash(participation.getVcsRepositoryUri());
+            assertThat(expectedCommitHash).isNotNull();
+            assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participation.getId()))
+                    .filteredOn(submission -> submission.getType() == SubmissionType.INSTRUCTOR).singleElement().satisfies(submission -> {
+                        assertThat(submission.getCommitHash()).isEqualTo(expectedCommitHash);
+                        assertThat(submission.getSubmissionDate()).isNotNull();
+                    });
+        }
         return createdExercise;
     }
 
@@ -1171,6 +1236,21 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(response.solutionParticipation().id()).isNotNull();
         assertThat(response.solutionParticipation().type()).isEqualTo(TemplateSolutionParticipationDTO.TYPE_SOLUTION);
         assertThat(response.solutionParticipation().initializationState()).isEqualTo(InitializationState.INITIALIZED);
+        if (requestedExercise.getAuxiliaryRepositories().isEmpty()) {
+            assertThat(response.auxiliaryRepositories()).isNullOrEmpty();
+        }
+        else {
+            assertThat(response.auxiliaryRepositories()).hasSize(requestedExercise.getAuxiliaryRepositories().size());
+            response.auxiliaryRepositories().forEach(repository -> {
+                assertThat(repository.id()).isNotNull();
+                assertThat(repository.repositoryUri()).isNotBlank();
+                assertThat(requestedExercise.getAuxiliaryRepositories()).anySatisfy(requestedRepository -> {
+                    assertThat(repository.name()).isEqualTo(requestedRepository.getName());
+                    assertThat(repository.checkoutDirectory()).isEqualTo(requestedRepository.getCheckoutDirectory());
+                    assertThat(repository.description()).isEqualTo(requestedRepository.getDescription());
+                });
+            });
+        }
         assertThat(response.exerciseGroup()).isNull();
         // the course stays nested rather than flattened to an id: the client renders display links off it
         assertThat(response.course()).isNotNull();
@@ -1197,6 +1277,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Enable sequential test runs
         var newBuildConfig = ProgrammingExerciseFactory.generateGradleBuildConfig();
         newBuildConfig.setSequentialTestRuns(true);
+        newBuildConfig.setBranch("ignored-client-branch");
 
         ProgrammingExercise createdExercise = createExerciseThroughTheSetupEndpoint(newExercise, newBuildConfig, "testchannelname-pe-sequential");
 
