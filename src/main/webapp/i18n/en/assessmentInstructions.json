@@ -8,7 +8,7 @@
                     "addCredits": "[credits] Points",
                     "addInstruction": "[instruction] Assessment Instructions",
                     "addFeedback": "[feedback] Feedback",
-                    "addGradingScale": "[gradingScale] Grading Scale",
+                    "addGradingScale": "[gradingScale] Scale",
                     "addCountUsage": "[count] Usage Number",
                     "addCriterion": "[criterion] Assessment Criterion"
                 }

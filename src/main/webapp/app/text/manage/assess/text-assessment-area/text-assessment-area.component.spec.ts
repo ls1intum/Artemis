@@ -18,7 +18,6 @@ import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
-import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 
 describe('TextAssessmentAreaComponent', () => {
@@ -216,12 +215,11 @@ describe('TextAssessmentAreaComponent', () => {
             fixture.detectChanges();
         };
 
-        const feedbackTextareas = (): HTMLTextAreaElement[] => Array.from(fixture.nativeElement.querySelectorAll('textarea.unified-feedback-detail-input'));
+        const feedbackTextareas = (): HTMLTextAreaElement[] => Array.from(fixture.nativeElement.querySelectorAll('[data-testid="feedback-editor-text-input"]'));
 
         const deleteFeedbackOfNewBlock = () => {
             // an empty feedback is dismissed without confirmation when Escape is pressed in its editor
-            const unifiedFeedback = fixture.debugElement.query(By.directive(UnifiedFeedbackComponent));
-            unifiedFeedback.nativeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+            feedbackTextareas()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
             fixture.detectChanges();
         };
 

@@ -1722,6 +1722,54 @@ describe('GradingInstructionsDetailsComponent', () => {
         expect(secondCriterion.title).toBe('testCriteria');
     });
 
+    it('rejects exchanged titles when both instructions also change', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2, feedback: 'second feedback' };
+        const secondCriterion = { id: 2, title: 'Second criterion', structuredGradingInstructions: [secondInstruction] } as GradingCriterion;
+        exercise.gradingCriteria = [gradingCriterion, secondCriterion];
+        exercise.gradingInstructionFeedbackUsed = true;
+        const originalCriteria = exercise.gradingCriteria;
+        const markdown = component
+            .generateMarkdown()
+            .replace('[criterion] testCriteria', '[criterion] temporary title')
+            .replace('[criterion] Second criterion', '[criterion] testCriteria')
+            .replace('[criterion] temporary title', '[criterion] Second criterion')
+            .replace('[feedback] feedback', '[feedback] edited first')
+            .replace('[feedback] second feedback', '[feedback] edited second');
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(markdown, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(gradingCriterion.title).toBe('testCriteria');
+        expect(gradingInstruction.feedback).toBe('feedback');
+        expect(secondCriterion.title).toBe('Second criterion');
+        expect(secondInstruction.feedback).toBe('second feedback');
+        component.showEditMode.set(false);
+        vi.spyOn(alertService, 'error');
+        expect(component.prepareForSave()).toBe(false);
+        expect(alertService.error).toHaveBeenCalledWith('artemisApp.exercise.assessmentCriteriaGeneration.ambiguousEdit');
+    });
+
+    it('rejects reordered same-title criteria when both instructions change', () => {
+        const secondInstruction = { ...gradingInstruction, id: 2, feedback: 'second feedback' };
+        const secondCriterion = { id: 2, title: 'testCriteria', structuredGradingInstructions: [secondInstruction] } as GradingCriterion;
+        exercise.gradingCriteria = [gradingCriterion, secondCriterion];
+        exercise.gradingInstructionFeedbackUsed = true;
+        const originalCriteria = exercise.gradingCriteria;
+        const markdown = component
+            .generateMarkdown()
+            .replace('[feedback] feedback', '[feedback] temporary')
+            .replace('[feedback] second feedback', '[feedback] edited second')
+            .replace('[feedback] temporary', '[feedback] edited first');
+        const blocks = markdown.trimEnd().split('\n\n');
+
+        component.onDomainActionsFound(parseMarkdownForDomainActions(`${blocks[0]}\n\n${blocks[2]}\n\n${blocks[1]}\n`, component.domainActionsForMainEditor));
+
+        expect(exercise.gradingCriteria).toBe(originalCriteria);
+        expect(exercise.gradingCriteria).toEqual([gradingCriterion, secondCriterion]);
+        expect(gradingInstruction.feedback).toBe('feedback');
+        expect(secondInstruction.feedback).toBe('second feedback');
+    });
+
     it('should keep a literal {id:N} criterion title prefix for an unsaved criterion', () => {
         const domainActions = getDomainActionArray();
         domainActions[0] = { text: '{id:3} Intro', action: domainActions[0].action };

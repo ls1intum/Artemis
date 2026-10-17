@@ -10,6 +10,8 @@ export class UnreferencedFeedbackDetailStubComponent {
     readonly resultId = input.required<number>();
     public readonly readOnly = input.required<boolean>();
     readonly highlightDifferences = input<boolean>(false);
+    readonly isSuggestion = input(false);
+    readonly suggestionAcceptanceDisabled = input(false);
 
     public readonly onFeedbackChange = output<Feedback>();
     public readonly onFeedbackDelete = output<Feedback>();

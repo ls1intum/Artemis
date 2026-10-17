@@ -37,7 +37,7 @@ describe('FeedbackSuggestionBadgeComponent', () => {
     it('should have the correct text for an ACCEPTED feedback', () => {
         vi.spyOn(Feedback, 'getFeedbackSuggestionType').mockReturnValue(FeedbackSuggestionType.ACCEPTED);
 
-        expect(component.text).toBe('artemisApp.assessment.suggestion.suggested');
+        expect(component.text).toBe('artemisApp.assessment.suggestion.accepted');
     });
 
     it('should have the correct text for an ADAPTED feedback', () => {
@@ -69,7 +69,7 @@ describe('FeedbackSuggestionBadgeComponent', () => {
     it('re-derives its displayed suggestion state within the same test when feedbackText changes value, without remounting (regression test: the badge must react to the primitive value, not to Feedback object identity)', () => {
         fixture.componentRef.setInput('feedbackText', `${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Missing null check`);
         fixture.detectChanges();
-        expect(component.text).toBe('artemisApp.assessment.suggestion.suggested');
+        expect(component.text).toBe('artemisApp.assessment.suggestion.accepted');
 
         fixture.componentRef.setInput('feedbackText', `${FEEDBACK_SUGGESTION_ADAPTED_IDENTIFIER}Missing null check`);
         fixture.detectChanges();

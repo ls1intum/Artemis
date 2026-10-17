@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { By } from '@angular/platform-browser';
 import { UnreferencedFeedbackDetailStubComponent } from 'test/helpers/stubs/exercise/unreferenced-feedback-detail-stub.component';
@@ -90,6 +90,43 @@ describe('UnreferencedFeedbackComponent', () => {
 
         expect(comp.unreferencedFeedback).toHaveLength(1);
         expect(comp.unreferencedFeedback[0].text).toBe(feedback.text);
+    });
+
+    it.each([FEEDBACK_SUGGESTION_IDENTIFIER, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER])('should mark an accepted suggestion exactly once from %s', (prefix) => {
+        const suggestion = { text: `${prefix}Title`, credits: 1 } as Feedback;
+        comp.feedbackSuggestions.set([suggestion]);
+
+        comp.acceptSuggestion(suggestion);
+
+        expect(comp.feedbackSuggestions()).toEqual([]);
+        expect(comp.unreferencedFeedback).toContain(suggestion);
+        expect(suggestion.text).toBe(`${FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER}Title`);
+        expect(Feedback.getDisplayTitle(suggestion)).toBe('Title');
+    });
+
+    it.each(['used', 'reserved'])('keeps an instruction-linked suggestion pending when its only slot is %s', (occupancy) => {
+        const instruction = { id: 7, credits: 1, usageCount: 1 } as GradingInstruction;
+        const suggestion = { text: `${FEEDBACK_SUGGESTION_IDENTIFIER}Title`, gradingInstruction: instruction } as Feedback;
+        if (occupancy === 'used') {
+            comp.unreferencedFeedback = [{ gradingInstruction: instruction, credits: 1 } as Feedback];
+        }
+        comp.feedbackSuggestions.set([suggestion]);
+        fixture.componentRef.setInput('readOnly', false);
+        fixture.detectChanges();
+        const selectionService = TestBed.inject(GradingInstructionSelectionService);
+        if (occupancy === 'reserved') {
+            selectionService.reserveInstruction({}, instruction);
+        }
+        const acceptSpy = vi.fn();
+        comp.onAcceptSuggestion.subscribe(acceptSpy);
+
+        comp.acceptSuggestion(suggestion);
+
+        expect(selectionService.applicationCount(instruction)).toBe(1);
+        expect(comp.feedbackSuggestions()).toEqual([suggestion]);
+        expect(comp.unreferencedFeedback).toHaveLength(occupancy === 'used' ? 1 : 0);
+        expect(suggestion.text).toBe(`${FEEDBACK_SUGGESTION_IDENTIFIER}Title`);
+        expect(acceptSpy).not.toHaveBeenCalled();
     });
 
     it('should update unreferenced feedback by id even when the emitted object is a different reference (e.g. long feedback hydration)', () => {
@@ -184,6 +221,7 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.unreferencedFeedback[0].credits).toBe(4);
             expect(comp.unreferencedFeedback[0].type).toBe(FeedbackType.MANUAL_UNREFERENCED);
             expect(comp.appliedInstructionIds()).toEqual(new Set([1]));
+            expect(comp.appliedInstructionCounts()).toEqual(new Map([[1, 1]]));
         });
 
         it('should remove every feedback of the instruction when it is un-applied', () => {
@@ -206,6 +244,22 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(comp.appliedInstructionCounts()).toEqual(new Map([[2, 1]]));
         });
 
+        it('should remove only one feedback of the instruction when one application is taken back', () => {
+            comp.applyInstruction(documentationInstruction);
+            comp.applyInstruction(documentationInstruction);
+            comp.applyInstruction(cameraInstruction);
+
+            comp.unapplyOneInstruction(documentationInstruction);
+
+            expect(comp.unreferencedFeedback).toHaveLength(2);
+            expect(comp.appliedInstructionCounts()).toEqual(
+                new Map([
+                    [1, 1],
+                    [2, 1],
+                ]),
+            );
+        });
+
         it('should group the feedback by criterion, with uncategorized feedback last', () => {
             comp.applyInstruction(cameraInstruction);
             comp.applyInstruction(documentationInstruction);
@@ -216,6 +270,16 @@ describe('UnreferencedFeedbackComponent', () => {
             expect(groups.map((group) => group.points)).toEqual([-2, 4, 0]);
             expect(groups[2].translateTitle).toBe(true);
             expect(comp.showGroupHeaders()).toBe(true);
+            expect(comp.placeAddButtonWithOtherGroup()).toBe(true);
+        });
+
+        it('should keep an empty Other group so Add Feedback stays with it when criterion groups exist', () => {
+            comp.applyInstruction(documentationInstruction);
+
+            const groups = comp.feedbackGroups();
+            expect(groups.map((group) => group.title)).toEqual(['Documentation', 'artemisApp.assessment.detail.otherFeedback']);
+            expect(groups[1].feedbacks).toHaveLength(0);
+            expect(comp.placeAddButtonWithOtherGroup()).toBe(true);
         });
 
         it('should not show a group header for a single uncategorized block', () => {
@@ -224,6 +288,7 @@ describe('UnreferencedFeedbackComponent', () => {
 
             expect(comp.feedbackGroups()).toHaveLength(1);
             expect(comp.showGroupHeaders()).toBe(false);
+            expect(comp.placeAddButtonWithOtherGroup()).toBe(false);
         });
 
         it('should summarize awarded, deducted and resulting points', () => {

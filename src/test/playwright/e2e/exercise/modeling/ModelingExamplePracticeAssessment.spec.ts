@@ -74,7 +74,7 @@ test.describe('Modeling example submission practice assessment', { tag: '@slow' 
         await expect(submit).toBeDisabled();
 
         await score.fill('1');
-        await feedbackCard.locator('.unified-feedback-detail-input').fill('Not quite the instructor wording');
+        await feedbackCard.getByTestId('unreferenced-feedback-detail-text').fill('Not quite the instructor wording');
         await expect(submit).toBeEnabled();
 
         await submit.click();
@@ -82,7 +82,7 @@ test.describe('Modeling example submission practice assessment', { tag: '@slow' 
         await expect(feedbackCard).toContainText('score');
 
         await score.fill('5');
-        await feedbackCard.locator('.unified-feedback-detail-input').fill('Sample solution feedback');
+        await feedbackCard.getByTestId('unreferenced-feedback-detail-text').fill('Sample solution feedback');
         await submit.click();
         await expect(page.locator('[data-testid="alert"]').filter({ hasText: 'good assessment' })).toBeVisible();
     });

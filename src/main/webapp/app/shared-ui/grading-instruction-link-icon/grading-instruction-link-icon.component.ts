@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -17,6 +17,8 @@ export class GradingInstructionLinkIconComponent implements OnInit {
 
     linkIcon = input(faLink);
     feedback = input.required<Feedback>();
+    /** Fired after the grading instruction is cleared so parents can refresh usage counts (zoneless). */
+    readonly linkRemoved = output<void>();
 
     instruction = signal<GradingInstruction | undefined>(undefined);
     confirmIcon = faTrash;
@@ -33,14 +35,15 @@ export class GradingInstructionLinkIconComponent implements OnInit {
         this.toggle();
         this.feedback().gradingInstruction = undefined;
         this.instruction.set(undefined);
+        this.linkRemoved.emit();
     }
 
     /**
      * Set the tooltip of the link icon to be equal to the grading instruction description text
      * @param {GradingInstruction} instruction - the instruction object which is associated with feedback
      */
-    setTooltip(instruction: GradingInstruction) {
-        return this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + instruction.instructionDescription;
+    setTooltip(instruction?: GradingInstruction) {
+        return this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + (instruction?.instructionDescription ?? '');
     }
 
     /**
