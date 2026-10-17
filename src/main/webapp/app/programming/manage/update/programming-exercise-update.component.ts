@@ -1039,7 +1039,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             if (!refresh && this.generationSaveBlocked()) return of(false);
             const sequence = ++this.generationRefreshSequence;
             this.generationRefreshPending.set(true);
-            return this.programmingExerciseService.find(exerciseId).pipe(
+            return this.programmingExerciseService.find(exerciseId, true).pipe(
                 take(1),
                 takeUntilDestroyed(this.destroyRef),
                 map((response) => {
