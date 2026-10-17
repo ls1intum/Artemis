@@ -277,6 +277,33 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSavePlagiarismCaseVerdict_messageAtMaxLength_ok() throws Exception {
+        var plagiarismVerdictDTO = new PlagiarismVerdictDTO(WARNING, "a".repeat(1000), 0);
+        var response = request.putWithResponseBody("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", plagiarismVerdictDTO,
+                PlagiarismCaseVerdictResponseDTO.class, HttpStatus.OK);
+        assertThat(response.verdictMessage()).as("should accept a 1000-character verdict message").hasSize(1000);
+        var updatedPlagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCase1.getId());
+        assertThat(updatedPlagiarismCase.getVerdictMessage()).as("should persist the 1000-character verdict message").hasSize(1000);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSavePlagiarismCaseVerdict_messageTooLong_badRequest() throws Exception {
+        // Establish a valid existing verdict and message first.
+        request.putWithResponseBody("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict",
+                new PlagiarismVerdictDTO(WARNING, "existing message", 0), PlagiarismCaseVerdictResponseDTO.class, HttpStatus.OK);
+
+        // An over-limit message is rejected before the controller body runs, so nothing is persisted.
+        request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict",
+                new PlagiarismVerdictDTO(WARNING, "a".repeat(1001), 0), HttpStatus.BAD_REQUEST);
+
+        var unchangedPlagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCase1.getId());
+        assertThat(unchangedPlagiarismCase.getVerdict()).as("verdict must stay unchanged after a rejected over-limit message").isEqualTo(PlagiarismVerdict.WARNING);
+        assertThat(unchangedPlagiarismCase.getVerdictMessage()).as("verdict message must stay unchanged after a rejected over-limit message").isEqualTo("existing message");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSavePlagiarismCaseVerdict_wrongCourse() throws Exception {
         var examPlagiarismCase = examPlagiarismCases.getFirst();
         var plagiarismVerdictDTO = new PlagiarismVerdictDTO(WARNING, "This is a warning!", 0);
