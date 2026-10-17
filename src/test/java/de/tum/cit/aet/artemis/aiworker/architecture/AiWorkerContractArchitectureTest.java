@@ -12,17 +12,30 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 
+import de.tum.cit.aet.artemis.aiworker.api.ExecutionObserver;
+import de.tum.cit.aet.artemis.aiworker.api.InteractiveSandbox;
+import de.tum.cit.aet.artemis.aiworker.api.SandboxApi;
+import de.tum.cit.aet.artemis.aiworker.api.SandboxUnavailableException;
+import de.tum.cit.aet.artemis.aiworker.api.WorkerMessageCodecApi;
+import de.tum.cit.aet.artemis.aiworker.api.WorkloadApi;
+
 /** Local execution contracts have no Spring service, model-provider or domain dependency. */
 @Tag("ArchitectureTest")
 class AiWorkerContractArchitectureTest {
 
-    private static final JavaClasses CLASSES = new ClassFileImporter().withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-            .importPackages("de.tum.cit.aet.artemis.aiworker.api", "de.tum.cit.aet.artemis.aiworker.domain", "de.tum.cit.aet.artemis.aiworker.dto");
+    private static final ClassFileImporter IMPORTER = new ClassFileImporter().withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS);
+
+    private static final JavaClasses CLASSES = IMPORTER.importPackages("de.tum.cit.aet.artemis.aiworker.domain", "de.tum.cit.aet.artemis.aiworker.dto");
+
+    private static final JavaClasses PORTABLE_API = IMPORTER.importClasses(ExecutionObserver.class, InteractiveSandbox.class, SandboxApi.class, SandboxUnavailableException.class,
+            WorkerMessageCodecApi.class, WorkloadApi.class);
 
     @Test
     void contractsAreIndependentOfImplementationsAndWorkloads() {
         noClasses().should().dependOnClassesThat().resideInAnyPackage("..hyperion..", "..aiworker.service..", "..aiworker.config..", "de.tum.cit.aet.artemis.core..",
                 "org.springframework..", "com.github.dockerjava..", "com.hazelcast..", "org.redisson..", "jakarta.persistence..").check(CLASSES);
+        noClasses().should().dependOnClassesThat().resideInAnyPackage("..hyperion..", "..aiworker.service..", "..aiworker.config..", "de.tum.cit.aet.artemis.core..",
+                "org.springframework..", "com.github.dockerjava..", "com.hazelcast..", "org.redisson..", "jakarta.persistence..").check(PORTABLE_API);
     }
 
     @Test
@@ -32,6 +45,7 @@ class AiWorkerContractArchitectureTest {
 
     @Test
     void contractImportIsNotEmpty() {
-        assertThat(CLASSES.stream().map(type -> type.getName())).contains("de.tum.cit.aet.artemis.aiworker.api.SandboxApi", "de.tum.cit.aet.artemis.aiworker.dto.SandboxPolicyDTO");
+        assertThat(PORTABLE_API.stream().map(type -> type.getName())).contains("de.tum.cit.aet.artemis.aiworker.api.SandboxApi");
+        assertThat(CLASSES.stream().map(type -> type.getName())).contains("de.tum.cit.aet.artemis.aiworker.dto.SandboxPolicyDTO");
     }
 }

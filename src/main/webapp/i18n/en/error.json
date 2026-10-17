@@ -1,5 +1,6 @@
 {
     "error": {
+        "exerciseGenerationCancellationUnavailable": "The cancellation could not be confirmed. Check the current run status, then try again.",
         "title": "Error page!",
         "http": {
             "400": "Bad request.",
