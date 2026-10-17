@@ -552,6 +552,7 @@ public class FileResource {
                 unit -> authorizationCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
                 .toList();
 
+        attachmentApi.ensureStudentVersionsAvailable(lectureAttachments);
         unitApi.setCompletedForAllLectureUnits(lectureAttachments, user, true);
 
         // Modified to use studentVersion if available
@@ -712,6 +713,7 @@ public class FileResource {
         // check if hidden link is available in the attachment
         String studentVersion = attachment.getStudentVersion();
         if (studentVersion == null) {
+            api.ensureStudentVersionAvailable(attachmentVideoUnitId);
             return buildAttachmentFileResponse(storedFileLocationElseThrow(attachment), downloadFilename, AttachmentCachePolicy.PRIVATE_ONE_DAY, requestHeaders);
         }
 

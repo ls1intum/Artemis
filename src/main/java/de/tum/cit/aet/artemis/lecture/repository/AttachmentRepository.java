@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -15,6 +17,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.dto.AttachmentFileLocationDTO;
+import de.tum.cit.aet.artemis.lecture.dto.AttachmentStudentVersionStateDTO;
 
 /**
  * Spring Data repository for the Attachment entity.
@@ -84,6 +87,185 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
             ORDER BY attachment.id
             """)
     List<AttachmentFileLocationDTO> findAttachmentFileLocationsAfter(@Param("minimumAttachmentId") long minimumAttachmentId, Pageable pageable);
+
+    /**
+     * Stores the filename of a student version submitted together with an editor change, but only while nothing changed since the request started: the attachment still has
+     * the file the request stored and the student version reference it read at its start. A student version published in the meantime, for example one regenerated after
+     * the split or after another visibility change, is newer and stays.
+     *
+     * @param attachmentId           the id of the attachment
+     * @param studentVersionFilename the stored filename of the submitted student version
+     * @param expectedVersion        the version of the file the request stored
+     * @param expectedSha256Hash     the hash of that file
+     * @param expectedStudentVersion the stored student version value the request read at its start, or null if there was none
+     * @return 1 when stored, 0 when something changed in the meantime
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Attachment a
+            SET a.studentVersion = :studentVersionFilename
+            WHERE a.id = :attachmentId
+                AND (a.version = :expectedVersion OR (:expectedVersion IS NULL AND a.version IS NULL))
+                AND (a.sha256Hash = :expectedSha256Hash OR (:expectedSha256Hash IS NULL AND a.sha256Hash IS NULL))
+                AND (a.studentVersion = :expectedStudentVersion OR (:expectedStudentVersion IS NULL AND a.studentVersion IS NULL))
+            """)
+    int updateStudentVersionIfUnchangedSince(@Param("attachmentId") long attachmentId, @Param("studentVersionFilename") String studentVersionFilename,
+            @Param("expectedVersion") Integer expectedVersion, @Param("expectedSha256Hash") String expectedSha256Hash,
+            @Param("expectedStudentVersion") String expectedStudentVersion);
+
+    /**
+     * Stores the filename of a student version submitted together with an editor change, under the conditions of {@link #updateStudentVersionIfUnchangedSince}, and only
+     * while the split that change scheduled has not completed: while no current slide exists, or a current slide still belongs to another file revision. Once the split has
+     * completed, the student version regenerated from its slides is authoritative, even when a later visibility change set the reference back to what the request read.
+     *
+     * @param attachmentId           the id of the attachment
+     * @param attachmentVideoUnitId  the id of its attachment video unit
+     * @param studentVersionFilename the stored filename of the submitted student version
+     * @param expectedVersion        the version of the file the request stored
+     * @param expectedSha256Hash     the hash of that file
+     * @param expectedStudentVersion the stored student version value the request read at its start, or null if there was none
+     * @return 1 when stored, 0 otherwise
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Attachment a
+            SET a.studentVersion = :studentVersionFilename
+            WHERE a.id = :attachmentId
+                AND (a.version = :expectedVersion OR (:expectedVersion IS NULL AND a.version IS NULL))
+                AND (a.sha256Hash = :expectedSha256Hash OR (:expectedSha256Hash IS NULL AND a.sha256Hash IS NULL))
+                AND (a.studentVersion = :expectedStudentVersion OR (:expectedStudentVersion IS NULL AND a.studentVersion IS NULL))
+                AND (
+                    NOT EXISTS (
+                        SELECT s.id
+                        FROM Slide s
+                        WHERE s.attachmentVideoUnit.id = :attachmentVideoUnitId
+                            AND s.superseded = FALSE
+                    )
+                    OR EXISTS (
+                        SELECT s.id
+                        FROM Slide s
+                        WHERE s.attachmentVideoUnit.id = :attachmentVideoUnitId
+                            AND s.superseded = FALSE
+                            AND (COALESCE(s.attachmentVersion, -1) <> COALESCE(:expectedVersion, -1)
+                                OR COALESCE(s.attachmentSha256Hash, '') <> COALESCE(:expectedSha256Hash, ''))
+                    )
+                )
+            """)
+    int updateSubmittedStudentVersionWhileSplitPending(@Param("attachmentId") long attachmentId, @Param("attachmentVideoUnitId") long attachmentVideoUnitId,
+            @Param("studentVersionFilename") String studentVersionFilename, @Param("expectedVersion") Integer expectedVersion,
+            @Param("expectedSha256Hash") String expectedSha256Hash, @Param("expectedStudentVersion") String expectedStudentVersion);
+
+    /**
+     * Removes the student version reference, but only while the attachment still points at the given file and still has the given file version and hash. A caller that
+     * replaced the file therefore never removes the student version of a newer file stored by a later request.
+     *
+     * @param attachmentId                   the id of the attachment
+     * @param expectedStudentVersionFilename the stored filename the caller wants to remove
+     * @param expectedVersion                the version of the file the caller stored or loaded
+     * @param expectedSha256Hash             the hash of that file
+     * @return the number of updated attachments
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Attachment a
+            SET a.studentVersion = NULL
+            WHERE a.id = :attachmentId
+                AND a.studentVersion = :expectedStudentVersionFilename
+                AND (a.version = :expectedVersion OR (:expectedVersion IS NULL AND a.version IS NULL))
+                AND (a.sha256Hash = :expectedSha256Hash OR (:expectedSha256Hash IS NULL AND a.sha256Hash IS NULL))
+            """)
+    int clearStudentVersionOfFileIfUnchanged(@Param("attachmentId") long attachmentId, @Param("expectedStudentVersionFilename") String expectedStudentVersionFilename,
+            @Param("expectedVersion") Integer expectedVersion, @Param("expectedSha256Hash") String expectedSha256Hash);
+
+    /**
+     * Reads the stored student version reference and the file version of an attachment.
+     *
+     * @param attachmentId the id of the attachment
+     * @return the state, or empty if the attachment does not exist
+     */
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.AttachmentStudentVersionStateDTO(a.studentVersion, a.version, a.sha256Hash)
+            FROM Attachment a
+            WHERE a.id = :attachmentId
+            """)
+    Optional<AttachmentStudentVersionStateDTO> findStudentVersionStateById(@Param("attachmentId") long attachmentId);
+
+    /**
+     * Stores a regenerated student version, but only while everything it was generated from is unchanged: the attachment still has the same file version and student
+     * version reference, the current slide deck hides exactly the given slides, and every current slide was split from that file. The check and the write are one statement, so a
+     * regeneration that ran on an older state
+     * does not replace a newer student version or show a slide hidden in the meantime; the caller discards its file and starts over instead.
+     *
+     * @param attachmentId             the id of the attachment
+     * @param attachmentVideoUnitId    the id of its attachment video unit
+     * @param newStudentVersion        the stored filename of the regenerated student version
+     * @param expectedVersion          the file version the student version was generated from
+     * @param expectedSha256Hash       the hash of that file
+     * @param expectedStudentVersion   the stored student version value the regeneration started from, or null if there was none
+     * @param expectedHiddenSlideIds   the ids of the hidden slides that were left out; never empty
+     * @param expectedHiddenSlideCount the number of those slides
+     * @return 1 when stored, 0 when something changed
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Attachment a
+            SET a.studentVersion = :newStudentVersion
+            WHERE a.id = :attachmentId
+                AND (a.version = :expectedVersion OR (:expectedVersion IS NULL AND a.version IS NULL))
+                AND (a.sha256Hash = :expectedSha256Hash OR (:expectedSha256Hash IS NULL AND a.sha256Hash IS NULL))
+                AND (a.studentVersion = :expectedStudentVersion OR (:expectedStudentVersion IS NULL AND a.studentVersion IS NULL))
+                AND (
+                    SELECT COUNT(s.id)
+                    FROM Slide s
+                    WHERE s.attachmentVideoUnit.id = :attachmentVideoUnitId
+                        AND s.hidden IS NOT NULL
+                        AND s.superseded = FALSE
+                ) = :expectedHiddenSlideCount
+                AND NOT EXISTS (
+                    SELECT s.id
+                    FROM Slide s
+                    WHERE s.attachmentVideoUnit.id = :attachmentVideoUnitId
+                        AND s.hidden IS NOT NULL
+                        AND s.superseded = FALSE
+                        AND s.id NOT IN :expectedHiddenSlideIds
+                )
+                AND NOT EXISTS (
+                    SELECT s.id
+                    FROM Slide s
+                    WHERE s.attachmentVideoUnit.id = :attachmentVideoUnitId
+                        AND s.superseded = FALSE
+                        AND (COALESCE(s.attachmentVersion, -1) <> COALESCE(:expectedVersion, -1)
+                            OR COALESCE(s.attachmentSha256Hash, '') <> COALESCE(:expectedSha256Hash, ''))
+                )
+            """)
+    int publishStudentVersionIfUnchanged(@Param("attachmentId") long attachmentId, @Param("attachmentVideoUnitId") long attachmentVideoUnitId,
+            @Param("newStudentVersion") String newStudentVersion, @Param("expectedVersion") Integer expectedVersion, @Param("expectedSha256Hash") String expectedSha256Hash,
+            @Param("expectedStudentVersion") String expectedStudentVersion, @Param("expectedHiddenSlideIds") Collection<Long> expectedHiddenSlideIds,
+            @Param("expectedHiddenSlideCount") long expectedHiddenSlideCount);
+
+    /**
+     * Removes the student version reference, but only if the attachment still points at the given file.
+     * <p>
+     * Student version filenames are unique per write, so a concurrent writer that has published a newer student version changes the value and this statement matches nothing.
+     * The caller must delete the old file only when this returns 1.
+     *
+     * @param attachmentId                   the id of the attachment
+     * @param expectedStudentVersionFilename the stored filename the caller wants to remove
+     * @return the number of updated attachments
+     */
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Attachment a
+            SET a.studentVersion = NULL
+            WHERE a.id = :attachmentId
+                AND a.studentVersion = :expectedStudentVersionFilename
+            """)
+    int clearStudentVersionIfUnchanged(@Param("attachmentId") long attachmentId, @Param("expectedStudentVersionFilename") String expectedStudentVersionFilename);
 
     /**
      * Update an attachment's display page numbers unconditionally: for a calling run whose processing
