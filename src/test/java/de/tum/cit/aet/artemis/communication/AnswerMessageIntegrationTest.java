@@ -25,6 +25,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -1025,6 +1026,45 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         // Verifying a reply is not the creation of a reply: the token is not expanded to the members of the group chat, only the explicit mention is notified.
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(notificationRecipientIds(3, savedAnswerPost.getId())).containsExactly(mentionedMember.getId()));
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = "Corrected Iris answer")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void shouldPreserveAnswerAndErrorWhenVerificationUsesAnotherCourse(String editedContent) throws Exception {
+        Course otherCourse = courseUtilService.createEnrolledCourseWithMessagingEnabled(TEST_PREFIX);
+        Channel channel = conversationUtilService.createCourseWideChannel(otherCourse, "verify-course-guard");
+        Post parent = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+        User irisBot = userUtilService.createAndSaveUser(User.IRIS_BOT_LOGIN);
+        AnswerPost answer = createAnswerPost(parent);
+        answer.setAuthor(irisBot);
+        answer.setVerified(false);
+        AnswerPost savedAnswer = answerPostRepository.save(answer);
+        String originalContent = savedAnswer.getContent();
+        ZonedDateTime originalUpdatedDate = savedAnswer.getUpdatedDate();
+
+        String wrongCoursePath = "/api/communication/courses/" + courseId + "/answer-messages/" + savedAnswer.getId() + "/verify";
+        var response = request.patchWithoutResponseBody(wrongCoursePath, new VerifyAnswerMessageDTO(editedContent), HttpStatus.BAD_REQUEST);
+        var error = request.getObjectMapper().readTree(response.getContentAsString());
+        assertThat(error.path("errorKey").asString()).isEqualTo("invalidCourse");
+        assertThat(error.path("title").asString()).isEqualTo("Answer message does not belong to the specified course");
+        assertThat(error.path("entityName").asString()).isEqualTo("messages.answerPost");
+
+        AnswerPost unchanged = answerPostRepository.findById(savedAnswer.getId()).orElseThrow();
+        assertThat(unchanged.isVerified()).isFalse();
+        assertThat(unchanged.getVerifiedBy()).isNull();
+        assertThat(unchanged.getVerifiedAt()).isNull();
+        assertThat(unchanged.getContent()).isEqualTo(originalContent);
+        assertThat(unchanged.getUpdatedDate()).isEqualTo(originalUpdatedDate);
+
+        String correctCoursePath = "/api/communication/courses/" + otherCourse.getId() + "/answer-messages/" + savedAnswer.getId() + "/verify";
+        request.patchWithResponseBody(correctCoursePath, new VerifyAnswerMessageDTO(editedContent), AnswerMessageDTO.class, HttpStatus.OK);
+        AnswerPost verified = answerPostRepository.findById(savedAnswer.getId()).orElseThrow();
+        assertThat(verified.isVerified()).isTrue();
+        assertThat(verified.getVerifiedBy()).isNotNull();
+        assertThat(verified.getVerifiedAt()).isNotNull();
+        assertThat(verified.getContent()).isEqualTo(editedContent == null ? originalContent : editedContent);
     }
 
     private Conversation nameGroupChat(Conversation groupChat, String name) {
