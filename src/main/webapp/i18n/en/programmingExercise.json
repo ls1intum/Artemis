@@ -62,6 +62,7 @@
                     "branch": "Branch",
                     "dockerFlags": "Docker Flags",
                     "theiaImage": "Online IDE Image",
+                    "onlineIdeExperienceLevel": "Online IDE Experience Level",
                     "postDueDateHandling": "Post Due Date Handling",
                     "assignmentCheckoutPath": "Assignment Checkout Path",
                     "solutionCheckoutPath": "Solution Checkout Path",
@@ -273,6 +274,16 @@
                 "title": "Configuration for Online IDE",
                 "noImageAvailable": "The Online IDE is not yet available for this programming language.",
                 "alert": "A valid configuration for the Online IDE must be selected."
+            },
+            "onlineIdeExperienceLevel": {
+                "title": "Starting experience level in the Online IDE",
+                "notSet": "Not set (Artemis adds no configuration)",
+                "description": "Students start at this experience level when they open the exercise in the Online IDE. Artemis writes it into .vscode/eduide.json of every student repository it creates from the template, replacing a file of the template at that path. If not set, Artemis adds no file: students start at the level in the template's own .vscode/eduide.json if it has one, otherwise at the Online IDE's default level. Students can still choose another level, and repositories that already exist are not changed.",
+                "levels": {
+                    "BEGINNER": "Beginner",
+                    "ADVANCED": "Advanced",
+                    "EXPERT": "Expert"
+                }
             },
             "appName": "App Name",
             "templateResult": "Template Result",
