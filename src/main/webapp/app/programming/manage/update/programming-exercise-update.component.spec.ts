@@ -432,7 +432,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             if (state === 'failed') {
                 const retry = fixture.debugElement.query(By.css('[data-testid="hyperion-settings-retry-status"]'));
                 expect(retry).toBeTruthy();
-                expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.hyperion.generationActivity.statusUnavailable"]'))).toBeTruthy();
+                expect(fixture.debugElement.query(By.css('[jhiTranslate="artemisApp.hyperion.generation.run.statusUnavailable"]'))).toBeTruthy();
                 retry.nativeElement.click();
                 expect(activity.retryStatus).toHaveBeenCalledOnce();
                 activity.statusLoadFailed.set(false);
