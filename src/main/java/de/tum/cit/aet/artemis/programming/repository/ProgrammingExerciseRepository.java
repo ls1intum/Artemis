@@ -1086,13 +1086,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     @Modifying
     @Transactional // ok because the update attaches the base repositories atomically
-    @Query(value = """
-            UPDATE exercise
-            SET test_repository_url = :#{#exercise.testRepositoryUri},
-                template_participation_id = :#{#exercise.templateParticipation.id},
-                solution_participation_id = :#{#exercise.solutionParticipation.id}
-            WHERE id = :#{#exercise.id} AND discriminator = 'P'
-            """, nativeQuery = true)
+    @Query("""
+            UPDATE ProgrammingExercise exercise
+            SET exercise.testRepositoryUri = :#{#exercise.testRepositoryUri},
+                exercise.templateParticipation = :#{#exercise.templateParticipation},
+                exercise.solutionParticipation = :#{#exercise.solutionParticipation}
+            WHERE exercise.id = :#{#exercise.id}
+            """)
     void updateRepositoryMetadataForCreation(@Param("exercise") ProgrammingExercise exercise);
 
     /**

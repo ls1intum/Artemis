@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisCategoryDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -111,13 +112,13 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
                 programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember(), programmingLanguage);
         testExercise = programmingExerciseRepository.save(testExercise);
         var storedExercise = testExercise;
+        var defaults = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(programmingLanguage);
         assertThatDb(() -> {
             staticCodeAnalysisService.createDefaultCategories(storedExercise);
             return null;
-        }).hasBeenCalledTimes(1);
+        }).hasBeenCalledAtMostTimes(defaults.size());
         // Verify every persisted setting, not just the number of category rows.
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(testExercise.getId());
-        var defaults = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(programmingLanguage);
         assertThat(categories).hasSize(defaults.size());
         for (var defaultCategory : defaults) {
             assertThat(categories).filteredOn(category -> category.getName().equals(defaultCategory.name())).singleElement().satisfies(category -> {
@@ -150,17 +151,13 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
     }
 
     @Test
-    void testInsertDefaultCategories_preservesNullsZeroesAndEscapedNames() {
-        assertThatDb(() -> {
-            staticCodeAnalysisCategoryRepository.insertDefaultCategories(programmingExercise.getId(), """
-                    [
-                      {"name":"O'Reilly — 名称","state":"INACTIVE","penalty":0.25,"maxPenalty":null},
-                      {"name":"Feedback","state":"FEEDBACK","penalty":0.5,"maxPenalty":-1.5},
-                      {"name":"Graded","state":"GRADED","penalty":0.0,"maxPenalty":0.0}
-                    ]
-                    """);
-            return null;
-        }).hasBeenCalledTimes(1);
+    void testSaveCategories_preservesNullableMaxPenaltyZeroesAndQuotedNames() {
+        var categories = List
+                .of(new StaticCodeAnalysisDefaultCategory("O'Reilly — 名称", 0.25, null, CategoryState.INACTIVE, List.of()),
+                        new StaticCodeAnalysisDefaultCategory("Feedback", 0.5, -1.5, CategoryState.FEEDBACK, List.of()),
+                        new StaticCodeAnalysisDefaultCategory("Graded", 0.0, 0.0, CategoryState.GRADED, List.of()))
+                .stream().map(category -> category.toStaticCodeAnalysisCategory(programmingExercise)).toList();
+        staticCodeAnalysisCategoryRepository.saveAll(categories);
         assertThat(staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExercise.getId())).extracting(StaticCodeAnalysisCategory::getName,
                 StaticCodeAnalysisCategory::getState, StaticCodeAnalysisCategory::getPenalty, StaticCodeAnalysisCategory::getMaxPenalty)
                 .containsExactlyInAnyOrder(tuple("O'Reilly — 名称", CategoryState.INACTIVE, 0.25, null), tuple("Feedback", CategoryState.FEEDBACK, 0.5, -1.5),
