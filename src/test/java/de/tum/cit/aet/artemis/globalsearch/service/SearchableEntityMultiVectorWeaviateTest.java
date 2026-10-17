@@ -113,7 +113,7 @@ class SearchableEntityMultiVectorWeaviateTest {
         weaviateService = new WeaviateService(Optional.of(client), properties(model), new MockEnvironment());
         var vectorWriter = new SearchableEntityVectorWriter(weaviateService, embeddingClient);
         searchService = new SearchableEntityWeaviateService(weaviateService, mock(WeaviateOutboxRepository.class), resolver, JsonObjectMapper.get(),
-                new SearchableEntityContentHasher(JsonObjectMapper.get()), mock(ApplicationEventPublisher.class), vectorWriter, embeddingClient);
+                new SearchableEntityContentHasher(JsonObjectMapper.get()), mock(ApplicationEventPublisher.class), vectorWriter, embeddingClient, Runnable::run);
     }
 
     private SearchableEntityIndexRebuildService rebuildService(String model) {

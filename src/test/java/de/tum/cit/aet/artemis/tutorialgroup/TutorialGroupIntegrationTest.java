@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -492,6 +494,88 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     @Nested
     class UpdateTutorialGroupTests {
+
+        @ParameterizedTest
+        @ValueSource(strings = { "tutorgroup-tg-mo-13", "tutorgroup-tg-mo-137", "tutorgroup-tg-mo-13-7" })
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void update_withUnchangedTitle_preservesChannelName(String channelName) throws Exception {
+            firstCourseChannel1.setName(channelName);
+            channelRepository.saveAndFlush(firstCourseChannel1);
+            var update = new CreateOrUpdateTutorialGroupRequestDTO(firstCourseTutorialGroup1.getTitle(), firstCourseTutor2.getId(), "English", false, "Garching", 15,
+                    "Updated information.", null);
+
+            for (int i = 0; i < 2; i++) {
+                request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), update,
+                        HttpStatus.NO_CONTENT);
+                var updatedGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(firstCourseTutorialGroup1.getId());
+                var updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup1.getId()).orElseThrow();
+                assertThat(updatedGroup.getTitle()).isEqualTo(firstCourseTutorialGroup1.getTitle());
+                assertThat(updatedGroup.getTeachingAssistant()).isEqualTo(firstCourseTutor2);
+                assertThat(updatedChannel.getId()).isEqualTo(firstCourseChannel1.getId());
+                assertThat(updatedChannel.getName()).isEqualTo(channelName);
+            }
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void update_withTrailingWhitespaceInUnchangedTitle_preservesChannelName() throws Exception {
+            firstCourseChannel1.setName("tutorgroup-custom-name-7");
+            channelRepository.saveAndFlush(firstCourseChannel1);
+            var update = new CreateOrUpdateTutorialGroupRequestDTO(firstCourseTutorialGroup1.getTitle() + "  ", firstCourseTutor2.getId(), "English", false, "Garching", 15,
+                    "Updated information.", null);
+
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), update,
+                    HttpStatus.NO_CONTENT);
+
+            var updatedGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(firstCourseTutorialGroup1.getId());
+            assertThat(updatedGroup.getTitle()).isEqualTo(firstCourseTutorialGroup1.getTitle());
+            assertThat(updatedGroup.getTeachingAssistant()).isEqualTo(firstCourseTutor2);
+            assertThat(tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup1.getId()).orElseThrow().getName()).isEqualTo("tutorgroup-custom-name-7");
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void update_withTrailingWhitespaceInDuplicateTitle_rejectsUpdate() throws Exception {
+            var update = new CreateOrUpdateTutorialGroupRequestDTO(firstCourseTutorialGroup2.getTitle() + "  ", firstCourseTutor2.getId(), "English", false, "Garching", 15,
+                    "Updated information.", null);
+
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), update,
+                    HttpStatus.BAD_REQUEST);
+
+            assertThat(tutorialGroupTestRepository.findByIdElseThrow(firstCourseTutorialGroup1.getId()).getTitle()).isEqualTo(firstCourseTutorialGroup1.getTitle());
+            assertThat(tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup1.getId()).orElseThrow().getName()).isEqualTo(firstCourseChannel1.getName());
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void update_withTitleCollidingWithAnotherChannel_addsSuffix() throws Exception {
+            var otherChannel = tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup2.getId()).orElseThrow();
+            otherChannel.setName("tutorgroup-renamed");
+            channelRepository.saveAndFlush(otherChannel);
+            var update = new CreateOrUpdateTutorialGroupRequestDTO("Renamed", firstCourseTutor1.getId(), "English", false, "Garching", 15, "Updated information.", null);
+
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), update,
+                    HttpStatus.NO_CONTENT);
+
+            var updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup1.getId()).orElseThrow();
+            assertThat(updatedChannel.getName()).matches("tutorgroup-renamed-[0-9]+").hasSizeLessThanOrEqualTo(30);
+            assertThat(channelRepository.findByIdElseThrow(otherChannel.getId()).getName()).isEqualTo("tutorgroup-renamed");
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void update_withTitleNormalizingToCurrentChannelName_doesNotAddSuffix() throws Exception {
+            var title = firstCourseTutorialGroup1.getTitle().toUpperCase(Locale.ROOT);
+            var channelName = "tutorgroup-" + title.replaceAll("\\s", "-").toLowerCase(Locale.ROOT);
+            firstCourseChannel1.setName(channelName);
+            channelRepository.saveAndFlush(firstCourseChannel1);
+            var update = new CreateOrUpdateTutorialGroupRequestDTO(title, firstCourseTutor1.getId(), "English", false, "Garching", 15, "Updated information.", null);
+
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), update,
+                    HttpStatus.NO_CONTENT);
+
+            assertThat(tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup1.getId()).orElseThrow().getName()).isEqualTo(channelName);
+        }
 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")

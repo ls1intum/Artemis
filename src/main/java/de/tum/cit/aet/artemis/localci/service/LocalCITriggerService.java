@@ -76,6 +76,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     public static final int TESTCOURSE_PRIORITY_PENALTY = 5;
 
+    // The durable job identifier preserves the restricted policy when a missing job is reconstructed from the database.
+    static final String RESTRICTED_BUILD_PREFIX = "hyperion-sync-";
+
     private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
 
     private final DistributedDataAccessService distributedDataAccessService;
@@ -185,12 +188,18 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo) throws LocalCIException {
-        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, 0, SharedBuildTriggerData.NONE);
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, 0, SharedBuildTriggerData.NONE, false);
+    }
+
+    @Override
+    public void triggerRestrictedBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo) throws LocalCIException {
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, false, 0, SharedBuildTriggerData.NONE, true);
     }
 
     public void retryBuildJob(BuildJob buildJob, ProgrammingExerciseParticipation participation) throws LocalCIException {
         log.info("Retrying build for missing build job with id {} (retry count: {})", buildJob.getBuildJobId(), buildJob.getRetryCount() + 1);
-        triggerBuild(participation, buildJob.getCommitHash(), buildJob.getTriggeredByPushTo(), buildJob.getRetryCount() + 1);
+        triggerBuild(participation, buildJob.getCommitHash(), buildJob.getTriggeredByPushTo(), false, buildJob.getRetryCount() + 1, SharedBuildTriggerData.NONE,
+                buildJob.getBuildJobId().startsWith(RESTRICTED_BUILD_PREFIX));
     }
 
     /**
@@ -208,6 +217,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll, int retryCount,
             SharedBuildTriggerData sharedData) throws LocalCIException {
+        triggerBuild(participation, commitHashToBuild, triggeredByPushTo, triggerAll, retryCount, sharedData, false);
+    }
+
+    private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll, int retryCount,
+            SharedBuildTriggerData sharedData, boolean restricted) throws LocalCIException {
 
         log.info("Triggering build for participation {} and commit hash {}", participation.getId(), commitHashToBuild);
 
@@ -255,7 +269,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         ZonedDateTime submissionDate = ZonedDateTime.now();
 
-        String buildJobId = String.valueOf(participation.getId()) + submissionDate.toInstant().toEpochMilli();
+        String buildJobId = (restricted ? RESTRICTED_BUILD_PREFIX : "") + participation.getId() + submissionDate.toInstant().toEpochMilli();
 
         var programmingExerciseBuildConfig = sharedData.resolved() ? sharedData.buildConfig() : loadBuildConfig(programmingExercise);
 
@@ -268,7 +282,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
         RepositoryInfo repositoryInfo = getRepositoryInfo(participation, triggeredByPushTo, programmingExerciseBuildConfig);
 
-        BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig);
+        BuildConfig buildConfig = getBuildConfig(participation, commitHashToBuild, assignmentCommitHash, testCommitHash, programmingExerciseBuildConfig, restricted);
 
         BuildAgentDTO buildAgent = new BuildAgentDTO(null, null, null);
 
@@ -379,7 +393,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     }
 
     private BuildConfig getBuildConfig(ProgrammingExerciseParticipation participation, String commitHashToBuild, String assignmentCommitHash, String testCommitHash,
-            ProgrammingExerciseBuildConfig buildConfig) throws LocalCIException {
+            ProgrammingExerciseBuildConfig buildConfig, boolean restricted) throws LocalCIException {
         String branch = participation instanceof ProgrammingExerciseStudentParticipation studentParticipation ? studentParticipation.getBranch() : buildConfig.getBranch();
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
         ProgrammingLanguage programmingLanguage = programmingExercise.getProgrammingLanguage();
@@ -403,8 +417,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         final String configuredDockerImage = container == null ? buildPlanPhasesDTO.dockerImage() : container.dockerImage();
         final String dockerImage = configuredDockerImage == null ? buildPhasesTemplateService.getDefaultDockerImageFor(programmingExercise) : configuredDockerImage;
         // the container's Docker flags override the exercise's for its job, see BuildContainerDockerFlagsDTO
-        final DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise,
+        DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig, programmingExercise,
                 container == null ? null : container.dockerFlags());
+        if (restricted) {
+            dockerRunConfig = restrictedRunConfig(dockerRunConfig);
+        }
 
         final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(phases, participation);
 
@@ -436,6 +453,11 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             return container.timeoutSeconds();
         }
         return Math.min(container.timeoutSeconds(), exerciseTimeoutSeconds);
+    }
+
+    static DockerRunConfig restrictedRunConfig(@Nullable DockerRunConfig original) {
+        return original == null ? new DockerRunConfig(List.of(), "none", 0, 0, 0)
+                : new DockerRunConfig(List.of(), "none", original.cpuCount(), original.memory(), original.memorySwap());
     }
 
     private List<String> finalizeResultPaths(final ProgrammingExerciseBuildConfig buildConfig, final Stream<String> resultPaths) {

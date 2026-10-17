@@ -1,5 +1,6 @@
 {
     "error": {
+        "exerciseGenerationCancellationUnavailable": "Der Abbruch konnte nicht bestätigt werden. Prüfe den aktuellen Status des Laufs und versuche es erneut.",
         "title": "Fehlerseite!",
         "http": {
             "400": "Ungültige Anfrage.",

@@ -302,20 +302,6 @@ public class PyrisWebhookService {
     }
 
     /**
-     * send the updated / created faqs to Pyris for ingestion if autoLecturesUpdate is enabled.
-     *
-     * @param newFaq the new faqs to be sent to pyris for ingestion
-     */
-    public void autoUpdateFaqInPyris(Faq newFaq) {
-        var course = newFaq.getCourse();
-        var settings = irisSettingsService.getSettingsForCourse(course);
-
-        if (settings.enabled()) {
-            addFaq(newFaq);
-        }
-    }
-
-    /**
      * adds the faq to Pyris.
      *
      * @param faq The faq that will be added to pyris
@@ -324,7 +310,7 @@ public class PyrisWebhookService {
     public String addFaq(Faq faq) {
         if (irisSettingsService.isEnabledForCourse(faq.getCourse())) {
             return executeFaqAdditionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(),
-                    faq.getCourse().getTitle(), faq.getCourse().getDescription(), faq.computeContentFingerprint()), faq.getCourse());
+                    faq.getCourse().getTitle(), faq.getCourse().getDescription(), faq.computeContentFingerprint()));
         }
         return null;
     }
@@ -333,30 +319,17 @@ public class PyrisWebhookService {
      * executes the faq addition webhook to add faq to the vector database on pyris
      *
      * @param toUpdateFaq The faq that got Updated as webhook DTO
-     * @param course      The course of the faq
      * @return jobToken if the job was created else null
      */
 
-    private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq, Course course) {
+    private String executeFaqAdditionWebhook(PyrisFaqWebhookDTO toUpdateFaq) {
         String jobToken = pyrisJobService.addFaqIngestionWebhookJob(toUpdateFaq.courseId(), toUpdateFaq.faqId());
-        var settings = irisSettingsService.getSettingsForCourse(course);
-        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, settings.variant().jsonValue(),
-                settings.supportLevel().jsonValue());
+        // FAQ ingestion has its own pipeline, which supports only the default variant. The course variant selects the chat pipeline.
+        PyrisPipelineExecutionSettingsDTO settingsDTO = new PyrisPipelineExecutionSettingsDTO(jobToken, null, artemisBaseUrl, "default", IrisSupportLevel.MODERATE.jsonValue());
         PyrisWebhookFaqIngestionExecutionDTO executionDTO = new PyrisWebhookFaqIngestionExecutionDTO(toUpdateFaq, settingsDTO);
         pyrisConnectorService.executeFaqAdditionWebhook(toUpdateFaq, executionDTO);
         return jobToken;
 
-    }
-
-    /**
-     * delete the faqs in pyris
-     *
-     * @param faq The faqs that gets erased
-     * @return jobToken if the job was created
-     */
-    public String deleteFaq(Faq faq) {
-        return executeFaqDeletionWebhook(new PyrisFaqWebhookDTO(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCourse().getId(), faq.getCourse().getTitle(),
-                faq.getCourse().getDescription(), null));
     }
 
     /**

@@ -59,6 +59,8 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectMessage;
 import de.tum.cit.aet.artemis.core.service.messaging.WebsocketBrokerReconnectionService.ControlAction;
 import de.tum.cit.aet.artemis.hyperion.service.codegeneration.HyperionCodeGenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.persistence.ExerciseGenerationBaseline;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
 /**
@@ -105,9 +107,11 @@ class DistributedDataSurfaceTest {
      * distributed topics and map/queue notification topics.
      */
     private static final List<Class<?>> DECLARED_ROOTS = List.of(BuildJobQueueItem.class, ResultQueueItem.class, BuildAgentInformation.class, Feature.class,
-            BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, OIDCExchangeCodeService.ExchangeCodeEntry.class,
-            AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class, PublicKeyCredentialCreationOptionsDTO.class, QueueItemEvent.class,
-            MapItemEvent.class, PerNodeCacheEviction.class, WebsocketBrokerReconnectMessage.class);
+            BuildAgentAddressInfo.class, ClusterNodeInfo.class, HyperionCodeGenerationJobService.JobInfo.class, GenerationJobService.JobInfo.class,
+            de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationLiveSaveService.LiveSaveSlot.class, GenerationJobService.JobTranscript.class,
+            GenerationJobService.JobFileChangeIndex.class, GenerationJobService.JobArtifacts.class, ExerciseGenerationBaseline.class,
+            OIDCExchangeCodeService.ExchangeCodeEntry.class, AtlasAgentSessionCacheService.MessagePreviewData.class, ContentChangeAccumulator.class,
+            PublicKeyCredentialCreationOptionsDTO.class, QueueItemEvent.class, MapItemEvent.class, PerNodeCacheEviction.class, WebsocketBrokerReconnectMessage.class);
 
     /**
      * Where the {@link PyrisJob} implementations live. The {@code pyris-job-map} stores them polymorphically, so the
@@ -121,8 +125,15 @@ class DistributedDataSurfaceTest {
      * Stored types this package cannot name directly, because they are package-private where they are declared.
      * Loaded by name so that they are still covered rather than quietly left out.
      */
+    // Hyperion and AI Worker use new map/topic names; aiworker-presence never reads the retired Hyperion worker maps.
+    // JobInfo is a JDK-serialized map value: the added cancellation flag defaults to false in older streams.
+    // Upgrade only after draining generation slots and stopping all writers (see the Hyperion admin guide);
+    // mixed writers could discard this decision even though the record remains readable. No positional type changed.
     private static final List<String> ROOTS_BY_NAME = List.of("de.tum.cit.aet.artemis.atlas.service.CompetencyOrchestrationService$RunInfo",
-            "de.tum.cit.aet.artemis.iris.service.pyris.IrisCommandCoordinationService$AckMessage");
+            "de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationCancelHooks$CancelRequest",
+            "de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationJobReplayStore$JobUsage",
+            "de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.HyperionGenerationBudgetService$TokenBudgetReservation",
+            "de.tum.cit.aet.artemis.aiworker.service.WorkerRegistryService$Presence", "de.tum.cit.aet.artemis.iris.service.pyris.IrisCommandCoordinationService$AckMessage");
 
     /**
      * Cache annotations that can write a method's return value. {@link Caching} is included because it may wrap either
