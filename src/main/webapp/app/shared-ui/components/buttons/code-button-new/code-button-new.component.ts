@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, resource } from '@angular/core';
+import { Component, type ResourceParamsContext, computed, inject, input, resource } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleExclamation, faCircleNotch, faCode } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
@@ -18,6 +18,7 @@ import { Observable } from 'rxjs';
 import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { User } from 'app/account/user/user.model';
 
 type CodeButtonLoadingState =
     { status: 'loading' } | { status: 'error' } | { status: 'complete'; authenticationMethodData: NonEmptyArray<AuthenticationMethodData>; preferredIde: Ide };
@@ -49,15 +50,12 @@ export class CodeButtonNewComponent {
 
     protected readonly loadingState = computed(() => this.getLoadingState());
 
+    private readonly userResource = resource({ loader: () => this.loadUser() });
+
     private readonly authenticationMethodDataResource = resource({
-        params: () => ({
-            exerciseId: this.exerciseId(),
-            isInCourseManagement: this.isInCourseManagement(),
-            repositoryUri: this.repositoryUri(),
-            vcsAccessTokenData: this.vcsAccessTokenData(),
-        }),
+        params: ({ chain }) => this.getAuthenticationMethodDataParams(chain),
         loader: ({ params }) => {
-            return this.loadAuthenticationMethodData(params.exerciseId, params.isInCourseManagement, params.repositoryUri, params.vcsAccessTokenData);
+            return this.loadAuthenticationMethodData(params.login, params.exerciseId, params.isInCourseManagement, params.repositoryUri, params.vcsAccessTokenData);
         },
     });
 
@@ -80,14 +78,36 @@ export class CodeButtonNewComponent {
         }
     }
 
+    private async loadUser(): Promise<User> {
+        const user = await this.accountService.identity();
+        if (!user) {
+            throw new Error('Incomplete user data');
+        }
+        return user;
+    }
+
+    private getAuthenticationMethodDataParams(chain: ResourceParamsContext['chain']) {
+        const user = chain(this.userResource);
+        if (!user) {
+            throw new Error('Resolved user resource contained no user');
+        }
+        return {
+            login: user.login,
+            exerciseId: this.exerciseId(),
+            isInCourseManagement: this.isInCourseManagement(),
+            repositoryUri: this.repositoryUri(),
+            vcsAccessTokenData: this.vcsAccessTokenData(),
+        };
+    }
+
     private async loadAuthenticationMethodData(
+        login: string | undefined,
         exerciseId: number,
         isInCourseManagement: boolean,
         repositoryUri: string,
         vcsAccessTokenData: VcsAccessTokenData,
     ): Promise<NonEmptyArray<AuthenticationMethodData>> {
         const authenticationMethods = this.getAuthenticationMethods();
-        const login = await this.getLoginIfRequired(authenticationMethods);
 
         const authenticationMethodData = await Promise.all(
             authenticationMethods.map((authenticationMethod) => {
@@ -106,22 +126,6 @@ export class CodeButtonNewComponent {
         return authenticationMechanismStrings.filter((method): method is RepositoryAuthenticationMethod =>
             Object.values(RepositoryAuthenticationMethod).includes(method as RepositoryAuthenticationMethod),
         );
-    }
-
-    private async getLoginIfRequired(authenticationMethods: RepositoryAuthenticationMethod[]): Promise<string | undefined> {
-        const requiresLogin = authenticationMethods.some((authenticationMethod) => {
-            return authenticationMethod === RepositoryAuthenticationMethod.Token || authenticationMethod === RepositoryAuthenticationMethod.Password;
-        });
-        if (requiresLogin) {
-            const user = await this.accountService.identity();
-            const login = user?.login;
-            if (!login) {
-                throw new Error('Incomplete token or password authentication data');
-            }
-            return login;
-        } else {
-            return undefined;
-        }
     }
 
     private async getAuthenticationMethodData(
