@@ -1,4 +1,4 @@
-import { Component, type ResourceParamsContext, computed, inject, input, resource } from '@angular/core';
+import { Component, type ResourceParamsContext, type ResourceSnapshot, computed, inject, input, resource, resourceFromSnapshots } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleExclamation, faCircleNotch, faCode } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
@@ -61,10 +61,12 @@ export class CodeButtonNewComponent {
         loader: ({ params }) => this.getToken(params.exerciseId, params.isInCourseManagement, params.vcsAccessTokenData),
     });
 
+    private readonly tokenUrlResource = resourceFromSnapshots(() => this.getTokenUrlSnapshot());
+
     private readonly authenticationMethodDataResource = resource({
         params: ({ chain }) => this.getAuthenticationMethodDataParams(chain),
         loader: ({ params }) => {
-            return this.loadAuthenticationMethodData(params.repositoryUri, params.login, params.token);
+            return this.loadAuthenticationMethodData(params.repositoryUri, params.login, params.tokenUrl);
         },
     });
 
@@ -100,23 +102,48 @@ export class CodeButtonNewComponent {
         if (!user) {
             throw new Error('Resolved user resource contained no user');
         }
-        const token = chain(this.tokenResource);
-        if (!token) {
-            throw new Error('Resolved token resource contained no token');
+        const tokenUrl = chain(this.tokenUrlResource);
+        if (!tokenUrl) {
+            throw new Error('Resolved token URL resource contained no URL');
         }
         return {
             repositoryUri: this.repositoryUri(),
             login: user.login,
-            token,
+            tokenUrl,
         };
     }
 
-    private async loadAuthenticationMethodData(repositoryUri: string, login: string | undefined, token: string): Promise<NonEmptyArray<AuthenticationMethodData>> {
+    private getTokenUrlSnapshot(): ResourceSnapshot<string | undefined> {
+        const userSnapshot = this.userResource.snapshot();
+        const tokenSnapshot = this.tokenResource.snapshot();
+
+        if (userSnapshot.status === 'error' || tokenSnapshot.status === 'error') {
+            return userSnapshot.status === 'error' ? userSnapshot : tokenSnapshot;
+        }
+        if (userSnapshot.status === 'loading' || userSnapshot.status === 'reloading' || tokenSnapshot.status === 'loading' || tokenSnapshot.status === 'reloading') {
+            return { status: 'loading', value: undefined };
+        }
+        if (userSnapshot.status === 'idle' || tokenSnapshot.status === 'idle') {
+            return { status: 'idle', value: undefined };
+        }
+
+        const login = userSnapshot.value?.login;
+        const token = tokenSnapshot.value;
+        if (!login || !token) {
+            return { status: 'error', error: new Error('Incomplete token URL data') };
+        }
+
+        const credentials = `://${login}:${token}@`;
+        const url = this.insertCredentialsIntoUrl(this.repositoryUri(), credentials);
+        return { status: 'resolved', value: url };
+    }
+
+    private async loadAuthenticationMethodData(repositoryUri: string, login: string | undefined, tokenUrl: string): Promise<NonEmptyArray<AuthenticationMethodData>> {
         const authenticationMethods = this.getAuthenticationMethods();
 
         const authenticationMethodData = await Promise.all(
             authenticationMethods.map((authenticationMethod) => {
-                return this.getAuthenticationMethodData(authenticationMethod, repositoryUri, login, token);
+                return this.getAuthenticationMethodData(authenticationMethod, repositoryUri, login, tokenUrl);
             }),
         );
         if (authenticationMethodData.length === 0) {
@@ -137,13 +164,13 @@ export class CodeButtonNewComponent {
         authenticationMethod: RepositoryAuthenticationMethod,
         repositoryUri: string,
         login: string | undefined,
-        token: string,
+        tokenUrl: string,
     ): Promise<AuthenticationMethodData> {
         switch (authenticationMethod) {
             case RepositoryAuthenticationMethod.SSH:
                 return this.getSshAuthenticationMethodData(repositoryUri);
             case RepositoryAuthenticationMethod.Token:
-                return this.getTokenAuthenticationMethodData(repositoryUri, this.requireLogin(login), token);
+                return this.getTokenAuthenticationMethodData(tokenUrl);
             case RepositoryAuthenticationMethod.Password:
                 return this.getPasswordAuthenticationMethodData(repositoryUri, this.requireLogin(login));
         }
@@ -203,13 +230,10 @@ export class CodeButtonNewComponent {
         return login;
     }
 
-    private getTokenAuthenticationMethodData(repositoryUri: string, login: string, token: string): AuthenticationMethodData {
-        const credentials = `://${login}:${token}@`;
-        const url = this.insertCredentialsIntoUrl(repositoryUri, credentials);
-
+    private getTokenAuthenticationMethodData(tokenUrl: string): AuthenticationMethodData {
         return {
             authenticationMethod: RepositoryAuthenticationMethod.Token,
-            url,
+            url: tokenUrl,
         };
     }
 
