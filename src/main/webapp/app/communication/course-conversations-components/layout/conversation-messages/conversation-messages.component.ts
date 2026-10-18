@@ -138,6 +138,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     searchText = '';
     readonly _activeConversation = signal<ConversationDTO | undefined>(undefined);
     readonly onNavigateToPost = output<Posting>();
+    readonly forwardedMessagesLoaded = output<Post[]>();
 
     elementsAtScrollPosition: PostingThreadComponent[] = [];
     readonly newPost = signal<Post | undefined>(undefined);
@@ -566,6 +567,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                         const { fetchedPosts, fetchedAnswerPosts } = this.extractFetchedSources(responses);
                         this.posts.set(this.attachForwardedMessages(this.posts(), forwardedMessagesMap, fetchedPosts, fetchedAnswerPosts));
                         this.groupPosts(preparationId);
+                        this.forwardedMessagesLoaded.emit(this.posts());
                         if (this.createdNewMessage) {
                             this.scrollToBottomOfMessages();
                             this.createdNewMessage = false;

@@ -7,6 +7,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { PostComponent } from 'app/communication/post/post.component';
 import { MessageReplyInlineInputComponent } from 'app/communication/message/message-reply-inline-input/message-reply-inline-input.component';
 import { Post } from 'app/communication/shared/entities/post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { post } from 'test/helpers/sample/communication-sample-data';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
@@ -119,6 +120,32 @@ describe('ConversationThreadSidebarComponent', () => {
 
         const replyInput = fixture.debugElement.query(By.directive(MessageReplyInlineInputComponent));
         expect(replyInput.componentInstance.activeConversation()).toBe(conversation);
+    });
+
+    it('should pass forwarded messages to the post shown in the thread', () => {
+        const activePost = new Post();
+        activePost.forwardedPosts = [{ id: 10, content: 'Original message' }];
+        activePost.forwardedAnswerPosts = [{ id: 11, content: 'Original reply' }];
+        fixture.componentRef.setInput('activePost', activePost);
+        fixture.detectChanges();
+
+        const threadPost: PostComponent = fixture.debugElement.query(By.directive(PostComponent)).componentInstance;
+        expect(threadPost.forwardedPosts()).toEqual(activePost.forwardedPosts);
+        expect(threadPost.forwardedAnswerPosts()).toEqual(activePost.forwardedAnswerPosts);
+    });
+
+    it('should forward navigation from the thread to the original message', () => {
+        fixture.componentRef.setInput('activePost', new Post());
+        fixture.detectChanges();
+        const threadPost: PostComponent = fixture.debugElement.query(By.directive(PostComponent)).componentInstance;
+        const originalReply = new AnswerPost();
+        originalReply.id = 11;
+        let destination: Post | AnswerPost | undefined;
+        component.onNavigateToPost.subscribe((post: Post | AnswerPost) => (destination = post));
+
+        threadPost.onNavigateToPost.emit(originalReply);
+
+        expect(destination).toBe(originalReply);
     });
 
     it('should not show the reply input in read only mode', () => {

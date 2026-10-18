@@ -1,3 +1,4 @@
+import { By } from '@angular/platform-browser';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 import { MarkdownDirective } from 'app/foundation/directives/markdown.directive';
@@ -42,7 +43,7 @@ import { CourseSidebarService } from 'app/course/overview/services/course-sideba
 import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channels-create-dialog.component';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
-import { ElementRef, signal } from '@angular/core';
+import { ElementRef, computed, signal } from '@angular/core';
 import {
     ChannelAction,
     ChannelsOverviewDialogComponent,
@@ -269,6 +270,27 @@ examples.forEach((activeConversation) => {
             component.ngOnDestroy();
             vi.useRealTimers();
             vi.resetAllMocks();
+        });
+
+        it('should refresh an already open thread after its forwarded sources finish loading', () => {
+            activeConversation$.next({ id: 5, type: ConversationType.CHANNEL });
+            fixture.detectChanges();
+            const openedPost = new Post();
+            openedPost.id = 42;
+            openedPost.conversation = { id: 5 };
+            component.postInThread.set(openedPost);
+            fixture.detectChanges();
+            const sidebar = fixture.debugElement.query(By.directive(ConversationThreadSidebarComponent));
+            const forwardedContent = computed(() => sidebar.componentInstance.activePost()?.forwardedPosts?.[0]?.content);
+            expect(forwardedContent()).toBeUndefined();
+
+            // Forwarded sources arrive after the user opened the bare wrapper in the thread.
+            openedPost.forwardedPosts = [{ id: 43, content: 'Loaded forwarded message' }];
+            fixture.debugElement.query(By.directive(ConversationMessagesComponent)).triggerEventHandler('forwardedMessagesLoaded', [openedPost]);
+            fixture.detectChanges();
+
+            expect(sidebar.componentInstance.activePost()).not.toBe(openedPost);
+            expect(forwardedContent()).toBe('Loaded forwarded message');
         });
 
         it('should have service set up', () => {

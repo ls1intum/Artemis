@@ -20,6 +20,7 @@ import { MockCommunicationService } from 'test/helpers/mocks/service/mock-commun
 describe('ForwardedMessageComponent', () => {
     let component: ForwardedMessageComponent;
     let fixture: ComponentFixture<ForwardedMessageComponent>;
+    let resizeObservers: { callback: ResizeObserverCallback; observer: ResizeObserver }[];
 
     const mockPost: Post = {
         id: 1,
@@ -35,11 +36,25 @@ describe('ForwardedMessageComponent', () => {
 
     beforeEach(() => {
         vi.useFakeTimers();
+        resizeObservers = [];
+        vi.stubGlobal(
+            'ResizeObserver',
+            class implements ResizeObserver {
+                observe = vi.fn();
+                unobserve = vi.fn();
+                disconnect = vi.fn();
+
+                constructor(callback: ResizeObserverCallback) {
+                    resizeObservers.push({ callback, observer: this });
+                }
+            },
+        );
     });
 
     afterEach(() => {
         vi.useRealTimers();
         vi.restoreAllMocks();
+        vi.unstubAllGlobals();
     });
 
     beforeEach(async () => {
@@ -290,10 +305,80 @@ describe('ForwardedMessageComponent', () => {
         expect(component.isContentLong()).toBe(false);
     });
 
-    it('should call checkIfContentOverflows in ngAfterViewInit', () => {
-        const spy = vi.spyOn(component, 'checkIfContentOverflows');
-        component.ngAfterViewInit();
+    it('should offer expansion when markdown finishes rendering after the initial height check', () => {
+        fixture.detectChanges();
         vi.advanceTimersByTime(0);
-        expect(spy).toHaveBeenCalled();
+        const body = fixture.nativeElement.querySelector('#messageContent');
+        Object.defineProperty(body, 'scrollHeight', { value: 400, configurable: true });
+        Object.defineProperty(body, 'clientHeight', { value: 100, configurable: true });
+
+        for (const { callback, observer } of resizeObservers) {
+            callback([], observer);
+        }
+        fixture.detectChanges();
+
+        const expandButton = fixture.nativeElement.querySelector('button');
+        expect(expandButton).not.toBeNull();
+        expandButton.click();
+        fixture.detectChanges();
+        expect(body.classList.contains('expanded')).toBe(true);
+
+        // Once expanded, the preview no longer overflows, but the collapse control must remain available.
+        Object.defineProperty(body, 'clientHeight', { value: 400, configurable: true });
+        for (const { callback, observer } of resizeObservers) {
+            callback([], observer);
+        }
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('button')).not.toBeNull();
+        fixture.nativeElement.querySelector('button').click();
+        fixture.detectChanges();
+        expect(body.classList.contains('expanded')).toBe(false);
+    });
+
+    it('should detect long content when the forwarded source arrives after the component is initialized', () => {
+        fixture.componentRef.setInput('originalPostDetails', undefined);
+        fixture.detectChanges();
+        vi.advanceTimersByTime(0);
+        fixture.componentRef.setInput('originalPostDetails', { content: 'Long content arriving asynchronously' });
+        fixture.detectChanges();
+        const body = fixture.nativeElement.querySelector('#messageContent');
+        Object.defineProperty(body, 'scrollHeight', { value: 400, configurable: true });
+        Object.defineProperty(body, 'clientHeight', { value: 100, configurable: true });
+
+        for (const { callback, observer } of resizeObservers) {
+            callback([], observer);
+        }
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('button')).not.toBeNull();
+    });
+
+    it('should keep expansion available when the forwarded source is replaced by content of the same size', () => {
+        const source = { id: 17, content: 'Refetched long source' };
+        fixture.componentRef.setInput('originalPostDetails', source);
+        fixture.detectChanges();
+        const body = fixture.nativeElement.querySelector('#messageContent');
+        Object.defineProperty(body, 'scrollHeight', { value: 400, configurable: true });
+        Object.defineProperty(body, 'clientHeight', { value: 100, configurable: true });
+        for (const { callback, observer } of resizeObservers) {
+            callback([], observer);
+        }
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('button')).not.toBeNull();
+
+        // The source can be refetched without changing either observed box's dimensions.
+        fixture.componentRef.setInput('originalPostDetails', { ...source });
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('button')).not.toBeNull();
+    });
+
+    it('should stop observing forwarded content after the component is destroyed', () => {
+        fixture.detectChanges();
+        expect(resizeObservers.length).toBeGreaterThan(0);
+        const { observer } = resizeObservers[0];
+        fixture.destroy();
+
+        expect(observer.disconnect).toHaveBeenCalledOnce();
     });
 });

@@ -1,4 +1,20 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, OnInit, Renderer2, effect, inject, input, model, output, signal, untracked, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    HostListener,
+    OnDestroy,
+    OnInit,
+    Renderer2,
+    computed,
+    effect,
+    inject,
+    input,
+    model,
+    output,
+    signal,
+    untracked,
+    viewChild,
+} from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import { CommunicationService } from 'app/communication/service/communication.service';
@@ -94,7 +110,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     readonly mayDelete = signal(false);
     readonly canPin = signal(false);
     readonly canMarkAsUnread = signal(false);
-    readonly originalPostDetails = signal<Post | AnswerPost | undefined>(undefined);
     readonly onNavigateToPost = output<Posting>();
 
     // Icons
@@ -113,21 +128,16 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     forwardedAnswerPosts = input<(AnswerPost | undefined)[]>([]);
     readonly course = signal<Course>(undefined!);
 
-    readonly hasOriginalPostBeenDeleted = signal<boolean>(undefined!);
+    readonly originalPostDetails = computed(() => (this.forwardedAnswerPosts().length ? this.forwardedAnswerPosts()[0] : this.forwardedPosts()[0]));
+    readonly hasOriginalPostBeenDeleted = computed(
+        () =>
+            (this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined) ||
+            (this.forwardedAnswerPosts().length > 0 && this.forwardedAnswerPosts()[0] === undefined),
+    );
 
     constructor() {
         super();
         this.course.set(this.communicationService.getCourse() ?? throwError(() => new Error('Course not found')));
-        // Reactive check: if forwarded post/answer is deleted, update flag
-        effect(() => {
-            const forwardedPosts = this.forwardedPosts();
-            const forwardedAnswerPosts = this.forwardedAnswerPosts();
-            untracked(() => {
-                const hasDeletedForwardedPost = forwardedPosts.length > 0 && forwardedPosts[0] === undefined;
-                const hasDeletedForwardedAnswerPost = forwardedAnswerPosts.length > 0 && forwardedAnswerPosts[0] === undefined;
-                this.hasOriginalPostBeenDeleted.set(hasDeletedForwardedAnswerPost || hasDeletedForwardedPost);
-            });
-        });
         // Track posting signal changes (replaces ngOnChanges)
         effect(() => {
             this.posting();
@@ -289,7 +299,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
         this.updateShowSearchResultInAnswersHint();
         this.sortAnswerPosts();
         this.assignPostingToPost();
-        this.fetchForwardedMessages();
     }
 
     updateShowSearchResultInAnswersHint() {
@@ -318,22 +327,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
                 return answerContent?.includes(searchQuery);
             }) ?? false,
         );
-    }
-
-    /**
-     * Sets originalPostDetails if forwarded post or forwarded answer post exists.
-     */
-    fetchForwardedMessages(): void {
-        try {
-            if (this.forwardedPosts().length > 0) {
-                this.originalPostDetails.set(this.forwardedPosts()[0]);
-            }
-            if (this.forwardedAnswerPosts().length > 0) {
-                this.originalPostDetails.set(this.forwardedAnswerPosts()[0]);
-            }
-        } catch (error) {
-            throw new Error(String(error), { cause: error });
-        }
     }
 
     /**
