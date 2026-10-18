@@ -18,6 +18,7 @@ import { Observable } from 'rxjs';
 import { CourseBrowserData } from '../model/course-browser-data';
 import { IndexedEntityRecord } from '../model/indexed-entity-record';
 import { IndexedContentObject } from '../model/indexed-content-object';
+import { appendQueryParam } from './query-params';
 
 @Injectable({ providedIn: 'root' })
 export class IngestionBrowserApi {
@@ -42,9 +43,7 @@ export class IngestionBrowserApi {
      */
     getIndexedEntityRecords(courseId: number, type: string): Observable<Array<IndexedEntityRecord>> {
         const queryParams = new URLSearchParams();
-        if (type !== undefined && type !== null) {
-            queryParams.set('type', String(type));
-        }
+        appendQueryParam(queryParams, 'type', type);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/global-search/admin/courses/${courseId}/entities${queryString ? `?${queryString}` : ''}`;
         return this.http.get<Array<IndexedEntityRecord>>(url);
@@ -59,9 +58,7 @@ export class IngestionBrowserApi {
      */
     getUnitContent(courseId: number, unitId: number, key: string): Observable<Array<IndexedContentObject>> {
         const queryParams = new URLSearchParams();
-        if (key !== undefined && key !== null) {
-            queryParams.set('key', String(key));
-        }
+        appendQueryParam(queryParams, 'key', key);
         const queryString = queryParams.toString();
         const url = `${this.basePath}/api/global-search/admin/courses/${courseId}/units/${unitId}/content${queryString ? `?${queryString}` : ''}`;
         return this.http.get<Array<IndexedContentObject>>(url);

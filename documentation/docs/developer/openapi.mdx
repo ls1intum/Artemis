@@ -44,6 +44,8 @@ This command:
 
 - Prunes the specs file to only include DTO-only endpoints
 - Generates the client files based on the OpenAPI spec
-- Post-processes generated files: converts `oneOf` schemas into TypeScript union types, serializes DTO multipart request parts, names binary multipart parts after their files, and returns the full `HttpResponse` for operations that declare a response header, so callers can read it
+- Post-processes generated files: removes unused imports and strips the numeric suffixes that duplicate operation ids leave in method names
+
+The generator returns the full `HttpResponse` for operations that declare a response header (`observeResponseHeaders`), so callers can read it.
 
 The generated client files are stored in the `src/main/webapp/app/openapi` directory.

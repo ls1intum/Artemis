@@ -7,6 +7,7 @@ api/hyperion-faq-api.ts
 api/hyperion-problem-statement-api.ts
 api/hyperion-quiz-question-generation-api.ts
 api/ingestion-browser-api.ts
+api/query-params.ts
 api/quiz-exercise-api.ts
 api/quiz-exercise-batch-api.ts
 api/quiz-exercise-creation-update-api.ts
