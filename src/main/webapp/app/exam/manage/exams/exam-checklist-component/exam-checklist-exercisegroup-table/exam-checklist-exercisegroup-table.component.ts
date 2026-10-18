@@ -1,7 +1,7 @@
 import { Component, effect, input, signal } from '@angular/core';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExerciseGroupColumn, ExerciseGroupVariantColumn } from 'app/exam/shared/entities/exercise-group-variant-column.model';
+import { ExerciseGroupColumn, ExerciseGroupVariantColumn } from 'app/exam/shared/entities/exercise-group-column.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TumAetUiTableDirective, TumAetUiTooltipDirective } from '@tumaet/ui-angular';

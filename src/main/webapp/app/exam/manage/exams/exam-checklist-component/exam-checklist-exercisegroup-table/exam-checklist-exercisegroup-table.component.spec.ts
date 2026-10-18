@@ -10,12 +10,12 @@ import { ProgressBarComponent } from 'app/exercise/dashboards/tutor-participatio
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
-import { ExerciseGroupVariantColumn } from 'app/exam/shared/entities/exercise-group-variant-column.model';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ExerciseGroupColumn } from 'app/exam/shared/entities/exercise-group-variant-column.model';
 
 @Component({
     template: '',
@@ -100,39 +100,41 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
         it('should set properties false', () => {
             examChecklistComponentFixture.componentRef.setInput('exerciseGroups', getExerciseGroups(false));
             examChecklistComponentFixture.detectChanges();
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()).toHaveLength(2);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[0].indexExerciseGroup).toBe(1);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[0].indexExercise).toBe(1);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[0].exerciseGroupPointsEqual).toBe(false);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[0].exerciseTitle).toBe('A');
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[0].exerciseMaxPoints).toBe(50);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[0].exerciseNumberOfParticipations).toBe(23);
+            expect(examChecklistExerciseGroupTableComponent.exerciseGroupColumns()).toHaveLength(1);
+            const group = examChecklistExerciseGroupTableComponent.exerciseGroupColumns()[0];
+            expect(group.indexExerciseGroup).toBe(1);
+            expect(group.exerciseGroupPointsEqual).toBe(false);
+            expect(group.variants).toHaveLength(2);
+            expect(group.variants[0].indexExercise).toBe(1);
+            expect(group.variants[0].exerciseTitle).toBe('A');
+            expect(group.variants[0].exerciseMaxPoints).toBe(50);
+            expect(group.variants[0].exerciseNumberOfParticipations).toBe(23);
 
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[1].indexExerciseGroup).toBeUndefined();
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[1].indexExercise).toBe(2);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[1].exerciseGroupPointsEqual).toBeUndefined();
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[1].exerciseTitle).toBe('B');
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[1].exerciseMaxPoints).toBe(101);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[1].exerciseNumberOfParticipations).toBe(22);
+            expect(group.variants[1].indexExercise).toBe(2);
+            expect(group.variants[1].exerciseTitle).toBe('B');
+            expect(group.variants[1].exerciseMaxPoints).toBe(101);
+            expect(group.variants[1].exerciseNumberOfParticipations).toBe(22);
         });
 
         it('should set properties true', () => {
             examChecklistComponentFixture.componentRef.setInput('exerciseGroups', getExerciseGroups(true));
             examChecklistComponentFixture.detectChanges();
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()).not.toHaveLength(0);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[0].indexExerciseGroup).toBe(1);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[0].indexExercise).toBe(1);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[0].exerciseGroupPointsEqual).toBe(true);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[0].exerciseTitle).toBe('A');
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[0].exerciseMaxPoints).toBe(101);
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()[0].exerciseNumberOfParticipations).toBe(23);
+            expect(examChecklistExerciseGroupTableComponent.exerciseGroupColumns()).toHaveLength(1);
+            const group = examChecklistExerciseGroupTableComponent.exerciseGroupColumns()[0];
+            expect(group.indexExerciseGroup).toBe(1);
+            expect(group.exerciseGroupPointsEqual).toBe(true);
+            expect(group.variants).not.toHaveLength(0);
+            expect(group.variants[0].indexExercise).toBe(1);
+            expect(group.variants[0].exerciseTitle).toBe('A');
+            expect(group.variants[0].exerciseMaxPoints).toBe(101);
+            expect(group.variants[0].exerciseNumberOfParticipations).toBe(23);
         });
 
         it('should reset group variant columns first', () => {
-            examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns.set([{} as ExerciseGroupVariantColumn]);
+            examChecklistExerciseGroupTableComponent.exerciseGroupColumns.set([{} as ExerciseGroupColumn]);
             examChecklistComponentFixture.componentRef.setInput('exerciseGroups', []);
             examChecklistComponentFixture.detectChanges();
-            expect(examChecklistExerciseGroupTableComponent.exerciseGroupVariantColumns()).toEqual([]);
+            expect(examChecklistExerciseGroupTableComponent.exerciseGroupColumns()).toEqual([]);
         });
     });
 });
