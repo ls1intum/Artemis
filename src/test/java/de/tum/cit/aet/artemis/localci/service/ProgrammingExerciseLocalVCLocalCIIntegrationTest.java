@@ -1188,6 +1188,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         assertThat(createdExercise.getTemplateParticipation().getId()).isEqualTo(response.templateParticipation().id());
         assertThat(createdExercise.getSolutionParticipation().getId()).isEqualTo(response.solutionParticipation().id());
         var storedAuxiliaryRepositories = auxiliaryRepositoryRepository.findByExerciseId(createdExercise.getId());
+        assertThat(storedAuxiliaryRepositories).hasSize(newExercise.getAuxiliaryRepositories().size());
         for (var storedRepository : storedAuxiliaryRepositories) {
             assertThat(response.auxiliaryRepositories()).anySatisfy(repository -> {
                 assertThat(repository.id()).isEqualTo(storedRepository.getId());

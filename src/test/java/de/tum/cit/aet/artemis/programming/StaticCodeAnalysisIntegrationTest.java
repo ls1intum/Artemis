@@ -113,6 +113,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractProgrammingIntegrationLo
         testExercise = programmingExerciseRepository.save(testExercise);
         var storedExercise = testExercise;
         var defaults = StaticCodeAnalysisConfigurer.staticCodeAnalysisConfiguration().get(programmingLanguage);
+        // JPA IDENTITY persistence inserts each category once; the cap prevents additional reads/merges, not those required inserts.
         assertThatDb(() -> {
             staticCodeAnalysisService.createDefaultCategories(storedExercise);
             return null;
