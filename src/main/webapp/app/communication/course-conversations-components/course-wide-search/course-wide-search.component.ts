@@ -100,7 +100,11 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     private subscribeToPosts() {
         this.communicationService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             if (this.currentPostContextFilter?.filterToUnresolved) {
+                // Filters the posts if the unresolved filter is active so that the post is removed from the list when it is resolved, but the post itself doesn't get closed.
                 posts = posts.filter((post) => post.resolved === false);
+                setTimeout(() => {
+                    this.totalNumberOfPosts.set(posts.length);
+                }, 10);
             }
             this.setPosts(posts);
         });
