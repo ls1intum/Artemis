@@ -8,7 +8,7 @@ import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/
 import { Post } from 'app/communication/shared/entities/post.model';
 import { CommunicationService } from 'app/communication/service/communication.service';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
-import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/communication.util';
+import { PostContextFilter, PostSortCriterion, SortDirection, USER_SCROLL_EVENTS } from 'app/communication/communication.util';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { CourseSidebarService } from 'app/course/overview/services/course-sidebar.service';
 import { NgClass } from '@angular/common';
@@ -57,7 +57,8 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     readonly SortDirection = SortDirection;
     readonly onNavigateToPost = output<Posting>();
-    readonly sortingOrder = signal(SortDirection.ASCENDING);
+    // The list shows the oldest message of a page at the top and starts at its end, so the newest page is requested first.
+    readonly sortingOrder = signal(SortDirection.DESCENDING);
 
     private ngUnsubscribe = new Subject<void>();
     readonly isFetchingPosts = signal(true);
@@ -69,6 +70,15 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     private postRequestId = 0;
     private initialScrollPositioned = false;
     private scrollFrame: number | undefined;
+    // The list starts at its end, but images load after that and push the newest messages out of view, so the end is held
+    // until the user scrolls themselves.
+    private holdsEnd = false;
+    private readonly releaseEnd = () => {
+        this.holdsEnd = false;
+    };
+    private readonly onContentLoaded = () => {
+        if (this.holdsEnd) this.scrollToBottomOfMessages();
+    };
     page = 1;
 
     formGroup!: FormGroup; // set in resetFormGroup() from ngOnInit()
@@ -84,11 +94,18 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     ngAfterViewInit() {
         this.messages$.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
+        const container = this.content()?.nativeElement;
+        // load events do not bubble, so they are caught on their way down to the image
+        container?.addEventListener('load', this.onContentLoaded, true);
+        USER_SCROLL_EVENTS.forEach((eventName) => container?.addEventListener(eventName, this.releaseEnd, { passive: true }));
     }
 
     ngOnDestroy() {
         this.postRequestId++;
         if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
+        const container = this.content()?.nativeElement;
+        container?.removeEventListener('load', this.onContentLoaded, true);
+        USER_SCROLL_EVENTS.forEach((eventName) => container?.removeEventListener(eventName, this.releaseEnd));
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
@@ -123,8 +140,10 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             if (this.pendingPageScrollDistance !== undefined) {
                 element.scrollTop = element.scrollHeight - this.pendingPageScrollDistance;
                 this.pendingPageScrollDistance = undefined;
+                this.holdsEnd = false;
             } else if (!this.initialScrollPositioned) {
                 this.scrollToBottomOfMessages();
+                this.holdsEnd = true;
             }
             this.initialScrollPositioned = true;
         });
@@ -276,5 +295,5 @@ export class CourseWideSearchConfig {
     filterToUnresolved = false;
     filterToAnsweredOrReacted = false;
     filterToUnverifiedIris = false;
-    sortingOrder = SortDirection.ASCENDING;
+    sortingOrder = SortDirection.DESCENDING;
 }

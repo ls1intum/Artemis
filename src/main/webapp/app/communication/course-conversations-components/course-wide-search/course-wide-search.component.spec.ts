@@ -61,7 +61,7 @@ describe('CourseWideSearchComponent', () => {
     courseWideSearchConfig.filterToUnresolved = false;
     courseWideSearchConfig.filterToCourseWide = false;
     courseWideSearchConfig.filterToAnsweredOrReacted = false;
-    courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
+    courseWideSearchConfig.sortingOrder = SortDirection.DESCENDING;
     courseWideSearchConfig.selectedConversations = [];
     courseWideSearchConfig.selectedAuthors = [];
 
@@ -125,6 +125,72 @@ describe('CourseWideSearchComponent', () => {
     afterEach(() => {
         vi.useRealTimers();
         vi.clearAllMocks();
+    });
+
+    describe('when images load after the list was positioned at its end', () => {
+        let container: HTMLElement;
+        let top: number;
+        let listHeight: number;
+
+        const imageLoaded = () => {
+            const image = document.createElement('img');
+            container.appendChild(image);
+            // load events do not bubble, so the component has to listen while the event travels down to the image
+            image.dispatchEvent(new Event('load'));
+        };
+
+        beforeEach(() => {
+            container = component.content()!.nativeElement;
+            top = 0;
+            listHeight = 1000;
+            Object.defineProperties(container, {
+                scrollHeight: { get: () => listHeight, configurable: true },
+                clientHeight: { get: () => 400, configurable: true },
+                scrollTop: {
+                    get: () => top,
+                    set: (value: number) => {
+                        top = Math.max(0, Math.min(value, listHeight - 400));
+                    },
+                    configurable: true,
+                },
+            });
+            // the freshly loaded posts are shown starting at the newest message
+            component.handleScrollOnNewMessage();
+            vi.runAllTimers();
+        });
+
+        it('should keep the newest message in view until the user scrolls', () => {
+            expect(top).toBe(600);
+
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+
+            container.dispatchEvent(new Event('wheel'));
+            listHeight = 2000;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it('should hold the end again for the next search', () => {
+            container.dispatchEvent(new Event('wheel'));
+            component.onSearch();
+            // the new results arrive
+            component.isFetchingPosts.set(false);
+            component.handleScrollOnNewMessage();
+            vi.runAllTimers();
+
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(1100);
+        });
+
+        it('should not follow the end after the component is destroyed', () => {
+            fixture.destroy();
+            listHeight = 1500;
+            imageLoaded();
+            expect(top).toBe(600);
+        });
     });
 
     it('should leave the oldest search result reachable when all pages are loaded', () => {
@@ -234,7 +300,7 @@ describe('CourseWideSearchComponent', () => {
             pageSize: 50,
             pagingEnabled: true,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
-            sortingOrder: SortDirection.ASCENDING,
+            sortingOrder: SortDirection.DESCENDING,
         });
     });
 
@@ -257,7 +323,7 @@ describe('CourseWideSearchComponent', () => {
             pageSize: 50,
             pagingEnabled: true,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
-            sortingOrder: SortDirection.ASCENDING,
+            sortingOrder: SortDirection.DESCENDING,
         });
     });
 
@@ -383,14 +449,20 @@ describe('CourseWideSearchComponent', () => {
     });
 
     it('should initialize sorting direction correctly', () => {
-        expect(component.courseWideSearchConfig()?.sortingOrder).toBe(SortDirection.ASCENDING);
+        expect(component.courseWideSearchConfig()?.sortingOrder).toBe(SortDirection.DESCENDING);
+    });
+
+    it('should show the newest messages first by default', () => {
+        // The list is displayed oldest to newest and starts at its end, so the page it shows must be the newest one.
+        expect(new CourseWideSearchConfig().sortingOrder).toBe(SortDirection.DESCENDING);
+        expect(component.sortingOrder()).toBe(SortDirection.DESCENDING);
     });
 
     it('should change sorting direction after clicking the order direction button', () => {
         fixture.changeDetectorRef.detectChanges();
         const selectedDirectionOption = getElement(fixture.debugElement, '.clickable');
         selectedDirectionOption.dispatchEvent(new Event('click'));
-        expect(component.courseWideSearchConfig()?.sortingOrder).toBe(SortDirection.DESCENDING);
+        expect(component.courseWideSearchConfig()?.sortingOrder).toBe(SortDirection.ASCENDING);
     });
 
     it('should change sorting direction once when a held Space key is released', () => {

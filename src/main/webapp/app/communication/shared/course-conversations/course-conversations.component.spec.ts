@@ -10,6 +10,7 @@ import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { CourseConversationsService } from 'app/communication/service/course-conversations.service';
+import { SortDirection } from 'app/communication/communication.util';
 import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared-ui/loading-indicator-container/loading-indicator-container.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
@@ -496,6 +497,12 @@ examples.forEach((activeConversation) => {
             });
             fixture.changeDetectorRef.detectChanges();
             expect(component.courseWideSearchConfig.searchTerm).toBe('test');
+        });
+
+        it('should show the newest messages of the course first when no search is active', () => {
+            fixture.detectChanges();
+            component.initializeCourseWideSearchConfig();
+            expect(component.courseWideSearchConfig.sortingOrder).toBe(SortDirection.DESCENDING);
         });
 
         it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {

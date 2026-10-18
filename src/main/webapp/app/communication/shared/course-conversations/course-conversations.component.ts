@@ -554,7 +554,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
         this.courseWideSearchConfig.filterToCourseWide = false;
         this.courseWideSearchConfig.filterToUnresolved = false;
         this.courseWideSearchConfig.filterToAnsweredOrReacted = false;
-        this.courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
+        this.courseWideSearchConfig.sortingOrder = SortDirection.DESCENDING;
         this.courseWideSearchConfig.selectedAuthors = [];
         this.courseWideSearchConfig.selectedConversations = [];
         this.commitCourseWideSearchConfig();
