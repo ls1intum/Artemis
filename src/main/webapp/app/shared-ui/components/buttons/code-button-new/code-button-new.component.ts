@@ -4,7 +4,7 @@ import { faCircleExclamation, faCircleNotch, faCode } from '@fortawesome/free-so
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { AuthenticationMethodData, CodeButtonPopoverContentComponent, NonEmptyArray, SshKeyState } from './code-button-popover-content.component';
+import { AuthenticationMethodData, CodeButtonPopoverContentComponent, NonEmptyArray, SshKeyState, TheiaLinkData } from './code-button-popover-content.component';
 import { RepositoryAuthenticationMethod, VcsAccessTokenData } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { SshUserSettingsService } from 'app/account/user/settings/ssh-settings/ssh-user-settings.service';
 import dayjs from 'dayjs/esm';
@@ -14,14 +14,17 @@ import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRout
 import { Router } from '@angular/router';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { Observable } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { User } from 'app/account/user/user.model';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 
 type CodeButtonLoadingState =
-    { status: 'loading' } | { status: 'error' } | { status: 'complete'; authenticationMethodData: NonEmptyArray<AuthenticationMethodData>; preferredIde: Ide };
+    | { status: 'loading' }
+    | { status: 'error' }
+    | { status: 'complete'; authenticationMethodData: NonEmptyArray<AuthenticationMethodData>; preferredIde: Ide; theiaLinkData: TheiaLinkData | undefined };
 
 @Component({
     selector: 'jhi-code-button-new',
@@ -46,12 +49,15 @@ export class CodeButtonNewComponent {
     readonly repositoryUri = input.required<string>();
     readonly vcsAccessTokenData = input.required<VcsAccessTokenData>();
     readonly repositoryViewLink = input.required<(string | number)[]>();
+    readonly allowOnlineIde = input.required<boolean>();
     readonly programmingLanguage = input<ProgrammingLanguage>();
 
+    private readonly theiaDisabled = computed(() => !this.allowOnlineIde() || !this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA));
     protected readonly loadingState = computed(() => this.getLoadingState());
 
-    private readonly userResource = resource({ loader: () => this.loadUser() });
-
+    private readonly userResource = resource({
+        loader: () => this.loadUser(),
+    });
     private readonly tokenResource = resource({
         params: () => ({
             exerciseId: this.exerciseId(),
@@ -60,29 +66,31 @@ export class CodeButtonNewComponent {
         }),
         loader: ({ params }) => this.getToken(params.exerciseId, params.isInCourseManagement, params.vcsAccessTokenData),
     });
-
     private readonly tokenUrlResource = resourceFromSnapshots(() => this.getTokenUrlSnapshot());
-
     private readonly authenticationMethodDataResource = resource({
         params: ({ chain }) => this.getAuthenticationMethodDataParams(chain),
         loader: ({ params }) => {
             return this.loadAuthenticationMethodData(params.repositoryUri, params.login, params.tokenUrl);
         },
     });
-
+    private readonly theiaLinkDataResource = resource({
+        params: ({ chain }) => this.getTheiaLinkDataParams(chain),
+        loader: ({ params }) => this.loadTheiaLinkData(params.exerciseId, params.theiaPortalURL, params.repositoryUrl, params.userName, params.userEmail),
+    });
     private readonly preferredIdeResource = resource({
         params: () => ({ programmingLanguage: this.programmingLanguage() }),
         loader: ({ params }) => this.loadPreferredIde(params.programmingLanguage),
     });
 
     private getLoadingState(): CodeButtonLoadingState {
-        if (this.authenticationMethodDataResource.isLoading() || this.preferredIdeResource.isLoading()) {
+        if (this.authenticationMethodDataResource.isLoading() || this.theiaLinkDataResource.isLoading() || this.preferredIdeResource.isLoading()) {
             return { status: 'loading' };
-        } else if (this.authenticationMethodDataResource.hasValue() && this.preferredIdeResource.hasValue()) {
+        } else if (this.authenticationMethodDataResource.hasValue() && this.preferredIdeResource.hasValue() && (this.theiaDisabled() || this.theiaLinkDataResource.hasValue())) {
             return {
                 status: 'complete',
                 authenticationMethodData: this.authenticationMethodDataResource.value(),
                 preferredIde: this.preferredIdeResource.value(),
+                theiaLinkData: this.theiaLinkDataResource.hasValue() ? this.theiaLinkDataResource.value() : undefined,
             };
         } else {
             return { status: 'error' };
@@ -110,6 +118,43 @@ export class CodeButtonNewComponent {
             repositoryUri: this.repositoryUri(),
             login: user.login,
             tokenUrl,
+        };
+    }
+
+    private getTheiaLinkDataParams(chain: ResourceParamsContext['chain']) {
+        if (this.theiaDisabled()) {
+            return undefined;
+        }
+
+        const theiaPortalURL = this.profileService.getProfileInfo()?.theiaPortalURL;
+        const tokenUrl = chain(this.tokenUrlResource);
+        const user = chain(this.userResource);
+        const userName = user?.name;
+        const userEmail = user?.email;
+        if (!tokenUrl || !theiaPortalURL || !userName || !userEmail) {
+            throw new Error('Incomplete Theia link data');
+        }
+
+        return {
+            exerciseId: this.exerciseId(),
+            theiaPortalURL,
+            repositoryUrl: tokenUrl,
+            userName,
+            userEmail,
+        };
+    }
+
+    private async loadTheiaLinkData(exerciseId: number, theiaPortalURL: string, repositoryUrl: string, userName: string, userEmail: string): Promise<TheiaLinkData> {
+        const theiaConfig = await firstValueFrom(this.programmingExerciseService.getTheiaConfig(exerciseId));
+        if (!theiaConfig.theiaImage) {
+            throw new Error('Incomplete Theia configuration');
+        }
+        return {
+            theiaPortalURL,
+            theiaImage: theiaConfig.theiaImage,
+            repositoryUrl,
+            userName,
+            userEmail,
         };
     }
 
@@ -294,20 +339,13 @@ export class CodeButtonNewComponent {
         }
     }
 
-    private requestToken(request: () => Observable<HttpResponse<string>>, operation: 'fetch' | 'create', tokenType: 'participation' | 'repository'): Promise<string> {
-        return new Promise((resolve, reject) => {
-            request().subscribe({
-                next: (response) => {
-                    const token = response.body;
-                    if (!token) {
-                        reject(new Error(`Unexpected error during valid ${operation} ${tokenType} token request: Server did not return token in response body.`));
-                        return;
-                    }
-                    resolve(token);
-                },
-                error: reject,
-            });
-        });
+    private async requestToken(request: () => Observable<HttpResponse<string>>, operation: 'fetch' | 'create', tokenType: 'participation' | 'repository'): Promise<string> {
+        const response = await firstValueFrom(request());
+        const token = response.body;
+        if (!token) {
+            throw new Error(`Unexpected error during valid ${operation} ${tokenType} token request: Server did not return token in response body.`);
+        }
+        return token;
     }
 
     private getPasswordAuthenticationMethodData(repositoryUri: string, login: string): AuthenticationMethodData {

@@ -19,6 +19,7 @@ import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
+import { TheiaService } from 'app/programming/shared/services/theia.service';
 
 export type NonEmptyArray<T> = readonly [T, ...T[]];
 export type SshKeyState = { status: 'missing' } | { status: 'configured'; hasExpiredKeys: boolean };
@@ -27,6 +28,7 @@ export type AuthenticationMethodData =
     | { authenticationMethod: RepositoryAuthenticationMethod.Token; url: string }
     | { authenticationMethod: RepositoryAuthenticationMethod.Password; url: string };
 type IdeLinkData = { url: SafeUrl; name: string };
+export type TheiaLinkData = { theiaPortalURL: string; theiaImage: string; repositoryUrl: string; userName: string; userEmail: string };
 
 @Component({
     selector: 'jhi-code-button-popover-content',
@@ -49,6 +51,7 @@ export class CodeButtonPopoverContentComponent {
     private readonly localStorageService = inject(LocalStorageService);
     private readonly externalCloningService = inject(ExternalCloningService);
     private readonly sanitizer = inject(DomSanitizer);
+    private readonly theiaService = inject(TheiaService);
 
     protected readonly faCaretDown = faCaretDown;
     protected readonly faCheck = faCheck;
@@ -59,9 +62,10 @@ export class CodeButtonPopoverContentComponent {
     protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
     protected readonly sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
 
-    readonly authenticationMethodData = input.required<NonEmptyArray<AuthenticationMethodData>>();
     readonly repositoryViewLink = input.required<(string | number)[]>();
+    readonly authenticationMethodData = input.required<NonEmptyArray<AuthenticationMethodData>>();
     readonly preferredIde = input.required<Ide>();
+    readonly theiaLinkData = input<TheiaLinkData>();
     protected readonly copiedRepositoryUrl = signal(false);
     protected readonly showAlternatives = signal(false);
     protected readonly selectedAuthenticationMethodData = linkedSignal(() => this.initializeSelectedAuthenticationMethodData());
@@ -71,7 +75,7 @@ export class CodeButtonPopoverContentComponent {
     protected readonly repositoryCopyUrl = computed(() => this.selectedAuthenticationMethodData().url);
     protected readonly ideLinkData = computed(() => this.getIdeLinkData());
 
-    selectAuthenticationMethod(authenticationMethodData: AuthenticationMethodData) {
+    protected selectAuthenticationMethod(authenticationMethodData: AuthenticationMethodData) {
         this.selectedAuthenticationMethodData.set(authenticationMethodData);
         this.localStorageService.store<RepositoryAuthenticationMethod>('code-button-state', authenticationMethodData.authenticationMethod);
     }
@@ -82,6 +86,16 @@ export class CodeButtonPopoverContentComponent {
         }
         this.copiedRepositoryUrl.set(true);
         setTimeout(() => this.copiedRepositoryUrl.set(false), 2000);
+    }
+
+    protected startOnlineIDE(theiaLinkData: TheiaLinkData): Promise<void> {
+        return this.theiaService.startOnlineIDE(
+            theiaLinkData.theiaPortalURL,
+            theiaLinkData.theiaImage,
+            theiaLinkData.repositoryUrl,
+            theiaLinkData.userName,
+            theiaLinkData.userEmail,
+        );
     }
 
     private initializeSelectedAuthenticationMethodData(): AuthenticationMethodData {

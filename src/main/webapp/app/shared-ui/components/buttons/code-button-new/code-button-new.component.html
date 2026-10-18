@@ -18,9 +18,10 @@
             </div>
         } @else if (state.status === 'complete') {
             <jhi-code-button-popover-content
+                [repositoryViewLink]="repositoryViewLink()"
                 [authenticationMethodData]="state.authenticationMethodData"
                 [preferredIde]="state.preferredIde"
-                [repositoryViewLink]="repositoryViewLink()"
+                [theiaLinkData]="state.theiaLinkData"
             />
         } @else {
             <div class="flex h-40 w-full flex-col items-center justify-center gap-2 text-center">
