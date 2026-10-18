@@ -157,6 +157,44 @@ describe('ConversationThreadSidebarComponent', () => {
         expect(fixture.debugElement.query(By.directive(MessageReplyInlineInputComponent))).toBeNull();
     });
 
+    it('should clear the pinned width and open-post selection when closing the thread', () => {
+        const container = component.threadContainer()!.nativeElement as HTMLElement;
+        container.style.width = '420px';
+        const close = vi.fn();
+        component.closePostThread.subscribe(close);
+        const setOpenPost = vi.spyOn(component['conversationSelectionState'], 'setOpenPostId');
+
+        component.closeThread();
+
+        expect(container.style.width).toBe('');
+        expect(close).toHaveBeenCalledExactlyOnceWith(undefined);
+        expect(setOpenPost).toHaveBeenCalledExactlyOnceWith(undefined);
+    });
+
+    it('should pin a measured thread width while preserving an explicit user width', () => {
+        const container = component.threadContainer()!.nativeElement as HTMLElement;
+        vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({ width: 420 } as DOMRect);
+
+        component['lockWidth']();
+        expect(container.style.width).toBe('420px');
+        container.style.width = '510px';
+        component['lockWidth']();
+        expect(container.style.width).toBe('510px');
+    });
+
+    it('should scroll the reply editor to the bottom of its own scroll container', () => {
+        fixture.componentRef.setInput('activePost', new Post());
+        fixture.detectChanges();
+        const body = component.scrollBody()!.nativeElement;
+        Object.defineProperty(body, 'scrollHeight', { configurable: true, value: 900 });
+        const scroll = vi.fn();
+        body.scrollTo = scroll;
+
+        component.scrollEditorIntoView();
+
+        expect(scroll).toHaveBeenCalledExactlyOnceWith({ top: 900, behavior: 'instant' });
+    });
+
     it('should set min and max width for the resizable thread section', () => {
         const expandedThreadElement = fixture.debugElement.nativeElement.querySelector('.expanded-thread');
         const minWidth = window.innerWidth * 0.3;

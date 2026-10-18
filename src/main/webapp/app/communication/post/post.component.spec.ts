@@ -495,6 +495,42 @@ describe('PostComponent', () => {
         expect(forwardedMessage.componentInstance.hasOriginalPostBeenDeleted()).toBe(true);
     });
 
+    it('should display the selected answer when an unused forwarded post is deleted', () => {
+        const answer = { id: 33, content: 'Available forwarded answer' } as AnswerPost;
+        component.posting.set(communicationPostExerciseUser1);
+        fixture.componentRef.setInput('forwardedPosts', [undefined]);
+        fixture.componentRef.setInput('forwardedAnswerPosts', [answer]);
+        fixture.detectChanges();
+
+        expect(component.originalPostDetails()).toBe(answer);
+        expect(component.hasOriginalPostBeenDeleted()).toBe(false);
+        const forwardedMessage = debugElement.query(By.directive(ForwardedMessageComponent)).componentInstance as ForwardedMessageComponent;
+        expect(forwardedMessage.originalPostDetails()).toBe(answer);
+        expect(forwardedMessage.hasOriginalPostBeenDeleted()).toBe(false);
+    });
+
+    it('should keep deletion state aligned when switching from a deleted answer to an available post', () => {
+        const post = { id: 11, content: 'Available forwarded post' } as Post;
+        component.posting.set(communicationPostExerciseUser1);
+        fixture.componentRef.setInput('forwardedPosts', [post]);
+        fixture.componentRef.setInput('forwardedAnswerPosts', [undefined]);
+        fixture.detectChanges();
+
+        expect(component.originalPostDetails()).toBeUndefined();
+        expect(component.hasOriginalPostBeenDeleted()).toBe(true);
+        let forwardedMessage = debugElement.query(By.directive(ForwardedMessageComponent)).componentInstance as ForwardedMessageComponent;
+        expect(forwardedMessage.hasOriginalPostBeenDeleted()).toBe(true);
+
+        fixture.componentRef.setInput('forwardedAnswerPosts', []);
+        fixture.detectChanges();
+
+        expect(component.originalPostDetails()).toBe(post);
+        expect(component.hasOriginalPostBeenDeleted()).toBe(false);
+        forwardedMessage = debugElement.query(By.directive(ForwardedMessageComponent)).componentInstance as ForwardedMessageComponent;
+        expect(forwardedMessage.originalPostDetails()).toBe(post);
+        expect(forwardedMessage.hasOriginalPostBeenDeleted()).toBe(false);
+    });
+
     it('should clear the forwarded preview when the original is removed', () => {
         component.posting.set(communicationPostExerciseUser1);
         fixture.componentRef.setInput('forwardedPosts', [{ id: 11, content: 'Original message' }]);

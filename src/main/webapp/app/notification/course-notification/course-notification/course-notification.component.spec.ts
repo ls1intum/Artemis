@@ -182,6 +182,26 @@ describe('CourseNotificationComponent', () => {
         expect(profilePicture).not.toBeNull();
     });
 
+    it('should use the reply author profile and decode navigation query parameters', () => {
+        const notification = createMockNotification(7, 101, 'newAnswerNotification', {
+            replyAuthorName: 'Ada Lovelace',
+            replyAuthorId: 42,
+            replyImageUrl: '/public/ada.png',
+            replyIsBot: true,
+        });
+        notification.relativeWebAppUrl = '/courses/101/messages?messageId=42&search=sorting%20algorithms&empty';
+        fixture.componentRef.setInput('courseNotification', notification);
+        fixture.detectChanges();
+
+        expect(component['authorName']()).toBe('Ada Lovelace');
+        expect(component['authorId']()).toBe(42);
+        expect(component['authorImageUrl']()).toBe('/public/ada.png');
+        expect(component['isAuthorBot']()).toBe(true);
+        expect(component['isShowProfilePicture']()).toBe(true);
+        expect(component['notificationUrl']()).toEqual({ link: ['/courses/101/messages'], queryParams: { messageId: '42', search: 'sorting algorithms', empty: '' } });
+        expect(fixture.debugElement.query(By.directive(ProfilePictureComponent))).not.toBeNull();
+    });
+
     it('should show icon when author details are not present', () => {
         const notificationWithoutAuthor = createMockNotification(1, 101);
 

@@ -129,11 +129,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
     readonly course = signal<Course>(undefined!);
 
     readonly originalPostDetails = computed(() => (this.forwardedAnswerPosts().length ? this.forwardedAnswerPosts()[0] : this.forwardedPosts()[0]));
-    readonly hasOriginalPostBeenDeleted = computed(
-        () =>
-            (this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined) ||
-            (this.forwardedAnswerPosts().length > 0 && this.forwardedAnswerPosts()[0] === undefined),
-    );
+    readonly hasOriginalPostBeenDeleted = computed(() => (this.forwardedAnswerPosts().length > 0 || this.forwardedPosts().length > 0) && this.originalPostDetails() === undefined);
 
     constructor() {
         super();
