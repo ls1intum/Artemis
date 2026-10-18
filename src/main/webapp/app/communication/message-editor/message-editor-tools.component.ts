@@ -203,8 +203,9 @@ export class MessageEditorToolsComponent {
 
     /** Keeps picker navigation from submitting the message and leaves IME confirmation unhandled. */
     protected keydown(event: Event): void {
+        // Safari may confirm a candidate after compositionend with keyCode 229 and isComposing=false.
         event.stopPropagation();
-        if (!(event instanceof KeyboardEvent) || event.isComposing || this.composing) {
+        if (!(event instanceof KeyboardEvent) || event.isComposing || this.composing || event.keyCode === 229) {
             return;
         }
         if (event.key === 'Escape') {

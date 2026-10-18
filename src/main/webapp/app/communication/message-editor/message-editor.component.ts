@@ -244,7 +244,8 @@ export class MessageEditorComponent {
 
     /** Handles editing shortcuts and completion acceptance before allowing the parent form's send shortcut to run. */
     protected keydown(event: KeyboardEvent): void {
-        if (event.isComposing || this.composing) {
+        // Safari may confirm a candidate after compositionend with keyCode 229 and isComposing=false.
+        if (event.isComposing || this.composing || event.keyCode === 229) {
             event.stopPropagation();
             return;
         }

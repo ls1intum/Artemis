@@ -706,6 +706,49 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         await expect(reopened.editor).toContainText('today!');
     });
 
+    test('creating a link preserves separate bold and italic runs through save and reopen', async ({ page, composer, communicationAPIRequests }) => {
+        const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', 'Read **bold** and *italic* next');
+        const { posting, editor } = await reopen(page, original);
+        await selectText(editor, 5, 20, 'bold and italic');
+        await posting.getByTestId('message-link-button').click();
+        await expect(posting.getByTestId('message-link-text')).toHaveValue('bold and italic');
+        await posting.getByTestId('message-link-url').fill('https://example.org/guide');
+        await posting.getByTestId('apply-message-link').click();
+        await expect(editor.locator('a strong')).toHaveText('bold');
+        await expect(editor.locator('a em')).toHaveText('italic');
+        await expectText(editor, 'Read bold and italic next');
+        const saved = await saveEdited(page, composer, posting, original);
+        expect(saved.content).toBe('Read [**bold** and *italic*](https://example.org/guide) next');
+        const reopened = await reopen(page, saved);
+        await expect(reopened.editor.locator('a')).toHaveAttribute('href', 'https://example.org/guide');
+        await expect(reopened.editor.locator('a strong')).toHaveText('bold');
+        await expect(reopened.editor.locator('a em')).toHaveText('italic');
+        await expectText(reopened.editor, 'Read bold and italic next');
+    });
+
+    test('Safari-style IME confirmation after compositionend cannot bubble to send', async ({ page, composer }) => {
+        const { editor } = composer;
+        await editor.pressSequentially('日本語');
+        await editor.dispatchEvent('compositionstart');
+        await editor.dispatchEvent('compositionend', { data: '日本語' });
+        const handled = await editor.evaluate((element) => {
+            let bubbled = false;
+            const parent = element.parentElement!;
+            const listener = () => {
+                bubbled = true;
+            };
+            parent.addEventListener('keydown', listener);
+            const enter = new KeyboardEvent('keydown', { key: 'Enter', keyCode: 229, isComposing: false, bubbles: true, cancelable: true });
+            element.dispatchEvent(enter);
+            parent.removeEventListener('keydown', listener);
+            return { bubbled, prevented: enter.defaultPrevented };
+        });
+        expect(handled).toEqual({ bubbled: false, prevented: false });
+        await expectText(editor, '日本語');
+        const saved = await send(page, composer);
+        expect(saved.content).toBe('日本語');
+    });
+
     test('editing a bold italic link URL keeps its label marks and resumes native typing outside the link', async ({ page, composer, communicationAPIRequests }) => {
         const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', 'Read [***guide***](https://example.com/old) today');
         const { posting, editor } = await reopen(page, original);

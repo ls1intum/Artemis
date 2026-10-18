@@ -661,6 +661,22 @@ describe('Formatted message composer', () => {
         expect(emit).toHaveBeenLastCalledWith('日本語');
     });
 
+    it('does not let Safari IME-confirmation Enter submit after compositionend', () => {
+        const bubbled = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', bubbled);
+        editable.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+        editable.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
+        const enter = new KeyboardEvent('keydown', { key: 'Enter', keyCode: 229, bubbles: true, cancelable: true });
+
+        editable.dispatchEvent(enter);
+
+        expect(enter.defaultPrevented).toBe(false);
+        expect(bubbled).not.toHaveBeenCalled();
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(bubbled).toHaveBeenCalledOnce();
+        fixture.nativeElement.removeEventListener('keydown', bubbled);
+    });
+
     it('owns cancellable code insertion so WebKit cannot move typing before a line break', () => {
         caretAtEnd();
         (fixture.nativeElement.querySelector('[data-testid="message-block-pre"]') as HTMLButtonElement).click();

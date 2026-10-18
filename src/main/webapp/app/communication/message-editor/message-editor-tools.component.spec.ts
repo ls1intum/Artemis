@@ -274,6 +274,26 @@ describe('Formatted message attachment and resource controls', () => {
         expect(component.picker()).toBe('slides');
     });
 
+    it('keeps the resource picker open for Safari IME-confirmation Enter after compositionend', async () => {
+        const emit = vi.spyOn(component.insert, 'emit');
+        (fixture.nativeElement.querySelector('[data-testid="message-slides-button"]') as HTMLButtonElement).click();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const input = document.querySelector('[data-testid="message-resource-search"]')!;
+        input.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+        input.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
+        const enter = new KeyboardEvent('keydown', { key: 'Enter', keyCode: 229, bubbles: true, cancelable: true });
+
+        input.dispatchEvent(enter);
+
+        expect(enter.defaultPrevented).toBe(false);
+        expect(emit).not.toHaveBeenCalled();
+        expect(component.picker()).toBe('slides');
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+        expect(emit).toHaveBeenCalledOnce();
+        expect(component.picker()).toBeUndefined();
+    });
+
     it('reports another pasted file during an upload instead of silently discarding it', async () => {
         let complete!: (value: { path: string }) => void;
         upload.mockReturnValue(

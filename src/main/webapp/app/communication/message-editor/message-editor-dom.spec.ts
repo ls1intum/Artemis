@@ -388,6 +388,29 @@ describe('Message editor editing transactions', () => {
         expect(changed).toHaveBeenLastCalledWith('Read [**guide**](https://example.org/new) next');
     });
 
+    it('keeps mixed inline marks when creating a link and after undo, redo and reload', () => {
+        editor.load('Read **bold** and *italic* next');
+        const range = document.createRange();
+        range.setStart(root.querySelector('strong')!.firstChild!, 0);
+        range.setEnd(root.querySelector('em')!.firstChild!, 6);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+
+        editor.setLink('bold and italic', 'https://example.org/guide');
+
+        expect(root.querySelector('a strong')?.textContent).toBe('bold');
+        expect(root.querySelector('a em')?.textContent).toBe('italic');
+        expect(changed).toHaveBeenLastCalledWith('Read [**bold** and *italic*](https://example.org/guide) next');
+        editor.undo();
+        expect(root.querySelector('a')).toBeNull();
+        expect(root.querySelector('strong')?.textContent).toBe('bold');
+        editor.redo();
+        expect(root.querySelector('a strong')?.textContent).toBe('bold');
+        editor.load(changed.mock.lastCall![0]);
+        expect(root.querySelector('a em')?.textContent).toBe('italic');
+        expect(root.querySelector('a')?.getAttribute('href')).toBe('https://example.org/guide');
+    });
+
     it('updates and unlinks an existing code-formatted link label without losing its formatting', () => {
         editor.load('Read [`List`](https://example.org/old) next');
         const link = root.querySelector('a')!;

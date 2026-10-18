@@ -481,7 +481,13 @@ export class MessageEditorDom {
                 this.select(caret);
             } else {
                 const link = this.element.ownerDocument.createElement('a');
-                link.textContent = label || url;
+                const selection = this.range();
+                if (!selection.collapsed && selection.toString() === label) {
+                    // A URL-only operation must preserve each selected inline mark rather than flatten the label.
+                    link.append(selection.cloneContents());
+                } else {
+                    link.textContent = label || url;
+                }
                 link.setAttribute('href', url);
                 this.replace(link);
             }
