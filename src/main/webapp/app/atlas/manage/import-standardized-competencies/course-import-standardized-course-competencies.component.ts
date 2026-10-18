@@ -53,6 +53,8 @@ export abstract class CourseImportStandardizedCourseCompetenciesComponent extend
         return this.knowledgeAreaTree();
     }
 
+    protected readonly importTitle: string = 'artemisApp.standardizedCompetency.courseImport.title';
+
     protected selectedCompetencies: StandardizedCompetencyForImport[] = [];
     protected selectedCompetency?: StandardizedCompetencyForImport;
     protected sourceString = '';

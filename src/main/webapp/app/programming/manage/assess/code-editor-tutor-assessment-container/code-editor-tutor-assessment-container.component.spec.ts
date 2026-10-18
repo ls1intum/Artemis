@@ -20,6 +20,7 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { MockRepositoryFileService } from 'test/helpers/mocks/service/mock-repository-file.service';
@@ -1105,9 +1106,20 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             fixture.changeDetectorRef.detectChanges();
         }
 
-        it('should link a tutor to the commit history of the assessed participation in the course', async () => {
+        /** A course programming exercise, assessed manually and due in the given number of days, which is what decides whether participants are anonymous. */
+        const useProgrammingExerciseDueIn = (days: number, isAtLeastEditor: boolean) => {
+            exercise.type = ExerciseType.PROGRAMMING;
+            exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+            exercise.dueDate = dayjs().add(days, 'day');
+            // the access rights are set by the account service when the participation is loaded, so the role of the user is decided there
+            vi.spyOn(accountService, 'setAccessRightsForExercise').mockImplementation((loaded) => {
+                loaded.isAtLeastEditor = isAtLeastEditor;
+            });
+        };
+
+        it('should link a tutor to the commit history of the assessed participation in the course while participants are visible', async () => {
             // a tutor is not an editor, so the "go to repository" button is not available to them
-            exercise.isAtLeastEditor = false;
+            useProgrammingExerciseDueIn(1, false);
             const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree');
 
             await renderAssessmentWithRouteParams({ courseId: 5, exerciseId: 1, submissionId: 123 });
@@ -1121,7 +1133,26 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             );
         });
 
-        it('should link to the commit history of the exam exercise when assessing an exam', async () => {
+        it('should not offer a tutor the commit history once participants are anonymous, because the server refuses it', async () => {
+            useProgrammingExerciseDueIn(-1, false);
+
+            await renderAssessmentWithRouteParams({ courseId: 5, exerciseId: 1, submissionId: 123 });
+
+            expect(comp.commitHistoryLink()).toBeUndefined();
+            expect(commitHistoryButton()).toBeNull();
+        });
+
+        it('should keep offering an editor the commit history once participants are anonymous', async () => {
+            useProgrammingExerciseDueIn(-1, true);
+
+            await renderAssessmentWithRouteParams({ courseId: 5, exerciseId: 1, submissionId: 123 });
+
+            expect(commitHistoryButton()).not.toBeNull();
+        });
+
+        it('should link an editor to the commit history of the exam exercise when assessing an exam', async () => {
+            // exam participants are always anonymous for a tutor, an editor keeps the access
+            useProgrammingExerciseDueIn(-1, true);
             const createUrlTreeSpy = vi.spyOn(router, 'createUrlTree');
 
             await renderAssessmentWithRouteParams({ courseId: 5, examId: 7, exerciseGroupId: 9, exerciseId: 1, submissionId: 123 });

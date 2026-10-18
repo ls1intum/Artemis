@@ -321,3 +321,20 @@ button.global-refinement-fab-close-button.p-button {
         background: var(--bs-danger);
     }
 }
+
+// Keep corresponding scheduling fields in the same row, including when duration controls wrap.
+.quiz-schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.5rem;
+    max-width: 66.6667%;
+
+    @media (width < 992px) {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+    }
+
+    .form-element {
+        margin-bottom: 0;
+    }
+}
