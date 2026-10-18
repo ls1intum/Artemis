@@ -16,7 +16,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { regexValidator } from 'app/shared-ui/form/shortname-validator.directive';
-import { LOGIN_PATTERN } from 'app/foundation/constants/input.constants';
+import { LOGIN_PATTERN, LTI_USER_PREFIX_MAX_LENGTH } from 'app/foundation/constants/input.constants';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
@@ -218,6 +218,18 @@ describe('Edit Course LTI Configuration Component', () => {
 
             expect(userPrefixControl).toBeDefined();
             expect(userPrefixControl.value).toBe(onlineCourseConfiguration.userPrefix);
+        });
+
+        it('should accept a user prefix up to the maximum length and reject a longer one', () => {
+            fixture.detectChanges();
+            const userPrefixControl = comp.userPrefix;
+
+            userPrefixControl.setValue('p'.repeat(LTI_USER_PREFIX_MAX_LENGTH));
+            expect(userPrefixControl.errors).toBeNull();
+
+            userPrefixControl.setValue('p'.repeat(LTI_USER_PREFIX_MAX_LENGTH + 1));
+            expect(userPrefixControl.errors?.['maxlength']).toBeDefined();
+            expect(comp.onlineCourseConfigurationForm.invalid).toBe(true);
         });
     });
 });

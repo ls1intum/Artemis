@@ -1,0 +1,160 @@
+---
+id: best-practices
+title: OpenSSF Best Practices Assessment
+sidebar_label: OpenSSF Best Practices
+---
+
+Artemis records its self-assessment in the
+[OpenSSF Best Practices project entry](https://www.bestpractices.dev/en/projects/14163).
+The [Silver criteria](https://www.bestpractices.dev/en/criteria/1?details=true) require evidence about
+project governance, documentation, builds, testing, and security. The badge is a self-assessment of
+those practices, not a security certification. OpenSSF Scorecard is a separate automated assessment;
+its fuzzing score is not a requirement to add fuzzing to Artemis to obtain Silver.
+
+## Keep the evidence with the project
+
+The repository's [`.bestpractices.json`](https://github.com/ls1intum/Artemis/blob/develop/.bestpractices.json)
+provides proposed answers and evidence links using OpenSSF's supported format. Review changes to it
+like changes to the policy or implementation it describes. Keep unknown requirements as `?`; the
+badge service ignores these placeholders rather than replacing an existing answer.
+
+After a change is merged and its evidence is publicly available, the project-entry owner can open the
+Silver edit page and choose **Save (and continue)** to run the site's automation again. Check its
+proposals against the evidence before submitting them. Repository changes alone do not update the
+public assessment or award a higher badge. Submission also accepts the site's data-license terms;
+the submitting maintainer must review those terms.
+
+Some criteria share one answer across badge levels. Changing a Gold answer can therefore affect
+Passing and Silver too. Use **Unmet** for a known gap and reserve `?` for unknown facts. Prefix a
+factual work-item comment with `// ` when it is not a justification that leaving a SHOULD unmet is
+acceptable. A SUGGESTED criterion can be considered without being met, while a stricter Gold
+requirement remains open. Verify all three levels after every submission.
+
+The main evidence is maintained in these locations:
+
+| Practice                                          | Evidence                                                                                                                            |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Governance, roles, and continuity                 | [Governance](/about/governance), named maintainers, and CODEOWNERS                                                                  |
+| At least one year of intended work and scope      | [Roadmap](/about/roadmap) and its linked project board                                                                              |
+| Architecture and security requirements            | [System design](./system-design), [trust and transparency](/about/trust), and the [security assurance case](./security-assurance)   |
+| Contributions, coding rules, and regression tests | Contribution guidelines, [development process](./development-process), and the enforcing CI workflows                               |
+| Dependencies and release verification             | Lockfiles, SBOMs, [builds and dependencies](./builds-and-dependencies), and the security policy's release-verification instructions |
+| Coverage                                          | Server JaCoCo and client Vitest reports from the same successful complete CI run                                                    |
+| Vulnerability response and credit                 | Security policy and the advisories for reports resolved during the preceding twelve months                                          |
+
+## Checks that require more than a policy link
+
+### Regression tests and statement coverage
+
+For the six-month regression-test requirement, identify the bug fixes in the interval and inspect
+their tests. A changed test filename alone does not establish regression coverage. Record the date
+range, selection method, total fixes, and the fixes that add tests or assertions. Reassess this as the
+window advances instead of reusing a historical percentage indefinitely.
+
+Use the client report's **statements** counter for the 80% statement-coverage requirement. Java's
+JaCoCo reports instruction and line coverage; state which counter supplies the server evidence. The
+README coverage badge reports a weighted **line** percentage and is not itself statement-coverage
+evidence. A filtered local test run cannot replace the reports from the complete suite.
+
+### Repeatable builds
+
+Silver asks the project to generate the same bytes from the same source and controlled build
+environment. Signed provenance describes where a build came from; it does not establish this property.
+Two invocations that reuse the first build's cached output do not establish it either.
+
+A repeatability check must regenerate the production client, compiled server, and bundled SBOMs in
+each run, pin the toolchain and dependency inputs, and compare the complete WAR's SHA-256 hashes.
+Investigate differing archive entries before marking the criterion met. Keep separate provenance
+attestations for the two executions even when their artifact hashes match.
+
+Use the optional release-build mode for this check:
+
+```sh
+test ! -d build/webapp-dist
+pnpm exec ng cache clean
+./gradlew clean bootWar -Pprod -Pwar -Psbom -Preproducible -x test --no-build-cache --rerun-tasks
+sha256sum build/libs/Artemis-*.war
+```
+
+Install the frozen dependencies before starting. Require `build/webapp-dist` to be absent before
+Gradle starts: its presence selects the prebuilt-client path during configuration instead of compiling
+the client. Copy the first WAR outside `build/` before repeating every command above. Explicitly clean
+Angular's disk cache before each run, including caches it shares with the main checkout when using
+linked Git worktrees. The configured cache normally lives under `build/angular/` and is already
+removed by `clean` in a regular checkout.
+
+Use the same source, lockfiles,
+JDK, Node, pnpm, Gradle, operating system, and environment for both runs. This mode retains revision
+information and dependency details while omitting volatile builder identity, build clocks, and SBOM
+generation commentary. The service-worker manifest uses `SOURCE_DATE_EPOCH` (seconds since the Unix
+epoch), or the latest Git commit time when it is unset, instead of the build clock. Release provenance
+must still record each actual execution separately. Tests remain a separate required release check;
+`-x test` here isolates artifact generation after those tests have passed.
+
+#### Verified build pair
+
+On 2026-10-16, two complete builds of
+[`efdb52e01c3565a12f3d9bf2816466e6b4cea5eb`](https://github.com/ls1intum/Artemis/commit/efdb52e01c3565a12f3d9bf2816466e6b4cea5eb)
+used the procedure above in the same clean checkout. Both executed all fifteen Gradle tasks and
+regenerated the client, server, and bundled SBOMs. The controlled environment was macOS 27.0.1 on
+arm64, Homebrew OpenJDK 25.0.4.1, Gradle 9.8.1, Gradle-managed Node 24.21.0, and pnpm 12.11.2.
+`SOURCE_DATE_EPOCH` was unset; the service-worker source epoch was the commit time, 1792179000 seconds.
+
+Both complete `Artemis-10.4.war` files had SHA-256:
+
+```text
+f0f91909df8831a0bfe7f5ce8a6595eed3db3ac5edabef9bce73c27da2c2547e
+```
+
+A byte comparison also found no difference. This establishes the controlled-environment Silver
+criterion for the recorded source. It does not establish Gold's independent reproducibility
+requirement or promise the same hash for a different revision or build environment. Repeat the check
+when changing the build process.
+
+### Maintainer continuity and reporter credit
+
+Repository membership alone does not prove continuity. Maintainers confirm that another active
+maintainer can manage issues, merge changes, publish releases, and recover essential accounts within
+a week if any one person becomes unavailable. Review this when responsibilities change, without
+publishing recovery secrets.
+
+The reporter-credit criterion concerns reports actually resolved during the preceding twelve months.
+A promise to credit future reports is insufficient. Review the resolved reports and their credits;
+select **N/A** only if no reports were resolved in that interval.
+
+### Contribution rights
+
+Do not mark the DCO criterion met merely because contributions use the MIT license or commits have
+cryptographic signatures. It asks for a mechanism by which contributors assert their authority to
+contribute. If the project adopts a DCO, CLA, or another mechanism, document its meaning and how it
+is applied. A new legal contribution requirement needs an explicit maintainer decision.
+
+## Progress toward Gold
+
+The [Gold criteria](https://www.bestpractices.dev/en/criteria/2?details=true) strengthen several Silver
+requirements. `.bestpractices.json` also records the Gold baseline; an unknown or unmet answer is a
+work item, not a reason to weaken the evidence. Reassess the shared criteria at the stricter level.
+For example, encrypting network communication is a SHOULD at Silver and a MUST at Gold.
+
+Work through these areas before proposing Gold:
+
+| Area                     | Next evidence or change                                                                                                                                                                                                  |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Silver                   | Publish the evidence and complete Silver first.                                                                                                                                                                          |
+| Contributor independence | Confirm two significant contributors in the preceding year are paid by unrelated organizations; profile company names alone are insufficient.                                                                            |
+| Source notices           | Inventory project-owned, third-party, and generated files; establish accurate copyright and license notices, including generator changes. Preserve third-party notices.                                                  |
+| Account protection       | Require organization-wide two-factor authentication and verify suitable second factors for repository and private-report access. Coordinate enforcement with maintainers before changing account access.                 |
+| Independent builds       | Pin a builder environment and have a separate party reproduce the artifact bytes. The controlled-environment Silver check alone is insufficient.                                                                         |
+| Coverage                 | Raise server instruction coverage (the Java statement proxy) to at least 90% and branch coverage to at least 80%, using meaningful tests and reports from the complete suite. Keep the client above the same thresholds. |
+| Transport and websites   | Close plaintext network paths or document how deployment enforces encryption; verify required security headers across project, documentation, and download sites with their operators.                                   |
+| Human security review    | Record reviewers, date, requirements, trust boundaries, findings, and remediation for a qualifying review within five years. Automated scans and this assurance case do not replace it.                                  |
+| Dynamic analysis         | Select a qualifying check before every major release, enable applicable runtime assertions, and retain reviewed results. Fuzz testing is outside the current scope.                                                      |
+
+The initial coverage baseline is complete CI run
+[38921395454](https://github.com/ls1intum/Artemis/actions/runs/38921395454): server instruction coverage
+89.58% and branch coverage 74.85%; client statement coverage 92.04% and branch coverage 80.17%.
+Refresh these measurements after changes rather than treating this snapshot as a permanent claim.
+
+Keep the live assessment honest while work proceeds. A root JSON proposal neither changes
+organization settings nor proves a deployment's configuration, and it does not automatically submit
+or award a badge.

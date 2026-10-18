@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.videosource.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
@@ -68,7 +70,7 @@ class VideoSourceResolverServiceTest {
     @Test
     void tumLiveMatchReturnsTumLiveTypeAndPlaylistUrl() {
         var api = mock(TumLiveApi.class);
-        when(api.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://live.rbg.tum.de/pl.m3u8"));
+        when(api.lookUpPlaylist(any())).thenReturn(new TumLivePlaylistLookup("https://live.rbg.tum.de/pl.m3u8", TumLivePlaylistLookup.Outcome.RESOLVED));
         var resolved = withTumLive(api).resolve("https://live.rbg.tum.de/?course=foo&streamId=1");
         assertThat(resolved.url()).isEqualTo("https://live.rbg.tum.de/pl.m3u8");
         assertThat(resolved.type()).isEqualTo(VideoSourceType.TUM_LIVE);
@@ -78,7 +80,7 @@ class VideoSourceResolverServiceTest {
     @Test
     void tumLiveNoMatchFallsThroughToYouTubeCheck() {
         var api = mock(TumLiveApi.class);
-        when(api.getTumLivePlaylistLink(any())).thenReturn(Optional.empty());
+        when(api.lookUpPlaylist(any())).thenReturn(new TumLivePlaylistLookup(null, TumLivePlaylistLookup.Outcome.NOT_ACCESSIBLE));
         var resolved = withTumLive(api).resolve("https://youtu.be/dQw4w9WgXcQ");
         assertThat(resolved.type()).isEqualTo(VideoSourceType.YOUTUBE);
         assertThat(resolved.youtubeVideoId()).isEqualTo("dQw4w9WgXcQ");
@@ -87,7 +89,7 @@ class VideoSourceResolverServiceTest {
     @Test
     void tumLiveCheckedBeforeYouTube() {
         var api = mock(TumLiveApi.class);
-        when(api.getTumLivePlaylistLink(any())).thenReturn(Optional.of("https://live.rbg.tum.de/resolved.m3u8"));
+        when(api.lookUpPlaylist(any())).thenReturn(new TumLivePlaylistLookup("https://live.rbg.tum.de/resolved.m3u8", TumLivePlaylistLookup.Outcome.RESOLVED));
         // URL is a YouTube URL, but TUM Live matches first
         var resolved = withTumLive(api).resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
         assertThat(resolved.type()).isEqualTo(VideoSourceType.TUM_LIVE);
@@ -99,7 +101,7 @@ class VideoSourceResolverServiceTest {
     @Test
     void tumLiveApiExceptionFallsBackToOriginalUrlWithNullType() {
         var api = mock(TumLiveApi.class);
-        when(api.getTumLivePlaylistLink(any())).thenThrow(new RuntimeException("boom"));
+        when(api.lookUpPlaylist(any())).thenThrow(new RuntimeException("boom"));
         var resolved = withTumLive(api).resolve("https://live.rbg.tum.de/?x=1");
         assertThat(resolved.url()).isEqualTo("https://live.rbg.tum.de/?x=1");
         assertThat(resolved.type()).isNull();
@@ -109,10 +111,35 @@ class VideoSourceResolverServiceTest {
     @Test
     void tumLiveApiExceptionDoesNotFallThroughToYouTube() {
         var api = mock(TumLiveApi.class);
-        when(api.getTumLivePlaylistLink(any())).thenThrow(new RuntimeException("boom"));
+        when(api.lookUpPlaylist(any())).thenThrow(new RuntimeException("boom"));
         // The URL looks like a YouTube URL — but after a TUM Live exception we must return null type, not YOUTUBE
         var resolved = withTumLive(api).resolve("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
         assertThat(resolved.type()).isNull();
         assertThat(resolved.youtubeVideoId()).isNull();
+    }
+
+    // ── supported source (URL shape only) ────────────────────────────────────
+
+    @Test
+    void youTubeUrlIsSupportedWithoutTumLive() {
+        assertThat(withTumLive(null).isSupportedSource("https://youtu.be/dQw4w9WgXcQ")).isTrue();
+    }
+
+    @Test
+    void tumLiveUrlIsSupportedOnlyWhenTumLiveIsConfiguredAndWithoutCallingIt() {
+        var api = mock(TumLiveApi.class);
+        when(api.isTumLiveUrl("https://live.rbg.tum.de/w/course/1")).thenReturn(true);
+
+        assertThat(withTumLive(api).isSupportedSource("https://live.rbg.tum.de/w/course/1")).isTrue();
+        assertThat(withTumLive(null).isSupportedSource("https://live.rbg.tum.de/w/course/1")).isFalse();
+        verify(api, never()).lookUpPlaylist(any());
+    }
+
+    @Test
+    void otherAndBlankSourcesAreNotSupported() {
+        var api = mock(TumLiveApi.class);
+        assertThat(withTumLive(api).isSupportedSource("https://vimeo.com/123456")).isFalse();
+        assertThat(withTumLive(api).isSupportedSource(null)).isFalse();
+        assertThat(withTumLive(api).isSupportedSource("   ")).isFalse();
     }
 }

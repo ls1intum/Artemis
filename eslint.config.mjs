@@ -710,8 +710,10 @@ export default tseslint.config(
             'src/main/webapp/app/course/request/**/*.html',
             'src/main/webapp/app/exercise/result/**/*.html',
             'src/main/webapp/app/iris/manage/settings/**/*.html',
-            'src/main/webapp/app/shared-ui/date-time-picker/**/*.html',
             'src/main/webapp/app/atlas/shared/standardized-competencies/**/*.html',
+            'src/main/webapp/app/atlas/shared/competency-selection/**/*.html',
+            'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.html',
+            'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.html',
             'src/main/webapp/app/localci/build-queue/**/*.html',
             'src/main/webapp/app/shared-ui/user-import/**/*.html',
             'src/main/webapp/app/shared-ui/user-registration-modal/**/*.html',
@@ -790,7 +792,14 @@ export default tseslint.config(
     // The exam mode is migrated to TUM AET UI and Tailwind: neither PrimeNG nor ng-bootstrap may be imported anywhere in it, including specs.
     // Like the other `no-restricted-imports` blocks, this one overrides the rule, so the shared restrictions are repeated.
     {
-        files: ['src/main/webapp/app/exam/**/*.ts', 'src/main/webapp/app/notification/**/*.ts', 'src/main/webapp/app/calendar/**/*.ts'],
+        files: [
+            'src/main/webapp/app/exam/**/*.ts',
+            'src/main/webapp/app/notification/**/*.ts',
+            'src/main/webapp/app/calendar/**/*.ts',
+            'src/main/webapp/app/atlas/shared/competency-selection/**/*.ts',
+            'src/main/webapp/app/shared-ui/form/title-channel-name/**/*.ts',
+            'src/main/webapp/app/exercise/exercise-title-channel-name/**/*.ts',
+        ],
         rules: {
             'no-restricted-imports': [
                 'error',
@@ -806,7 +815,7 @@ export default tseslint.config(
                         {
                             group: ['primeng', 'primeng/**', '@ng-bootstrap/**', 'bootstrap', 'bootstrap/**'],
                             message:
-                                'The exam mode, the notifications and the calendar use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
+                                'Migrated client components use TUM AET UI (@tumaet/ui-angular) and Tailwind. Do not import PrimeNG or ng-bootstrap here; host dialogs declaratively in tumaet-ui-dialog.',
                         },
                     ],
                 },

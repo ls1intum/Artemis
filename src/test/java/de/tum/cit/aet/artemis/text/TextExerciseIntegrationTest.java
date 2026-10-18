@@ -8,12 +8,17 @@ import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.DENIED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -37,6 +42,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.util.LinkedMultiValueMap;
 
 import tools.jackson.databind.node.ObjectNode;
 
@@ -65,6 +73,7 @@ import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -112,6 +121,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private static final String TEST_PREFIX = "textexerciseintegration";
 
+    /** The exercise updated notifications in a page of course notifications, as a JSON path filter. */
+    private static final String EXERCISE_UPDATED_NOTIFICATIONS = "$.content[?(@.notificationType == 'exerciseUpdatedNotification')]";
+
     @Autowired
     private TeamAssignmentConfigRepository teamAssignmentConfigRepository;
 
@@ -147,6 +159,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExamTestRepository examRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -855,6 +870,35 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         verify(groupNotificationScheduleService, timeout(2000).times(1)).checkAndCreateAppropriateNotificationsWhenUpdatingExercise(any(), any(), any(), any());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of()), any());
         assertExerciseExistsInWeaviate(weaviateService, textExerciseRepository.findById(updatedTextExercise.id()).orElseThrow());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateTextExercise_withNotificationText_deliversTheTextToStudents() throws Exception {
+        textExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(textExercise.getId());
+
+        // Without a notification text, an update does not notify students at all.
+        request.putWithResponseBody("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.OK);
+        performGetExerciseUpdatedNotificationsAsStudent().andExpect(jsonPath(EXERCISE_UPDATED_NOTIFICATIONS).doesNotExist());
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("notificationText", "  Task 2 now asks for 300 words instead of 200  ");
+        request.putWithResponseBodyAndParams("/api/text/text-exercises", UpdateTextExerciseDTO.of(textExercise), TextExerciseResponseDTO.class, HttpStatus.OK, params);
+
+        // The student receives the editor's text, trimmed, next to the exercise it is about. The flat parameters carry it
+        // too, because that is what the released iOS app reads.
+        performGetExerciseUpdatedNotificationsAsStudent().andExpect(jsonPath(EXERCISE_UPDATED_NOTIFICATIONS, hasSize(1)))
+                .andExpect(jsonPath(EXERCISE_UPDATED_NOTIFICATIONS + ".payload.notificationText", contains("Task 2 now asks for 300 words instead of 200")))
+                .andExpect(jsonPath(EXERCISE_UPDATED_NOTIFICATIONS + ".parameters.notificationText", contains("Task 2 now asks for 300 words instead of 200")))
+                .andExpect(jsonPath(EXERCISE_UPDATED_NOTIFICATIONS + ".payload.exerciseTitle", contains(textExercise.getTitle())));
+    }
+
+    private ResultActions performGetExerciseUpdatedNotificationsAsStudent() throws Exception {
+        var result = request
+                .performMvcRequest(MockMvcRequestBuilders.get("/api/notification/courses/" + course.getId() + "?page=0&size=20").with(user(TEST_PREFIX + "student1").roles("USER")))
+                .andExpect(status().isOk());
+        request.restoreSecurityContext();
+        return result;
     }
 
     @Test
@@ -1629,8 +1673,8 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 var params = pageableSearchUtilService.searchMapping(search);
 
                 // COURSE_TITLE / EXAM_TITLE navigations only make sense for one exercise category, mirroring the shared
-                // helper. With the filter applied each yields a single result, so sorting holds trivially; we still assert
-                // the endpoint returns the sorted page and compare through the DTO fields the client reads.
+                // helper. With the filter applied each yields a single result here, so sorting holds trivially; the order
+                // by course and exam title is checked on several exercises in testSearchSortedByCourseAndExamTitle.
                 if (sort.equals("EXAM_TITLE")) {
                     params.add("isCourseFilter", "false");
                 }
@@ -1646,6 +1690,51 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 }
                 assertThat(result.getResultsOnPage()).as("Sorting by " + sort + " " + order).isSortedAccordingTo(comparator);
             }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testSearchSortedByCourseAndExamTitle() throws Exception {
+        final String searchTerm = "SortedByContainerTitle";
+        // The titles are not created in alphabetical order, so that an order by id cannot pass for an order by title.
+        final List<String> courseTitles = List.of("Sorting course Mu", "Sorting course Alpha", "Sorting course Zeta");
+        final List<String> examTitles = List.of("Sorting exam Kappa", "Sorting exam Beta", "Sorting exam Omega");
+
+        for (int i = 0; i < courseTitles.size(); i++) {
+            Course titledCourse = textExerciseUtilService.addCourseWithOneReleasedTextExercise(searchTerm + " course " + i);
+            // the course is loaded again, as the one of the helper still holds its exercises
+            Course courseToRename = courseRepository.findById(titledCourse.getId()).orElseThrow();
+            courseToRename.setTitle(courseTitles.get(i));
+            courseRepository.save(courseToRename);
+        }
+        for (int i = 0; i < examTitles.size(); i++) {
+            TextExercise examExercise = examUtilService.addEnrolledCourseExamExerciseGroupWithOneTextExercise(searchTerm + " exam " + i, TEST_PREFIX);
+            var examToRename = examRepository.findById(examExercise.getExerciseGroup().getExam().getId()).orElseThrow();
+            examToRename.setTitle(examTitles.get(i));
+            examRepository.save(examToRename);
+        }
+
+        for (var order : List.of(SortingOrder.ASCENDING, SortingOrder.DESCENDING)) {
+            final Comparator<String> titleOrder = order == SortingOrder.ASCENDING ? Comparator.naturalOrder() : Comparator.reverseOrder();
+
+            var courseSearch = pageableSearchUtilService.configureSearch(searchTerm);
+            courseSearch.setSortedColumn("COURSE_TITLE");
+            courseSearch.setSortingOrder(order);
+            var courseParams = pageableSearchUtilService.searchMapping(courseSearch);
+            courseParams.add("isExamFilter", "false");
+            var courseResult = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExerciseListItemDTO.class, courseParams);
+            assertThat(courseResult.getResultsOnPage()).as("Sorting by COURSE_TITLE " + order).extracting(dto -> dto.course().title())
+                    .containsExactlyElementsOf(courseTitles.stream().sorted(titleOrder).toList());
+
+            var examSearch = pageableSearchUtilService.configureSearch(searchTerm);
+            examSearch.setSortedColumn("EXAM_TITLE");
+            examSearch.setSortingOrder(order);
+            var examParams = pageableSearchUtilService.searchMapping(examSearch);
+            examParams.add("isCourseFilter", "false");
+            var examResult = request.getSearchResult("/api/text/text-exercises", HttpStatus.OK, TextExerciseListItemDTO.class, examParams);
+            assertThat(examResult.getResultsOnPage()).as("Sorting by EXAM_TITLE " + order).extracting(TextExerciseListItemDTO::examTitle)
+                    .containsExactlyElementsOf(examTitles.stream().sorted(titleOrder).toList());
         }
     }
 
