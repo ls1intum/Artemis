@@ -211,9 +211,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         Path otherClone = Files.createDirectories(cloneRoot.resolve(otherProject));
         Path otherDownload = Files.createDirectories(downloadRoot.resolve(otherProject));
         Path ownClone = Files.createDirectories(gitService.getDefaultLocalCheckOutPathOfRepo(new LocalVCRepositoryUri(participation.getRepositoryUri())).getParent());
-        Files.writeString(otherClone.resolve("keep.txt"), "another test's repository");
-        Files.writeString(otherDownload.resolve("keep.txt"), "another test's download");
-        Files.writeString(ownClone.resolve("remove.txt"), "this test's repository");
+        FileUtils.writeStringToFile(otherClone.resolve("keep.txt").toFile(), "another test's repository", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(otherDownload.resolve("keep.txt").toFile(), "another test's download", StandardCharsets.UTF_8);
+        FileUtils.writeStringToFile(ownClone.resolve("remove.txt").toFile(), "this test's repository", StandardCharsets.UTF_8);
         try {
             tearDown();
 
