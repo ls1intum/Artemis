@@ -19,6 +19,8 @@ import de.tum.cit.aet.artemis.account.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -35,11 +37,18 @@ class AssessmentUploadResultServiceUnitTest {
     @Mock
     private ResultWebsocketService resultWebsocketService;
 
+    @Mock
+    private TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    @Mock
+    private ScaFeedbackRepository scaFeedbackRepository;
+
     private AssessmentUploadResultService assessmentUploadResultService;
 
     @BeforeEach
     void setUp() {
-        assessmentUploadResultService = new AssessmentUploadResultService(userRepository, assessmentUploadResultRepository, Optional.empty(), resultWebsocketService);
+        assessmentUploadResultService = new AssessmentUploadResultService(userRepository, assessmentUploadResultRepository, Optional.empty(), resultWebsocketService,
+                testCaseFeedbackRepository, scaFeedbackRepository);
     }
 
     @Test

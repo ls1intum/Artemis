@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 
 class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
@@ -497,6 +498,37 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise, buildZip(null, textFiles));
 
         assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.MISSING_CSV);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldDropTheAutomaticFeedbackOfAnOverwrittenAssessment() {
+        // An assessment opened in the editor carries the automatic feedback of the build it was opened on: lockSubmission copies the typed test-case and static-analysis rows
+        // and their counters into the manual result. They live in their own tables, so replacing Result.feedbacks does not touch them, and a grading recalculation would add
+        // their points and penalties back on top of the uploaded score.
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
+        final Result seeded = getManualResults(participation1.getId()).getFirst();
+        final var testCase = testCaseRepository.findByExerciseId(programmingExercise.getId()).iterator().next();
+        participationUtilService.addTestCaseFeedbackToResult(seeded, testCase, true, null);
+        participationUtilService.addScaFeedbackToResult(seeded, StaticCodeAnalysisTool.SPOTBUGS, "BAD_PRACTICE", "spotbugs-category", "a code issue");
+        seeded.setTestCaseCount(1);
+        seeded.setPassedTestCaseCount(1);
+        seeded.setCodeIssueCount(1);
+        resultRepository.save(seeded);
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(seeded.getId()))).hasSize(1);
+
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Overall points\n%s,90\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
+
+        final Result overwritten = getManualResults(participation1.getId()).getFirst();
+        assertThat(overwritten.getId()).isEqualTo(seeded.getId());
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(seeded.getId()))).isEmpty();
+        assertThat(scaFeedbackRepository.findByResultIds(List.of(seeded.getId()))).isEmpty();
+        assertThat(overwritten.getTestCaseCount()).isZero();
+        assertThat(overwritten.getPassedTestCaseCount()).isZero();
+        assertThat(overwritten.getCodeIssueCount()).isZero();
+        assertManualAssessment(participation1.getId(), 90.0, "second");
     }
 
     @Test

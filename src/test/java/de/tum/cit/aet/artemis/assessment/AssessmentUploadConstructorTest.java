@@ -15,6 +15,8 @@ import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadErrorDTO;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadResultDTO;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadResultService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
@@ -60,7 +62,8 @@ class AssessmentUploadConstructorTest {
 
     @Test
     void shouldRejectNullAssessmentUploadResultServiceDependencies() {
-        final Object[] dependencies = { mock(UserRepository.class), mock(AssessmentUploadResultRepository.class), Optional.<LtiApi>empty(), mock(ResultWebsocketService.class) };
+        final Object[] dependencies = { mock(UserRepository.class), mock(AssessmentUploadResultRepository.class), Optional.<LtiApi>empty(), mock(ResultWebsocketService.class),
+                mock(TestCaseFeedbackRepository.class), mock(ScaFeedbackRepository.class) };
 
         for (int dependencyIndex = 0; dependencyIndex < dependencies.length; dependencyIndex++) {
             final Object[] dependenciesWithNull = dependencies.clone();
@@ -72,7 +75,7 @@ class AssessmentUploadConstructorTest {
     @SuppressWarnings("unchecked")
     private AssessmentUploadResultService createAssessmentUploadResultService(final Object[] dependencies) {
         return new AssessmentUploadResultService((UserRepository) dependencies[0], (AssessmentUploadResultRepository) dependencies[1], (Optional<LtiApi>) dependencies[2],
-                (ResultWebsocketService) dependencies[3]);
+                (ResultWebsocketService) dependencies[3], (TestCaseFeedbackRepository) dependencies[4], (ScaFeedbackRepository) dependencies[5]);
     }
 
     @Test

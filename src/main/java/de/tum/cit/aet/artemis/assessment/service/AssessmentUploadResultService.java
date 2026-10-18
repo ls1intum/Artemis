@@ -21,6 +21,8 @@ import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -45,6 +47,10 @@ public class AssessmentUploadResultService {
 
     private final ResultWebsocketService resultWebsocketService;
 
+    private final TestCaseFeedbackRepository testCaseFeedbackRepository;
+
+    private final ScaFeedbackRepository scaFeedbackRepository;
+
     /**
      * Creates a service for storing and updating uploaded manual results.
      * <p>
@@ -54,17 +60,23 @@ public class AssessmentUploadResultService {
      * @param assessmentUploadResultRepository repository used to store and load uploaded results
      * @param ltiApi                           optional LTI integration notified about new results
      * @param resultWebsocketService           websocket service notified about new results
+     * @param testCaseFeedbackRepository       repository used to drop the test-case feedback of an overwritten assessment
+     * @param scaFeedbackRepository            repository used to drop the static-code-analysis feedback of an overwritten assessment
      * @throws IllegalArgumentException if a parameter is {@code null}
      */
     public AssessmentUploadResultService(final UserRepository userRepository, final AssessmentUploadResultRepository assessmentUploadResultRepository,
-            final Optional<LtiApi> ltiApi, final ResultWebsocketService resultWebsocketService) {
-        if (Stream.of(userRepository, assessmentUploadResultRepository, ltiApi, resultWebsocketService).anyMatch(Objects::isNull)) {
+            final Optional<LtiApi> ltiApi, final ResultWebsocketService resultWebsocketService, final TestCaseFeedbackRepository testCaseFeedbackRepository,
+            final ScaFeedbackRepository scaFeedbackRepository) {
+        if (Stream.of(userRepository, assessmentUploadResultRepository, ltiApi, resultWebsocketService, testCaseFeedbackRepository, scaFeedbackRepository)
+                .anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("The assessment upload result service dependencies must not be null");
         }
         this.userRepository = userRepository;
         this.assessmentUploadResultRepository = assessmentUploadResultRepository;
         this.ltiApi = ltiApi;
         this.resultWebsocketService = resultWebsocketService;
+        this.testCaseFeedbackRepository = testCaseFeedbackRepository;
+        this.scaFeedbackRepository = scaFeedbackRepository;
     }
 
     /**
@@ -111,6 +123,7 @@ public class AssessmentUploadResultService {
         // Saving an existing result merges those edits, and its feedback association (cascade ALL with orphan removal) both persists the replacement feedback and deletes the
         // feedback the upload removed; saving a new result inserts it together with its feedback.
         final List<Result> storedResults = assessmentUploadResultRepository.saveAll(results);
+        dropTypedFeedbackOfOverwrittenResults(updatedResults);
 
         // Past this point the assessments are stored: saveAll is one repository call and therefore one transaction, so it either wrote every result or none. Announcing them is
         // a separate concern that must not turn a stored upload into a failed one — the caller treats an exception from this method as "nothing was written" and compensates
@@ -125,6 +138,38 @@ public class AssessmentUploadResultService {
         catch (final RuntimeException e) {
             log.warn("Stored {} uploaded assessment result(s) but could not reload them to announce them", storedResults.size(), e);
             return storedResults;
+        }
+    }
+
+    /**
+     * Drops the automatic test-case and static-code-analysis feedback of the assessments this upload overwrote.
+     * <p>
+     * An assessment created in the editor carries the automatic feedback of the build it was opened on: {@code ProgrammingSubmissionService.lockSubmission} copies those typed
+     * rows into the new manual result. They live in their own tables rather than in {@code Result.feedbacks}, so replacing the feedback of an overwritten assessment leaves
+     * them in place. The uploaded points replace that assessment outright, so they have to go: the feedback synthesizer would keep presenting them to the participant, and
+     * {@code ProgrammingExerciseGradingService} recomputes a manual result's score from the test-case points, which would add them back on top of the uploaded score.
+     * <p>
+     * Deleted by id instead of through the collections, which the upload never loads, and only once the results are stored: a failure here leaves the stale rows behind, which
+     * is recoverable, whereas deleting them before a result write that then fails would strip an existing assessment of its feedback without replacing it.
+     * <p>
+     * <b>Precondition:</b> {@code updatedResults} are persisted results whose feedback this upload replaced.
+     * <p>
+     * <b>Postcondition:</b> the typed feedback rows of those results are deleted, or the failure to delete them is logged; nothing propagates.
+     *
+     * @param updatedResults the overwritten assessments
+     */
+    private void dropTypedFeedbackOfOverwrittenResults(final Collection<Result> updatedResults) {
+        final List<Long> overwrittenResultIds = updatedResults.stream().map(Result::getId).toList();
+        if (overwrittenResultIds.isEmpty()) {
+            return;
+        }
+        try {
+            testCaseFeedbackRepository.deleteByResultIds(overwrittenResultIds);
+            scaFeedbackRepository.deleteByResultIds(overwrittenResultIds);
+        }
+        catch (final RuntimeException e) {
+            log.error("Stored the uploaded assessments but could not drop the automatic feedback of the {} overwritten result(s) {}. Their score will be recomputed from that "
+                    + "feedback instead of the uploaded points.", overwrittenResultIds.size(), overwrittenResultIds, e);
         }
     }
 

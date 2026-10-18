@@ -669,6 +669,11 @@ public class AssessmentUploadService {
         // the previous feedback (and its long feedback text) as an orphan once the result is saved.
         result.getFeedbacks().clear();
         result.addFeedback(buildManualFeedback(row.feedbackText(), row.points()));
+        // The counters belong to the automatic feedback the editor copied into this assessment, which the upload replaces; AssessmentUploadResultService drops the typed rows
+        // they count once the result is stored. Leaving them would keep reporting passed tests and code issues the assessment no longer carries.
+        result.setTestCaseCount(0);
+        result.setPassedTestCaseCount(0);
+        result.setCodeIssueCount(0);
     }
 
     /**
