@@ -169,6 +169,7 @@
             @if (dto.repositoryUri) {
                 <jhi-code-button
                     [smallButtons]="true"
+                    [allowOnlineIde]="false"
                     [hideLabelMobile]="true"
                     [hideLabelBreakpoint]="'xl'"
                     [exerciseId]="exercise()!.id!"

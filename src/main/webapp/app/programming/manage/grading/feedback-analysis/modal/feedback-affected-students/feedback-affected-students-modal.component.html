@@ -30,6 +30,7 @@
                             <jhi-code-button
                                 class="ms-2"
                                 [smallButtons]="true"
+                                [allowOnlineIde]="false"
                                 [exerciseId]="exerciseId()"
                                 [repositoryUri]="item.repositoryURI"
                                 [routerLinkForRepositoryView]="['/courses', courseId(), 'exercises', exerciseId(), 'repository', item.participationId]"

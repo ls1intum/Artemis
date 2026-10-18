@@ -32,8 +32,6 @@ import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/id
 import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { captureException } from '@sentry/angular';
-import { cloneWith } from 'app/foundation/util/deep-clone.util';
-import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
 import { map } from 'rxjs/operators';
 import { getSignalBasedOnRoute } from 'app/foundation/route/getSignalBasedOnRoute';
@@ -54,12 +52,6 @@ export type VcsAccessTokenData =
     | { type: 'student-repository'; participationId: number }
     | { type: 'base-repository'; repositoryType: RepositoryType.TEMPLATE | RepositoryType.SOLUTION | RepositoryType.TESTS }
     | { type: 'auxiliary-repository'; auxiliaryRepositoryId: number };
-
-export interface ProgrammingExerciseIdeConfiguration {
-    programmingLanguage?: ProgrammingLanguage;
-    allowOnlineIde?: boolean;
-    buildConfig?: ProgrammingExerciseBuildConfig;
-}
 
 @Component({
     selector: 'jhi-code-button',
@@ -115,6 +107,7 @@ export class CodeButtonComponent implements OnInit {
     sshKeys?: UserSshPublicKey[];
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
     theiaPortalURL!: string; // set in initTheia() from ngOnInit()
+    private theiaImage?: string;
 
     // Input
     hideLabelMobile = input<boolean>(false);
@@ -123,7 +116,8 @@ export class CodeButtonComponent implements OnInit {
     repositoryUri = input.required<string>();
     exerciseId = input.required<number>();
     vcsAccessTokenData = input.required<VcsAccessTokenData>();
-    programmingExerciseIdeConfiguration = input<ProgrammingExerciseIdeConfiguration>();
+    programmingLanguage = input<ProgrammingLanguage>();
+    allowOnlineIde = input.required<boolean>();
     isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
     user = signal<User | undefined>(undefined);
     private participationIdForVcsAccessToken = computed(() => this.getParticipationIdForVcsAccessToken());
@@ -592,7 +586,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     private getPreferredIde(): Ide {
-        const programmingLanguage = this.programmingExerciseIdeConfiguration()?.programmingLanguage;
+        const programmingLanguage = this.programmingLanguage();
         let preference: Ide | undefined;
         if (programmingLanguage) {
             preference = this.programmingLanguageToPreferredIde.get(programmingLanguage);
@@ -628,21 +622,12 @@ export class CodeButtonComponent implements OnInit {
     }
 
     private initTheia(profileInfo: ProfileInfo) {
-        const programmingExerciseIdeConfiguration = this.programmingExerciseIdeConfiguration();
         const exerciseId = this.exerciseId();
-        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA) && programmingExerciseIdeConfiguration && exerciseId) {
-            // Theia requires the Build Config of the programming exercise to be set
+        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_THEIA) && this.allowOnlineIde() && exerciseId) {
             this.programmingExerciseService.getTheiaConfig(exerciseId).subscribe((theiaConfig) => {
-                // Merge the theiaConfig (containing the theiaImage) into the buildConfig
-                // The exercise may arrive without a build config; the previous spread tolerated that, so fall back to a
-                // fresh one rather than cloning undefined.
-                programmingExerciseIdeConfiguration.buildConfig = cloneWith(programmingExerciseIdeConfiguration.buildConfig ?? new ProgrammingExerciseBuildConfig(), theiaConfig);
-
-                // Set variables now, sanitize later on
+                this.theiaImage = theiaConfig.theiaImage;
                 this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
-
-                // Verify that all conditions are met
-                if (this.theiaPortalURL !== '' && programmingExerciseIdeConfiguration.allowOnlineIde && theiaConfig.theiaImage) {
+                if (this.theiaPortalURL && this.allowOnlineIde() && this.theiaImage) {
                     this.theiaEnabled.set(true);
                 }
             });
@@ -650,7 +635,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     async startOnlineIDE() {
-        const theiaImage = this.programmingExerciseIdeConfiguration()?.buildConfig?.theiaImage ?? '';
+        const theiaImage = this.theiaImage ?? '';
         const repositoryUri = this.getHttpOrSshRepositoryUri(false, true, true);
         const userName = this.user()!.name;
         const userEmail = this.user()!.email;

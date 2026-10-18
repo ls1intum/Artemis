@@ -151,7 +151,8 @@
                         <jhi-code-button
                             [loading]="isLoading()"
                             [smallButtons]="smallButtons()"
-                            [programmingExerciseIdeConfiguration]="programmingExercise()"
+                            [programmingLanguage]="programmingExercise()?.programmingLanguage"
+                            [allowOnlineIde]="programmingExercise()?.allowOnlineIde ?? false"
                             [exerciseId]="exercise().id!"
                             [routerLinkForRepositoryView]="routerLinkForRepositoryView()"
                             [hideLabelMobile]="true"

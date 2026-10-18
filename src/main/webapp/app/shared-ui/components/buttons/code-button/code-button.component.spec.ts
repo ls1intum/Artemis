@@ -112,6 +112,7 @@ describe('CodeButtonComponent', () => {
                 fixture.componentRef.setInput('smallButtons', true);
                 fixture.componentRef.setInput('routerLinkForRepositoryView', []);
                 fixture.componentRef.setInput('exerciseId', 1);
+                fixture.componentRef.setInput('allowOnlineIde', false);
                 fixture.componentRef.setInput('vcsAccessTokenData', { type: 'student-repository', participationId: 1 });
                 stubServices();
                 fixture.detectChanges();
@@ -939,12 +940,11 @@ describe('CodeButtonComponent', () => {
                 activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 theiaPortalURL: 'https://theia.test',
             },
-            {
-                allowOnlineIde: true,
-            },
+            true,
             {
                 theiaImage: 'this-is-a-theia-image',
             },
+            true,
             true,
         ],
         [
@@ -953,13 +953,12 @@ describe('CodeButtonComponent', () => {
                 activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 theiaPortalURL: 'https://theia.test',
             },
-            {
-                allowOnlineIde: true,
-            },
+            true,
             {
                 theiaImage: undefined,
             },
             false,
+            true,
         ],
         [
             'start theia button should not be visible when module feature is active but onlineIde is not activated',
@@ -967,12 +966,11 @@ describe('CodeButtonComponent', () => {
                 activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 theiaPortalURL: 'https://theia.test',
             },
-            {
-                allowOnlineIde: false,
-            },
+            false,
             {
                 theiaImage: 'this-is-an-old-image',
             },
+            false,
             false,
         ],
         [
@@ -980,41 +978,39 @@ describe('CodeButtonComponent', () => {
             {
                 activeModuleFeatures: [MODULE_FEATURE_THEIA],
             },
-            {
-                allowOnlineIde: true,
-            },
+            true,
             {
                 theiaImage: 'this-is-a-theia-image',
             },
             false,
+            true,
         ],
         [
             'start theia button should not be visible when module feature is not active but url is set',
             {
                 theiaPortalURL: 'https://theia.test',
             },
-            {
-                allowOnlineIde: true,
-            },
+            true,
             {
                 theiaImage: 'this-is-a-theia-image',
             },
             false,
+            false,
         ],
-    ])('%s', async (description, profileInfo, programmingExercise, theiaConfig, expectedVisibility) => {
+    ])('%s', async (description, profileInfo, allowOnlineIde, theiaConfig, expectedVisibility, expectedConfigRequest) => {
         const getProfileInfoStub = vi.spyOn(profileService, 'getProfileInfo');
         getProfileInfoStub.mockReturnValue(profileInfo as ProfileInfo);
 
         const getTheiaConfigStub = vi.spyOn(programmingExerciseService, 'getTheiaConfig');
         getTheiaConfigStub.mockReturnValue(of(theiaConfig as ProgrammingExerciseTheiaConfig));
 
-        // Expand the programmingExercise by given properties
         fixture.componentRef.setInput('exerciseId', 1);
-        fixture.componentRef.setInput('programmingExerciseIdeConfiguration', programmingExercise);
+        fixture.componentRef.setInput('allowOnlineIde', allowOnlineIde);
 
         await component['initializeCodeButtonComponent']();
 
         expect(component.theiaEnabled()).toBe(expectedVisibility);
+        expect(getTheiaConfigStub).toHaveBeenCalledTimes(expectedConfigRequest ? 1 : 0);
     });
 
     it('should include the correct data in the form submission when startOnlineIDE is called', async () => {
@@ -1025,7 +1021,7 @@ describe('CodeButtonComponent', () => {
 
         const getToolTokenSpy = vi.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
 
-        fixture.componentRef.setInput('programmingExerciseIdeConfiguration', { buildConfig: { theiaImage: 'theia-image' } });
+        component['theiaImage'] = 'theia-image';
         fixture.componentRef.setInput('repositoryUri', 'https://repo.uri');
         fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: 5, isOwnParticipation: true });
         getVcsAccessTokenSpy.mockReturnValue(of(new HttpResponse({ body: 'token' })));
@@ -1074,7 +1070,7 @@ describe('CodeButtonComponent', () => {
 
         const getToolTokenSpy = vi.spyOn(accountService, 'getToolToken').mockReturnValue(of('token'));
 
-        fixture.componentRef.setInput('programmingExerciseIdeConfiguration', { buildConfig: { theiaImage: 'theia-image' } });
+        component['theiaImage'] = 'theia-image';
         fixture.componentRef.setInput('repositoryUri', 'https://repo.uri');
         fixture.componentRef.setInput('vcsAccessTokenData', { type: 'participation', participationId: 5, isOwnParticipation: true });
         getVcsAccessTokenSpy.mockReturnValue(of(new HttpResponse({ body: 'token' })));

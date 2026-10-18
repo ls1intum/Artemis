@@ -45,7 +45,8 @@
                     <jhi-code-button
                         [loading]="!!exercise()!.loading"
                         [smallButtons]="false"
-                        [programmingExerciseIdeConfiguration]="exercise()"
+                        [programmingLanguage]="exercise()?.programmingLanguage"
+                        [allowOnlineIde]="exercise()?.allowOnlineIde ?? false"
                         [exerciseId]="exercise().id!"
                         [repositoryUri]="repositoryUri()"
                         [routerLinkForRepositoryView]="[]"
