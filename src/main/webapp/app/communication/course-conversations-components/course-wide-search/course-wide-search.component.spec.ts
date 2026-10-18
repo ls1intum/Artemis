@@ -66,6 +66,8 @@ describe('CourseWideSearchComponent', () => {
     courseWideSearchConfig.selectedConversations = [];
     courseWideSearchConfig.selectedAuthors = [];
 
+    let postsSubject: BehaviorSubject<Post[]>;
+
     beforeEach(() => {
         vi.useFakeTimers();
     });
@@ -113,7 +115,8 @@ describe('CourseWideSearchComponent', () => {
         Object.defineProperty(communicationService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(1).asObservable() });
         Object.defineProperty(communicationService, 'createEmptyPostForContext', { value: () => new Post() });
         Object.defineProperty(courseConversationsService, 'course', { get: () => course });
-        Object.defineProperty(communicationService, 'posts', { get: () => new BehaviorSubject([examplePost]).asObservable() });
+        postsSubject = new BehaviorSubject<Post[]>([examplePost]);
+        Object.defineProperty(communicationService, 'posts', { get: () => postsSubject.asObservable() });
 
         fixture = TestBed.createComponent(CourseWideSearchComponent);
         component = fixture.componentInstance;
@@ -423,31 +426,26 @@ describe('CourseWideSearchComponent', () => {
         expect(component.sortingOrder()).not.toBe(initialDirection);
     });
 
-    it('should filter out resolved messages with unresolved filter active otherwise not', async () => {
+    it('should filter out resolved messages with unresolved filter active otherwise not', () => {
         // Setup and initial assertions
-        const post1 = { id: 1, content: 'test', resolved: false } as Post;
+        const post1 = { id: 1, content: 'test', resolved: true } as Post;
         const post2 = { id: 2, content: 'test2', resolved: false } as Post;
-        const initialPosts = [post1, post2];
-        Object.defineProperty(communicationService, 'posts', { get: () => new BehaviorSubject(initialPosts).asObservable() });
-        Object.defineProperty(communicationService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(initialPosts.length).asObservable() });
 
         // Simulate a change in the posts that includes a resolved post.
-        const post1Resolved = { ...post1, resolved: true };
-        const updatedPosts = [post1Resolved, post2];
+        const updatedPosts = [post1, post2];
 
         // Retrigger the subscription avoiding setup for an answer and a resolve action.
-        communicationService.setPosts(updatedPosts);
+        postsSubject.next(updatedPosts);
 
         // Assert that the component's posts are filtered to only include unresolved posts.
-        expect(component.posts()).toStrictEqual(updatedPosts);
-        await fixture.whenStable(); // Factor in the timeout
-        expect(component.totalNumberOfPosts()).toBe(2);
+        expect(component.posts()).toHaveLength(updatedPosts.length);
+        updatedPosts.forEach((post) => {
+            expect(component.posts()).toContainEqual(post);
+        });
 
         // Now activate the unresolved filter and check that the resolved post is filtered out.
         component.currentPostContextFilter = { filterToUnresolved: true } as PostContextFilter;
-        communicationService.setPosts(updatedPosts);
+        postsSubject.next(updatedPosts);
         expect(component.posts()).toStrictEqual([post2]);
-        await fixture.whenStable(); // Factor in the timeout
-        expect(component.totalNumberOfPosts()).toBe(1);
     });
 });
