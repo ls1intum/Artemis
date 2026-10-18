@@ -52,10 +52,15 @@ export class CodeButtonNewComponent {
 
     private readonly userResource = resource({ loader: () => this.loadUser() });
 
+    private readonly tokenResource = resource({
+        params: ({ chain }) => this.getTokenParams(chain),
+        loader: ({ params }) => this.getToken(params.exerciseId, params.isInCourseManagement, params.vcsAccessTokenData),
+    });
+
     private readonly authenticationMethodDataResource = resource({
         params: ({ chain }) => this.getAuthenticationMethodDataParams(chain),
         loader: ({ params }) => {
-            return this.loadAuthenticationMethodData(params.login, params.exerciseId, params.isInCourseManagement, params.repositoryUri, params.vcsAccessTokenData);
+            return this.loadAuthenticationMethodData(params.repositoryUri, params.login, params.token);
         },
     });
 
@@ -86,32 +91,40 @@ export class CodeButtonNewComponent {
         return user;
     }
 
-    private getAuthenticationMethodDataParams(chain: ResourceParamsContext['chain']) {
+    private getTokenParams(chain: ResourceParamsContext['chain']) {
         const user = chain(this.userResource);
         if (!user) {
             throw new Error('Resolved user resource contained no user');
         }
         return {
-            login: user.login,
             exerciseId: this.exerciseId(),
             isInCourseManagement: this.isInCourseManagement(),
-            repositoryUri: this.repositoryUri(),
             vcsAccessTokenData: this.vcsAccessTokenData(),
         };
     }
 
-    private async loadAuthenticationMethodData(
-        login: string | undefined,
-        exerciseId: number,
-        isInCourseManagement: boolean,
-        repositoryUri: string,
-        vcsAccessTokenData: VcsAccessTokenData,
-    ): Promise<NonEmptyArray<AuthenticationMethodData>> {
+    private getAuthenticationMethodDataParams(chain: ResourceParamsContext['chain']) {
+        const user = chain(this.userResource);
+        if (!user) {
+            throw new Error('Resolved user resource contained no user');
+        }
+        const token = chain(this.tokenResource);
+        if (!token) {
+            throw new Error('Resolved token resource contained no token');
+        }
+        return {
+            repositoryUri: this.repositoryUri(),
+            login: user.login,
+            token,
+        };
+    }
+
+    private async loadAuthenticationMethodData(repositoryUri: string, login: string | undefined, token: string): Promise<NonEmptyArray<AuthenticationMethodData>> {
         const authenticationMethods = this.getAuthenticationMethods();
 
         const authenticationMethodData = await Promise.all(
             authenticationMethods.map((authenticationMethod) => {
-                return this.getAuthenticationMethodData(authenticationMethod, repositoryUri, login, exerciseId, isInCourseManagement, vcsAccessTokenData);
+                return this.getAuthenticationMethodData(authenticationMethod, repositoryUri, login, token);
             }),
         );
         if (authenticationMethodData.length === 0) {
@@ -132,15 +145,13 @@ export class CodeButtonNewComponent {
         authenticationMethod: RepositoryAuthenticationMethod,
         repositoryUri: string,
         login: string | undefined,
-        exerciseId: number,
-        isInCourseManagement: boolean,
-        vcsAccessTokenData: VcsAccessTokenData,
+        token: string,
     ): Promise<AuthenticationMethodData> {
         switch (authenticationMethod) {
             case RepositoryAuthenticationMethod.SSH:
                 return this.getSshAuthenticationMethodData(repositoryUri);
             case RepositoryAuthenticationMethod.Token:
-                return this.getTokenAuthenticationMethodData(repositoryUri, this.requireLogin(login), exerciseId, isInCourseManagement, vcsAccessTokenData);
+                return this.getTokenAuthenticationMethodData(repositoryUri, this.requireLogin(login), token);
             case RepositoryAuthenticationMethod.Password:
                 return this.getPasswordAuthenticationMethodData(repositoryUri, this.requireLogin(login));
         }
@@ -200,14 +211,7 @@ export class CodeButtonNewComponent {
         return login;
     }
 
-    private async getTokenAuthenticationMethodData(
-        repositoryUri: string,
-        login: string,
-        exerciseId: number,
-        isInCourseManagement: boolean,
-        vcsAccessTokenData: VcsAccessTokenData,
-    ): Promise<AuthenticationMethodData> {
-        const token = await this.getToken(exerciseId, isInCourseManagement, vcsAccessTokenData);
+    private getTokenAuthenticationMethodData(repositoryUri: string, login: string, token: string): AuthenticationMethodData {
         const credentials = `://${login}:${token}@`;
         const url = this.insertCredentialsIntoUrl(repositoryUri, credentials);
 
