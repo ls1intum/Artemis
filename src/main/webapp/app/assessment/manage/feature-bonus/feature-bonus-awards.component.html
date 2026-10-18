@@ -1,0 +1,118 @@
+<section class="feature-bonus-awards" aria-labelledby="feature-bonus-awards-title">
+    <!-- Section header: the title on the leading edge, the points awarded so far on the trailing edge, like the feedback list above. -->
+    <div class="feature-bonus-awards__header">
+        <h4 id="feature-bonus-awards-title" class="feature-bonus-awards__title" jhiTranslate="artemisApp.featureBonus.assessment.title"></h4>
+        @if (awards().length > 0) {
+            <dl class="feature-bonus-awards__summary">
+                <dt jhiTranslate="artemisApp.featureBonus.assessment.total"></dt>
+                <dd class="feature-bonus-awards__summary-value" data-testid="feature-bonus-total">
+                    {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: totalPoints() } }}
+                </dd>
+            </dl>
+        }
+    </div>
+    <tumaet-ui-message severity="info" [text]="'artemisApp.featureBonus.assessment.info' | artemisTranslate" />
+
+    @if (awards().length > 0) {
+        <ul class="feature-bonus-awards__list">
+            @for (award of awards(); track award.id) {
+                <li class="feature-bonus-awards__item" [class.feature-bonus-awards__item--edited]="editedAwardId() === award.id" data-testid="feature-bonus-award">
+                    <div class="feature-bonus-awards__item-header">
+                        <span class="feature-bonus-awards__item-title">{{ award.title }}</span>
+                        <div class="feature-bonus-awards__item-actions">
+                            <tumaet-ui-tag severity="success" [value]="'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: award.points }" />
+                            @if (!readOnly()) {
+                                <button
+                                    type="button"
+                                    class="feature-bonus-awards__icon-button"
+                                    [attr.aria-label]="'artemisApp.featureBonus.assessment.edit' | artemisTranslate"
+                                    [disabled]="busy()"
+                                    (click)="edit(award)"
+                                >
+                                    <fa-icon [icon]="faPen" />
+                                </button>
+                                <jhi-confirm-icon
+                                    [initialTooltip]="'artemisApp.featureBonus.assessment.delete' | artemisTranslate"
+                                    [confirmTooltip]="'artemisApp.featureBonus.assessment.confirmDelete' | artemisTranslate"
+                                    (confirmEvent)="delete(award)"
+                                />
+                            }
+                        </div>
+                    </div>
+                    @if (award.justification) {
+                        <p class="feature-bonus-awards__item-justification">{{ award.justification }}</p>
+                    }
+                    @if (award.createdBy) {
+                        <span class="feature-bonus-awards__item-meta">{{ 'artemisApp.featureBonus.assessment.awardedBy' | artemisTranslate: { tutor: award.createdBy } }}</span>
+                    }
+                </li>
+            }
+        </ul>
+    }
+
+    @if (!readOnly()) {
+        <form class="feature-bonus-awards__form" (ngSubmit)="save()">
+            <div class="feature-bonus-awards__form-row">
+                <tumaet-ui-form-field
+                    class="feature-bonus-awards__form-title"
+                    required
+                    [label]="'artemisApp.featureBonus.assessment.feature' | artemisTranslate"
+                    controlId="feature-bonus-title"
+                >
+                    <input
+                        tumAetUiInput
+                        class="w-full"
+                        name="featureBonusTitle"
+                        data-testid="feature-bonus-title"
+                        [maxLength]="MAX_TITLE_LENGTH"
+                        [placeholder]="'artemisApp.featureBonus.assessment.featurePlaceholder' | artemisTranslate"
+                        [ngModel]="title()"
+                        (ngModelChange)="title.set($event)"
+                    />
+                </tumaet-ui-form-field>
+                <tumaet-ui-form-field
+                    class="feature-bonus-awards__form-points"
+                    required
+                    [label]="'artemisApp.featureBonus.assessment.points' | artemisTranslate"
+                    controlId="feature-bonus-points"
+                >
+                    <input
+                        tumAetUiInput
+                        class="w-full"
+                        type="number"
+                        name="featureBonusPoints"
+                        data-testid="feature-bonus-points"
+                        min="0.5"
+                        step="0.5"
+                        [max]="MAX_POINTS"
+                        [ngModel]="points()"
+                        (ngModelChange)="points.set($event ?? undefined)"
+                    />
+                </tumaet-ui-form-field>
+            </div>
+            <tumaet-ui-form-field [label]="'artemisApp.featureBonus.assessment.justification' | artemisTranslate" controlId="feature-bonus-justification">
+                <textarea
+                    tumAetUiTextarea
+                    class="w-full"
+                    rows="2"
+                    name="featureBonusJustification"
+                    data-testid="feature-bonus-justification"
+                    [maxLength]="MAX_JUSTIFICATION_LENGTH"
+                    [placeholder]="'artemisApp.featureBonus.assessment.justificationPlaceholder' | artemisTranslate"
+                    [ngModel]="justification()"
+                    (ngModelChange)="justification.set($event)"
+                ></textarea>
+            </tumaet-ui-form-field>
+            <div class="feature-bonus-awards__form-actions">
+                <button type="submit" tumAetUiButton severity="success" size="small" data-testid="feature-bonus-save" [disabled]="!formValid() || busy()">
+                    <span [jhiTranslate]="editedAwardId() === undefined ? 'artemisApp.featureBonus.assessment.add' : 'artemisApp.featureBonus.assessment.saveChanges'"></span>
+                </button>
+                @if (editedAwardId() !== undefined) {
+                    <button type="button" tumAetUiButton severity="secondary" variant="outlined" size="small" (click)="resetForm()">
+                        <span jhiTranslate="entity.action.cancel"></span>
+                    </button>
+                }
+            </div>
+        </form>
+    }
+</section>

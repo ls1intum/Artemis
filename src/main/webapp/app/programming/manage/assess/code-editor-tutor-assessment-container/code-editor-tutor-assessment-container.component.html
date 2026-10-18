@@ -173,6 +173,9 @@
                         [maxPoints]="getTotalMaxPoints(exercise())"
                         [capAutomaticTestSubtotal]="true"
                     />
+                    @if (exercise()?.featureBonusEnabled && participation()?.id; as participationId) {
+                        <jhi-feature-bonus-awards [participationId]="participationId" [readOnly]="readOnly()" />
+                    }
                 }
             </div>
         </ng-template>

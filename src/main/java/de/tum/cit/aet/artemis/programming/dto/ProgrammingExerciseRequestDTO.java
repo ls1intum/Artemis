@@ -92,6 +92,8 @@ public interface ProgrammingExerciseRequestDTO {
 
     Boolean releaseTestsWithExampleSolution();
 
+    Boolean featureBonusEnabled();
+
     ProgrammingLanguage programmingLanguage();
 
     ProjectType projectType();
@@ -173,6 +175,7 @@ public interface ProgrammingExerciseRequestDTO {
             exercise.setShowTestNamesToStudents(request.showTestNamesToStudents());
         }
         exercise.setReleaseTestsWithExampleSolution(Boolean.TRUE.equals(request.releaseTestsWithExampleSolution()));
+        exercise.setFeatureBonusEnabled(Boolean.TRUE.equals(request.featureBonusEnabled()));
         exercise.setProgrammingLanguage(request.programmingLanguage());
         exercise.setProjectType(request.projectType());
         exercise.setSubmissionPolicy(request.submissionPolicy() == null ? null : request.submissionPolicy().toEntity());

@@ -161,6 +161,7 @@
             "points": "Punktzahl",
             "pointsError": "Muss eine Zahl zwischen 1 und 9999 sein.",
             "bonusPoints": "Bonuspunkte",
+            "bonusPointsTooltip": "Zusätzliche Punkte innerhalb der Punktzahl dieser Aufgabe: Studierende können mehr als deren Punkte erreichen. Sie haben keinen Einfluss auf den Feature-Bonus der Kursnote.",
             "bonusPointsError": "Muss eine Zahl zwischen 0 und 9999 sein.",
             "includedInOverallScoreCourseLabel": "Diese Aufgabe bei der Berechnung des Kursergebnisses einbeziehen",
             "includedInOverallScoreExamLabel": "Diese Aufgabe bei der Berechnung des Klausurergebnisses einbeziehen",

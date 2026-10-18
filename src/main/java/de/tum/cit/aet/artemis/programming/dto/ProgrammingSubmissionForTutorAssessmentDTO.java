@@ -96,6 +96,7 @@ public record ProgrammingSubmissionForTutorAssessmentDTO(Long id, String submiss
      * @param staticCodeAnalysisEnabled                  whether static code analysis is enabled
      * @param maxStaticCodeAnalysisPenalty               the maximum static code analysis penalty
      * @param showTestNamesToStudents                    whether test names are shown to students
+     * @param featureBonusEnabled                        whether the tutor may award feature bonus points in the assessment
      * @param solutionParticipation                      the solution repository, for the link to the example solution
      * @param course                                     the course of a course exercise
      * @param exerciseGroup                              the exercise group of an exam exercise
@@ -105,7 +106,8 @@ public record ProgrammingSubmissionForTutorAssessmentDTO(Long id, String submiss
             Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean teamMode, AssessmentType assessmentType, ZonedDateTime assessmentDueDate,
             ZonedDateTime dueDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, Boolean allowComplaintsForAutomaticAssessments,
             ProgrammingLanguage programmingLanguage, ProjectType projectType, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty,
-            Boolean showTestNamesToStudents, SolutionParticipationDTO solutionParticipation, CourseDTO course, ExerciseGroupDTO exerciseGroup) implements Serializable {
+            Boolean showTestNamesToStudents, Boolean featureBonusEnabled, SolutionParticipationDTO solutionParticipation, CourseDTO course, ExerciseGroupDTO exerciseGroup)
+            implements Serializable {
 
         /**
          * Every lazy slot is guarded, so a relation that is not loaded is left out instead of being fetched.
@@ -144,7 +146,8 @@ public record ProgrammingSubmissionForTutorAssessmentDTO(Long id, String submiss
                     gradingCriteria, exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(), exercise.isTeamMode(), exercise.getAssessmentType(),
                     exercise.getAssessmentDueDate(), exercise.getDueDate(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate(),
                     exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getProgrammingLanguage(), exercise.getProjectType(), exercise.isStaticCodeAnalysisEnabled(),
-                    exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(), solutionParticipation, course, exerciseGroup);
+                    exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(), exercise.isFeatureBonusEnabled(), solutionParticipation, course,
+                    exerciseGroup);
         }
     }
 

@@ -192,6 +192,19 @@
                 "title": "Enable Complaints",
                 "description": "Enabling this allows students to complain about assessments."
             },
+            "featureBonus": {
+                "title": "Enable Feature Bonus",
+                "description": "Tutors can award points for features students implemented beyond the task, in programming exercises that allow it. Artemis converts a student's points into a bonus in percent of the final grade that you add on top. This is separate from the bonus points of an exercise, which only raise the score of that one exercise.",
+                "percentPerPoint": {
+                    "label": "Percent per point",
+                    "hint": "How much of the final grade one feature point is worth, e.g. 0.5%."
+                },
+                "maxPercent": {
+                    "label": "Maximum bonus (%)",
+                    "hint": "The highest bonus a student can receive, e.g. 5%."
+                },
+                "percentRange": "Enter a percentage greater than 0 and at most 100."
+            },
             "requestMoreFeedbackEnabled": {
                 "title": "Enable More Feedback Requests",
                 "description": "This option allows students to request more feedback without complaining. Asking for further feedback will not count towards the number of complaints, but it will also not allow modification of the assessment. By default, this option is enabled, but it can be disabled if assessment corrections must always be possible."

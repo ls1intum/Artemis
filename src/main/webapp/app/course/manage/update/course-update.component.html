@@ -492,6 +492,66 @@
                             />
                         </div>
                     }
+                    <div class="course-form-option">
+                        <tumaet-ui-checkbox
+                            inputId="field_featureBonusEnabled"
+                            name="featureBonusEnabled"
+                            formControlName="featureBonusEnabled"
+                            (changed)="changeFeatureBonusEnabled()"
+                        />
+                        <label class="course-form-option-label" jhiTranslate="artemisApp.course.featureBonus.title" for="field_featureBonusEnabled"></label>
+                        <fa-icon [icon]="faQuestionCircle" class="text-muted-color" [tumAetUiTooltip]="'artemisApp.course.featureBonus.description' | artemisTranslate" />
+                    </div>
+                    @if (courseForm.get('featureBonusEnabled')?.value) {
+                        <div class="course-form-nested">
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <tumaet-ui-form-field
+                                    class="min-w-0"
+                                    required
+                                    [label]="'artemisApp.course.featureBonus.percentPerPoint.label' | artemisTranslate"
+                                    controlId="field_featureBonusPercentPerPoint"
+                                    [hint]="'artemisApp.course.featureBonus.percentPerPoint.hint' | artemisTranslate"
+                                    [invalid]="showError('featureBonusPercentPerPoint')"
+                                    [error]="'artemisApp.course.featureBonus.percentRange' | artemisTranslate"
+                                >
+                                    <input
+                                        required
+                                        type="number"
+                                        tumAetUiInput
+                                        class="w-full"
+                                        min="0.01"
+                                        max="100"
+                                        step="0.01"
+                                        name="featureBonusPercentPerPoint"
+                                        id="field_featureBonusPercentPerPoint"
+                                        formControlName="featureBonusPercentPerPoint"
+                                    />
+                                </tumaet-ui-form-field>
+                                <tumaet-ui-form-field
+                                    class="min-w-0"
+                                    required
+                                    [label]="'artemisApp.course.featureBonus.maxPercent.label' | artemisTranslate"
+                                    controlId="field_featureBonusMaxPercent"
+                                    [hint]="'artemisApp.course.featureBonus.maxPercent.hint' | artemisTranslate"
+                                    [invalid]="showError('featureBonusMaxPercent')"
+                                    [error]="'artemisApp.course.featureBonus.percentRange' | artemisTranslate"
+                                >
+                                    <input
+                                        required
+                                        type="number"
+                                        tumAetUiInput
+                                        class="w-full"
+                                        min="0.01"
+                                        max="100"
+                                        step="0.01"
+                                        name="featureBonusMaxPercent"
+                                        id="field_featureBonusMaxPercent"
+                                        formControlName="featureBonusMaxPercent"
+                                    />
+                                </tumaet-ui-form-field>
+                            </div>
+                        </div>
+                    }
                 </div>
             </section>
 

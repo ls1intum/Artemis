@@ -13,6 +13,9 @@ import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { FeatureBonusService } from 'app/assessment/shared/services/feature-bonus.service';
+import { ParticipationFeatureBonus } from 'app/assessment/shared/entities/feature-bonus.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { User } from 'app/account/user/user.model';
@@ -93,6 +96,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly profileService = inject(ProfileService);
     private readonly gradingService = inject(GradingService);
     private readonly websocketService = inject(WebsocketService);
+    private readonly featureBonusService = inject(FeatureBonusService);
 
     protected readonly faTable = faTable;
     protected readonly faTimes = faTimes;
@@ -122,6 +126,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly isAdmin = signal(false);
     readonly isLocalCIEnabled = signal(true);
     readonly gradeStepsDTO = signal<GradeStepsDTO | undefined>(undefined);
+    /** Whether tutors award feature bonus points in this exercise, which then get a column of their own. */
+    readonly featureBonusEnabled = computed(() => this.exercise()?.type === ExerciseType.PROGRAMMING && !!(this.exercise() as ProgrammingExercise).featureBonusEnabled);
+    readonly featureBonusPerParticipation = signal<Map<number, ParticipationFeatureBonus>>(new Map());
 
     readonly basicPresentationEnabled = computed(() => {
         const ex = this.exercise();
@@ -201,6 +208,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly basicPresentationCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('basicPresentationCellTemplate');
     readonly gradedPresentationCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('gradedPresentationCellTemplate');
     readonly individualDueDateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('individualDueDateCellTemplate');
+    readonly featureBonusCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('featureBonusCellTemplate');
 
     readonly columns = computed<ColumnDef<ParticipationManagementDTO>[]>(() => {
         const ex = this.exercise();
@@ -299,6 +307,16 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             });
         }
 
+        if (this.featureBonusEnabled()) {
+            cols.push({
+                headerKey: 'artemisApp.featureBonus.participations.column',
+                headerTooltip: 'artemisApp.featureBonus.participations.tooltip',
+                width: '150px',
+                sort: false,
+                templateRef: this.featureBonusCellTemplate(),
+            });
+        }
+
         if (ex.type !== ExerciseType.QUIZ && ex.dueDate) {
             cols.push({
                 headerKey: 'artemisApp.participation.individualDueDate',
@@ -353,6 +371,11 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             if (ex.type === ExerciseType.PROGRAMMING) {
                 this.loadSubmissionState(exerciseId);
                 this.setupFailedFilterWebsocket(exerciseId);
+            }
+            if (this.featureBonusEnabled()) {
+                this.featureBonusService
+                    .getFeatureBonusOfExercise(exerciseId)
+                    .subscribe((featureBonus) => this.featureBonusPerParticipation.set(new Map(featureBonus.map((bonus) => [bonus.participationId, bonus]))));
             }
             this.isLoading.set(false);
         });

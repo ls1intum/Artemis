@@ -79,7 +79,11 @@ public record CourseUpdateDTO(
 
         // Atlas auto-orchestration configuration (per-course): kill switch plus nullable overrides.
         boolean autoOrchestratorEnabled, @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
-        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) {
+        @Nullable @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride,
+
+        // Feature bonus: conversion of the points tutors award for additional features into a bonus on the final grade, both
+        // empty while the course does not use it.
+        @Nullable Double featureBonusPercentPerPoint, @Nullable Double featureBonusMaxPercent) {
 
     /**
      * Applies the DTO values to an existing Course entity.
@@ -159,6 +163,7 @@ public record CourseUpdateDTO(
         configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
+        configuration.setFeatureBonus(featureBonusPercentPerPoint, featureBonusMaxPercent);
 
         return course;
     }

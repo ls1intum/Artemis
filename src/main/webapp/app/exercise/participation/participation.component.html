@@ -176,6 +176,17 @@
     {{ (cell.data.testRun ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}
 </ng-template>
 
+<ng-template #featureBonusCellTemplate let-cell>
+    @let featureBonus = featureBonusPerParticipation().get(cell.data.participationId);
+    @if (!featureBonus) {
+        <span class="text-muted-color">-</span>
+    } @else if (featureBonus.bonusPercent !== undefined) {
+        {{ 'artemisApp.featureBonus.participations.value' | artemisTranslate: { points: featureBonus.points, percent: featureBonus.bonusPercent } }}
+    } @else {
+        {{ 'artemisApp.assessment.detail.pointsShort' | artemisTranslate: { points: featureBonus.points } }}
+    }
+</ng-template>
+
 <ng-template #basicPresentationCellTemplate let-cell>
     {{ cell.data.presentationScore ?? 0 }}
 </ng-template>

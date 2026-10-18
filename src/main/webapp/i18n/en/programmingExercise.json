@@ -235,6 +235,11 @@
                 "title": "Regular Expression for the branch name",
                 "description": "Custom branches names must match the regular expression."
             },
+            "featureBonus": {
+                "label": "Allow feature bonus",
+                "tooltip": "Tutors can award points for additional features in the assessment of a participation, after the due date. The points do not change the score of this exercise: the course settings convert them into a bonus on the final grade.",
+                "hint": "Feature points count towards the course grade bonus, not towards this exercise. Configure the conversion in the course settings."
+            },
             "showTestNamesToStudents": "Show Test Names to Students",
             "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
             "participationMode": "Participation Mode",

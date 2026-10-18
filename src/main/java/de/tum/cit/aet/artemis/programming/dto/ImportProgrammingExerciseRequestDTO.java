@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
  * @param maxStaticCodeAnalysisPenalty               the maximum static code analysis penalty
  * @param showTestNamesToStudents                    whether test names are shown to students
  * @param releaseTestsWithExampleSolution            whether tests are released with the example solution
+ * @param featureBonusEnabled                        whether tutors may award feature bonus points
  * @param programmingLanguage                        the programming language
  * @param projectType                                the project type (build tool / IDE flavour)
  * @param projectKey                                 the VCS/CI project key of the exercise being imported
@@ -97,10 +98,11 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, AssessmentType assessmentType,
         Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, Boolean allowOnlineEditor, Boolean allowOfflineIde,
         Boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution,
-        ProgrammingLanguage programmingLanguage, ProjectType projectType, String projectKey, String testRepositoryUri, UpdateProgrammingExerciseBuildConfigDTO buildConfig,
-        List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy,
-        PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course, ExerciseGroupIdDTO exerciseGroup, SourceParticipationRefDTO templateParticipation,
-        SourceParticipationRefDTO solutionParticipation) implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
+        Boolean featureBonusEnabled, ProgrammingLanguage programmingLanguage, ProjectType projectType, String projectKey, String testRepositoryUri,
+        UpdateProgrammingExerciseBuildConfigDTO buildConfig, List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks,
+        List<AuxiliaryRepositoryDTO> auxiliaryRepositories, SubmissionPolicyDTO submissionPolicy, PlagiarismDetectionConfigDTO plagiarismDetectionConfig, CourseRefDTO course,
+        ExerciseGroupIdDTO exerciseGroup, SourceParticipationRefDTO templateParticipation, SourceParticipationRefDTO solutionParticipation)
+        implements CompetencyLinksHolderDTO, ProgrammingExerciseRequestDTO {
 
     /**
      * Builds the import request body describing an exercise and the build configuration the import should use. The
@@ -136,9 +138,10 @@ public record ImportProgrammingExerciseRequestDTO(@Nullable Long id, String titl
                 exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getAssessmentType(), exercise.getAllowComplaintsForAutomaticAssessments(),
                 exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(), exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(),
                 exercise.isAllowOnlineIde(), exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(),
-                exercise.isReleaseTestsWithExampleSolution(), exercise.getProgrammingLanguage(), exercise.getProjectType(), exercise.getProjectKey(),
-                exercise.getTestRepositoryUri(), UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig), gradingCriteria, competencyLinks, auxiliaryRepositories, submissionPolicy,
-                plagiarismDetectionConfig, exercise.isCourseExercise() && course != null ? new CourseRefDTO(course.getId(), null, null, null) : null,
+                exercise.isReleaseTestsWithExampleSolution(), exercise.isFeatureBonusEnabled(), exercise.getProgrammingLanguage(), exercise.getProjectType(),
+                exercise.getProjectKey(), exercise.getTestRepositoryUri(), UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig), gradingCriteria, competencyLinks,
+                auxiliaryRepositories, submissionPolicy, plagiarismDetectionConfig,
+                exercise.isCourseExercise() && course != null ? new CourseRefDTO(course.getId(), null, null, null) : null,
                 exercise.getExerciseGroup() == null ? null : new ExerciseGroupIdDTO(exercise.getExerciseGroup().getId()), null, null);
     }
 

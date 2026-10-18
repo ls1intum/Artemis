@@ -192,6 +192,19 @@
                 "title": "Beschwerden von Studierenden aktivieren",
                 "description": "Wenn du diese Option aktivierst, können sich Studierende über Ergebnisse beschweren."
             },
+            "featureBonus": {
+                "title": "Feature-Bonus aktivieren",
+                "description": "Tutor:innen können Punkte für Features vergeben, die Studierende über die Aufgabe hinaus umgesetzt haben, in Programmieraufgaben, die das erlauben. Artemis rechnet die Punkte in einen Bonus in Prozent der Endnote um, den du zusätzlich anrechnest. Das ist unabhängig von den Bonuspunkten einer Aufgabe, die nur die Punktzahl dieser einen Aufgabe erhöhen.",
+                "percentPerPoint": {
+                    "label": "Prozent pro Punkt",
+                    "hint": "Wie viel der Endnote ein Feature-Punkt wert ist, z. B. 0,5 %."
+                },
+                "maxPercent": {
+                    "label": "Maximaler Bonus (%)",
+                    "hint": "Der höchste Bonus, den Studierende erhalten können, z. B. 5 %."
+                },
+                "percentRange": "Gib einen Prozentwert größer als 0 und höchstens 100 ein."
+            },
             "requestMoreFeedbackEnabled": {
                 "title": "Feedbackanfragen von Studierenden aktivieren",
                 "description": "Diese Option ermöglicht den Studierenden, erneut Feedback anzufragen, ohne dabei eine Beschwerde zu nutzen. Weiteres Feedback anzufragen wird nicht auf die Anzahl der Beschwerden angerechnet, erlaubt dafür jedoch keine Veränderung der Bewertung. Standardmäßig ist diese Option aktiviert, sie kann jedoch deaktiviert werden, wenn eine Korrektur der Bewertung immer möglich sein muss."

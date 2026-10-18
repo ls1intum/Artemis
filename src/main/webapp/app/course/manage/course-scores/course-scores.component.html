@@ -173,6 +173,17 @@
                                     <fa-icon [icon]="faSort" />
                                 </th>
                             }
+                            @if (featureBonusActive()) {
+                                <th scope="col" jhiSortBy="featureBonusPoints">
+                                    <span jhiTranslate="artemisApp.featureBonus.courseScores.points"></span>
+                                    <jhi-help-icon text="artemisApp.featureBonus.courseScores.tooltip" />
+                                    <fa-icon [icon]="faSort" />
+                                </th>
+                                <th scope="col" jhiSortBy="featureBonusPercent">
+                                    <span jhiTranslate="artemisApp.featureBonus.courseScores.percent"></span>
+                                    <fa-icon [icon]="faSort" />
+                                </th>
+                            }
                         </tr>
                         <tr>
                             <th scope="row"><span jhiTranslate="artemisApp.instructorDashboard.max"></span></th>
@@ -194,6 +205,10 @@
                             <td class="font-bold">{{ maxNumberOfOverallPoints() }}</td>
                             @if (gradingScaleExists()) {
                                 <td class="font-bold">{{ maxGrade() }}</td>
+                            }
+                            @if (featureBonusActive()) {
+                                <td class="font-bold"></td>
+                                <td class="font-bold"></td>
                             }
                         </tr>
                         <tr>
@@ -240,6 +255,10 @@
                                 <td class="font-bold">
                                     {{ averageGrade() }}
                                 </td>
+                            }
+                            @if (featureBonusActive()) {
+                                <td class="font-bold">{{ localize(averageNumberOfFeatureBonusPoints()) }}</td>
+                                <td class="font-bold">{{ averageFeatureBonusPercent() !== undefined ? localize(averageFeatureBonusPercent()!) + '%' : '-' }}</td>
                             }
                         </tr>
                     </thead>
@@ -289,6 +308,10 @@
                                     <td>
                                         {{ studentStat.gradeStep?.gradeName }}
                                     </td>
+                                }
+                                @if (featureBonusActive()) {
+                                    <td>{{ localize(studentStat.featureBonusPoints) }}</td>
+                                    <td>{{ studentStat.featureBonusPercent !== undefined ? localize(studentStat.featureBonusPercent) + '%' : '-' }}</td>
                                 }
                             </tr>
                         }

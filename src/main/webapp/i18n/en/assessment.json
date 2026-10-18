@@ -140,6 +140,34 @@
                 "type": "Type",
                 "empty": "No assessments locked by you!"
             }
+        },
+        "featureBonus": {
+            "assessment": {
+                "title": "Feature bonus",
+                "total": "Awarded",
+                "info": "Award points for features beyond the task. They do not change the score of this exercise: the course converts them into a bonus on the final grade. Every change is saved right away.",
+                "feature": "Feature",
+                "featurePlaceholder": "e.g. Intelligent enemies",
+                "points": "Points",
+                "justification": "Justification",
+                "justificationPlaceholder": "Why is the feature worth these points?",
+                "add": "Award points",
+                "saveChanges": "Save changes",
+                "edit": "Edit award",
+                "delete": "Remove award",
+                "confirmDelete": "Click again to remove the award",
+                "awardedBy": "Awarded by {{ tutor }}"
+            },
+            "participations": {
+                "column": "Feature bonus",
+                "tooltip": "Points awarded for additional features in this exercise and the bonus on the final grade they amount to with the course settings.",
+                "value": "{{ points }} pts ({{ percent }}%)"
+            },
+            "courseScores": {
+                "points": "Feature Points",
+                "percent": "Feature Bonus (%)",
+                "tooltip": "Points tutors awarded for additional features over all exercises, including team exercises, and the bonus on the final grade they amount to. Add the bonus on top of the final grade."
+            }
         }
     }
 }

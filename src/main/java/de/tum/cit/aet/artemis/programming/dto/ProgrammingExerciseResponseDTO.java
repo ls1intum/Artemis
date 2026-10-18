@@ -81,6 +81,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
  * @param maxStaticCodeAnalysisPenalty               the maximum static code analysis penalty
  * @param showTestNamesToStudents                    whether test names are shown to students
  * @param releaseTestsWithExampleSolution            whether tests are released with the example solution
+ * @param featureBonusEnabled                        whether tutors may award feature bonus points
  * @param testCasesChanged                           whether the test cases changed since the last build
  * @param allowOnlineEditor                          whether the online editor is allowed
  * @param allowOfflineIde                            whether the offline IDE is allowed
@@ -112,8 +113,8 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
         Boolean allowComplaintsForAutomaticAssessments, Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String gradingInstructions,
         List<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks, PlagiarismDetectionConfigDTO plagiarismDetectionConfig,
         ProgrammingLanguage programmingLanguage, String packageName, ProjectType projectType, String projectKey, String testRepositoryUri, Boolean staticCodeAnalysisEnabled,
-        Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution, Boolean testCasesChanged, Boolean allowOnlineEditor,
-        Boolean allowOfflineIde, Boolean allowOnlineIde, Boolean gradingInstructionFeedbackUsed, UpdateProgrammingExerciseBuildConfigDTO buildConfig,
+        Integer maxStaticCodeAnalysisPenalty, Boolean showTestNamesToStudents, Boolean releaseTestsWithExampleSolution, Boolean featureBonusEnabled, Boolean testCasesChanged,
+        Boolean allowOnlineEditor, Boolean allowOfflineIde, Boolean allowOnlineIde, Boolean gradingInstructionFeedbackUsed, UpdateProgrammingExerciseBuildConfigDTO buildConfig,
         SubmissionPolicyDTO submissionPolicy, ProgrammingExerciseCourseDTO course, ProgrammingExerciseExamGroupDTO exerciseGroup,
         TemplateSolutionParticipationDTO templateParticipation, TemplateSolutionParticipationDTO solutionParticipation, ExerciseVariantGroupReferenceDTO exerciseVariantGroup,
         List<ProgrammingExerciseStudentParticipationDTO> studentParticipations, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, ExerciseType exerciseType,
@@ -267,11 +268,11 @@ public record ProgrammingExerciseResponseDTO(Long id, String type, String title,
                 exercise.getAllowComplaintsForAutomaticAssessments(), exercise.getPresentationScoreEnabled(), exercise.getSecondCorrectionEnabled(),
                 exercise.getGradingInstructions(), gradingCriteria, competencyLinks, plagiarismDetectionConfig, exercise.getProgrammingLanguage(), exercise.getPackageName(),
                 exercise.getProjectType(), exercise.getProjectKey(), exercise.getTestRepositoryUri(), exercise.isStaticCodeAnalysisEnabled(),
-                exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(), exercise.isReleaseTestsWithExampleSolution(), exercise.getTestCasesChanged(),
-                exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(), exercise.isAllowOnlineIde(), gradingInstructionFeedbackUsed, buildConfig, submissionPolicy, course,
-                exerciseGroup, templateParticipation, solutionParticipation, ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()), studentParticipations,
-                auxiliaryRepositories, exercise.getExerciseType(), exercise.isVisibleToStudents(), exercise.isStudentAssignedTeamIdComputed(),
-                exercise.getDefaultTestCaseVisibility());
+                exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getShowTestNamesToStudents(), exercise.isReleaseTestsWithExampleSolution(), exercise.isFeatureBonusEnabled(),
+                exercise.getTestCasesChanged(), exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(), exercise.isAllowOnlineIde(), gradingInstructionFeedbackUsed,
+                buildConfig, submissionPolicy, course, exerciseGroup, templateParticipation, solutionParticipation,
+                ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()), studentParticipations, auxiliaryRepositories, exercise.getExerciseType(),
+                exercise.isVisibleToStudents(), exercise.isStudentAssignedTeamIdComputed(), exercise.getDefaultTestCaseVisibility());
     }
 
     /**

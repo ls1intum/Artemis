@@ -225,6 +225,11 @@
                 "title": "Regex für den Branchnamen",
                 "description": "Namens für andere Branches als der default Branch müssen im Namen dem Regex entsprechen."
             },
+            "featureBonus": {
+                "label": "Feature-Bonus erlauben",
+                "tooltip": "Tutor:innen können in der Bewertung einer Teilnahme nach der Abgabefrist Punkte für zusätzliche Features vergeben. Die Punkte ändern die Punktzahl dieser Aufgabe nicht: Die Kurseinstellungen rechnen sie in einen Bonus auf die Endnote um.",
+                "hint": "Feature-Punkte zählen zum Notenbonus des Kurses, nicht zu dieser Aufgabe. Die Umrechnung legst du in den Kurseinstellungen fest."
+            },
             "showTestNamesToStudents": "Zeige die Testnamen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",

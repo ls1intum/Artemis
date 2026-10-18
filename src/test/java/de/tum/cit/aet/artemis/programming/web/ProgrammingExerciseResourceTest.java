@@ -676,7 +676,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 base.testRepositoryUri(), base.solutionRepositoryUri(), base.auxiliaryRepositories(), base.allowOnlineEditor(), base.allowOfflineIde(), base.allowOnlineIde(),
                 base.staticCodeAnalysisEnabled(), base.maxStaticCodeAnalysisPenalty(), base.programmingLanguage(), base.packageName(), base.showTestNamesToStudents(),
                 base.buildAndTestStudentSubmissionsAfterDueDate(), base.testCasesChanged(), base.projectKey(), base.submissionPolicy(), base.projectType(),
-                base.releaseTestsWithExampleSolution(), base.assessmentType(), base.buildConfig(), null);
+                base.releaseTestsWithExampleSolution(), base.featureBonusEnabled(), base.assessmentType(), base.buildConfig(), null);
         var updated = request.putWithResponseBody("/api/programming/programming-exercises", withoutConfig, ProgrammingExerciseResponseDTO.class, HttpStatus.OK);
 
         var fromDb = programmingExerciseUtilService.findWithPlagiarismDetectionConfigAndGradingCriteriaById(updated.id()).orElseThrow();
@@ -1334,7 +1334,7 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 Boolean.TRUE.equals(response.allowOnlineIde()), response.staticCodeAnalysisEnabled(), response.maxStaticCodeAnalysisPenalty(), response.programmingLanguage(),
                 response.packageName(), Boolean.TRUE.equals(response.showTestNamesToStudents()), response.buildAndTestStudentSubmissionsAfterDueDate(), response.testCasesChanged(),
                 response.projectKey(), response.submissionPolicy(), response.projectType(), Boolean.TRUE.equals(response.releaseTestsWithExampleSolution()),
-                response.assessmentType(), response.buildConfig(), response.plagiarismDetectionConfig());
+                Boolean.TRUE.equals(response.featureBonusEnabled()), response.assessmentType(), response.buildConfig(), response.plagiarismDetectionConfig());
     }
 
     /**
@@ -1357,8 +1357,8 @@ class ProgrammingExerciseResourceTest extends AbstractSpringIntegrationLocalCILo
                 dto.exampleSolutionPublicationDate(), dto.courseId(), dto.exerciseGroupId(), gradingCriteria, dto.competencyLinks(), dto.testRepositoryUri(),
                 dto.solutionRepositoryUri(), dto.auxiliaryRepositories(), dto.allowOnlineEditor(), dto.allowOfflineIde(), dto.allowOnlineIde(), dto.staticCodeAnalysisEnabled(),
                 dto.maxStaticCodeAnalysisPenalty(), dto.programmingLanguage(), dto.packageName(), dto.showTestNamesToStudents(), dto.buildAndTestStudentSubmissionsAfterDueDate(),
-                dto.testCasesChanged(), dto.projectKey(), dto.submissionPolicy(), dto.projectType(), dto.releaseTestsWithExampleSolution(), dto.assessmentType(), dto.buildConfig(),
-                dto.plagiarismDetectionConfig());
+                dto.testCasesChanged(), dto.projectKey(), dto.submissionPolicy(), dto.projectType(), dto.releaseTestsWithExampleSolution(), dto.featureBonusEnabled(),
+                dto.assessmentType(), dto.buildConfig(), dto.plagiarismDetectionConfig());
     }
 
     /**

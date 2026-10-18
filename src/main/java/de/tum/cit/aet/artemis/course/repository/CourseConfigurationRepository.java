@@ -87,6 +87,8 @@ public interface CourseConfigurationRepository extends ArtemisJpaRepository<Cour
      * @param autoOrchestratorEnabled        whether the auto-orchestration pipeline is on
      * @param debounceWindowSecondsOverride  the debounce override, or null for the global default
      * @param maxDailyOrchestrationOverride  the daily run cap override, or null for the global default
+     * @param featureBonusPercentPerPoint    the percent one feature bonus point is worth, or null without feature bonus
+     * @param featureBonusMaxPercent         the highest feature bonus in percent, or null without feature bonus
      * @return the number of updated rows: 1, or 0 if the course has no configuration row
      */
     @Modifying
@@ -95,13 +97,15 @@ public interface CourseConfigurationRepository extends ArtemisJpaRepository<Cour
             UPDATE CourseConfiguration configuration
             SET configuration.gradeRelevant = :gradeRelevant, configuration.autoOrchestratorEnabled = :autoOrchestratorEnabled,
                 configuration.presentationAssessmentsEnabled = :presentationAssessmentsEnabled,
-                configuration.debounceWindowSecondsOverride = :debounceWindowSecondsOverride, configuration.maxDailyOrchestrationOverride = :maxDailyOrchestrationOverride
+                configuration.debounceWindowSecondsOverride = :debounceWindowSecondsOverride, configuration.maxDailyOrchestrationOverride = :maxDailyOrchestrationOverride,
+                configuration.featureBonusPercentPerPoint = :featureBonusPercentPerPoint, configuration.featureBonusMaxPercent = :featureBonusMaxPercent
             WHERE configuration.course.id = :courseId
             """)
     int updateEditableSettings(@Param("courseId") long courseId, @Param("gradeRelevant") boolean gradeRelevant,
             @Param("presentationAssessmentsEnabled") boolean presentationAssessmentsEnabled, @Param("autoOrchestratorEnabled") boolean autoOrchestratorEnabled,
             @Param("debounceWindowSecondsOverride") @Nullable Integer debounceWindowSecondsOverride,
-            @Param("maxDailyOrchestrationOverride") @Nullable Integer maxDailyOrchestrationOverride);
+            @Param("maxDailyOrchestrationOverride") @Nullable Integer maxDailyOrchestrationOverride,
+            @Param("featureBonusPercentPerPoint") @Nullable Double featureBonusPercentPerPoint, @Param("featureBonusMaxPercent") @Nullable Double featureBonusMaxPercent);
 
     /**
      * Changes the data-retention hold of a course in place.

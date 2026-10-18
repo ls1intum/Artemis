@@ -419,6 +419,7 @@ public class ProgrammingExerciseUpdateResource {
         exercise.setSubmissionPolicy(dto.submissionPolicy() == null ? null : dto.submissionPolicy().toEntity());
         exercise.setProjectType(dto.projectType());
         exercise.setReleaseTestsWithExampleSolution(dto.releaseTestsWithExampleSolution());
+        exercise.setFeatureBonusEnabled(dto.featureBonusEnabled());
 
         // Update auxiliary repositories. Attached one by one rather than assigned as a collection: a repository
         // carries the key to its exercise, and one deserialized from the request body names none until it is attached,

@@ -58,6 +58,10 @@ export interface CourseCreateDTO {
     autoOrchestratorEnabled: boolean;
     debounceWindowSecondsOverride?: number;
     maxDailyOrchestrationOverride?: number;
+
+    // Feature bonus: conversion of awarded feature points into a bonus on the final grade, unset while the course does not use it
+    featureBonusPercentPerPoint?: number;
+    featureBonusMaxPercent?: number;
 }
 
 /**
@@ -117,6 +121,10 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
         debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride ?? undefined,
         maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride ?? undefined,
+
+        // Feature bonus: conversion of awarded feature points into a bonus on the final grade
+        featureBonusPercentPerPoint: course.courseConfiguration?.featureBonusPercentPerPoint ?? undefined,
+        featureBonusMaxPercent: course.courseConfiguration?.featureBonusMaxPercent ?? undefined,
     };
 }
 
@@ -183,6 +191,10 @@ export interface CourseUpdateDTO {
     autoOrchestratorEnabled: boolean;
     debounceWindowSecondsOverride?: number;
     maxDailyOrchestrationOverride?: number;
+
+    // Feature bonus: conversion of awarded feature points into a bonus on the final grade, unset while the course does not use it
+    featureBonusPercentPerPoint?: number;
+    featureBonusMaxPercent?: number;
 }
 
 /**
@@ -251,5 +263,9 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         autoOrchestratorEnabled: course.courseConfiguration?.autoOrchestratorEnabled ?? false,
         debounceWindowSecondsOverride: course.courseConfiguration?.debounceWindowSecondsOverride ?? undefined,
         maxDailyOrchestrationOverride: course.courseConfiguration?.maxDailyOrchestrationOverride ?? undefined,
+
+        // Feature bonus: conversion of awarded feature points into a bonus on the final grade
+        featureBonusPercentPerPoint: course.courseConfiguration?.featureBonusPercentPerPoint ?? undefined,
+        featureBonusMaxPercent: course.courseConfiguration?.featureBonusMaxPercent ?? undefined,
     };
 }

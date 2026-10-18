@@ -1,0 +1,136 @@
+:host {
+    display: block;
+    margin-top: 1rem;
+}
+
+.feature-bonus-awards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
+
+    &__header {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding-bottom: 0.375rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    &__title {
+        margin: 0;
+    }
+
+    &__summary {
+        display: flex;
+        align-items: baseline;
+        gap: 0.375rem;
+        margin: 0;
+
+        dt {
+            font-weight: 400;
+            color: var(--secondary);
+        }
+
+        dd {
+            margin: 0;
+        }
+    }
+
+    &__summary-value {
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: var(--success);
+    }
+
+    &__list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    &__item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.375rem;
+
+        &--edited {
+            border-color: var(--primary);
+        }
+    }
+
+    &__item-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+
+    &__item-title {
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    &__item-actions {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    &__icon-button {
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--secondary);
+
+        &:hover:not(:disabled) {
+            color: var(--tumaet-ui-text-color);
+        }
+    }
+
+    &__item-justification {
+        margin: 0;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    &__item-meta {
+        color: var(--tumaet-ui-muted-color);
+        font-size: 0.8rem;
+    }
+
+    &__form {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    &__form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    &__form-title {
+        flex: 1 1 16rem;
+        min-width: 0;
+    }
+
+    &__form-points {
+        flex: 0 0 8rem;
+    }
+
+    &__form-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+}

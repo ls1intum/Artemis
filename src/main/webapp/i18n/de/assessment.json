@@ -140,6 +140,34 @@
                 "type": "Aufgabentyp",
                 "empty": "Keine von dir gesperrten Bewertungen vorhanden!"
             }
+        },
+        "featureBonus": {
+            "assessment": {
+                "title": "Feature-Bonus",
+                "total": "Vergeben",
+                "info": "Vergib Punkte für Features über die Aufgabe hinaus. Sie ändern die Punktzahl dieser Aufgabe nicht: Der Kurs rechnet sie in einen Bonus auf die Endnote um. Jede Änderung wird sofort gespeichert.",
+                "feature": "Feature",
+                "featurePlaceholder": "z. B. Intelligente Gegner",
+                "points": "Punkte",
+                "justification": "Begründung",
+                "justificationPlaceholder": "Warum ist das Feature diese Punkte wert?",
+                "add": "Punkte vergeben",
+                "saveChanges": "Änderungen speichern",
+                "edit": "Vergabe bearbeiten",
+                "delete": "Vergabe entfernen",
+                "confirmDelete": "Erneut klicken, um die Vergabe zu entfernen",
+                "awardedBy": "Vergeben von {{ tutor }}"
+            },
+            "participations": {
+                "column": "Feature-Bonus",
+                "tooltip": "Punkte für zusätzliche Features in dieser Aufgabe und der Bonus auf die Endnote, den sie mit den Kurseinstellungen ergeben.",
+                "value": "{{ points }} Pkt. ({{ percent }} %)"
+            },
+            "courseScores": {
+                "points": "Feature-Punkte",
+                "percent": "Feature-Bonus (%)",
+                "tooltip": "Punkte, die Tutor:innen über alle Aufgaben hinweg für zusätzliche Features vergeben haben, auch in Teamaufgaben, und der Bonus auf die Endnote, den sie ergeben. Rechne den Bonus zusätzlich auf die Endnote an."
+            }
         }
     }
 }

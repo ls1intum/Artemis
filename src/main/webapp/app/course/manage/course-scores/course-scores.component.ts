@@ -29,6 +29,8 @@ import {
     COURSE_OVERALL_SCORE_KEY,
     EMAIL_KEY,
     EXCESS_VARIANT_POINTS_KEY,
+    FEATURE_BONUS_PERCENT_KEY,
+    FEATURE_BONUS_POINTS_KEY,
     GRADE_KEY,
     NAME_KEY,
     POINTS_KEY,
@@ -58,6 +60,9 @@ import { CourseManagementService, GradeScoreDTO, StudentGradeDTO } from 'app/cou
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseTitleBarActionsDirective } from 'app/course/shared/directives/course-title-bar-actions.directive';
 import { HelpIconComponent } from 'app/shared-ui/components/help-icon/help-icon.component';
+import { FeatureBonusService } from 'app/assessment/shared/services/feature-bonus.service';
+import { StudentFeatureBonus } from 'app/assessment/shared/entities/feature-bonus.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { GradingScaleDTO, toEntity } from 'app/assessment/shared/entities/grading-scale-dto.model';
 
 export enum HighlightType {
@@ -94,6 +99,7 @@ export class CourseScoresComponent implements OnInit {
     private readonly gradingService = inject(GradingService);
     private readonly plagiarismCasesService = inject(PlagiarismCasesService);
     private readonly profileService = inject(ProfileService);
+    private readonly featureBonusService = inject(FeatureBonusService);
     private readonly destroyRef = inject(DestroyRef);
 
     // State signals
@@ -132,6 +138,13 @@ export class CourseScoresComponent implements OnInit {
     readonly averageNumberOfUncappedPoints = signal(0);
     readonly averageNumberOfExcessVariantPoints = signal(0);
     readonly averageNumberOfPresentationPoints = signal(0);
+
+    // Feature bonus: points tutors awarded for additional features, shown beside the grade because the instructor adds the bonus on top of it
+    readonly featureBonusActive = signal(false);
+    readonly averageNumberOfFeatureBonusPoints = signal(0);
+    readonly averageFeatureBonusPercent = signal<number | undefined>(undefined);
+    private featureBonusPerStudent = new Map<number, StudentFeatureBonus>();
+    private featureBonusWithoutConversion = false;
 
     /**
      * Whether any variant-group cap actually deducts points; the uncapped and excess columns would otherwise show
@@ -272,30 +285,42 @@ export class CourseScoresComponent implements OnInit {
             ? this.plagiarismCasesService.getCoursePlagiarismCasesForScores(courseId)
             : of(new HttpResponse<PlagiarismCaseDTO[]>());
 
-        forkJoin([findGradeScoresObservable, gradingScaleObservable, plagiarismCasesObservable]).subscribe(([courseGradeInformation, gradingScaleResponse, plagiarismCases]) => {
-            this.gradeScores.set(courseGradeInformation.gradeScores ?? []);
-            this.students.set(courseGradeInformation.students ?? []);
-            if (gradingScaleResponse.body) {
-                this.setUpGradingScale(gradingScaleResponse.body);
-            }
+        // Awards stay valid when an exercise stops allowing new ones, so any exercise that ever allowed them shows the columns.
+        const featureBonusActive = !!this.course()?.exercises?.some(
+            (exercise) => exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).featureBonusEnabled,
+        );
+        const featureBonusObservable = featureBonusActive ? this.featureBonusService.getFeatureBonusOfCourse(courseId) : of([]);
 
-            this.calculateExerciseLevelStatistics();
-            this.exerciseTypesWithExercises = this.filterExercisesTypesWithExercises();
+        forkJoin([findGradeScoresObservable, gradingScaleObservable, plagiarismCasesObservable, featureBonusObservable]).subscribe(
+            ([courseGradeInformation, gradingScaleResponse, plagiarismCases, featureBonus]) => {
+                this.featureBonusActive.set(featureBonusActive);
+                this.featureBonusPerStudent = new Map(featureBonus.map((bonus) => [bonus.studentId, bonus]));
+                // The server leaves out the percentage while the course has no conversion; students without awards then have none either.
+                this.featureBonusWithoutConversion = featureBonus.length > 0 && featureBonus.every((bonus) => bonus.bonusPercent === undefined);
+                this.gradeScores.set(courseGradeInformation.gradeScores ?? []);
+                this.students.set(courseGradeInformation.students ?? []);
+                if (gradingScaleResponse.body) {
+                    this.setUpGradingScale(gradingScaleResponse.body);
+                }
 
-            this.calculateStudentLevelStatistics();
+                this.calculateExerciseLevelStatistics();
+                this.exerciseTypesWithExercises = this.filterExercisesTypesWithExercises();
 
-            // if grading scale exists set properties
-            if (this.gradingScaleExists()) {
-                this.calculateGradingScaleInformation(plagiarismCases.body ?? undefined);
-            }
+                this.calculateStudentLevelStatistics();
 
-            this.calculateAverageAndMedianScores();
-            const stats = this.studentStatistics();
-            const maxPoints = this.maxNumberOfOverallPoints();
-            const course = this.course();
-            this.scoresToDisplay.set(stats.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / maxPoints, course)));
-            this.highlightBar(HighlightType.AVERAGE);
-        });
+                // if grading scale exists set properties
+                if (this.gradingScaleExists()) {
+                    this.calculateGradingScaleInformation(plagiarismCases.body ?? undefined);
+                }
+
+                this.calculateAverageAndMedianScores();
+                const stats = this.studentStatistics();
+                const maxPoints = this.maxNumberOfOverallPoints();
+                const course = this.course();
+                this.scoresToDisplay.set(stats.map((student) => roundScorePercentSpecifiedByCourseSettings(student.overallPoints / maxPoints, course)));
+                this.highlightBar(HighlightType.AVERAGE);
+            },
+        );
     }
 
     /**
@@ -398,6 +423,10 @@ export class CourseScoresComponent implements OnInit {
             }
 
             this.addPresentationPointsForStudent(student);
+
+            const featureBonus = this.featureBonusPerStudent.get(student.student.id);
+            student.featureBonusPoints = featureBonus?.points ?? 0;
+            student.featureBonusPercent = featureBonus ? featureBonus.bonusPercent : this.featureBonusWithoutConversion ? undefined : 0;
         });
 
         this.studentStatistics.set(statistics);
@@ -413,6 +442,10 @@ export class CourseScoresComponent implements OnInit {
         this.averageNumberOfUncappedPoints.set(average(statistics.map((student) => student.overallPointsUncapped)));
         this.averageNumberOfExcessVariantPoints.set(average(statistics.map((student) => student.excessVariantPoints)));
         this.averageNumberOfPresentationPoints.set(average(statistics.map((student) => student.presentationPoints)));
+        this.averageNumberOfFeatureBonusPoints.set(average(statistics.map((student) => student.featureBonusPoints)));
+        const featureBonusPercents = statistics.map((student) => student.featureBonusPercent);
+        // Without a conversion in the course settings no student has a percentage, and an average of nothing would read as 0%.
+        this.averageFeatureBonusPercent.set(featureBonusPercents.every((percent) => percent !== undefined) ? average(featureBonusPercents) : undefined);
         this.averageNumberOfSuccessfulExercises.set(average(statistics.map((student) => student.numberOfSuccessfulExercises)));
         this.averageNumberOfParticipatedExercises.set(average(statistics.map((student) => student.numberOfParticipatedExercises)));
 
@@ -793,6 +826,10 @@ export class CourseScoresComponent implements OnInit {
             keys.push(this.isBonus() ? BONUS_KEY : GRADE_KEY);
         }
 
+        if (this.featureBonusActive()) {
+            keys.push(FEATURE_BONUS_POINTS_KEY, FEATURE_BONUS_PERCENT_KEY);
+        }
+
         return keys;
     }
 
@@ -849,6 +886,11 @@ export class CourseScoresComponent implements OnInit {
         }
 
         this.setExportRowGradeValue(rowData, studentStatistics.gradeStep?.gradeName);
+
+        if (this.featureBonusActive()) {
+            rowData.setPoints(FEATURE_BONUS_POINTS_KEY, studentStatistics.featureBonusPoints);
+            rowData.setScore(FEATURE_BONUS_PERCENT_KEY, studentStatistics.featureBonusPercent);
+        }
 
         return rowData.build();
     }
@@ -941,6 +983,11 @@ export class CourseScoresComponent implements OnInit {
 
         this.setExportRowGradeValue(rowData, this.averageGrade());
 
+        if (this.featureBonusActive()) {
+            rowData.setPoints(FEATURE_BONUS_POINTS_KEY, this.averageNumberOfFeatureBonusPoints());
+            rowData.setScore(FEATURE_BONUS_PERCENT_KEY, this.averageFeatureBonusPercent());
+        }
+
         return rowData.build();
     }
 
@@ -1020,6 +1067,11 @@ export class CourseScoresComponent implements OnInit {
             emptyLine.set(PRESENTATION_SCORE_KEY, '');
         }
         this.setExportRowGradeValue(emptyLine, '');
+
+        if (this.featureBonusActive()) {
+            emptyLine.set(FEATURE_BONUS_POINTS_KEY, '');
+            emptyLine.set(FEATURE_BONUS_PERCENT_KEY, '');
+        }
 
         return emptyLine;
     }

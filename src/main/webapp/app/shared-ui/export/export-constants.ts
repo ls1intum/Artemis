@@ -18,6 +18,8 @@ export const EXAM_PASSED = 'Passed';
 
 export const PRESENTATION_SCORE_KEY = 'Presentation Score';
 export const PRESENTATION_POINTS_KEY = 'Presentation Points';
+export const FEATURE_BONUS_POINTS_KEY = 'Feature Bonus Points';
+export const FEATURE_BONUS_PERCENT_KEY = 'Feature Bonus (%)';
 export const POINTS_KEY = 'Points';
 export const SCORE_KEY = 'Score';
 export const GRADE_KEY = 'Grades';

@@ -9,11 +9,14 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Parent;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
  * Holds course-level configuration values that are only needed in specific flows and should not widen the (already large)
@@ -23,8 +26,8 @@ import de.tum.cit.aet.artemis.core.domain.Parent;
  * <p>
  * Currently stores the grade-relevance flag that drives the GDPR retention period for a course's student data
  * (grade-relevant courses are retained longer than non-grade-relevant ones), the data-retention hold that suspends that
- * cleanup entirely, the timestamps recording the retention lifecycle, and the per-course Atlas auto-orchestration
- * settings.
+ * cleanup entirely, the timestamps recording the retention lifecycle, the per-course Atlas auto-orchestration
+ * settings, and the conversion of feature bonus points into a bonus on the final grade.
  * <p>
  * The auto-orchestration settings live here rather than in an Atlas-owned table because they must be readable and
  * writable even when the Atlas module is disabled: the course update flow has to preserve them, and it cannot go
@@ -118,6 +121,21 @@ public class CourseConfiguration extends DomainObject {
     @Column(name = "max_daily_orchestration_override")
     private Integer maxDailyOrchestrationOverride;
 
+    /**
+     * How many percent of the final grade one feature bonus point is worth. Together with {@link #featureBonusMaxPercent} it
+     * converts the points tutors award for additional features into the bonus the instructor adds on top of the final grade.
+     * {@code null} while the course does not use the feature bonus.
+     */
+    @Column(name = "feature_bonus_percent_per_point")
+    private Double featureBonusPercentPerPoint;
+
+    /**
+     * The highest feature bonus, in percent of the final grade, a student can receive. {@code null} while the course does not
+     * use the feature bonus.
+     */
+    @Column(name = "feature_bonus_max_percent")
+    private Double featureBonusMaxPercent;
+
     public Long getCourseId() {
         return courseId;
     }
@@ -194,5 +212,33 @@ public class CourseConfiguration extends DomainObject {
 
     public void setMaxDailyOrchestrationOverride(Integer maxDailyOrchestrationOverride) {
         this.maxDailyOrchestrationOverride = maxDailyOrchestrationOverride;
+    }
+
+    public Double getFeatureBonusPercentPerPoint() {
+        return featureBonusPercentPerPoint;
+    }
+
+    public Double getFeatureBonusMaxPercent() {
+        return featureBonusMaxPercent;
+    }
+
+    /**
+     * Sets the conversion of feature bonus points into a bonus on the final grade. Either both values are set or neither is,
+     * which disables the feature bonus for the course.
+     *
+     * @param percentPerPoint how many percent one point is worth, greater than 0 and at most 100
+     * @param maxPercent      the highest bonus in percent, greater than 0 and at most 100
+     */
+    public void setFeatureBonus(@Nullable Double percentPerPoint, @Nullable Double maxPercent) {
+        if ((percentPerPoint == null) != (maxPercent == null) || (percentPerPoint != null && !(isValidPercent(percentPerPoint) && isValidPercent(maxPercent)))) {
+            throw new BadRequestAlertException("The feature bonus needs a value per point and a maximum, both greater than 0 and at most 100 percent", ENTITY_NAME,
+                    "invalidFeatureBonus");
+        }
+        this.featureBonusPercentPerPoint = percentPerPoint;
+        this.featureBonusMaxPercent = maxPercent;
+    }
+
+    private static boolean isValidPercent(double percent) {
+        return percent > 0 && percent <= 100;
     }
 }

@@ -54,7 +54,8 @@ public record UpdateProgrammingExerciseDTO(
         String testRepositoryUri, String solutionRepositoryUri, List<AuxiliaryRepositoryDTO> auxiliaryRepositories, Boolean allowOnlineEditor, Boolean allowOfflineIde,
         boolean allowOnlineIde, Boolean staticCodeAnalysisEnabled, Integer maxStaticCodeAnalysisPenalty, ProgrammingLanguage programmingLanguage, String packageName,
         boolean showTestNamesToStudents, @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, Boolean testCasesChanged, String projectKey,
-        @Nullable SubmissionPolicyDTO submissionPolicy, @Nullable ProjectType projectType, boolean releaseTestsWithExampleSolution, @Nullable AssessmentType assessmentType,
+        @Nullable SubmissionPolicyDTO submissionPolicy, @Nullable ProjectType projectType, boolean releaseTestsWithExampleSolution, boolean featureBonusEnabled,
+        @Nullable AssessmentType assessmentType,
 
         // Build config
         UpdateProgrammingExerciseBuildConfigDTO buildConfig,
@@ -116,7 +117,7 @@ public record UpdateProgrammingExerciseDTO(
                 exercise.getSolutionRepositoryUri(), auxiliaryRepositoryDTOs, exercise.isAllowOnlineEditor(), exercise.isAllowOfflineIde(), exercise.isAllowOnlineIde(),
                 exercise.isStaticCodeAnalysisEnabled(), exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(), exercise.getPackageName(),
                 exercise.getShowTestNamesToStudents(), exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getTestCasesChanged(), exercise.getProjectKey(),
-                submissionPolicyDTO, exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), exercise.getAssessmentType(),
+                submissionPolicyDTO, exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), exercise.isFeatureBonusEnabled(), exercise.getAssessmentType(),
                 UpdateProgrammingExerciseBuildConfigDTO.of(buildConfig), plagiarismDetectionConfigDTO);
     }
 }

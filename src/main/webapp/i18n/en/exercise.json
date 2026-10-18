@@ -161,6 +161,7 @@
             "points": "Points",
             "pointsError": "Must be a number between 1 and 9999.",
             "bonusPoints": "Bonus Points",
+            "bonusPointsTooltip": "Extra points within the score of this exercise: students can earn more than its points. They do not affect the feature bonus on the course grade.",
             "bonusPointsError": "Must be a number between 0 and 9999.",
             "includedInOverallScoreCourseLabel": "Include this exercise in the course score calculation",
             "includedInOverallScoreExamLabel": "Include this exercise in the exam score calculation",

@@ -64,6 +64,8 @@ export class ProgrammingExercise extends Exercise {
     public submissionPolicy?: SubmissionPolicy;
     public buildConfig?: ProgrammingExerciseBuildConfig;
     public releaseTestsWithExampleSolution?: boolean;
+    /** Whether tutors may award feature bonus points while assessing; the points convert into a bonus on the final grade. */
+    public featureBonusEnabled?: boolean;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
     public testCasesChanged?: boolean;

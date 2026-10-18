@@ -123,3 +123,30 @@ in a pair of totals and Artemis shows the grade that combination would produce, 
 whether a configuration does what you meant.
 
 <Image src={bonusExamples} alt="Worked bonus examples, with the last row editable" size={ImageSize.large} caption="Worked examples, and one row to try your own" />
+
+## Feature Bonus
+
+A feature bonus rewards students for features they built beyond the task of a programming exercise, such as a
+path-finding algorithm in a game project. Tutors award points for each feature while they assess, and Artemis converts
+a student's points into a bonus in percent of the final grade. Artemis does not apply that bonus itself: you add it on
+top of the final grade, after the exam and the exercises are combined.
+
+The feature bonus is separate from the two other kinds of bonus in Artemis:
+
+- **Bonus points** of an exercise raise the score of that one exercise above 100%. They count towards the course
+  score like any other points.
+- **Bonus** on an exam, described above, moves an exam grade using the result of another course or exam.
+
+To use it:
+
+1. In the course settings, under **Exercises & Grading**, select **Enable Feature Bonus** and set **Percent per point**
+   and **Maximum bonus (%)**. With 0.5% per point and a maximum of 5%, a student reaches the maximum at 10 points.
+2. In each programming exercise that should allow it, select **Allow feature bonus** in the grading section. The option
+   is offered for course exercises that are assessed manually.
+3. Tutors award the points in the assessment, see
+   [Feature Bonus](/instructor/exercises/programming-exercise/grade-and-verify#feature-bonus).
+
+The **Participations** page of an exercise shows the points of every student or team and the bonus they amount to. The
+**Scores** page of the course adds two columns, **Feature Points** and **Feature Bonus (%)**, which sum each student's
+points over all exercises, including the points awarded to their teams, and cap the result at the maximum. Both columns
+are part of the CSV and Excel export.

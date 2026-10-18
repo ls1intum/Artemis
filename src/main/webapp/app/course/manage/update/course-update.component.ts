@@ -89,6 +89,8 @@ const CONTROL_ISSUES: readonly Required<CourseFormIssue>[] = [
     { control: 'maxComplaintTextLimit', labelKey: 'artemisApp.course.maxComplaintTextLimit.title', targetId: 'field_maxComplaintTextLimit' },
     { control: 'maxComplaintResponseTextLimit', labelKey: 'artemisApp.course.maxComplaintResponseTextLimit.title', targetId: 'field_maxComplaintResponseTextLimit' },
     { control: 'maxRequestMoreFeedbackTimeDays', labelKey: 'artemisApp.course.maxRequestMoreFeedbackTimeDays.title', targetId: 'field_maxRequestMoreFeedbackTimeDays' },
+    { control: 'featureBonusPercentPerPoint', labelKey: 'artemisApp.course.featureBonus.percentPerPoint.label', targetId: 'field_featureBonusPercentPerPoint' },
+    { control: 'featureBonusMaxPercent', labelKey: 'artemisApp.course.featureBonus.maxPercent.label', targetId: 'field_featureBonusMaxPercent' },
     {
         control: 'debounceWindowSecondsOverride',
         labelKey: 'artemisApp.course.autoOrchestration.debounceWindowSecondsOverride.label',
@@ -376,6 +378,13 @@ export class CourseUpdateComponent implements OnInit {
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled()),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled()),
+                featureBonusEnabled: new FormControl(this.course.courseConfiguration?.featureBonusPercentPerPoint !== undefined),
+                featureBonusPercentPerPoint: new FormControl(this.course.courseConfiguration?.featureBonusPercentPerPoint, {
+                    validators: this.featureBonusValidators(this.course.courseConfiguration?.featureBonusPercentPerPoint !== undefined),
+                }),
+                featureBonusMaxPercent: new FormControl(this.course.courseConfiguration?.featureBonusMaxPercent, {
+                    validators: this.featureBonusValidators(this.course.courseConfiguration?.featureBonusPercentPerPoint !== undefined),
+                }),
                 maxPoints: new FormControl(this.course.maxPoints, {
                     validators: [Validators.min(1), Validators.max(MAX_GRADING_POINTS), integerValidator()],
                 }),
@@ -620,6 +629,8 @@ export class CourseUpdateComponent implements OnInit {
             autoOrchestratorEnabled: rawValue.autoOrchestratorEnabled ?? false,
             debounceWindowSecondsOverride: rawValue.debounceWindowSecondsOverride ?? undefined,
             maxDailyOrchestrationOverride: rawValue.maxDailyOrchestrationOverride ?? undefined,
+            featureBonusPercentPerPoint: rawValue.featureBonusEnabled ? (rawValue.featureBonusPercentPerPoint ?? undefined) : undefined,
+            featureBonusMaxPercent: rawValue.featureBonusEnabled ? (rawValue.featureBonusMaxPercent ?? undefined) : undefined,
         };
 
         if (this.communicationEnabled && this.messagingEnabled) {
@@ -861,6 +872,27 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
+    /**
+     * Enable or disable the feature bonus. Enabling suggests the common conversion of 0.5% per point up to 5%; disabling clears
+     * both values, which is how the server stores a course without feature bonus.
+     */
+    changeFeatureBonusEnabled() {
+        const enabled = !!this.courseForm.controls['featureBonusEnabled'].value;
+        const percentPerPoint = this.courseForm.controls['featureBonusPercentPerPoint'];
+        const maxPercent = this.courseForm.controls['featureBonusMaxPercent'];
+        percentPerPoint.setValidators(this.featureBonusValidators(enabled));
+        maxPercent.setValidators(this.featureBonusValidators(enabled));
+        percentPerPoint.setValue(enabled ? (percentPerPoint.value ?? 0.5) : undefined);
+        maxPercent.setValue(enabled ? (maxPercent.value ?? 5) : undefined);
+    }
+
+    /**
+     * Both feature bonus values are percentages above 0 and at most 100, required while the feature bonus is enabled.
+     */
+    private featureBonusValidators(enabled: boolean): ValidatorFn[] {
+        return enabled ? [Validators.required, Validators.min(0.01), Validators.max(100)] : [];
+    }
+
     /**
      * Enable or disable test course
      */

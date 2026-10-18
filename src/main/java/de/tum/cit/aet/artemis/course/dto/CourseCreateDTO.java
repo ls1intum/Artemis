@@ -70,7 +70,11 @@ public record CourseCreateDTO(
         // The strict deserializer matches CourseUpdateDTO: @Min(1) alone would not reject a fractional value, because the
         // default Integer deserializer truncates it (10.5 -> 10) before bean validation runs.
         boolean autoOrchestratorEnabled, @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer debounceWindowSecondsOverride,
-        @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride) {
+        @Min(1) @JsonDeserialize(using = StrictIntegerDeserializer.class) Integer maxDailyOrchestrationOverride,
+
+        // Feature bonus: conversion of the points tutors award for additional features into a bonus on the final grade, both
+        // empty while the course does not use it.
+        Double featureBonusPercentPerPoint, Double featureBonusMaxPercent) {
 
     /**
      * Creates a new Course entity from this DTO.
@@ -140,6 +144,7 @@ public record CourseCreateDTO(
         configuration.setAutoOrchestratorEnabled(autoOrchestratorEnabled);
         configuration.setDebounceWindowSecondsOverride(debounceWindowSecondsOverride);
         configuration.setMaxDailyOrchestrationOverride(maxDailyOrchestrationOverride);
+        configuration.setFeatureBonus(featureBonusPercentPerPoint, featureBonusMaxPercent);
         configuration.setCourse(course);
         course.setCourseConfiguration(configuration);
 

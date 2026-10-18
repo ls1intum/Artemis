@@ -45,7 +45,7 @@ public interface CourseDefaultConfigurationsRepository {
         if (courseConfiguration != null) {
             updateCourseConfiguration(courseId, courseConfiguration.isGradeRelevant(), courseConfiguration.isDataRetentionHold(),
                     courseConfiguration.isPresentationAssessmentsEnabled(), courseConfiguration.isAutoOrchestratorEnabled(), courseConfiguration.getDebounceWindowSecondsOverride(),
-                    courseConfiguration.getMaxDailyOrchestrationOverride());
+                    courseConfiguration.getMaxDailyOrchestrationOverride(), courseConfiguration.getFeatureBonusPercentPerPoint(), courseConfiguration.getFeatureBonusMaxPercent());
         }
     }
 
@@ -76,6 +76,8 @@ public interface CourseDefaultConfigurationsRepository {
      * @param autoOrchestratorEnabled        whether the auto-orchestration pipeline is on
      * @param debounceWindowSecondsOverride  the debounce override, or null for the global default
      * @param maxDailyOrchestrationOverride  the daily run cap override, or null for the global default
+     * @param featureBonusPercentPerPoint    the percent one feature bonus point is worth, or null without feature bonus
+     * @param featureBonusMaxPercent         the highest feature bonus in percent, or null without feature bonus
      */
     @Modifying
     @Transactional // ok because of the update
@@ -83,13 +85,15 @@ public interface CourseDefaultConfigurationsRepository {
             UPDATE CourseConfiguration config
             SET config.gradeRelevant = :gradeRelevant, config.dataRetentionHold = :dataRetentionHold, config.autoOrchestratorEnabled = :autoOrchestratorEnabled,
                 config.presentationAssessmentsEnabled = :presentationAssessmentsEnabled,
-                config.debounceWindowSecondsOverride = :debounceWindowSecondsOverride, config.maxDailyOrchestrationOverride = :maxDailyOrchestrationOverride
+                config.debounceWindowSecondsOverride = :debounceWindowSecondsOverride, config.maxDailyOrchestrationOverride = :maxDailyOrchestrationOverride,
+                config.featureBonusPercentPerPoint = :featureBonusPercentPerPoint, config.featureBonusMaxPercent = :featureBonusMaxPercent
             WHERE config.course.id = :courseId
             """)
     void updateCourseConfiguration(@Param("courseId") long courseId, @Param("gradeRelevant") boolean gradeRelevant, @Param("dataRetentionHold") boolean dataRetentionHold,
             @Param("presentationAssessmentsEnabled") boolean presentationAssessmentsEnabled, @Param("autoOrchestratorEnabled") boolean autoOrchestratorEnabled,
             @Param("debounceWindowSecondsOverride") @Nullable Integer debounceWindowSecondsOverride,
-            @Param("maxDailyOrchestrationOverride") @Nullable Integer maxDailyOrchestrationOverride);
+            @Param("maxDailyOrchestrationOverride") @Nullable Integer maxDailyOrchestrationOverride,
+            @Param("featureBonusPercentPerPoint") @Nullable Double featureBonusPercentPerPoint, @Param("featureBonusMaxPercent") @Nullable Double featureBonusMaxPercent);
 
     /**
      * Creates the Athena settings of a newly stored course with every feature switched off.

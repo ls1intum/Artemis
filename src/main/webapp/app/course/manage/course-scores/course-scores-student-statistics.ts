@@ -8,6 +8,10 @@ export class CourseScoresStudentStatistics {
     gradeScores: GradeScoreDTO[] = [];
     presentationScore = 0;
     presentationPoints = 0;
+    // points tutors awarded for additional features over all exercises and teams; they never count towards overallPoints
+    featureBonusPoints = 0;
+    // the feature bonus points converted with the course settings, in percent of the final grade; undefined without a conversion
+    featureBonusPercent?: number;
     numberOfParticipatedExercises = 0;
     numberOfSuccessfulExercises = 0;
     overallPoints = 0;

@@ -174,6 +174,13 @@ public class ProgrammingExercise extends Exercise {
     private boolean releaseTestsWithExampleSolution = false;
 
     /**
+     * Whether tutors may award feature bonus points while assessing a participation. The points do not change the score of the
+     * exercise; the course converts them into a bonus on the final grade.
+     */
+    @Column(name = "feature_bonus_enabled", table = "programming_exercise_details", nullable = false)
+    private boolean featureBonusEnabled = false;
+
+    /**
      * Convenience getter. The actual URI is stored in the {@link TemplateProgrammingExerciseParticipation}
      *
      * @return The URI of the template repository as a String
@@ -322,6 +329,14 @@ public class ProgrammingExercise extends Exercise {
         return releaseTestsWithExampleSolution;
     }
 
+    public boolean isFeatureBonusEnabled() {
+        return featureBonusEnabled;
+    }
+
+    public void setFeatureBonusEnabled(boolean featureBonusEnabled) {
+        this.featureBonusEnabled = featureBonusEnabled;
+    }
+
     /**
      * Generates the full repository name for a given repository type.
      *
@@ -413,6 +428,7 @@ public class ProgrammingExercise extends Exercise {
         setMaxStaticCodeAnalysisPenalty(source.getMaxStaticCodeAnalysisPenalty());
         setShowTestNamesToStudents(source.getShowTestNamesToStudents());
         setReleaseTestsWithExampleSolution(source.isReleaseTestsWithExampleSolution());
+        setFeatureBonusEnabled(source.isFeatureBonusEnabled());
         // The fields below belong to Exercise. They stay here because the programming import service copies none of them either.
         setAssessmentType(source.getAssessmentType());
         setDifficulty(source.getDifficulty());

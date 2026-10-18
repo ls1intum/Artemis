@@ -353,6 +353,14 @@ const createProgrammingHandlers = (): ExerciseMetadataFieldHandler<Exercise>[] =
             applyValue: (exercise, value) => ((exercise as ProgrammingExercise).releaseTestsWithExampleSolution = value),
         } satisfies ExerciseMetadataFieldHandler<Exercise, boolean | undefined>,
         {
+            key: 'programmingData.featureBonusEnabled',
+            labelKey: 'artemisApp.programmingExercise.featureBonus.label',
+            getCurrentValue: (exercise) => (exercise as ProgrammingExercise).featureBonusEnabled,
+            getBaselineValue: (exercise) => (exercise as ProgrammingExercise).featureBonusEnabled,
+            getIncomingValue: (snapshot) => snapshot.programmingData?.featureBonusEnabled,
+            applyValue: (exercise, value) => ((exercise as ProgrammingExercise).featureBonusEnabled = value),
+        } satisfies ExerciseMetadataFieldHandler<Exercise, boolean | undefined>,
+        {
             key: 'programmingData.buildConfig',
             labelKey: 'artemisApp.programmingExercise.buildConfiguration',
             getCurrentValue: (exercise) => (exercise as ProgrammingExercise).buildConfig,

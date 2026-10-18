@@ -92,6 +92,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * @param showTestNamesToStudents                    whether test names are shown to students, for programming exercises
  * @param buildAndTestStudentSubmissionsAfterDueDate the date submissions are built and tested again, for programming exercises
  * @param releaseTestsWithExampleSolution            whether tests are released with the example solution, for programming exercises
+ * @param featureBonusEnabled                        whether tutors may award feature bonus points, for programming exercises
  * @param programmingLanguage                        the programming language, for programming exercises
  * @param projectType                                the project type, for programming exercises
  * @param packageName                                the package name, for programming exercises
@@ -126,13 +127,13 @@ public record ExerciseResponseDTO(long id, String type, ExerciseType exerciseTyp
         @Nullable List<ExampleSubmissionDTO> exampleSubmissions, @Nullable List<ExerciseTutorParticipationDTO> tutorParticipations, @Nullable ZonedDateTime latestExamEndDate,
         @Nullable ZonedDateTime assessmentPossibleFrom, @Nullable Boolean allowOnlineEditor, @Nullable Boolean allowOfflineIde, @Nullable Boolean allowOnlineIde,
         @Nullable Boolean staticCodeAnalysisEnabled, @Nullable Integer maxStaticCodeAnalysisPenalty, @Nullable Boolean showTestNamesToStudents,
-        @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, @Nullable Boolean releaseTestsWithExampleSolution, @Nullable ProgrammingLanguage programmingLanguage,
-        @Nullable ProjectType projectType, @Nullable String packageName, @Nullable String projectKey, @Nullable String testRepositoryUri, @Nullable Boolean testCasesChanged,
-        @Nullable Visibility defaultTestCaseVisibility, @Nullable TemplateSolutionParticipationDTO templateParticipation,
-        @Nullable TemplateSolutionParticipationDTO solutionParticipation, @Nullable Boolean randomizeQuestionOrder, @Nullable Integer allowedNumberOfAttempts,
-        @Nullable Integer remainingNumberOfAttempts, @Nullable QuizMode quizMode, @Nullable Integer duration, @Nullable Boolean quizStarted, @Nullable Boolean quizEnded,
-        @Nullable String exampleSolution, @Nullable String filePattern, @Nullable DiagramType diagramType, @Nullable String exampleSolutionModel,
-        @Nullable String exampleSolutionExplanation) {
+        @Nullable ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate, @Nullable Boolean releaseTestsWithExampleSolution, @Nullable Boolean featureBonusEnabled,
+        @Nullable ProgrammingLanguage programmingLanguage, @Nullable ProjectType projectType, @Nullable String packageName, @Nullable String projectKey,
+        @Nullable String testRepositoryUri, @Nullable Boolean testCasesChanged, @Nullable Visibility defaultTestCaseVisibility,
+        @Nullable TemplateSolutionParticipationDTO templateParticipation, @Nullable TemplateSolutionParticipationDTO solutionParticipation,
+        @Nullable Boolean randomizeQuestionOrder, @Nullable Integer allowedNumberOfAttempts, @Nullable Integer remainingNumberOfAttempts, @Nullable QuizMode quizMode,
+        @Nullable Integer duration, @Nullable Boolean quizStarted, @Nullable Boolean quizEnded, @Nullable String exampleSolution, @Nullable String filePattern,
+        @Nullable DiagramType diagramType, @Nullable String exampleSolutionModel, @Nullable String exampleSolutionExplanation) {
 
     /**
      * Maps an already authorized and filtered exercise, mapping each association only when it was loaded.
@@ -149,6 +150,7 @@ public record ExerciseResponseDTO(long id, String type, ExerciseType exerciseTyp
         Boolean showTestNamesToStudents = null;
         ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate = null;
         Boolean releaseTestsWithExampleSolution = null;
+        Boolean featureBonusEnabled = null;
         ProgrammingLanguage programmingLanguage = null;
         ProjectType projectType = null;
         String packageName = null;
@@ -181,6 +183,7 @@ public record ExerciseResponseDTO(long id, String type, ExerciseType exerciseTyp
                 showTestNamesToStudents = programmingExercise.getShowTestNamesToStudents();
                 buildAndTestStudentSubmissionsAfterDueDate = programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate();
                 releaseTestsWithExampleSolution = programmingExercise.isReleaseTestsWithExampleSolution();
+                featureBonusEnabled = programmingExercise.isFeatureBonusEnabled();
                 programmingLanguage = programmingExercise.getProgrammingLanguage();
                 projectType = programmingExercise.getProjectType();
                 packageName = programmingExercise.getPackageName();
@@ -225,8 +228,8 @@ public record ExerciseResponseDTO(long id, String type, ExerciseType exerciseTyp
                 ExerciseGroupContextDTO.of(initialized(exercise.getExerciseGroup())), ExerciseVariantGroupReferenceDTO.ofNullable(exercise.getExerciseVariantGroup()),
                 gradingCriteria(exercise), exampleSubmissions(exercise), tutorParticipations(exercise), exercise.getLatestExamEndDate(), exercise.getAssessmentPossibleFrom(),
                 allowOnlineEditor, allowOfflineIde, allowOnlineIde, staticCodeAnalysisEnabled, maxStaticCodeAnalysisPenalty, showTestNamesToStudents,
-                buildAndTestStudentSubmissionsAfterDueDate, releaseTestsWithExampleSolution, programmingLanguage, projectType, packageName, projectKey, testRepositoryUri,
-                testCasesChanged, defaultTestCaseVisibility, templateParticipation, solutionParticipation, randomizeQuestionOrder, allowedNumberOfAttempts,
+                buildAndTestStudentSubmissionsAfterDueDate, releaseTestsWithExampleSolution, featureBonusEnabled, programmingLanguage, projectType, packageName, projectKey,
+                testRepositoryUri, testCasesChanged, defaultTestCaseVisibility, templateParticipation, solutionParticipation, randomizeQuestionOrder, allowedNumberOfAttempts,
                 remainingNumberOfAttempts, quizMode, duration, quizStarted, quizEnded, exampleSolution, filePattern, diagramType, exampleSolutionModel, exampleSolutionExplanation);
     }
 

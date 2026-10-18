@@ -2,6 +2,7 @@ import { Component, HostListener, OnDestroy, OnInit, computed, inject, input, ou
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
+import { FeatureBonusAwardsComponent } from 'app/assessment/manage/feature-bonus/feature-bonus-awards.component';
 import { EMPTY, Observable, Subscription, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -65,6 +66,7 @@ import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
         ResultComponent,
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
+        FeatureBonusAwardsComponent,
         FeedbackSuggestionsBannerComponent,
         ArtemisDatePipe,
     ],
