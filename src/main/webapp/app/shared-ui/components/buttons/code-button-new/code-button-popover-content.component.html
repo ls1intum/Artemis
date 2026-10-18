@@ -23,6 +23,11 @@
                 </tumaet-ui-message>
             }
         }
+        @if (selectedMethodData.authenticationMethod === RepositoryAuthenticationMethod.Password && tokenAuthenticationAvailable()) {
+            <tumaet-ui-message severity="warn">
+                <span class="text-sm" jhiTranslate="artemisApp.exerciseActions.passwordAuthenticationWarning"></span>
+            </tumaet-ui-message>
+        }
 
         <div class="flex items-center gap-2">
             <div class="flex min-w-0 flex-1">

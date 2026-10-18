@@ -74,6 +74,7 @@ export class CodeButtonPopoverContentComponent {
     protected readonly selectedAuthenticationMethodData = linkedSignal(() => this.initializeSelectedAuthenticationMethodData());
     protected readonly selectedAuthenticationMethodLabel = computed(() => this.getAuthenticationMechanismLabel(this.selectedAuthenticationMethodData().authenticationMethod));
     protected readonly authenticationMethodDataAndLabels = computed(() => this.getAuthenticationMechanismsWithLabels());
+    protected readonly tokenAuthenticationAvailable = computed(() => this.isTokenAuthenticationAvailable());
     protected readonly repositoryDisplayUrl = computed(() => this.getRepositoryDisplayUrl());
     protected readonly repositoryCopyUrl = computed(() => this.selectedAuthenticationMethodData().url);
     protected readonly ideLinkData = computed(() => this.getIdeLinkData());
@@ -116,6 +117,12 @@ export class CodeButtonPopoverContentComponent {
             authenticationMethodData,
             label: this.getAuthenticationMechanismLabel(authenticationMethodData.authenticationMethod),
         }));
+    }
+
+    private isTokenAuthenticationAvailable(): boolean {
+        return this.authenticationMethodData().some((data) => {
+            return data.authenticationMethod === RepositoryAuthenticationMethod.Token;
+        });
     }
 
     /**

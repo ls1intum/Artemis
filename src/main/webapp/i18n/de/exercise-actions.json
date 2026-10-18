@@ -72,6 +72,7 @@
             "passwordWarningText": "Die Nutzung von Kontopasswörtern für Git ist unsicher. Nutze stattdessen einen",
             "passwordWarningHelp": "Persönliche Zugriffstokens sind auf Übungen beschränkt und verhindern, dass dein primäres Passwort im Klartext in Git gespeichert wird.",
             "switchToToken": "Zu Token wechseln",
+            "passwordAuthenticationWarning": "Beim Klonen über HTTPS wird dein Artemis-Passwort verwendet, das Git möglicherweise im Klartext zwischenspeichert. Dies kann ein Sicherheitsrisiko darstellen. Wir empfehlen, stattdessen die Option Token zu verwenden.",
             "vcsTokenTip": "Um mit einem VCS-Zugriffstoken auf das Repository zuzugreifen, musst du {link:hier} ein neues hinzufügen.",
             "vcsTokenExpiredTip": "Dein VCS-Zugriffstoken ist abgelaufen. Erneuere es {link:hier}.",
             "repositoryAccessTokenForbidden": "Du bist nicht berechtigt, auf dieses Repository zuzugreifen.",
