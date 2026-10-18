@@ -197,8 +197,34 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         if (testsRepository != null) {
             testsRepository.deleteWorkingCopy();
         }
-        deleteDirectoryIfExists(Path.of("local/server-integration-test/repos"));
-        deleteDirectoryIfExists(Path.of("local/server-integration-test/repos-download"));
+        // Other test contexts use these roots concurrently. Remove only this exercise's online-editor clones.
+        if (programmingExercise != null) {
+            gitService.deleteLocalProgrammingExerciseReposFolder(programmingExercise);
+        }
+    }
+
+    @Test
+    void testCleanupPreservesUnrelatedRepositoryDirectories() throws IOException {
+        String otherProject = "unrelated-" + UUID.randomUUID();
+        Path cloneRoot = Path.of("local/server-integration-test/repos");
+        Path downloadRoot = Path.of("local/server-integration-test/repos-download");
+        Path otherClone = Files.createDirectories(cloneRoot.resolve(otherProject));
+        Path otherDownload = Files.createDirectories(downloadRoot.resolve(otherProject));
+        Path ownClone = Files.createDirectories(gitService.getDefaultLocalCheckOutPathOfRepo(new LocalVCRepositoryUri(participation.getRepositoryUri())).getParent());
+        Files.writeString(otherClone.resolve("keep.txt"), "another test's repository");
+        Files.writeString(otherDownload.resolve("keep.txt"), "another test's download");
+        Files.writeString(ownClone.resolve("remove.txt"), "this test's repository");
+        try {
+            tearDown();
+
+            assertThat(otherClone.resolve("keep.txt")).hasContent("another test's repository");
+            assertThat(otherDownload.resolve("keep.txt")).hasContent("another test's download");
+            assertThat(ownClone).doesNotExist();
+        }
+        finally {
+            RepositoryExportTestUtil.safeDeleteDirectory(otherClone);
+            RepositoryExportTestUtil.safeDeleteDirectory(otherDownload);
+        }
     }
 
     @Test
@@ -1590,10 +1616,6 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         catch (Exception ex) {
             log.warn("Failed to delete LocalVC project {} before test execution", normalizedProjectKey, ex);
         }
-    }
-
-    private void deleteDirectoryIfExists(Path path) throws IOException {
-        RepositoryExportTestUtil.safeDeleteDirectory(path);
     }
 
     private List<FileSubmission> getFileSubmissions(String fileContent) {
