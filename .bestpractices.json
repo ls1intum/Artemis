@@ -110,7 +110,7 @@
     "dynamic_analysis_unsafe_status": "N/A",
     "dynamic_analysis_unsafe_justification": "The Artemis server and client are Java and TypeScript/JavaScript; the project-owned application does not contain memory-unsafe C/C++ code. Exercise samples are teaching inputs run in separate build environments, and externally maintained native runtime dependencies are outside project-owned code.",
     "achieve_silver_status": "Met",
-    "achieve_silver_justification": "Silver was awarded on 2026-10-17 after the roadmap, security assurance case, and verified repeatable-build evidence were published in https://github.com/ls1intum/Artemis/pull/14258 . The live assessment is 100%: https://www.bestpractices.dev/en/projects/14163/silver",
+    "achieve_silver_justification": "Silver was first achieved on 2026-10-17, as recorded by first_achieved_silver_at in https://www.bestpractices.dev/en/projects/14163.json . The roadmap, security assurance case, and verified repeatable-build evidence were published in https://github.com/ls1intum/Artemis/pull/14258 . The live assessment is 100%: https://www.bestpractices.dev/en/projects/14163/silver",
     "contributors_unassociated_status": "?",
     "contributors_unassociated_justification": "Verify at least two significant contributors during the preceding year are paid by unrelated organizations. GitHub profile company strings or a contributor count do not prove this condition. https://github.com/ls1intum/Artemis/graphs/contributors",
     "copyright_per_file_status": "Unmet",
