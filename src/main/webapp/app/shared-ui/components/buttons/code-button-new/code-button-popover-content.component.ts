@@ -1,7 +1,7 @@
-import { Component, SecurityContext, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, SecurityContext, computed, inject, input, linkedSignal, model, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCaretDown, faCheck, faExternalLink, faLaptopCode, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCaretDown, faCheck, faCodeBranch, faExternalLink, faLaptopCode, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { faCopy } from '@fortawesome/free-regular-svg-icons';
 import {
     TumAetUiButtonDirective,
@@ -20,6 +20,7 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 export type NonEmptyArray<T> = readonly [T, ...T[]];
 export type SshKeyState = { status: 'missing' } | { status: 'configured'; hasExpiredKeys: boolean };
@@ -52,9 +53,11 @@ export class CodeButtonPopoverContentComponent {
     private readonly externalCloningService = inject(ExternalCloningService);
     private readonly sanitizer = inject(DomSanitizer);
     private readonly theiaService = inject(TheiaService);
+    private readonly profileService = inject(ProfileService);
 
     protected readonly faCaretDown = faCaretDown;
     protected readonly faCheck = faCheck;
+    protected readonly faCodeBranch = faCodeBranch;
     protected readonly faCopy = faCopy;
     protected readonly faExternalLink = faExternalLink;
     protected readonly faLaptopCode = faLaptopCode;
@@ -66,14 +69,15 @@ export class CodeButtonPopoverContentComponent {
     readonly authenticationMethodData = input.required<NonEmptyArray<AuthenticationMethodData>>();
     readonly preferredIde = input.required<Ide>();
     readonly theiaLinkData = input<TheiaLinkData>();
+    readonly showAlternatives = model.required<boolean>();
     protected readonly copiedRepositoryUrl = signal(false);
-    protected readonly showAlternatives = signal(false);
     protected readonly selectedAuthenticationMethodData = linkedSignal(() => this.initializeSelectedAuthenticationMethodData());
     protected readonly selectedAuthenticationMethodLabel = computed(() => this.getAuthenticationMechanismLabel(this.selectedAuthenticationMethodData().authenticationMethod));
     protected readonly authenticationMethodDataAndLabels = computed(() => this.getAuthenticationMechanismsWithLabels());
     protected readonly repositoryDisplayUrl = computed(() => this.getRepositoryDisplayUrl());
     protected readonly repositoryCopyUrl = computed(() => this.selectedAuthenticationMethodData().url);
     protected readonly ideLinkData = computed(() => this.getIdeLinkData());
+    protected readonly sourceTreeUrl = computed(() => this.getSourceTreeUrl());
 
     protected selectAuthenticationMethod(authenticationMethodData: AuthenticationMethodData) {
         this.selectedAuthenticationMethodData.set(authenticationMethodData);
@@ -145,6 +149,21 @@ export class CodeButtonPopoverContentComponent {
             url: this.sanitizer.bypassSecurityTrustUrl(sanitizedUrl),
             name: preferredIde.name,
         };
+    }
+
+    private getSourceTreeUrl(): SafeUrl | undefined {
+        const versionControlUrl = this.profileService.getProfileInfo().versionControlUrl;
+        const selectedAuthenticationMethodData = this.selectedAuthenticationMethodData();
+        const sourceTreeUrl = this.externalCloningService.buildSourceTreeUrl(versionControlUrl, selectedAuthenticationMethodData.url);
+        if (!sourceTreeUrl) {
+            return undefined;
+        }
+        const sanitizedUrl = this.sanitizer.sanitize(SecurityContext.URL, sourceTreeUrl);
+        if (!sanitizedUrl || sanitizedUrl.startsWith('unsafe:')) {
+            return undefined;
+        }
+
+        return this.sanitizer.bypassSecurityTrustUrl(sanitizedUrl);
     }
 
     private getAuthenticationMechanismLabel(authenticationMechanism: RepositoryAuthenticationMethod): string {

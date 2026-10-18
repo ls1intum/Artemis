@@ -9,7 +9,13 @@
     {{ 'artemisApp.exerciseActions.code' | artemisTranslate }}
 </button>
 
-<tumaet-ui-popover #popoverContent [ariaLabel]="'artemisApp.exerciseActions.codePopoverAriaLabel' | artemisTranslate" placement="bottom" padding="none">
+<tumaet-ui-popover
+    #popoverContent
+    [ariaLabel]="'artemisApp.exerciseActions.codePopoverAriaLabel' | artemisTranslate"
+    placement="bottom"
+    padding="none"
+    (openChange)="handleOpenChange($event)"
+>
     <div class="w-120">
         @let state = loadingState();
         @if (state.status === 'loading') {
@@ -22,6 +28,7 @@
                 [authenticationMethodData]="state.authenticationMethodData"
                 [preferredIde]="state.preferredIde"
                 [theiaLinkData]="state.theiaLinkData"
+                [(showAlternatives)]="showAlternatives"
             />
         } @else {
             <div class="flex h-40 w-full flex-col items-center justify-center gap-2 text-center">

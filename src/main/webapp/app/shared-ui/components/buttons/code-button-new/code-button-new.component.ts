@@ -1,4 +1,4 @@
-import { Component, type ResourceParamsContext, type ResourceSnapshot, computed, inject, input, resource, resourceFromSnapshots } from '@angular/core';
+import { Component, type ResourceParamsContext, type ResourceSnapshot, computed, inject, input, resource, resourceFromSnapshots, signal } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleExclamation, faCircleNotch, faCode } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
@@ -42,6 +42,7 @@ export class CodeButtonNewComponent {
     protected readonly faCircleExclamation = faCircleExclamation;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCode = faCode;
+    protected readonly showAlternatives = signal(false);
 
     private readonly isInCourseManagement = getSignalBasedOnRoute(this.router, (url) => url.includes('course-management'));
 
@@ -94,6 +95,12 @@ export class CodeButtonNewComponent {
             };
         } else {
             return { status: 'error' };
+        }
+    }
+
+    protected handleOpenChange(isOpen: boolean): void {
+        if (!isOpen) {
+            this.showAlternatives.set(false);
         }
     }
 

@@ -51,9 +51,9 @@
             "codePopoverSshKeyTip": "To use SSH, you need to add an SSH key to your account <a href=\"{{ sshSettingsUrl }}\">here</a>.",
             "codePopoverSshKeyExpiredTip": "Some of your SSH keys are expired. You might need to add a new SSH key to your account <a href=\"{{ sshSettingsUrl }}\">here</a>.",
             "accessRepository": "Access your Repository",
-            "cloneSourceTree": {
-                "button": "Clone in Git client",
-                "helpIcon": "This opens the repository in Sourcetree or Tower. If you do not have them, you can still clone the repository using your IDE or terminal."
+            "openInSourceTree": {
+                "button": "Open in Sourcetree",
+                "helpIcon": "This opens the repository in Sourcetree. If you do not have it, you can still clone the repository using your IDE or terminal."
             },
             "ideButton": {
                 "openIn": "Open in {{ ideName }}",

@@ -69,7 +69,8 @@
 
     @let currentIdeLinkData = ideLinkData();
     @let currentTheiaLinkData = theiaLinkData();
-    @if (currentIdeLinkData || currentTheiaLinkData) {
+    @let currentSourceTreeUrl = sourceTreeUrl();
+    @if (currentIdeLinkData || currentTheiaLinkData || currentSourceTreeUrl) {
         <div class="border-t border-border"></div>
         @if (showAlternatives()) {
             @if (currentIdeLinkData) {
@@ -84,17 +85,9 @@
                         class="ms-auto text-muted-color"
                         [icon]="faQuestionCircle"
                         [tumAetUiTooltip]="'artemisApp.exerciseActions.ideButton.helpIcon' | artemisTranslate"
-                        tumAetUiTooltipPlacement="right"
+                        tumAetUiTooltipPlacement="left"
                     />
                 </a>
-                <!-- This hidden iframe is used to avoid "Do you want to leave the site" messages in the exam mode -->
-                <iframe
-                    name="hidden-iframe"
-                    [title]="'accessibility.externalApplicationLauncher' | artemisTranslate"
-                    aria-hidden="true"
-                    tabindex="-1"
-                    class="invisible absolute"
-                ></iframe>
             }
             @if (currentTheiaLinkData) {
                 <a
@@ -111,6 +104,30 @@
                     <span jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
                 </a>
             }
+            @if (currentSourceTreeUrl) {
+                <a
+                    class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-(--tumaet-ui-text-color)! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
+                    target="hidden-iframe"
+                    [href]="currentSourceTreeUrl"
+                >
+                    <fa-icon [icon]="faCodeBranch" aria-hidden="true" />
+                    <span jhiTranslate="artemisApp.exerciseActions.openInSourceTree.button"></span>
+                    <fa-icon
+                        class="ms-auto text-muted-color"
+                        [icon]="faQuestionCircle"
+                        [tumAetUiTooltip]="'artemisApp.exerciseActions.openInSourceTree.helpIcon' | artemisTranslate"
+                        tumAetUiTooltipPlacement="left"
+                    />
+                </a>
+            }
+            <!-- This hidden iframe is used to avoid "Do you want to leave the site" messages in the exam mode -->
+            <iframe
+                name="hidden-iframe"
+                [title]="'accessibility.externalApplicationLauncher' | artemisTranslate"
+                aria-hidden="true"
+                tabindex="-1"
+                class="invisible absolute"
+            ></iframe>
         } @else {
             <div class="flex h-10 items-center justify-center">
                 <button

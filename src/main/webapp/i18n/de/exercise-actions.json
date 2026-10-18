@@ -51,9 +51,9 @@
             "codePopoverSshKeyTip": "Um SSH zu nutzen, musst du deinem Konto <a href=\"{{ sshSettingsUrl }}\">hier</a> einen SSH-Schlüssel hinzufügen.",
             "codePopoverSshKeyExpiredTip": "Einige deiner SSH-Schlüssel sind abgelaufen. Möglicherweise musst du deinem Konto <a href=\"{{ sshSettingsUrl }}\">hier</a> einen neuen SSH-Schlüssel hinzufügen.",
             "accessRepository": "Greif auf dein Repository zu",
-            "cloneSourceTree": {
-                "button": "Im Git Client klonen",
-                "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."
+            "openInSourceTree": {
+                "button": "In Sourcetree öffnen",
+                "helpIcon": "Dies öffnet das Repository in Sourcetree. Falls du es nicht installiert hast, kannst du das Repository weiterhin in deiner IDE oder dem Terminal klonen."
             },
             "ideButton": {
                 "openIn": "Öffnen in {{ ideName }}",
