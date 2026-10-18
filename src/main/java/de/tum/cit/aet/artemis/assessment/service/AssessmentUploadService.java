@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -45,6 +46,9 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingS
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ParsedCsv;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ZipContents;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -81,6 +85,15 @@ public class AssessmentUploadService {
     /** The extension (including the leading dot) of the per-participant feedback files inside the zip, used when reporting text files in errors. */
     private static final String TEXT_FILE_EXTENSION = ".txt";
 
+    /** Prefix of the lock that serializes the storage phase of the uploads for one exercise. */
+    private static final String STORAGE_LOCK_PREFIX = "assessmentUpload:exercise:";
+
+    /**
+     * How long an upload waits for another upload into the same exercise to finish before giving up. Long enough to cover a large import, short enough that an instructor is
+     * told what is going on instead of watching the request hang.
+     */
+    private static final Duration STORAGE_LOCK_TIMEOUT = Duration.ofMinutes(2);
+
     private final AssessmentUploadArchiveParsingService archiveParser;
 
     private final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository;
@@ -90,6 +103,8 @@ public class AssessmentUploadService {
     private final AssessmentUploadResultService assessmentUploadResultService;
 
     private final SubmissionService submissionService;
+
+    private final DistributedDataProvider distributedDataProvider;
 
     /**
      * Creates a service for validating and storing uploaded manual assessments.
@@ -101,11 +116,14 @@ public class AssessmentUploadService {
      * @param submissionRepository                    the repository used to load the latest submissions and to create the missing ones
      * @param assessmentUploadResultService           the service used to replace manual assessment results
      * @param submissionService                       the service enforcing the shared assessment-availability gate
+     * @param distributedDataProvider                 provides the lock that serializes concurrent uploads into one exercise
      * @throws IllegalArgumentException if any parameter is {@code null}
      */
     public AssessmentUploadService(final AssessmentUploadArchiveParsingService archiveParser, final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository,
-            final SubmissionRepository submissionRepository, final AssessmentUploadResultService assessmentUploadResultService, final SubmissionService submissionService) {
-        if (Stream.of(archiveParser, assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService).anyMatch(Objects::isNull)) {
+            final SubmissionRepository submissionRepository, final AssessmentUploadResultService assessmentUploadResultService, final SubmissionService submissionService,
+            final DistributedDataProvider distributedDataProvider) {
+        if (Stream.of(archiveParser, assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService, distributedDataProvider)
+                .anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("The assessment upload service dependencies must not be null");
         }
         this.archiveParser = archiveParser;
@@ -113,6 +131,7 @@ public class AssessmentUploadService {
         this.submissionRepository = submissionRepository;
         this.assessmentUploadResultService = assessmentUploadResultService;
         this.submissionService = submissionService;
+        this.distributedDataProvider = distributedDataProvider;
     }
 
     /**
@@ -279,7 +298,20 @@ public class AssessmentUploadService {
             return AssessmentUploadResultDTO.failure(errors);
         }
 
-        return storeValidatedRows(exercise, validatedRows);
+        // Serialize the storage phase per exercise. Two instructors importing into the same exercise at the same time would otherwise both read a participant as unassessed and
+        // both write, leaving two manual assessments, or two external submissions for a participant who had none; the check and the write cannot be made atomic in one
+        // statement because they span several rows and several tables. Parsing and validating the archive stay outside, so the lock is held only for the reads and writes.
+        final DistributedLock storageLock = distributedDataProvider.getLock(STORAGE_LOCK_PREFIX + exercise.getId());
+        if (!storageLock.tryLock(STORAGE_LOCK_TIMEOUT)) {
+            throw new ConflictException("Another assessment upload for this exercise is still being stored. Please try again once it has finished.", ENTITY_NAME,
+                    "assessmentUpload.concurrentUpload");
+        }
+        try {
+            return storeValidatedRows(exercise, validatedRows);
+        }
+        finally {
+            storageLock.unlock();
+        }
     }
 
     /**
@@ -506,7 +538,7 @@ public class AssessmentUploadService {
         // Undo log for the submissions created below. Each is committed by its own repository call, so without this a failure part-way through the loop — or in the result
         // write that follows — would leave submitted external submissions carrying no assessment behind, for participants the upload then reports as not stored. They would
         // also be picked up as the latest submission by a re-run, which would assess that submission instead of creating a fresh one.
-        final List<Submission> createdSubmissions = new ArrayList<>();
+        final List<Long> createdSubmissionIds = new ArrayList<>();
         try {
             for (final ValidatedRow row : validatedRows) {
                 final Result existingManualResult = existingManualResultsByParticipationId.get(row.participationId());
@@ -519,7 +551,7 @@ public class AssessmentUploadService {
                         .orElseThrow(() -> new IllegalStateException("Validated participation %d is no longer available".formatted(row.participationId())));
                 final Submission submission = Optional.ofNullable(latestSubmissionsByParticipationId.get(row.participationId())).orElseGet(() -> {
                     final Submission createdSubmission = initializeSubmittedExternalSubmission(participation);
-                    createdSubmissions.add(createdSubmission);
+                    createdSubmissionIds.add(createdSubmission.getId());
                     return createdSubmission;
                 });
                 final Result manualResult = buildManualResult(exercise, submission, row);
@@ -531,7 +563,7 @@ public class AssessmentUploadService {
             assessmentUploadResultService.saveManualResults(newResults, updatedResults, true);
         }
         catch (final RuntimeException failure) {
-            removeSubmissionsCreatedBeforeFailure(createdSubmissions, exercise);
+            removeSubmissionsCreatedBeforeFailure(createdSubmissionIds, exercise);
             throw failure;
         }
 
@@ -563,29 +595,32 @@ public class AssessmentUploadService {
      * Removes the submissions an upload created before it failed, so a failed upload leaves the exercise as it found it.
      * <p>
      * This is the compensation that replaces the transaction the storage path is not allowed to open: the submissions were committed one repository call at a time, and the
-     * result write that would have given them an assessment never happened. Deleting them also removes the results attached to them, since a submission cascades to its
-     * results, but there is nothing to undo for a participant whose existing assessment was only edited in memory.
+     * result write that would have given them an assessment never happened. There is nothing to undo for a participant whose existing assessment was only edited in memory.
+     * <p>
+     * Deleted by id, which reloads each submission before removing it, rather than by handing the instances back: the results attached to those instances are the ones the
+     * failed batch tried to write, and an insert that rolled back still leaves its generated id on the object it came from. Passing such an instance would cascade a merge to
+     * a result whose row does not exist, and the cleanup would fail on that instead of removing anything.
      * <p>
      * <b>Precondition:</b> {@code createdSubmissions} are the persisted submissions this upload created, and no assessment of this upload was stored.
      * <p>
      * <b>Postcondition:</b> the submissions are deleted, or the failure to delete them is logged; nothing propagates, so the original failure reaches the caller unchanged.
      *
-     * @param createdSubmissions the submissions this upload created, in creation order
-     * @param exercise           the exercise being imported into, for the log message
+     * @param createdSubmissionIds ids of the submissions this upload created, in creation order
+     * @param exercise             the exercise being imported into, for the log message
      */
-    private void removeSubmissionsCreatedBeforeFailure(final List<Submission> createdSubmissions, final ProgrammingExercise exercise) {
-        assert createdSubmissions != null && exercise != null : "createdSubmissions and exercise must not be null";
-        if (createdSubmissions.isEmpty()) {
+    private void removeSubmissionsCreatedBeforeFailure(final List<Long> createdSubmissionIds, final ProgrammingExercise exercise) {
+        assert createdSubmissionIds != null && exercise != null : "createdSubmissionIds and exercise must not be null";
+        if (createdSubmissionIds.isEmpty()) {
             return;
         }
         try {
-            submissionRepository.deleteAll(createdSubmissions);
-            log.info("Removed {} submission(s) created by a failed assessment upload for programming exercise {}", createdSubmissions.size(), exercise.getId());
+            submissionRepository.deleteAllById(createdSubmissionIds);
+            log.info("Removed {} submission(s) created by a failed assessment upload for programming exercise {}", createdSubmissionIds.size(), exercise.getId());
         }
         catch (final RuntimeException cleanupFailure) {
             // Swallowed on purpose: the upload is failing already, and the caller must see why it failed rather than why the cleanup did.
             log.error("Could not remove the {} submission(s) created by a failed assessment upload for programming exercise {}. They are submitted submissions without an "
-                    + "assessment and will be assessed instead of a fresh one if the upload is retried.", createdSubmissions.size(), exercise.getId(), cleanupFailure);
+                    + "assessment and will be assessed instead of a fresh one if the upload is retried.", createdSubmissionIds.size(), exercise.getId(), cleanupFailure);
         }
     }
 

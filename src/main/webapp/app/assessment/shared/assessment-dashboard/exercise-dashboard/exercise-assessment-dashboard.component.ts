@@ -50,7 +50,7 @@ import { getLinkToSubmissionAssessment } from 'app/foundation/util/navigation.ut
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ChartSeriesEntry } from 'app/shared-ui/chart/chart-data.model';
 import { singleSeriesChart } from 'app/shared-ui/chart/tum-aet-ui-chart-adapters';
-import { TumAetUiButtonComponent, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiDoughnutChartComponent, TumAetUiDoughnutChartConfig } from '@tumaet/ui-angular';
 import dayjs from 'dayjs/esm';
 import {
     faCheckCircle,
@@ -112,6 +112,7 @@ export interface ExampleSubmissionQueryParams {
         SecondCorrectionEnableButtonComponent,
         TumAetUiDoughnutChartComponent,
         TumAetUiButtonComponent,
+        TumAetUiButtonDirective,
         AssessmentUploadDialogComponent,
         SidePanelComponent,
         TranslateDirective,

@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,6 +27,7 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUploadParticipationDTO;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService;
@@ -33,6 +35,9 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingS
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ZipContents;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadResultService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
+import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -68,20 +73,25 @@ class AssessmentUploadFailureCompensationTest {
         final AssessmentUploadResultService resultService = mock(AssessmentUploadResultService.class);
         when(resultService.findParticipationsWithComplaintOnResults(any())).thenReturn(Set.of());
         final RuntimeException storageFailure = new IllegalStateException("the result write failed");
-        when(resultService.saveManualResults(any(), any(), anyBoolean())).thenThrow(storageFailure);
+        // Reproduce a batch that rolled back after it had already inserted a row: the result keeps the id the database generated for it even though the row is gone again.
+        when(resultService.saveManualResults(any(), any(), anyBoolean())).thenAnswer(invocation -> {
+            final Collection<Result> newResults = invocation.getArgument(0);
+            newResults.forEach(result -> result.setId(4711L));
+            throw storageFailure;
+        });
 
         final AssessmentUploadService service = new AssessmentUploadService(archiveParserReturningOneRow(), participationRepositoryReturningOneParticipation(),
-                submissionRepository, resultService, mock(SubmissionService.class));
+                submissionRepository, resultService, mock(SubmissionService.class), acquirableLockProvider());
 
         assertThatThrownBy(() -> service.importAssessments(exerciseAllowingManualResults(), new MockMultipartFile("file", "upload.zip", "application/zip", new byte[] { 1 })))
                 .isSameAs(storageFailure);
 
-        final ArgumentCaptor<Iterable<Submission>> deleted = ArgumentCaptor.captor();
-        verify(submissionRepository).deleteAll(deleted.capture());
-        assertThat(deleted.getValue()).singleElement().satisfies(submission -> {
-            assertThat(submission.getId()).isEqualTo(815L);
-            assertThat(submission.getParticipation().getId()).isEqualTo(PARTICIPATION_ID);
-        });
+        // Deleted by id, so the submission is reloaded instead of merged. Handing back the instance would cascade a merge to the result above, whose id no longer matches any
+        // row, and the cleanup would fail on that rather than remove the submission.
+        final ArgumentCaptor<Iterable<Long>> deleted = ArgumentCaptor.captor();
+        verify(submissionRepository).deleteAllById(deleted.capture());
+        assertThat(deleted.getValue()).containsExactly(815L);
+        verify(submissionRepository, never()).deleteAll(any());
     }
 
     @Test
@@ -100,14 +110,47 @@ class AssessmentUploadFailureCompensationTest {
         when(participationRepository.findAllForAssessmentUpload(any(Long.class), any())).thenReturn(List.of(participation));
 
         final AssessmentUploadService service = new AssessmentUploadService(archiveParserReturningOneRow(), participationRepository, submissionRepository, resultService,
-                mock(SubmissionService.class));
+                mock(SubmissionService.class), acquirableLockProvider());
 
         assertThatThrownBy(() -> service.importAssessments(exerciseAllowingManualResults(), new MockMultipartFile("file", "upload.zip", "application/zip", new byte[] { 1 })))
                 .isSameAs(storageFailure);
 
         // Nothing was created, so there is nothing to take back: the participant's own submission must survive the failed upload.
+        verify(submissionRepository, never()).deleteAllById(any());
         verify(submissionRepository, never()).deleteAll(any());
         verify(submissionRepository, never()).save(any(Submission.class));
+    }
+
+    @Test
+    void shouldRejectAnUploadWhileAnotherOneIntoTheSameExerciseIsStillBeingStored() {
+        // The storage phase reads which participants already have an assessment and then writes, which cannot be made atomic in one statement. Two overlapping uploads would
+        // otherwise both read a participant as unassessed and both write, so the second one has to wait, and say so rather than hang, when it cannot get the lock.
+        final DistributedLock heldLock = mock(DistributedLock.class);
+        when(heldLock.tryLock(any())).thenReturn(false);
+        final DistributedDataProvider provider = mock(DistributedDataProvider.class);
+        when(provider.getLock(any())).thenReturn(heldLock);
+
+        final SubmissionRepository submissionRepository = mock(SubmissionRepository.class);
+        final AssessmentUploadResultService resultService = mock(AssessmentUploadResultService.class);
+        when(resultService.findParticipationsWithComplaintOnResults(any())).thenReturn(Set.of());
+        final AssessmentUploadService service = new AssessmentUploadService(archiveParserReturningOneRow(), participationRepositoryReturningOneParticipation(),
+                submissionRepository, resultService, mock(SubmissionService.class), provider);
+
+        assertThatThrownBy(() -> service.importAssessments(exerciseAllowingManualResults(), new MockMultipartFile("file", "upload.zip", "application/zip", new byte[] { 1 })))
+                .isInstanceOf(ConflictException.class);
+
+        // Nothing of the second upload reached the database.
+        verify(submissionRepository, never()).save(any(Submission.class));
+        verify(resultService, never()).saveManualResults(any(), any(), anyBoolean());
+        verify(heldLock, never()).unlock();
+    }
+
+    private DistributedDataProvider acquirableLockProvider() {
+        final DistributedLock lock = mock(DistributedLock.class);
+        when(lock.tryLock(any())).thenReturn(true);
+        final DistributedDataProvider provider = mock(DistributedDataProvider.class);
+        when(provider.getLock(any())).thenReturn(lock);
+        return provider;
     }
 
     private AssessmentUploadArchiveParsingService archiveParserReturningOneRow() {
