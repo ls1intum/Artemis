@@ -15,7 +15,7 @@ import { provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ExerciseGroupColumn } from 'app/exam/shared/entities/exercise-group-variant-column.model';
+import { ExerciseGroupColumn } from 'app/exam/shared/entities/exercise-group-column.model';
 
 @Component({
     template: '',
