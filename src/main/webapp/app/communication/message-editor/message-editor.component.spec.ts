@@ -495,6 +495,40 @@ describe('Formatted message composer', () => {
         expect(bubbled).not.toHaveBeenCalled();
     });
 
+    it('keeps the keyboard-selected completion inside the popup without moving editor focus', async () => {
+        search.mockResolvedValue(Array.from({ length: 12 }, (_, index) => ({ label: `@Person ${index}`, kind: 'user', markdown: `[user]Person ${index}(person${index})[/user]` })));
+        fixture.componentRef.setInput('content', '@person');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        editable.focus();
+        caretAtEnd();
+        await component.refreshSuggestions();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const popup = document.querySelector<HTMLElement>('[data-testid="message-completion-list"]')!;
+        Object.defineProperty(popup, 'clientHeight', { value: 120 });
+        vi.spyOn(popup, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 100, 200, 120));
+        const options = Array.from(popup.querySelectorAll<HTMLElement>('[role="option"]'));
+        options.forEach((option, index) => vi.spyOn(option, 'getBoundingClientRect').mockImplementation(() => new DOMRect(0, 124 + index * 32 - popup.scrollTop, 200, 32)));
+        const navigate = async (key: string) => {
+            editable.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        };
+        await navigate('ArrowUp');
+        expect(options[11].getAttribute('aria-selected')).toBe('true');
+        expect(popup.scrollTop).toBe(288);
+        expect(editable.getAttribute('aria-activedescendant')).toBe(options[11].id);
+        expect(document.activeElement).toBe(editable);
+        await navigate('ArrowDown');
+        expect(options[0].getAttribute('aria-selected')).toBe('true');
+        expect(popup.scrollTop).toBe(24);
+        expect(document.activeElement).toBe(editable);
+        await navigate('Enter');
+        expect(editable.querySelector('[data-message-reference]')?.textContent).toBe('@Person 0');
+        expect(component.suggestionsOpen()).toBe(false);
+    });
+
     it('repositions the completion overlay after loading changes its rendered size', async () => {
         let resolve!: (value: { label: string; kind: 'user'; markdown: string }[]) => void;
         search.mockReturnValue(new Promise((complete) => (resolve = complete)));

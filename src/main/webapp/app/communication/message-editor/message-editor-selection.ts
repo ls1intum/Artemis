@@ -1,4 +1,7 @@
-/** Inserts temporary, text-free boundaries so a DOM transformation can restore the exact selection, including empty lines. */
+/**
+ * Inserts temporary, text-free boundaries so a DOM transformation can preserve the exact selection, including empty lines.
+ * After transforming the marked DOM, call the returned function to remove the boundaries and obtain the restored range.
+ */
 export function preserveMessageSelection(root: HTMLElement, range: Range): () => Range {
     const marker = () => {
         const element = root.ownerDocument.createElement('span');
@@ -20,7 +23,10 @@ export function preserveMessageSelection(root: HTMLElement, range: Range): () =>
 
 let nextBoundary = 0;
 
-/** Reads the temporary boundaries before moving DOM nodes, or restores and removes them after a transformation. */
+/**
+ * Resolves temporary boundaries to a range, falling back to the document end when none remain.
+ * Set remove to false when the marked nodes still need to move; the default removes the boundaries after a transformation.
+ */
 export function restoreMessageSelectionBoundaries(root: HTMLElement, remove = true): Range {
     const markers = Array.from(root.querySelectorAll('[data-message-selection-boundary]'));
     const first = markers[0];

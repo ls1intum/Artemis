@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 import { test as artemisTest } from '../../support/fixtures';
-import { admin, studentOne, studentTwo, studentThree, studentFour } from '../../support/users';
+import { admin, studentOne, studentTwo, studentThree, studentFour, UserRole } from '../../support/users';
 import { generateUUID, readResponseJson } from '../../support/utils';
 import { expectAligned, expectBelow, expectNoHorizontalOverflow, expectNoHorizontalScrollAround, expectWithinViewport, forEachViewport } from '../../support/layout';
 import { Course } from 'app/course/shared/entities/course.model';
@@ -442,6 +442,34 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         await expect(editor).toContainText('afXYter');
     });
 
+    for (const list of ['ul', 'ol']) {
+        test(`applying ${list} after Shift+Enter changes only the current line and preserves editing history`, async ({ page, composer }) => {
+            const { editor } = composer;
+            await editor.pressSequentially('Lecture notes');
+            await editor.press('Shift+Enter');
+            await page.keyboard.type('Review recurrence');
+            await page.getByTestId(`message-block-${list}`).click();
+            await expect(editor.locator(':scope > p')).toHaveText(['Lecture notes']);
+            await expect(editor.locator(`${list} > li`)).toHaveText(['Review recurrence']);
+            await expectCaret(editor, 30);
+            await editor.press('ControlOrMeta+z');
+            await expect(editor.locator('ul, ol')).toHaveCount(0);
+            await expect(editor.locator('br')).toHaveCount(1);
+            await expectText(editor, 'Lecture notesReview recurrence');
+            await editor.press('ControlOrMeta+Shift+z');
+            await expect(editor.locator(`${list} > li`)).toHaveText(['Review recurrence']);
+            await page.keyboard.type(' today');
+            await expect(editor.locator(':scope > p')).toHaveText(['Lecture notes']);
+            await expect(editor.locator(`${list} > li`)).toHaveText(['Review recurrence today']);
+            const saved = await send(page, composer);
+            expect(saved.content).toBe(`Lecture notes\n\n${list === 'ul' ? '-' : '1.'} Review recurrence today`);
+            await expect(postContent(page, saved.id!).locator(`${list} > li`)).toHaveText(['Review recurrence today']);
+            const reopened = await reopen(page, saved);
+            await expect(reopened.editor.locator(':scope > p')).toHaveText(['Lecture notes']);
+            await expect(reopened.editor.locator(`${list} > li`)).toHaveText(['Review recurrence today']);
+        });
+    }
+
     test('code Enter and Shift+Enter preserve literal lines when returning to a paragraph', async ({ page, composer }) => {
         const { editor } = composer;
         await editor.pressSequentially('const answer = 42;');
@@ -832,6 +860,83 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         expect(saved.content).not.toContain(':jo');
         expect(sentRequests).toHaveLength(1);
         await expect(postContent(page, saved.id!)).toContainText(`Nice ${glyph} thanks`);
+    });
+
+    test('keyboard mention navigation scrolls the active option into view in both directions and wraps', async ({
+        page,
+        composer,
+        login,
+        courseManagementAPIRequests,
+        userManagementAPIRequests,
+    }) => {
+        const users: string[] = [];
+        const prefix = `mention-${generateUUID().slice(0, 8)}`;
+        await login(admin);
+        try {
+            for (let index = 0; index < 10; index++) {
+                const username = `${prefix}-${index}`;
+                const response = await userManagementAPIRequests.createUser(username, username, UserRole.Student);
+                expect(response.status()).toBe(201);
+                users.push(username);
+                await courseManagementAPIRequests.addStudentToCourse(composer.course, { username, password: username });
+            }
+            await login(studentOne, composer.route);
+            const { editor } = composer;
+            // Keep pointer hover from choosing a row while exercising keyboard-only navigation.
+            await page.mouse.move(0, 0);
+            await editor.pressSequentially(`@${prefix}`);
+            const popup = page.getByTestId('message-completion-list');
+            const options = popup.getByRole('option');
+            await expect(options).toHaveCount(10);
+            expect(await popup.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+            const documentScroll = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
+            const selected = popup.getByRole('option', { selected: true });
+            const expectSelectionVisible = async (index: number) => {
+                await expect(options.nth(index)).toHaveAttribute('aria-selected', 'true');
+                await expect(selected).toHaveCount(1);
+                await expect(editor).toHaveAttribute('aria-activedescendant', (await selected.getAttribute('id'))!);
+                await expect
+                    .poll(() =>
+                        selected.evaluate((element) => {
+                            const bounds = element.getBoundingClientRect();
+                            const container = element.closest('[data-testid="message-completion-list"]')!.getBoundingClientRect();
+                            return bounds.top >= container.top && bounds.bottom <= container.bottom;
+                        }),
+                    )
+                    .toBe(true);
+                await expect(editor).toBeFocused();
+                expect(await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))).toEqual(documentScroll);
+            };
+            await expectSelectionVisible(0);
+            for (let index = 1; index < 10; index++) {
+                await editor.press('ArrowDown');
+                await expectSelectionVisible(index);
+            }
+            expect(await popup.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+            await editor.press('ArrowDown');
+            await expectSelectionVisible(0);
+            await editor.press('ArrowUp');
+            await expectSelectionVisible(9);
+            for (let index = 8; index >= 0; index--) {
+                await editor.press('ArrowUp');
+                await expectSelectionVisible(index);
+            }
+            const label = (await selected.locator('span').first().textContent())!;
+            const selectedLogin = users.find((username) => label === `@${username} ${username}`);
+            expect(selectedLogin).toBeDefined();
+            await editor.press('Enter');
+            await expect(popup).toBeHidden();
+            await expect(editor.locator('[data-reference-type="user"]')).toHaveText(label);
+            await expect(page.locator('[id^="item-"]')).toHaveCount(0);
+            const saved = await send(page, composer);
+            expect(saved.content).toBe(`[user]${label.slice(1)}(${selectedLogin})[/user]`);
+            await expect(postContent(page, saved.id!)).toContainText(label.slice(1));
+        } finally {
+            await login(admin);
+            for (const username of users) {
+                expect((await userManagementAPIRequests.deleteUser(username)).ok()).toBe(true);
+            }
+        }
     });
 
     test('mention completions stay beside the caret on the first line of a multiline editor at every viewport', async ({ page, composer }) => {

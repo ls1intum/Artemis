@@ -138,7 +138,10 @@ export function editorCodeText(element: HTMLElement): string {
     return code.textContent ?? '';
 }
 
-/** Limits the exploratory composer to syntax it can export without silently discarding legacy content. */
+/**
+ * Reports whether the editor can preserve the message's formatting when it serializes an edit.
+ * Callers must retain unsupported source and block saving it through the rich editor; sanitizing it alone can discard formatting.
+ */
 export function canEditMessageVisually(source: string): boolean {
     let quoteDepth = 0;
     return markdown.parse(source, {}).every((token) => {
@@ -164,7 +167,10 @@ export function canEditMessageVisually(source: string): boolean {
     });
 }
 
-/** Renders a sanitized editing document; reference payloads remain attached to protected inline items. */
+/**
+ * Renders a sanitized editing document after the caller has checked canEditMessageVisually.
+ * Protected inline items retain their original reference payloads. The returned fragment is consumed when inserted into the host.
+ */
 export function messageToEditorFragment(source: string): DocumentFragment {
     // Preserve user whitespace in the editing host, but remove linefeeds used only to lay out generated HTML.
     // Literal code is escaped by markdown-it and cannot match these tag boundaries.
@@ -177,7 +183,7 @@ export function messageToEditorFragment(source: string): DocumentFragment {
     });
 }
 
-/** Serializes the editable document to the existing Artemis message format. */
+/** Serializes the editable document, escaping literal text while retaining the original payloads of protected references. */
 export function editorToMessage(element: HTMLElement): string {
     // Native editing uses divs for new paragraphs in some browsers. Turndown understands them as blocks.
     return serializer.turndown(element.innerHTML);

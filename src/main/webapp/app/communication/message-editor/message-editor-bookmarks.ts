@@ -99,7 +99,10 @@ export function messageBookmarkText(root: HTMLElement): string {
     return indexMessage(root).text;
 }
 
-/** Captures structure-aware positions before a picker takes focus or formatting replaces the DOM. */
+/**
+ * Captures structure-aware positions before a picker takes focus or formatting replaces the DOM.
+ * The offsets use UTF-16 positions in the returned text, including its line and block separators, so they can be adjusted by a text diff.
+ */
 export function captureMessageBookmark(root: HTMLElement, range: Range): { text: string; start: number; end: number } {
     const index = indexMessage(root);
     const offset = (node: Node, childOffset: number): number => {
@@ -109,7 +112,10 @@ export function captureMessageBookmark(root: HTMLElement, range: Range): { text:
     return { text: index.text, start: offset(range.startContainer, range.startOffset), end: offset(range.endContainer, range.endOffset) };
 }
 
-/** Restores diff-adjusted positions into current DOM boundaries, clamping removed content. */
+/**
+ * Resolves UTF-16 positions in the current bookmark text to a DOM range, clamping removed content.
+ * Atomic-item boundaries stay outside those items. The caller applies the returned range to the native selection.
+ */
 export function restoreMessageBookmark(root: HTMLElement, start: number, end: number): Range {
     const index = indexMessage(root);
     const clamp = (offset: number): number => Math.max(0, Math.min(offset, index.text.length));

@@ -198,6 +198,96 @@ describe('Message editor block formatting', () => {
         expect(window.getSelection()!.toString()).toBe('irstsec');
     });
 
+    it.each(['ul', 'ol'] as const)('starts a %s on the second line after Shift+Enter and retains its caret and undo history', (tag) => {
+        editor.load('First');
+        select(root.querySelector('p')!.firstChild!, 5);
+        editor.insertText('\n');
+        editor.insertText('Second');
+
+        editor.block(tag);
+
+        const marker = tag === 'ul' ? '-' : '1.';
+        expectMessage(`First\n\n${marker} Second`);
+        expect(root.querySelectorAll('li')).toHaveLength(1);
+        editor.undo();
+        expectMessage('First\nSecond');
+        editor.redo();
+        expectMessage(`First\n\n${marker} Second`);
+        editor.insertText('!');
+        expectMessage(`First\n\n${marker} Second!`);
+    });
+
+    it.each([
+        [0, '- First\n\nSecond\nThird'],
+        [1, 'First\n\n- Second\n\nThird'],
+        [2, 'First\nSecond\n\n- Third'],
+    ] as const)('applies a list only to soft line %i and keeps the remaining soft lines together', (line, expected) => {
+        editor.load('First\nSecond\nThird');
+        const text = Array.from(root.querySelector('p')!.childNodes).filter((node) => node.nodeType === Node.TEXT_NODE);
+        select(text[line], 2);
+
+        editor.block('ul');
+
+        expectMessage(expected);
+        expect(root.querySelectorAll('li')).toHaveLength(1);
+    });
+
+    it('retains marks that cross a soft break and protected references on the chosen line', () => {
+        editor.load('**First\nSecond** [user]Anna(anna)[/user]\nThird');
+        select(root.querySelector('strong')!.lastChild!, 3);
+
+        editor.block('ul');
+
+        expectMessage('**First**\n\n- **Second** [user]Anna(anna)[/user]\n\nThird');
+        expect(root.querySelector('li strong')!.textContent).toBe('Second');
+        expect(root.querySelector('p strong')!.textContent).toBe('First');
+        expect(root.querySelector('[data-message-reference]')!.getAttribute('data-message-reference')).toBe('[user]Anna(anna)[/user]');
+        editor.insertText('!');
+        expect(root.querySelector('li strong')!.textContent).toBe('Sec!ond');
+    });
+
+    it('starts an empty current soft line as a list without absorbing its preceding line', () => {
+        editor.load('First');
+        select(root.querySelector('p')!.firstChild!, 5);
+        editor.insertText('\n');
+
+        editor.block('ul');
+        editor.insertText('Second');
+
+        expectMessage('First\n\n- Second');
+        expect(root.querySelector('p')!.textContent).toBe('First');
+    });
+
+    it('starts a list on the current soft line when native editing has no paragraph wrapper', () => {
+        editor.load('');
+        editor.insertText('First\nSecond');
+
+        editor.block('ul');
+
+        expectMessage('First\n\n- Second');
+    });
+
+    it('keeps an existing list item and its soft continuation together when changing list type', () => {
+        editor.load('- First\n  Second');
+        select(root.querySelector('li')!.lastChild!, 2);
+
+        editor.block('ol');
+
+        expectMessage('1. First\n   Second');
+        expect(root.querySelectorAll('li')).toHaveLength(1);
+    });
+
+    it('converts a real code block as one item when its caret is on a later code line', () => {
+        editor.load('```\nFirst\nSecond\n```');
+        select(root.querySelector('code')!.lastChild!, 2);
+
+        editor.block('ul');
+
+        expectMessage('- First\n  Second');
+        expect(root.querySelectorAll('li')).toHaveLength(1);
+        expect(root.querySelector('pre')).toBeNull();
+    });
+
     it('toggles only selected list items to paragraphs while leaving the preceding item in its list', () => {
         editor.load('Before\n\n- First\n- Middle\n- Last\n\nAfter');
         const items = root.querySelectorAll('li');

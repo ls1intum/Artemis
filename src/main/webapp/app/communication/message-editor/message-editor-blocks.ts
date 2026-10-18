@@ -14,14 +14,56 @@ interface BlockRun {
     selected: boolean;
 }
 
+/** Splits only the caret's soft line, retaining inline ancestors on each side of its breaks. */
+function currentSoftLine(nodes: Node[], marker: Element): Pick<BlockRun, 'nodes' | 'selected'>[] | undefined {
+    const breaks = nodes.flatMap((node) =>
+        node instanceof HTMLElement
+            ? [...(node.matches('br:not([data-message-placeholder])') ? [node] : []), ...Array.from(node.querySelectorAll('br:not([data-message-placeholder])'))]
+            : [],
+    );
+    if (!breaks.length) return undefined;
+    const before = breaks.findLastIndex((lineBreak) => !!(lineBreak.compareDocumentPosition(marker) & Node.DOCUMENT_POSITION_FOLLOWING));
+    const after = breaks.findIndex((lineBreak) => !!(marker.compareDocumentPosition(lineBreak) & Node.DOCUMENT_POSITION_FOLLOWING));
+    const part = (from: number, to: number, selected: boolean) => {
+        const container = marker.ownerDocument.createElement('div');
+        container.append(...nodes.map((node) => node.cloneNode(true)));
+        const clonedBreaks = Array.from(container.querySelectorAll('br:not([data-message-placeholder])'));
+        const trim = marker.ownerDocument.createRange();
+        // Trim the clone in place so a shared inline ancestor, such as <strong>, remains wrapped.
+        if (to !== -1) {
+            trim.selectNodeContents(container);
+            trim.setStartBefore(clonedBreaks[to]);
+            trim.deleteContents();
+        }
+        if (from !== -1) {
+            trim.selectNodeContents(container);
+            trim.setEndAfter(clonedBreaks[from]);
+            trim.deleteContents();
+        }
+        return { nodes: Array.from(container.childNodes), selected };
+    };
+    return [...(before !== -1 ? [part(-1, before, false)] : []), part(before, after, true), ...(after !== -1 ? [part(after, -1, false)] : [])];
+}
+
 /** Converts selected block runs, splitting list/quote containers rather than nesting a second style inside them. */
 export function formatMessageBlocks(root: HTMLElement, selection: Range, style: BlockStyle): Range {
     const restore = preserveMessageSelection(root, selection);
     selection = restoreMessageSelectionBoundaries(root, false);
+    const caret = selection.collapsed ? root.querySelector('[data-message-selection-boundary]') : undefined;
     const runs: BlockRun[] = [];
     const collect = (parent: HTMLElement, frames: Frame[]) => {
         let inline: Node[] = [];
-        const emit = (source: HTMLElement, nodes: Node[], code = false) => runs.push({ source, nodes, frames, code, selected: false });
+        const emit = (source: HTMLElement, nodes: Node[], code = false) => {
+            const lines =
+                caret && !code && !frames.length && (style === 'ul' || style === 'ol') && nodes.some((node) => node === caret || node.contains(caret))
+                    ? currentSoftLine(nodes, caret)
+                    : undefined;
+            if (lines) {
+                lines.forEach((line) => runs.push({ source, nodes: line.nodes, frames, code, selected: line.selected }));
+            } else {
+                runs.push({ source, nodes, frames, code, selected: false });
+            }
+        };
         const flush = () => {
             if (inline.length) {
                 emit(parent, inline);
@@ -82,6 +124,7 @@ export function formatMessageBlocks(root: HTMLElement, selection: Range, style: 
     for (let index = runs.length - 1; index >= 0 && runs.length > 1; index--) {
         const run = runs[index];
         if (
+            !run.selected &&
             (run.source === root || run.source.matches('ul, ol, blockquote')) &&
             run.nodes.every(
                 (node) => (node instanceof HTMLElement && node.hasAttribute('data-message-selection-boundary')) || (node.nodeType === Node.TEXT_NODE && !node.textContent),
@@ -98,7 +141,7 @@ export function formatMessageBlocks(root: HTMLElement, selection: Range, style: 
         run.nodes.some((owned) => owned === node || owned.contains(node)) ||
         (run.source === node && run.nodes.includes(node.childNodes[selection.startOffset - 1]));
     if (selection.collapsed) {
-        const current = runs.findLast((run) => contains(run, selection.startContainer)) ?? runs.at(-1);
+        const current = runs.find((run) => run.selected) ?? runs.findLast((run) => contains(run, selection.startContainer)) ?? runs.at(-1);
         if (current) {
             current.selected = true;
         }

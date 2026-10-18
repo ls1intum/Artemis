@@ -54,6 +54,7 @@ export class MessageEditorComponent {
     private readonly editable = viewChild<ElementRef<HTMLElement>>('editable');
     protected readonly tools = viewChild(MessageEditorToolsComponent);
     private readonly completionOverlay = viewChild(CdkConnectedOverlay);
+    private readonly completionList = viewChild<ElementRef<HTMLElement>>('completionList');
     protected readonly uploading = signal(false);
     protected readonly editorRevision = signal(0);
     protected readonly captureEntitySelection = () => this.editor?.captureEntitySelection();
@@ -115,6 +116,19 @@ export class MessageEditorComponent {
             this.searchFailed();
             // Search results change the popup's size after attachment, so measure its rendered content again.
             if (this.suggestionsOpen()) this.completionOverlay()?.overlayRef?.updatePosition();
+        });
+        afterRenderEffect(() => {
+            const index = this.activeIndex();
+            this.suggestions();
+            const popup = this.completionList()?.nativeElement;
+            const option = popup?.querySelector<HTMLElement>(`[id="${this.listId}-${index}"]`);
+            if (!this.suggestionsOpen() || !popup || !option) return;
+            // Scroll only the popup; scrollIntoView can also move the surrounding conversation.
+            const top = popup.getBoundingClientRect().top + popup.clientTop;
+            const bottom = top + popup.clientHeight;
+            const bounds = option.getBoundingClientRect();
+            if (bounds.top < top) popup.scrollTop += bounds.top - top;
+            else if (bounds.bottom > bottom) popup.scrollTop += bounds.bottom - bottom;
         });
         const dismissOnAncestorScroll = (event: Event) => {
             const element = this.editable()?.nativeElement;

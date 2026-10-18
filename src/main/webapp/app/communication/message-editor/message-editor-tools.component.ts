@@ -95,6 +95,7 @@ export class MessageEditorToolsComponent {
         effect(() => this.queryInput()?.nativeElement.focus());
     }
 
+    /** Captures the insertion range without letting a pointer press move focus from the editor to a resource button. */
     protected remember(event: MouseEvent): void {
         event.preventDefault();
         this.range = this.captureSelection()();
@@ -115,7 +116,10 @@ export class MessageEditorToolsComponent {
         }
     }
 
-    /** Closes the picker without interrupting a pending file upload. */
+    /**
+     * Invalidates pending picker searches without interrupting an upload.
+     * Set restoreFocus to false when collapsing the toolbar or replacing the draft, so closure does not refocus the editor.
+     */
     close(restoreFocus = true): void {
         this.request++;
         this.picker.set(undefined);
@@ -218,7 +222,10 @@ export class MessageEditorToolsComponent {
         input.value = '';
     }
 
-    /** Uploads pasted, dropped or selected files using the existing conversation-scoped validation and endpoint. */
+    /**
+     * Uploads pasted, dropped or selected files sequentially at the captured insertion range.
+     * Validation failures remain visible while later files can proceed; a changed draft context prevents insertion of stale results.
+     */
     async uploadFiles(files: File[], range = this.captureSelection()()): Promise<void> {
         if (!files.length) {
             return;
