@@ -187,7 +187,7 @@ Not everything on a schedule is a nightly test run. For completeness:
 | Workflow | Schedule | Purpose |
 | --- | --- | --- |
 | [`codeql-analysis.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/codeql-analysis.yml) | Sundays 16:00 UTC | Full CodeQL scan of Java and TypeScript, beyond the per-pull-request diff |
-| [`scorecard.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/scorecard.yml) | Mondays 05:31 UTC | OpenSSF Scorecard; reflects repository settings rather than a diff, so weekly is enough |
+| [`scorecard.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/scorecard.yml) | Mondays 05:31 UTC | OpenSSF Scorecard; also runs after successful Gradle wrapper validation on `develop`, so validated wrapper JARs are recognized |
 | [`pullrequest-stale.yml`](https://github.com/ls1intum/Artemis/blob/develop/.github/workflows/pullrequest-stale.yml) | Daily 12:00 UTC | Marks inactive pull requests stale. Housekeeping, not a test |
 
 ## Adding a nightly suite

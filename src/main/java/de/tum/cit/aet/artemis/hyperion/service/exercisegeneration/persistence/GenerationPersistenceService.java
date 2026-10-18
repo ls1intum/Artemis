@@ -198,14 +198,14 @@ public class GenerationPersistenceService {
         if (exercise.isExamExercise()) {
             throw new IllegalArgumentException("Whole-exercise generation is available only for course exercises.");
         }
-        PersistResult saved = null;
-        try (var reservation = liveSaves.reserveWrite(exercise.getId())) {
+        var reservation = liveSaves.reserveWrite(exercise.getId());
+        PersistResult saved;
+        try {
             try {
                 saved = persistCoordinated(exercise, user, outcome, expectedProblemStatement, expectedTitle, mode, commitMessage, () -> {
                     reservation.verify();
                     return stillOwnsMutationSlot.getAsBoolean();
                 }, beforeDurableMutation);
-                return saved;
             }
             catch (GenerationIncompleteException failure) {
                 if (failure.liveExerciseChanged()) {
@@ -214,13 +214,23 @@ public class GenerationPersistenceService {
                 throw failure;
             }
         }
-        catch (RuntimeException failure) {
-            if (saved != null) {
-                throw new GenerationIncompleteException("The exercise was saved, but releasing its reservation failed; manual reconciliation is required", failure, true,
-                        saved.postPersistHeads());
+        catch (RuntimeException | Error failure) {
+            try {
+                reservation.close();
+            }
+            catch (RuntimeException | Error releaseFailure) {
+                failure.addSuppressed(releaseFailure);
             }
             throw failure;
         }
+        try {
+            reservation.close();
+        }
+        catch (RuntimeException failure) {
+            throw new GenerationIncompleteException("The exercise was saved, but releasing its reservation failed; manual reconciliation is required", failure, true,
+                    saved.postPersistHeads());
+        }
+        return saved;
     }
 
     private PersistResult persistCoordinated(ProgrammingExercise exercise, User user, GenerationOutcome outcome, String expectedProblemStatement, String expectedTitle,
