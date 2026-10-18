@@ -197,6 +197,59 @@ describe('Formatted message attachment and resource controls', () => {
         expect(document.querySelector('[data-testid="message-slide-preview"]')).toBeNull();
     });
 
+    it.each([
+        { kind: 'slides' as const, height: 120, clientHeight: 120 },
+        { kind: 'faq' as const, height: 120, clientHeight: 120 },
+        { kind: 'slides' as const, height: 120.75, clientHeight: 121 },
+        { kind: 'faq' as const, height: 120.75, clientHeight: 121 },
+    ])('scrolls keyboard-selected $kind results in a $height px viewport through wraparound while keeping search focus', async ({ kind, height, clientHeight }) => {
+        search.mockResolvedValue(
+            Array.from({ length: 40 }, (_, index) => ({
+                label: `Resource ${index}`,
+                kind: kind === 'slides' ? 'slide' : 'faq',
+                markdown: kind === 'slides' ? `[slide]Slide ${index + 1}(#${index + 1})[/slide]` : `[faq]Question ${index}(/courses/1/faq?faqId=${index + 1})[/faq]`,
+            })),
+        );
+        (fixture.nativeElement.querySelector(`[data-testid="message-${kind === 'slides' ? 'slides' : 'faq'}-button"]`) as HTMLButtonElement).click();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        const input = document.querySelector<HTMLInputElement>('[data-testid="message-resource-search"]')!;
+        const content = document.querySelector<HTMLElement>('[data-testid="message-resource-content"]')!;
+        const options = Array.from(content.querySelectorAll<HTMLElement>('[role="option"]'));
+        Object.defineProperty(content, 'clientHeight', { value: clientHeight });
+        let scrollTop = 0;
+        // Model WebKit's whole-pixel scroll offsets against fractional element dimensions.
+        Object.defineProperty(content, 'scrollTop', {
+            get: () => scrollTop,
+            set: (value: number) => {
+                scrollTop = Math.max(0, Math.floor(value));
+            },
+        });
+        vi.spyOn(content, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 100, 200, height));
+        options.forEach((option, index) => vi.spyOn(option, 'getBoundingClientRect').mockImplementation(() => new DOMRect(0, 100 + index * 32 - content.scrollTop, 200, 32)));
+        const navigate = async (key: string) => {
+            input.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+            fixture.detectChanges();
+            await fixture.whenStable();
+        };
+        await navigate('ArrowUp');
+        expect(options[39].getAttribute('aria-selected')).toBe('true');
+        expect(content.scrollTop).toBe(1160);
+        expect(input.getAttribute('aria-activedescendant')).toBe(options[39].id);
+        expect(document.activeElement).toBe(input);
+        await navigate('ArrowDown');
+        expect(options[0].getAttribute('aria-selected')).toBe('true');
+        expect(content.scrollTop).toBe(0);
+        const emit = vi.spyOn(component.insert, 'emit');
+        await navigate('ArrowUp');
+        await navigate('Enter');
+        expect(emit).toHaveBeenCalledExactlyOnceWith({
+            markdown: kind === 'slides' ? '[slide]Slide 40(#40)[/slide] ' : '[faq]Question 39(/courses/1/faq?faqId=40)[/faq] ',
+            range: expect.any(Range),
+        });
+        expect(component.picker()).toBeUndefined();
+    });
+
     it('inserts the selected slide at the original caret after the search field takes focus', async () => {
         const emit = vi.spyOn(component.insert, 'emit');
         (fixture.nativeElement.querySelector('[data-testid="message-slides-button"]') as HTMLButtonElement).click();

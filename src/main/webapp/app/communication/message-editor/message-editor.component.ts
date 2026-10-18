@@ -22,6 +22,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { MessageCompletion, MessageEditorDom } from './message-editor-dom';
 import { MessageEditorSuggestions, MessageSuggestion } from './message-editor-suggestions';
+import { revealMessageEditorOption } from './message-editor-scroll';
 import { isMessageLinkSafe } from './message-editor-conversion';
 import { MessageEditorToolsComponent, MessageResourceInsertion } from './message-editor-tools.component';
 
@@ -123,12 +124,7 @@ export class MessageEditorComponent {
             const popup = this.completionList()?.nativeElement;
             const option = popup?.querySelector<HTMLElement>(`[id="${this.listId}-${index}"]`);
             if (!this.suggestionsOpen() || !popup || !option) return;
-            // Scroll only the popup; scrollIntoView can also move the surrounding conversation.
-            const top = popup.getBoundingClientRect().top + popup.clientTop;
-            const bottom = top + popup.clientHeight;
-            const bounds = option.getBoundingClientRect();
-            if (bounds.top < top) popup.scrollTop += bounds.top - top;
-            else if (bounds.bottom > bottom) popup.scrollTop += bounds.bottom - bottom;
+            revealMessageEditorOption(popup, option);
         });
         const dismissOnAncestorScroll = (event: Event) => {
             const element = this.editable()?.nativeElement;

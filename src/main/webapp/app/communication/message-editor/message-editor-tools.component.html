@@ -103,41 +103,43 @@
         (compositionstart)="composing = true"
         (compositionend)="composing = false"
     >
-        <div class="min-h-0 overflow-auto" data-testid="message-resource-content">
+        @if (picker() !== 'emoji') {
+            <label class="message-resource-search">
+                {{ 'artemisApp.communication.formattedEditor.' + picker() | artemisTranslate }}
+                <input
+                    #queryInput
+                    tumAetUiInput
+                    data-testid="message-resource-search"
+                    type="search"
+                    [value]="query()"
+                    (input)="search($event)"
+                    (keydown)="keydown($event)"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-expanded="true"
+                    [attr.aria-controls]="listId"
+                    [attr.aria-activedescendant]="results().length ? listId + '-' + active() : null"
+                />
+            </label>
+            <div role="status" class="message-editor-muted py-2 text-xs" aria-live="polite">
+                @if (loading()) {
+                    {{ 'artemisApp.communication.formattedEditor.loading' | artemisTranslate }}
+                } @else if (failed()) {
+                    {{ 'artemisApp.communication.formattedEditor.searchError' | artemisTranslate }}
+                    <button type="button" tumAetUiButton size="small" variant="text" (click)="search()">
+                        {{ 'artemisApp.communication.formattedEditor.retry' | artemisTranslate }}
+                    </button>
+                } @else if (!results().length) {
+                    {{ 'artemisApp.communication.formattedEditor.noResults' | artemisTranslate }}
+                } @else {
+                    {{ 'artemisApp.communication.formattedEditor.choose' | artemisTranslate }}
+                }
+            </div>
+        }
+        <div #resourceContent class="min-h-0 overflow-auto" data-testid="message-resource-content">
             @if (picker() === 'emoji') {
                 <jhi-emoji-picker (emojiSelect)="chooseEmoji($event)" />
             } @else {
-                <label class="message-resource-search">
-                    {{ 'artemisApp.communication.formattedEditor.' + picker() | artemisTranslate }}
-                    <input
-                        #queryInput
-                        tumAetUiInput
-                        data-testid="message-resource-search"
-                        type="search"
-                        [value]="query()"
-                        (input)="search($event)"
-                        (keydown)="keydown($event)"
-                        role="combobox"
-                        aria-autocomplete="list"
-                        aria-expanded="true"
-                        [attr.aria-controls]="listId"
-                        [attr.aria-activedescendant]="results().length ? listId + '-' + active() : null"
-                    />
-                </label>
-                <div role="status" class="message-editor-muted py-2 text-xs" aria-live="polite">
-                    @if (loading()) {
-                        {{ 'artemisApp.communication.formattedEditor.loading' | artemisTranslate }}
-                    } @else if (failed()) {
-                        {{ 'artemisApp.communication.formattedEditor.searchError' | artemisTranslate }}
-                        <button type="button" tumAetUiButton size="small" variant="text" (click)="search()">
-                            {{ 'artemisApp.communication.formattedEditor.retry' | artemisTranslate }}
-                        </button>
-                    } @else if (!results().length) {
-                        {{ 'artemisApp.communication.formattedEditor.noResults' | artemisTranslate }}
-                    } @else {
-                        {{ 'artemisApp.communication.formattedEditor.choose' | artemisTranslate }}
-                    }
-                </div>
                 <ul [id]="listId" role="listbox" class="m-0 list-none p-0" [attr.aria-label]="'artemisApp.communication.formattedEditor.' + picker() | artemisTranslate">
                     @for (item of results(); track item.markdown; let index = $index) {
                         <li

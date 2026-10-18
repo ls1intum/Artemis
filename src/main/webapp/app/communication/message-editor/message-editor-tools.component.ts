@@ -1,4 +1,18 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, effect, inject, input, output, signal, untracked, viewChild, viewChildren } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    DestroyRef,
+    ElementRef,
+    afterRenderEffect,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    untracked,
+    viewChild,
+    viewChildren,
+} from '@angular/core';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -12,6 +26,7 @@ import { MAX_FILE_SIZE_COMMUNICATION } from 'app/foundation/constants/input.cons
 import { sanitizeStringForMarkdownEditor } from 'app/foundation/util/markdown.util';
 import { MessageEditorResources, MessageResourceKind } from './message-editor-resources';
 import { MessageSuggestion } from './message-editor-suggestions';
+import { revealMessageEditorOption } from './message-editor-scroll';
 
 /** An insertion payload paired with the editor range captured before a picker or upload took focus. */
 export interface MessageResourceInsertion {
@@ -47,6 +62,7 @@ export class MessageEditorToolsComponent {
     readonly closed = output<void>();
     private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
     private readonly queryInput = viewChild<ElementRef<HTMLInputElement>>('queryInput');
+    private readonly resourceContent = viewChild<ElementRef<HTMLElement>>('resourceContent');
     private readonly optionOrigins = viewChildren<CdkOverlayOrigin>('optionOrigin');
     protected readonly preview = signal<{ item: MessageSuggestion; origin: CdkOverlayOrigin } | undefined>(undefined);
     protected readonly previewFailed = signal(false);
@@ -91,6 +107,13 @@ export class MessageEditorToolsComponent {
                 this.setUploading(false);
                 this.error.set(undefined);
             });
+        });
+        afterRenderEffect(() => {
+            const index = this.active();
+            this.results();
+            const content = this.resourceContent()?.nativeElement;
+            const option = content?.querySelector<HTMLElement>(`[id="${this.listId}-${index}"]`);
+            if (content && option) revealMessageEditorOption(content, option);
         });
         effect(() => this.queryInput()?.nativeElement.focus());
     }

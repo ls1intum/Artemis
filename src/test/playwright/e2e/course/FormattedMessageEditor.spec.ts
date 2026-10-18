@@ -2,7 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 import { test as artemisTest } from '../../support/fixtures';
 import { admin, studentOne, studentTwo, studentThree, studentFour, UserRole } from '../../support/users';
 import { generateUUID, readResponseJson } from '../../support/utils';
-import { expectAligned, expectBelow, expectNoHorizontalOverflow, expectNoHorizontalScrollAround, expectWithinViewport, forEachViewport } from '../../support/layout';
+import { expectAligned, expectBelow, expectInside, expectNoHorizontalOverflow, expectNoHorizontalScrollAround, expectWithinViewport, forEachViewport } from '../../support/layout';
 import { Course } from 'app/course/shared/entities/course.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -938,6 +938,124 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
             }
         }
     });
+
+    for (const kind of ['slides', 'faq'] as const) {
+        for (const viewport of [
+            { width: 1440, height: 1000 },
+            { width: 390, height: 844 },
+        ]) {
+            test(`${kind} picker keeps overflowing keyboard selections and search visible at ${viewport.width}px`, async ({ page, composer }) => {
+                await page.setViewportSize(viewport);
+                await page.goto(composer.route);
+                await expect(composer.editor).toBeVisible();
+                await page.getByTestId('message-toolbar-toggle').click();
+                await expect(page.getByTestId('message-advanced-toolbar')).toBeVisible();
+                // These read-only resource fixtures isolate the layout contract; the composer/course are real.
+                if (kind === 'slides') {
+                    await page.route(`**/api/lecture/courses/${composer.course.id}/lectures-with-slides`, (route) =>
+                        route.fulfill({
+                            json: [
+                                {
+                                    id: 1001,
+                                    title: 'Algorithms',
+                                    course: composer.course,
+                                    lectureUnits: [
+                                        {
+                                            id: 1002,
+                                            name: 'Recurrence relations',
+                                            type: 'attachment',
+                                            visibleToStudents: true,
+                                            attachment: {
+                                                id: 1003,
+                                                name: 'Recurrence relations',
+                                                link: '/api/core/files/attachments/editor-layout/recurrences.pdf',
+                                                studentVersion: '/api/core/files/attachments/editor-layout/recurrences_student.pdf',
+                                                version: 1,
+                                            },
+                                            slides: Array.from({ length: 40 }, (_, index) => ({ id: 2001 + index, slideNumber: index + 1 })),
+                                        },
+                                    ],
+                                },
+                            ],
+                        }),
+                    );
+                    await page.route('**/api/core/files/slides/*', (route) =>
+                        route.fulfill({
+                            contentType: 'image/svg+xml',
+                            body: '<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90"><text x="8" y="45">Recurrence relations</text></svg>',
+                        }),
+                    );
+                } else {
+                    await page.route(`**/api/communication/courses/${composer.course.id}/faq-state/ACCEPTED`, (route) =>
+                        route.fulfill({
+                            json: Array.from({ length: 40 }, (_, index) => ({
+                                id: 3001 + index,
+                                questionTitle: `Recurrence relations question ${index + 1}`,
+                                questionAnswer: 'Use the recurrence covered in the lecture.',
+                                faqState: 'ACCEPTED',
+                                course: composer.course,
+                                categories: [],
+                            })),
+                        }),
+                    );
+                }
+                const { editor } = composer;
+                await editor.pressSequentially('Reference: ');
+                await page.getByTestId(`message-${kind === 'slides' ? 'slides' : 'faq'}-button`).click();
+                await page.mouse.move(0, 0);
+                const input = page.getByTestId('message-resource-search');
+                await input.fill('recurrence');
+                const content = page.getByTestId('message-resource-content');
+                const options = content.getByRole('option');
+                const count = kind === 'slides' ? 41 : 40;
+                await expect(options).toHaveCount(count);
+                expect(await content.evaluate((element) => element.scrollHeight > element.clientHeight)).toBe(true);
+                const inputTop = (await input.boundingBox())!.y;
+                const documentScroll = await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }));
+                const expectActiveVisible = async (index: number) => {
+                    const active = options.nth(index);
+                    await expect(active).toHaveAttribute('aria-selected', 'true');
+                    await expect(input).toHaveAttribute('aria-activedescendant', (await active.getAttribute('id'))!);
+                    await expect(input).toBeFocused();
+                    await expectInside(active, content, ['top', 'bottom'], { name: `active ${kind} result ${index}` });
+                    await expect.poll(() => input.evaluate((element, top) => Math.abs(element.getBoundingClientRect().top - top), inputTop)).toBeLessThanOrEqual(1);
+                    expect(await page.evaluate(() => ({ x: window.scrollX, y: window.scrollY }))).toEqual(documentScroll);
+                };
+                await expectActiveVisible(0);
+                for (let index = 1; index < count; index++) {
+                    await input.press('ArrowDown');
+                    await expectActiveVisible(index);
+                }
+                expect(await content.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+                await input.press('ArrowDown');
+                await expectActiveVisible(0);
+                await input.press('ArrowUp');
+                await expectActiveVisible(count - 1);
+                for (let index = count - 2; index >= 0; index--) {
+                    await input.press('ArrowUp');
+                    await expectActiveVisible(index);
+                }
+                await input.press('ArrowUp');
+                await expectActiveVisible(count - 1);
+                if (kind === 'slides') {
+                    const preview = page.getByTestId('message-slide-preview');
+                    await expect(preview.locator('img')).toHaveAttribute('src', '/api/core/files/slides/2040');
+                    await expectWithinViewport(preview, ['top', 'right', 'bottom', 'left'], { name: 'active slide preview' });
+                }
+                await input.press('Enter');
+                await expect(content).toBeHidden();
+                await expect(editor).toBeFocused();
+                const expected =
+                    kind === 'slides'
+                        ? '[slide]Recurrence relations Slide 40(#2040)[/slide]'
+                        : `[faq]Recurrence relations question 40(/courses/${composer.course.id}/faq?faqId=3040)[/faq]`;
+                await expect(editor.locator('[data-message-reference]')).toHaveAttribute('data-message-reference', expected);
+                await page.keyboard.type('reviewed');
+                await expectText(editor, `Reference: Recurrence relations ${kind === 'slides' ? 'Slide' : 'question'} 40 reviewed`);
+                await expect(page.locator('[id^="item-"]')).toHaveCount(0);
+            });
+        }
+    }
 
     test('mention completions stay beside the caret on the first line of a multiline editor at every viewport', async ({ page, composer }) => {
         const { editor } = composer;
