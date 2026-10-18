@@ -27,6 +27,7 @@ import { getElement } from 'test/helpers/utils/general-test.utils';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { PostContextFilter } from '../../communication.util';
 
 @Directive({
     selector: '[infiniteScroll], [infinite-scroll], [data-infinite-scroll]',
@@ -420,5 +421,33 @@ describe('CourseWideSearchComponent', () => {
         sortControl.dispatchEvent(new KeyboardEvent('keyup', { key: ' ', bubbles: true }));
         expect(changeDirection).toHaveBeenCalledOnce();
         expect(component.sortingOrder()).not.toBe(initialDirection);
+    });
+
+    it('should filter out resolved messages with unresolved filter active otherwise not', async () => {
+        // Setup and initial assertions
+        const post1 = { id: 1, content: 'test', resolved: false } as Post;
+        const post2 = { id: 2, content: 'test2', resolved: false } as Post;
+        const initialPosts = [post1, post2];
+        Object.defineProperty(communicationService, 'posts', { get: () => new BehaviorSubject(initialPosts).asObservable() });
+        Object.defineProperty(communicationService, 'totalNumberOfPosts', { get: () => new BehaviorSubject(initialPosts.length).asObservable() });
+
+        // Simulate a change in the posts that includes a resolved post.
+        const post1Resolved = { ...post1, resolved: true };
+        const updatedPosts = [post1Resolved, post2];
+
+        // Retrigger the subscription avoiding setup for an answer and a resolve action.
+        communicationService.setPosts(updatedPosts);
+
+        // Assert that the component's posts are filtered to only include unresolved posts.
+        expect(component.posts()).toStrictEqual(updatedPosts);
+        await fixture.whenStable(); // Factor in the timeout
+        expect(component.totalNumberOfPosts()).toBe(2);
+
+        // Now activate the unresolved filter and check that the resolved post is filtered out.
+        component.currentPostContextFilter = { filterToUnresolved: true } as PostContextFilter;
+        communicationService.setPosts(updatedPosts);
+        expect(component.posts()).toStrictEqual([post2]);
+        await fixture.whenStable(); // Factor in the timeout
+        expect(component.totalNumberOfPosts()).toBe(1);
     });
 });
