@@ -38,6 +38,7 @@ export class ExamChecklistExerciseGroupTableComponent {
         const exerciseGroupColumns: ExerciseGroupColumn[] = []; // Clear any previously existing entries
         let totalParticipants = this.totalParticipants();
         let totalPoints = 0;
+        let pointMismatch = false;
         if (this.exerciseGroups()) {
             let exerciseGroupIndex = 1;
             this.exerciseGroups().forEach((exerciseGroup) => {
@@ -56,7 +57,7 @@ export class ExamChecklistExerciseGroupTableComponent {
                     });
 
                     if (!exerciseGroupColumn.exerciseGroupPointsEqual) {
-                        this.hasPointMismatch.set(true);
+                        pointMismatch = true;
                     }
 
                     exerciseGroupColumn.noExercises = false;
@@ -86,6 +87,7 @@ export class ExamChecklistExerciseGroupTableComponent {
         this.totalParticipants.set(totalParticipants);
         this.exerciseGroupColumns.set(exerciseGroupColumns);
         this.totalPoints.set(totalPoints);
+        this.hasPointMismatch.set(pointMismatch);
     }
 
     protected readonly ExerciseType = ExerciseType;
