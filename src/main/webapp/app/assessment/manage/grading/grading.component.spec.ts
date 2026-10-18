@@ -286,8 +286,15 @@ describe('GradingComponent', () => {
             const addLabels = fixture.nativeElement.querySelectorAll('[jhiTranslate="artemisApp.gradingSystem.add"]') as NodeListOf<HTMLElement>;
             expect(addLabels).toHaveLength(1);
             const before = comp.gradeStepsModel().gradeSteps.length;
+            const rowsBefore = fixture.nativeElement.querySelectorAll('tbody tr').length;
             addLabels[0].closest('button')!.click();
-            expect(comp.gradeStepsModel().gradeSteps.length).toBeGreaterThan(before);
+            fixture.detectChanges();
+            await fixture.whenStable();
+
+            // After switching to an empty interval view, Add also creates its final sticky step.
+            const addedRows = mode === GradingViewMode.DETAILED ? 2 : 1;
+            expect(comp.gradeStepsModel().gradeSteps).toHaveLength(before + addedRows);
+            expect(fixture.nativeElement.querySelectorAll('tbody tr')).toHaveLength(rowsBefore + addedRows);
         });
 
         it('announces the selected grading view after keyboard activation', () => {
