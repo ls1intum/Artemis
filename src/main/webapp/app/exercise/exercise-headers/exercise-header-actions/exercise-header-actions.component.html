@@ -160,6 +160,7 @@
                         />
                         <jhi-code-button-new
                             [exerciseId]="exercise().id!"
+                            [programmingLanguage]="programmingExercise()?.programmingLanguage"
                             [repositoryUri]="repositoryUriForCodeButton()"
                             [repositoryViewLink]="routerLinkForRepositoryView()"
                             [vcsAccessTokenData]="vcsAccessTokenDataForCodeButton()"

@@ -67,11 +67,44 @@
         <span [jhiTranslate]="copiedRepositoryUrl() ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl'"></span>
     </button>
 
-    <div class="border-t border-border"></div>
+    @if (ideLinkData(); as ideLinkData) {
+        <div class="border-t border-border"></div>
 
-    <div class="flex h-10 items-center justify-center">
-        <button type="button" tumAetUiButton variant="text" size="small" jhiTranslate="artemisApp.exerciseActions.showAlternatives"></button>
-    </div>
+        @if (showAlternatives()) {
+            <a
+                class="flex w-full cursor-pointer items-center gap-2 rounded-sm border-0 bg-transparent px-3! py-2 text-(--tumaet-ui-text-color)! no-underline! hover:bg-(--tumaet-ui-hover-background)! hover:text-(--tumaet-ui-accent-color)!"
+                target="hidden-iframe"
+                [href]="ideLinkData.url"
+            >
+                <fa-icon [icon]="faLaptopCode" aria-hidden="true" />
+                <span jhiTranslate="artemisApp.exerciseActions.ideButton.openIn" [translateValues]="{ ideName: ideLinkData.name }"></span>
+                <fa-icon
+                    class="ms-auto text-muted-color"
+                    [icon]="faQuestionCircle"
+                    [tumAetUiTooltip]="'artemisApp.exerciseActions.ideButton.helpIcon' | artemisTranslate"
+                    tumAetUiTooltipPlacement="right"
+                />
+            </a>
+            <iframe
+                name="hidden-iframe"
+                [title]="'accessibility.externalApplicationLauncher' | artemisTranslate"
+                aria-hidden="true"
+                tabindex="-1"
+                class="invisible absolute"
+            ></iframe>
+        } @else {
+            <div class="flex h-10 items-center justify-center">
+                <button
+                    type="button"
+                    tumAetUiButton
+                    variant="text"
+                    size="small"
+                    (click)="showAlternatives.set(true)"
+                    jhiTranslate="artemisApp.exerciseActions.showAlternatives"
+                ></button>
+            </div>
+        }
+    }
 </div>
 
 <ng-template #authenticationMenu>

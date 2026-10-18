@@ -1,7 +1,7 @@
-import { Component, computed, inject, input, linkedSignal, signal } from '@angular/core';
+import { Component, SecurityContext, computed, inject, input, linkedSignal, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCaretDown, faCheck, faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { faCaretDown, faCheck, faExternalLink, faLaptopCode, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { faCopy } from '@fortawesome/free-regular-svg-icons';
 import {
     TumAetUiButtonDirective,
@@ -16,6 +16,9 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { RepositoryAuthenticationMethod } from 'app/shared-ui/components/buttons/code-button/code-button.component';
 import { LocalStorageService } from 'app/foundation/service/local-storage.service';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
+import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 
 export type NonEmptyArray<T> = readonly [T, ...T[]];
 export type SshKeyState = { status: 'missing' } | { status: 'configured'; hasExpiredKeys: boolean };
@@ -23,6 +26,7 @@ export type AuthenticationMethodData =
     | { authenticationMethod: RepositoryAuthenticationMethod.SSH; url: string; sshKeyState: SshKeyState }
     | { authenticationMethod: RepositoryAuthenticationMethod.Token; url: string }
     | { authenticationMethod: RepositoryAuthenticationMethod.Password; url: string };
+type IdeLinkData = { url: SafeUrl; name: string };
 
 @Component({
     selector: 'jhi-code-button-popover-content',
@@ -42,23 +46,30 @@ export type AuthenticationMethodData =
     ],
 })
 export class CodeButtonPopoverContentComponent {
-    private localStorageService = inject(LocalStorageService);
+    private readonly localStorageService = inject(LocalStorageService);
+    private readonly externalCloningService = inject(ExternalCloningService);
+    private readonly sanitizer = inject(DomSanitizer);
 
     protected readonly faCaretDown = faCaretDown;
     protected readonly faCheck = faCheck;
     protected readonly faCopy = faCopy;
     protected readonly faExternalLink = faExternalLink;
+    protected readonly faLaptopCode = faLaptopCode;
+    protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly RepositoryAuthenticationMethod = RepositoryAuthenticationMethod;
     protected readonly sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
 
     readonly authenticationMethodData = input.required<NonEmptyArray<AuthenticationMethodData>>();
     readonly repositoryViewLink = input.required<(string | number)[]>();
+    readonly preferredIde = input.required<Ide>();
+    protected readonly copiedRepositoryUrl = signal(false);
+    protected readonly showAlternatives = signal(false);
     protected readonly selectedAuthenticationMethodData = linkedSignal(() => this.initializeSelectedAuthenticationMethodData());
     protected readonly selectedAuthenticationMethodLabel = computed(() => this.getAuthenticationMechanismLabel(this.selectedAuthenticationMethodData().authenticationMethod));
     protected readonly authenticationMethodDataAndLabels = computed(() => this.getAuthenticationMechanismsWithLabels());
     protected readonly repositoryDisplayUrl = computed(() => this.getRepositoryDisplayUrl());
     protected readonly repositoryCopyUrl = computed(() => this.selectedAuthenticationMethodData().url);
-    protected readonly copiedRepositoryUrl = signal(false);
+    protected readonly ideLinkData = computed(() => this.getIdeLinkData());
 
     selectAuthenticationMethod(authenticationMethodData: AuthenticationMethodData) {
         this.selectedAuthenticationMethodData.set(authenticationMethodData);
@@ -102,6 +113,24 @@ export class CodeButtonPopoverContentComponent {
             return authenticationMethodData.url;
         }
         return authenticationMethodData.url.replace(/(:\/\/[^:]+:)[^@]+(@)/, '$1**********$2');
+    }
+
+    private getIdeLinkData(): IdeLinkData | undefined {
+        const preferredIde = this.preferredIde();
+
+        const ideUrl = this.externalCloningService.buildIdeUrl(this.selectedAuthenticationMethodData().url, preferredIde);
+        if (!ideUrl) {
+            return undefined;
+        }
+        const sanitizedUrl = this.sanitizer.sanitize(SecurityContext.URL, ideUrl);
+        if (!sanitizedUrl || sanitizedUrl.startsWith('unsafe:')) {
+            return undefined;
+        }
+
+        return {
+            url: this.sanitizer.bypassSecurityTrustUrl(sanitizedUrl),
+            name: preferredIde.name,
+        };
     }
 
     private getAuthenticationMechanismLabel(authenticationMechanism: RepositoryAuthenticationMethod): string {

@@ -1,4 +1,4 @@
-import { Component, inject, input, resource } from '@angular/core';
+import { Component, computed, inject, input, resource } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCircleExclamation, faCircleNotch, faCode } from '@fortawesome/free-solid-svg-icons';
 import { TumAetUiButtonDirective, TumAetUiPopoverComponent, TumAetUiPopoverTriggerDirective } from '@tumaet/ui-angular';
@@ -15,6 +15,12 @@ import { Router } from '@angular/router';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { Observable } from 'rxjs';
+import { IdeSettingsService } from 'app/account/user/settings/ide-preferences/ide-settings.service';
+import { Ide } from 'app/account/user/settings/ide-preferences/ide.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+
+type CodeButtonLoadingState =
+    { status: 'loading' } | { status: 'error' } | { status: 'complete'; authenticationMethodData: NonEmptyArray<AuthenticationMethodData>; preferredIde: Ide };
 
 @Component({
     selector: 'jhi-code-button-new',
@@ -26,7 +32,8 @@ export class CodeButtonNewComponent {
     private readonly profileService = inject(ProfileService);
     private readonly sshUserSettingsService = inject(SshUserSettingsService);
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
-    private router = inject(Router);
+    private readonly ideSettingsService = inject(IdeSettingsService);
+    private readonly router = inject(Router);
 
     protected readonly faCircleExclamation = faCircleExclamation;
     protected readonly faCircleNotch = faCircleNotch;
@@ -38,8 +45,11 @@ export class CodeButtonNewComponent {
     readonly repositoryUri = input.required<string>();
     readonly vcsAccessTokenData = input.required<VcsAccessTokenData>();
     readonly repositoryViewLink = input.required<(string | number)[]>();
+    readonly programmingLanguage = input<ProgrammingLanguage>();
 
-    protected readonly dataResource = resource({
+    protected readonly loadingState = computed(() => this.getLoadingState());
+
+    private readonly authenticationMethodDataResource = resource({
         params: () => ({
             exerciseId: this.exerciseId(),
             isInCourseManagement: this.isInCourseManagement(),
@@ -50,6 +60,25 @@ export class CodeButtonNewComponent {
             return this.loadAuthenticationMethodData(params.exerciseId, params.isInCourseManagement, params.repositoryUri, params.vcsAccessTokenData);
         },
     });
+
+    private readonly preferredIdeResource = resource({
+        params: () => ({ programmingLanguage: this.programmingLanguage() }),
+        loader: ({ params }) => this.loadPreferredIde(params.programmingLanguage),
+    });
+
+    private getLoadingState(): CodeButtonLoadingState {
+        if (this.authenticationMethodDataResource.isLoading() || this.preferredIdeResource.isLoading()) {
+            return { status: 'loading' };
+        } else if (this.authenticationMethodDataResource.hasValue() && this.preferredIdeResource.hasValue()) {
+            return {
+                status: 'complete',
+                authenticationMethodData: this.authenticationMethodDataResource.value(),
+                preferredIde: this.preferredIdeResource.value(),
+            };
+        } else {
+            return { status: 'error' };
+        }
+    }
 
     private async loadAuthenticationMethodData(
         exerciseId: number,
@@ -282,5 +311,20 @@ export class CodeButtonNewComponent {
         } else {
             return url.replace('://', credentials);
         }
+    }
+
+    private async loadPreferredIde(programmingLanguage: ProgrammingLanguage | undefined): Promise<Ide> {
+        const idePreferences = await this.ideSettingsService.loadIdePreferences();
+        const vsCodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
+
+        let preferredIde: Ide | undefined;
+        if (programmingLanguage) {
+            preferredIde = idePreferences.get(programmingLanguage);
+        }
+        if (!preferredIde) {
+            preferredIde = idePreferences.get(ProgrammingLanguage.EMPTY);
+        }
+
+        return preferredIde ?? vsCodeFallback;
     }
 }
