@@ -53,7 +53,11 @@ export class CodeButtonNewComponent {
     private readonly userResource = resource({ loader: () => this.loadUser() });
 
     private readonly tokenResource = resource({
-        params: ({ chain }) => this.getTokenParams(chain),
+        params: () => ({
+            exerciseId: this.exerciseId(),
+            isInCourseManagement: this.isInCourseManagement(),
+            vcsAccessTokenData: this.vcsAccessTokenData(),
+        }),
         loader: ({ params }) => this.getToken(params.exerciseId, params.isInCourseManagement, params.vcsAccessTokenData),
     });
 
@@ -89,18 +93,6 @@ export class CodeButtonNewComponent {
             throw new Error('Incomplete user data');
         }
         return user;
-    }
-
-    private getTokenParams(chain: ResourceParamsContext['chain']) {
-        const user = chain(this.userResource);
-        if (!user) {
-            throw new Error('Resolved user resource contained no user');
-        }
-        return {
-            exerciseId: this.exerciseId(),
-            isInCourseManagement: this.isInCourseManagement(),
-            vcsAccessTokenData: this.vcsAccessTokenData(),
-        };
     }
 
     private getAuthenticationMethodDataParams(chain: ResourceParamsContext['chain']) {
