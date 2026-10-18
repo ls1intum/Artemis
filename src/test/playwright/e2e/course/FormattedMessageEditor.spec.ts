@@ -726,6 +726,48 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         await expectText(reopened.editor, 'Read bold and italic next');
     });
 
+    for (const selection of [
+        { start: 0, end: 26, label: 'Read guide and notes today', markdown: '[Read **guide** and *notes* today](https://example.org/new)', links: 1 },
+        { start: 7, end: 26, label: 'ide and notes today', markdown: 'Read [**gu**](https://example.org/old)[**ide** and *notes* today](https://example.org/new)', links: 2 },
+        {
+            start: 0,
+            end: 7,
+            label: 'Read gu',
+            markdown: '[Read **gu**](https://example.org/new)[**ide**](https://example.org/old) and [*notes*](https://example.org/notes) today',
+            links: 3,
+        },
+    ]) {
+        test(`relinking from ${selection.start} to ${selection.end} preserves marks and one new destination after reopening`, async ({
+            page,
+            composer,
+            communicationAPIRequests,
+        }) => {
+            const original = await communicationAPIRequests.createCourseMessage(
+                composer.course,
+                composer.channel.id!,
+                'channel',
+                'Read [**guide**](https://example.org/old) and [*notes*](https://example.org/notes) today',
+            );
+            const { posting, editor } = await reopen(page, original);
+            await selectText(editor, selection.start, selection.end, selection.label);
+            await posting.getByTestId('message-link-button').click();
+            await expect(posting.getByTestId('message-link-text')).toHaveValue(selection.label);
+            await posting.getByTestId('message-link-url').fill('https://example.org/new');
+            await posting.getByTestId('apply-message-link').click();
+            await expect(editor.locator('a a')).toHaveCount(0);
+            await expect(editor.locator('a')).toHaveCount(selection.links);
+            await expect(editor.locator('a[href="https://example.org/new"]')).toHaveText(selection.label);
+            const saved = await saveEdited(page, composer, posting, original);
+            expect(saved.content).toBe(selection.markdown);
+            const reopened = await reopen(page, saved);
+            await expect(reopened.editor.locator('a a')).toHaveCount(0);
+            await expect(reopened.editor.locator('a')).toHaveCount(selection.links);
+            await expect(reopened.editor.locator('a[href="https://example.org/new"]')).toHaveText(selection.label);
+            await expect(reopened.editor.locator('a[href="https://example.org/new"] strong')).toHaveCount(1);
+            await expectText(reopened.editor, 'Read guide and notes today');
+        });
+    }
+
     test('Safari-style IME confirmation after compositionend cannot bubble to send', async ({ page, composer }) => {
         const { editor } = composer;
         await editor.pressSequentially('日本語');

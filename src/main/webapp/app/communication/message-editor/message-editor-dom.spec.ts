@@ -411,6 +411,36 @@ describe('Message editor editing transactions', () => {
         expect(root.querySelector('a')?.getAttribute('href')).toBe('https://example.org/guide');
     });
 
+    it.each([
+        [0, 26, 'Read guide and notes today', '[Read **guide** and *notes* today](https://example.org/new)', 1],
+        [7, 26, 'ide and notes today', 'Read [**gu**](https://example.org/old)[**ide** and *notes* today](https://example.org/new)', 2],
+        [0, 7, 'Read gu', '[Read **gu**](https://example.org/new)[**ide**](https://example.org/old) and [*notes*](https://example.org/notes) today', 3],
+    ] as const)('relinks a selection from %s to %s without nesting copied anchors', (start, end, label, expected, linkCount) => {
+        editor.load('Read [**guide**](https://example.org/old) and [*notes*](https://example.org/notes) today');
+        const first = root.querySelector('p')!.firstChild!;
+        const last = root.querySelector('p')!.lastChild!;
+        const range = document.createRange();
+        if (start === 7) range.setStart(root.querySelector('strong')!.firstChild!, 2);
+        else range.setStart(first, 0);
+        if (end === 7) range.setEnd(root.querySelector('strong')!.firstChild!, 2);
+        else range.setEnd(last, last.textContent!.length);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        expect(range.toString()).toBe(label);
+
+        editor.setLink(label, 'https://example.org/new');
+
+        expect(root.querySelector('a a')).toBeNull();
+        expect(root.querySelectorAll('a')).toHaveLength(linkCount);
+        expect(root.querySelector('a[href="https://example.org/new"]')?.textContent).toBe(label);
+        expect(changed).toHaveBeenLastCalledWith(expected);
+        editor.load(expected);
+        expect(root.querySelector('a a')).toBeNull();
+        expect(root.querySelectorAll('a')).toHaveLength(linkCount);
+        expect(root.querySelector('a[href="https://example.org/new"] strong')).not.toBeNull();
+        expect(root.textContent).toBe('Read guide and notes today');
+    });
+
     it('updates and unlinks an existing code-formatted link label without losing its formatting', () => {
         editor.load('Read [`List`](https://example.org/old) next');
         const link = root.querySelector('a')!;

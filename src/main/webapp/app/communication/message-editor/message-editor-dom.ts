@@ -484,7 +484,10 @@ export class MessageEditorDom {
                 const selection = this.range();
                 if (!selection.collapsed && selection.toString() === label) {
                     // A URL-only operation must preserve each selected inline mark rather than flatten the label.
-                    link.append(selection.cloneContents());
+                    const contents = selection.cloneContents();
+                    // Retarget the selected text without nesting an earlier destination inside the new link.
+                    contents.querySelectorAll('a').forEach((anchor) => anchor.replaceWith(...Array.from(anchor.childNodes)));
+                    link.append(contents);
                 } else {
                     link.textContent = label || url;
                 }
