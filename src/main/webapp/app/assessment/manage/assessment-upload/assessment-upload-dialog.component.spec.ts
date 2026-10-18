@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -149,6 +149,26 @@ describe('AssessmentUploadDialogComponent', () => {
         expect(component['isUploading']()).toBe(false);
         expect(component['selectedFile']()).toBe(zipFile);
         expect(component['errors']()).toEqual([]);
+        expect(component.visible()).toBe(true);
+    });
+
+    it.each([
+        ['assessmentNotPossibleExamRunning', 'artemisApp.assessment.error.assessmentNotPossibleExamRunning'],
+        ['assessmentNotPossibleTestsPending', 'artemisApp.assessment.error.assessmentNotPossibleTestsPending'],
+    ])('should report %s, which the server marks skipAlert so nothing else would', (errorKey, expectedTranslationKey) => {
+        // The exam guard sends the date as an ISO string and suppresses the global alert so it can be localized here. Without its own handling the dialog would just stop
+        // the spinner and leave the instructor without a reason or the date assessment becomes possible.
+        const date = '2026-10-20T10:00:00Z';
+        uploadSpy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403, error: { errorKey, params: { date }, skipAlert: true } })));
+        selectFileAndConfirmOverwrite(component, zipFile);
+
+        component.upload();
+
+        expect(component['isUploading']()).toBe(false);
+        expect(alertError).toHaveBeenCalledOnce();
+        const [translationKey, params] = alertError.mock.calls[0];
+        expect(translationKey).toContain(expectedTranslationKey.split('.').pop());
+        expect(params.date).toBeTruthy();
         expect(component.visible()).toBe(true);
     });
 

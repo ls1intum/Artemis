@@ -495,8 +495,11 @@ public class AssessmentUploadService {
 
         final Map<Long, StudentParticipation> participationsById = assessmentUploadParticipationRepository.findAllForAssessmentUpload(exercise.getId(), participationIds).stream()
                 .collect(Collectors.toMap(StudentParticipation::getId, Function.identity()));
-        // Enforce the shared assessment-availability gate (e.g. an exam that is not over for all students yet) for every target participation before touching any result.
-        participationsById.values().forEach(participation -> submissionService.checkThatAssessmentIsPossibleElseThrow(exercise, participation));
+        // Enforce the shared assessment-availability gate (e.g. an exam that is not over for all students yet) before touching any result. Asked once rather than per
+        // participation: the gate only distinguishes test runs, which are exempt, from everything else, and for an exam it answers the same exercise-wide question every time
+        // by reading the latest individual working time. Per row that would repeat one aggregate query per uploaded assessment, all of it while holding the exercise lock.
+        participationsById.values().stream().filter(participation -> !participation.isTestRun()).findAny()
+                .ifPresent(participation -> submissionService.checkThatAssessmentIsPossibleElseThrow(exercise, participation));
 
         // The participations above already carry their latest submission (and its results and feedback), so there is nothing left to read here.
         final Map<Long, Submission> latestSubmissionsByParticipationId = participationsById.values().stream()

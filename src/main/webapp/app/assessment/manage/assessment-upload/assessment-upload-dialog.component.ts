@@ -6,6 +6,8 @@ import { faCloudUploadAlt, faDownload, faFileZipper, faTriangleExclamation } fro
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
+import { alertIfAssessmentNotPossibleYet } from 'app/assessment/shared/util/assessment-availability.util';
 import { MAX_FILE_SIZE } from 'app/foundation/constants/input.constants';
 import { downloadZipFileFromResponse } from 'app/foundation/util/download.util';
 import { TumAetUiButtonComponent, TumAetUiCheckboxComponent, TumAetUiDialogComponent, TumAetUiMessageComponent } from '@tumaet/ui-angular';
@@ -42,6 +44,8 @@ import { AssessmentUploadError, AssessmentUploadResult, AssessmentUploadService 
 export class AssessmentUploadDialogComponent {
     private readonly assessmentUploadService = inject(AssessmentUploadService);
     private readonly alertService = inject(AlertService);
+
+    private readonly datePipe = inject(ArtemisDatePipe);
 
     /** Two-way visibility of the dialog, controlled by the parent. */
     readonly visible = model(false);
@@ -136,8 +140,12 @@ export class AssessmentUploadDialogComponent {
         this.errors.set([]);
         this.assessmentUploadService.uploadManualAssessments(this.exerciseId(), file).subscribe({
             next: (response) => this.handleUploadResult(response.body ?? { numberOfCreatedAssessments: 0 }),
-            // Malformed-request errors (empty/oversized/not a zip) carry an Artemis error header and are surfaced by the global alert interceptor.
-            error: (_error: HttpErrorResponse) => this.isUploading.set(false),
+            error: (error: HttpErrorResponse) => {
+                this.isUploading.set(false);
+                // The exam guard marks its response skipAlert so the date it names can be localized here, which means the global interceptor stays silent and the dialog
+                // would otherwise just stop its spinner. Everything else (empty, oversized or not a zip) carries an Artemis error header the interceptor surfaces itself.
+                alertIfAssessmentNotPossibleYet(error, this.alertService, this.datePipe);
+            },
         });
     }
 
