@@ -85,8 +85,9 @@ public class RepositoryAccessService {
             return;
         }
         boolean isTeachingAssistant = authorizationCheckService.isTeachingAssistantInCourse(course, user);
-        // The user is allowed to access the repository in any way if they are at least an editor or if they are a teaching assistant and only want to read the repository.
-        if (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ) {
+        // Tutors may read other student repositories during the support window; exercise repositories remain readable for assessment.
+        if (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ
+                && (!(programmingParticipation instanceof ProgrammingExerciseStudentParticipation) || !exerciseDateService.isAssessmentAnonymizationActive(programmingExercise))) {
             return;
         }
 
@@ -129,7 +130,8 @@ public class RepositoryAccessService {
             return;
         }
         boolean isTeachingAssistant = authorizationCheckService.isTeachingAssistantInCourse(courseId, user);
-        if (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ) {
+        if (isTeachingAssistant && repositoryActionType == RepositoryActionType.READ
+                && (!(programmingParticipation instanceof ProgrammingExerciseStudentParticipation) || !exerciseDateService.isAssessmentAnonymizationActive(exercise))) {
             return;
         }
 
@@ -140,6 +142,21 @@ public class RepositoryAccessService {
         }
 
         throw new AccessForbiddenException("You are not allowed to access the repository of this programming exercise.");
+    }
+
+    /**
+     * Allows reading anonymous code snapshots during assessment even when direct repository access is closed.
+     * This does not authorize live repository access, Git history, cloning, writing or resetting.
+     *
+     * @param participation the participation whose submitted code is read
+     * @param user          the requesting user
+     * @param exercise      the exercise being assessed
+     */
+    public void checkAccessRepositoryForAssessmentElseThrow(ProgrammingExerciseParticipation participation, User user, ProgrammingExercise exercise) {
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(getCourseOrThrow(exercise), user)) {
+            return;
+        }
+        checkAccessRepositoryElseThrow(participation, user, exercise, RepositoryActionType.READ);
     }
 
     /**
@@ -262,7 +279,8 @@ public class RepositoryAccessService {
     }
 
     /**
-     * Checks if the user has access to the plagiarism submission of the given programming participation.
+     * Checks access to the live repository used by the plagiarism view. Staff must also have live repository read access;
+     * anonymous assessment reads use the separately authorized submitted-commit endpoints.
      *
      * @param programmingParticipation The participation for which the plagiarism submission should be accessed.
      * @param user                     The user who wants to access the plagiarism submission.
@@ -275,6 +293,7 @@ public class RepositoryAccessService {
             boolean isAtLeastTeachingAssistant = authorizationCheckService.isAtLeastTeachingAssistantInCourse(getCourseOrThrow(programmingParticipation.getProgrammingExercise()),
                     user);
             if (isAtLeastTeachingAssistant) {
+                checkAccessRepositoryElseThrow(programmingParticipation, user, programmingParticipation.getProgrammingExercise(), RepositoryActionType.READ);
                 return;
             }
             if (plagiarismAccessApi.isEmpty()

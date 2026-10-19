@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -38,6 +39,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -669,6 +671,95 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         assertThat(new String(file, StandardCharsets.UTF_8)).isEqualTo(currentLocalFileContent);
         var files = request.getMap(commitUrl(submittedCommit, "/files-change"), HttpStatus.OK, String.class, Boolean.class);
         assertThat(files).containsEntry(currentLocalFileName, false).containsEntry(textFileWithBinaryExtensionName, true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void manualAssessmentDeadlineClosesLiveRepositoryButKeepsAnonymousSubmittedCode() throws Exception {
+        String commit = pushCommitFromLocalClone("submitted code");
+        var submission = new ProgrammingSubmission();
+        submission.setParticipation(participation);
+        submission.setCommitHash(commit);
+        participationUtilService.addSubmission(participation, submission);
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+
+        request.getMap(participationsBaseUrl + participation.getId() + "/repository/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
+        request.get(participationsBaseUrl + participation.getId() + "/repository/file", HttpStatus.FORBIDDEN, byte[].class, fileParams(currentLocalFileName));
+        request.get("/api/programming/programming-exercise-participations/" + participation.getId() + "/commit-history", HttpStatus.FORBIDDEN, String.class);
+        var file = request.get(commitUrl(commit, "/file"), HttpStatus.OK, byte[].class, fileParams(currentLocalFileName));
+        assertThat(new String(file, StandardCharsets.UTF_8)).isEqualTo("submitted code");
+        var files = request.getMap(commitUrl(commit, "/files"), HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).containsKey(currentLocalFileName);
+        request.getMap(commitUrl(commit, "/files-change"), HttpStatus.OK, String.class, Boolean.class);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void tutorCannotReadAnUnsubmittedCommitAfterTheDeadline(boolean submittedForAnotherParticipation) throws Exception {
+        String commit = pushCommitFromLocalClone("not submitted for this participation");
+        if (submittedForAnotherParticipation) {
+            var otherParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
+            var submission = new ProgrammingSubmission();
+            submission.setParticipation(otherParticipation);
+            submission.setCommitHash(commit);
+            participationUtilService.addSubmission(otherParticipation, submission);
+        }
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+
+        request.getMap(commitUrl(commit, "/files"), HttpStatus.FORBIDDEN, String.class, FileType.class);
+        request.get(commitUrl(commit, "/file"), HttpStatus.FORBIDDEN, byte[].class, fileParams(currentLocalFileName));
+        request.getMap(commitUrl(commit, "/files-change"), HttpStatus.FORBIDDEN, String.class, Boolean.class);
+        String selectedFilesUrl = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/files-content-commit-details/selected?commitId=" + commit
+                + "&participationId=" + participation.getId();
+        request.postWithResponseBody(selectedFilesUrl, Set.of(currentLocalFileName), Map.class, HttpStatus.FORBIDDEN);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void tutorCannotUsePlagiarismEndpointsToBypassAnonymousAssessment(boolean exam) throws Exception {
+        if (exam) {
+            programmingExercise = createProgrammingExerciseForExam();
+        }
+        else {
+            programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+            programmingExercise.setDueDate(ZonedDateTime.now().minusDays(1));
+            programmingExerciseRepository.save(programmingExercise);
+        }
+        String submittedCommit = pushCommitFromLocalClone("anonymous submitted code");
+        var submission = new ProgrammingSubmission();
+        submission.setParticipation(participation);
+        submission.setCommitHash(submittedCommit);
+        participationUtilService.addSubmission(participation, submission);
+        String unsubmittedCommit = pushCommitFromLocalClone("private later code");
+
+        request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-plagiarism-view", HttpStatus.FORBIDDEN, String.class, FileType.class);
+        request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.FORBIDDEN, byte[].class, fileParams(currentLocalFileName));
+        var submittedFiles = request.getMap(commitUrl(submittedCommit, "/files"), HttpStatus.OK, String.class, FileType.class);
+        assertThat(submittedFiles).containsKey(currentLocalFileName);
+        var submittedCode = request.get(commitUrl(submittedCommit, "/file"), HttpStatus.OK, byte[].class, fileParams(currentLocalFileName));
+        assertThat(new String(submittedCode, StandardCharsets.UTF_8)).isEqualTo("anonymous submitted code");
+        request.get(commitUrl(unsubmittedCommit, "/file"), HttpStatus.FORBIDDEN, byte[].class, fileParams(currentLocalFileName));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void tutorCanUseLivePlagiarismEndpointsDuringSupportWindow() throws Exception {
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        programmingExerciseRepository.save(programmingExercise);
+        String liveCode = "code available for tutor support";
+        pushCommitFromLocalClone(liveCode);
+
+        var files = request.getMap(participationsBaseUrl + participation.getId() + "/repository/files-plagiarism-view", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).containsKey(currentLocalFileName);
+        var code = request.get(participationsBaseUrl + participation.getId() + "/repository/file-plagiarism-view", HttpStatus.OK, byte[].class, fileParams(currentLocalFileName));
+        assertThat(new String(code, StandardCharsets.UTF_8)).isEqualTo(liveCode);
     }
 
     private String commitUrl(String commitId, String suffix) {
