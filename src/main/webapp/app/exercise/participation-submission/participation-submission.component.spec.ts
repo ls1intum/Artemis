@@ -351,6 +351,47 @@ describe('ParticipationSubmissionComponent', () => {
             expect(comp.displayedSubmissions()).toHaveLength(3);
         });
 
+        it.each([ProgrammingSubmissionState.IS_QUEUED, ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION])(
+            'retains a new %s submission after failure and reconciles its late result without duplicate rows',
+            (initialState) => {
+                fixture.detectChanges();
+                const liveSubmission: ProgrammingSubmission = { id: 3, commitHash: 'failed-live', submissionDate: dayjs(), results: [] };
+                states.next({ participationId: 1, submissionState: initialState, submission: liveSubmission });
+                fixture.detectChanges();
+                fixture.detectChanges();
+                expect(comp.displayedSubmissions().map((submission) => submission.id)).toEqual([3, 2, 1]);
+                expect(progress()).toHaveLength(1);
+
+                states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: liveSubmission });
+                fixture.detectChanges();
+
+                expect(comp.displayedSubmissions().map((submission) => submission.id)).toEqual([3, 2, 1]);
+                expect(fixture.nativeElement.textContent).toContain('failed-live');
+                expect(progress()).toHaveLength(0);
+                expect(comp.activeBuild()).toBeUndefined();
+                expect(comp.submissions().map((submission) => submission.id)).toEqual([2, 1]);
+                expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledOnce();
+                expect(fixture.debugElement.queryAll(By.directive(ResultComponent)).some((element) => element.componentInstance.result()?.id === 11)).toBe(true);
+
+                states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION, submission: liveSubmission });
+                fixture.detectChanges();
+                expect(comp.displayedSubmissions().map((submission) => submission.id)).toEqual([3, 2, 1]);
+                findAllSubmissionsOfParticipationStub.mockReturnValue(
+                    of(new HttpResponse({ body: [{ ...liveSubmission, results: [{ id: 33, score: 100, rated: true }] }, pendingSubmission, completedSubmission] })),
+                );
+                vi.mocked(participationService.getBuildJobIdsForResultsOfParticipation).mockReturnValue(of({ '33': 'late-build-33' }));
+                states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION });
+                fixture.detectChanges();
+                fixture.detectChanges();
+
+                expect(comp.displayedSubmissions().map((submission) => submission.id)).toEqual([3, 2, 1]);
+                expect(comp.submissions()[0].results?.[0]).toMatchObject({ id: 33, buildJobId: 'late-build-33' });
+                expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalledTimes(2);
+                expect(progress()).toHaveLength(0);
+                expect(fixture.nativeElement.textContent).toContain('failed-live');
+            },
+        );
+
         it('refreshes results and build log links when the active build finishes', () => {
             states.next({ participationId: 1, submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission: pendingSubmission });
             fixture.detectChanges();

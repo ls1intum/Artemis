@@ -111,10 +111,11 @@ export class ParticipationSubmissionComponent implements OnInit {
 
     readonly displayedSubmissions = computed(() => {
         const submissions = this.submissions();
-        const pendingSubmission = this.activeBuild()?.submission;
+        const latestSubmission = this.buildState()?.submission;
+        // Failed submissions remain persisted rows after their progress indicator stops.
         // The table sorts its input in place. Keep the loaded snapshot and participation's submissions untouched.
-        return pendingSubmission?.id !== undefined && !submissions.some((submission) => submission.id === pendingSubmission.id)
-            ? [pendingSubmission, ...submissions]
+        return latestSubmission?.id !== undefined && !submissions.some((submission) => submission.id === latestSubmission.id)
+            ? [latestSubmission, ...submissions]
             : [...submissions];
     });
 
