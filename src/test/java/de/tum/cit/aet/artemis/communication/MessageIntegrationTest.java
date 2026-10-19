@@ -8,6 +8,7 @@ import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -24,6 +25,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import jakarta.mail.internet.MimeMessage;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Execution;
@@ -32,6 +35,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -1419,12 +1423,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         // the message is created, nobody is left to ping
         assertThat(postWithoutRecipients.content()).isEqualTo("@all is anybody there?");
-        // the member who unmutes the group chat is pinged by the next message, which shows that the notifications work and that the first message did not notify anybody
-        updateParticipant(groupChat, mutedMember, participant -> participant.setIsMuted(false));
-        var postWithRecipient = postMessage(groupChat, "@all is anybody there now?");
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(notificationRecipientIds(3, "postId", postWithRecipient.id())).containsExactly(mutedMember.getId()));
-        assertThat(notificationRecipientIds(3, "postId", postWithoutRecipients.id())).isEmpty();
+        // The notifications are created asynchronously after the request returned and read the muted and hidden state of the members when they run, so the members keep their
+        // state for the whole test. That notifications are sent to unmuted members is checked by shouldNotifyEveryUnmutedGroupChatMemberExceptTheAuthorForAtAll.
+        // The mention notification is created even if nobody is left to ping and only after the new post notification is complete. Waiting for it proves that the task
+        // is running, so the empty results below are not read before it started.
+        await().atMost(Duration.ofSeconds(5)).until(() -> !notificationIds(3, "postId", postWithoutRecipients.id()).isEmpty());
         assertThat(notificationRecipientIds(1, "postId", postWithoutRecipients.id())).isEmpty();
+        // Only the recipients of the mention notification are still written by the task, right after it created the notification.
+        await().during(Duration.ofMillis(200)).atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(notificationRecipientIds(3, "postId", postWithoutRecipients.id())).isEmpty());
     }
 
     private Conversation nameGroupChat(Conversation groupChat, String name) {
@@ -1462,12 +1469,19 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      * An id appears once per received notification, so a duplicate notification for one user shows up as a repeated id.
      */
     private List<Long> notificationRecipientIds(int type, String parameterKey, Long parameterValue) {
+        return notificationIds(type, parameterKey, parameterValue).stream()
+                .flatMap(notificationId -> userCourseNotificationStatusRepository.findAllByCourseNotificationId(notificationId).stream()).map(status -> status.getUser().getId())
+                .toList();
+    }
+
+    /**
+     * Collects the ids of the course notifications of the given type which carry the given parameter, whether or not somebody received them.
+     */
+    private List<Long> notificationIds(int type, String parameterKey, Long parameterValue) {
         Set<Long> notificationIds = courseNotificationParameterRepository.findAll().stream()
                 .filter(parameter -> parameterKey.equals(parameter.getKey()) && String.valueOf(parameterValue).equals(parameter.getValue()))
                 .map(parameter -> parameter.getCourseNotification().getId()).collect(Collectors.toSet());
-        return courseNotificationRepository.findAllById(notificationIds).stream().filter(notification -> notification.getType() == type)
-                .flatMap(notification -> userCourseNotificationStatusRepository.findAllByCourseNotificationId(notification.getId()).stream())
-                .map(status -> status.getUser().getId()).toList();
+        return courseNotificationRepository.findAllById(notificationIds).stream().filter(notification -> notification.getType() == type).map(CourseNotification::getId).toList();
     }
 
     @Test
@@ -1492,6 +1506,54 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(notifications).filteredOn(notification -> notification.getCourse().getId().equals(courseId)).filteredOn(notification -> notification.getType() == 4)
                     .isNotEmpty();
         });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldNotSendAnAnnouncementEmailToATestUserThatNeverConfiguredIt() throws Exception {
+        var regularMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        var testUserMember = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        // The recipients of an announcement are rebuilt from a projection of the members, which has to keep the flag.
+        testUserMember.setTestUser(true);
+        userTestRepository.save(testUserMember);
+        try {
+            Channel channel = conversationUtilService.createAnnouncementChannel(course, "test-announcement-email");
+            conversationUtilService.addParticipantToConversation(channel, regularMember.getLogin());
+            conversationUtilService.addParticipantToConversation(channel, testUserMember.getLogin());
+            ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
+
+            Post postToSave = new Post();
+            postToSave.setAuthor(author.getUser());
+            postToSave.setConversation(channel);
+            postToSave.setContent("Important announcement for the e-mail test!");
+            CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), postToSave.getTitle(), postToSave.getHasForwardedMessages(),
+                    new CreatePostConversationDTO(channel.getId()));
+
+            request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, PostResponseDTO.class, HttpStatus.CREATED);
+
+            // The regular member is the control: the announcement e-mail is sent, so the absence of the other one means something.
+            await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> assertThat(recipientsOfSentMails()).contains(regularMember.getEmail()));
+            await().during(Duration.ofSeconds(1)).atMost(Duration.ofSeconds(5)).untilAsserted(() -> assertThat(recipientsOfSentMails()).doesNotContain(testUserMember.getEmail()));
+        }
+        finally {
+            testUserMember.setTestUser(false);
+            userTestRepository.save(testUserMember);
+        }
+    }
+
+    /**
+     * The addresses that every mail handed to the mail sender so far was sent to.
+     */
+    private List<String> recipientsOfSentMails() throws Exception {
+        ArgumentCaptor<MimeMessage> messages = ArgumentCaptor.forClass(MimeMessage.class);
+        verify(javaMailSender, atLeast(0)).send(messages.capture());
+        List<String> recipients = new ArrayList<>();
+        for (MimeMessage message : messages.getAllValues()) {
+            for (var address : message.getAllRecipients()) {
+                recipients.add(address.toString());
+            }
+        }
+        return recipients;
     }
 
     private Channel createChannelWithTwoStudents() {

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.repository;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -253,11 +254,14 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
 
     /**
      * Count the background units that are still open: backfill and reconcile work (dispatch priority at least the given one) that waits
-     * in the queue, runs, or waits for a scheduled retry. A failed unit counts while any retry is scheduled, whether due or not, so a run
-     * of failures, or a worker too busy to claim due retries, does not free room for more background work. This is the backlog that
-     * the reconcile walk and the backfill keep below their configured bound, so they add work only as fast as Iris finishes it.
+     * in the queue, runs, or is a failed unit whose retry is due or claimed right now. A failed unit that waits for its retry time occupies
+     * no worker, so it does not hold room: one unit that keeps failing for its own reasons (a video that is not public yet) must not stop the
+     * intake of other work. A run of failures that means Iris itself is down is caught by the outage pause instead (see
+     * {@link #countRecentOutageFailures} and {@link #countRecentSuccessfulIngestions}). This is the backlog that the reconcile walk and the
+     * backfill keep below their configured bound, so they add work only as fast as Iris finishes it.
      *
      * @param minDispatchPriority the lowest dispatch priority that counts as background work
+     * @param now                 the current time; a retry eligible at or before it is due
      * @return the number of open background units
      */
     @Query("""
@@ -265,9 +269,44 @@ public interface LectureUnitProcessingStateRepository extends ArtemisJpaReposito
             WHERE ps.dispatchPriority >= :minDispatchPriority
             AND (ps.phase IN (de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.IDLE, de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.TRANSCRIBING,
                     de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.INGESTING)
-                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt IS NOT NULL))
+                OR (ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED AND ps.retryEligibleAt IS NOT NULL
+                    AND (ps.retryEligibleAt <= :now OR ps.claimToken IS NOT NULL)))
             """)
-    long countOpenBackgroundUnits(@Param("minDispatchPriority") int minDispatchPriority);
+    long countOpenBackgroundUnits(@Param("minDispatchPriority") int minDispatchPriority, @Param("now") ZonedDateTime now);
+
+    /**
+     * Count the units that failed since the cutoff for a reason that may mean Iris itself is down: settled failures (no claim held) whose error key is
+     * not one of the given unit-specific keys. Fresh uploads count as well, and so do units that used up their retries. {@code lastUpdated} of an
+     * unclaimed FAILED row is the moment it failed: a retry claim refreshes it, but such a row holds a claim and is not counted.
+     *
+     * @param cutoff                the start of the window
+     * @param unitSpecificErrorKeys error keys of failures caused by the unit itself, which say nothing about Iris
+     * @return the number of recent failures that may point to an outage
+     */
+    @Query("""
+            SELECT COUNT(ps) FROM LectureUnitProcessingState ps
+            WHERE ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.FAILED
+            AND ps.claimToken IS NULL
+            AND ps.lastUpdated >= :cutoff
+            AND (ps.errorKey IS NULL OR ps.errorKey NOT IN :unitSpecificErrorKeys)
+            """)
+    long countRecentOutageFailures(@Param("cutoff") ZonedDateTime cutoff, @Param("unitSpecificErrorKeys") Collection<String> unitSpecificErrorKeys);
+
+    /**
+     * Count the units whose ingestion succeeded since the cutoff, fresh uploads and background work alike: proof that Iris works. A successful
+     * completion records its time in {@code startedAt} and confirms a fingerprint; the cleanup of removed content also settles a row as DONE, but
+     * clears both, so it does not count.
+     *
+     * @param cutoff the start of the window
+     * @return the number of recent successful ingestions
+     */
+    @Query("""
+            SELECT COUNT(ps) FROM LectureUnitProcessingState ps
+            WHERE ps.phase = de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase.DONE
+            AND ps.startedAt >= :cutoff
+            AND ps.confirmedFingerprint IS NOT NULL
+            """)
+    long countRecentSuccessfulIngestions(@Param("cutoff") ZonedDateTime cutoff);
 
     /**
      * List IDLE jobs that are ready for dispatch.

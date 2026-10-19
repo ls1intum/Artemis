@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.hyperion.api.HyperionExerciseMutationApi;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.localvc.service.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.localvc.service.ParticipationVcsAccessTokenService;
@@ -115,11 +116,15 @@ public class ParticipationService {
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
+    private final Optional<HyperionExerciseMutationApi> liveSaveApi;
+
     public ParticipationService(Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
-            ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository) {
+            ResultRepository resultRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            Optional<HyperionExerciseMutationApi> liveSaveApi) {
+        this.liveSaveApi = liveSaveApi;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
@@ -685,33 +690,35 @@ public class ParticipationService {
             Supplier<String> templateBranchSupplier, ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository uri is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUri() == null) {
-            LocalVCRepositoryUri sourceUri = sourceUriSupplier.get();
-            if (sourceUri == null) {
-                // fail fast with a meaningful message instead of a NullPointerException deep in the git checkout (see issue #12840)
-                throw new VersionControlException("The source repository URI for copying the repository of participation " + participation.getId() + " of exercise "
-                        + programmingExercise.getId() + " is missing");
-            }
-            final var projectKey = programmingExercise.getProjectKey();
-            // An exam test run is flagged from its first insert, but its repository never carried the practice prefix. Its slug is told apart from the
-            // graded one by the attempt instead, which copyRepositoryWithoutHistory appends. The build plan name has no attempt, so it keeps the prefix.
-            final var repoName = programmingExercise.isExamExercise() ? participation.getParticipantIdentifier()
-                    : participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
-            // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
-            final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceUri);
-            VersionControlService vcs = versionControlService.orElseThrow();
-            String templateBranch = templateBranchSupplier.get();
-            // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
-            var newRepoUri = vcs.copyRepositoryWithoutHistory(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt());
-            // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
-            if (participation.getStudent().isPresent()) {
-                newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
-            }
-            // After copying the repository, the new participation uses the default branch
-            participation.setBranch(defaultBranch);
-            participation.setRepositoryUri(newRepoUri.toString());
-            participation.setInitializationState(InitializationState.REPO_COPIED);
+            try (var reservation = programmingExercise.isExamExercise() ? null : liveSaveApi.map(api -> api.reserveParticipation(programmingExercise.getId())).orElse(null)) {
+                LocalVCRepositoryUri sourceUri = sourceUriSupplier.get();
+                if (sourceUri == null) {
+                    // fail fast with a meaningful message instead of a NullPointerException deep in the git checkout (see issue #12840)
+                    throw new VersionControlException("The source repository URI for copying the repository of participation " + participation.getId() + " of exercise "
+                            + programmingExercise.getId() + " is missing");
+                }
+                final var projectKey = programmingExercise.getProjectKey();
+                // An exam test run is flagged from its first insert, but its repository never carried the practice prefix. Its slug is told apart from the
+                // graded one by the attempt instead, which copyRepositoryWithoutHistory appends. The build plan name has no attempt, so it keeps the prefix.
+                final var repoName = programmingExercise.isExamExercise() ? participation.getParticipantIdentifier()
+                        : participation.addPracticePrefixIfTestRun(participation.getParticipantIdentifier());
+                // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
+                final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceUri);
+                VersionControlService vcs = versionControlService.orElseThrow();
+                String templateBranch = templateBranchSupplier.get();
+                // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
+                var newRepoUri = vcs.copyRepositoryWithoutHistory(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt());
+                // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
+                if (participation.getStudent().isPresent()) {
+                    newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
+                }
+                // After copying the repository, the new participation uses the default branch
+                participation.setBranch(defaultBranch);
+                participation.setRepositoryUri(newRepoUri.toString());
+                participation.setInitializationState(InitializationState.REPO_COPIED);
 
-            return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+                return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+            }
         }
         else {
             return participation;
@@ -1325,12 +1332,12 @@ public class ParticipationService {
         final Map<Long, Result> finalResultMap = resultBySubmissionId;
         final Map<Long, List<CorrectionRoundResultDTO>> finalCorrectionRoundResults = correctionRoundResultsBySubmissionId;
         List<ParticipationScoreDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull)
-                .map(p -> mapToDTO(p, submissionCountMap, finalResultMap, finalCorrectionRoundResults)).toList();
+                .map(p -> mapToDTO(p, exercise instanceof QuizExercise, submissionCountMap, finalResultMap, finalCorrectionRoundResults)).toList();
 
         return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
     }
 
-    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
+    private ParticipationScoreDTO mapToDTO(StudentParticipation participation, boolean quizExercise, Map<Long, Integer> submissionCountMap, Map<Long, Result> resultBySubmissionId,
             Map<Long, List<CorrectionRoundResultDTO>> correctionRoundResultsBySubmissionId) {
         // Participant info
         String participantName;
@@ -1366,9 +1373,11 @@ public class ParticipationService {
         AssessmentType assessmentType = latestResult != null ? latestResult.getAssessmentType() : null;
         String assessmentNote = (latestResult != null && latestResult.getAssessmentNote() != null) ? latestResult.getAssessmentNote().getNote() : null;
 
-        // Duration in seconds
+        // Duration in seconds. A quiz practice participation is reused for every attempt and the start of a single attempt is not recorded, so the time since the
+        // participation was created would include the pauses between the attempts and is not the duration of the latest one.
         Long durationInSeconds = null;
-        if (completionDate != null && participation.getInitializationDate() != null) {
+        boolean durationUnknown = quizExercise && participation.isPracticeMode();
+        if (!durationUnknown && completionDate != null && participation.getInitializationDate() != null) {
             durationInSeconds = Duration.between(participation.getInitializationDate(), completionDate).getSeconds();
         }
 

@@ -253,16 +253,16 @@ public class ParticipationRetrievalResource {
     }
 
     private boolean canSeeParticipant(StudentParticipation participation) {
-        return authCheckService.isOwnerOfParticipation(participation) || authCheckService.isAtLeastInstructorInCourse(findCourseFromParticipation(participation), null);
+        return participationAuthCheckService.canSeeParticipantInformation(participation);
     }
 
     private boolean shouldHideParticipantInformation(Exercise exercise, String searchTerm, String sortedColumn) {
-        if (authCheckService.isAtLeastInstructorForExercise(exercise)) {
+        if (participationAuthCheckService.canSeeParticipantInformation(exercise)) {
             return false;
         }
         // Filtering or ordering by identity would let tutors correlate an anonymous participation with a known student.
         if (StringUtils.hasText(searchTerm) || "participantName".equals(sortedColumn) || "participantIdentifier".equals(sortedColumn) || "buildPlanId".equals(sortedColumn)) {
-            throw new AccessForbiddenException("Only instructors may search or sort participations by participant identity.");
+            throw new AccessForbiddenException("Participant identity search and sorting are unavailable during anonymous assessment.");
         }
         return true;
     }

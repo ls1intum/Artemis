@@ -38,11 +38,15 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.api.errors.NoHeadException;
 import org.eclipse.jgit.api.errors.TransportException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.PushResult;
+import org.eclipse.jgit.transport.RefLeaseSpec;
+import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -248,6 +252,24 @@ public class GitService extends AbstractGitService {
      */
     public Repository getOrCheckoutRepository(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
             boolean writeAccess) throws GitAPIException, GitException, InvalidPathException {
+        return checkoutRepository(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch, writeAccess, false);
+    }
+
+    /**
+     * Prepares an authoring checkout whose first clone must use the selected branch, never a fallback to remote HEAD.
+     *
+     * @param repoUri   the repository to clone
+     * @param localPath caller-owned working directory
+     * @param branch    selected exercise branch
+     * @return the checkout on the requested branch
+     * @throws GitAPIException when checkout or pulling fails
+     */
+    public Repository getOrCheckoutRepositoryOnBranch(LocalVCRepositoryUri repoUri, Path localPath, String branch) throws GitAPIException {
+        return checkoutRepository(repoUri, repoUri, localPath, true, branch, false, true);
+    }
+
+    private Repository checkoutRepository(LocalVCRepositoryUri sourceRepoUri, LocalVCRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet, String defaultBranch,
+            boolean writeAccess, boolean selectCloneBranch) throws GitAPIException {
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUri differs from the targetRepoUri, we attempt to clone the source repo into the target directory
         deleteIncompleteWorkingCopy(localPath);
@@ -288,7 +310,11 @@ public class GitService extends AbstractGitService {
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-                try (Git ignored = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).call()) {
+                CloneCommand clone = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile());
+                if (selectCloneBranch) {
+                    clone.setBranch(defaultBranch);
+                }
+                try (Git ignored = clone.call()) {
                     // Git instance automatically closed by try-with-resources
                 }
             }
@@ -477,6 +503,81 @@ public class GitService extends AbstractGitService {
     }
 
     /**
+     * Creates a commit from the staged changes without pushing it.
+     *
+     * @param repo    the repository containing the staged changes
+     * @param message the commit message
+     * @param user    the commit author, or {@code null} for the Artemis service user
+     * @return the created commit hash
+     * @throws GitAPIException if the commit fails
+     */
+    public String commitStagedChanges(Repository repo, String message, @Nullable User user) throws GitAPIException {
+        String name = user != null ? user.getName() : artemisGitName;
+        String email = user != null ? user.getEmail() : artemisGitEmail;
+        try (Git git = new Git(repo)) {
+            RevCommit commit = GitService.commit(git).setMessage(message).setCommitter(name, email).call();
+            return commit.getName();
+        }
+    }
+
+    /**
+     * Pushes {@code commitHash} only if {@code branch} still points at {@code expectedRemoteHead}.
+     *
+     * @param repo               the repository containing the commit
+     * @param commitHash         the commit to push
+     * @param branch             the target branch
+     * @param expectedRemoteHead the required current remote head
+     * @throws GitAPIException if the push fails or the lease is rejected
+     */
+    public void pushCommitWithLease(Repository repo, String commitHash, String branch, String expectedRemoteHead) throws GitAPIException {
+        if (StringUtils.isBlank(expectedRemoteHead)) {
+            throw new TransportException("Refusing to push " + branch + " without an expected remote HEAD lease");
+        }
+        try (Git git = new Git(repo)) {
+            setRemoteUrl(repo);
+            String remoteRef = "refs/heads/" + branch;
+            Iterable<PushResult> pushResults = pushCommand(git).setRefSpecs(new RefSpec(commitHash + ":" + remoteRef))
+                    .setRefLeaseSpecs(new RefLeaseSpec(remoteRef, expectedRemoteHead)).call();
+            assertPushAccepted(pushResults, remoteRef);
+        }
+    }
+
+    /**
+     * Hard-resets the working copy to a previous commit hash and force-pushes that state onto the given branch only if the remote branch still points at the expected current
+     * commit. This is the compensation primitive for Hyperion's multi-repository persist and adaptation revert paths.
+     * <p>
+     * A force push is required because moving a branch back to an ancestor commit is a non-fast-forward update. The ref lease is the repository-level compare-and-swap guard: if
+     * another editor pushed to the branch after the caller captured {@code expectedCurrentHash}, the remote rejects the update instead of clobbering that work.
+     *
+     * @param repo                the local repository whose default branch is reverted
+     * @param commitHash          the pre-persist/pre-adaptation commit hash to reset the branch back to
+     * @param expectedCurrentHash the commit hash the remote branch must still point at before the force push is accepted
+     * @param branch              the short name of the branch to force-push (the default branch)
+     * @throws GitAPIException if resetting or force-pushing fails
+     */
+    public void resetToCommitAndForcePush(Repository repo, String commitHash, String expectedCurrentHash, String branch) throws GitAPIException {
+        if (StringUtils.isBlank(expectedCurrentHash)) {
+            throw new TransportException("Refusing to force-push " + branch + " without an expected remote HEAD lease");
+        }
+        boolean pushed = false;
+        try (Git git = new Git(repo)) {
+            setRemoteUrl(repo);
+            git.reset().setMode(ResetCommand.ResetType.HARD).setRef(commitHash).call();
+            String remoteRef = "refs/heads/" + branch;
+            log.debug("resetToCommitAndForcePush -> Force-push {} back to {} on branch {} if remote still is {}", repo.getLocalPath(), commitHash, branch, expectedCurrentHash);
+            Iterable<PushResult> pushResults = pushCommand(git).setForce(true).setRefSpecs(new RefSpec("HEAD:" + remoteRef))
+                    .setRefLeaseSpecs(new RefLeaseSpec(remoteRef, expectedCurrentHash)).call();
+            assertPushAccepted(pushResults, remoteRef);
+            pushed = true;
+        }
+        finally {
+            if (!pushed) {
+                resetToOriginHead(repo);
+            }
+        }
+    }
+
+    /**
      * Stages all changes in the repository, including new, modified, and deleted files.
      *
      * <p>
@@ -581,6 +682,11 @@ public class GitService extends AbstractGitService {
             log.debug("Pull ignore conflicts {}", repo.getLocalPath());
             setRemoteUrl(repo);
             pullCommand(git).call();
+        }
+        catch (WrongRepositoryStateException ex) {
+            // A merge that stopped on conflicts leaves the repository in MERGING or MERGING_RESOLVED until the repository is reset, e.g. via the code editor.
+            // Pulling cannot succeed before then and every further attempt fails the same way, so this is reported as the repository's state, not as an unexpected error.
+            log.warn("Cannot pull the repo {}: {}", repo.getLocalPath(), ex.getMessage());
         }
         catch (GitAPIException ex) {
             log.error("Cannot pull the repo {}", repo.getLocalPath(), ex);
@@ -804,20 +910,6 @@ public class GitService extends AbstractGitService {
             }
         }
         return Optional.empty();
-    }
-
-    /**
-     * Checks if no differences exist between the working-tree, the index, and the current HEAD.
-     *
-     * @param repo Local Repository Object.
-     * @return True if the status is clean
-     * @throws GitAPIException if the state of the repository could not be retrieved.
-     */
-    public boolean isWorkingCopyClean(Repository repo) throws GitAPIException {
-        try (Git git = new Git(repo)) {
-            Status status = git.status().call();
-            return status.isClean();
-        }
     }
 
     /**
