@@ -17,6 +17,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
@@ -24,11 +25,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
@@ -55,6 +59,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.dto.BuildJobStatisticsDTO;
+import de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.MergedBuildRun;
 import de.tum.cit.aet.artemis.localci.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
@@ -1026,5 +1031,45 @@ class LocalCIResultProcessingServiceTest {
         verify(buildJobRepository).save(saved.capture());
         assertThat(saved.getValue().isBuildFailed()).as("the container's verdict is recorded on its job").isTrue();
         verify(programmingExerciseGradingService).finalizeContainerResult(eq(7L), any(), eq(true), eq(true), any(), any());
+    }
+
+    /**
+     * The last container records whether its script ran clean and finalizes the group with whether every container did,
+     * which a test case synchronization requires, since the merged feedback drops a failed test the exercise does not know.
+     */
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    void theLastContainerFinalizesWithWhetherEveryContainerOfTheGroupRanClean(boolean siblingRanClean) {
+        withQueuedResult(new ResultQueueItem(buildResult, containerJob("group-1", 2, "container_b"), List.of(), null));
+        withParticipation();
+        List<BuildJob> savedJobs = new ArrayList<>();
+        lenient().when(buildJobRepository.findByBuildJobId(anyString())).thenReturn(Optional.empty());
+        when(buildJobRepository.save(any(BuildJob.class))).thenAnswer(invocation -> {
+            savedJobs.add(invocation.getArgument(0));
+            return invocation.getArgument(0);
+        });
+        when(distributedDataAccessService.getResultAggregationLockMap()).thenReturn(aggregationLocks);
+        when(buildJobRepository.findResultIdsOfBuildGroup(eq("group-1"), any(Pageable.class))).thenReturn(List.of(7L));
+        Result aggregatedResult = new Result();
+        aggregatedResult.setId(7L);
+        when(programmingExerciseGradingService.appendContainerResult(any(), any(BuildResult.class), anyBoolean(), eq("container_b"), eq(7L)))
+                .thenReturn(new AppendedContainerResult(aggregatedResult, false));
+        // the last container's script exited cleanly and reported no failed test
+        when(buildResult.buildScriptExitCode()).thenReturn(0);
+        when(buildResult.assignmentRepoCommitHash()).thenReturn("solution-commit");
+        when(buildResult.testsRepoCommitHash()).thenReturn("tests-commit");
+        BuildJob sibling = new BuildJob(containerJob("group-1", 2, "container_a"), BuildStatus.SUCCESSFUL, aggregatedResult);
+        sibling.setCleanRun(siblingRanClean);
+        when(buildJobRepository.findAllByBuildGroupId("group-1")).thenAnswer(_ -> Stream.concat(Stream.of(sibling), savedJobs.stream()).toList());
+        Result finalizedResult = new Result();
+        finalizedResult.setId(7L);
+        finalizedResult.setCompletionDate(ZonedDateTime.now());
+        when(programmingExerciseGradingService.finalizeContainerResult(eq(7L), any(), eq(true), eq(false), any(), any())).thenReturn(finalizedResult);
+
+        resultProcessingService.processResultAsync();
+
+        assertThat(savedJobs).extracting(BuildJob::isCleanRun).as("the last container ran clean").containsExactly(true);
+        verify(programmingExerciseGradingService).finalizeContainerResult(eq(7L), any(), eq(true), eq(false), any(),
+                eq(new MergedBuildRun("solution-commit", "tests-commit", siblingRanClean)));
     }
 }

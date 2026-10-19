@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
-import de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.BuildRevisions;
+import de.tum.cit.aet.artemis.localci.service.ProgrammingExerciseFeedbackCreationService.MergedBuildRun;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildStatistics;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -529,7 +529,7 @@ public class LocalCIResultProcessingService {
                             aggregatedResultId);
                     if (appended != null) {
                         appendedResult = appended.result();
-                        linkedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, appendedResult, appended.containerFailed());
+                        linkedContainerJob = saveFinishedBuildJob(buildJob, buildStatus, appendedResult, appended.containerFailed(), ranClean(effectiveBuildResult));
                         if (linkedContainerJob == null) {
                             // Without the link the group's count stays one short, so the recovery below records the job instead.
                             throw new IllegalStateException("the build job of container " + buildGroup.containerName() + " could not be saved after its result was merged");
@@ -543,7 +543,7 @@ public class LocalCIResultProcessingService {
                 }
                 if (appended != null) {
                     Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate(),
-                            revisionsOf(effectiveBuildResult));
+                            effectiveBuildResult);
                     outcome = new ContainerOutcome(finalizedResult != null ? finalizedResult : appendedResult, linkedContainerJob, finalizedResult != null);
                 }
             }
@@ -559,8 +559,7 @@ public class LocalCIResultProcessingService {
                 // covers a second failure.
                 Result finalizedResult = null;
                 try {
-                    finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate(),
-                            revisionsOf(effectiveBuildResult));
+                    finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate(), effectiveBuildResult);
                 }
                 catch (RuntimeException e) {
                     log.error("Could not finalize build group {} after container {} of build job {} merged; the group's aggregated result stays in progress", buildGroupId,
@@ -571,8 +570,7 @@ public class LocalCIResultProcessingService {
             // The merge failed: record the job as finished anyway, without a link, so the group's count still advances and, if
             // this was the last container, the siblings' aggregate is finalized now, as failed.
             BuildJob savedContainerJob = saveFinishedBuildJob(buildJob, BuildStatus.ERROR, null);
-            Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate(),
-                    revisionsOf(effectiveBuildResult));
+            Result finalizedResult = finalizeIfGroupComplete(buildGroupId, expectedContainerCount, participation, effectiveBuildResult.buildRunDate(), effectiveBuildResult);
             return new ContainerOutcome(finalizedResult, savedContainerJob, finalizedResult != null);
         }
         finally {
@@ -585,17 +583,24 @@ public class LocalCIResultProcessingService {
     }
 
     private Result finalizeIfGroupComplete(String buildGroupId, int expectedContainerCount, ProgrammingExerciseParticipation participation, ZonedDateTime completionDate,
-            BuildRevisions revisions) {
-        return finalizeIfGroupComplete(buildJobRepository.findAllByBuildGroupId(buildGroupId), expectedContainerCount, participation, completionDate, revisions);
+            BuildResult lastContainerResult) {
+        return finalizeIfGroupComplete(buildJobRepository.findAllByBuildGroupId(buildGroupId), expectedContainerCount, participation, completionDate, lastContainerResult);
     }
 
-    private static BuildRevisions revisionsOf(BuildResult buildResult) {
-        return new BuildRevisions(buildResult.assignmentRepoCommitHash(), buildResult.testsRepoCommitHash());
+    /**
+     * Whether a container's build script exited cleanly and reported no failed test, the per-container part of what a
+     * build needs to complete a test case synchronization (see ProgrammingExerciseFeedbackCreationService).
+     */
+    private static boolean ranClean(BuildResult buildResult) {
+        return Integer.valueOf(0).equals(buildResult.buildScriptExitCode()) && buildResult.jobs().stream().allMatch(job -> job.failedTests().isEmpty());
     }
 
-    /** Finalizes the aggregated result of a build group once every job of the group has finished. */
+    /**
+     * Finalizes the aggregated result of a build group once every job of the group has finished. The last container's
+     * result gives the revisions the build ran; the sweep has none.
+     */
     private Result finalizeIfGroupComplete(List<BuildJob> jobs, int expectedContainerCount, ProgrammingExerciseParticipation participation, ZonedDateTime completionDate,
-            @Nullable BuildRevisions revisions) {
+            @Nullable BuildResult lastContainerResult) {
         long finishedContainers = jobs.stream().filter(job -> FINISHED_BUILD_STATUSES.contains(job.getBuildStatus())).count();
         if (finishedContainers < expectedContainerCount) {
             return null;
@@ -608,6 +613,8 @@ public class LocalCIResultProcessingService {
         // job can be SUCCESSFUL, which the status check alone would miss.
         boolean allJobsSucceeded = jobs.stream().allMatch(job -> job.getBuildStatus() == BuildStatus.SUCCESSFUL && job.getResult() != null);
         boolean anyContainerFailedToBuild = jobs.stream().anyMatch(BuildJob::isBuildFailed);
+        MergedBuildRun mergedBuildRun = lastContainerResult == null ? null
+                : new MergedBuildRun(lastContainerResult.assignmentRepoCommitHash(), lastContainerResult.testsRepoCommitHash(), jobs.stream().allMatch(BuildJob::isCleanRun));
         // the finalization deletes the abandoned aggregates of the submission, which needs the participation's lock
         DistributedMap<String, Boolean> aggregationLocks = distributedDataAccessService.getResultAggregationLockMap();
         String participationLock = participationLockKey(participation.getId());
@@ -631,7 +638,7 @@ public class LocalCIResultProcessingService {
                 List<Long> supersededResultIds = triggeredAt == null ? List.of()
                         : buildJobRepository.findLaterCreatedResultsOfSubmissionTriggeredBefore(aggregatedResultId, triggeredAt);
                 finalizedResult = programmingExerciseGradingService.finalizeContainerResult(aggregatedResultId, participation, allJobsSucceeded, anyContainerFailedToBuild,
-                        completionDate, revisions);
+                        completionDate, mergedBuildRun);
                 supersededResultIds.forEach(programmingExerciseGradingService::deleteSupersededResult);
             }
         }
@@ -700,12 +707,13 @@ public class LocalCIResultProcessingService {
      * @return the saved the build job
      */
     private BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result) {
-        return saveFinishedBuildJob(queueItem, buildStatus, result, false);
+        return saveFinishedBuildJob(queueItem, buildStatus, result, false, false);
     }
 
-    private BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result, boolean buildFailed) {
+    private BuildJob saveFinishedBuildJob(BuildJobQueueItem queueItem, BuildStatus buildStatus, Result result, boolean buildFailed, boolean cleanRun) {
         try {
             BuildJob buildJob = new BuildJob(queueItem, buildStatus, result, buildFailed);
+            buildJob.setCleanRun(cleanRun);
             buildJobRepository.findByBuildJobId(queueItem.id()).ifPresent(existingBuildJob -> buildJob.setId(existingBuildJob.getId()));
             BuildJob savedBuildJob = buildJobRepository.save(buildJob);
 

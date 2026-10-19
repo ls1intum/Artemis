@@ -97,6 +97,14 @@ public class BuildJob extends DomainObject {
     @Column(name = "build_failed")
     private boolean buildFailed;
 
+    /**
+     * Whether the build script of this job exited cleanly and reported no failed test. Neither the status nor the merged
+     * feedback records it, since feedback of a test case the exercise does not know yet is dropped; a multi-container
+     * solution build completes a test case synchronization only if every job of its group ran clean.
+     */
+    @Column(name = "clean_run")
+    private boolean cleanRun;
+
     public BuildJob() {
     }
 
@@ -137,6 +145,14 @@ public class BuildJob extends DomainObject {
 
     public void setBuildFailed(boolean buildFailed) {
         this.buildFailed = buildFailed;
+    }
+
+    public boolean isCleanRun() {
+        return cleanRun;
+    }
+
+    public void setCleanRun(boolean cleanRun) {
+        this.cleanRun = cleanRun;
     }
 
     public void setBuildJobId(String buildJobId) {

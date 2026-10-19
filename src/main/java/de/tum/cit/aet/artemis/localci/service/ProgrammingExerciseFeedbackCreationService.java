@@ -507,21 +507,20 @@ public class ProgrammingExerciseFeedbackCreationService {
      *
      * @param presentTestCaseNames the names of the test cases the merged build result reported
      * @param exercise             the solution's programming exercise
-     * @param revisions            the solution and test revisions the build ran, or null if they are unknown
-     * @param buildSuccessful      whether the build passed every test case it reported, which a save requires
+     * @param run                  the revisions the build ran and whether every container ran clean, or null if unknown
+     * @param buildSuccessful      whether the build ran clean in every container and passed a test, which a save requires
      */
-    public void reconcileTestCasesOfMergedSolutionBuild(Set<String> presentTestCaseNames, ProgrammingExercise exercise, @Nullable BuildRevisions revisions,
-            boolean buildSuccessful) {
+    public void reconcileTestCasesOfMergedSolutionBuild(Set<String> presentTestCaseNames, ProgrammingExercise exercise, @Nullable MergedBuildRun run, boolean buildSuccessful) {
         if (!isDiscoveryCoordinated(exercise)) {
             reconcileMergedTestCases(presentTestCaseNames, exercise);
             return;
         }
-        if (revisions == null || StringUtils.isBlank(revisions.solutionCommitHash()) || StringUtils.isBlank(revisions.testsCommitHash())) {
+        if (run == null || StringUtils.isBlank(run.solutionCommitHash()) || StringUtils.isBlank(run.testsCommitHash())) {
             log.info("Skipped the test case reconciliation of exercise {}: the revisions of its multi-container solution build are unknown", exercise.getId());
             return;
         }
-        boolean synchronizedCases = mutationApi.get().synchronizeTestCases(exercise.getId(), revisions.solutionCommitHash(), revisions.testsCommitHash(), buildSuccessful, () -> {
-            ProgrammingExercise current = currentExerciseAt(exercise.getId(), revisions.solutionCommitHash(), revisions.testsCommitHash());
+        boolean synchronizedCases = mutationApi.get().synchronizeTestCases(exercise.getId(), run.solutionCommitHash(), run.testsCommitHash(), buildSuccessful, () -> {
+            ProgrammingExercise current = currentExerciseAt(exercise.getId(), run.solutionCommitHash(), run.testsCommitHash());
             if (current == null) {
                 return false;
             }
@@ -542,12 +541,14 @@ public class ProgrammingExerciseFeedbackCreationService {
     }
 
     /**
-     * The revisions a build ran.
+     * How a multi-container build ran, as far as its test case synchronization needs it.
      *
-     * @param solutionCommitHash the commit of the solution (assignment) repository the build ran
-     * @param testsCommitHash    the commit of the test repository the build ran
+     * @param solutionCommitHash     the commit of the solution (assignment) repository the build ran
+     * @param testsCommitHash        the commit of the test repository the build ran
+     * @param everyContainerRanClean whether the build script of every container exited cleanly and reported no failed
+     *                                   test, including failed tests the merged feedback dropped as unknown
      */
-    public record BuildRevisions(String solutionCommitHash, String testsCommitHash) {
+    public record MergedBuildRun(String solutionCommitHash, String testsCommitHash, boolean everyContainerRanClean) {
     }
 
     private Set<ProgrammingExerciseTestCase> getTestCasesWithUpdatedActivation(Set<ProgrammingExerciseTestCase> existingTestCases,
