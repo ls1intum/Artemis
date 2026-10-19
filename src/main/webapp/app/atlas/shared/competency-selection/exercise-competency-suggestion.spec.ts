@@ -164,8 +164,8 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             const competencySelection = fixture.debugElement.query(By.directive(CompetencySelectionComponent));
             expect(competencySelection).toBeTruthy();
 
-            // Step 3: Verify lightbulb button host (jhi-button) is present
-            const lightbulbButton = fixture.debugElement.query(By.css('jhi-button'));
+            // Step 3: Verify lightbulb button host (TUM button) is present
+            const lightbulbButton = fixture.debugElement.query(By.css('[data-testid="suggest-competencies"]'));
             expect(lightbulbButton).toBeTruthy();
 
             // Step 4: Mock API response for suggestions
@@ -180,7 +180,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             try {
                 const httpSpy = vi.spyOn(httpClient, 'post').mockReturnValue(of(suggestionResponse).pipe(delay(0)));
 
-                // Step 5: Trigger suggestions via component API to avoid jhi-button internals
+                // Step 5: Trigger suggestions via component API to avoid TUM button internals
                 component.competencySelection().suggestCompetencies();
                 vi.runAllTimers();
                 fixture.detectChanges();
@@ -192,7 +192,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
                 });
 
                 // Step 7: Verify suggested competencies are highlighted
-                const suggestedIcons = fixture.debugElement.queryAll(By.css('fa-icon.text-warning.ms-2'));
+                const suggestedIcons = fixture.debugElement.queryAll(By.css('[data-testid="suggested-competency"]'));
                 expect(suggestedIcons).toHaveLength(3);
 
                 // Step 8: Verify suggested competencies are sorted to top
@@ -274,7 +274,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
             expect(competencyComponent.isSuggested(5)).toBeFalsy(); // Not suggested
 
             // Verify lightbulb icon only appears next to suggested competency
-            const suggestedIcons = fixture.debugElement.queryAll(By.css('fa-icon.text-warning.ms-2'));
+            const suggestedIcons = fixture.debugElement.queryAll(By.css('[data-testid="suggested-competency"]'));
             expect(suggestedIcons).toHaveLength(1);
         });
     });
@@ -329,7 +329,7 @@ describe('Exercise Creation with Competency Suggestions - E2E', () => {
                 });
 
                 // Verify correct number of suggestion icons
-                const suggestedIcons = fixture.debugElement.queryAll(By.css('fa-icon.text-warning.ms-2'));
+                const suggestedIcons = fixture.debugElement.queryAll(By.css('[data-testid="suggested-competency"]'));
                 expect(suggestedIcons).toHaveLength(exerciseType.expectedSuggestions.length);
             });
         });

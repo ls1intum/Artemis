@@ -60,6 +60,9 @@
 @source './app/admin';
 @source './app/presentation';
 @source './app/atlas/shared/standardized-competencies';
+@source './app/atlas/shared/competency-selection';
+@source './app/shared-ui/form/title-channel-name';
+@source './app/exercise/exercise-title-channel-name';
 @source './app/atlas/manage/import-standardized-competencies';
 @source './app/exercise/feedback';
 @source './app/exercise/result';

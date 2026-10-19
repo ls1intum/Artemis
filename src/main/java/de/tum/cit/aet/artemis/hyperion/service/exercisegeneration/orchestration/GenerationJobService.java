@@ -15,6 +15,7 @@ import java.util.function.Consumer;
 
 import jakarta.annotation.PostConstruct;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -739,11 +740,12 @@ public class GenerationJobService {
         }
     }
 
-    private static WedgedSlotKind slotKind(JobInfo job) {
+    private static WedgedSlotKind slotKind(@NonNull JobInfo job) {
+        String jobId = job.jobId();
         if (GenerationRecoverySlots.isPending(job)) {
             return WedgedSlotKind.REVERT_RECOVERY;
         }
-        return job.jobId().startsWith(REVERT_JOB_PREFIX) ? WedgedSlotKind.REVERT : WedgedSlotKind.GENERATION;
+        return jobId.startsWith(REVERT_JOB_PREFIX) ? WedgedSlotKind.REVERT : WedgedSlotKind.GENERATION;
     }
 
     /**

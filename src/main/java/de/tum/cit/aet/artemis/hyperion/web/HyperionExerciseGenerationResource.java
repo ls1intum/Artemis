@@ -261,34 +261,33 @@ public class HyperionExerciseGenerationResource {
         validateDraftExercise(exercise);
         User user = userRepository.getUserWithAuthorities();
         String revertSlot = jobService.claimRevertSlot(user, exerciseId);
-        var consistent = new java.util.concurrent.atomic.AtomicBoolean();
+        boolean consistent = false;
         try {
             Optional<String> revertibleJobId = generationRevertService.findRevertibleJobId(exerciseId);
             if (revertibleJobId.isEmpty() || !runId.equals(revertibleJobId.get())) {
-                consistent.set(!jobService.isRevertRecoveryRetry(revertSlot));
+                consistent = !jobService.isRevertRecoveryRetry(revertSlot);
                 return revertibleJobId.isEmpty() ? ResponseEntity.notFound().build() : ResponseEntity.status(HttpStatus.CONFLICT).build();
             }
-            return generationRevertService
-                    .revert(exercise, user,
-                            () -> jobService.isOwnedActiveJob(exerciseId, revertSlot) && programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId))
-                    .map(result -> {
-                        if (result.fullyReverted()) {
-                            consistent.set(true);
-                            revertibleJobId.ifPresent(jobId -> jobService.discardRetainedRun(exerciseId, jobId));
-                        }
-                        else if (!result.mutationAttempted()) {
-                            consistent.set(!jobService.isRevertRecoveryRetry(revertSlot));
-                        }
-                        ExerciseGenerationRevertResultDTO body = new ExerciseGenerationRevertResultDTO(result.fullyReverted(),
-                                result.revertedRepositories().stream().map(HyperionExerciseGenerationResource::repositoryLabel).toList(), Instant.now());
-                        return result.fullyReverted() ? ResponseEntity.ok(body) : ResponseEntity.status(HttpStatus.CONFLICT).body(body);
-                    }).orElseGet(() -> {
-                        consistent.set(!jobService.isRevertRecoveryRetry(revertSlot));
-                        return ResponseEntity.notFound().build();
-                    });
+            var reverted = generationRevertService.revert(exercise, user,
+                    () -> jobService.isOwnedActiveJob(exerciseId, revertSlot) && programmingExerciseRepository.isUnreleasedAndWithoutStudentParticipations(exerciseId));
+            if (reverted.isEmpty()) {
+                consistent = !jobService.isRevertRecoveryRetry(revertSlot);
+                return ResponseEntity.notFound().build();
+            }
+            var result = reverted.orElseThrow();
+            if (result.fullyReverted()) {
+                consistent = true;
+                revertibleJobId.ifPresent(jobId -> jobService.discardRetainedRun(exerciseId, jobId));
+            }
+            else if (!result.mutationAttempted()) {
+                consistent = !jobService.isRevertRecoveryRetry(revertSlot);
+            }
+            ExerciseGenerationRevertResultDTO body = new ExerciseGenerationRevertResultDTO(result.fullyReverted(),
+                    result.revertedRepositories().stream().map(HyperionExerciseGenerationResource::repositoryLabel).toList(), Instant.now());
+            return result.fullyReverted() ? ResponseEntity.ok(body) : ResponseEntity.status(HttpStatus.CONFLICT).body(body);
         }
         finally {
-            if (consistent.get()) {
+            if (consistent) {
                 jobService.clearRevertSlot(exerciseId, revertSlot);
             }
             else {

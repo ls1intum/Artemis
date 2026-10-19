@@ -79,4 +79,13 @@ class HyperionExerciseMetadataParserTest {
         assertThat(HyperionExerciseMetadataParser.difficultyStatedInBrief("difficulty" + whitespace + "invalid")).isNull();
         assertThat(HyperionExerciseMetadataParser.difficultyStatedInBrief("difficulty" + whitespace + "level" + whitespace + ":" + whitespace + "invalid")).isNull();
     }
+
+    @Test
+    void preservesLongFencedProseAnswers() {
+        String title = "A".repeat(100_000);
+
+        assertThat(HyperionExerciseMetadataParser.parse("```text\n" + title + "\nDifficulty: medium.\n```"))
+                .isEqualTo(new HyperionExerciseMetadataParser.ModelAnswer(title, DifficultyLevel.MEDIUM));
+    }
+
 }

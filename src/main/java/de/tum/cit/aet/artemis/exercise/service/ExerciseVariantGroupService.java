@@ -167,7 +167,7 @@ public class ExerciseVariantGroupService {
                     }
                 }
             }
-            if (operationFailure != null && releaseFailure != null) {
+            if (releaseFailure != null && operationFailure != null) {
                 operationFailure.addSuppressed(releaseFailure);
             }
         }
