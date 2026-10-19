@@ -105,8 +105,6 @@
                     "historyExpired": "Run history expired"
                 },
                 "run": {
-                    "newRunHint": "Enter the brief or feedback for this new run. Previous instructions and selected review comments are not carried over.",
-                    "feedbackLabel": "What should change?",
                     "title": "Generate exercise",
                     "backToExercise": "Back to the exercise",
                     "elapsed": "Elapsed",
@@ -129,7 +127,6 @@
                     "stageStripWithDuration": "All {{total}} stages · {{duration}}",
                     "lastUpdate": "Last update at {{time}}",
                     "stillRunningOnServer": "The run itself is still going on the server. Only this page cannot read its status right now.",
-                    "notStartedWhoCanAct": "An instructor or editor of this course can start a generation.",
                     "stageAnnouncement": "Step {{position}} of {{total}}, {{stage}}.",
                     "stalledAnnouncement": "No update for {{minutes}} minutes. The run is still connected.",
                     "stalledOfflineAnnouncement": "No update for {{minutes}} minutes, and the status of the run could not be read.",
@@ -272,7 +269,6 @@
                     "cancelConfirmMessage": "Artemis stops immediately and nothing is written to your exercise. The exercise stays as it is.",
                     "cancelConfirmAccept": "Cancel run",
                     "cancelConfirmReject": "Keep running",
-                    "runAgain": "Run again",
                     "openEditor": "Open code editor",
                     "openRun": "Open the generation view",
                     "start": "Generate this exercise",

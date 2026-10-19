@@ -14,10 +14,6 @@
         [ownedByCaller]="ownedByCaller()"
         [cancelAvailable]="cancelAvailable()"
         [cancelPending]="cancelRequested()"
-        [runAgainAvailable]="runAgainAvailable()"
-        [startAvailable]="startAvailable()"
-        [startBlockedReason]="startBlockedReason()"
-        [startPending]="starting()"
         [editorLink]="terminal() && !running() ? editorLink() : undefined"
         [exerciseLink]="exerciseLink()"
         [stepPosition]="showStepCounter() ? stepPosition() : undefined"
@@ -25,11 +21,10 @@
         [spend]="spend()"
         [fileCount]="fileCount()"
         (cancelRequested)="cancel($event)"
-        (startRequested)="openStartDialog()"
     />
 
     @if (ownedByCaller() && runInput(); as context) {
-        <jhi-hyperion-run-input [context]="context" [adapting]="adapting()" [collapsed]="embedded()" />
+        <jhi-hyperion-run-input [context]="context" [adapting]="adapting()" [collapsed]="true" />
     }
 
     @if (canRevert() || reverting()) {
@@ -45,12 +40,6 @@
     @if (revertPartialRepositories(); as repositories) {
         <tumaet-ui-message severity="error" data-testid="hyperion-run-undo-partial">
             {{ 'artemisApp.hyperion.generationActivity.revertPartialFailed' | artemisTranslate: { repositories } }}
-        </tumaet-ui-message>
-    }
-
-    @if (startFailed() && !startDialogVisible()) {
-        <tumaet-ui-message severity="error" class="block" data-testid="hyperion-run-start-failed">
-            <span jhiTranslate="artemisApp.hyperion.generationActivity.startFailed"></span>
         </tumaet-ui-message>
     }
 
@@ -79,9 +68,6 @@
                 <h2 class="text-xl font-medium">{{ idleTitleKey() | artemisTranslate }}</h2>
             </div>
             <p class="m-0 text-sm" [jhiTranslate]="idleHintKey()"></p>
-            @if (!startAvailable()) {
-                <p class="mt-2 mb-0 text-sm text-muted-color" jhiTranslate="artemisApp.hyperion.generation.run.notStartedWhoCanAct"></p>
-            }
         </tumaet-ui-card>
     } @else {
         @if (outcomeView(); as view) {
@@ -152,47 +138,6 @@
         }
     }
 </div>
-
-<tumaet-ui-dialog
-    [header]="(adapting() ? 'artemisApp.review.adaptExercise.confirm' : 'artemisApp.hyperion.generation.actions.start') | artemisTranslate"
-    [(visible)]="startDialogVisible"
-    [closable]="!starting()"
-    [closeOnEscape]="!starting()"
-    [dismissableMask]="false"
-    ariaDescribedBy="hyperion-run-prompt-hint"
-    size="medium"
->
-    <div class="flex flex-col gap-3">
-        <p id="hyperion-run-prompt-hint" class="m-0 text-muted-color" jhiTranslate="artemisApp.hyperion.generation.run.newRunHint"></p>
-        <label for="hyperion-run-prompt" class="font-semibold">
-            {{ (adapting() ? 'artemisApp.hyperion.generation.run.feedbackLabel' : 'artemisApp.hyperion.generation.brief.label') | artemisTranslate }}
-        </label>
-        <textarea
-            id="hyperion-run-prompt"
-            tumAetUiTextarea
-            class="w-full resize-y"
-            rows="6"
-            [attr.maxlength]="maximumPromptLength"
-            [disabled]="starting()"
-            [ngModel]="startPrompt()"
-            (ngModelChange)="startPrompt.set($event)"
-            data-testid="hyperion-run-prompt"
-        ></textarea>
-        @if (startFailed()) {
-            <tumaet-ui-message severity="error" live>
-                <span jhiTranslate="artemisApp.hyperion.generationActivity.startFailed"></span>
-            </tumaet-ui-message>
-        }
-        <div class="flex justify-end gap-2">
-            <tumaet-ui-button severity="secondary" [disabled]="starting()" (clicked)="startDialogVisible.set(false)" data-testid="hyperion-run-prompt-cancel">
-                <span jhiTranslate="global.button.cancel"></span>
-            </tumaet-ui-button>
-            <tumaet-ui-button [disabled]="!startPromptValid() || starting()" [loading]="starting()" (clicked)="start()" data-testid="hyperion-run-prompt-confirm">
-                {{ (adapting() ? 'artemisApp.review.adaptExercise.confirm' : 'artemisApp.hyperion.generation.actions.start') | artemisTranslate }}
-            </tumaet-ui-button>
-        </div>
-    </div>
-</tumaet-ui-dialog>
 
 <tumaet-ui-dialog
     [header]="'artemisApp.hyperion.generationActivity.' + undoKey() + 'ConfirmHeader' | artemisTranslate"

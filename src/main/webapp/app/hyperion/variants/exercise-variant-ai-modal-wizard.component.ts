@@ -1,4 +1,4 @@
-import { HyperionRunPageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-page.component';
+import { HyperionRunInspectorComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-inspector.component';
 import {
     TumAetUiButtonComponent,
     TumAetUiConfirmDialogComponent,
@@ -97,7 +97,7 @@ const GENERATION_PHASES: readonly VariantJobPhase[] = ['ANALYZING', 'PLANNING', 
     styleUrl: './exercise-variant-ai-modal-wizard.component.scss',
     providers: [TumAetUiConfirmationService],
     imports: [
-        HyperionRunPageComponent,
+        HyperionRunInspectorComponent,
         TumAetUiDialogComponent,
         TumAetUiButtonComponent,
         TumAetUiRadioButtonComponent,

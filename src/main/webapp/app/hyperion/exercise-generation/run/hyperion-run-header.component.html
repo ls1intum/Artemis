@@ -68,32 +68,6 @@
                 <span [jhiTranslate]="cancelPending() ? 'artemisApp.hyperion.generation.actions.cancelling' : 'artemisApp.hyperion.generation.actions.cancel'"></span>
             </tumaet-ui-button>
         }
-        @if (startAvailable()) {
-            <tumaet-ui-button
-                severity="primary"
-                size="small"
-                [loading]="startPending()"
-                [disabled]="!!startBlockedReasonText()"
-                [ariaDescribedBy]="startBlockedReasonText() ? 'hyperion-run-start-blocker' : undefined"
-                (clicked)="startRequested.emit()"
-                data-testid="hyperion-run-start"
-            >
-                <span jhiTranslate="artemisApp.hyperion.generation.actions.start"></span>
-            </tumaet-ui-button>
-        }
-        @if (runAgainAvailable()) {
-            <tumaet-ui-button
-                severity="secondary"
-                variant="outlined"
-                size="small"
-                [disabled]="!!startBlockedReasonText()"
-                [ariaDescribedBy]="startBlockedReasonText() ? 'hyperion-run-start-blocker' : undefined"
-                (clicked)="startRequested.emit()"
-                data-testid="hyperion-run-run-again"
-            >
-                <span jhiTranslate="artemisApp.hyperion.generation.actions.runAgain"></span>
-            </tumaet-ui-button>
-        }
         @if (terminal() && editorLink(); as link) {
             <a tumAetUiButton severity="primary" size="small" [routerLink]="link" data-testid="hyperion-run-open-editor">
                 <span jhiTranslate="artemisApp.hyperion.generation.actions.openEditor"></span>
@@ -112,11 +86,6 @@
             </a>
         }
     </div>
-    @if ((startAvailable() || runAgainAvailable()) && startBlockedReasonText(); as reason) {
-        <tumaet-ui-message id="hyperion-run-start-blocker" severity="warn" class="mt-3 block min-w-0" data-testid="hyperion-run-start-blocker">
-            <span class="block wrap-anywhere">{{ reason }}</span>
-        </tumaet-ui-message>
-    }
 </tumaet-ui-card>
 
 <tumaet-ui-confirm-dialog [key]="cancelConfirmationKey" />

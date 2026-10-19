@@ -1,11 +1,9 @@
-import { HyperionExerciseGenerationApi } from 'app/openapi/api/hyperion-exercise-generation-api';
 import dayjs from 'dayjs/esm';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { provideRouter } from '@angular/router';
 import { TranslateService, provideTranslateService } from '@ngx-translate/core';
 import { BehaviorSubject, EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -23,7 +21,7 @@ import hyperionGenerationDe from 'src/main/webapp/i18n/de/hyperionExerciseGenera
 import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
-import { HyperionRunPageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-page.component';
+import { HyperionRunInspectorComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-inspector.component';
 import { HyperionGenerationEvent, HyperionGenerationStatus } from 'app/hyperion/exercise-generation/hyperion-generation-stream.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ExerciseGenerationLiveUsage } from 'app/openapi/model/exercise-generation-live-usage';
@@ -110,51 +108,32 @@ class MockGenerationService {
     readonly subscribeToExerciseState = vi.fn(() => EMPTY);
 }
 
-describe('HyperionRunPageComponent', () => {
+describe('HyperionRunInspectorComponent', () => {
     let service: MockGenerationService;
     let registry: { track: ReturnType<typeof vi.fn>; markSeen: ReturnType<typeof vi.fn> };
-    let fixture: ComponentFixture<HyperionRunPageComponent>;
-    let routeQuery: BehaviorSubject<Record<string, string>>;
-    let routeParams: BehaviorSubject<{ exerciseId: string }>;
+    let fixture: ComponentFixture<HyperionRunInspectorComponent>;
     let routeData: BehaviorSubject<{ programmingExercise: ProgrammingExercise }>;
     /** Everything the page asked the CDK announcer to read out, in order. */
     let announced: string[];
-    let generationFeatureActive: boolean;
 
     beforeEach(() => {
         vi.useRealTimers();
         announced = [];
-        generationFeatureActive = true;
         service = new MockGenerationService();
         registry = { track: vi.fn(), markSeen: vi.fn() };
-        const routeSnapshot = {
-            params: { exerciseId: String(EXERCISE_ID) },
-            data: { programmingExercise: exercise() },
-            pathFromRoot: [{ params: { courseId: String(COURSE_ID) } }, { params: { exerciseId: String(EXERCISE_ID) } }],
-        };
-        routeQuery = new BehaviorSubject<Record<string, string>>({});
-        routeParams = new BehaviorSubject(routeSnapshot.params);
-        routeData = new BehaviorSubject(routeSnapshot.data);
+        routeData = new BehaviorSubject({ programmingExercise: exercise() });
         TestBed.configureTestingModule({
-            imports: [HyperionRunPageComponent],
+            imports: [HyperionRunInspectorComponent],
             providers: [
                 provideRouter([]),
-                { provide: ProfileService, useValue: { isModuleFeatureActive: () => generationFeatureActive } },
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 provideTranslateService({ lang: 'en' }),
-                {
-                    provide: HyperionExerciseGenerationApi,
-                    useValue: { getGenerationCapabilities: () => of({ supported: true, canGenerate: true, canAdapt: true, canCreateVariant: true }) },
-                },
                 { provide: HyperionExerciseGenerationService, useValue: service },
                 { provide: HyperionJobRegistryService, useValue: registry },
-                {
-                    provide: ActivatedRoute,
-                    useValue: { params: routeParams, queryParams: routeQuery, data: routeData, snapshot: routeSnapshot },
-                },
             ],
         });
+        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockImplementation(() => of(new HttpResponse({ body: routeData.value.programmingExercise })));
         vi.spyOn(TestBed.inject(LiveAnnouncer), 'announce').mockImplementation((message) => {
             announced.push(String(message));
             return Promise.resolve();
@@ -166,24 +145,15 @@ describe('HyperionRunPageComponent', () => {
         vi.restoreAllMocks();
     });
 
-    function render(replayed: HyperionGenerationStatus | null): ComponentFixture<HyperionRunPageComponent> {
+    function render(replayed: HyperionGenerationStatus | null): ComponentFixture<HyperionRunInspectorComponent> {
         service.response = of(replayed);
-        fixture = TestBed.createComponent(HyperionRunPageComponent);
+        fixture = TestBed.createComponent(HyperionRunInspectorComponent);
+        fixture.componentRef.setInput('inspectedExerciseId', EXERCISE_ID);
         fixture.detectChanges();
         TestBed.tick();
         fixture.detectChanges();
         return fixture;
     }
-
-    it('pins an exact historical run from a query parameter without adding breadcrumb segments', () => {
-        routeQuery.next({ run: 'archived' });
-        fixture = TestBed.createComponent(HyperionRunPageComponent);
-        fixture.detectChanges();
-        expect(fixture.componentInstance['runId']()).toBe('archived');
-        routeQuery.next({ run: 'another-run' });
-        fixture.detectChanges();
-        expect(fixture.componentInstance['runId']()).toBe('another-run');
-    });
 
     it('renders an expired variant from durable history without inventing queued work or fresh usage', () => {
         const archived = status({
@@ -192,7 +162,8 @@ describe('HyperionRunPageComponent', () => {
             accountingState: 'INCOMPLETE',
         });
         service.response = of(archived);
-        fixture = TestBed.createComponent(HyperionRunPageComponent);
+        fixture = TestBed.createComponent(HyperionRunInspectorComponent);
+        fixture.componentRef.setInput('inspectedExerciseId', EXERCISE_ID);
         vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValue(of(new HttpResponse({ body: exercise() })));
         fixture.componentRef.setInput('inspectedExerciseId', EXERCISE_ID);
         fixture.componentRef.setInput('inspectedRunId', 'archived');
@@ -202,7 +173,6 @@ describe('HyperionRunPageComponent', () => {
         expect(fixture.componentInstance['status']()).toBe('unknown');
         expect(fixture.componentInstance['variant']()).toBe(true);
         expect(fixture.componentInstance['startedAt']()).toBe('2025-01-01T00:00:00Z');
-        expect(fixture.componentInstance['runAgainAvailable']()).toBe(false);
         expect(fixture.nativeElement.querySelector('[data-testid="hyperion-run-full-page"]')).toBeNull();
     });
 
@@ -268,7 +238,6 @@ describe('HyperionRunPageComponent', () => {
         saved.next(new HttpResponse({ body: { ...exercise(), title: 'Obsolete saved draft', releaseDate: dayjs().subtract(1, 'day') } }));
         fixture.detectChanges();
         expect(testId('hyperion-run-title')!.textContent).toBe('Restored draft');
-        expect(fixture.componentInstance['startBlockedReason']()).toBeUndefined();
     });
 
     it('keeps the restored snapshot when the initial inspector load arrives after undo', () => {
@@ -276,7 +245,8 @@ describe('HyperionRunPageComponent', () => {
         const initial = new Subject<HttpResponse<ProgrammingExercise>>();
         const restored = new Subject<HttpResponse<ProgrammingExercise>>();
         const find = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValueOnce(initial).mockReturnValueOnce(restored);
-        fixture = TestBed.createComponent(HyperionRunPageComponent);
+        fixture = TestBed.createComponent(HyperionRunInspectorComponent);
+        fixture.componentRef.setInput('inspectedExerciseId', EXERCISE_ID);
         fixture.componentRef.setInput('inspectedExerciseId', EXERCISE_ID);
         fixture.detectChanges();
         TestBed.tick();
@@ -311,7 +281,7 @@ describe('HyperionRunPageComponent', () => {
         render(status({ running: true }));
         const failed = new Subject<HttpResponse<ProgrammingExercise>>();
         const restored = new Subject<HttpResponse<ProgrammingExercise>>();
-        const find = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValueOnce(failed).mockReturnValueOnce(restored);
+        const find = vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockClear().mockReturnValueOnce(failed).mockReturnValueOnce(restored);
         const facade = fixture.debugElement.injector.get(HyperionGenerationActivityFacade);
 
         facade.generationCompleted.next({ jobId: 'job-1', liveExerciseChanged: true });
@@ -333,64 +303,14 @@ describe('HyperionRunPageComponent', () => {
         expect(testId('hyperion-run-undo-confirm')).toBeNull();
     });
 
-    it('keeps the start action but says why it is blocked after release or for a nonqualified exercise configuration', () => {
-        render(null);
-        expect(fixture.componentInstance['startAvailable']()).toBe(true);
-        expect(fixture.componentInstance['startBlockedReason']()).toBeUndefined();
-        expect(testId('hyperion-run-start')!.querySelector('button')!.getAttribute('aria-disabled')).toBeNull();
-
-        routeData.next({ programmingExercise: { ...exercise(), releaseDate: dayjs().subtract(1, 'day') } });
-        fixture.detectChanges();
-        expect(fixture.componentInstance['startAvailable']()).toBe(true);
-        expect(fixture.componentInstance['startBlockedReason']()).toBe('artemisApp.hyperion.generation.blocker.released');
-        const startButton = testId('hyperion-run-start')!.querySelector('button')!;
-        expect(startButton.hasAttribute('disabled')).toBe(true);
-        expect(fixture.nativeElement.textContent).toContain('artemisApp.hyperion.generation.blocker.released');
-
-        startButton.click();
-        fixture.detectChanges();
-        expect(fixture.componentInstance['startDialogVisible']()).toBe(false);
-        expect(document.querySelector('[data-testid="hyperion-run-prompt"]')).toBeNull();
-
-        routeData.next({ programmingExercise: { ...exercise(), staticCodeAnalysisEnabled: true } });
-        fixture.detectChanges();
-        expect(fixture.componentInstance['startBlockedReason']()).toBe('artemisApp.hyperion.generation.blocker.staticCodeAnalysis');
-        fixture.componentInstance['openStartDialog']();
-        fixture.detectChanges();
-        expect(fixture.componentInstance['startDialogVisible']()).toBe(false);
-        expect(service.generate).not.toHaveBeenCalled();
-    });
-
-    it('keeps Run again in place but blocked once the exercise no longer qualifies', () => {
-        render(status({ events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
-        routeData.next({ programmingExercise: { ...exercise(), releaseDate: dayjs().subtract(1, 'day') } });
-        fixture.detectChanges();
-
-        const runAgain = testId('hyperion-run-run-again')!.querySelector('button')!;
-        expect(runAgain.hasAttribute('disabled')).toBe(true);
-        runAgain.click();
-        fixture.detectChanges();
-
-        expect(fixture.componentInstance['startDialogVisible']()).toBe(false);
-        expect(service.generate).not.toHaveBeenCalled();
-    });
-
-    it('does not offer generation at all when the feature is off for this deployment', () => {
-        generationFeatureActive = false;
-        render(null);
-
-        expect(fixture.componentInstance['startAvailable']()).toBe(false);
-        expect(testId('hyperion-run-start')).toBeNull();
-    });
-
     it('does not show a previous exercise when its refresh finishes after route navigation', () => {
         render(status({ running: true }));
         const refresh = new Subject<HttpResponse<ProgrammingExercise>>();
         vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValue(refresh);
         fixture.debugElement.injector.get(HyperionGenerationActivityFacade).generationCompleted.next({ jobId: 'job-1', liveExerciseChanged: true });
 
-        routeParams.next({ exerciseId: '43' });
-        routeData.next({ programmingExercise: { ...exercise(), id: 43, title: 'New Exercise' } });
+        vi.spyOn(TestBed.inject(ProgrammingExerciseService), 'find').mockReturnValue(of(new HttpResponse({ body: { ...exercise(), id: 43, title: 'New Exercise' } })));
+        fixture.componentRef.setInput('inspectedExerciseId', 43);
         fixture.detectChanges();
         refresh.next(new HttpResponse({ body: { ...exercise(), title: 'Previous Exercise' } }));
         fixture.detectChanges();
@@ -411,22 +331,6 @@ describe('HyperionRunPageComponent', () => {
         const host = testId(id) ?? document.querySelector(`[data-testid="${id}"]`);
         expect(host).not.toBeNull();
         (host!.querySelector('button') as HTMLButtonElement).click();
-        fixture.detectChanges();
-    }
-
-    function dialogElement(id: string): HTMLElement {
-        return document.querySelector(`[data-testid="${id}"]`)!;
-    }
-
-    function enterPrompt(prompt: string): void {
-        const input = dialogElement('hyperion-run-prompt') as HTMLTextAreaElement;
-        input.value = prompt;
-        input.dispatchEvent(new Event('input'));
-        fixture.detectChanges();
-    }
-
-    function confirmPrompt(): void {
-        dialogElement('hyperion-run-prompt-confirm').querySelector('button')!.click();
         fixture.detectChanges();
     }
 
@@ -564,169 +468,16 @@ describe('HyperionRunPageComponent', () => {
         render(status({ events: [event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
 
         expect(testId('hyperion-run-cancel')).toBeNull();
-        expect(testId('hyperion-run-run-again')).not.toBeNull();
+        expect(testId('hyperion-run-run-again')).toBeNull();
     });
 
-    it.each(['GENERATE', 'ADAPT'] as const)('requires explicit instructions before starting another %s run', (mode) => {
-        render(status({ mode, events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
-        testId('hyperion-run-run-again')!.querySelector('button')!.click();
-        fixture.detectChanges();
-
-        expect(service.generate).not.toHaveBeenCalled();
-        enterPrompt('  \n ');
-        expect(dialogElement('hyperion-run-prompt-confirm').querySelector('button')!.disabled).toBe(true);
-        confirmPrompt();
-        expect(service.generate).not.toHaveBeenCalled();
-
-        enterPrompt('  Implement a bounded stack with generics.  ');
-        confirmPrompt();
-        expect(service.generate).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID, { mode, prompt: 'Implement a bounded stack with generics.' });
-    });
-
-    it('allows a new generation after replay expires while preserving the undo baseline', () => {
-        TestBed.inject(TranslateService).setTranslation('en', hyperionGenerationEn, true);
-        TestBed.inject(TranslateService).use('en');
-        render(status({ revertAvailable: true, revertJobId: 'job-1', revertMode: 'GENERATE', events: [] }));
-        expect(fixture.componentInstance['status']()).toBe('historyExpired');
-        expect(fixture.componentInstance['canRevert']()).toBe(true);
-        expect(fixture.componentInstance['jobId']()).toBe('job-1');
-        expect(testId('hyperion-run-not-started')!.textContent).toContain('Run history is no longer available');
-        testId('hyperion-run-start')!.querySelector('button')!.click();
-        fixture.detectChanges();
-        enterPrompt('Implement a bounded stack with generics.');
-        confirmPrompt();
-        expect(service.generate).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID, { mode: 'GENERATE', prompt: 'Implement a bounded stack with generics.' });
-    });
-
-    it.each([null, status({ events: [event({ type: 'DONE', completionStatus: 'SUCCESS' })] })])(
-        'never starts work from an inspector, even with a direct action call',
-        (replayed) => {
-            service.response = of(replayed);
-            fixture = TestBed.createComponent(HyperionRunPageComponent);
-            fixture.componentRef.setInput('inspectedExerciseId', EXERCISE_ID);
-            fixture.detectChanges();
-            TestBed.tick();
-            fixture.detectChanges();
-            expect(testId('hyperion-run-start')).toBeNull();
-            expect(testId('hyperion-run-run-again')).toBeNull();
-            fixture.componentInstance['openStartDialog']();
-            expect(fixture.componentInstance['startDialogVisible']()).toBe(false);
-            fixture.componentInstance['startDialogVisible'].set(true);
-            fixture.componentInstance['startPrompt'].set('Start a new stack exercise.');
-            fixture.componentInstance['start']();
-            expect(service.generate).not.toHaveBeenCalled();
-        },
-    );
-
-    it('starts the original brief collapsed only in embedded run details', () => {
+    it('keeps the original brief collapsed in the inspector until requested', () => {
         render(status({ input: { prompt: 'Implement a stack.' } }));
         const briefToggle = () => testId('hyperion-run-input')!.querySelector('button')!;
-        expect(briefToggle().getAttribute('aria-expanded')).toBe('true');
-        fixture.componentRef.setInput('embedded', true);
-        fixture.detectChanges();
         expect(briefToggle().getAttribute('aria-expanded')).toBe('false');
         briefToggle().click();
         fixture.detectChanges();
         expect(briefToggle().getAttribute('aria-expanded')).toBe('true');
-    });
-
-    it('allows an authorized editor to start after another instructor finishes, without exposing private details', () => {
-        render(status({ ownedByCaller: false, events: [event({ type: 'DONE', completionStatus: 'SUCCESS' })], input: { prompt: 'Private brief' } }));
-        expect(fixture.componentInstance['cancelAvailable']()).toBe(false);
-        expect(fixture.componentInstance['runInput']()).toBeUndefined();
-        expect(fixture.componentInstance['spend']()).toBeUndefined();
-        testId('hyperion-run-run-again')!.querySelector('button')!.click();
-        fixture.detectChanges();
-        enterPrompt('Implement a bounded stack with generics.');
-        confirmPrompt();
-        expect(service.generate).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID, { mode: 'GENERATE', prompt: 'Implement a bounded stack with generics.' });
-    });
-
-    it('does not offer a new run to a reader without editor rights even if they owned the previous run', () => {
-        render(status({ events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
-        routeData.next({ programmingExercise: { ...exercise(), isAtLeastEditor: false } });
-        fixture.detectChanges();
-        expect(testId('hyperion-run-run-again')).toBeNull();
-        fixture.componentInstance['openStartDialog']();
-        expect(service.generate).not.toHaveBeenCalled();
-        expect(fixture.componentInstance['startDialogVisible']()).toBe(false);
-    });
-
-    it('can cancel a new run without submitting anything', () => {
-        render(status({ events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
-        testId('hyperion-run-run-again')!.querySelector('button')!.click();
-        fixture.detectChanges();
-        enterPrompt('Implement a bounded stack with generics.');
-        dialogElement('hyperion-run-prompt-cancel').querySelector('button')!.click();
-        fixture.detectChanges();
-
-        expect(service.generate).not.toHaveBeenCalled();
-        expect(document.querySelector('[data-testid="hyperion-run-prompt"]')).toBeNull();
-    });
-
-    it('keeps the entered brief when starting fails, so retry submits the same instruction', () => {
-        render(status({ events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
-        service.generate.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 503 })));
-        testId('hyperion-run-run-again')!.querySelector('button')!.click();
-        fixture.detectChanges();
-        enterPrompt('Implement a bounded stack with generics.');
-        confirmPrompt();
-
-        expect((dialogElement('hyperion-run-prompt') as HTMLTextAreaElement).value).toBe('Implement a bounded stack with generics.');
-        confirmPrompt();
-        expect(service.generate).toHaveBeenCalledTimes(2);
-        expect(service.generate).toHaveBeenLastCalledWith(EXERCISE_ID, { mode: 'GENERATE', prompt: 'Implement a bounded stack with generics.' });
-    });
-
-    it('tracks a late start response without attaching its job to a different exercise', () => {
-        render(status({ events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
-        const started = new Subject<{ jobId: string }>();
-        service.generate.mockReturnValueOnce(started);
-        const facade = fixture.debugElement.injector.get(HyperionGenerationActivityFacade);
-        const attach = vi.spyOn(facade, 'attachToJob');
-        testId('hyperion-run-run-again')!.querySelector('button')!.click();
-        fixture.detectChanges();
-        enterPrompt('Implement a bounded stack with generics.');
-        confirmPrompt();
-        routeParams.next({ exerciseId: '99' });
-        fixture.detectChanges();
-        started.next({ jobId: 'late-job' });
-
-        expect(registry.track).toHaveBeenCalledWith({ jobId: 'late-job', exerciseId: EXERCISE_ID, courseId: COURSE_ID, exerciseTitle: 'Bounded Stack', mode: 'GENERATE' });
-        expect(attach).not.toHaveBeenCalled();
-    });
-
-    it('does not carry instructions or a pending dialog to another exercise', () => {
-        render(status({ events: [event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
-        testId('hyperion-run-run-again')!.querySelector('button')!.click();
-        fixture.detectChanges();
-        enterPrompt('Implement a bounded stack with generics.');
-        routeParams.next({ exerciseId: '99' });
-        fixture.detectChanges();
-
-        expect(document.querySelector('[data-testid="hyperion-run-prompt"]')).toBeNull();
-        expect(fixture.componentInstance['startPrompt']()).toBe('');
-        expect(service.generate).not.toHaveBeenCalled();
-    });
-
-    it('keeps elapsed time and stall announcements working after Run again', () => {
-        vi.useFakeTimers();
-        vi.setSystemTime(new Date('2026-09-07T10:00:00Z'));
-        render(status({ events: [event({ type: 'STARTED', phase: 'PREPARING' }), event({ type: 'ERROR', terminationReason: 'RUN_FAILED' })] }));
-        service.response = of(status({ jobId: 'job-2', running: true, events: [{ type: 'STARTED', phase: 'PREPARING', timestamp: new Date().toISOString() }] }));
-
-        testId('hyperion-run-run-again')!.querySelector('button')!.click();
-        fixture.detectChanges();
-        enterPrompt('Implement a bounded stack with generics.');
-        confirmPrompt();
-        expect(fact('elapsed')?.textContent?.trim()).toBe('0:00');
-        expect(announced).not.toContain('artemisApp.hyperion.generation.run.stalledAnnouncement');
-
-        vi.advanceTimersByTime(90_000);
-        fixture.detectChanges();
-
-        expect(fact('elapsed')?.textContent?.trim()).toBe('1:30');
-        expect(announced).toContain('artemisApp.hyperion.generation.run.stalledAnnouncement');
     });
 
     it('does not claim unchanged exercise contents when status is unavailable in either language', () => {
@@ -738,7 +489,8 @@ describe('HyperionRunPageComponent', () => {
 
     it('offers a retry that asks the server again when the status could not be loaded', () => {
         service.response = throwError(() => new HttpErrorResponse({ status: 400 }));
-        fixture = TestBed.createComponent(HyperionRunPageComponent);
+        fixture = TestBed.createComponent(HyperionRunInspectorComponent);
+        fixture.componentRef.setInput('inspectedExerciseId', EXERCISE_ID);
         fixture.detectChanges();
 
         const banner = testId('hyperion-run-status-unavailable');
@@ -763,7 +515,8 @@ describe('HyperionRunPageComponent', () => {
     it('reports the status as unavailable only when the server could not be asked', () => {
         // A 4xx is not retried, so the facade gives up on the first response and the page has its answer synchronously.
         service.response = throwError(() => new HttpErrorResponse({ status: 400 }));
-        fixture = TestBed.createComponent(HyperionRunPageComponent);
+        fixture = TestBed.createComponent(HyperionRunInspectorComponent);
+        fixture.componentRef.setInput('inspectedExerciseId', EXERCISE_ID);
         fixture.detectChanges();
 
         expect(testId('hyperion-run-status')!.textContent).toContain('artemisApp.hyperion.generation.status.unknown');
@@ -1165,27 +918,16 @@ describe('HyperionRunPageComponent', () => {
         });
     });
 
-    describe('the empty state', () => {
-        it('offers the action that starts a run rather than directions to it', () => {
-            render(null);
-
-            expect(testId('hyperion-run-not-started')).not.toBeNull();
-            expect(testId('hyperion-run-start')).not.toBeNull();
-        });
-
-        it('requires a brief when no prior run is retained', () => {
-            render(null);
-
-            (testId('hyperion-run-start')!.querySelector('button') as HTMLButtonElement).click();
-
-            fixture.detectChanges();
+    it.each([null, status({ events: [event({ type: 'DONE', completionStatus: 'SUCCESS' })] })])(
+        'never offers a second generation entry point from the run inspector',
+        (replayed) => {
+            render(replayed);
+            expect(testId('hyperion-run-start')).toBeNull();
+            expect(testId('hyperion-run-run-again')).toBeNull();
+            expect(document.querySelector('[data-testid="hyperion-run-prompt"]')).toBeNull();
             expect(service.generate).not.toHaveBeenCalled();
-            enterPrompt('Implement a bounded stack with generics.');
-            confirmPrompt();
-
-            expect(service.generate).toHaveBeenCalledExactlyOnceWith(EXERCISE_ID, { mode: 'GENERATE', prompt: 'Implement a bounded stack with generics.' });
-        });
-    });
+        },
+    );
 
     describe('announcements', () => {
         function announcements(): string[] {

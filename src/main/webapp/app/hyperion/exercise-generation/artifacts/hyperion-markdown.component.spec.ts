@@ -173,6 +173,15 @@ describe('HyperionMarkdownComponent', () => {
             expect(host.querySelector('[src], [srcset], [poster]')).toBeNull();
         });
 
+        it('keeps benign prose and links while filtering media from the same generated document', () => {
+            const host = render('**Keep this** and [the contract](https://example.invalid/contract).\n\n![tracking pixel](https://example.invalid/pixel)');
+
+            expect(host.querySelector('strong')?.textContent).toBe('Keep this');
+            expect(host.querySelector('a')?.getAttribute('href')).toBe('https://example.invalid/contract');
+            expect(host.querySelector('img')).toBeNull();
+            expect(host.querySelector('[src], [srcset], [poster]')).toBeNull();
+        });
+
         it('does not apply raw HTML or CSS from a generated document', () => {
             const host = render('<div style="background-image:url(https://example.invalid/pixel)">Text</div>');
 

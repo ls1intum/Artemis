@@ -68,47 +68,6 @@ describe('HyperionRunHeaderComponent', () => {
         expect(cancelled).not.toHaveBeenCalled();
     });
 
-    it('emits startRequested from both the start and the run-again buttons while nothing blocks a run', () => {
-        const started = vi.fn();
-        fixture.componentInstance.startRequested.subscribe(started);
-        fixture.componentRef.setInput('startAvailable', true);
-        fixture.componentRef.setInput('runAgainAvailable', true);
-        fixture.detectChanges();
-
-        const start = button('hyperion-run-start');
-        const runAgain = button('hyperion-run-run-again');
-        expect(start.getAttribute('aria-disabled')).toBeNull();
-        expect(runAgain.getAttribute('aria-disabled')).toBeNull();
-        start.click();
-        runAgain.click();
-
-        expect(started).toHaveBeenCalledTimes(2);
-    });
-
-    it('keeps the start buttons visible but disabled with the reason while a run is blocked', () => {
-        const started = vi.fn();
-        fixture.componentInstance.startRequested.subscribe(started);
-        fixture.componentRef.setInput('startAvailable', true);
-        fixture.componentRef.setInput('runAgainAvailable', true);
-        fixture.componentRef.setInput('startBlockedReason', 'artemisApp.hyperion.generation.blocker.released');
-        fixture.detectChanges();
-
-        const start = button('hyperion-run-start');
-        const runAgain = button('hyperion-run-run-again');
-        expect(fixture.componentInstance['startBlockedReasonText']()).toBe('artemisApp.hyperion.generation.blocker.released');
-        expect(start.hasAttribute('disabled')).toBe(true);
-        expect(fixture.nativeElement.textContent).toContain('artemisApp.hyperion.generation.blocker.released');
-        const blocker = fixture.nativeElement.querySelector('[data-testid="hyperion-run-start-blocker"]');
-        expect(blocker.closest('tumaet-ui-card')).not.toBeNull();
-        expect(start.getAttribute('aria-describedby')).toBe('hyperion-run-start-blocker');
-        expect(runAgain.getAttribute('aria-describedby')).toBe('hyperion-run-start-blocker');
-        expect(runAgain.hasAttribute('disabled')).toBe(true);
-        start.click();
-        runAgain.click();
-
-        expect(started).not.toHaveBeenCalled();
-    });
-
     function button(testId: string): HTMLButtonElement {
         return fixture.nativeElement.querySelector(`[data-testid="${testId}"] button`);
     }

@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, input } from '@angular/core';
+import DOMPurify from 'dompurify';
 import { SafeHtmlPipe } from 'app/foundation/pipes/safe-html.pipe';
 import { htmlForMarkdown } from 'app/foundation/util/markdown.conversion.util';
 
@@ -8,7 +9,7 @@ const FORBIDDEN_TAGS = ['style', 'form', 'input', 'button', 'select', 'option', 
 /** Uses Artemis markdown rendering and feature-scoped typography, with stricter sanitisation for generated content. */
 @Component({
     selector: 'jhi-hyperion-markdown',
-    template: `<div class="hyperion-markdown-body" data-slot="prose" [attr.data-density]="density()" [innerHTML]="rendered() | safeHtml: forbiddenTags"></div>`,
+    template: `<div class="hyperion-markdown-body" data-slot="prose" [attr.data-density]="density()" [innerHTML]="rendered() | safeHtml"></div>`,
     styleUrl: './hyperion-markdown.component.scss',
     encapsulation: ViewEncapsulation.None,
     styles: `
@@ -26,7 +27,7 @@ export class HyperionMarkdownComponent {
     readonly markdown = input<string | undefined>();
     /** `compact` tightens the block spacing for prose inside a docked panel. */
     readonly density = input<'comfortable' | 'compact'>('comfortable');
-    protected readonly forbiddenTags = FORBIDDEN_TAGS;
 
-    protected readonly rendered = computed(() => htmlForMarkdown(this.markdown(), [], undefined, undefined, false, false));
+    // Keep the stricter generated-content policy local; the shared pipe preserves the renderer's KaTeX positioning.
+    protected readonly rendered = computed(() => DOMPurify.sanitize(htmlForMarkdown(this.markdown(), [], undefined, undefined, false, false), { FORBID_TAGS: FORBIDDEN_TAGS }));
 }

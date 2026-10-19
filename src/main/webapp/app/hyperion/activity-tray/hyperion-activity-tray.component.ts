@@ -1,6 +1,6 @@
 import { parseJson } from 'app/foundation/util/json.util';
 import { facArtemisIntelligence } from 'app/foundation/icons/icons';
-import { HyperionRunPageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-page.component';
+import { HyperionRunInspectorComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-inspector.component';
 import { ChangeDetectionStrategy, Component, DestroyRef, Injector, computed, inject, input, linkedSignal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -37,7 +37,7 @@ import { HyperionActivityRow, authoringActivity, variantActivity } from './hyper
     providers: [TumAetUiConfirmationService],
     imports: [
         TumAetUiDialogComponent,
-        HyperionRunPageComponent,
+        HyperionRunInspectorComponent,
         FaIconComponent,
         ArtemisTranslatePipe,
         TumAetUiButtonDirective,

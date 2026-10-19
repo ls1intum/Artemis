@@ -1,4 +1,4 @@
-import { HyperionRunPageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-page.component';
+import { HyperionRunInspectorComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-inspector.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { effect, signal } from '@angular/core';
 import { Location } from '@angular/common';
@@ -98,8 +98,8 @@ describe('HyperionActivityTrayComponent', () => {
             ],
         })
             .overrideComponent(HyperionActivityTrayComponent, {
-                remove: { imports: [ExerciseVariantAiModalWizardComponent, HyperionRunPageComponent] },
-                add: { imports: [MockComponent(ExerciseVariantAiModalWizardComponent), MockComponent(HyperionRunPageComponent)] },
+                remove: { imports: [ExerciseVariantAiModalWizardComponent, HyperionRunInspectorComponent] },
+                add: { imports: [MockComponent(ExerciseVariantAiModalWizardComponent), MockComponent(HyperionRunInspectorComponent)] },
             })
             .compileComponents();
         // The application bootstrap normally registers the browser-history listener.
@@ -219,7 +219,9 @@ describe('HyperionActivityTrayComponent', () => {
         expect(fixture.componentInstance['inspector']()).toEqual([{ key: 'editor:authoring:2:a', exerciseId: 2, runId: 'a' }]);
         expect(registry.markSeen).toHaveBeenCalledWith('a');
         expect(fixture.debugElement.query(By.directive(TumAetUiDialogComponent)).componentInstance.size()).toBe('large');
-        expect(fixture.debugElement.query(By.directive(HyperionRunPageComponent)).componentInstance.embedded()).toBe(true);
+        const inspector = fixture.debugElement.query(By.directive(HyperionRunInspectorComponent)).componentInstance;
+        expect(inspector.inspectedExerciseId()).toBe(2);
+        expect(inspector.inspectedRunId()).toBe('a');
         expect(query('ai-activity-tray')).toBeNull();
     });
 

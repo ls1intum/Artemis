@@ -105,8 +105,6 @@
                     "historyExpired": "Verlauf des Durchlaufs abgelaufen"
                 },
                 "run": {
-                    "newRunHint": "Gib die Aufgabenbeschreibung oder das Feedback für diesen neuen Lauf ein. Frühere Anweisungen und ausgewählte Review-Kommentare werden nicht übernommen.",
-                    "feedbackLabel": "Was soll geändert werden?",
                     "title": "Aufgabe generieren",
                     "backToExercise": "Zurück zur Aufgabe",
                     "elapsed": "Vergangen",
@@ -129,7 +127,6 @@
                     "stageStripWithDuration": "Alle {{total}} Phasen · {{duration}}",
                     "lastUpdate": "Letzter Stand um {{time}}",
                     "stillRunningOnServer": "Der Durchlauf selbst läuft auf dem Server weiter. Nur diese Seite kann seinen Status gerade nicht lesen.",
-                    "notStartedWhoCanAct": "Eine Lehrperson oder Bearbeitende dieses Kurses können eine Generierung starten.",
                     "stageAnnouncement": "Schritt {{position}} von {{total}}, {{stage}}.",
                     "stalledAnnouncement": "Seit {{minutes}} Minuten keine Aktualisierung. Die Verbindung zum Durchlauf besteht weiterhin.",
                     "stalledOfflineAnnouncement": "Seit {{minutes}} Minuten keine Aktualisierung, und der Status des Durchlaufs konnte nicht gelesen werden.",
@@ -272,7 +269,6 @@
                     "cancelConfirmMessage": "Artemis stoppt sofort und schreibt nichts in deine Aufgabe. Die Aufgabe bleibt, wie sie ist.",
                     "cancelConfirmAccept": "Lauf abbrechen",
                     "cancelConfirmReject": "Weiterlaufen lassen",
-                    "runAgain": "Erneut ausführen",
                     "openEditor": "Code-Editor öffnen",
                     "openRun": "Generierungsansicht öffnen",
                     "start": "Diese Aufgabe generieren",

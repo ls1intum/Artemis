@@ -1,20 +1,12 @@
 import { HyperionStatusState } from 'app/hyperion/shared/status/hyperion-status.component';
-import { generationCapabilityBlocker, injectGenerationCapabilities } from 'app/hyperion/exercise-generation/hyperion-generation-capabilities';
 import { HyperionRunInputComponent } from './hyperion-run-input.component';
 import { EMPTY, catchError, filter, merge, of, switchMap } from 'rxjs';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_HYPERION_EXERCISE_GENERATION } from 'app/app.constants';
-import { HYPERION_GENERATION_BLOCKER_KEY, hyperionGenerationBlocker } from 'app/hyperion/exercise-generation/hyperion-generation-support';
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, linkedSignal, signal, untracked } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import {
     TumAetUiButtonComponent,
     TumAetUiCardComponent,
     TumAetUiDialogComponent,
-    TumAetUiInputDirective,
     TumAetUiMessageComponent,
     TumAetUiMessageSeverity,
     TumAetUiPanelComponent,
@@ -23,7 +15,6 @@ import {
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { HyperionExerciseGenerationService } from 'app/hyperion/exercise-generation/hyperion-exercise-generation.service';
 import { HyperionGenerationActivityFacade } from 'app/hyperion/exercise-generation/hyperion-generation-activity.facade';
 import { HyperionArtifactsComponent } from 'app/hyperion/exercise-generation/run/hyperion-artifacts.component';
 import { artifactFiles } from 'app/hyperion/exercise-generation/artifacts/hyperion-artifact-file';
@@ -86,15 +77,13 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
 
 /** Displays generation progress, retained artifacts, and the saved result. */
 @Component({
-    selector: 'jhi-hyperion-run-page',
-    templateUrl: './hyperion-run-page.component.html',
-    styleUrl: './hyperion-run-page.component.scss',
+    selector: 'jhi-hyperion-run-inspector',
+    templateUrl: './hyperion-run-inspector.component.html',
+    styleUrl: './hyperion-run-inspector.component.scss',
     changeDetection: ChangeDetectionStrategy.OnPush,
     providers: [HyperionGenerationActivityFacade, HyperionRunAnnouncerService],
     imports: [
-        FormsModule,
         TumAetUiDialogComponent,
-        TumAetUiInputDirective,
         ArtemisTranslatePipe,
         TranslateDirective,
         HyperionArtifactsComponent,
@@ -109,21 +98,16 @@ const OUTCOME_COPY: Record<HyperionRunOutcome, string> = {
         TumAetUiPanelComponent,
     ],
 })
-export class HyperionRunPageComponent {
-    private readonly route = inject(ActivatedRoute);
-    private readonly profileService = inject(ProfileService);
+export class HyperionRunInspectorComponent {
     private readonly translateService = inject(TranslateService);
     private readonly announcer = inject(HyperionRunAnnouncerService);
     private readonly facade = inject(HyperionGenerationActivityFacade);
     private readonly registry = inject(HyperionJobRegistryService);
-    private readonly generationService = inject(HyperionExerciseGenerationService);
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
-    private readonly destroyRef = inject(DestroyRef);
-    readonly inspectedExerciseId = input<number>();
-    readonly embedded = input(false);
+    readonly inspectedExerciseId = input.required<number>();
     readonly showStepCounter = input(true);
     readonly inspectedRunId = input<string>();
-    protected readonly runId = computed(() => this.inspectedRunId() ?? this.routeParams()['runId'] ?? this.routeQuery()['run']);
+    protected readonly runId = this.inspectedRunId;
     protected readonly variant = computed(() => this.facade.run()?.kind === 'VARIANT');
     protected readonly jobId = this.facade.jobId;
     protected readonly canRevert = this.facade.canRevert;
@@ -133,33 +117,11 @@ export class HyperionRunPageComponent {
     protected readonly revertPartialRepositories = this.facade.revertPartialRepositories;
     protected readonly undoKey = computed(() => (this.facade.effectiveRevertMode() === 'ADAPT' ? 'undoAdaptation' : 'undoGeneration'));
 
-    private readonly routeQuery = toSignal(this.route.queryParams, { initialValue: this.route.snapshot.queryParams });
-    private readonly routeParams = toSignal(this.route.params, { initialValue: this.route.snapshot.params });
-    private readonly resolvedExercise = toSignal(this.route.data, { initialValue: this.route.snapshot.data });
-
-    /** The exercise as last read from the server; re-read whenever a run reports that it changed the live exercise. */
+    /** The canonical exercise is loaded for the inspected ID, never inherited from the host route. */
     private readonly refreshedExercise = signal<ProgrammingExercise | undefined>(undefined);
-
-    protected readonly exerciseId = computed(() => {
-        if (this.inspectedExerciseId() !== undefined) return this.inspectedExerciseId();
-        const raw = this.routeParams()['exerciseId'];
-        const parsed = Number(raw);
-        return raw !== undefined && Number.isFinite(parsed) ? parsed : undefined;
-    });
-
-    protected readonly exercise = computed<ProgrammingExercise | undefined>(() => {
-        const refreshed = this.refreshedExercise();
-        return refreshed?.id === this.exerciseId()
-            ? refreshed
-            : this.inspectedExerciseId()
-              ? undefined
-              : (this.resolvedExercise()['programmingExercise'] as ProgrammingExercise | undefined);
-    });
-
-    /** The course the exercise belongs to; the route segment is the fallback for an exercise served without its course. */
-    private readonly routeCourseId = Number(this.route.snapshot.pathFromRoot.map((snapshot) => snapshot.params['courseId']).find((id) => id !== undefined));
-
-    protected readonly courseId = computed(() => getCourseId(this.exercise()) ?? (Number.isFinite(this.routeCourseId) ? this.routeCourseId : undefined));
+    protected readonly exerciseId = this.inspectedExerciseId;
+    protected readonly exercise = this.refreshedExercise.asReadonly();
+    protected readonly courseId = computed(() => getCourseId(this.exercise()));
 
     protected readonly events = this.facade.events;
     protected readonly fileChanges = this.facade.fileChanges;
@@ -250,25 +212,6 @@ export class HyperionRunPageComponent {
     protected readonly idleHintKey = computed(() => `artemisApp.hyperion.generation.run.${this.historyExpired() ? 'historyExpiredHint' : 'notStartedHint'}`);
 
     protected readonly cancelAvailable = computed(() => !this.terminal() && this.running() && this.ownedByCaller() && this.facade.cancellable());
-    /** Whether starting a run is this deployment's and this instructor's to do at all; why the exercise may still refuse one is {@link startBlockedReason}. */
-    protected readonly generationOffered = computed(
-        () =>
-            this.inspectedExerciseId() === undefined &&
-            !this.embedded() &&
-            this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION_EXERCISE_GENERATION) &&
-            (this.exercise()?.isAtLeastEditor ?? false),
-    );
-    private readonly generationCapabilities = injectGenerationCapabilities(this.exercise, this.generationOffered);
-    /** Translation key for what about the exercise prevents a run, so the start button can say it instead of vanishing. */
-    protected readonly startBlockedReason = computed(() => {
-        const exercise = this.exercise();
-        const blocker = exercise ? hyperionGenerationBlocker(exercise, this.now()) : undefined;
-        return blocker ? HYPERION_GENERATION_BLOCKER_KEY + blocker : generationCapabilityBlocker(this.generationCapabilities.value());
-    });
-    protected readonly runAgainAvailable = computed(() => !this.runId() && this.generationOffered() && this.terminal() && !this.starting());
-    protected readonly startAvailable = computed(() => !this.runId() && this.generationOffered() && (this.notStarted() || this.historyExpired()) && !this.starting());
-    private readonly canStart = computed(() => (this.runAgainAvailable() || this.startAvailable()) && this.startBlockedReason() === undefined);
-
     /** How long a finished run took, for the folded stage strip. Static: a terminal run has no clock left to tick. */
     protected readonly runDuration = computed(() => {
         const startedAt = this.startedAt();
@@ -288,12 +231,6 @@ export class HyperionRunPageComponent {
     /** When the page last heard anything at all, so stale data on screen is marked as stale rather than passed off as current. */
     protected readonly lastUpdateTime = computed(() => formatClockTime(this.events().at(-1)?.timestamp));
 
-    protected readonly starting = linkedSignal({ source: this.exerciseId, computation: () => false });
-    protected readonly startFailed = linkedSignal({ source: this.exerciseId, computation: () => false });
-    protected readonly startDialogVisible = linkedSignal({ source: this.exerciseId, computation: () => false });
-    protected readonly startPrompt = linkedSignal({ source: this.exerciseId, computation: () => '' });
-    protected readonly maximumPromptLength = 8000;
-    protected readonly startPromptValid = computed(() => this.startPrompt().trim().length > 0 && this.startPrompt().length <= this.maximumPromptLength);
     protected readonly adapting = computed(() => this.facade.mode() === 'ADAPT');
 
     protected readonly exerciseLink = computed(() => {
@@ -416,14 +353,9 @@ export class HyperionRunPageComponent {
         // Initial inspection, save, and undo share one latest-response boundary for this exercise.
         effect((onCleanup) => {
             const exerciseId = this.exerciseId();
-            const refreshInitially = this.inspectedExerciseId() !== undefined || untracked(() => this.facade.liveExerciseChanged() === true);
             this.refreshedExercise.set(undefined);
             if (exerciseId === undefined) return;
-            const subscription = merge(
-                refreshInitially ? of(undefined) : EMPTY,
-                this.facade.generationCompleted.pipe(filter((event) => event.liveExerciseChanged === true)),
-                this.facade.generationReverted,
-            )
+            const subscription = merge(of(undefined), this.facade.generationCompleted.pipe(filter((event) => event.liveExerciseChanged === true)), this.facade.generationReverted)
                 .pipe(
                     switchMap(() =>
                         this.programmingExerciseService.find(exerciseId).pipe(
@@ -455,47 +387,5 @@ export class HyperionRunPageComponent {
 
     protected retryStatus(): void {
         this.facade.retryStatus();
-    }
-
-    protected openStartDialog(): void {
-        if (this.canStart()) {
-            this.startDialogVisible.set(true);
-        }
-    }
-
-    protected start(): void {
-        const exerciseId = this.exerciseId();
-        if (exerciseId === undefined || !this.startDialogVisible() || !this.startPromptValid() || !this.canStart()) {
-            return;
-        }
-        const mode = this.facade.mode() ?? 'GENERATE';
-        const courseId = this.courseId();
-        const exerciseTitle = this.exercise()?.title ?? '';
-        this.starting.set(true);
-        this.startFailed.set(false);
-        this.generationService
-            .generate(exerciseId, { mode, prompt: this.startPrompt().trim() })
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: ({ jobId }) => {
-                    if (courseId !== undefined) {
-                        this.registry.track({ jobId, exerciseId, courseId, exerciseTitle, mode });
-                    }
-                    if (this.exerciseId() !== exerciseId) {
-                        return;
-                    }
-                    this.startDialogVisible.set(false);
-                    this.startPrompt.set('');
-                    this.starting.set(false);
-                    this.facade.attachToJob(jobId, mode);
-                },
-                error: () => {
-                    if (this.exerciseId() !== exerciseId) {
-                        return;
-                    }
-                    this.starting.set(false);
-                    this.startFailed.set(true);
-                },
-            });
     }
 }

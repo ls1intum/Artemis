@@ -1,4 +1,4 @@
-import { HyperionRunPageComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-page.component';
+import { HyperionRunInspectorComponent } from 'app/hyperion/exercise-generation/run/hyperion-run-inspector.component';
 import { signal } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { HyperionProgrammingVariantApi } from 'app/openapi/api/hyperion-programming-variant-api';
@@ -987,8 +987,8 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
             ],
         })
             .overrideComponent(ExerciseVariantAiModalWizardComponent, {
-                remove: { imports: [ArtemisTranslatePipe, HyperionRunPageComponent] },
-                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? ''), MockComponent(HyperionRunPageComponent)] },
+                remove: { imports: [ArtemisTranslatePipe, HyperionRunInspectorComponent] },
+                add: { imports: [MockPipe(ArtemisTranslatePipe, (key) => key ?? ''), MockComponent(HyperionRunInspectorComponent)] },
             })
             .compileComponents();
         fixture = TestBed.createComponent(ExerciseVariantAiModalWizardComponent);
@@ -1013,7 +1013,7 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
         component.startGeneration();
         started.next({ jobId: 'run', exerciseId: 81, sourceExerciseId: 12 });
         fixture.detectChanges();
-        expect(document.body.querySelector('jhi-hyperion-run-page')).not.toBeNull();
+        expect(document.body.querySelector('jhi-hyperion-run-inspector')).not.toBeNull();
         expect(document.body.querySelector('[data-testid="variant-wizard-step-indicator"]')).toBe(indicator);
         expect(document.body.querySelector('[data-testid="variant-wizard-indicator-Generating"]')?.getAttribute('aria-current')).toBe('step');
         expect(routerMock.navigate).not.toHaveBeenCalled();

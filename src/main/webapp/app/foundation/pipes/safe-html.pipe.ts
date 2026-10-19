@@ -11,10 +11,9 @@ export class SafeHtmlPipe implements PipeTransform {
      * [innerHTML]. Sanitizing inside the pipe makes it safe regardless of the caller: a caller that passes
      * user-controlled HTML can no longer introduce XSS through this pipe. DOMPurify keeps benign inline
      * markup and entities (e.g. <sub>, <sup>, <strong>, &infin;) that existing callers rely on.
-     * @param value         the HTML to sanitize and render
-     * @param forbiddenTags additional tags to remove for stricter content policies
+     * @param value The HTML to sanitize and render.
      */
-    transform(value: string | null | undefined, forbiddenTags?: string[]): SafeHtml {
-        return this.sanitizer.bypassSecurityTrustHtml(DOMPurify.sanitize(value ?? '', forbiddenTags ? { FORBID_TAGS: forbiddenTags } : undefined));
+    transform(value: string | null | undefined): SafeHtml {
+        return this.sanitizer.bypassSecurityTrustHtml(DOMPurify.sanitize(value ?? ''));
     }
 }

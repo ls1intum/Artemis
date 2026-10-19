@@ -31,7 +31,7 @@
     }
 
     @if (programmingRun(); as run) {
-        <jhi-hyperion-run-page [embedded]="true" [showStepCounter]="false" [inspectedExerciseId]="run.exerciseId" [inspectedRunId]="run.jobId" />
+        <jhi-hyperion-run-inspector [showStepCounter]="false" [inspectedExerciseId]="run.exerciseId" [inspectedRunId]="run.jobId" />
         <div class="mt-4 flex justify-end border-t border-border pt-4">
             <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="onClose(false)" data-testid="variant-wizard-run-in-background">
                 {{

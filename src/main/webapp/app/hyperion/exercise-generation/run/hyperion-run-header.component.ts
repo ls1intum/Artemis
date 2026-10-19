@@ -3,14 +3,7 @@ import { HyperionStatusComponent } from 'app/hyperion/shared/status/hyperion-sta
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import {
-    TumAetUiButtonComponent,
-    TumAetUiButtonDirective,
-    TumAetUiCardComponent,
-    TumAetUiConfirmDialogComponent,
-    TumAetUiConfirmationService,
-    TumAetUiMessageComponent,
-} from '@tumaet/ui-angular';
+import { TumAetUiButtonComponent, TumAetUiButtonDirective, TumAetUiCardComponent, TumAetUiConfirmDialogComponent, TumAetUiConfirmationService } from '@tumaet/ui-angular';
 import { TranslateService } from '@ngx-translate/core';
 
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
@@ -55,7 +48,6 @@ interface RunFact {
         TumAetUiButtonDirective,
         TumAetUiCardComponent,
         TumAetUiConfirmDialogComponent,
-        TumAetUiMessageComponent,
         HyperionStatusComponent,
     ],
 })
@@ -81,17 +73,11 @@ export class HyperionRunHeaderComponent {
      * is measured against its own end rather than against the clock.
      */
     readonly endedAt = input<string | undefined>();
-    /** Whether the run has ended, however it ended. Freezes the clock and swaps Cancel for Run again. */
+    /** Whether the run has ended, however it ended. Freezes the clock and hides cancellation. */
     readonly terminal = input(false);
     readonly ownedByCaller = input(true);
     readonly cancelAvailable = input(false);
     readonly cancelPending = input(false);
-    readonly runAgainAvailable = input(false);
-    /** Offered on an exercise that has never generated anything, so the empty state carries an action rather than directions. */
-    readonly startAvailable = input(false);
-    /** Translation key for why the exercise refuses a run right now; the start and run-again buttons stay visible and say it. */
-    readonly startBlockedReason = input<string | undefined>();
-    readonly startPending = input(false);
     readonly editorLink = input<readonly (string | number)[] | undefined>();
     readonly exerciseLink = input<readonly (string | number)[] | undefined>();
     /** 1-based position in the five fixed stages, derived from position rather than completion so it cannot walk back. */
@@ -102,21 +88,12 @@ export class HyperionRunHeaderComponent {
     readonly fileCount = input(0);
 
     readonly cancelRequested = output<{ exerciseId: number; jobId: string }>();
-    /** Both the first start and a run-again ask for the same thing: the start dialog. */
-    readonly startRequested = output<void>();
-
     protected readonly cancelConfirmationKey = CANCEL_CONFIRMATION_KEY;
 
     private readonly now = serverTimeSignal();
 
     /** Re-read on every language change, because a number formatted for one locale is wrong in the other. */
     private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
-    /** The blocked reason as text for the button tooltip; re-translated on a language switch. */
-    protected readonly startBlockedReasonText = computed(() => {
-        this.languageChange();
-        const reason = this.startBlockedReason();
-        return reason ? this.translateService.instant(reason) : undefined;
-    });
     private readonly locale = computed(() => {
         this.languageChange();
         return this.translateService.getCurrentLang() ?? 'en';
