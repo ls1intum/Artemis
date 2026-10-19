@@ -7,6 +7,10 @@ import java.util.regex.Pattern;
  */
 public final class Constants {
 
+    public static final String HYPERION_LIVE_SAVE_COORDINATION_MAP = "hyperion-live-save-coordination";
+
+    public static final String HYPERION_GENERATION_JOBS_MAP = "hyperion-exercise-generation-jobs";
+
     // NOTE: those 4 values have to be the same as in app.constants.ts
     public static final int USERNAME_MIN_LENGTH = 4;
 
@@ -166,6 +170,8 @@ public final class Constants {
     public static final long SYNTHETIC_FEEDBACK_ID_STRIDE = 2L;
 
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
+
+    public static final int MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH = 255; // Keep in sync with MAX_QUIZ_DRAG_ITEM_TEXT_LENGTH in input.constants.ts
 
     // Note: Must be consistent with EXAM_TEXT_MAX_LENGTH in input.constants.ts
     public static final int EXAM_TEXT_MAX_LENGTH = 10_000; // Applies to the exam start/end and confirmation start/end texts
@@ -477,6 +483,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_HYPERION = "hyperion";
 
     /**
+     * The name of the module feature used for whole-exercise generation.
+     */
+    public static final String MODULE_FEATURE_HYPERION_EXERCISE_GENERATION = "hyperion-exercise-generation";
+
+    /**
      * The name of the module feature used for Deimos malicious participation analysis functionality.
      */
     public static final String MODULE_FEATURE_DEIMOS = "deimos";
@@ -583,6 +594,11 @@ public final class Constants {
      * The name of the property used to enable or disable Hyperion functionality.
      */
     public static final String HYPERION_ENABLED_PROPERTY_NAME = "artemis.hyperion.enabled";
+
+    /**
+     * The name of the property used to enable or disable whole-exercise generation.
+     */
+    public static final String HYPERION_EXERCISE_GENERATION_ENABLED_PROPERTY_NAME = "artemis.hyperion.exercise-generation.enabled";
 
     /**
      * The name of the property used to enable or disable Iris / Pyris functionality.

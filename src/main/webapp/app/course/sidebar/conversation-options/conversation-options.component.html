@@ -1,8 +1,8 @@
-<div class="option-buttons">
+<div class="option-buttons flex items-center">
     <button class="favorite btn btn-outline-secondary sidebar-button p-0" (click)="onFavoriteClicked($event)" type="button">
         <fa-icon [icon]="conversation().isFavorite ? faHeartSolid : faHeartRegular" size="sm" />
     </button>
-    <div ngbDropdown container="body" class="d-inline-block">
+    <div ngbDropdown container="body" class="flex items-center">
         <button class="btn btn-outline-secondary dropdown-toggle sidebar-button py-0 pe-1 ps-0" type="button" ngbDropdownToggle (click)="$event.stopPropagation()">
             <fa-icon [icon]="faEllipsisVertical" size="sm" />
         </button>

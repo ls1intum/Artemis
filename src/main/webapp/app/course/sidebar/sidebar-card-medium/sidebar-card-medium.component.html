@@ -1,7 +1,7 @@
 @if (sidebarType() === 'inExam') {
     <div
         id="test-sidebar-card-medium"
-        class="pointer item-border rounded-3 col-12 px-1 pt-2 pb-1 border-5 highlight-card bg-module hover-effect"
+        class="pointer item-border rounded-3 col-12 px-1 pt-2 pb-1 highlight-card bg-module hover-effect"
         [ngClass]="{ 'bg-selected border-selected': itemSelected() }"
         (click)="onExamCardClicked()"
         [attr.aria-current]="itemSelected() ? true : null"
@@ -18,7 +18,7 @@
     <div class="item-border rounded-3 col-12">
         <div
             id="test-sidebar-card-medium"
-            class="flex rounded-3 col-12 border-start border-5 highlight-card bg-module hover-effect"
+            class="flex rounded-3 col-12 border-s-5 highlight-card bg-module hover-effect"
             [ngClass]="{
                 'border-success': sidebarItem()?.difficulty === DifficultyLevel.EASY,
                 'border-warning': sidebarItem()?.difficulty === DifficultyLevel.MEDIUM,

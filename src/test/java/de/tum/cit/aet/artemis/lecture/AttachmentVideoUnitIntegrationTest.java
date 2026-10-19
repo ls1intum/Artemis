@@ -497,6 +497,22 @@ class AttachmentVideoUnitIntegrationTest extends AbstractSpringIntegrationIndepe
         request.performMvcRequest(buildCreateAttachmentVideoUnit(attachmentVideoUnit, attachment)).andExpect(status().isBadRequest());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "This is plain text, not a PDF document", "" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentVideoUnit_withCorruptedOrEmptyPdf_shouldReturnBadRequestAndCreateNoUnit(String content) throws Exception {
+        long unitCountBefore = attachmentVideoUnitRepository.count();
+        var corruptedPdf = new MockMultipartFile("file", "slides.pdf", MediaType.APPLICATION_PDF_VALUE, content.getBytes());
+        var attachmentVideoUnitPart = new MockMultipartFile("attachmentVideoUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentVideoUnit).getBytes());
+        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-video-units").file(attachmentVideoUnitPart)
+                .file(attachmentPart).file(corruptedPdf).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        request.performMvcRequest(builder).andExpect(status().isBadRequest()).andExpect(jsonPath("$.errorKey").value("invalidPdf"));
+
+        assertThat(attachmentVideoUnitRepository.count()).isEqualTo(unitCountBefore);
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentVideoUnit_descriptionAtMaxLength_shouldCreateAttachmentVideoUnit() throws Exception {

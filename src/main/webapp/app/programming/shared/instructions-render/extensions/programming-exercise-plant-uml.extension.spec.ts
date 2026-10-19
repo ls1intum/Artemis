@@ -84,6 +84,40 @@ describe('ProgrammingExercisePlantUmlExtensionWrapper', () => {
         });
     });
 
+    describe('same exercise rendered by two component instances', () => {
+        it('should generate different container IDs for different instance IDs', () => {
+            extension.setExerciseId(10);
+            extension.setInstanceId(1);
+            const idsOfFirstInstance = extractPlantUmlIds(extension.replaceText(singleDiagramText));
+            extension.setInstanceId(2);
+            const idsOfSecondInstance = extractPlantUmlIds(extension.replaceText(singleDiagramText));
+
+            expect(idsOfFirstInstance).toEqual(['plantUml-10-1-0']);
+            expect(idsOfSecondInstance).toEqual(['plantUml-10-2-0']);
+        });
+    });
+
+    describe('instance ID scoping', () => {
+        it('should ignore the instance ID when no exercise ID is set, so it cannot collide with an exercise-scoped ID', () => {
+            extension.setExerciseId(undefined);
+            extension.setInstanceId(7);
+            const ids = extractPlantUmlIds(extension.replaceText(singleDiagramText));
+
+            expect(ids).toEqual(['plantUml-0']);
+        });
+
+        it('should not leak the instance ID of a previous render into a render that only sets the exercise ID', () => {
+            extension.setExerciseId(10);
+            extension.setInstanceId(3);
+            extension.replaceText(singleDiagramText);
+
+            extension.setExerciseId(11);
+            const ids = extractPlantUmlIds(extension.replaceText(singleDiagramText));
+
+            expect(ids).toEqual(['plantUml-11-0']);
+        });
+    });
+
     describe('single exercise with multiple diagrams', () => {
         it('should generate sequential exercise-scoped container IDs for two diagrams', () => {
             extension.setExerciseId(10);
