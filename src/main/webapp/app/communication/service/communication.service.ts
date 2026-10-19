@@ -181,6 +181,12 @@ export class CommunicationService implements OnDestroy {
 
             const coursewideTopic = `/topic/communication/courses/${this.courseId}`;
             this.courseWideTopicSubscription = this.websocketService.subscribe<PostBroadcastDTO>(coursewideTopic).subscribe((postDTO: PostBroadcastDTO) => {
+                // Personal-topic posts are counted by CourseConversationsService. Count course-wide posts only here,
+                // rather than again when the visible-message stream subscribes to this same topic.
+                const conversationId = postDTO.post.conversation?.id;
+                if (postDTO.action === CommunicationCrudAction.CREATE && conversationId !== this.currentConversation?.id && postDTO.post.author?.id !== this.user.id) {
+                    this.courseConversationsService.handleNewMessage(conversationId, postDTO.post.creationDate);
+                }
                 this.handleNewOrUpdatedMessage(postDTO);
             });
         }
@@ -771,10 +777,6 @@ export class CommunicationService implements OnDestroy {
         const postIsPrivate = !!this.currentPostContextFilter.filterToCourseWide && !getAsChannelDTO(postDTO.post.conversation)?.isCourseWide;
         const postIsNotFromCurrentPlagiarismCase =
             this.currentPostContextFilter.plagiarismCaseId && postDTO.post.plagiarismCase?.id !== this.currentPostContextFilter.plagiarismCaseId;
-
-        if (postDTO.action === CommunicationCrudAction.CREATE && postDTO.post.conversation?.id !== this.currentConversation?.id && postDTO.post.author?.id !== this.user.id) {
-            this.courseConversationsService.handleNewMessage(postConvId, postDTO.post.creationDate);
-        }
 
         if (!isValidPostContext || !postIsFromCurrentConversation || postIsNotFromCurrentPlagiarismCase || postIsPrivate) {
             return;

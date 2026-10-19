@@ -137,6 +137,64 @@ describe('CommunicationService', () => {
         vi.restoreAllMocks();
     });
 
+    describe('unread websocket ownership', () => {
+        it.each([ConversationType.CHANNEL, ConversationType.GROUP_CHAT, ConversationType.ONE_TO_ONE])(
+            'leaves %s personal-topic counting to the course conversation service',
+            async (type) => {
+                await Promise.resolve();
+                const socket = TestBed.inject(WebsocketService);
+                if (!(socket instanceof MockWebsocketService)) {
+                    throw new Error('Expected the shared websocket test service');
+                }
+                const handleUnread = vi.spyOn(TestBed.inject(CourseConversationsService), 'handleNewMessage');
+                communicationService.setCourse(course);
+                socket.emit<PostBroadcastDTO>('/topic/user/99/notifications/conversations', {
+                    action: CommunicationCrudAction.CREATE,
+                    post: { id: 900, author: { id: 1, internal: true }, creationDate: dayjs(), conversation: { id: 77, type } },
+                });
+                expect(handleUnread).not.toHaveBeenCalled();
+            },
+        );
+
+        it('counts one course-wide post once even when the visible-message stream uses the same topic', async () => {
+            await Promise.resolve();
+            const socket = TestBed.inject(WebsocketService);
+            if (!(socket instanceof MockWebsocketService)) {
+                throw new Error('Expected the shared websocket test service');
+            }
+            const handleUnread = vi.spyOn(TestBed.inject(CourseConversationsService), 'handleNewMessage');
+            communicationService.setCourse(course);
+            const topic = `/topic/communication/courses/${course.id}`;
+            communicationService.createWebsocketSubscription(topic);
+            const created = dayjs();
+            socket.emit<PostBroadcastDTO>(topic, {
+                action: CommunicationCrudAction.CREATE,
+                post: { id: 900, author: { id: 1, internal: true }, creationDate: created, conversation: { id: 77, type: ConversationType.CHANNEL } },
+            });
+            expect(handleUnread).toHaveBeenCalledExactlyOnceWith(77, created);
+        });
+
+        it('does not count own posts or edits received on the course-wide topic', async () => {
+            await Promise.resolve();
+            const socket = TestBed.inject(WebsocketService);
+            if (!(socket instanceof MockWebsocketService)) {
+                throw new Error('Expected the shared websocket test service');
+            }
+            const handleUnread = vi.spyOn(TestBed.inject(CourseConversationsService), 'handleNewMessage');
+            communicationService.setCourse(course);
+            const topic = `/topic/communication/courses/${course.id}`;
+            socket.emit<PostBroadcastDTO>(topic, {
+                action: CommunicationCrudAction.CREATE,
+                post: { id: 900, author: { id: 99, internal: true }, conversation: { id: 77, type: ConversationType.CHANNEL } },
+            });
+            socket.emit<PostBroadcastDTO>(topic, {
+                action: CommunicationCrudAction.UPDATE,
+                post: { id: 900, author: { id: 1, internal: true }, conversation: { id: 77, type: ConversationType.CHANNEL } },
+            });
+            expect(handleUnread).not.toHaveBeenCalled();
+        });
+    });
+
     it('finishes only the requested page and calls its anchor hook before publishing the response', () => {
         const response = new Subject<HttpResponse<Post[]>>();
         vi.spyOn(postService, 'getPosts').mockReturnValue(response);
