@@ -375,7 +375,7 @@ class GenerationAttemptLoop {
                 if (cancelledDuringReview != null) {
                     return cancelledDuringReview;
                 }
-                if (terminationReason == TerminationReason.REPAIR_DID_NOT_IMPROVE) {
+                if (terminationReason == TerminationReason.REPAIR_DID_NOT_IMPROVE || terminationReason == TerminationReason.REVIEW_UNAVAILABLE) {
                     break;
                 }
             }
@@ -888,7 +888,10 @@ class GenerationAttemptLoop {
         catch (RuntimeException e) {
             log.warn("Executable semantic probes were unavailable for exercise {} ({})", exercise.id(), e.getClass().getSimpleName());
             emit("Executable semantic probes were unavailable; the verified candidate is preserved, but no mutation or witness evidence was inferred from that failure.");
-            return preserveExecutableEvidenceState(report);
+            terminationReason = TerminationReason.REVIEW_UNAVAILABLE;
+            List<SpecFidelityReport.Finding> findings = new ArrayList<>(report.findings());
+            findings.addAll(SpecFidelityReport.executableEvidenceUnavailable("Executable probe authoring or evaluation did not complete.").findings());
+            return preserveExecutableEvidenceState(new SpecFidelityReport(findings));
         }
     }
 

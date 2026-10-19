@@ -15,13 +15,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
 
 import tools.jackson.databind.json.JsonMapper;
-
-import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
 
 /**
  * The contract-witness authoring pass: it proposes a few executable test methods that pin rules of the approved specification, so rule coverage becomes something the server can
@@ -30,8 +26,6 @@ import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
  * Every candidate is validated against the reference solution by the caller and discarded unless it passes, which is why an over-confident witness costs nothing.
  */
 class ContractWitnessAuthor {
-
-    private static final Logger log = LoggerFactory.getLogger(ContractWitnessAuthor.class);
 
     private static final String CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE = "/prompts/hyperion/critic/contract_witness_system.st";
 
@@ -70,7 +64,8 @@ class ContractWitnessAuthor {
      * @param solutionSources       the reference solution, which fixes the exact API a witness must call
      * @param usageSink             optional token-usage sink
      * @param cancelled             cooperative cancellation signal
-     * @return at most {@link #MAX_CONTRACT_WITNESSES} unvalidated candidates; empty whenever the pass is unavailable, cancelled, or does not parse
+     * @return at most {@link #MAX_CONTRACT_WITNESSES} unvalidated candidates; empty when skipped or no eligible candidates were proposed
+     * @throws IllegalStateException if the provider response is blank, malformed, or lacks the required witnesses array
      */
     List<ContractWitness> authorContractWitnesses(String specificationContract, String testSources, String solutionSources, Map<String, String> templateStatuses,
             @Nullable Consumer<ChatResponse> usageSink, BooleanSupplier cancelled) {
@@ -84,15 +79,8 @@ class ContractWitnessAuthor {
         String userPrompt = "APPROVED SPECIFICATION CONTRACT (sole authority for a rule):\n" + specificationContract.strip() + "\n\nAUTHORITATIVE TEMPLATE OWNERSHIP:\n"
                 + renderTemplateOwnership(templateStatuses) + "\n\nREFERENCE SOLUTION (fixes the exact API a witness may call):\n" + boundedEvidence(solutionSources)
                 + "\n\nGRADED TEST SOURCES AS PRODUCED:\n" + boundedEvidence(testSources);
-        try {
-            String response = reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, cancelled, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS);
-            return parseContractWitnesses(response, specificationContract, testSources);
-        }
-        catch (RuntimeException e) {
-            // Advisory by construction: the caller proceeds with the suite it already has.
-            log.warn("Contract-witness authoring failed: {}", ProviderFailureClass.describe(e));
-            return List.of();
-        }
+        String response = reviewer.call(CONTRACT_WITNESS_SYSTEM_PROMPT_TEMPLATE, userPrompt, usageSink, cancelled, CONTRACT_WITNESS_MAX_OUTPUT_TOKENS);
+        return parseContractWitnesses(response, specificationContract, testSources);
     }
 
     static String renderTemplateOwnership(Map<String, String> statuses) {
@@ -121,18 +109,17 @@ class ContractWitnessAuthor {
 
     private List<ContractWitness> parseContractWitnesses(@Nullable String text, String specificationContract, String testSources) {
         if (text == null || text.isBlank()) {
-            return List.of();
+            throw new IllegalStateException("Contract-witness authoring returned no response");
         }
         ContractWitnessResponse parsed;
         try {
             parsed = objectMapper.readValue(extractJsonPayload(text), ContractWitnessResponse.class);
         }
         catch (Exception e) {
-            log.debug("Contract-witness JSON did not parse ({}); authoring nothing.", ProviderFailureClass.describe(e));
-            return List.of();
+            throw new IllegalStateException("Contract-witness authoring returned invalid JSON", e);
         }
         if (parsed == null || parsed.witnesses() == null) {
-            return List.of();
+            throw new IllegalStateException("Contract-witness authoring returned no witnesses array");
         }
         List<ContractWitness> witnesses = new ArrayList<>();
         Set<String> seenNames = new HashSet<>();

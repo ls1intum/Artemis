@@ -17,14 +17,11 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.model.ChatResponse;
 
 import tools.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.hyperion.protocol.SpecFidelityReport;
-import de.tum.cit.aet.artemis.hyperion.runtime.agent.ProviderFailureClass;
 
 /**
  * Independent authoring pass for complete semantic mutants and the counterexamples that should kill them. It receives no graded test bodies: the environment, not model
@@ -35,8 +32,6 @@ class SemanticMutantAuthor {
     private static final Pattern TARGET_ID = Pattern.compile("T[1-9]\\d*");
 
     private static final Pattern PARENT_PATH = Pattern.compile("(^|/)\\.\\.?(/|$)");
-
-    private static final Logger log = LoggerFactory.getLogger(SemanticMutantAuthor.class);
 
     private static final String SYSTEM_PROMPT = "/prompts/hyperion/critic/semantic_mutant_system.st";
 
@@ -107,13 +102,7 @@ class SemanticMutantAuthor {
                         + "\nDo not repeat a renamed, recoded, or numerically varied equivalent. Choose another applicable observable misconception or return fewer proposals.";
         String prompt = "APPROVED SPECIFICATION (sole rule authority):\n" + specification.strip() + "\n\nPRISTINE REFERENCE SOLUTION:\n" + renderedSolution + targetPrompt
                 + exclusionPrompt;
-        try {
-            return parse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, cancelled, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles, visibleTargets);
-        }
-        catch (RuntimeException exception) {
-            log.warn("Semantic-mutant authoring failed: {}", ProviderFailureClass.describe(exception));
-            return List.of();
-        }
+        return parse(reviewer.call(SYSTEM_PROMPT, prompt, usageSink, cancelled, MAX_OUTPUT_TOKENS), specification, visibleSolutionFiles, visibleTargets);
     }
 
     static String renderReviewTargets(List<SpecFidelityReport.Finding> reviewTargets) {
@@ -134,17 +123,17 @@ class SemanticMutantAuthor {
 
     List<SemanticMutant> parse(@Nullable String responseText, String specification, Map<String, String> solutionFiles, List<SpecFidelityReport.Finding> reviewTargets) {
         if (responseText == null || responseText.isBlank()) {
-            return List.of();
+            throw new IllegalStateException("Semantic-mutant authoring returned no response");
         }
         Response response;
         try {
             response = objectMapper.readValue(extractJsonPayload(responseText), Response.class);
         }
         catch (Exception exception) {
-            return List.of();
+            throw new IllegalStateException("Semantic-mutant authoring returned invalid JSON", exception);
         }
         if (response == null || response.mutants() == null) {
-            return List.of();
+            throw new IllegalStateException("Semantic-mutant authoring returned no mutants array");
         }
         List<SemanticMutant> accepted = new ArrayList<>();
         Set<String> seenTests = new HashSet<>();

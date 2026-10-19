@@ -432,6 +432,34 @@ class GenerationAttemptLoopTest {
     }
 
     @Test
+    void witnessAuthoringFailurePreservesAnEnvironmentProvenSemanticSurvivor() {
+        sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any()))
+                .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("test/SchedulerTest.java", "package p; class SchedulerTest {}"), false));
+        when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.SOLUTION), any()))
+                .thenReturn(new GenerationWorkspace.RepositoryExtraction(Map.of("src/Scheduler.java", "class Scheduler {}"), false));
+        ContractWitness counterexample = new ContractWitness("R1", "hyperionMutantGlobalChoice", "@Test void hyperionMutantGlobalChoice() { assertEquals(1, choose()); }",
+                "chooses within the first batch");
+        SemanticMutant mutant = new SemanticMutant("R1", "src/Scheduler.java", "class Scheduler {}", "class Scheduler {}", counterexample);
+        when(specFidelityCritic.authorSemanticMutants(anyString(), any(), any(), any(), any(), any())).thenReturn(List.of(mutant));
+        when(verifier.evaluateSemanticMutants(any(), anyString(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(List.of(new SemanticMutantOutcome(mutant, Disposition.SURVIVED_GRADED_SUITE)));
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenThrow(new IllegalStateException("provider unavailable"));
+        GenerationAttemptLoop loop = newGenerateLoop(2, 1);
+
+        loop.run();
+
+        assertThat(loop.lastMechanicallyVerifiedCandidate()).isNotNull();
+        assertThat(loop.specFidelityReport().findings()).anySatisfy(finding -> {
+            assertThat(finding.kind()).isEqualTo(SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE);
+            assertThat(finding.detail()).contains("previously proven semantic mutant", "R1", mutant.solutionPath(), counterexample.testName(), "remains unresolved");
+        });
+        assertThat(loop.terminationReason()).isEqualTo(TerminationReason.REVIEW_UNAVAILABLE);
+        verify(specFidelityCritic).authorContractWitnesses(anyString(), anyString(), anyString(), any(), any());
+        verify(baseTools, never()).enterRepairScope(any());
+    }
+
+    @Test
     void aFailedRecheckCannotEraseAProvenSemanticSurvivorOrConverge() {
         sandbox.withFile(SPEC_PATH, "## Rules\n| R1 | globally cheapest request |");
         when(workspace.extractRepository(any(), anyString(), Mockito.eq(RepositoryRole.TESTS), any()))

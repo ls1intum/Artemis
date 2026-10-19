@@ -1,12 +1,21 @@
 package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import tools.jackson.databind.json.JsonMapper;
 
@@ -19,6 +28,38 @@ class SemanticMutantAuthorTest {
     private static final String SOURCE = "package example; public class Scheduler { public int choose() { return 1; } }";
 
     private final SemanticMutantAuthor author = new SemanticMutantAuthor(mock(ReviewerClient.class), JsonMapper.builder().build());
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = { "   ", "not JSON", "{", "{}", "null", "{\"mutants\":null}" })
+    void unavailableResponsesAreNotSuccessfulEmptyProposals(String response) {
+        assertThatThrownBy(() -> author.parse(response, SPEC, Map.of("src/example/Scheduler.java", SOURCE))).isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void anExplicitEmptyArrayIsAValidProposal() {
+        assertThat(author.parse("{\"mutants\":[]}", SPEC, Map.of("src/example/Scheduler.java", SOURCE))).isEmpty();
+    }
+
+    @Test
+    void providerFailureReachesTheExecutableReviewBoundary() {
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        IllegalStateException failure = new IllegalStateException("provider unavailable");
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenThrow(failure);
+        SemanticMutantAuthor configured = new SemanticMutantAuthor(reviewer, JsonMapper.builder().build());
+
+        assertThatThrownBy(() -> configured.author(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(), null, () -> false)).isSameAs(failure);
+    }
+
+    @Test
+    void cancellationDoesNotCallTheProvider() {
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        SemanticMutantAuthor configured = new SemanticMutantAuthor(reviewer, JsonMapper.builder().build());
+
+        assertThat(configured.author(SPEC, Map.of("src/example/Scheduler.java", SOURCE), List.of(), null, () -> true)).isEmpty();
+        verifyNoInteractions(reviewer);
+    }
 
     @Test
     void parsesACompleteOneFileMutantAndCounterexample() {
