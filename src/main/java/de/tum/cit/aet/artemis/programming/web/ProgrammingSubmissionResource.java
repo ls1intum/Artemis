@@ -242,6 +242,8 @@ public class ProgrammingSubmissionResource {
      * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
      * <p>
      * Note: If a participationId does not belong to the exercise, it will be ignored!
+     * <p>
+     * The builds are queued in the background, one after the other, while the build queue has room for them. The response does not wait for that.
      *
      * @param exerciseId       to identify the programming exercise.
      * @param participationIds list of participation ids.
@@ -266,7 +268,7 @@ public class ProgrammingSubmissionResource {
         log.info("Trigger (failed) instructor build for participations {} in exercise {} with id {}", participationIds, programmingExercise.getTitle(),
                 programmingExercise.getId());
         var triggerData = programmingExerciseStudentParticipationRepository.findBuildTriggerDataByExerciseIdAndParticipationIds(exerciseId, participationIds);
-        programmingTriggerService.triggerBuildForParticipationData(triggerData, programmingExercise);
+        programmingTriggerService.triggerInstructorBuildForParticipations(triggerData, programmingExercise);
 
         return ResponseEntity.ok().build();
     }

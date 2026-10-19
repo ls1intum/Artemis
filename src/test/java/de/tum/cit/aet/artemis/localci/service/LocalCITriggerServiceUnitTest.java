@@ -9,6 +9,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
+import de.tum.cit.aet.artemis.localci.service.ci.BulkTriggerThrottle;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -50,5 +51,23 @@ class LocalCITriggerServiceUnitTest {
 
         assertThat(penalized).isGreaterThan(4);
         assertThat(regular).isEqualTo(4);
+    }
+
+    @Test
+    void createBulkTriggerThrottle_withALimitOfZero_neverWaits() {
+        // 0 is how an operator switches the wait off; it is also what a plain instance without configuration holds.
+        assertThat(service.createBulkTriggerThrottle()).isSameAs(BulkTriggerThrottle.NONE);
+    }
+
+    @Test
+    void createBulkTriggerThrottle_withALimit_createsAThrottleOfItsOwnForEveryRun() {
+        ReflectionTestUtils.setField(service, "bulkTriggerMaxQueuedJobsPerBuildSlot", 2);
+        ReflectionTestUtils.setField(service, "bulkTriggerMaxWaitMinutes", 180);
+
+        var first = service.createBulkTriggerThrottle();
+        var second = service.createBulkTriggerThrottle();
+
+        assertThat(first).isInstanceOf(LocalCIBulkTriggerThrottle.class).isNotSameAs(BulkTriggerThrottle.NONE);
+        assertThat(second).as("a throttle remembers what its run already waited, so runs must not share one").isNotSameAs(first);
     }
 }

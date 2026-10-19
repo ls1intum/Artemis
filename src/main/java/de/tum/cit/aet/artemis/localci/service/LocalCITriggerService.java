@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.localci.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.localci.domain.BuildJob;
 import de.tum.cit.aet.artemis.localci.exception.LocalCIException;
 import de.tum.cit.aet.artemis.localci.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.localci.service.ci.BulkTriggerThrottle;
 import de.tum.cit.aet.artemis.localci.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.localci.service.ci.SharedBuildTriggerData;
 import de.tum.cit.aet.artemis.localvc.service.GitService;
@@ -79,6 +82,18 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     static final String RESTRICTED_BUILD_PREFIX = "hyperion-sync-";
 
     private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
+
+    /**
+     * How many queued jobs each build slot is allowed to have before a bulk trigger waits, see {@link LocalCIBulkTriggerThrottle}. 0 disables the wait.
+     */
+    @Value("${artemis.continuous-integration.bulk-trigger.max-queued-jobs-per-build-slot:2}")
+    private int bulkTriggerMaxQueuedJobsPerBuildSlot;
+
+    /**
+     * The longest a single bulk trigger waits for room in the queue in total, after which it queues the rest without waiting.
+     */
+    @Value("${artemis.continuous-integration.bulk-trigger.max-wait-minutes:180}")
+    private int bulkTriggerMaxWaitMinutes;
 
     private final DistributedDataAccessService distributedDataAccessService;
 
@@ -175,6 +190,20 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     @Override
     public SharedBuildTriggerData prepareSharedTriggerData(ProgrammingExercise exercise) {
         return SharedBuildTriggerData.of(getCommitHashOrNull(exercise.getVcsTestRepositoryUri(), "test repository"), loadBuildStatistics(exercise), loadBuildConfig(exercise));
+    }
+
+    /**
+     * Creates the throttle that keeps one bulk run from queueing more builds than the build agents can work off, see
+     * {@link LocalCIBulkTriggerThrottle}. A limit of 0 jobs per build slot switches the throttle off.
+     *
+     * @return a throttle for one run, or one that never waits if the throttle is switched off
+     */
+    @Override
+    public BulkTriggerThrottle createBulkTriggerThrottle() {
+        if (bulkTriggerMaxQueuedJobsPerBuildSlot <= 0) {
+            return BulkTriggerThrottle.NONE;
+        }
+        return new LocalCIBulkTriggerThrottle(distributedDataAccessService, bulkTriggerMaxQueuedJobsPerBuildSlot, Duration.ofMinutes(Math.max(0, bulkTriggerMaxWaitMinutes)));
     }
 
     /**
