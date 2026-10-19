@@ -83,77 +83,39 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
     },
 ];
 
+function featureCard(id: string, imageName = id, downloadLinks?: FeatureCardDownloadLink[]): FeatureCard {
+    return {
+        categoryKey: `landing.features.cards.${id}.category`,
+        descriptionKey: `landing.features.cards.${id}.description`,
+        imageSrc: `content/images/landing/${imageName}.webp`,
+        imageSrcDark: `content/images/landing/${imageName}-dark.webp`,
+        imageAltKey: `landing.features.cards.${id}.imageAlt`,
+        downloadLinks,
+    };
+}
+
 export const FEATURE_CARDS: FeatureCard[] = [
-    {
-        categoryKey: 'landing.features.cards.assessment.category',
-        descriptionKey: 'landing.features.cards.assessment.description',
-        imageSrc: 'content/images/landing/assessment.webp',
-        imageSrcDark: 'content/images/landing/assessment-dark.webp',
-        imageAltKey: 'landing.features.cards.assessment.imageAlt',
-    },
-    {
-        categoryKey: 'landing.features.cards.tutorials.category',
-        descriptionKey: 'landing.features.cards.tutorials.description',
-        imageSrc: 'content/images/landing/tutorials.webp',
-        imageSrcDark: 'content/images/landing/tutorials-dark.webp',
-        imageAltKey: 'landing.features.cards.tutorials.imageAlt',
-    },
-    {
-        categoryKey: 'landing.features.cards.lectures.category',
-        descriptionKey: 'landing.features.cards.lectures.description',
-        imageSrc: 'content/images/landing/lectures.webp',
-        imageSrcDark: 'content/images/landing/lectures-dark.webp',
-        imageAltKey: 'landing.features.cards.lectures.imageAlt',
-    },
-    {
-        categoryKey: 'landing.features.cards.examMode.category',
-        descriptionKey: 'landing.features.cards.examMode.description',
-        imageSrc: 'content/images/landing/exam-mode.webp',
-        imageSrcDark: 'content/images/landing/exam-mode-dark.webp',
-        imageAltKey: 'landing.features.cards.examMode.imageAlt',
-    },
-    {
-        categoryKey: 'landing.features.cards.communication.category',
-        descriptionKey: 'landing.features.cards.communication.description',
-        imageSrc: 'content/images/landing/communication.webp',
-        imageSrcDark: 'content/images/landing/communication-dark.webp',
-        imageAltKey: 'landing.features.cards.communication.imageAlt',
-    },
-    {
-        categoryKey: 'landing.features.cards.faq.category',
-        descriptionKey: 'landing.features.cards.faq.description',
-        imageSrc: 'content/images/landing/faq-feature.webp',
-        imageSrcDark: 'content/images/landing/faq-feature-dark.webp',
-        imageAltKey: 'landing.features.cards.faq.imageAlt',
-    },
-    {
-        categoryKey: 'landing.features.cards.iris.category',
-        descriptionKey: 'landing.features.cards.iris.description',
-        imageSrc: 'content/images/landing/iris.webp',
-        imageSrcDark: 'content/images/landing/iris-dark.webp',
-        imageAltKey: 'landing.features.cards.iris.imageAlt',
-    },
-    {
-        categoryKey: 'landing.features.cards.mobileApps.category',
-        descriptionKey: 'landing.features.cards.mobileApps.description',
-        imageSrc: 'content/images/landing/mobile-phone.webp',
-        imageSrcDark: 'content/images/landing/mobile-phone-dark.webp',
-        imageAltKey: 'landing.features.cards.mobileApps.imageAlt',
-        downloadLinks: [
-            {
-                href: 'https://apps.apple.com/app/artemis-learning/id6478965616',
-                badgeSrc: 'content/images/landing/badges/app-store-badge.svg',
-                badgeSrcDark: 'content/images/landing/badges/app-store-badge-dark.svg',
-                altKey: 'landing.features.cards.mobileApps.appStoreAlt',
-            },
-            {
-                href: 'https://play.google.com/store/apps/details?id=de.tum.cit.aet.artemis',
-                badgeSrc: 'content/images/landing/badges/google-play-badge.svg',
-                badgeSrcDark: 'content/images/landing/badges/google-play-badge-dark.svg',
-                altKey: 'landing.features.cards.mobileApps.playStoreAlt',
-            },
-        ],
-    },
+    featureCard('assessment'),
+    featureCard('tutorials'),
+    featureCard('lectures'),
+    featureCard('examMode', 'exam-mode'),
+    featureCard('communication'),
+    featureCard('faq', 'faq-feature'),
+    featureCard('iris'),
+    featureCard('mobileApps', 'mobile-phone', [
+        {
+            href: 'https://apps.apple.com/app/artemis-learning/id6478965616',
+            badgeSrc: 'content/images/landing/badges/app-store-badge.svg',
+            badgeSrcDark: 'content/images/landing/badges/app-store-badge-dark.svg',
+            altKey: 'landing.features.cards.mobileApps.appStoreAlt',
+        },
+        {
+            href: 'https://play.google.com/store/apps/details?id=de.tum.cit.aet.artemis',
+            badgeSrc: 'content/images/landing/badges/google-play-badge.svg',
+            badgeSrcDark: 'content/images/landing/badges/google-play-badge-dark.svg',
+            altKey: 'landing.features.cards.mobileApps.playStoreAlt',
+        },
+    ]),
 ];
 
 export const FAQ_ITEMS: FaqItem[] = [
@@ -316,44 +278,39 @@ export const UNIVERSITY_LOGOS: UniversityLogo[] = [
     { name: 'Maria-Theresia-Gymnasium', file: 'content/images/landing/user-logos/maria-theresia.webp', width: 57 },
 ];
 
+function footerLinkGroup(id: string, links: [string, string][]): FooterLinkGroup {
+    return {
+        titleKey: `landing.footer.links.${id}.title`,
+        links: links.map(([label, href]) => ({ labelKey: `landing.footer.links.${id}.${label}`, href })),
+    };
+}
+
 export const FOOTER_LINK_GROUPS: FooterLinkGroup[] = [
-    {
-        titleKey: 'landing.footer.links.features.title',
-        links: [
-            { labelKey: 'landing.footer.links.features.exercises', href: 'https://docs.artemis.tum.de/instructor/exercises/intro' },
-            { labelKey: 'landing.footer.links.features.lectures', href: 'https://docs.artemis.tum.de/student/learning-content/lectures' },
-            { labelKey: 'landing.footer.links.features.communication', href: 'https://docs.artemis.tum.de/student/communication-support/communication' },
-            { labelKey: 'landing.footer.links.features.adaptiveLearning', href: 'https://docs.artemis.tum.de/student/progress-analytics/adaptive-learning' },
-            { labelKey: 'landing.footer.links.features.iris', href: 'https://ls1intum.github.io/edutelligence/iris/' },
-        ],
-    },
-    {
-        titleKey: 'landing.footer.links.instructors.title',
-        links: [
-            { labelKey: 'landing.footer.links.instructors.examMode', href: 'https://docs.artemis.tum.de/instructor/exams/participation-checker' },
-            { labelKey: 'landing.footer.links.instructors.assessment', href: 'https://docs.artemis.tum.de/instructor/assessment-grading/assessment' },
-            { labelKey: 'landing.footer.links.instructors.tutorials', href: 'https://docs.artemis.tum.de/instructor/communication-support/tutorial-groups' },
-            { labelKey: 'landing.footer.links.instructors.faq', href: 'https://docs.artemis.tum.de/instructor/communication-support/faq' },
-        ],
-    },
-    {
-        titleKey: 'landing.footer.links.project.title',
-        links: [
-            { labelKey: 'landing.footer.links.project.about', href: 'https://docs.artemis.tum.de/about' },
-            { labelKey: 'landing.footer.links.project.try', href: 'https://docs.artemis.tum.de/about/try' },
-            { labelKey: 'landing.footer.links.project.trust', href: 'https://docs.artemis.tum.de/about/trust' },
-            { labelKey: 'landing.footer.links.project.governance', href: 'https://docs.artemis.tum.de/about/governance' },
-            { labelKey: 'landing.footer.links.project.roadmap', href: 'https://docs.artemis.tum.de/about/roadmap' },
-            { labelKey: 'landing.footer.links.project.adoption', href: 'https://docs.artemis.tum.de/about/adoption' },
-        ],
-    },
-    {
-        titleKey: 'landing.footer.links.resources.title',
-        links: [
-            { labelKey: 'landing.footer.links.resources.documentation', href: 'https://docs.artemis.tum.de' },
-            { labelKey: 'landing.footer.links.resources.publication', href: 'https://docs.artemis.tum.de/publications' },
-            { labelKey: 'landing.footer.links.resources.github', href: 'https://github.com/ls1intum/Artemis' },
-            { labelKey: 'landing.footer.links.resources.security', href: 'https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md' },
-        ],
-    },
+    footerLinkGroup('features', [
+        ['exercises', 'https://docs.artemis.tum.de/instructor/exercises/intro'],
+        ['lectures', 'https://docs.artemis.tum.de/student/learning-content/lectures'],
+        ['communication', 'https://docs.artemis.tum.de/student/communication-support/communication'],
+        ['adaptiveLearning', 'https://docs.artemis.tum.de/student/progress-analytics/adaptive-learning'],
+        ['iris', 'https://ls1intum.github.io/edutelligence/iris/'],
+    ]),
+    footerLinkGroup('instructors', [
+        ['examMode', 'https://docs.artemis.tum.de/instructor/exams/participation-checker'],
+        ['assessment', 'https://docs.artemis.tum.de/instructor/assessment-grading/assessment'],
+        ['tutorials', 'https://docs.artemis.tum.de/instructor/communication-support/tutorial-groups'],
+        ['faq', 'https://docs.artemis.tum.de/instructor/communication-support/faq'],
+    ]),
+    footerLinkGroup('project', [
+        ['about', 'https://docs.artemis.tum.de/about'],
+        ['try', 'https://docs.artemis.tum.de/about/try'],
+        ['trust', 'https://docs.artemis.tum.de/about/trust'],
+        ['governance', 'https://docs.artemis.tum.de/about/governance'],
+        ['roadmap', 'https://docs.artemis.tum.de/about/roadmap'],
+        ['adoption', 'https://docs.artemis.tum.de/about/adoption'],
+    ]),
+    footerLinkGroup('resources', [
+        ['documentation', 'https://docs.artemis.tum.de'],
+        ['publication', 'https://docs.artemis.tum.de/publications'],
+        ['github', 'https://github.com/ls1intum/Artemis'],
+        ['security', 'https://github.com/ls1intum/Artemis/blob/develop/.github/SECURITY.md'],
+    ]),
 ];

@@ -67,20 +67,7 @@
         <div class="right-col">
             @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'releaseDate' && nextRelevantDateLabel() !== 'startDate')) {
             } @else {
-                @if (nextRelevantDate() && (!exam() || !isTestRun())) {
-                    <div class="fw-500">
-                        {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() | artemisTranslate }}
-                        <span
-                            [ngClass]="nextRelevantDateStatusBadge()"
-                            class="badge"
-                            [ngbTooltip]="
-                                'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate }
-                            "
-                        >
-                            {{ nextRelevantDate() | artemisTimeAgo }}
-                        </span>
-                    </div>
-                }
+                <ng-container [ngTemplateOutlet]="nextRelevantDateBadge" />
                 @if (exercise().presentationScoreEnabled) {
                     <div>
                         @if (effectiveCourse()?.presentationScore) {
@@ -119,20 +106,7 @@
             }
             @if (!nextRelevantDateLabel() || (nextRelevantDateLabel() !== 'assessmentDue' && nextRelevantDateLabel() !== 'complaintDue')) {
             } @else {
-                @if (nextRelevantDate() && (!exam() || !isTestRun())) {
-                    <div class="fw-500">
-                        {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() | artemisTranslate }}
-                        <span
-                            [ngClass]="nextRelevantDateStatusBadge()"
-                            class="badge"
-                            [ngbTooltip]="
-                                'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate }
-                            "
-                        >
-                            {{ nextRelevantDate() | artemisTimeAgo }}
-                        </span>
-                    </div>
-                }
+                <ng-container [ngTemplateOutlet]="nextRelevantDateBadge" />
                 @if (exercise().presentationScoreEnabled) {
                     <div>
                         @if (effectiveCourse()?.presentationScore) {
@@ -171,3 +145,18 @@
         </div>
     </div>
 }
+
+<ng-template #nextRelevantDateBadge>
+    @if (nextRelevantDate() && (!exam() || !isTestRun())) {
+        <div class="fw-500">
+            {{ 'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() | artemisTranslate }}
+            <span
+                [ngClass]="nextRelevantDateStatusBadge()"
+                class="badge"
+                [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.' + nextRelevantDateLabel() + 'Tooltip' | artemisTranslate: { date: nextRelevantDate() | artemisDate }"
+            >
+                {{ nextRelevantDate() | artemisTimeAgo }}
+            </span>
+        </div>
+    }
+</ng-template>

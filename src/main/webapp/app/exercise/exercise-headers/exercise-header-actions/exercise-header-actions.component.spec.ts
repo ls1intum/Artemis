@@ -1,3 +1,4 @@
+import { FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 import { describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
@@ -77,6 +78,7 @@ describe('ExerciseHeaderActionsComponent', () => {
         TestBed.configureTestingModule({
             imports: [ExerciseHeaderActionsComponent],
             providers: [
+                MockProvider(FeatureToggleService, { getFeatureTogglesActive: () => of(true) }),
                 provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(QuizExerciseService, { getStatus: () => quizStatus as QuizStatus }),
@@ -795,6 +797,26 @@ describe('ExerciseHeaderActionsComponent', () => {
 
             expect(fixture.componentInstance.shouldDisplayIDEButtons()).toBe(true);
         });
+    });
+
+    it('keeps only the rightmost resume action primary as practice availability changes', () => {
+        const exercise = new ProgrammingExercise(undefined, undefined);
+        exercise.id = 7;
+        exercise.dueDate = dayjs().subtract(1, 'day');
+        const graded = { id: 10, testRun: false, initializationState: InitializationState.INACTIVE, individualDueDate: dayjs().add(1, 'day') } as StudentParticipation;
+        const practice = { id: 20, testRun: true, initializationState: InitializationState.INACTIVE } as StudentParticipation;
+        exercise.studentParticipations = [graded, practice];
+        createComponent(exercise);
+        const gradedButton = fixture.nativeElement.querySelector('#resume-exercise-7');
+        const practiceButton = fixture.nativeElement.querySelector('#resume-practice-exercise-7');
+        expect(gradedButton.classList.contains('btn-secondary')).toBe(true);
+        expect(practiceButton.classList.contains('btn-primary')).toBe(true);
+
+        const updated = Object.assign(new ProgrammingExercise(undefined, undefined), exercise, { studentParticipations: [graded] });
+        fixture.componentRef.setInput('exercise', updated);
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#resume-practice-exercise-7')).toBeNull();
+        expect(fixture.nativeElement.querySelector('#resume-exercise-7').classList.contains('btn-primary')).toBe(true);
     });
 
     describe('quiz action', () => {

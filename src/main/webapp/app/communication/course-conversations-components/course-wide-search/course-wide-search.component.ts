@@ -1,3 +1,4 @@
+import { PostPageRequestState } from 'app/communication/course-conversations-components/post-page-request-state';
 import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewEncapsulation, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown, faLongArrowAltUp, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -66,9 +67,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     readonly totalNumberOfPosts = signal(0);
     readonly posts = signal<Post[]>([]);
     private allConversationIds: number[] = [];
-    private pendingPageScrollDistance: number | undefined;
-    private preserveScrollOnNextPage = false;
-    private postRequestId = 0;
+    private readonly postPageRequest = new PostPageRequestState();
     private initialScrollPositioned = false;
     private scrollFrame: number | undefined;
     private resizeObserver?: ResizeObserver;
@@ -107,7 +106,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     };
     /** Keep the newest result visible through delayed layout changes until the reader takes over. */
     private readonly onContentLoaded = () => {
-        if (this.holdsEnd && !this.isFetchingPosts() && this.pendingPageScrollDistance === undefined) {
+        if (this.holdsEnd && !this.isFetchingPosts() && this.postPageRequest.pendingScrollDistance === undefined) {
             this.scrollToBottomOfMessages();
         }
     };
@@ -143,7 +142,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     /** Invalidate pending results and remove layout observers, frames and input listeners owned by this view. */
     ngOnDestroy() {
-        this.postRequestId++;
+        this.postPageRequest.invalidate();
         this.resizeObserver?.disconnect();
         if (this.scrollFrame !== undefined) window.cancelAnimationFrame(this.scrollFrame);
         const container = this.content()?.nativeElement;
@@ -183,12 +182,12 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             if (!element) return;
             // Initial positioning and an end the reader has not released take precedence over automatic prefetch.
             if (!this.initialScrollPositioned || this.holdsEnd) {
-                this.pendingPageScrollDistance = undefined;
+                this.postPageRequest.pendingScrollDistance = undefined;
                 this.scrollToBottomOfMessages();
                 this.holdsEnd = true;
-            } else if (this.pendingPageScrollDistance !== undefined) {
-                element.scrollTop = element.scrollHeight - this.pendingPageScrollDistance;
-                this.pendingPageScrollDistance = undefined;
+            } else if (this.postPageRequest.pendingScrollDistance !== undefined) {
+                element.scrollTop = element.scrollHeight - this.postPageRequest.pendingScrollDistance;
+                this.postPageRequest.pendingScrollDistance = undefined;
             }
             this.initialScrollPositioned = true;
         });
@@ -201,7 +200,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     fetchNextPage() {
         if (this.isFetchingPosts() || this.posts().length >= this.totalNumberOfPosts()) return;
-        this.preserveScrollOnNextPage = true;
+        this.postPageRequest.preserveScrollOnNextPage = true;
         const previousPage = this.page;
         this.page += 1;
         this.fetchPosts(false, previousPage);
@@ -211,28 +210,23 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.refreshConversationPostContextFilter();
         if (this.currentPostContextFilter) {
             this.isFetchingPosts.set(true);
-            const requestId = ++this.postRequestId;
-            this.communicationService.getFilteredPosts(this.currentPostContextFilter, forceUpdate, undefined, {
-                beforeApply: () => {
-                    if (requestId !== this.postRequestId || !this.preserveScrollOnNextPage) return;
-                    // Capture only for the requested response, after any reader movement and intervening live updates.
-                    const element = this.content()?.nativeElement;
-                    this.pendingPageScrollDistance = element ? element.scrollHeight - element.scrollTop : undefined;
-                    this.preserveScrollOnNextPage = false;
-                },
-                complete: (applied) => {
-                    if (requestId !== this.postRequestId) return;
-                    this.isFetchingPosts.set(false);
-                    this.preserveScrollOnNextPage = false;
-                    if (!applied) {
-                        this.page = previousPage;
-                        this.pendingPageScrollDistance = undefined;
-                    }
-                    if (applied) {
-                        this.handleScrollOnNewMessage();
-                    }
-                },
-            });
+            this.communicationService.getFilteredPosts(
+                this.currentPostContextFilter,
+                forceUpdate,
+                undefined,
+                this.postPageRequest.callbacks(
+                    () => this.content()?.nativeElement,
+                    (applied) => {
+                        this.isFetchingPosts.set(false);
+                        if (!applied) {
+                            this.page = previousPage;
+                        }
+                        if (applied) {
+                            this.handleScrollOnNewMessage();
+                        }
+                    },
+                ),
+            );
         }
     }
 
@@ -274,8 +268,8 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.scrollFrame = undefined;
         this.page = 1;
         this.initialScrollPositioned = false;
-        this.pendingPageScrollDistance = undefined;
-        this.preserveScrollOnNextPage = false;
+        this.postPageRequest.pendingScrollDistance = undefined;
+        this.postPageRequest.preserveScrollOnNextPage = false;
         this.fetchPosts(true);
     }
 

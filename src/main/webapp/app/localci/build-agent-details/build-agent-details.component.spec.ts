@@ -176,7 +176,6 @@ describe('BuildAgentDetailsComponent', () => {
         getFinishedBuildJobs: vi.fn(),
         getRunningBuildJobs: vi.fn(),
         cancelBuildJob: vi.fn(),
-        cancelAllRunningBuildJobsForAgent: vi.fn(),
     };
 
     let agentTopicSubject: Subject<BuildAgentInformation>;
@@ -222,7 +221,6 @@ describe('BuildAgentDetailsComponent', () => {
 
         mockBuildQueueService.getRunningBuildJobs.mockReturnValue(of(mockRunningJobs1));
         mockBuildQueueService.cancelBuildJob.mockReturnValue(of({}));
-        mockBuildQueueService.cancelAllRunningBuildJobsForAgent.mockReturnValue(of({}));
         mockBuildQueueService.getFinishedBuildJobs.mockReturnValue(of(mockFinishedJobsResponse));
     });
 
@@ -271,6 +269,21 @@ describe('BuildAgentDetailsComponent', () => {
         expect(runningUnsubscribeSpy).toHaveBeenCalled();
     });
 
+    it('does not issue a pending search request after the page is destroyed', () => {
+        vi.useFakeTimers();
+        try {
+            fixture.changeDetectorRef.detectChanges();
+            vi.clearAllMocks();
+            component.searchTerm = 'pending search';
+            component.triggerLoadFinishedJobs();
+            component.ngOnDestroy();
+            vi.advanceTimersByTime(150);
+            expect(mockBuildQueueService.getFinishedBuildJobs).not.toHaveBeenCalled();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
     it('should cancel a build job', () => {
         const buildJob = mockRunningJobs1[0];
         const spy = vi.spyOn(component, 'cancelBuildJob');
@@ -281,16 +294,6 @@ describe('BuildAgentDetailsComponent', () => {
 
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(buildJob.id!);
-    });
-
-    it('should cancel all build jobs of a build agent', () => {
-        const spy = vi.spyOn(component, 'cancelAllBuildJobs');
-
-        component.ngOnInit();
-        fixture.changeDetectorRef.detectChanges();
-        component.cancelAllBuildJobs();
-
-        expect(spy).toHaveBeenCalledOnce();
     });
 
     it('should show an alert when pausing build agent without a name', () => {
@@ -589,14 +592,6 @@ describe('BuildAgentDetailsComponent', () => {
         component.onPageChange({} as any);
 
         expect(component.currentPage).toBe(initialPage);
-    });
-
-    it('should not cancel all build jobs if agent name is missing', () => {
-        component.buildAgent.set({ ...mockBuildAgent, buildAgent: undefined });
-
-        component.cancelAllBuildJobs();
-
-        expect(mockBuildQueueService.cancelAllRunningBuildJobsForAgent).not.toHaveBeenCalled();
     });
 
     it('should update running jobs when websocket receives jobs for this agent', () => {

@@ -1,3 +1,4 @@
+import { QuestionReevaluationActionsComponent } from '../question-reevaluation-actions/question-reevaluation-actions.component';
 import {
     AfterViewInit,
     Component,
@@ -25,7 +26,7 @@ import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solut
 import { QuizQuestion, ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { markdownForHtml } from 'app/foundation/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/foundation/util/markdown.util';
-import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faBan, faBars, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
 import { MAX_QUIZ_QUESTION_LENGTH_THRESHOLD, MAX_QUIZ_QUESTION_POINTS, MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/foundation/constants/input.constants';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/editor/markdown-editor/monaco/markdown-editor-monaco.component';
 import { BoldAction } from 'app/editor/monaco-editor/model/actions/bold.action';
@@ -61,6 +62,7 @@ import { deepClone } from 'app/foundation/util/deep-clone.util';
     styleUrls: ['./short-answer-question-edit.component.scss', '../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
+        QuestionReevaluationActionsComponent,
         FaIconComponent,
         FormsModule,
         TranslateDirective,
@@ -142,8 +144,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, AfterViewInit, 
     faBan = faBan;
     faTrash = faTrash;
     faUndo = faUndo;
-    faChevronUp = faChevronUp;
-    faChevronDown = faChevronDown;
     faBars = faBars;
     faUnlink = faUnlink;
     faAngleRight = faAngleRight;

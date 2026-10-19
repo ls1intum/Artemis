@@ -1019,23 +1019,7 @@ public class ParticipationService {
             }
             return teamParticipation;
         }
-        if (exercise.isTestExamExercise()) {
-            return studentParticipationRepository.findLatestSubmitTargetByExerciseIdAndStudentId(exercise.getId(), student.getId());
-        }
-        Optional<StudentParticipationSubmitTargetDTO> gradedParticipation = studentParticipationRepository.findSubmitTargetByExerciseIdAndStudentIdAndTestRun(exercise.getId(),
-                student.getId(), false);
-        ZonedDateTime effectiveDueDate = gradedParticipation.map(StudentParticipationSubmitTargetDTO::individualDueDate).orElse(exercise.getDueDate());
-        if (effectiveDueDate != null && ZonedDateTime.now().isAfter(effectiveDueDate)) {
-            Optional<StudentParticipationSubmitTargetDTO> practiceParticipation = studentParticipationRepository
-                    .findSubmitTargetByExerciseIdAndStudentIdAndTestRun(exercise.getId(), student.getId(), true);
-            if (practiceParticipation.isPresent()) {
-                return practiceParticipation;
-            }
-        }
-        if (gradedParticipation.isEmpty() && exercise.isExamExercise() && !exercise.isTestExamExercise()) {
-            return studentParticipationRepository.findLatestSubmitTargetByExerciseIdAndStudentId(exercise.getId(), student.getId());
-        }
-        return gradedParticipation;
+        return findSubmitTargetOfStudent(exercise, student);
     }
 
     /**

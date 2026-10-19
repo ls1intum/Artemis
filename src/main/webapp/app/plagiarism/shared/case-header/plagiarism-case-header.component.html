@@ -1,0 +1,22 @@
+<div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center">
+    <h1 class="h2" jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></h1>
+</div>
+<div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center">
+    <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase()" class="my-2" />
+</div>
+<div class="col-12 col-lg-6 col-xl-3 d-flex flex-column">
+    <p class="mb-1 text-truncate">
+        <fa-icon [icon]="faUser" />
+        {{ plagiarismCase().student!.name }} ({{ plagiarismCase().student!.login }})
+    </p>
+    @if (plagiarismCase()?.exercise) {
+        <p class="mb-0 text-truncate">
+            @if (plagiarismCase().exercise!.type!) {
+                <fa-icon [icon]="getIcon(plagiarismCase().exercise!.type!)" />
+            }
+            {{ plagiarismCase().exercise!.title! }}
+        </p>
+    }
+</div>
+
+<ng-content />

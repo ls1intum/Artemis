@@ -375,24 +375,7 @@ public class PyrisConnectorService {
      * @return whether Pyris accepted the update, false if it does not hold the lecture unit
      */
     public boolean executeLectureMetadataWebhook(PyrisLectureUnitMetadataWebhookDTO dto) {
-        var endpoint = "/api/v1/webhooks/lectures/metadata";
-        try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, dto, Void.class);
-            return true;
-        }
-        catch (HttpStatusCodeException e) {
-            if (reportsLectureUnitNotIngested(e)) {
-                // See executeLectureVisibilityWebhook: a unit Pyris never ingested has no metadata to update either.
-                log.info("Pyris does not hold lecture unit {}, so its metadata has nothing to update", dto.lectureUnitId());
-                return false;
-            }
-            log.error("Failed to send lecture unit metadata {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
-            throw toIrisException(e);
-        }
-        catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to send lecture unit metadata {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
-            throw new PyrisConnectorException("Could not send lecture metadata to Pyris");
-        }
+        return executeLectureUpdateWebhook("metadata", dto.lectureUnitId(), dto);
     }
 
     /**
@@ -402,24 +385,26 @@ public class PyrisConnectorService {
      * @return whether Pyris accepted the update, false if it does not hold the lecture unit
      */
     public boolean executeLectureVisibilityWebhook(PyrisLectureUnitVisibilityWebhookDTO dto) {
-        var endpoint = "/api/v1/webhooks/lectures/visibility";
+        return executeLectureUpdateWebhook("visibility", dto.lectureUnitId(), dto);
+    }
+
+    /** Metadata and visibility updates have the same not-ingested outcome and transport failure semantics. */
+    private boolean executeLectureUpdateWebhook(String operation, Long lectureUnitId, Object dto) {
         try {
-            restTemplate.postForEntity(pyrisUrl + endpoint, dto, Void.class);
+            restTemplate.postForEntity(pyrisUrl + "/api/v1/webhooks/lectures/" + operation, dto, Void.class);
             return true;
         }
         catch (HttpStatusCodeException e) {
             if (reportsLectureUnitNotIngested(e)) {
-                // Pyris answers 404 for a unit it never ingested. There is no visibility to update, and a retry cannot
-                // create one, so this is reported back as an outcome rather than raised as a failure.
-                log.info("Pyris does not hold lecture unit {}, so its visibility has nothing to update", dto.lectureUnitId());
+                log.info("Pyris does not hold lecture unit {}, so its {} has nothing to update", lectureUnitId, operation);
                 return false;
             }
-            log.error("Failed to send lecture unit visibility {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
+            log.error("Failed to send lecture unit {} {} to Pyris: {}", operation, lectureUnitId, e.getMessage());
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
-            log.error("Failed to send lecture unit visibility {} to Pyris: {}", dto.lectureUnitId(), e.getMessage());
-            throw new PyrisConnectorException("Could not send lecture visibility to Pyris");
+            log.error("Failed to send lecture unit {} {} to Pyris: {}", operation, lectureUnitId, e.getMessage());
+            throw new PyrisConnectorException("Could not send lecture " + operation + " to Pyris");
         }
     }
 
