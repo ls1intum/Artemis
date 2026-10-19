@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -23,10 +24,14 @@ import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationStartedEvent;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationTokenUsageService;
 import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.orchestration.GenerationVariantPreparation;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationRequestService;
+import de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker.GenerationSeedService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -34,7 +39,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 @WithMockUser(username = "hypvariantdraftinstructor1", roles = "INSTRUCTOR")
 class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
-    @Autowired
     private GenerationVariantDraftService drafts;
 
     @Autowired
@@ -53,7 +57,15 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
     private de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService imports;
 
     @Autowired
-    private de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.profile.GenerationCapabilityService capabilities;
+    private GenerationRequestService generationRequests;
+
+    @Autowired
+    private AuxiliaryRepositoryRepository auxiliaries;
+
+    @Autowired
+    private GenerationJobService generationJobs;
+
+    private GenerationCapabilityService capabilities;
 
     @Autowired
     private tools.jackson.databind.json.JsonMapper mapper;
@@ -75,6 +87,13 @@ class GenerationVariantDraftServicePersistenceTest extends AbstractSpringIntegra
         configuration.setSequentialTestRuns(false);
         configuration.setBranch("teaching");
         configurations.save(configuration);
+        // This fixture exercises real database imports without creating Git repositories.
+        var seeds = org.mockito.Mockito.mock(GenerationSeedService.class);
+        org.mockito.Mockito.when(seeds.readTestHarness(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(Map.of("build.gradle", "testImplementation 'de.tum.cit.ase:ares:2.2.1'\napply from: 'gradle/AresReservedPackages.gradle'",
+                        "gradle/AresReservedPackages.gradle", "de/tum/cit/ase/ares/** org/junit/**", "SecurityPolicy.yaml", "trustedPackages: []"));
+        capabilities = new GenerationCapabilityService(generationRequests, auxiliaries, generationJobs, workerRegistry, seeds);
+        drafts = new GenerationVariantDraftService(programmingExerciseRepository, configurations, imports, capabilities, teamConfigurations, gitServiceSpy, mapper, defaultBranch);
     }
 
     @Test
