@@ -254,16 +254,25 @@ export class CourseConversationsService implements OnDestroy {
     }
 
     private updateConversationAsRead() {
-        // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation if not marked as unread
         if (this.activeConversation && !this.isMarkedAsUnread) {
-            this.activeConversation.lastReadDate = dayjs();
+            const lastReadDate = dayjs();
+            this.activeConversation.lastReadDate = lastReadDate;
+            const cachedConversation = this.conversationsOfUser.find((conversation) => conversation.id === this.activeConversation!.id);
+            if (cachedConversation) {
+                cachedConversation.lastReadDate = lastReadDate;
+            }
+            this.clearActiveConversationUnreadBadge();
+        }
+    }
+
+    private clearActiveConversationUnreadBadge() {
+        if (this.activeConversation && !this.isMarkedAsUnread) {
             this.activeConversation.unreadMessagesCount = 0;
             this.activeConversation.hasUnreadMessage = false;
-            const indexOfConversationToUpdate = this.conversationsOfUser.findIndex((conversation) => conversation.id === this.activeConversation!.id);
-            if (indexOfConversationToUpdate !== -1) {
-                this.conversationsOfUser[indexOfConversationToUpdate].lastReadDate = dayjs();
-                this.conversationsOfUser[indexOfConversationToUpdate].unreadMessagesCount = 0;
-                this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = false;
+            const cachedConversation = this.conversationsOfUser.find((conversation) => conversation.id === this.activeConversation!.id);
+            if (cachedConversation) {
+                cachedConversation.unreadMessagesCount = 0;
+                cachedConversation.hasUnreadMessage = false;
                 this._conversationsOfUser$.next(this.conversationsOfUser);
             }
         }
@@ -493,9 +502,9 @@ export class CourseConversationsService implements OnDestroy {
     private subscribeToRouteChange() {
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
-                // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation
+                // Keep the opening timestamp until messages arrive: it locates the first unread post.
                 if (this.isReadingConversation(this.activeConversation?.id) && !this.isMarkedAsUnread) {
-                    this.updateConversationAsRead();
+                    this.clearActiveConversationUnreadBadge();
                     this.hasUnreadMessagesCheck();
                 }
             }

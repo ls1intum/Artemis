@@ -8,6 +8,9 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { SEED_COURSES } from '../../support/seedData';
 import { RELOAD_RENDER_TIMEOUT } from '../../support/timeouts';
 import { Commands } from '../../support/commands';
+import { Course } from 'app/course/shared/entities/course.model';
+import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
+import { CommunicationAPIRequests } from '../../support/requests/CommunicationAPIRequests';
 
 // Use pre-seeded courses — no course creation needed
 const readOnlyCourse = { id: SEED_COURSES.channel1.id };
@@ -261,6 +264,83 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             await courseMessages.checkMessage(message.id!, messageText);
             await courseMessages.deleteMessage(message.id!);
             await expect(courseMessages.getSinglePost(message.id!)).not.toBeVisible();
+        });
+    });
+
+    test.describe('Unread conversation navigation', () => {
+        let course: Course | undefined;
+
+        test.afterEach(async ({ courseManagementAPIRequests }) => {
+            await courseManagementAPIRequests.deleteCourse(course, admin);
+            course = undefined;
+        });
+
+        test('keeps the New separator when messages arrive after channel navigation completes', async ({ browser, page, login, communicationAPIRequests, courseMessages }) => {
+            const authorContext = await browser.newContext({ baseURL: test.info().project.use.baseURL });
+            try {
+                const authorPage = await authorContext.newPage();
+                await Commands.login(authorPage, admin);
+                const courses = new CourseManagementAPIRequests(authorPage);
+                const messages = new CommunicationAPIRequests(authorPage);
+                course = await courses.createCourse();
+                await courses.addStudentToCourse(course, studentOne);
+                const target = await messages.createCourseMessageChannel(course, 'unread-navigation', 'Unread marker regression', false, true);
+                const other = await messages.createCourseMessageChannel(course, 'other-navigation', 'Navigation starting point', false, true);
+                await messages.joinUserIntoChannel(course, target.id!, studentOne);
+                await messages.joinUserIntoChannel(course, other.id!, studentOne);
+                const oldPost = await messages.createCourseMessage(course, target.id!, 'channel', 'Previously read lecture announcement');
+
+                await login(studentOne, `/courses/${course.id}/exercises`);
+                await communicationAPIRequests.acceptCodeOfConduct(course);
+                await communicationAPIRequests.markConversationAsRead(course.id!, target.id!);
+                const readConversation = await communicationAPIRequests.getConversationById(course.id!, target.id!);
+                expect(readConversation?.lastReadDate).toBeTruthy();
+                const unreadPost = await messages.createCourseMessage(course, target.id!, 'channel', 'New lecture question');
+                expect(new Date(unreadPost.creationDate!.toString()).getTime()).toBeGreaterThan(new Date(readConversation!.lastReadDate!.toString()).getTime());
+                await page.goto(`/courses/${course.id}/communication?conversationId=${other.id}`);
+                await expect(page.getByTestId('conversation-name')).toHaveText(other.name!);
+                const generalChannels = page.getByRole('button', { name: /^General \(/ });
+                if ((await generalChannels.getAttribute('aria-expanded')) !== 'true') {
+                    await generalChannels.click();
+                }
+
+                let releaseMessages!: () => void;
+                let notifyRequest!: () => void;
+                const messageGate = new Promise<void>((resolve) => (releaseMessages = resolve));
+                const requestStarted = new Promise<void>((resolve) => (notifyRequest = resolve));
+                await page.route(`**/api/communication/courses/${course.id}/messages?**`, async (route) => {
+                    if (new URL(route.request().url()).searchParams.get('conversationIds') !== String(target.id)) {
+                        await route.continue();
+                        return;
+                    }
+                    notifyRequest();
+                    await messageGate;
+                    await route.continue();
+                });
+                try {
+                    await page
+                        .getByRole('link')
+                        .filter({ has: page.getByTestId('sidebar-card-title').filter({ hasText: target.name! }) })
+                        .click();
+                    await requestStarted;
+                    await expect(page).toHaveURL(new RegExp(`conversationId=${target.id}$`));
+                    await expect(page.getByTestId('conversation-name')).toHaveText(target.name!);
+                    await expect(courseMessages.getSinglePost(unreadPost.id!)).toHaveCount(0);
+                } finally {
+                    releaseMessages();
+                }
+
+                await courseMessages.checkMessage(oldPost.id!, 'Previously read lecture announcement');
+                await courseMessages.checkMessage(unreadPost.id!, 'New lecture question');
+                const unreadLine = page.locator('#unread-post-line');
+                await expect(unreadLine).toBeVisible();
+                // The line belongs immediately before the unread post, not the older read post.
+                const followingPost = unreadLine.locator('..').locator('xpath=following-sibling::*[1]');
+                await expect(followingPost.locator(`#item-${unreadPost.id}`)).toHaveCount(1);
+                await expect(followingPost.locator(`#item-${oldPost.id}`)).toHaveCount(0);
+            } finally {
+                await authorContext.close();
+            }
         });
     });
 

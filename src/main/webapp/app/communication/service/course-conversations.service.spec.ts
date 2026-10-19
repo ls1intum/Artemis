@@ -678,6 +678,35 @@ describe('CourseConversationsService', () => {
             expect(courseConversationsService['hasUnreadMessages']).toBe(true);
         });
 
+        it('clears navigation badges without advancing the opening read timestamp', async () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            const lastReadDate = dayjs().subtract(10, 'minutes');
+            channel.lastReadDate = lastReadDate;
+            channel.unreadMessagesCount = 2;
+            channel.hasUnreadMessage = true;
+            const active = channel;
+            courseConversationsService.setActiveConversation(active);
+            courseConversationsService.setConversationViewOpen(true);
+            const emittedCounts: number[] = [];
+            const subscription = courseConversationsService.conversationsOfUser$.subscribe((conversations) => {
+                emittedCounts.push(conversations.find((conversation) => conversation.id === channel.id)?.unreadMessagesCount ?? 0);
+            });
+
+            await TestBed.inject(Router).navigateByUrl('/courses/1/communication?conversationId=3');
+
+            // The message response can still be pending at NavigationEnd. The shared DTO
+            // must keep the timestamp used to locate the first unread message when that response arrives.
+            expect(active.lastReadDate).toBe(lastReadDate);
+            expect(channel.lastReadDate).toBe(lastReadDate);
+            expect(active.unreadMessagesCount).toBe(0);
+            expect(channel.unreadMessagesCount).toBe(0);
+            expect(active.hasUnreadMessage).toBe(false);
+            expect(channel.hasUnreadMessage).toBe(false);
+            expect(emittedCounts.at(-1)).toBe(0);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
+            subscription.unsubscribe();
+        });
+
         it('clears the cached and course unread state when a read succeeds after an earlier failure', () => {
             courseConversationsService.setUpConversationService(course).subscribe();
             courseConversationsService.setConversationViewOpen(true);
