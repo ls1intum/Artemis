@@ -106,11 +106,12 @@ final class AuthoringStageCapture {
             Map<RepositoryRole, Map<String, String>> files = GenerationOrchestrator.changedCapturedRepositoryFiles(baselineRepositoryFiles,
                     service.captureRepositoryFiles(sandbox, sessionId, workspaceSeed, placeholderReplacements));
             String statement = problemStatementOrBaseline();
-            if (files.isEmpty() && statement.isBlank()) {
+            String specDocument = GenerationOrchestrator.readSpecDocument(sandbox, sessionId);
+            String testPlanJson = GenerationOrchestrator.readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
+            if (!hasProducedArtifacts(files, statement, specDocument, testPlanJson)) {
                 return;
             }
-            latestStageSnapshot = new CapturedWorkspace(files, statement, GenerationOrchestrator.readSpecDocument(sandbox, sessionId),
-                    GenerationOrchestrator.readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"), stage);
+            latestStageSnapshot = new CapturedWorkspace(files, statement, specDocument, testPlanJson, stage);
             log.debug("Snapshotted {} repository/repositories at the end of authoring stage {} for session {}", files.size(), stage, sessionId);
         }
         catch (RuntimeException e) {
@@ -179,12 +180,12 @@ final class AuthoringStageCapture {
                 log.debug("Could not extract every repository after generation failed: {}", extractionFailure.getMessage());
             }
             String statement = problemStatementOrBaseline();
-            boolean statementChanged = !Objects.equals(normalizedBaselineProblemStatement(), statement);
-            if (!statementChanged && files.isEmpty()) {
+            String specDocument = GenerationOrchestrator.readSpecDocument(sandbox, sessionId);
+            String testPlanJson = GenerationOrchestrator.readWorkspaceRootFile(sandbox, sessionId, "test-plan.json");
+            if (!hasProducedArtifacts(files, statement, specDocument, testPlanJson)) {
                 return latestStageSnapshot;
             }
-            return new CapturedWorkspace(files, statement, GenerationOrchestrator.readSpecDocument(sandbox, sessionId),
-                    GenerationOrchestrator.readWorkspaceRootFile(sandbox, sessionId, "test-plan.json"), null);
+            return new CapturedWorkspace(files, statement, specDocument, testPlanJson, null);
         }
         finally {
             lifecycle.endCapture();
@@ -218,6 +219,11 @@ final class AuthoringStageCapture {
         catch (RuntimeException extractionFailure) {
             return normalizedBaselineProblemStatement();
         }
+    }
+
+    private boolean hasProducedArtifacts(Map<RepositoryRole, Map<String, String>> files, String statement, @Nullable String specDocument, @Nullable String testPlanJson) {
+        return !files.isEmpty() || !Objects.equals(normalizedBaselineProblemStatement(), statement) || specDocument != null && !specDocument.isBlank()
+                || testPlanJson != null && !testPlanJson.isBlank();
     }
 
     private String normalizedBaselineProblemStatement() {

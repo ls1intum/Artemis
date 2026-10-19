@@ -327,12 +327,15 @@ public class AgentLoopRunner {
             messagesAtLastCall = conversation.size();
             lastPromptConversation = conversation;
             emitWaitingOnModel(stepListener, activity);
-            ChatResponse response = callModel(prompt, turn, cancelled, usageSink, stepListener, activity);
-            if (response == null) {
-                if (cancelled.getAsBoolean()) {
-                    return session(AgentLoopResult.Status.CANCELLED, turn, lastAssistantText, conversation);
-                }
+            ChatResponse response;
+            try {
+                response = callModel(prompt, turn, cancelled, usageSink, stepListener, activity);
+            }
+            catch (UsageAccountingException | UsageUncertainException failure) {
                 return session(AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
+            }
+            if (response == null) {
+                return session(cancelled.getAsBoolean() ? AgentLoopResult.Status.CANCELLED : AgentLoopResult.Status.ERROR, turn, lastAssistantText, conversation);
             }
             response = normalizeToolNames(response);
             lastPromptTokens = AgentConversationContext.promptTokensOf(response);
@@ -661,6 +664,9 @@ public class AgentLoopRunner {
             catch (RuntimeException e) {
                 log.error("Agent loop model call failed on turn {} ({}, {})", turn, ProviderFailureClass.of(e), ProviderFailureClass.describe(e));
                 emit(stepListener, "The AI service could not complete the request.");
+                if (e instanceof UsageAccountingException || e instanceof UsageUncertainException) {
+                    throw e;
+                }
                 return null;
             }
         }
