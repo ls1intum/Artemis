@@ -30,7 +30,16 @@
         </div>
     }
 
-    @if (programmingRun(); as run) {
+    @if (isMonitorMode() && monitorLoading()) {
+        <p role="status" data-testid="variant-monitor-loading">{{ 'loading' | artemisTranslate }}</p>
+    } @else if (isMonitorMode() && monitorLoadFailed()) {
+        <tumaet-ui-message severity="error" data-testid="variant-monitor-load-error">
+            {{ 'artemisApp.hyperion.jobs.loadFailed' | artemisTranslate }}
+            <tumaet-ui-button variant="text" size="small" (clicked)="retryMonitor()" data-testid="variant-monitor-retry">
+                {{ 'artemisApp.hyperion.jobs.retry' | artemisTranslate }}
+            </tumaet-ui-button>
+        </tumaet-ui-message>
+    } @else if (programmingRun(); as run) {
         <jhi-hyperion-run-inspector [showStepCounter]="false" [inspectedExerciseId]="run.exerciseId" [inspectedRunId]="run.jobId" />
         <div class="mt-4 flex justify-end border-t border-border pt-4">
             <tumaet-ui-button severity="secondary" variant="outlined" size="small" (clicked)="onClose(false)" data-testid="variant-wizard-run-in-background">
@@ -248,6 +257,17 @@
 
         <!-- ── Step 3: Placement ──────────────────────────────────────────────────── -->
         @if (wizardStep() === 3) {
+            @if (sourceGroupLoading()) {
+                <p role="status" data-testid="variant-placement-loading">{{ 'loading' | artemisTranslate }}</p>
+            } @else if (sourceGroupLoadFailed()) {
+                <tumaet-ui-message severity="error" data-testid="variant-placement-load-error">
+                    {{ 'artemisApp.exerciseVariantGeneration.wizard.placement.loadFailed' | artemisTranslate }}
+                    <tumaet-ui-button variant="text" size="small" (clicked)="retrySourceGroup()" data-testid="variant-placement-retry">
+                        {{ 'artemisApp.hyperion.jobs.retry' | artemisTranslate }}
+                    </tumaet-ui-button>
+                </tumaet-ui-message>
+            }
+
             <div class="placement-section">
                 <p class="text-sm font-semibold mb-2">{{ 'artemisApp.exerciseVariantGeneration.wizard.placement.question' | artemisTranslate }}</p>
                 <div class="placement-options">

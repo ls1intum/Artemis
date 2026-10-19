@@ -3,6 +3,7 @@ import { signal } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { HyperionProgrammingVariantApi } from 'app/openapi/api/hyperion-programming-variant-api';
 import { HyperionJobRegistryService } from 'app/hyperion/exercise-generation/state/hyperion-job-registry.service';
+import { VariantJobDetail } from 'app/openapi/model/variant-job-detail';
 import { ExerciseGenerationJobStart } from 'app/openapi/model/exercise-generation-job-start';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -198,6 +199,61 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
         expect(document.body.querySelector('[data-testid="variant-wizard-indicator-Placement"]')).not.toBeNull();
     });
 
+    it('does not infer membership while its lookup is pending, but permits explicit standalone', async () => {
+        await createWizard(programmingExercise);
+        const lookup = new Subject<ExerciseVariantGroupDTO[]>();
+        groupServiceMock.getGroupsForCourse.mockReturnValue(lookup);
+        component['retrySourceGroup']();
+        component.goToPlacement();
+        fixture.detectChanges();
+
+        expect(component.canGenerate()).toBe(false);
+        expect(placementOption('variant-placement-loading')).not.toBeNull();
+        expect(placementOption('variant-placement-new-group')).toBeNull();
+        component.placementChoice.set('standalone');
+        expect(component.canGenerate()).toBe(true);
+
+        lookup.next([{ id: 8, exerciseIds: [1] } as ExerciseVariantGroupDTO]);
+        expect(component.placementChoice()).toBe('standalone');
+        expect(component.sourceGroup()?.id).toBe(8);
+    });
+
+    it('shows failed group lookup and retries before enabling grouped placement', async () => {
+        await createWizard(programmingExercise);
+        groupServiceMock.getGroupsForCourse.mockReturnValueOnce(throwError(() => new Error('unavailable'))).mockReturnValueOnce(of([{ id: 8, exerciseIds: [1] }]));
+        component['retrySourceGroup']();
+        component.goToPlacement();
+        fixture.detectChanges();
+
+        expect(component.canGenerate()).toBe(false);
+        expect(placementOption('variant-placement-load-error')).not.toBeNull();
+        document.body.querySelector<HTMLButtonElement>('[data-testid="variant-placement-retry"] button')!.click();
+        fixture.detectChanges();
+
+        expect(component.sourceGroup()?.id).toBe(8);
+        expect(component.placementChoice()).toBe('existing-group');
+        expect(component.canGenerate()).toBe(true);
+        expect(component['buildPlacement']()).toEqual({ type: 'EXISTING_GROUP', existingGroupId: 8 });
+        expect(placementOption('variant-placement-load-error')).toBeNull();
+    });
+
+    it('ignores an older group response after the wizard has reopened', async () => {
+        await createWizard(programmingExercise);
+        const oldLookup = new Subject<ExerciseVariantGroupDTO[]>();
+        groupServiceMock.getGroupsForCourse.mockReturnValueOnce(oldLookup).mockReturnValueOnce(of([{ id: 9, exerciseIds: [1] }]));
+        component['retrySourceGroup']();
+        component.onClose(false);
+        fixture.componentRef.setInput('visible', false);
+        fixture.detectChanges();
+        fixture.componentRef.setInput('visible', true);
+        fixture.detectChanges();
+        oldLookup.next([{ id: 8, exerciseIds: [1] } as ExerciseVariantGroupDTO]);
+
+        expect(component.sourceGroup()?.id).toBe(9);
+        component.goToPlacement();
+        expect(component['buildPlacement']()).toEqual({ type: 'EXISTING_GROUP', existingGroupId: 9 });
+    });
+
     it('offers the new-group placement for an ungrouped programming exercise', async () => {
         await createWizard(programmingExercise);
 
@@ -207,6 +263,8 @@ describe('ExerciseVariantAiModalWizardComponent (new-group placement availabilit
         expect(component.canGroupSourceWithVariant()).toBe(true);
         expect(component.placementChoice()).toBe('new-group');
         expect(placementOption('variant-placement-new-group')).not.toBeNull();
+        component.placementChoice.set('existing-group');
+        expect(component.canGenerate()).toBe(false);
     });
 
     it('carries the dates of the source into the new group and sends them as instants', async () => {
@@ -398,6 +456,7 @@ describe('ExerciseVariantAiModalWizardComponent (storytelling)', () => {
         component.changeNarrative.set(true);
         component.narrativeStyle.set('CREATIVE');
 
+        component.placementChoice.set('standalone');
         component.startGeneration();
 
         const request = generationServiceMock.startGeneration.mock.calls[0][1] as VariantGenerationRequest;
@@ -408,6 +467,7 @@ describe('ExerciseVariantAiModalWizardComponent (storytelling)', () => {
         component.changeDomain.set(true);
         component.domainText.set('banking');
 
+        component.placementChoice.set('standalone');
         component.startGeneration();
 
         const request = generationServiceMock.startGeneration.mock.calls[0][1] as VariantGenerationRequest;
@@ -627,6 +687,7 @@ describe('ExerciseVariantAiModalWizardComponent (fresh reopen for parallel gener
         // Start a generation and let it run: the wizard sits on the running view (step 4) with a job attached.
         component.changeDomain.set(true);
         component.domainText.set('space');
+        component.placementChoice.set('standalone');
         component.startGeneration();
         fixture.detectChanges();
         expect(component.wizardStep()).toBe(4);
@@ -705,6 +766,7 @@ describe('ExerciseVariantAiModalWizardComponent (late job-detail response)', () 
     it('discards a job detail that arrives after the wizard was reset for a new generation', () => {
         component.changeDomain.set(true);
         component.domainText.set('space');
+        component.placementChoice.set('standalone');
         component.startGeneration();
         // The step output fires the detail request; the response is still pending.
         jobEvents.next({ type: 'STEP_OUTPUT', phase: 'PROVISIONING', detail: 'Provisioned' });
@@ -756,6 +818,52 @@ describe('ExerciseVariantAiModalWizardComponent (late job-detail response)', () 
         expect(component.jobPhase()).not.toBe('COMPLETED');
     });
 
+    it('shows a failed monitor read and retries without starting generation', () => {
+        const generationService = TestBed.inject(ExerciseVariantGenerationService);
+        vi.spyOn(generationService, 'getJobDetail')
+            .mockReturnValueOnce(throwError(() => new Error('unavailable')))
+            .mockReturnValueOnce(of({ job: { jobId: 'job-monitor', phase: 'COMPLETED', sourceExerciseTitle: 'Recovered source' }, stepOutputs: {} }));
+        fixture.componentRef.setInput('monitorJobId', 'job-monitor');
+        fixture.detectChanges();
+
+        expect(document.body.querySelector('[data-testid="variant-monitor-load-error"]')).not.toBeNull();
+        expect(document.body.querySelector('[data-testid="variant-option-difficulty"]')).toBeNull();
+        const retry = document.body.querySelector<HTMLButtonElement>('[data-testid="variant-monitor-retry"] button')!;
+        expect(retry).not.toBeNull();
+        retry.click();
+        fixture.detectChanges();
+
+        expect(generationService.getJobDetail).toHaveBeenCalledTimes(2);
+        expect(generationService.getJobDetail).toHaveBeenLastCalledWith('job-monitor');
+        expect(component.jobId()).toBe('job-monitor');
+        expect(component.jobPhase()).toBe('COMPLETED');
+        expect(component.monitorSourceTitle()).toBe('Recovered source');
+        expect(document.body.querySelector('[data-testid="variant-monitor-load-error"]')).toBeNull();
+        expect(generationService.startGeneration).not.toHaveBeenCalled();
+    });
+
+    it('ignores a failed monitor read after a different monitor has loaded', () => {
+        const oldRead = new Subject<VariantJobDetail>();
+        const generationService = TestBed.inject(ExerciseVariantGenerationService);
+        vi.spyOn(generationService, 'getJobDetail')
+            .mockReturnValueOnce(oldRead)
+            .mockReturnValueOnce(of({ job: { jobId: 'job-B', phase: 'COMPLETED', sourceExerciseTitle: 'Job B source' }, stepOutputs: {} }));
+        fixture.componentRef.setInput('monitorJobId', 'job-A');
+        fixture.detectChanges();
+        expect(document.body.querySelector('[data-testid="variant-monitor-loading"]')).not.toBeNull();
+        expect(document.body.querySelector('[data-testid="variant-option-difficulty"]')).toBeNull();
+
+        fixture.componentRef.setInput('monitorJobId', 'job-B');
+        fixture.detectChanges();
+        oldRead.error(new Error('old request failed'));
+        fixture.detectChanges();
+
+        expect(component.jobId()).toBe('job-B');
+        expect(component.monitorSourceTitle()).toBe('Job B source');
+        expect(document.body.querySelector('[data-testid="variant-monitor-load-error"]')).toBeNull();
+        expect(document.body.querySelector('[data-testid="variant-monitor-loading"]')).toBeNull();
+    });
+
     it('discards a variant lookup that arrives after the wizard was reset for a new generation', () => {
         const variantLookup = new Subject<any>();
         const exerciseService = TestBed.inject(ExerciseService);
@@ -763,6 +871,7 @@ describe('ExerciseVariantAiModalWizardComponent (late job-detail response)', () 
 
         component.changeDomain.set(true);
         component.domainText.set('space');
+        component.placementChoice.set('standalone');
         component.startGeneration();
         // The terminal event starts the lookup of the generated exercise; its response is still pending.
         jobEvents.next({ type: 'DONE', phase: 'COMPLETED', variantExerciseId: 4711 });
@@ -1010,6 +1119,7 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
         expect(indicator).not.toBeNull();
         component.changeDomain.set(true);
         component.domainText.set('spacecraft');
+        component.placementChoice.set('standalone');
         component.startGeneration();
         started.next({ jobId: 'run', exerciseId: 81, sourceExerciseId: 12 });
         fixture.detectChanges();
@@ -1031,6 +1141,7 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
         fixture.componentRef.setInput('visible', true);
         component.changeDomain.set(true);
         component.domainText.set('spacecraft');
+        component.placementChoice.set('standalone');
         component.startGeneration();
         component.onClose(false);
         started.next({ jobId: 'background-run', exerciseId: 81, sourceExerciseId: 12 });
@@ -1042,6 +1153,7 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
     it('sends structured intent to the common lifecycle and tracks the destination separately from its source', () => {
         component.changeDomain.set(true);
         component.domainText.set(' spacecraft ');
+        component.placementChoice.set('standalone');
         component.startGeneration();
         expect(startProgramming).toHaveBeenCalledWith(12, expect.objectContaining({ domainText: 'spacecraft' }));
         expect(startQuiz).not.toHaveBeenCalled();
@@ -1054,6 +1166,7 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
     });
 
     it('does not attach an old account response to the new account', () => {
+        component.placementChoice.set('standalone');
         component.startGeneration();
         identity.set({ login: 'another-instructor' });
         started.next({ jobId: 'run', exerciseId: 81 });
@@ -1062,6 +1175,7 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
     });
 
     it('keeps start failures visible without pretending a quiz job was created', () => {
+        component.placementChoice.set('standalone');
         component.startGeneration();
         started.error(new Error('capacity unavailable'));
         expect(component.wizardStep()).toBe(5);
@@ -1072,12 +1186,14 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
 
     it('does not dispatch without a course context', () => {
         fixture.componentRef.setInput('courseId', undefined);
+        component.placementChoice.set('standalone');
         component.startGeneration();
         expect(startProgramming).not.toHaveBeenCalled();
         expect(component.jobPhase()).toBe('FAILED');
     });
 
     it('detaches a late response after destruction', () => {
+        component.placementChoice.set('standalone');
         component.startGeneration();
         fixture.destroy();
         started.next({ jobId: 'run', exerciseId: 81 });

@@ -147,6 +147,9 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     readonly headerKey = computed(() => (this.isMonitorMode() ? 'artemisApp.exerciseVariantGeneration.wizard.monitorTitle' : 'artemisApp.exerciseVariantGeneration.wizard.title'));
 
     private programmingRequest = 0;
+    private monitorRequestId = 0;
+    protected readonly monitorLoading = signal(false);
+    protected readonly monitorLoadFailed = signal(false);
     readonly programmingRun = signal<{ exerciseId: number; jobId: string } | undefined>(undefined);
     readonly programmingRunActive = computed(() => {
         const run = this.programmingRun();
@@ -213,6 +216,10 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
      * open — offers the "add to existing group" placement.
      */
     readonly sourceGroup = signal<ExerciseVariantGroupDTO | undefined>(undefined);
+    protected readonly sourceGroupLoading = signal(false);
+    protected readonly sourceGroupLoadFailed = signal(false);
+    private readonly sourceGroupKnown = signal(false);
+    private sourceGroupRequestId = 0;
 
     /** Exam exercises skip the placement step entirely — SAME_EXAM_GROUP is forced. */
     readonly isExamExercise = computed(() => this.examExercise() || !!this.sourceExercise()?.exerciseGroup);
@@ -226,7 +233,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
      */
     readonly canGroupSourceWithVariant = computed(() => {
         const source = this.sourceExercise();
-        if (!source || this.isExamExercise()) {
+        if (!source || this.isExamExercise() || !this.sourceGroupKnown()) {
             return false;
         }
         // Already grouped: the server keeps the source in its current group, so use "add to existing group".
@@ -258,7 +265,11 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
     /** Ids of the new-group date pickers whose text is not a date; a picker keeps its last valid date while that is the case. */
     private readonly invalidDateTexts = signal<ReadonlySet<string>>(new Set());
 
-    readonly canGenerate = computed(() => this.placementChoice() !== 'new-group' || (this.newGroupTitle().trim().length > 0 && this.invalidDateTexts().size === 0));
+    readonly canGenerate = computed(() => {
+        if (this.isExamExercise() || this.placementChoice() === 'standalone') return true;
+        if (!this.sourceGroupKnown()) return false;
+        return this.placementChoice() === 'existing-group' ? !!this.sourceGroup() : this.newGroupTitle().trim().length > 0 && this.invalidDateTexts().size === 0;
+    });
 
     /** Index of the active timeline step; REPAIRING maps back onto the VERIFYING step (repeat visit). */
     readonly currentPhaseIndex = computed(() => {
@@ -460,7 +471,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         this.newGroupDueDate.set(src.dueDate);
         this.newGroupAssessmentDueDate.set(src.assessmentDueDate);
         // Never preselect a hidden option: a source that cannot join a new group falls back to standalone.
-        this.placementChoice.set(this.sourceGroup() ? 'existing-group' : this.canGroupSourceWithVariant() ? 'new-group' : 'standalone');
+        this.placementChoice.set(!this.sourceGroupKnown() || this.sourceGroup() ? 'existing-group' : this.canGroupSourceWithVariant() ? 'new-group' : 'standalone');
         this.wizardStep.set(3);
     }
 
@@ -477,6 +488,13 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
      * starts a NEW generation even while another variant of the same exercise is still running in the background.
      */
     private resetToFreshWizard(): void {
+        this.sourceGroupRequestId++;
+        this.sourceGroupKnown.set(false);
+        this.sourceGroupLoading.set(false);
+        this.sourceGroupLoadFailed.set(false);
+        this.monitorRequestId++;
+        this.monitorLoading.set(false);
+        this.monitorLoadFailed.set(false);
         this.eventsSubscription?.unsubscribe();
         this.eventsSubscription = undefined;
         this.wizardStep.set(1);
@@ -629,8 +647,7 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         return ['/course-management', courseId, typeSegment, variant.id!, 'edit'];
     }
 
-    /** A phase's panel is expandable once at least one message carries a full log detail. */
-    /** The phase's recorded outputs, or undefined when none arrived — an empty array must not read as present. */
+    /** The phase's recorded outputs, or undefined when none arrived. */
     outputsFor(phase: string): StepOutput[] | undefined {
         const outputs = this.stepOutputs()[phase];
         return outputs?.length ? outputs : undefined;
@@ -798,49 +815,85 @@ export class ExerciseVariantAiModalWizardComponent implements OnDestroy {
         }
     }
 
-    /** Resolves the variant group the source exercise is a member of — basis of the "existing group" placement. */
+    protected retrySourceGroup(): void {
+        if (this.visible() && !this.sourceGroupLoading()) this.loadSourceGroup();
+    }
+
     private loadSourceGroup(): void {
+        const requestId = ++this.sourceGroupRequestId;
         this.sourceGroup.set(undefined);
+        this.sourceGroupKnown.set(false);
+        this.sourceGroupLoadFailed.set(false);
         const courseId = this.courseId();
         const exerciseId = this.sourceExercise()?.id;
-        if (!courseId || !exerciseId || this.isExamExercise()) {
-            return;
-        }
-        this.variantGroupService.getGroupsForCourse(courseId).subscribe({
-            next: (groups) => this.sourceGroup.set(groups.find((group) => group.exerciseIds?.includes(exerciseId))),
-            error: () => {},
-        });
+        if (!courseId || !exerciseId || this.isExamExercise()) return;
+        this.sourceGroupLoading.set(true);
+        this.variantGroupService
+            .getGroupsForCourse(courseId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (groups) => {
+                    if (requestId !== this.sourceGroupRequestId || !this.visible() || this.courseId() !== courseId || this.sourceExercise()?.id !== exerciseId) return;
+                    this.sourceGroup.set(groups.find((group) => group.exerciseIds?.includes(exerciseId)));
+                    this.sourceGroupKnown.set(true);
+                    this.sourceGroupLoading.set(false);
+                    if (this.wizardStep() === 3 && this.placementChoice() === 'existing-group' && !this.sourceGroup()) {
+                        this.placementChoice.set(this.canGroupSourceWithVariant() ? 'new-group' : 'standalone');
+                    }
+                },
+                error: () => {
+                    if (requestId !== this.sourceGroupRequestId || !this.visible() || this.courseId() !== courseId || this.sourceExercise()?.id !== exerciseId) return;
+                    this.sourceGroupLoading.set(false);
+                    this.sourceGroupLoadFailed.set(true);
+                },
+            });
+    }
+
+    protected retryMonitor(): void {
+        const jobId = this.monitorJobId();
+        if (this.visible() && jobId && !this.monitorLoading()) this.openInMonitorMode(jobId);
     }
 
     /** Tray-triggered monitor mode: initialize from the job-detail endpoint and skip steps 1–3. */
     private openInMonitorMode(jobId: string): void {
-        this.variantGenerationService.getJobDetail(jobId).subscribe({
-            next: (detail) => {
-                // The dialog may have been closed, or reopened for a different job, while this was in flight.
-                // Applying it then would reset the modal and attach it to the superseded job.
-                if (!this.visible() || this.monitorJobId() !== jobId) {
-                    return;
-                }
-                const job = detail.job;
-                this.initializeFromJobId(jobId, job?.phase, job?.attempt, job?.maxAttempts);
-                this.stepOutputs.set(detail.stepOutputs ?? {});
-                this.warnings.set(job?.warnings ?? []);
-                this.monitorSourceTitle.set(job?.sourceExerciseTitle);
-                this.monitorExerciseType.set(job?.exerciseType as ExerciseType | undefined);
-                this.variantTitle.set(job?.variantExerciseTitle);
-                this.monitorRequest.set(detail.request);
-                this.totalTokensUsed.set(job?.totalTokensUsed);
-                if (isTerminalVariantPhase(job?.phase)) {
-                    this.jobId.set(jobId);
-                    this.jobPhase.set(job!.phase!);
-                    this.failurePhase.set(job?.failedInPhase);
-                    this.failureDetail.set(job?.failureDetail);
-                    this.instructorSummary.set(job?.instructorSummary);
-                    this.showResult(job?.variantExerciseId);
-                }
-            },
-            error: () => {},
-        });
+        const requestId = ++this.monitorRequestId;
+        this.monitorLoading.set(true);
+        this.monitorLoadFailed.set(false);
+        this.variantGenerationService
+            .getJobDetail(jobId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (detail) => {
+                    // The dialog may have been closed, or reopened for a different job, while this was in flight.
+                    // Applying it then would reset the modal and attach it to the superseded job.
+                    if (!this.visible() || this.monitorJobId() !== jobId || requestId !== this.monitorRequestId) {
+                        return;
+                    }
+                    this.monitorLoading.set(false);
+                    const job = detail.job;
+                    this.initializeFromJobId(jobId, job?.phase, job?.attempt, job?.maxAttempts);
+                    this.stepOutputs.set(detail.stepOutputs ?? {});
+                    this.warnings.set(job?.warnings ?? []);
+                    this.monitorSourceTitle.set(job?.sourceExerciseTitle);
+                    this.monitorExerciseType.set(job?.exerciseType as ExerciseType | undefined);
+                    this.variantTitle.set(job?.variantExerciseTitle);
+                    this.monitorRequest.set(detail.request);
+                    this.totalTokensUsed.set(job?.totalTokensUsed);
+                    if (isTerminalVariantPhase(job?.phase)) {
+                        this.jobId.set(jobId);
+                        this.jobPhase.set(job!.phase!);
+                        this.failurePhase.set(job?.failedInPhase);
+                        this.failureDetail.set(job?.failureDetail);
+                        this.instructorSummary.set(job?.instructorSummary);
+                        this.showResult(job?.variantExerciseId);
+                    }
+                },
+                error: () => {
+                    if (!this.visible() || this.monitorJobId() !== jobId || requestId !== this.monitorRequestId) return;
+                    this.monitorLoading.set(false);
+                    this.monitorLoadFailed.set(true);
+                },
+            });
     }
 
     private initializeFromJobId(jobId: string, phase: VariantJobPhase | undefined, attempt: number | undefined, maxAttempts: number | undefined): void {
