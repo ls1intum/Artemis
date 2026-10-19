@@ -77,7 +77,7 @@ public class AssessmentUploadResource {
      * The zip file has to contain exactly one {@code assessment-scores.csv} file (identifying each participant by the repository-export identifier
      * {@code <participationId>-<login>}
      * in
-     * its first column and providing the points in an {@code Overall points} column) and one {@code .txt} file per participant (named after the exported repository folder, its
+     * its first column and providing the points in a {@code Manual points} column) and one {@code .txt} file per participant (named after the exported repository folder, its
      * content
      * becomes the manual feedback). The whole file is validated before anything is stored (all-or-nothing).
      * <p>
@@ -117,7 +117,7 @@ public class AssessmentUploadResource {
      * GET exercises/{exerciseId}/manual-assessments/template : Download a template zip that an instructor can fill in and upload again.
      * <p>
      * The archive contains an {@code assessment-scores.csv} pre-filled with the repository-export identifier {@code <participationId>-<login>} of every participation and an empty
-     * {@code Overall points} column, plus one empty {@code <identifier>.txt} feedback file per participation. The instructor fills in the points and feedback and uploads the
+     * {@code Manual points} column, plus one empty {@code <identifier>.txt} feedback file per participation. The instructor fills in the points and feedback and uploads the
      * archive
      * via {@link #uploadManualAssessments}.
      * <p>

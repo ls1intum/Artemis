@@ -28,9 +28,9 @@ public enum AssessmentUploadErrorType {
     MALFORMED_CSV,
 
     /**
-     * The {@code assessment-scores.csv} file does not contain the mandatory {@code Overall points} column.
+     * The {@code assessment-scores.csv} file does not contain the mandatory {@code Manual points} column.
      */
-    MISSING_OVERALL_POINTS_COLUMN,
+    MISSING_MANUAL_POINTS_COLUMN,
 
     /**
      * A row of the CSV file does not contain a student identifier in its first column.
@@ -69,7 +69,7 @@ public enum AssessmentUploadErrorType {
     EXISTING_COMPLAINT,
 
     /**
-     * The value of the {@code Overall points} column is missing, not a number, or negative.
+     * The value of the {@code Manual points} column is missing, not a number, or outside the points the exercise can award or take away.
      */
     INVALID_POINTS,
 

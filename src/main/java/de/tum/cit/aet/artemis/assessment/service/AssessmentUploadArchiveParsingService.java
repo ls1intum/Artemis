@@ -54,7 +54,7 @@ public class AssessmentUploadArchiveParsingService {
     /**
      * The mandatory column holding the achieved points (matched case-insensitively, ignoring surrounding whitespace).
      */
-    private static final String OVERALL_POINTS_COLUMN = "Overall points";
+    private static final String MANUAL_POINTS_COLUMN = "Manual points";
 
     /** The extension (including the leading dot) of the per-participant feedback files inside the zip. */
     private static final String TEXT_FILE_EXTENSION = ".txt";
@@ -222,7 +222,7 @@ public class AssessmentUploadArchiveParsingService {
 
     /**
      * Runs all structural checks on the archive that must pass before any row can be validated: there has to be exactly one {@code assessment-scores.csv} file that can be parsed,
-     * has at least one data row, and contains the mandatory {@code Overall points} column.
+     * has at least one data row, and contains the mandatory {@code Manual points} column.
      * <p>
      * <b>Precondition:</b> {@code contents} is non-{@code null}.
      * <p>
@@ -244,7 +244,7 @@ public class AssessmentUploadArchiveParsingService {
     }
 
     /**
-     * Parses the text of the single CSV file into records, resolving the mandatory {@code Overall points} column.
+     * Parses the text of the single CSV file into records, resolving the mandatory {@code Manual points} column.
      * <p>
      * <b>Precondition:</b> {@code csvContent} is non-{@code null}.
      * <p>
@@ -258,10 +258,10 @@ public class AssessmentUploadArchiveParsingService {
         assert csvContent != null : "csvContent must not be null";
         final CSVFormat format = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).setIgnoreSurroundingSpaces(true).setIgnoreEmptyLines(true).setTrim(true).get();
         try (CSVParser parser = CSVParser.parse(new StringReader(csvContent), format)) {
-            final Optional<String> pointsColumn = parser.getHeaderNames().stream().filter(header -> header != null && header.trim().equalsIgnoreCase(OVERALL_POINTS_COLUMN))
+            final Optional<String> pointsColumn = parser.getHeaderNames().stream().filter(header -> header != null && header.trim().equalsIgnoreCase(MANUAL_POINTS_COLUMN))
                     .findFirst();
             if (pointsColumn.isEmpty()) {
-                return new CsvParseError(AssessmentUploadErrorType.MISSING_OVERALL_POINTS_COLUMN);
+                return new CsvParseError(AssessmentUploadErrorType.MISSING_MANUAL_POINTS_COLUMN);
             }
             final List<CSVRecord> records = readBoundedRecords(parser);
             if (records.isEmpty()) {
@@ -384,7 +384,7 @@ public class AssessmentUploadArchiveParsingService {
      * Invariant: {@code records} is non-empty and {@code pointsColumn} is non-{@code null}.
      *
      * @param records      the parsed data rows
-     * @param pointsColumn the resolved header name of the {@code Overall points} column
+     * @param pointsColumn the resolved header name of the {@code Manual points} column
      */
     public record ParsedCsv(List<CSVRecord> records, String pointsColumn) implements CsvParseResult {
 

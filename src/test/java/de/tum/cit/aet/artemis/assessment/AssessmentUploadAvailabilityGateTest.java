@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.TestCasePointsService;
 
 /**
  * The shared assessment-availability gate only distinguishes test runs from everything else; for an exam it then answers the same exercise-wide question by reading the latest
@@ -102,7 +103,7 @@ class AssessmentUploadAvailabilityGateTest {
         when(participationRepository.findAllForAssessmentUpload(eq(EXERCISE_ID), any())).thenReturn(participations);
 
         final AssessmentUploadService service = new AssessmentUploadService(archiveParserFor(participations), participationRepository, submissionRepository, resultService,
-                submissionService);
+                submissionService, mock(TestCasePointsService.class));
         service.importAssessments(exercise(), new MockMultipartFile("file", "upload.zip", "application/zip", new byte[] { 1 }));
     }
 
@@ -121,10 +122,10 @@ class AssessmentUploadAvailabilityGateTest {
     private AssessmentUploadArchiveParsingService archiveParserFor(final List<StudentParticipation> participations) {
         final List<String> identifiers = participations.stream().map(p -> p.getId() + "-" + login(p.getId())).toList();
         final Map<String, String> textFiles = identifiers.stream().collect(Collectors.toMap(identifier -> identifier, identifier -> "well done"));
-        final String csv = "Identifier,Overall points\n" + identifiers.stream().map(identifier -> identifier + ",80\n").collect(Collectors.joining());
+        final String csv = "Identifier,Manual points\n" + identifiers.stream().map(identifier -> identifier + ",80\n").collect(Collectors.joining());
         final AssessmentUploadArchiveParsingService archiveParser = mock(AssessmentUploadArchiveParsingService.class);
         when(archiveParser.readZipContents(any())).thenReturn(new ZipContents(List.of(new byte[0]), textFiles, Set.of()));
-        when(archiveParser.parseCsv(any())).thenReturn(new ParsedCsv(csvRecords(csv), "Overall points"));
+        when(archiveParser.parseCsv(any())).thenReturn(new ParsedCsv(csvRecords(csv), "Manual points"));
         return archiveParser;
     }
 

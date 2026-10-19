@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.service.TestCasePointsService;
 
 /**
  * Covers the compensation that replaces the transaction the storage path is not allowed to open: a submission created for a participant who had none is committed on its own,
@@ -71,14 +72,14 @@ class AssessmentUploadFailureCompensationTest {
         when(resultService.findParticipationsWithComplaintOnResults(any())).thenReturn(Set.of());
         final RuntimeException storageFailure = new IllegalStateException("the result write failed");
         // Reproduce a batch that rolled back after it had already inserted a row: the result keeps the id the database generated for it even though the row is gone again.
-        when(resultService.saveManualResults(any(), any(), anyBoolean())).thenAnswer(invocation -> {
+        when(resultService.saveManualResults(any(), any(), anyBoolean(), any(), any())).thenAnswer(invocation -> {
             final Collection<Result> newResults = invocation.getArgument(0);
             newResults.forEach(result -> result.setId(4711L));
             throw storageFailure;
         });
 
         final AssessmentUploadService service = new AssessmentUploadService(archiveParserReturningOneRow(), participationRepositoryReturningOneParticipation(),
-                submissionRepository, resultService, mock(SubmissionService.class));
+                submissionRepository, resultService, mock(SubmissionService.class), mock(TestCasePointsService.class));
 
         assertThatThrownBy(() -> service.importAssessments(exerciseAllowingManualResults(), new MockMultipartFile("file", "upload.zip", "application/zip", new byte[] { 1 })))
                 .isSameAs(storageFailure);
@@ -98,7 +99,7 @@ class AssessmentUploadFailureCompensationTest {
         final AssessmentUploadResultService resultService = mock(AssessmentUploadResultService.class);
         when(resultService.findParticipationsWithComplaintOnResults(any())).thenReturn(Set.of());
         final RuntimeException storageFailure = new IllegalStateException("the result write failed");
-        when(resultService.saveManualResults(any(), any(), anyBoolean())).thenThrow(storageFailure);
+        when(resultService.saveManualResults(any(), any(), anyBoolean(), any(), any())).thenThrow(storageFailure);
 
         final StudentParticipation participation = participationWithExistingSubmission();
         final AssessmentUploadParticipationRepository participationRepository = mock(AssessmentUploadParticipationRepository.class);
@@ -107,7 +108,7 @@ class AssessmentUploadFailureCompensationTest {
         when(participationRepository.findAllForAssessmentUpload(any(Long.class), any())).thenReturn(List.of(participation));
 
         final AssessmentUploadService service = new AssessmentUploadService(archiveParserReturningOneRow(), participationRepository, submissionRepository, resultService,
-                mock(SubmissionService.class));
+                mock(SubmissionService.class), mock(TestCasePointsService.class));
 
         assertThatThrownBy(() -> service.importAssessments(exerciseAllowingManualResults(), new MockMultipartFile("file", "upload.zip", "application/zip", new byte[] { 1 })))
                 .isSameAs(storageFailure);
@@ -121,7 +122,7 @@ class AssessmentUploadFailureCompensationTest {
     private AssessmentUploadArchiveParsingService archiveParserReturningOneRow() {
         final AssessmentUploadArchiveParsingService archiveParser = mock(AssessmentUploadArchiveParsingService.class);
         when(archiveParser.readZipContents(any())).thenReturn(new ZipContents(List.of(new byte[0]), Map.of(IDENTIFIER, "well done"), Set.of()));
-        when(archiveParser.parseCsv(any())).thenReturn(new ParsedCsv(csvRecords("Identifier,Overall points\n%s,80\n".formatted(IDENTIFIER)), "Overall points"));
+        when(archiveParser.parseCsv(any())).thenReturn(new ParsedCsv(csvRecords("Identifier,Manual points\n%s,80\n".formatted(IDENTIFIER)), "Manual points"));
         return archiveParser;
     }
 

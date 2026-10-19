@@ -11,7 +11,7 @@ export type AssessmentUploadErrorType =
     | 'MULTIPLE_CSV'
     | 'EMPTY_CSV'
     | 'MALFORMED_CSV'
-    | 'MISSING_OVERALL_POINTS_COLUMN'
+    | 'MISSING_MANUAL_POINTS_COLUMN'
     | 'MISSING_IDENTIFIER'
     | 'INVALID_IDENTIFIER_FORMAT'
     | 'DUPLICATE_IDENTIFIER'
@@ -71,7 +71,7 @@ export class AssessmentUploadService {
     }
 
     /**
-     * Downloads a template zip for a programming exercise: an `assessment-scores.csv` pre-filled with every participant's identifier and an empty `Overall points` column, plus one
+     * Downloads a template zip for a programming exercise: an `assessment-scores.csv` pre-filled with every participant's identifier and an empty `Manual points` column, plus one
      * empty `.txt` feedback file per participant. The instructor fills in the points and feedback and uploads the archive via {@link uploadManualAssessments}.
      *
      * Precondition: `exerciseId` refers to a programming exercise the current user may assess.

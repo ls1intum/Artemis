@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.TestCasePointsService;
 
 /**
  * Pure unit tests for {@link AssessmentUploadService#generateTemplateArchive} that need neither a database nor a Spring context: the participation repository is mocked so template
@@ -109,7 +110,7 @@ class AssessmentUploadTemplateGenerationTest {
         final AssessmentUploadParticipationRepository participationRepository = mock(AssessmentUploadParticipationRepository.class);
         when(participationRepository.findAllForAssessmentUploadTemplate(EXERCISE_ID)).thenReturn(participations);
         return new AssessmentUploadService(mock(AssessmentUploadArchiveParsingService.class), participationRepository, mock(SubmissionRepository.class),
-                mock(AssessmentUploadResultService.class), mock(SubmissionService.class));
+                mock(AssessmentUploadResultService.class), mock(SubmissionService.class), mock(TestCasePointsService.class));
     }
 
     private static ProgrammingExercise exerciseWithId(final long id) {

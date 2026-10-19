@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingS
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ParsedCsv;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ZipContents;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -53,12 +52,13 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.service.TestCasePointsService;
 
 /**
  * Service that parses a zip file uploaded by an instructor and stores manual assessments for the participants of a programming exercise at once.
  * <p>
  * The zip file has to contain exactly one {@code assessment-scores.csv} file and one {@code .txt} file per graded participant. The CSV file identifies each participant by the
- * repository-export identifier {@code <participationId>-<login>} in its first column and provides the achieved points in an {@code Overall points} column. Each {@code .txt} file
+ * repository-export identifier {@code <participationId>-<login>} in its first column and provides the manual points in a {@code Manual points} column. Each {@code .txt} file
  * is
  * named after the exported repository folder of the participant (e.g. {@code Course-Exercise-<participationId>-<login>.txt}) and its content becomes the manual feedback.
  * <p>
@@ -91,6 +91,8 @@ public class AssessmentUploadService {
 
     private final SubmissionService submissionService;
 
+    private final TestCasePointsService testCasePointsService;
+
     /**
      * Creates a service for validating and storing uploaded manual assessments.
      * <p>
@@ -100,12 +102,15 @@ public class AssessmentUploadService {
      * @param assessmentUploadParticipationRepository the repository used to resolve participants
      * @param submissionRepository                    the repository used to load the latest submissions and to create the missing ones
      * @param assessmentUploadResultService           the service used to replace manual assessment results
-     * @param submissionService                       the service enforcing the shared assessment-availability gate
+     * @param submissionService                       the service enforcing the shared assessment-availability gate and copying automatic feedback onto a new assessment
+     * @param testCasePointsService                   derives the points a passed test case is worth, so an uploaded assessment is scored like one made in the editor
      * @throws IllegalArgumentException if any parameter is {@code null}
      */
     public AssessmentUploadService(final AssessmentUploadArchiveParsingService archiveParser, final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository,
-            final SubmissionRepository submissionRepository, final AssessmentUploadResultService assessmentUploadResultService, final SubmissionService submissionService) {
-        if (Stream.of(archiveParser, assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService).anyMatch(Objects::isNull)) {
+            final SubmissionRepository submissionRepository, final AssessmentUploadResultService assessmentUploadResultService, final SubmissionService submissionService,
+            final TestCasePointsService testCasePointsService) {
+        if (Stream.of(archiveParser, assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService, testCasePointsService)
+                .anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("The assessment upload service dependencies must not be null");
         }
         this.archiveParser = archiveParser;
@@ -113,6 +118,7 @@ public class AssessmentUploadService {
         this.submissionRepository = submissionRepository;
         this.assessmentUploadResultService = assessmentUploadResultService;
         this.submissionService = submissionService;
+        this.testCasePointsService = testCasePointsService;
     }
 
     /**
@@ -188,7 +194,7 @@ public class AssessmentUploadService {
      * <p>
      * <b>Precondition:</b> {@code participations} is non-{@code null}.
      * <p>
-     * <b>Postcondition:</b> pure function; returns the UTF-8 bytes of a CSV with the {@code Identifier,Login,Overall points} header and one row per participation, the points cell
+     * <b>Postcondition:</b> pure function; returns the UTF-8 bytes of a CSV with the {@code Identifier,Login,Manual points} header and one row per participation, the points cell
      * left empty for the instructor to fill in.
      *
      * @param participations the participations exported into the template
@@ -200,10 +206,10 @@ public class AssessmentUploadService {
         // The parser reads the CSV back with CSVFormat.DEFAULT; a plain '\n' record separator keeps the generated template the Unix-newline CSV it has always been.
         final CSVFormat format = CSVFormat.DEFAULT.builder().setRecordSeparator('\n').get();
         try (CSVPrinter printer = new CSVPrinter(csv, format)) {
-            printer.printRecord("Identifier", "Login", "Overall points");
+            printer.printRecord("Identifier", "Login", "Manual points");
             for (final AssessmentUploadParticipationDTO participation : participations) {
                 // The first column is the repository-export identifier <participationId>-<login> that importAssessments resolves; the login column is informational and ignored on
-                // upload; the empty third column is the "Overall points" the instructor fills in.
+                // upload; the empty third column is the "Manual points" the instructor fills in.
                 printer.printRecord(templateIdentifier(participation), participation.participantIdentifier(), "");
             }
         }
@@ -385,7 +391,7 @@ public class AssessmentUploadService {
      *
      * @param identifier                      the student identifier from the first CSV column ({@code <participationId>-<login>})
      * @param csvRecord                       the CSV row being validated
-     * @param pointsColumn                    the resolved header name of the {@code Overall points} column
+     * @param pointsColumn                    the resolved header name of the {@code Manual points} column
      * @param textContentsByBaseName          the available text files keyed by base name
      * @param matchedTextKeys                 text-file keys already assigned to earlier valid rows
      * @param participationsById              exercise-scoped participation data resolved for the entire upload
@@ -526,12 +532,13 @@ public class AssessmentUploadService {
                     return createdSubmission;
                 });
                 final Result manualResult = buildManualResult(exercise, submission, row);
+                copyAutomaticFeedbackOfLatestBuild(manualResult, submission);
                 submission.addResult(manualResult);
                 newResults.add(manualResult);
             }
             // Writes every result in one repository call, so it stores all of them or none. Reaching the catch below therefore means no assessment was written and the
             // submissions created above are the only trace of this upload; the in-place edits made in the loop were never flushed.
-            assessmentUploadResultService.saveManualResults(newResults, updatedResults, true);
+            assessmentUploadResultService.saveManualResults(newResults, updatedResults, true, exercise, testCasePointsService.calculateTestCasePoints(exercise, false));
         }
         catch (final RuntimeException failure) {
             removeSubmissionsCreatedBeforeFailure(createdSubmissionIds, exercise);
@@ -596,6 +603,30 @@ public class AssessmentUploadService {
     }
 
     /**
+     * Starts a newly created assessment from the automatic feedback of the participant's latest build, the way {@code ProgrammingSubmissionService#lockSubmission} starts one
+     * opened in the assessment editor.
+     * <p>
+     * The uploaded points are manual feedback on top of the automatic score, so without this a participant who had never been assessed would be scored on the uploaded points
+     * alone while a participant with the same build who had been assessed once keeps their test points — the same upload would mean different things for the two.
+     * <p>
+     * <b>Precondition:</b> {@code manualResult} is the transient assessment being created for {@code submission}.
+     * <p>
+     * <b>Postcondition:</b> the assessment carries copies of the typed automatic feedback of the submission's latest automatic result and its counters, or nothing at all when
+     * the submission has no automatic result (a participant whose submission this upload just created).
+     *
+     * @param manualResult the assessment being created
+     * @param submission   the submission it is created on
+     */
+    private void copyAutomaticFeedbackOfLatestBuild(final Result manualResult, final Submission submission) {
+        assert manualResult != null && submission != null : "manualResult and submission must not be null";
+        submission.getResults().stream().filter(result -> result != null && result.getId() != null && !result.isManual()).max(Comparator.comparing(Result::getId))
+                .ifPresent(automaticResult -> {
+                    submissionService.copyTypedFeedbackToResult(manualResult, automaticResult);
+                    manualResult.copyProgrammingExerciseCounters(automaticResult);
+                });
+    }
+
+    /**
      * Creates an empty external submission for a participation that has none yet and marks it as submitted with the current date.
      * <p>
      * This mirrors the established external-submission path in {@link de.tum.cit.aet.artemis.exercise.service.ParticipationService}: an uploaded assessment must be attached to a
@@ -639,11 +670,11 @@ public class AssessmentUploadService {
         assert exercise.getId() != null && exercise.getMaxPoints() != null && exercise.getMaxPoints() > 0 : "exercise must be persisted and have positive maximum points";
         assert submission.getParticipation() != null && submission.getParticipation().getId() != null
                 && submission.getParticipation().getId() == row.participationId() : "submission must belong to the validated participation";
-        final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         final Result result = new Result();
         result.setSubmission(submission);
         result.setExerciseId(exercise.getId());
-        result.setScore(row.points(), exercise.getMaxPoints(), course);
+        // No score here: the uploaded points are the credits of the manual feedback below, and the total is derived from them together with the automatic feedback once the
+        // assessment is complete, exactly as it is for an assessment made in the editor.
         result.addFeedback(buildManualFeedback(row.feedbackText(), row.points()));
         return result;
     }
@@ -668,34 +699,29 @@ public class AssessmentUploadService {
         assert result != null && result.getId() != null : "result must be persisted";
         assert exercise != null && row != null : "exercise and row must not be null";
         assert exercise.getMaxPoints() != null && exercise.getMaxPoints() > 0 : "exercise must have positive maximum points";
-        final Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
         result.setExerciseId(exercise.getId());
-        result.setScore(row.points(), exercise.getMaxPoints(), course);
         // Mutate the collection instead of replacing it: Hibernate rejects a swapped reference on a collection that uses orphan removal, and the in-place clear is what deletes
         // the previous feedback (and its long feedback text) as an orphan once the result is saved.
         result.getFeedbacks().clear();
         result.addFeedback(buildManualFeedback(row.feedbackText(), row.points()));
-        // The counters belong to the automatic feedback the editor copied into this assessment, which the upload replaces; AssessmentUploadResultService drops the typed rows
-        // they count once the result is stored. Leaving them would keep reporting passed tests and code issues the assessment no longer carries.
-        result.setTestCaseCount(0);
-        result.setPassedTestCaseCount(0);
-        result.setCodeIssueCount(0);
+        // The automatic feedback this assessment carries, and the counters that describe it, are deliberately left alone: the upload replaces the manual part of an
+        // assessment, not the build it was made against.
     }
 
     /**
-     * Builds the single unreferenced manual feedback that carries the uploaded text and the achieved points.
+     * Builds the single unreferenced manual feedback that carries the uploaded text and the manual points.
      * <p>
-     * <b>Preconditions:</b> {@code feedbackText} is non-{@code null}, and {@code points} is finite and non-negative.
+     * <b>Preconditions:</b> {@code feedbackText} is non-{@code null} and {@code points} is finite.
      * <p>
-     * <b>Postcondition:</b> returns positive-via-credits {@code MANUAL_UNREFERENCED} feedback with the supplied text and points.
+     * <b>Postcondition:</b> returns {@code MANUAL_UNREFERENCED} feedback with the supplied text and points, marked positive or negative by its credits.
      *
      * @param feedbackText the content of the participant's text file, stored as the feedback detail text
-     * @param points       the achieved points, stored as the feedback credits
+     * @param points       the manual points, stored as the feedback credits and negative to deduct
      * @return the manual feedback
      */
     private Feedback buildManualFeedback(final String feedbackText, final double points) {
         assert feedbackText != null : "feedbackText must not be null";
-        assert Double.isFinite(points) && points >= 0 : "points must be finite and non-negative";
+        assert Double.isFinite(points) : "points must be finite";
         final Feedback feedback = new Feedback();
         feedback.setType(FeedbackType.MANUAL_UNREFERENCED);
         feedback.setDetailText(feedbackText);
@@ -750,7 +776,7 @@ public class AssessmentUploadService {
      * <p>
      * <b>Postcondition:</b> pure function (no side effects); any present value is finite and between zero and {@code maximumPoints}, inclusive.
      *
-     * @param rawPoints     the raw cell value of the {@code Overall points} column (empty string if the cell is missing)
+     * @param rawPoints     the raw cell value of the {@code Manual points} column (empty string if the cell is missing)
      * @param maximumPoints maximum accepted points including bonus points
      * @return the parsed points, or {@link Optional#empty()} if the value is missing or outside the accepted range
      */
@@ -762,7 +788,9 @@ public class AssessmentUploadService {
         }
         try {
             final double points = Double.parseDouble(rawPoints.trim());
-            if (points < 0 || points > maximumPoints || !Double.isFinite(points)) {
+            // Negative values are deductions, which is what a manual assessment usually is once the automatic tests have scored the submission. Bounded symmetrically: a
+            // deduction larger than everything the exercise can award cannot mean anything, and the total is floored at zero when the assessment is scored anyway.
+            if (Math.abs(points) > maximumPoints || !Double.isFinite(points)) {
                 return Optional.empty();
             }
             return Optional.of(points);
@@ -807,18 +835,19 @@ public class AssessmentUploadService {
     /**
      * A CSV row that passed validation and can be turned into a manual assessment.
      * <p>
-     * Invariant: all reference components are non-{@code null}, {@code participationId} identifies a participation in the target exercise, and {@code points >= 0}.
+     * Invariant: all reference components are non-{@code null}, {@code participationId} identifies a participation in the target exercise, and {@code points} is finite. The
+     * points are the manual part of the assessment and may be negative, which deducts from what the automatic tests awarded.
      *
      * @param identifier      the student identifier from the CSV ({@code <participationId>-<login>})
      * @param participationId the resolved participation id
-     * @param points          the achieved points
+     * @param points          the manual points, added to the automatic score and negative to deduct
      * @param feedbackText    the content of the matching text file, used as the manual feedback
      */
     private record ValidatedRow(String identifier, long participationId, double points, String feedbackText) {
 
         /**
          * <b>Preconditions:</b> {@code identifier} is non-blank, {@code participationId} identifies a persisted participation, {@code feedbackText} is non-{@code null}, and
-         * {@code points} is finite and non-negative.
+         * {@code points} is finite.
          *
          * @throws IllegalArgumentException if a precondition is violated
          */
@@ -829,8 +858,8 @@ public class AssessmentUploadService {
             if (participationId <= 0) {
                 throw new IllegalArgumentException("The participation id must identify a persisted participation");
             }
-            if (!Double.isFinite(points) || points < 0) {
-                throw new IllegalArgumentException("The achieved points must be finite and non-negative");
+            if (!Double.isFinite(points)) {
+                throw new IllegalArgumentException("The manual points must be finite");
             }
             if (feedbackText == null) {
                 throw new IllegalArgumentException("The feedback text must not be null");

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -22,8 +23,10 @@ import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadResultReposi
 import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
+import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @ExtendWith(MockitoExtension.class)
 class AssessmentUploadResultServiceUnitTest {
@@ -56,7 +59,11 @@ class AssessmentUploadResultServiceUnitTest {
         final User assessor = new User();
         final StudentParticipation participation = new StudentParticipation();
         final Submission submission = mock(Submission.class);
+        final ProgrammingExercise exercise = new ProgrammingExercise();
+        exercise.setMaxPoints(100.0);
+        exercise.setCourse(new Course());
         when(submission.getParticipation()).thenReturn(participation);
+        participation.setExercise(exercise);
         final Result result = new Result();
         result.setId(1L);
         result.setSubmission(submission);
@@ -64,7 +71,7 @@ class AssessmentUploadResultServiceUnitTest {
         when(assessmentUploadResultRepository.saveAll(List.of(result))).thenReturn(List.of(result));
         when(assessmentUploadResultRepository.findAllWithSubmissionAndFeedbackAndTeamStudentsByIds(List.of(1L))).thenReturn(List.of(result));
 
-        final List<Result> savedResults = assessmentUploadResultService.saveManualResults(List.of(result), List.of(), true);
+        final List<Result> savedResults = assessmentUploadResultService.saveManualResults(List.of(result), List.of(), true, exercise, Map.of());
 
         assertThat(savedResults).containsExactly(result);
         assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);

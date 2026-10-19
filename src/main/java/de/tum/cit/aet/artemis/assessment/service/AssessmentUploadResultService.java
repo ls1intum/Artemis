@@ -5,9 +5,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.slf4j.Logger;
@@ -20,6 +22,8 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.repository.UserRepository;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ScaFeedback;
+import de.tum.cit.aet.artemis.assessment.domain.TestCaseFeedback;
 import de.tum.cit.aet.artemis.assessment.repository.AssessmentUploadResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ScaFeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TestCaseFeedbackRepository;
@@ -27,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 
 /**
@@ -94,13 +99,16 @@ public class AssessmentUploadResultService {
      * <b>Postcondition:</b> every supplied result is stored as a manual result and its notification has been sent. The results are written by a single repository call and are
      * therefore stored all or not at all; an exception from this method means none of them was written, which is what lets the caller compensate for what it created before.
      *
-     * @param newResults     newly created results, each attached to its submission's results collection
-     * @param updatedResults existing persisted results that were edited in place
-     * @param ratedResult    override value for the rated property of every result
+     * @param newResults         newly created results, each attached to its submission's results collection
+     * @param updatedResults     existing persisted results that were edited in place
+     * @param ratedResult        override value for the rated property of every result
+     * @param exercise           the programming exercise being assessed, needed to cap and store the score
+     * @param pointsByTestCaseId derived points per test case, as {@code TestCasePointsService} computes them for this exercise
      * @return the stored results with eagerly loaded submissions and feedback
      * @throws IllegalArgumentException if a precondition is violated
      */
-    public List<Result> saveManualResults(final Collection<Result> newResults, final Collection<Result> updatedResults, final boolean ratedResult) {
+    public List<Result> saveManualResults(final Collection<Result> newResults, final Collection<Result> updatedResults, final boolean ratedResult,
+            final ProgrammingExercise exercise, final Map<Long, Double> pointsByTestCaseId) {
         if (newResults == null || updatedResults == null) {
             throw new IllegalArgumentException("The manual results must not be null");
         }
@@ -119,11 +127,16 @@ public class AssessmentUploadResultService {
         final ZonedDateTime completionDate = ZonedDateTime.now();
         results.forEach(result -> initializeManualResult(result, ratedResult, assessor, completionDate));
 
+        // An overwritten assessment keeps the automatic feedback it carries; the uploaded points are manual feedback on top of it, exactly as a tutor's feedback is in the
+        // assessment editor. The score therefore has to come out of the shared calculation rather than from the uploaded number, and that calculation refuses to run on
+        // collections it cannot see, so the rows of the results being overwritten are loaded here. A new result already carries the copies its caller made.
+        hydrateTypedFeedback(updatedResults);
+        results.forEach(result -> result.calculateScoreForProgrammingExercise(exercise, pointsByTestCaseId));
+
         // Write every result explicitly. There is no surrounding transaction, so the results the caller edited are detached and nothing would be written by dirty checking.
         // Saving an existing result merges those edits, and its feedback association (cascade ALL with orphan removal) both persists the replacement feedback and deletes the
         // feedback the upload removed; saving a new result inserts it together with its feedback.
         final List<Result> storedResults = assessmentUploadResultRepository.saveAll(results);
-        dropTypedFeedbackOfOverwrittenResults(updatedResults);
 
         // Past this point the assessments are stored: saveAll is one repository call and therefore one transaction, so it either wrote every result or none. Announcing them is
         // a separate concern that must not turn a stored upload into a failed one — the caller treats an exception from this method as "nothing was written" and compensates
@@ -142,35 +155,31 @@ public class AssessmentUploadResultService {
     }
 
     /**
-     * Drops the automatic test-case and static-code-analysis feedback of the assessments this upload overwrote.
+     * Loads the automatic test-case and static-code-analysis rows of the assessments this upload overwrites.
      * <p>
-     * An assessment created in the editor carries the automatic feedback of the build it was opened on: {@code ProgrammingSubmissionService.lockSubmission} copies those typed
-     * rows into the new manual result. They live in their own tables rather than in {@code Result.feedbacks}, so replacing the feedback of an overwritten assessment leaves
-     * them in place. The uploaded points replace that assessment outright, so they have to go: the feedback synthesizer would keep presenting them to the participant, and
-     * {@code ProgrammingExerciseGradingService} recomputes a manual result's score from the test-case points, which would add them back on top of the uploaded score.
+     * The upload reads results without those collections, so they arrive as uninitialized proxies. The score calculation rejects them in that state rather than quietly
+     * scoring an assessment as if it had no automatic feedback, and saving a result whose collections were replaced while uninitialized would orphan-remove the stored rows.
+     * Loaded in one query per table so a batch does not scale its query count with the number of overwritten assessments.
      * <p>
-     * Deleted by id instead of through the collections, which the upload never loads, and only once the results are stored: a failure here leaves the stale rows behind, which
-     * is recoverable, whereas deleting them before a result write that then fails would strip an existing assessment of its feedback without replacing it.
+     * <b>Precondition:</b> {@code updatedResults} are persisted results.
      * <p>
-     * <b>Precondition:</b> {@code updatedResults} are persisted results whose feedback this upload replaced.
-     * <p>
-     * <b>Postcondition:</b> the typed feedback rows of those results are deleted, or the failure to delete them is logged; nothing propagates.
+     * <b>Postcondition:</b> every supplied result carries its stored typed feedback.
      *
-     * @param updatedResults the overwritten assessments
+     * @param updatedResults the assessments being overwritten
      */
-    private void dropTypedFeedbackOfOverwrittenResults(final Collection<Result> updatedResults) {
-        final List<Long> overwrittenResultIds = updatedResults.stream().map(Result::getId).toList();
-        if (overwrittenResultIds.isEmpty()) {
+    private void hydrateTypedFeedback(final Collection<Result> updatedResults) {
+        final List<Long> resultIds = updatedResults.stream().map(Result::getId).toList();
+        if (resultIds.isEmpty()) {
             return;
         }
-        try {
-            testCaseFeedbackRepository.deleteByResultIds(overwrittenResultIds);
-            scaFeedbackRepository.deleteByResultIds(overwrittenResultIds);
-        }
-        catch (final RuntimeException e) {
-            log.error("Stored the uploaded assessments but could not drop the automatic feedback of the {} overwritten result(s) {}. Their score will be recomputed from that "
-                    + "feedback instead of the uploaded points.", overwrittenResultIds.size(), overwrittenResultIds, e);
-        }
+        final Map<Long, List<TestCaseFeedback>> testCaseFeedbackByResultId = testCaseFeedbackRepository.findWithTestCaseByResultIds(resultIds).stream()
+                .collect(Collectors.groupingBy(feedback -> feedback.getResult().getId()));
+        final Map<Long, List<ScaFeedback>> scaFeedbackByResultId = scaFeedbackRepository.findByResultIds(resultIds).stream()
+                .collect(Collectors.groupingBy(feedback -> feedback.getResult().getId()));
+        updatedResults.forEach(result -> {
+            result.setTestCaseFeedbacks(testCaseFeedbackByResultId.getOrDefault(result.getId(), List.of()));
+            result.setScaFeedbacks(scaFeedbackByResultId.getOrDefault(result.getId(), List.of()));
+        });
     }
 
     /**

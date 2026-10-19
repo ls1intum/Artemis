@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 
 class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndependentTest {
 
@@ -107,7 +106,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldStoreScoreAndFeedbackForEveryParticipant() {
         final String csv = """
-                Identifier,Name,Overall points
+                Identifier,Name,Manual points
                 %s,Student One,80
                 %s,Student Two,55.5
                 """.formatted(identifier1, identifier2);
@@ -131,12 +130,12 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     void shouldGenerateATemplateThatRoundTripsThroughTheUpload() throws IOException {
         final Map<String, String> templateEntries = readZipEntries(assessmentUploadService.generateTemplateArchive(programmingExercise));
 
-        // The template contains the CSV the parser expects (identifier in the first column, an "Overall points" column) and one feedback file per participation, each named after
+        // The template contains the CSV the parser expects (identifier in the first column, an "Manual points" column) and one feedback file per participation, each named after
         // the
         // path-safe participation id so the upload matches it back by id.
         final String templateCsv = templateEntries.get(CSV_FILE_NAME);
         assertThat(templateCsv).isNotNull();
-        assertThat(templateCsv.lines().findFirst().orElseThrow()).contains("Overall points");
+        assertThat(templateCsv.lines().findFirst().orElseThrow()).contains("Manual points");
         assertThat(templateCsv).contains(identifier1).contains(identifier2);
         final List<String> textFileNames = templateEntries.keySet().stream().filter(name -> name.endsWith(".txt")).toList();
         assertThat(textFileNames).hasSize(identifiers.size()).contains(participation1.getId() + ".txt", participation2.getId() + ".txt");
@@ -158,7 +157,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     void shouldMatchFeedbackFileNamedAfterParticipationId() {
         // The generated template names each feedback file after the path-safe participation id (the identifier's login/team-short-name part may contain a '/'); the importer must
         // resolve such a flat name back to its CSV row.
-        final String csv = "Identifier,Overall points\n%s,80\n".formatted(identifier1);
+        final String csv = "Identifier,Manual points\n%s,80\n".formatted(identifier1);
         final Map<String, String> textFiles = new LinkedHashMap<>();
         textFiles.put(participation1.getId() + ".txt", "Great work!");
 
@@ -177,7 +176,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         assertThat(getSubmissions(participation1.getId())).isEmpty();
 
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback")));
+                buildZip("Identifier,Manual points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback")));
 
         assertThat(result.errors()).isEmpty();
         final List<Submission> submissions = getSubmissions(participation1.getId());
@@ -199,14 +198,14 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
         final Map<String, String> textFiles = new LinkedHashMap<>();
         textFiles.put(identifier1 + ".txt", "First feedback");
-        assessmentUploadService.importAssessments(programmingExercise, buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), textFiles));
+        assessmentUploadService.importAssessments(programmingExercise, buildZip("Identifier,Manual points\n%s,40\n".formatted(identifier1), textFiles));
         assertManualAssessment(participation1.getId(), 40.0, "First feedback");
         final long firstManualResultId = getManualResults(participation1.getId()).getFirst().getId();
 
         final Map<String, String> newTextFiles = new LinkedHashMap<>();
         newTextFiles.put(identifier1 + ".txt", "Corrected feedback");
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,90\n".formatted(identifier1), newTextFiles));
+                buildZip("Identifier,Manual points\n%s,90\n".formatted(identifier1), newTextFiles));
 
         assertThat(result.errors()).isEmpty();
         // Still exactly one manual result, now with the corrected score and feedback.
@@ -227,7 +226,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         assertThat(getManualResults(participation1.getId())).hasSize(1);
 
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,75\n".formatted(identifier1), Map.of(identifier1 + ".txt", "uploaded feedback")));
+                buildZip("Identifier,Manual points\n%s,75\n".formatted(identifier1), Map.of(identifier1 + ".txt", "uploaded feedback")));
 
         assertThat(result.errors()).isEmpty();
         // Exactly one manual result remains: the existing SEMI_AUTOMATIC one, overwritten in place with the uploaded MANUAL assessment instead of being duplicated.
@@ -243,14 +242,13 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     void shouldKeepTheRatingOfAnOverwrittenManualAssessment() {
         // The upload overwrites an existing manual assessment in place instead of deleting and re-creating it, so a student's rating of that assessment is neither destroyed nor
         // left dangling.
-        assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
+        assessmentUploadService.importAssessments(programmingExercise, buildZip("Identifier,Manual points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
         final Result ratedManualResult = getManualResults(participation1.getId()).getFirst();
         participationUtilService.addRatingToResult(ratedManualResult, 3);
         assertThat(ratingRepository.findRatingByResultId(ratedManualResult.getId())).isPresent();
 
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,90\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
+                buildZip("Identifier,Manual points\n%s,90\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
 
         assertThat(result.errors()).isEmpty();
         // Exactly one manual result remains, it is still the same one, and the rating that referenced it survived the overwrite.
@@ -265,7 +263,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         // Deleting a manual result must remove it together with every row that references it — feedback, rating, complaint and complaint response — in foreign-key-safe order; a
         // wrong order would fail with a foreign-key violation.
         assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback to delete")));
+                buildZip("Identifier,Manual points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback to delete")));
         final Result manualResult = getManualResults(participation1.getId()).getFirst();
         participationUtilService.addRatingToResult(manualResult, 3);
         final Complaint complaint = complaintRepo.save(new Complaint().result(manualResult).complaintType(ComplaintType.COMPLAINT));
@@ -285,13 +283,12 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectUploadWhenExistingAssessmentHasComplaint() {
-        assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
+        assessmentUploadService.importAssessments(programmingExercise, buildZip("Identifier,Manual points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
         final Result manualResult = getManualResults(participation1.getId()).getFirst();
         complaintRepo.save(new Complaint().result(manualResult).complaintType(ComplaintType.COMPLAINT));
 
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,90\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
+                buildZip("Identifier,Manual points\n%s,90\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
 
         assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.EXISTING_COMPLAINT);
         // The complaint and the original assessment must be left untouched (nothing is stored).
@@ -305,13 +302,12 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         // Regression test for the all-or-nothing contract: participation1 has a complained manual result that blocks the whole upload, while participation2 has no submission at
         // all. The upload writes nothing before the complaint gate has passed, so participation2 must not receive a submission — otherwise a rejected upload would leave that
         // submission behind even though it reports that nothing was stored.
-        assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
+        assessmentUploadService.importAssessments(programmingExercise, buildZip("Identifier,Manual points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
         final Result manualResult = getManualResults(participation1.getId()).getFirst();
         complaintRepo.save(new Complaint().result(manualResult).complaintType(ComplaintType.COMPLAINT));
         assertThat(getSubmissions(participation2.getId())).isEmpty();
 
-        final String csv = "Identifier,Overall points\n%s,90\n%s,70\n".formatted(identifier1, identifier2);
+        final String csv = "Identifier,Manual points\n%s,90\n%s,70\n".formatted(identifier1, identifier2);
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
                 buildZip(csv, Map.of(identifier1 + ".txt", "second", identifier2 + ".txt", "feedback two")));
 
@@ -336,7 +332,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         resultRepository.saveAndFlush(latestManualResult);
 
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "latest feedback")));
+                buildZip("Identifier,Manual points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "latest feedback")));
 
         assertThat(result.errors()).isEmpty();
         // The superseded result and its complaint are left untouched.
@@ -357,9 +353,9 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         final Map<String, String> textFiles = Map.of(identifier1 + ".txt", "feedback");
 
         final AssessmentUploadResultDTO accepted = assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,110\n".formatted(identifier1), textFiles));
+                buildZip("Identifier,Manual points\n%s,110\n".formatted(identifier1), textFiles));
         final AssessmentUploadResultDTO rejected = assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,110.01\n".formatted(identifier1), textFiles));
+                buildZip("Identifier,Manual points\n%s,110.01\n".formatted(identifier1), textFiles));
 
         assertThat(accepted.errors()).isEmpty();
         assertThat(rejected.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.INVALID_POINTS);
@@ -373,7 +369,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         textFiles.put("second/" + identifier1 + ".TXT", "second");
 
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), textFiles));
+                buildZip("Identifier,Manual points\n%s,80\n".formatted(identifier1), textFiles));
 
         assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.DUPLICATE_TEXT_FILE);
         assertThat(getManualResults(participation1.getId())).isEmpty();
@@ -389,7 +385,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         student1.setLogin(identifier2);
         userTestRepository.saveAndFlush(student1);
         final String identifierWithSuffixLogin = participation1.getId() + "-" + identifier2;
-        final String csv = "Identifier,Overall points\n%s,80\n%s,60\n".formatted(identifierWithSuffixLogin, identifier2);
+        final String csv = "Identifier,Manual points\n%s,80\n%s,60\n".formatted(identifierWithSuffixLogin, identifier2);
 
         final AssessmentUploadResultDTO result;
         try {
@@ -409,7 +405,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReportMalformedCsvSeparatelyFromEmptyCsv() {
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n\"unterminated,80\n", Map.of(identifier1 + ".txt", "feedback")));
+                buildZip("Identifier,Manual points\n\"unterminated,80\n", Map.of(identifier1 + ".txt", "feedback")));
 
         assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.MALFORMED_CSV);
     }
@@ -420,8 +416,8 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         final String oversizedFeedback = "x".repeat(10 * 1024 * 1024 + 1);
 
         assertThatThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", oversizedFeedback))))
-                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("maximum uncompressed size");
+                buildZip("Identifier,Manual points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", oversizedFeedback)))).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("maximum uncompressed size");
     }
 
     @Test
@@ -430,14 +426,14 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         final String oversizedDirectoryContent = "x".repeat(10 * 1024 * 1024 + 1);
 
         assertThatThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of("oversized/", oversizedDirectoryContent))))
-                .isInstanceOf(BadRequestAlertException.class).hasMessageContaining("maximum uncompressed size");
+                buildZip("Identifier,Manual points\n%s,80\n".formatted(identifier1), Map.of("oversized/", oversizedDirectoryContent)))).isInstanceOf(BadRequestAlertException.class)
+                .hasMessageContaining("maximum uncompressed size");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectCsvWithMoreThanTheMaximumNumberOfRows() {
-        final StringBuilder csv = new StringBuilder("Identifier,Overall points\n");
+        final StringBuilder csv = new StringBuilder("Identifier,Manual points\n");
         // One row more than the accepted maximum of 10000 data rows: parsing must stop and reject before materializing all rows.
         for (int row = 0; row <= 10_000; row++) {
             csv.append("row").append(row).append(",80\n");
@@ -456,14 +452,14 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise, buildZip(csv, textFiles));
 
-        assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.MISSING_OVERALL_POINTS_COLUMN);
+        assertThat(result.errors()).extracting(error -> error.type()).containsExactly(AssessmentUploadErrorType.MISSING_MANUAL_POINTS_COLUMN);
         assertThat(getManualResults(participation1.getId())).isEmpty();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectUploadWithUnknownParticipationAndStoreNothing() {
-        final String csv = "Identifier,Overall points\n%s,80\n999999-nobody,50\n".formatted(identifier1);
+        final String csv = "Identifier,Manual points\n%s,80\n999999-nobody,50\n".formatted(identifier1);
         final Map<String, String> textFiles = new LinkedHashMap<>();
         textFiles.put(identifier1 + ".txt", "feedback one");
         textFiles.put("999999-nobody.txt", "feedback nobody");
@@ -478,7 +474,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReportMissingAndUnmatchedTextFiles() {
-        final String csv = "Identifier,Overall points\n%s,80\n".formatted(identifier1);
+        final String csv = "Identifier,Manual points\n%s,80\n".formatted(identifier1);
         final Map<String, String> textFiles = new LinkedHashMap<>();
         // No text file for identifier1, but an orphan text file that matches no row.
         textFiles.put("orphan-file.txt", "orphan");
@@ -502,33 +498,75 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldDropTheAutomaticFeedbackOfAnOverwrittenAssessment() {
-        // An assessment opened in the editor carries the automatic feedback of the build it was opened on: lockSubmission copies the typed test-case and static-analysis rows
-        // and their counters into the manual result. They live in their own tables, so replacing Result.feedbacks does not touch them, and a grading recalculation would add
-        // their points and penalties back on top of the uploaded score.
-        assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
+    void shouldKeepTheAutomaticFeedbackOfAnOverwrittenAssessmentAndCountItTowardsTheScore() {
+        // An assessment opened in the editor carries the automatic feedback of the build it was made against, and a tutor's points count on top of it. An upload replaces the
+        // manual part of that assessment the same way, so the typed rows and their counters have to survive the overwrite and keep contributing to the score.
+        assessmentUploadService.importAssessments(programmingExercise, buildZip("Identifier,Manual points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
         final Result seeded = getManualResults(participation1.getId()).getFirst();
         final var testCase = testCaseRepository.findByExerciseId(programmingExercise.getId()).iterator().next();
         participationUtilService.addTestCaseFeedbackToResult(seeded, testCase, true, null);
-        participationUtilService.addScaFeedbackToResult(seeded, StaticCodeAnalysisTool.SPOTBUGS, "BAD_PRACTICE", "spotbugs-category", "a code issue");
         seeded.setTestCaseCount(1);
         seeded.setPassedTestCaseCount(1);
-        seeded.setCodeIssueCount(1);
         resultRepository.save(seeded);
-        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(seeded.getId()))).hasSize(1);
 
         assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,90\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
+                buildZip("Identifier,Manual points\n%s,10\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
 
         final Result overwritten = getManualResults(participation1.getId()).getFirst();
         assertThat(overwritten.getId()).isEqualTo(seeded.getId());
-        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(seeded.getId()))).isEmpty();
-        assertThat(scaFeedbackRepository.findByResultIds(List.of(seeded.getId()))).isEmpty();
-        assertThat(overwritten.getTestCaseCount()).isZero();
-        assertThat(overwritten.getPassedTestCaseCount()).isZero();
-        assertThat(overwritten.getCodeIssueCount()).isZero();
-        assertManualAssessment(participation1.getId(), 90.0, "second");
+        assertThat(testCaseFeedbackRepository.findWithTestCaseByResultIds(List.of(seeded.getId()))).hasSize(1);
+        assertThat(overwritten.getTestCaseCount()).isEqualTo(1);
+        assertThat(overwritten.getPassedTestCaseCount()).isEqualTo(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCountUploadedPointsOnTopOfTheAutomaticTestPoints() {
+        // The uploaded number is manual points, not a final score: it is added to what the tests already awarded, exactly as a tutor's points are in the assessment editor.
+        final double automaticPoints = seedAssessmentWithOnePassingTest();
+
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Manual points\n%s,10\n".formatted(identifier1), Map.of(identifier1 + ".txt", "ten on top")));
+        final double scoreWithTen = getManualResults(participation1.getId()).getFirst().getScore();
+
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Manual points\n%s,25\n".formatted(identifier1), Map.of(identifier1 + ".txt", "twenty-five on top")));
+        final double scoreWithTwentyFive = getManualResults(participation1.getId()).getFirst().getScore();
+
+        assertThat(automaticPoints).isPositive();
+        assertThat(scoreWithTen).isCloseTo(automaticPoints + 10, within(0.01));
+        assertThat(scoreWithTwentyFive).isCloseTo(automaticPoints + 25, within(0.01));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldDeductNegativeUploadedPointsFromTheAutomaticTestPoints() {
+        // Deducting is what a manual assessment usually does once the tests have scored the submission, so a negative value is a valid row rather than an invalid one.
+        final double automaticPoints = seedAssessmentWithOnePassingTest();
+
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Manual points\n%s,-5\n".formatted(identifier1), Map.of(identifier1 + ".txt", "five off for style")));
+
+        final Result result = getManualResults(participation1.getId()).getFirst();
+        assertThat(result.getScore()).isCloseTo(automaticPoints - 5, within(0.01));
+        assertThat(result.getFeedbacks().iterator().next().getCredits()).isCloseTo(-5, within(0.01));
+    }
+
+    /**
+     * Gives participation1 an assessment carrying one passing test case, the way an assessment opened in the editor carries the automatic feedback of its build, and returns
+     * the points those tests are worth so a caller can assert what the uploaded points are added to.
+     */
+    private double seedAssessmentWithOnePassingTest() {
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Manual points\n%s,0\n".formatted(identifier1), Map.of(identifier1 + ".txt", "nothing manual yet")));
+        final Result seeded = getManualResults(participation1.getId()).getFirst();
+        final var testCase = testCaseRepository.findByExerciseId(programmingExercise.getId()).iterator().next();
+        participationUtilService.addTestCaseFeedbackToResult(seeded, testCase, true, null);
+        resultRepository.save(seeded);
+        // Re-upload zero manual points so the stored score is exactly what the tests award.
+        assessmentUploadService.importAssessments(programmingExercise,
+                buildZip("Identifier,Manual points\n%s,0\n".formatted(identifier1), Map.of(identifier1 + ".txt", "nothing manual yet")));
+        return getManualResults(participation1.getId()).getFirst().getScore();
     }
 
     @Test
@@ -537,7 +575,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         // "042-login" parses to the same participation as "42-login" but differs as an identifier string, and each row brings a text file of its own, so neither the raw
         // identifier check nor text-file matching catches the pair. Without deduplication by resolved id the participant would be assessed twice by one upload.
         final String aliasIdentifier = "0" + identifier1;
-        final String csv = "Identifier,Overall points\n%s,80\n%s,40\n".formatted(identifier1, aliasIdentifier);
+        final String csv = "Identifier,Manual points\n%s,80\n%s,40\n".formatted(identifier1, aliasIdentifier);
 
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise,
                 buildZip(csv, Map.of(identifier1 + ".txt", "first", aliasIdentifier + ".txt", "second")));
@@ -550,7 +588,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectUploadWhenLoginDoesNotMatchParticipation() {
-        final String csv = "Identifier,Overall points\n%s-wrong,80\n".formatted(identifier1);
+        final String csv = "Identifier,Manual points\n%s-wrong,80\n".formatted(identifier1);
         // No text file for the row: it fails the login cross-check before text-file matching, so the only expected error is the mismatch itself.
         final AssessmentUploadResultDTO result = assessmentUploadService.importAssessments(programmingExercise, buildZip(csv, new LinkedHashMap<>()));
 
@@ -606,7 +644,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectNullArguments() {
-        final MockMultipartFile zip = buildZip("Identifier,Overall points\n", new LinkedHashMap<>());
+        final MockMultipartFile zip = buildZip("Identifier,Manual points\n", new LinkedHashMap<>());
         assertThatIllegalArgumentException().isThrownBy(() -> assessmentUploadService.importAssessments(null, zip));
         assertThatIllegalArgumentException().isThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise, null));
     }
@@ -614,7 +652,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectExerciseWithoutPositiveMaximumPoints() {
-        final MockMultipartFile zip = buildZip("Identifier,Overall points\n", new LinkedHashMap<>());
+        final MockMultipartFile zip = buildZip("Identifier,Manual points\n", new LinkedHashMap<>());
         programmingExercise.setMaxPoints(0.0);
 
         assertThatIllegalArgumentException().isThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise, zip))
@@ -628,10 +666,9 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC);
         resultRepository.saveAndFlush(automaticResult);
 
+        assessmentUploadService.importAssessments(programmingExercise, buildZip("Identifier,Manual points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
         assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,40\n".formatted(identifier1), Map.of(identifier1 + ".txt", "first")));
-        assessmentUploadService.importAssessments(programmingExercise,
-                buildZip("Identifier,Overall points\n%s,90\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
+                buildZip("Identifier,Manual points\n%s,90\n".formatted(identifier1), Map.of(identifier1 + ".txt", "second")));
 
         // Repeated uploads overwrite the same manual assessment instead of appending a new one, so the submission still holds exactly the automatic result and one manual result.
         final Set<Result> submissionResults = getLatestSubmissionResults(participation1.getId());
@@ -647,7 +684,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         // getNumberOfCorrectionRounds() is always 1 for course exercises, so a spy emulates a (multi-round) exam exercise without the exam setup.
         final ProgrammingExercise exerciseWithTwoRounds = Mockito.spy(programmingExercise);
         Mockito.doReturn(2).when(exerciseWithTwoRounds).getNumberOfCorrectionRounds();
-        final MockMultipartFile zip = buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback"));
+        final MockMultipartFile zip = buildZip("Identifier,Manual points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback"));
 
         assertThatThrownBy(() -> assessmentUploadService.importAssessments(exerciseWithTwoRounds, zip)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("correction round");
@@ -661,7 +698,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(3));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(5));
         programmingExerciseRepository.saveAndFlush(programmingExercise);
-        final MockMultipartFile zip = buildZip("Identifier,Overall points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback"));
+        final MockMultipartFile zip = buildZip("Identifier,Manual points\n%s,80\n".formatted(identifier1), Map.of(identifier1 + ".txt", "feedback"));
 
         assertThatThrownBy(() -> assessmentUploadService.importAssessments(programmingExercise, zip)).isInstanceOf(BadRequestAlertException.class)
                 .hasMessageContaining("not allowed");
@@ -729,13 +766,13 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
         return entries;
     }
 
-    /** Fills the empty "Overall points" field of every data row of a template CSV with the given value, leaving the header untouched. */
+    /** Fills the empty "Manual points" field of every data row of a template CSV with the given value, leaving the header untouched. */
     private String fillTemplatePoints(final String templateCsv, final double points) {
         final String[] lines = templateCsv.split("\n", -1);
         final StringBuilder filled = new StringBuilder(lines[0]).append("\n");
         for (int lineIndex = 1; lineIndex < lines.length; lineIndex++) {
             if (!lines[lineIndex].isBlank()) {
-                // Each data row ends with the empty "Overall points" field, so appending the value fills it in.
+                // Each data row ends with the empty "Manual points" field, so appending the value fills it in.
                 filled.append(lines[lineIndex]).append(points).append("\n");
             }
         }
@@ -743,7 +780,7 @@ class AssessmentUploadServiceTest extends AbstractProgrammingIntegrationIndepend
     }
 
     private String buildCsvWithoutTextFiles(final List<String> participantIdentifiers) {
-        return "Identifier,Overall points\n" + participantIdentifiers.stream().map(identifier -> identifier + ",80").collect(java.util.stream.Collectors.joining("\n")) + "\n";
+        return "Identifier,Manual points\n" + participantIdentifiers.stream().map(identifier -> identifier + ",80").collect(java.util.stream.Collectors.joining("\n")) + "\n";
     }
 
     /** One {@code <identifier>.txt} feedback file per identifier, so every CSV row of {@link #buildCsvWithoutTextFiles} has an exact-match text file and the upload succeeds. */
