@@ -265,7 +265,6 @@ class ArchitectureTest extends AbstractArchitectureTest {
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutantAuthor.completeJavaSource(java.lang.String, java.lang.String)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutantAuthor.declaresTestMethod(java.lang.String, java.lang.String)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SemanticMutantAuthor.specificationDeclaresRule(java.lang.String, java.lang.String)",
-            "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.SpecFidelityCritic.compile(java.lang.String)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedStructuralContract.canonicalTypeName(java.lang.String, java.util.Set, java.lang.String)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ApprovedStructuralContract.templateDependencies(java.util.Set, java.util.Set)",
             "de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.verification.ContractWitnessProbe.collidesWithExistingTest(de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.critic.ContractWitness, java.util.Map)",
