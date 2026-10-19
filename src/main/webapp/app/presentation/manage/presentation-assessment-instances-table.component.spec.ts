@@ -88,7 +88,7 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
 
     it('should show and hide the details of a row when the student is clicked', () => {
         render([createRow()]);
-        const toggle = query('button[aria-controls="presentation-detail-10:student1"]')!;
+        const toggle = query('[data-testid="toggle-row-details"]')!;
         expect(query('.presentation-detail-row')).toBeNull();
 
         toggle.click();
@@ -104,7 +104,7 @@ describe('PresentationAssessmentInstancesTableComponent', () => {
 
     it('should keep rows expanded while the rows reload and collapse them for another presentation', () => {
         render([createRow()]);
-        query('button[aria-controls="presentation-detail-10:student1"]')!.click();
+        query('[data-testid="toggle-row-details"]')!.click();
         fixture.detectChanges();
 
         render([createRow()]);

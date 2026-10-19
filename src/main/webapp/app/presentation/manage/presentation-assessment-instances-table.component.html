@@ -14,26 +14,7 @@
             @let expanded = expandedRowKeys().includes(row.rowKey);
             <tr>
                 <td>
-                    <button
-                        type="button"
-                        class="inline-flex items-center gap-3 rounded-sm border-0 bg-transparent p-0 text-left text-inherit focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-(--primary)"
-                        [attr.aria-expanded]="expanded"
-                        [attr.aria-controls]="'presentation-detail-' + row.rowKey"
-                        [attr.aria-label]="(expanded ? 'artemisApp.presentationAssessment.hideDetails' : 'artemisApp.presentationAssessment.showDetails') | artemisTranslate"
-                        (click)="toggleDetails(row)"
-                    >
-                        <jhi-profile-picture
-                            imageSizeInRem="2"
-                            fontSizeInRem="0.75"
-                            [imageId]="'presentation-student-profile-picture-' + row.rowKey"
-                            [defaultPictureId]="'presentation-student-default-picture-' + row.rowKey"
-                            [authorName]="row.displayName"
-                        />
-                        <div class="flex flex-col">
-                            <strong>{{ row.displayName }}</strong>
-                            <small class="text-muted-color">{{ row.student.email || row.studentLogin }}</small>
-                        </div>
-                    </button>
+                    <jhi-presentation-student-toggle [row]="row" [expanded]="expanded" [detailsId]="'presentation-detail-' + row.rowKey" (toggled)="toggleDetails(row)" />
                 </td>
                 <td>
                     @if (row.assessed) {
@@ -57,32 +38,11 @@
                 <td>{{ row.instance.presentationDate ? (row.instance.presentationDate | artemisDate) : '-' }}</td>
                 <td class="text-muted-color">{{ row.instance.remark || '-' }}</td>
                 <td>
-                    <div class="flex justify-end gap-2">
-                        <tumaet-ui-button
-                            size="small"
-                            variant="text"
-                            [icon]="faPencilAlt"
-                            [ariaLabel]="'entity.action.edit' | artemisTranslate"
-                            (clicked)="editInstance.emit(row.instance)"
-                            data-testid="edit-instance-button"
-                        />
-                        @if (canDelete()) {
-                            <tumaet-ui-button
-                                size="small"
-                                severity="danger"
-                                variant="text"
-                                [icon]="faTrash"
-                                [ariaLabel]="'entity.action.delete' | artemisTranslate"
-                                jhiDeleteButton
-                                [renderButtonStyle]="false"
-                                [renderButtonText]="false"
-                                [actionType]="ActionType.Delete"
-                                deleteQuestion="artemisApp.presentationAssessment.delete.instanceQuestion"
-                                (delete)="deleteInstance.emit(row.instance)"
-                                data-testid="delete-instance-button"
-                            />
-                        }
-                    </div>
+                    <jhi-presentation-instance-actions
+                        [canDelete]="canDelete()"
+                        (editRequested)="editInstance.emit(row.instance)"
+                        (deleteRequested)="deleteInstance.emit(row.instance)"
+                    />
                 </td>
             </tr>
             @if (expanded) {

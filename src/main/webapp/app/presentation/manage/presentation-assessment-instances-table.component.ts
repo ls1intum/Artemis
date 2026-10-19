@@ -1,15 +1,13 @@
 import { Component, input, linkedSignal, output } from '@angular/core';
-import { faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonComponent, TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective, TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { PresentationAssessment, PresentationAssessmentInstance } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentInstanceDetailsComponent } from 'app/presentation/manage/presentation-assessment-instance-details.component';
+import { PresentationInstanceActionsComponent } from 'app/presentation/manage/presentation-instance-actions.component';
+import { PresentationStudentToggleComponent } from 'app/presentation/manage/presentation-student-toggle.component';
 import { PresentationStudentTableRow } from 'app/presentation/manage/presentation-assessment-management.helper';
 
 /** Lists the students assigned to one presentation with their grade, date and remark. */
@@ -21,20 +19,15 @@ import { PresentationStudentTableRow } from 'app/presentation/manage/presentatio
     imports: [
         TumAetUiTableDirective,
         TumAetUiTagComponent,
-        TumAetUiButtonComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
         ArtemisDatePipe,
-        ProfilePictureComponent,
-        DeleteButtonDirective,
         PresentationAssessmentInstanceDetailsComponent,
+        PresentationInstanceActionsComponent,
+        PresentationStudentToggleComponent,
     ],
 })
 export class PresentationAssessmentInstancesTableComponent {
-    protected readonly faPencilAlt = faPencilAlt;
-    protected readonly faTrash = faTrash;
-    protected readonly ActionType = ActionType;
-
     readonly rows = input.required<PresentationStudentTableRow[]>();
     readonly presentationAssessment = input.required<PresentationAssessment>();
     /** Editors remove assigned students; tutors only grade them. */

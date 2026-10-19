@@ -407,9 +407,9 @@ describe('PresentationAssessmentManagementComponent', () => {
         applySearch('ab12cde');
         fixture.detectChanges();
 
-        const studentButton = query('[data-testid="toggle-overview-row-details"]')!;
+        const studentButton = query('[data-testid="toggle-row-details"]')!;
         expect(studentButton.querySelector('strong.truncate')!.textContent!.trim()).toBe(expectedName);
-        expect(query('#presentation-overview-default-picture-11\\:ab12cde')!.textContent!.trim()).toBe(expectedInitials);
+        expect(query('#presentation-student-default-picture-11\\:ab12cde')!.textContent!.trim()).toBe(expectedInitials);
     });
 
     it('should request and display rows for the selected presentation', () => {
@@ -1299,7 +1299,7 @@ describe('PresentationAssessmentManagementComponent', () => {
         fixture.detectChanges();
         expect(query('.presentation-detail-row')).toBeNull();
 
-        clickByTestId('toggle-overview-row-details');
+        clickByTestId('toggle-row-details');
 
         const link = query('.presentation-detail-row a[href="https://example.org/meeting"]')!;
         expect(link.getAttribute('target')).toBe('_blank');
@@ -1385,13 +1385,13 @@ describe('PresentationAssessmentManagementComponent', () => {
     });
 
     it('should collapse an expanded row again', () => {
-        clickByTestId('toggle-overview-row-details');
+        clickByTestId('toggle-row-details');
         expect(query('.presentation-detail-row')).not.toBeNull();
 
-        clickByTestId('toggle-overview-row-details');
+        clickByTestId('toggle-row-details');
 
         expect(query('.presentation-detail-row')).toBeNull();
-        expect(query('[data-testid="toggle-overview-row-details"]')!.getAttribute('aria-expanded')).toBe('false');
+        expect(query('[data-testid="toggle-row-details"]')!.getAttribute('aria-expanded')).toBe('false');
     });
 
     it('should open an empty presentation dialog from the create button in the title bar', () => {

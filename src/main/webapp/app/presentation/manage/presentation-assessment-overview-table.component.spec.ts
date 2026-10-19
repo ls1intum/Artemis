@@ -112,7 +112,7 @@ describe('PresentationAssessmentOverviewTableComponent', () => {
 
     it('should show and hide the presentation details of a row when the student is clicked', () => {
         render([createRow()]);
-        const toggle = query('[data-testid="toggle-overview-row-details"]')!;
+        const toggle = query('[data-testid="toggle-row-details"]')!;
         expect(query('.presentation-detail-row')).toBeNull();
 
         toggle.click();

@@ -1,15 +1,13 @@
 import { Component, input, output, signal } from '@angular/core';
-import { faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { TumAetUiButtonComponent, TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
+import { TumAetUiTableDirective, TumAetUiTableSortEvent, TumAetUiTableSortableColumnComponent, TumAetUiTagComponent } from '@tumaet/ui-angular';
 
 import { TranslateDirective } from 'app/foundation/language/translate.directive';
 import { ArtemisDatePipe } from 'app/foundation/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pipe';
-import { DeleteButtonDirective } from 'app/shared-ui/delete-dialog/directive/delete-button.directive';
-import { ActionType } from 'app/shared-ui/delete-dialog/delete-dialog.model';
-import { ProfilePictureComponent } from 'app/shared-ui/profile-picture/profile-picture.component';
 import { PresentationAssessmentStudentRowsRequest } from 'app/presentation/shared/entities/presentation-assessment.model';
 import { PresentationAssessmentInstanceDetailsComponent } from 'app/presentation/manage/presentation-assessment-instance-details.component';
+import { PresentationInstanceActionsComponent } from 'app/presentation/manage/presentation-instance-actions.component';
+import { PresentationStudentToggleComponent } from 'app/presentation/manage/presentation-student-toggle.component';
 import { PresentationStudentTableRow } from 'app/presentation/manage/presentation-assessment-management.helper';
 
 /** Lists the presenters of all presentations of a course, one row per student and presentation. */
@@ -22,20 +20,15 @@ import { PresentationStudentTableRow } from 'app/presentation/manage/presentatio
         TumAetUiTableDirective,
         TumAetUiTableSortableColumnComponent,
         TumAetUiTagComponent,
-        TumAetUiButtonComponent,
         TranslateDirective,
         ArtemisTranslatePipe,
         ArtemisDatePipe,
-        ProfilePictureComponent,
-        DeleteButtonDirective,
         PresentationAssessmentInstanceDetailsComponent,
+        PresentationInstanceActionsComponent,
+        PresentationStudentToggleComponent,
     ],
 })
 export class PresentationAssessmentOverviewTableComponent {
-    protected readonly faPencilAlt = faPencilAlt;
-    protected readonly faTrash = faTrash;
-    protected readonly ActionType = ActionType;
-
     readonly rows = input.required<PresentationStudentTableRow[]>();
     readonly sortField = input.required<PresentationAssessmentStudentRowsRequest['sortField']>();
     readonly sortOrder = input.required<number>();
