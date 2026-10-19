@@ -56,10 +56,8 @@ describe('ExamParticipationLiveEventsService', () => {
         vi.restoreAllMocks();
     });
 
-    // Tests the reconnection handler. The service should only fetch events when the WebSocket
-    // reconnects (connected=true AND wasEverConnectedBefore=true). Initial connections and
-    // disconnections should not trigger a fetch. The fetch happens immediately (no delay)
-    // because on reconnection we want to backfill missed events as quickly as possible.
+    // Every successful connection backfills events, including a first connection that
+    // becomes ready after the initial REST snapshot. Disconnections do not fetch.
     it.each([
         [true, true],
         [true, false],
@@ -85,19 +83,65 @@ describe('ExamParticipationLiveEventsService', () => {
             // The reconnection fetch happens synchronously (no setTimeout delay)
             await new Promise((resolve) => setTimeout(resolve, 0));
 
-            if (connected && wasEverConnectedBefore) {
-                // Only on a genuine reconnection should we fetch events to backfill the gap
+            if (connected) {
+                // Both first connections and reconnections backfill the disconnected interval.
                 expect(fetchPreviousExamEventsSpy).toHaveBeenCalledOnce();
                 const req = httpMock.expectOne({ method: 'GET', url: `/api/exam/courses/1/exams/1/student-exams/live-events` });
                 req.flush(mockEvents);
                 expect(service['events']).toEqual(mockEvents);
                 expect(service['allEventsSubject'].getValue()).toEqual(mockEvents);
             } else {
-                // Initial connection, disconnection, or disconnected+wasEverConnected — no fetch
+                // Disconnections do not trigger a fetch.
                 expect(fetchPreviousExamEventsSpy).not.toHaveBeenCalled();
             }
         },
     );
+
+    it('backfills working time updates persisted after the initial snapshot when the first websocket connection is late', async () => {
+        vi.useFakeTimers();
+        try {
+            mockWebsocketService.setConnectionState(new ConnectionState(false, false));
+            currentlyLoadedStudentExamSubject.next({ id: 42, exam: { id: 24, course: { id: 12 } } });
+            const systemEvents: ExamLiveEvent[] = [];
+            const userEvents: ExamLiveEvent[] = [];
+            service.observeNewEventsAsSystem().subscribe((event) => systemEvents.push(event));
+            service.observeNewEventsAsUser([], dayjs()).subscribe((event) => userEvents.push(event));
+
+            // The initial snapshot completes while STOMP is still connecting.
+            await vi.advanceTimersByTimeAsync(2000);
+            const liveEventsURL = '/api/exam/courses/12/exams/24/student-exams/live-events';
+            httpMock.expectOne({ method: 'GET', url: liveEventsURL }).flush([]);
+
+            // An instructor changes working time after that snapshot, before the first
+            // successful subscription. There is no WebSocket delivery to replay locally.
+            await vi.advanceTimersByTimeAsync(1000);
+            const persistedEvent = {
+                id: 99,
+                eventType: ExamLiveEventType.WORKING_TIME_UPDATE,
+                createdDate: dayjs().toISOString(),
+                oldWorkingTime: 7260,
+                newWorkingTime: 107,
+                courseWide: true,
+            };
+            expect(systemEvents).toEqual([]);
+            expect(userEvents).toEqual([]);
+
+            mockWebsocketService.setConnectionState(new ConnectionState(true, false));
+            httpMock.expectOne({ method: 'GET', url: liveEventsURL }).flush([persistedEvent]);
+
+            expect(systemEvents.map((event) => (event as WorkingTimeUpdateEvent).newWorkingTime)).toEqual([107]);
+            expect(userEvents.map((event) => event.id)).toEqual([99]);
+
+            // A duplicate delivery after subscribing must not update the timer or show
+            // the dialog a second time.
+            mockWebsocketService.emit('/topic/exam-participation/exam/24/events', persistedEvent);
+            expect(systemEvents.map((event) => event.id)).toEqual([99]);
+            expect(userEvents.map((event) => event.id)).toEqual([99]);
+        } finally {
+            service.reset();
+            vi.useRealTimers();
+        }
+    });
 
     // Verifies the two-phase initialization when a new student exam loads:
     //   Phase 1 (immediate): WebSocket subscription is set up so no real-time events are missed

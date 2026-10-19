@@ -749,6 +749,74 @@ describe('ExamParticipationComponent', () => {
             expectSyncedSubmissions(submission, syncedSubmission);
         });
 
+        it('should save the latest text after an older in-flight save completes during continued editing', () => {
+            const textExercise = new TextExercise(new Course(), undefined);
+            textExercise.id = 5;
+            const participation = new StudentParticipation();
+            const submission = new TextSubmission();
+            submission.text = 'The original long answer';
+            submission.isSynced = false;
+            participation.submissions = [submission];
+            textExercise.studentParticipations = [participation];
+            comp.studentExam().exercises = [textExercise];
+            const pendingSave = new Subject<HttpResponse<TextSubmission>>();
+            const sentTexts: (string | undefined)[] = [];
+            vi.spyOn(textSubmissionService, 'update').mockImplementation((answer) => {
+                sentTexts.push(answer.text);
+                return sentTexts.length === 1 ? pendingSave : of(new HttpResponse({ body: answer }));
+            });
+
+            comp.triggerSave(false);
+            expect(sentTexts).toEqual(['The original long answer']);
+
+            // The student continues from the early hand-in view and edits while the previous save is pending.
+            submission.text = 'Short answer';
+            submission.isSynced = false;
+            pendingSave.next(new HttpResponse({ body: new TextSubmission() }));
+            pendingSave.complete();
+
+            expect(submission.isSynced).toBe(false);
+            comp.triggerSave(false);
+            expect(sentTexts).toEqual(['The original long answer', 'Short answer']);
+            expect(submission.isSynced).toBe(true);
+        });
+
+        it('should resend the latest text if an older save finishes after the newer save', () => {
+            const textExercise = new TextExercise(new Course(), undefined);
+            textExercise.id = 5;
+            const participation = new StudentParticipation();
+            const submission = new TextSubmission();
+            submission.text = 'The original long answer';
+            submission.isSynced = false;
+            participation.submissions = [submission];
+            textExercise.studentParticipations = [participation];
+            comp.studentExam().exercises = [textExercise];
+            const firstSave = new Subject<HttpResponse<TextSubmission>>();
+            const secondSave = new Subject<HttpResponse<TextSubmission>>();
+            const sentTexts: (string | undefined)[] = [];
+            vi.spyOn(textSubmissionService, 'update').mockImplementation((answer) => {
+                sentTexts.push(answer.text);
+                return sentTexts.length === 1 ? firstSave : sentTexts.length === 2 ? secondSave : of(new HttpResponse({ body: answer }));
+            });
+
+            comp.triggerSave(false);
+            submission.text = 'Short answer';
+            submission.isSynced = false;
+            comp.triggerSave(false);
+            secondSave.next(new HttpResponse({ body: new TextSubmission() }));
+            secondSave.complete();
+            expect(submission.isSynced).toBe(true);
+
+            // The older server update may have completed last, so the latest answer must be eligible for another save.
+            firstSave.next(new HttpResponse({ body: new TextSubmission() }));
+            firstSave.complete();
+            expect(submission.text).toBe('Short answer');
+            expect(submission.isSynced).toBe(false);
+            comp.triggerSave(false);
+            expect(sentTexts).toEqual(['The original long answer', 'Short answer', 'Short answer']);
+            expect(submission.isSynced).toBe(true);
+        });
+
         it('should sync modeling submissions', () => {
             const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, new Course(), undefined);
             modelingExercise.id = 5;

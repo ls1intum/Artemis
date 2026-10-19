@@ -131,16 +131,12 @@ export class ExamParticipationLiveEventsService {
     constructor() {
         this.clearOldAcknowledgement();
 
-        // Handle WebSocket reconnection.
-        // When the STOMP connection drops and re-establishes (e.g., after a network interruption),
-        // RxStomp automatically re-subscribes to all previously watched topics, so new events will
-        // flow again. However, any events published to the topic while the socket was down are lost
-        // (STOMP topics are pub/sub, not queued). To recover those missed events, we immediately
-        // fetch the full event list from the REST endpoint and merge it into our in-memory store.
-        // The guard conditions ensure we only do this on a *re*connection (wasEverConnectedBefore)
-        // and only when we actually have an active student exam to fetch events for.
+        // Backfill after every successful STOMP connection. The first connection can become
+        // ready after the initial REST snapshot, so events created in that interval also need
+        // recovery. RxStomp reinstalls watched subscriptions before publishing its OPEN state.
+        // Keep the active-exam guard so leaving an exam stops these history requests.
         this.websocketService.connectionState.subscribe((connectionState: ConnectionState) => {
-            if (connectionState.connected && connectionState.wasEverConnectedBefore && this.studentExamId) {
+            if (connectionState.connected && this.studentExamId) {
                 this.fetchPreviousExamEvents();
             }
         });
@@ -185,8 +181,8 @@ export class ExamParticipationLiveEventsService {
                 this.lastAcknowledgedEventStatus = this.getLastAcknowledgedEventOfStudentExam();
 
                 // Step 1: Subscribe to the WebSocket topics immediately.
-                // This ensures that any event published from this moment onward is captured
-                // in real time. Previously, both the subscription and the REST fetch were
+                // RxStomp registers the watched topics as soon as STOMP is connected.
+                // Previously, both the subscription and the REST fetch were
                 // delayed by 5 seconds, which created a window where events were silently lost.
                 this.subscribeToExamLiveEvents();
 
@@ -195,8 +191,8 @@ export class ExamParticipationLiveEventsService {
                 // became active (e.g., an announcement made seconds before the student loaded
                 // the page). The 2-second delay is intentional: it spreads the HTTP requests
                 // across time when hundreds of students start the exam simultaneously, reducing
-                // peak load on the server. The WebSocket subscription above already covers the
-                // real-time path, so this delay does not create a gap in event delivery.
+                // peak load on the server. If the first STOMP connection is still pending,
+                // the connection handler above backfills again once that connection is ready.
                 this.fetchEventsTimeoutHandle = setTimeout(() => this.fetchPreviousExamEvents(), 2000);
             } else {
                 // No valid student exam (or it's a test run) — reset all identity fields so that

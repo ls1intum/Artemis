@@ -1,5 +1,17 @@
 #!/bin/sh
 
+INFRASTRUCTURE_FAILED=true
+# Called indirectly by the EXIT trap on every path, including image/setup failures.
+# shellcheck disable=SC2329
+report_infrastructure_verdict() {
+    if [ -n "${GITHUB_OUTPUT:-}" ]; then
+        echo "infrastructure_failed=$INFRASTRUCTURE_FAILED" >> "$GITHUB_OUTPUT"
+    fi
+}
+trap report_infrastructure_verdict 0
+
+rm -f .successful src/test/playwright/test-reports/runner-status.env
+
 CONFIGURATION=$1
 # $2 (test framework) is part of the positional CLI contract but is currently unused in this script.
 # shellcheck disable=SC2034
@@ -37,7 +49,7 @@ if [ "$CONFIGURATION" = "postgres" ]; then
 fi
 
 echo "Compose file:"
-echo $COMPOSE_FILE
+echo "$COMPOSE_FILE"
 
 # pass current host's hostname to the docker container for server.url (see docker compose config file)
 export HOST_HOSTNAME="nginx"
@@ -62,25 +74,42 @@ rm -f ../../src/test/playwright/test-reports/.reporter-failed
 
 # Pull the images to avoid using outdated images
 # --env-file ../../.env is needed because .env lives in the project root but we cd'd into deployment/docker/
-docker compose --env-file ../../.env -f $COMPOSE_FILE pull --quiet --policy always
+# COMPOSE_FILE intentionally contains both -f arguments for the Redis overlay.
+# shellcheck disable=SC2086
+docker compose --env-file ../../.env -f $COMPOSE_FILE pull --quiet --policy always || exit $?
+
+# A compose stack must serve the revision whose tests are being run. Local runs without an expected SHA skip this check.
+if [ -n "${ARTEMIS_EXPECTED_COMMIT_SHA:-}" ] || [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+    bash ../../supporting_scripts/ci/E2E-tests/verify-image-revision.sh || exit $?
+fi
 # Run the tests
+# COMPOSE_FILE intentionally contains both -f arguments for the Redis overlay.
+# shellcheck disable=SC2086
 docker compose --env-file ../../.env -f $COMPOSE_FILE up --exit-code-from artemis-playwright
 
 exitCode=$?
 cd ../..
 echo "Container exit code: $exitCode"
 
-# Check for reporter failure marker (e.g., monocart OOM that didn't affect test results)
+# Never infer execution health from JUnit: a partial report can contain only known flaky failures.
+# Compare exact text instead of sourcing a file from the container into the host shell.
+RUNNER_STATUS="src/test/playwright/test-reports/runner-status.env"
+if [ -f "$RUNNER_STATUS" ] && [ "$(cat "$RUNNER_STATUS")" = "$(printf 'exit_code=%s\ninfrastructure_failed=false' "$exitCode")" ]; then
+    INFRASTRUCTURE_FAILED=false
+elif [ "$exitCode" -eq 0 ]; then
+    echo "ERROR: Container succeeded without a complete runner verdict."
+    exitCode=1
+fi
+
+# Report optional report-generation failures without altering the container exit code.
 REPORTER_MARKER="src/test/playwright/test-reports/.reporter-failed"
 if [ -f "$REPORTER_MARKER" ]; then
-    echo "WARNING: Reporter failure detected (tests still passed):"
+    echo "WARNING: Optional reporter failure detected:"
     cat "$REPORTER_MARKER"
     if [ -n "$GITHUB_OUTPUT" ]; then
         echo "reporter_failed=true" >> "$GITHUB_OUTPUT"
     fi
     rm -f "$REPORTER_MARKER"
-    # Tests passed but reporter failed — treat as success
-    exitCode=0
 fi
 
 if [ $exitCode -eq 0 ]

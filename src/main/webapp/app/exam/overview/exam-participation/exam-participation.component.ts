@@ -57,6 +57,7 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
@@ -1163,13 +1164,16 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (forceSave || this.connected()) {
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
-                    case ExerciseType.TEXT:
+                    case ExerciseType.TEXT: {
+                        const textSubmission = submissionToSync.submission as TextSubmission;
+                        const savedText = textSubmission.text;
                         this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
                         this.textSubmissionService.update(submissionToSync.submission, submissionToSync.exercise.id!).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission),
+                            next: () => this.onSaveSubmissionSuccess(textSubmission, textSubmission.text === savedText),
                             error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.submission),
                         });
                         break;
+                    }
                     case ExerciseType.MODELING:
                         this.examParticipationService.setSubmissionSaving(submissionToSync.submission, true);
                         this.modelingSubmissionService.update(submissionToSync.submission, submissionToSync.exercise.id!).subscribe({
@@ -1201,9 +1205,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             .forEach((component) => component.updateSubmissionFromView());
     }
 
-    private onSaveSubmissionSuccess(submission: Submission) {
+    private onSaveSubmissionSuccess(submission: Submission, unchangedSinceSave = true) {
         this.examParticipationService.setSubmissionSaving(submission, false);
-        submission.isSynced = true;
+        // A response only confirms the text sent with its request. If the student has since edited it, keep the latest
+        // answer eligible for saving, including when an older server update completes after a newer one.
+        submission.isSynced = unchangedSinceSave;
         submission.submitted = true;
         // isSynced is mutated in place; notify sync-state-dependent UI (e.g. the save button) to re-evaluate.
         this.examParticipationService.notifySubmissionSyncStateChanged();
