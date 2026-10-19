@@ -213,10 +213,12 @@ It does not claim that Java assertions are enabled in a deployed production JVM.
 
 Gold accepts an automated test suite with **at least 80% branch coverage** as a dynamic-analysis
 tool. Fuzzing is therefore not required for this route and remains outside the current scope.
-The tool threshold is now met, but the separate requirement to apply and review a qualifying run
-**before every proposed major production release** still needs release-practice confirmation.
-A test run triggered by GitHub's `release: published` event happens after publication and does not
-by itself prove that pre-release step. Retain the candidate revision, complete server/client reports,
+On **2026-10-19**, the maintainer confirmed the existing release practice: **before every proposed
+major production release**, maintainers require successful complete server and client test runs for
+the release candidate, review runtime failures and coverage, and resolve significant findings before
+release. Together with the qualifying suites, this establishes the pre-release dynamic-analysis
+criterion. A test run triggered by GitHub's `release: published` event happens after publication and
+is not the evidence for that step. Retain the candidate revision, complete server/client reports,
 runtime failures, and their disposition when recording the release review.
 
 ### Remaining work
@@ -228,7 +230,6 @@ runtime failures, and their disposition when recording the release review.
 | Independent reproducible builds           | Pin the builder environment and obtain an independent rebuild of the same artifact bytes. The controlled-environment Silver build pair does not establish this.                                                                                                                                                                  |
 | Encrypted transport defaults              | Close plaintext communication paths, including distributed infrastructure links, and establish the secure deployment defaults. A private network alone does not prove encrypted transport.                                                                                                                                       |
 | Website headers                           | `artemis.tum.de` now returns HSTS, CSP, `nosniff`, and `X-Frame-Options: DENY`. The HTTPS GET response from `docs.artemis.tum.de` on 2026-10-19 omitted all four. Configure the documentation hosting/proxy headers and verify project, repository, and download sites. Gold also requires these headers for fully static sites. |
-| Pre-release dynamic analysis              | Confirm and record the complete test and coverage review before each major production release, using the qualifying suite described above.                                                                                                                                                                                       |
 
 Keep the live assessment and repository proposals aligned. Reassess shared criteria at the stricter
 level, and verify Passing and Silver after saving any Gold changes. Organization settings,
