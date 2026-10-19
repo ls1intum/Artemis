@@ -1010,17 +1010,16 @@ class GenerationTaskServiceTest {
 
     @Test
     void tokenAccountingFailure_mechanicallyVerifiedCandidate_isSavedInsteadOfDiscarded() {
-        // Observed in a live campaign: a single failed critic request made the usage account indeterminate, and an exercise that had already passed differential verification
-        // and been checkpointed was thrown away. Saving consumes no provider tokens, so an account that cannot be closed is a reason to stop spending, not to destroy work.
-        // The run is still reported with an incomplete accounting state.
-        when(jobService.tokenUsageSink(any(), any(), any(), any(), any())).thenReturn(response -> {
-            throw new GenerationJobService.TokenUsageAccountingException();
-        });
         when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
-            @SuppressWarnings("unchecked")
-            Consumer<ChatResponse> usageSink = invocation.getArgument(8);
-            usageSink.accept(responseWithTokens(7, 3));
-            return outcomeWith(AgentLoopResult.Status.COMPLETED, new VerificationResult(true, true, true, 3, List.of()));
+            ProviderUsageSink usageSink = invocation.getArgument(8);
+            usageSink.markUncertain();
+            BooleanSupplier shouldStop = invocation.getArgument(5);
+            assertThat(shouldStop.getAsBoolean()).isTrue();
+            var snapshot = new WorkspaceSnapshot(List.of());
+            var verification = new VerificationResult(true, true, true, 3, List.of());
+            var output = new GenerationOutput(snapshot, verification, snapshot.sha256(), SpecFidelityReport.qualityReviewUnavailable("The provider failed during quality review."),
+                    ExerciseGenerationEventDTO.TerminationReason.CANCELLED.name(), null, GenerationOutput.AccountingState.INCOMPLETE, "default");
+            return GenerationOutcome.received(output, new Seed(snapshot, Map.of(), new GradingContext(false, Set.of())), false);
         });
 
         taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE, exercise.getProblemStatement(), exercise.getTitle(), null,
@@ -1030,7 +1029,32 @@ class GenerationTaskServiceTest {
         verify(jobService, never()).requestSystemCancellation(eq(EXERCISE_ID), eq(JOB_ID), anyString());
         verify(persistenceService).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
         assertThat(sentEvents()).anyMatch(event -> event.message() != null && event.message().contains("keeping and saving the already-verified exercise"));
-        assertThat(sentEvents().getLast().type()).isNotEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.DONE);
+        assertThat(terminal.completionStatus()).isEqualTo(ExerciseGenerationEventDTO.CompletionStatus.NEEDS_REVIEW);
+        assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.REVIEW_UNAVAILABLE);
+    }
+
+    @Test
+    void operatorCancellationDuringUncertainQualityReview_staysACancellation() {
+        when(orchestrator.generate(any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any(), any())).thenAnswer((Answer<GenerationOutcome>) invocation -> {
+            ProviderUsageSink usageSink = invocation.getArgument(8);
+            usageSink.markUncertain();
+            when(jobService.isCancelled(JOB_ID)).thenReturn(true);
+            when(jobService.enterNonCancellablePhase(EXERCISE_ID, JOB_ID)).thenReturn(false);
+            var snapshot = new WorkspaceSnapshot(List.of());
+            var verification = new VerificationResult(true, true, true, 3, List.of());
+            var output = new GenerationOutput(snapshot, verification, snapshot.sha256(), SpecFidelityReport.qualityReviewUnavailable("The provider failed during quality review."),
+                    ExerciseGenerationEventDTO.TerminationReason.CANCELLED.name(), null, GenerationOutput.AccountingState.INCOMPLETE, "default");
+            return GenerationOutcome.received(output, new Seed(snapshot, Map.of(), new GradingContext(false, Set.of())), false);
+        });
+
+        taskService.runAsync(new GenerationStartedEvent(JOB_ID, user, exercise, "make it", GenerationMode.GENERATE));
+
+        ExerciseGenerationEventDTO terminal = sentEvents().getLast();
+        assertThat(terminal.type()).isEqualTo(ExerciseGenerationEventDTO.Type.CANCELLED);
+        assertThat(terminal.terminationReason()).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.CANCELLED);
+        verify(persistenceService, never()).persist(any(), any(), any(), any(), any(), anyString(), any(), any(), any());
     }
 
     @Test
@@ -1331,7 +1355,7 @@ class GenerationTaskServiceTest {
     @ParameterizedTest
     @EnumSource(ExerciseGenerationEventDTO.TerminationReason.class)
     void runLevelBudgets_refineOnlyACooperativeStop(ExerciseGenerationEventDTO.TerminationReason reason) {
-        ExerciseGenerationEventDTO.TerminationReason refined = GenerationTaskService.refineTerminationReason(reason, true, true);
+        ExerciseGenerationEventDTO.TerminationReason refined = GenerationTaskService.refineTerminationReason(reason, true, true, true);
 
         if (reason == ExerciseGenerationEventDTO.TerminationReason.CANCELLED) {
             assertThat(refined).isEqualTo(ExerciseGenerationEventDTO.TerminationReason.DEADLINE_EXCEEDED);
@@ -1343,13 +1367,13 @@ class GenerationTaskServiceTest {
 
     @Test
     void aCooperativeStopUnderNoBudgetPressure_staysACancellation() {
-        assertThat(GenerationTaskService.refineTerminationReason(ExerciseGenerationEventDTO.TerminationReason.CANCELLED, false, false))
+        assertThat(GenerationTaskService.refineTerminationReason(ExerciseGenerationEventDTO.TerminationReason.CANCELLED, false, false, false))
                 .isEqualTo(ExerciseGenerationEventDTO.TerminationReason.CANCELLED);
     }
 
     @Test
     void aCooperativeStopUnderTokenPressureAlone_reportsTheTokenBudget() {
-        assertThat(GenerationTaskService.refineTerminationReason(ExerciseGenerationEventDTO.TerminationReason.CANCELLED, false, true))
+        assertThat(GenerationTaskService.refineTerminationReason(ExerciseGenerationEventDTO.TerminationReason.CANCELLED, false, true, true))
                 .isEqualTo(ExerciseGenerationEventDTO.TerminationReason.TOKEN_BUDGET_EXHAUSTED);
     }
 
