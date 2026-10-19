@@ -37,6 +37,8 @@ export class MockCourseConversationsService {
 
     setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {}
 
+    setConversationViewOpen(isOpen: boolean): void {}
+
     setUpConversationService = (course: Course): Observable<never> => {
         return EMPTY;
     };

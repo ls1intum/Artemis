@@ -66,6 +66,7 @@ export class CourseConversationsService implements OnDestroy {
     private hasUnreadMessages = false;
     _hasUnreadMessages$: Subject<boolean> = new ReplaySubject<boolean>(1);
     private isMarkedAsUnread = false;
+    private isConversationViewOpen = false;
     // Stores the course for which the service is set up -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
@@ -516,6 +517,21 @@ export class CourseConversationsService implements OnDestroy {
             });
     }
 
+    /**
+     * Tells the service whether the conversation view is shown. The service belongs to the whole course, so it outlives the view and keeps the
+     * selected conversation for the way back to it, e.g. while the user is on the exercises tab of the course.
+     *
+     * @param isOpen whether the conversation view is shown
+     */
+    public setConversationViewOpen(isOpen: boolean) {
+        this.isConversationViewOpen = isOpen;
+    }
+
+    // The selected conversation only counts as read while the view that shows it is open.
+    private isReadingConversation(conversationId: number | undefined): boolean {
+        return this.isConversationViewOpen && conversationId !== undefined && conversationId === this.activeConversation?.id;
+    }
+
     private onConversationMembershipMessageReceived(websocketDTO: ConversationWebsocketDTO) {
         const conversationDTO = this.conversationService.convertServerDates(websocketDTO.conversation);
         const action = websocketDTO.action;
@@ -531,10 +547,13 @@ export class CourseConversationsService implements OnDestroy {
                 this.handleDeleteConversation(conversationDTO);
                 break;
             case CommunicationCrudAction.NEW_MESSAGE:
-                if (conversationDTO.id === this.activeConversation?.id) {
+                if (this.isReadingConversation(conversationDTO.id) && !this.isMarkedAsUnread) {
                     // The user is reading this conversation, so what arrived is not new to them, e.g. a reply in a thread of theirs. The server counted
                     // it for them anyway, and reading the conversation again is what resets that count.
-                    this.conversationService.markAsRead(this._courseId, conversationDTO.id!).subscribe();
+                    this.conversationService.markAsRead(this._courseId, conversationDTO.id!).subscribe({
+                        // the count the server raised stays, so the badge has to show it
+                        error: () => this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate),
+                    });
                 } else {
                     this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate);
                 }

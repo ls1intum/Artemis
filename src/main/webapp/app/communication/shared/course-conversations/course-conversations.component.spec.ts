@@ -499,6 +499,16 @@ examples.forEach((activeConversation) => {
             expect(component.courseWideSearchConfig.searchTerm).toBe('test');
         });
 
+        it('should tell the service for as long as the conversation view is open', () => {
+            const setConversationViewOpen = vi.spyOn(courseConversationsService, 'setConversationViewOpen');
+
+            fixture.detectChanges();
+            expect(setConversationViewOpen).toHaveBeenCalledWith(true);
+
+            fixture.destroy();
+            expect(setConversationViewOpen).toHaveBeenLastCalledWith(false);
+        });
+
         it('should show the newest messages of the course first when no search is active', () => {
             fixture.detectChanges();
             component.initializeCourseWideSearchConfig();

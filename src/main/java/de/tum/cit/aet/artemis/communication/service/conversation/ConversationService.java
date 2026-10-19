@@ -223,14 +223,16 @@ public class ConversationService {
     }
 
     /**
-     * Determines if the user has unread messages in that course
+     * Determines if the user has unread messages in that course: new messages of other users since they last read a conversation, or
+     * replies that raised the unread count of a conversation, which are no new messages
      *
      * @param courseId       the id of the course
      * @param requestingUser the user for which the conversations should be checked
      * @return true if the user has unread messages in that course, false otherwise
      */
     public boolean userHasUnreadMessages(Long courseId, User requestingUser) {
-        return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId());
+        return conversationRepository.userHasUnreadMessageInCourse(courseId, requestingUser.getId())
+                || conversationParticipantRepository.userHasConversationWithUnreadCountInCourse(courseId, requestingUser.getId());
     }
 
     public void markAsRead(Long conversationId, Long userId) {

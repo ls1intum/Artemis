@@ -602,6 +602,7 @@ describe('CourseConversationsService', () => {
             return new Promise((done) => {
                 courseConversationsService.setUpConversationService(course).subscribe({
                     complete: () => {
+                        courseConversationsService.setConversationViewOpen(true);
                         courseConversationsService.setActiveConversation(channel);
                         const markAsRead = vi.spyOn(conversationService, 'markAsRead').mockReturnValue(of(new HttpResponse<void>()));
 
@@ -610,6 +611,62 @@ describe('CourseConversationsService', () => {
 
                         expect(cachedUnreadCount(channel.id)).toBe(0);
                         expect(markAsRead).toHaveBeenCalledWith(course.id, channel.id);
+                        done({});
+                    },
+                });
+            });
+        });
+
+        it('should raise the unread count of the selected conversation while the user is on another tab of the course', () => {
+            return new Promise((done) => {
+                courseConversationsService.setUpConversationService(course).subscribe({
+                    complete: () => {
+                        // the service outlives the conversation view and keeps the selection for the way back to it
+                        courseConversationsService.setConversationViewOpen(true);
+                        courseConversationsService.setActiveConversation(channel);
+                        courseConversationsService.setConversationViewOpen(false);
+                        const markAsRead = vi.spyOn(conversationService, 'markAsRead').mockReturnValue(of(new HttpResponse<void>()));
+
+                        receiveMockSubject.next(eventFor(channel));
+
+                        expect(cachedUnreadCount(channel.id)).toBe(1);
+                        expect(markAsRead).not.toHaveBeenCalled();
+                        done({});
+                    },
+                });
+            });
+        });
+
+        it('should keep a conversation that the user marked as unread unread', () => {
+            return new Promise((done) => {
+                courseConversationsService.setUpConversationService(course).subscribe({
+                    complete: () => {
+                        courseConversationsService.setConversationViewOpen(true);
+                        courseConversationsService.setActiveConversation(channel);
+                        courseConversationsService.updateConversationUnreadState(channel.id, dayjs(), 1);
+                        const markAsRead = vi.spyOn(conversationService, 'markAsRead').mockReturnValue(of(new HttpResponse<void>()));
+
+                        receiveMockSubject.next(eventFor(channel));
+
+                        expect(cachedUnreadCount(channel.id)).toBe(2);
+                        expect(markAsRead).not.toHaveBeenCalled();
+                        done({});
+                    },
+                });
+            });
+        });
+
+        it('should show the unread count the server kept when marking the open conversation as read fails', () => {
+            return new Promise((done) => {
+                courseConversationsService.setUpConversationService(course).subscribe({
+                    complete: () => {
+                        courseConversationsService.setConversationViewOpen(true);
+                        courseConversationsService.setActiveConversation(channel);
+                        vi.spyOn(conversationService, 'markAsRead').mockReturnValue(throwError(() => new Error('mark as read failed')));
+
+                        receiveMockSubject.next(eventFor(channel));
+
+                        expect(cachedUnreadCount(channel.id)).toBe(1);
                         done({});
                     },
                 });

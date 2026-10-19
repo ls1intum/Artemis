@@ -255,6 +255,24 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
     void incrementUnreadMessagesCountOfParticipantsIn(@Param("conversationId") Long conversationId, @Param("userIds") Collection<Long> userIds);
 
     /**
+     * Checks if the user has a conversation in the course whose unread count is positive and that is not muted. This covers what
+     * the check of the posts of a course cannot see: a reply in a thread raises the count, but is no new top-level post.
+     *
+     * @param courseId the id of the course
+     * @param userId   the id of the user
+     * @return true if the user has a conversation with unread messages in the course, false otherwise
+     */
+    @Query("""
+            SELECT COUNT(conversationParticipant.id) > 0
+            FROM ConversationParticipant conversationParticipant
+            WHERE conversationParticipant.conversation.course.id = :courseId
+                AND conversationParticipant.user.id = :userId
+                AND conversationParticipant.unreadMessagesCount > 0
+                AND conversationParticipant.isMuted = FALSE
+            """)
+    boolean userHasConversationWithUnreadCountInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);
+
+    /**
      * Decrement unreadMessageCount field of ConversationParticipant
      *
      * @param senderId       userId of the sender of the message(Post)

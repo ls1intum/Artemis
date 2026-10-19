@@ -302,6 +302,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
     }
 
     ngOnInit(): void {
+        // The service outlives this view, so it has to be told that the selected conversation is only being read while the view is open
+        this.courseConversationsService.setConversationViewOpen(true);
         // Selecting this tab while already on it acts as a refresh -- prepareSidebarData re-reads the conversations and
         // replaces the rendered list only once they arrive
         this.tabReselectionSubscription = this.courseTabRefreshService.reselections(this.activatedRoute).subscribe(() => this.prepareSidebarData());
@@ -481,6 +483,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy, SidebarV
     }
 
     ngOnDestroy() {
+        this.courseConversationsService.setConversationViewOpen(false);
         this.tabReselectionSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();

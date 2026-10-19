@@ -25,11 +25,14 @@ import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.account.util.UserFactory;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.dto.AnswerPostResponseDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationDTO;
 import de.tum.cit.aet.artemis.communication.dto.ConversationUserDTO;
+import de.tum.cit.aet.artemis.communication.dto.CreateAnswerPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
+import de.tum.cit.aet.artemis.communication.dto.ParentPostDTO;
 import de.tum.cit.aet.artemis.communication.dto.ResponsibleUserDTO;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.course.domain.Course;
@@ -606,6 +609,43 @@ class ConversationIntegrationTest extends AbstractConversationTest {
 
         boolean unreadMessages = request.get("/api/communication/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class);
         assertThat(unreadMessages).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void unreadMessages_shouldReturnTrue_ForReplyToOwnMessage() throws Exception {
+        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"),
+                OneToOneChatDTO.class, HttpStatus.CREATED);
+        var ownMessage = this.postInConversation(oneToOneChat.getId(), "student1");
+        assertThat(unreadMessagesInCourse()).as("nothing happened yet that the user has not seen").isFalse();
+
+        // the only thing that happens afterwards is a reply in the thread of the message of the user
+        userUtilService.changeUser(testPrefix + "tutor1");
+        replyToMessage(ownMessage.id());
+
+        userUtilService.changeUser(testPrefix + "student1");
+        assertThat(unreadMessagesInCourse()).isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void unreadMessages_shouldReturnFalse_ForOwnReply() throws Exception {
+        var oneToOneChat = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/one-to-one-chats", List.of(testPrefix + "tutor1"),
+                OneToOneChatDTO.class, HttpStatus.CREATED);
+        var ownMessage = this.postInConversation(oneToOneChat.getId(), "student1");
+
+        replyToMessage(ownMessage.id());
+
+        assertThat(unreadMessagesInCourse()).isFalse();
+    }
+
+    private boolean unreadMessagesInCourse() throws Exception {
+        return request.get("/api/communication/courses/" + exampleCourseId + "/unread-messages", HttpStatus.OK, Boolean.class);
+    }
+
+    private void replyToMessage(Long messageId) throws Exception {
+        request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/answer-messages", new CreateAnswerPostDTO("A reply", new ParentPostDTO(messageId)),
+                AnswerPostResponseDTO.class, HttpStatus.CREATED);
     }
 
     @Test
