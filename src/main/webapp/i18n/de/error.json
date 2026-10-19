@@ -363,6 +363,7 @@
         "emptyBuildContainer": "Der Build-Container {{ container }} muss mindestens eine Build-Phase enthalten.",
         "invalidBuildContainerTimeout": "Der Timeout des Build-Containers {{ container }} muss eine positive Anzahl an Sekunden sein.",
         "buildContainerTimeoutExceedsExerciseTimeout": "Der Timeout des Build-Containers {{ container }} darf den Timeout der Aufgabe ({{ timeout }} Sekunden) nicht überschreiten.",
+        "invalidBuildContainerRepository": "Die Repository-Auswahl des Build-Containers {{ container }} enthält einen Eintrag ohne Repository-Typ.",
         "buildContainerMemorySwapBelowMemory": "Der Build-Container {{ container }} würde mit einer maximalen Swap-Speichergröße von {{ memorySwap }} MB unterhalb seiner Speicherbegrenzung von {{ memory }} MB laufen. Setze auch seine Swap-Speichergröße oder überlasse die Speicherbegrenzung der Aufgabe.",
         "sharingInfoMissing": "Die Informationen der Sharing-Plattform fehlen.",
         "problemStatementTooLong": "Die Aufgabenstellung darf 100.000 Zeichen nicht überschreiten."

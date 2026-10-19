@@ -212,6 +212,20 @@ class ProgrammingExerciseBuildConfigResourceIntegrationTest extends AbstractProg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testRejectsANullRepositoryEntry() throws Exception {
+        // bean validation skips a null list element, so the shared validator has to reject it before the plan is stored
+        var container = new BuildContainerDTO("student_tests", DOCKER_IMAGE, Arrays.asList((BuildContainerRepositoryDTO) null), List.of(phase("test")));
+        var originalBuildPlanConfiguration = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow()
+                .getBuildPlanConfiguration();
+
+        request.put(buildConfigEndpoint(), configurationWith(List.of(container)), HttpStatus.BAD_REQUEST);
+
+        var after = programmingExerciseBuildConfigRepository.findByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
+        assertThat(after.getBuildPlanConfiguration()).isEqualTo(originalBuildPlanConfiguration);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testRejectsContainerDockerFlagsBelowTheMemoryMinimum() throws Exception {
         var flags = new BuildContainerDockerFlagsDTO(null, null, null, 1, null);
         var container = new BuildContainerDTO("student_tests", DOCKER_IMAGE, null, List.of(phase("test")), flags);

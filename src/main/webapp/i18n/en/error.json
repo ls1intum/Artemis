@@ -361,6 +361,7 @@
         "emptyBuildContainer": "The build container {{ container }} must contain at least one build phase.",
         "invalidBuildContainerTimeout": "The timeout of the build container {{ container }} must be a positive number of seconds.",
         "buildContainerTimeoutExceedsExerciseTimeout": "The timeout of the build container {{ container }} must not exceed the timeout of the exercise ({{ timeout }} seconds).",
+        "invalidBuildContainerRepository": "The repository selection of the build container {{ container }} contains an entry without a repository type.",
         "buildContainerMemorySwapBelowMemory": "The build container {{ container }} would run with a memory swap limit of {{ memorySwap }} MB below its memory limit of {{ memory }} MB. Set its memory swap limit as well, or leave the memory limit to the exercise.",
         "sharingInfoMissing": "The sharing platform information is missing.",
         "problemStatementTooLong": "The problem statement must not exceed 100,000 characters."
