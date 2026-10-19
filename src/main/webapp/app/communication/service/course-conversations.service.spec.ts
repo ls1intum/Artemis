@@ -707,6 +707,28 @@ describe('CourseConversationsService', () => {
             subscription.unsubscribe();
         });
 
+        it('preserves the opening read timestamp when a live reply is marked read before posts finish loading', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            const openingReadDate = dayjs().subtract(10, 'minutes');
+            channel.lastReadDate = openingReadDate;
+            courseConversationsService.setActiveConversation(channel);
+            courseConversationsService.setConversationViewOpen(true);
+            const pendingRead = new Subject<HttpResponse<void>>();
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pendingRead);
+
+            receiveMockSubject.next(eventFor(channel));
+            pendingRead.next(new HttpResponse<void>());
+
+            expect(courseConversationsService['activeConversation']?.lastReadDate).toBe(openingReadDate);
+            expect(channel.lastReadDate).toBe(openingReadDate);
+            expect(cachedUnreadCount(channel.id)).toBe(0);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
+            pendingRead.complete();
+
+            courseConversationsService.setActiveConversation(groupChat);
+            expect(channel.lastReadDate?.isAfter(openingReadDate)).toBe(true);
+        });
+
         it('clears the cached and course unread state when a read succeeds after an earlier failure', () => {
             courseConversationsService.setUpConversationService(course).subscribe();
             courseConversationsService.setConversationViewOpen(true);

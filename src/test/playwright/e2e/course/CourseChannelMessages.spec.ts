@@ -275,23 +275,24 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
             course = undefined;
         });
 
-        test('keeps the New separator when messages arrive after channel navigation completes', async ({ browser, page, login, communicationAPIRequests, courseMessages }) => {
+        test('keeps the New separator when a live reply arrives while initial messages are pending', async ({ browser, page, login, communicationAPIRequests, courseMessages }) => {
             const authorContext = await browser.newContext({ baseURL: test.info().project.use.baseURL });
             try {
                 const authorPage = await authorContext.newPage();
                 await Commands.login(authorPage, admin);
                 const courses = new CourseManagementAPIRequests(authorPage);
                 const messages = new CommunicationAPIRequests(authorPage);
-                course = await courses.createCourse();
+                course = await courses.createCourse({ courseName: 'Software Construction' });
                 await courses.addStudentToCourse(course, studentOne);
-                const target = await messages.createCourseMessageChannel(course, 'unread-navigation', 'Unread marker regression', false, true);
-                const other = await messages.createCourseMessageChannel(course, 'other-navigation', 'Navigation starting point', false, true);
+                const target = await messages.createCourseMessageChannel(course, 'unread-navigation', 'Questions about specifications and representation invariants', false, true);
+                const other = await messages.createCourseMessageChannel(course, 'other-navigation', 'Tutorial planning', false, true);
                 await messages.joinUserIntoChannel(course, target.id!, studentOne);
                 await messages.joinUserIntoChannel(course, other.id!, studentOne);
                 const oldPost = await messages.createCourseMessage(course, target.id!, 'channel', 'Previously read lecture announcement');
 
                 await login(studentOne, `/courses/${course.id}/exercises`);
                 await communicationAPIRequests.acceptCodeOfConduct(course);
+                await communicationAPIRequests.createCourseMessageReply(course, oldPost, 'Does this apply to both the lecture examples and the tutorial exercises?');
                 await communicationAPIRequests.markConversationAsRead(course.id!, target.id!);
                 const readConversation = await communicationAPIRequests.getConversationById(course.id!, target.id!);
                 expect(readConversation?.lastReadDate).toBeTruthy();
@@ -326,6 +327,12 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
                     await expect(page).toHaveURL(new RegExp(`conversationId=${target.id}$`));
                     await expect(page.getByTestId('conversation-name')).toHaveText(target.name!);
                     await expect(courseMessages.getSinglePost(unreadPost.id!)).toHaveCount(0);
+                    // A real reply notification marks the selected conversation read while its initial GET is held.
+                    const markedRead = page.waitForResponse(
+                        (response) => response.request().method() === 'PATCH' && response.url().endsWith(`/conversations/${target.id}/mark-as-read`),
+                    );
+                    await messages.createCourseMessageReply(course, oldPost, 'Yes. State the preconditions and postconditions for each example.');
+                    expect((await markedRead).ok()).toBe(true);
                 } finally {
                     releaseMessages();
                 }
@@ -338,6 +345,9 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
                 const followingPost = unreadLine.locator('..').locator('xpath=following-sibling::*[1]');
                 await expect(followingPost.locator(`#item-${unreadPost.id}`)).toHaveCount(1);
                 await expect(followingPost.locator(`#item-${oldPost.id}`)).toHaveCount(0);
+                if (process.env.ARTEMIS_PR_SCREENSHOTS && test.info().project.name === 'chromium') {
+                    await page.screenshot({ path: `${process.env.ARTEMIS_PR_SCREENSHOTS}/00-first-unread-marker.png`, fullPage: true });
+                }
             } finally {
                 await authorContext.close();
             }

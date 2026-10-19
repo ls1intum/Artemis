@@ -564,7 +564,9 @@ export class CourseConversationsService implements OnDestroy {
                         next: () => {
                             // A delayed read must not clear a different selection or an explicit unread mark.
                             if (selectionVersion === this.selectionVersion && this.isReadingConversation(conversationDTO.id) && !this.isMarkedAsUnread) {
-                                this.updateConversationAsRead();
+                                // Preserve the opening timestamp used by the initial posts response and its New divider.
+                                // Advancing it here can hide unread posts while that response is still pending.
+                                this.clearActiveConversationUnreadBadge();
                                 this.hasUnreadMessagesCheck();
                             }
                         },
