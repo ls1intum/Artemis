@@ -420,10 +420,16 @@ describe('Message editor editing transactions', () => {
         const first = root.querySelector('p')!.firstChild!;
         const last = root.querySelector('p')!.lastChild!;
         const range = document.createRange();
-        if (start === 7) range.setStart(root.querySelector('strong')!.firstChild!, 2);
-        else range.setStart(first, 0);
-        if (end === 7) range.setEnd(root.querySelector('strong')!.firstChild!, 2);
-        else range.setEnd(last, last.textContent!.length);
+        if (start === 7) {
+            range.setStart(root.querySelector('strong')!.firstChild!, 2);
+        } else {
+            range.setStart(first, 0);
+        }
+        if (end === 7) {
+            range.setEnd(root.querySelector('strong')!.firstChild!, 2);
+        } else {
+            range.setEnd(last, last.textContent!.length);
+        }
         window.getSelection()!.removeAllRanges();
         window.getSelection()!.addRange(range);
         expect(range.toString()).toBe(label);
@@ -439,6 +445,70 @@ describe('Message editor editing transactions', () => {
         expect(root.querySelectorAll('a')).toHaveLength(linkCount);
         expect(root.querySelector('a[href="https://example.org/new"] strong')).not.toBeNull();
         expect(root.textContent).toBe('Read guide and notes today');
+    });
+
+    it.each([
+        ['paragraphs', 'First paragraph\n\nSecond paragraph', 'p'],
+        ['list items', '- First item\n- Second item', 'li'],
+        ['quote paragraphs', '> First paragraph\n>\n> Second paragraph', 'p'],
+    ])('rejects links across %s without changing content, selection or undo history', (_kind, message, selector) => {
+        editor.load(message);
+        const blocks = root.querySelectorAll(selector);
+        const range = document.createRange();
+        range.setStart(blocks[0].firstChild!, 2);
+        range.setEnd(blocks[1].firstChild!, 3);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        const html = root.innerHTML;
+        const text = range.toString();
+
+        expect(editor.canLinkSelection()).toBe(false);
+        editor.setLink(text, 'https://example.org/guide');
+
+        expect(root.innerHTML).toBe(html);
+        expect(window.getSelection()!.toString()).toBe(text);
+        expect(root.querySelector('a')).toBeNull();
+        expect(changed).not.toHaveBeenCalled();
+        editor.undo();
+        expect(root.innerHTML).toBe(html);
+        expect(changed).not.toHaveBeenCalled();
+    });
+
+    it('links a single paragraph selected from its container without losing the paragraph or inline marks', () => {
+        editor.load('Read **course** guide');
+        const range = document.createRange();
+        range.selectNodeContents(root);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+
+        expect(editor.canLinkSelection()).toBe(true);
+        editor.setLink('Read course guide', 'https://example.org/guide');
+
+        expect(root.querySelectorAll('p')).toHaveLength(1);
+        expect(root.querySelector('p > a strong')?.textContent).toBe('course');
+        expect(changed).toHaveBeenLastCalledWith('[Read **course** guide](https://example.org/guide)');
+        editor.undo();
+        expect(changed).toHaveBeenLastCalledWith('Read **course** guide');
+        editor.redo();
+        expect(changed).toHaveBeenLastCalledWith('[Read **course** guide](https://example.org/guide)');
+        editor.load(changed.mock.lastCall![0]);
+        expect(root.querySelector('p > a strong')?.textContent).toBe('course');
+        expect(root.querySelector('a')?.getAttribute('href')).toBe('https://example.org/guide');
+    });
+
+    it('rejects block selections whose endpoints are the editor container', () => {
+        editor.load('First paragraph\n\nSecond paragraph');
+        const range = document.createRange();
+        range.selectNodeContents(root);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        const html = root.innerHTML;
+
+        expect(editor.canLinkSelection()).toBe(false);
+        editor.setLink(range.toString(), 'https://example.org/guide');
+
+        expect(root.innerHTML).toBe(html);
+        expect(changed).not.toHaveBeenCalled();
     });
 
     it('updates and unlinks an existing code-formatted link label without losing its formatting', () => {

@@ -338,6 +338,24 @@ describe('Formatted message composer', () => {
         expect(editable.querySelector('a')).toBeNull();
     });
 
+    it('disables links across paragraphs through the toolbar and shortcut without changing the document', () => {
+        fixture.componentRef.setInput('content', 'First paragraph\n\nSecond paragraph');
+        fixture.detectChanges();
+        const paragraphs = editable.querySelectorAll('p');
+        const range = document.createRange();
+        range.setStart(paragraphs[0].firstChild!, 2);
+        range.setEnd(paragraphs[1].firstChild!, 3);
+        window.getSelection()!.removeAllRanges();
+        window.getSelection()!.addRange(range);
+        editable.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        fixture.detectChanges();
+        const html = editable.innerHTML;
+        expect((fixture.nativeElement.querySelector('[data-testid="message-link-button"]') as HTMLButtonElement).disabled).toBe(true);
+        editable.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true, cancelable: true }));
+        expect(component.linkOpen()).toBe(false);
+        expect(editable.innerHTML).toBe(html);
+    });
+
     it('exposes active and pending formatting through toolbar pressed state', () => {
         caretAtEnd();
         const bold = fixture.nativeElement.querySelector('[data-testid="message-format-strong"]') as HTMLButtonElement;
@@ -730,6 +748,45 @@ describe('Formatted message composer', () => {
         (fixture.nativeElement.querySelector('[data-testid="remove-message-link"]') as HTMLButtonElement).click();
         expect(editable.querySelector('a')).toBeNull();
         expect(editable.textContent).toContain('Guide');
+    });
+
+    it.each(['message-link-text', 'message-link-url'])('keeps %s open during every IME Enter variant and applies on a later normal Enter', (testId) => {
+        fixture.componentRef.setInput('content', '[Guide](https://example.org/old)');
+        fixture.detectChanges();
+        editable.querySelector('a')!.click();
+        fixture.detectChanges();
+        const field = fixture.nativeElement.querySelector(`[data-testid="${testId}"]`) as HTMLInputElement;
+        field.value = testId === 'message-link-text' ? '日本語' : 'https://example.org/new';
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+        const emit = vi.spyOn(component.contentChange, 'emit');
+        const html = editable.innerHTML;
+        const bubbled = vi.fn();
+        fixture.nativeElement.addEventListener('keydown', bubbled);
+
+        field.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+        const active = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+        field.dispatchEvent(active);
+        expect(active.defaultPrevented).toBe(false);
+        expect(component.linkOpen()).toBe(true);
+        field.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
+        for (const options of [{ isComposing: true }, { keyCode: 229 }]) {
+            const candidate = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, ...options });
+            field.dispatchEvent(candidate);
+            expect(candidate.defaultPrevented).toBe(false);
+            expect(component.linkOpen()).toBe(true);
+        }
+        expect(editable.innerHTML).toBe(html);
+        expect(emit).not.toHaveBeenCalled();
+        expect(bubbled).not.toHaveBeenCalled();
+
+        const enter = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+        field.dispatchEvent(enter);
+        expect(enter.defaultPrevented).toBe(true);
+        expect(component.linkOpen()).toBe(false);
+        expect(editable.querySelector('a')!.textContent).toBe(testId === 'message-link-text' ? '日本語' : 'Guide');
+        expect(editable.querySelector('a')!.getAttribute('href')).toBe(testId === 'message-link-url' ? 'https://example.org/new' : 'https://example.org/old');
+        expect(emit).toHaveBeenCalledOnce();
+        fixture.nativeElement.removeEventListener('keydown', bubbled);
     });
 
     it('does not send when keyboard activation targets a toolbar button', () => {

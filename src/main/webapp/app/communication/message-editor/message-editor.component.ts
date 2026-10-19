@@ -70,6 +70,7 @@ export class MessageEditorComponent {
     readonly linkUrl = signal('');
     readonly linkInvalid = signal(false);
     protected readonly editingLink = signal(false);
+    protected readonly linkComposing = signal(false);
     readonly activeFormatting = signal<string[]>([]);
     readonly linkAllowed = signal(true);
     protected readonly completionOrigin = signal({ x: 0, y: 0, width: 0, height: 0 });
@@ -484,6 +485,7 @@ export class MessageEditorComponent {
         this.linkText.set(target?.textContent ?? selection?.toString() ?? '');
         this.linkUrl.set(target?.getAttribute('href') ?? '');
         this.linkInvalid.set(false);
+        this.linkComposing.set(false);
         this.linkOpen.set(true);
     }
 
@@ -495,8 +497,9 @@ export class MessageEditorComponent {
 
     /** Validates the destination before updating the captured link or selection and prevents form submission. */
     protected saveLink(event?: Event): void {
-        event?.preventDefault();
         event?.stopPropagation();
+        if (event instanceof KeyboardEvent && (this.linkComposing() || event.isComposing || event.keyCode === 229)) return;
+        event?.preventDefault();
         const url = this.linkUrl().trim();
         if (!isMessageLinkSafe(url)) {
             this.linkInvalid.set(true);
@@ -514,6 +517,7 @@ export class MessageEditorComponent {
     }
 
     protected closeLink(): void {
+        this.linkComposing.set(false);
         this.linkOpen.set(false);
         this.focus();
     }

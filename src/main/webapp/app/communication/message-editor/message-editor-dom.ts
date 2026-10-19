@@ -427,13 +427,26 @@ export class MessageEditorDom {
         return link instanceof HTMLAnchorElement && this.element.contains(link) ? link : undefined;
     }
 
-    /** Existing links may have code-formatted labels; creating a link inside literal code is unsupported. */
+    /** Firefox Select All can select the paragraph node; descend into a sole paragraph to keep its wrapper outside the link. */
+    private linkRange(): Range {
+        const range = this.range().cloneRange();
+        while (range.startContainer === range.endContainer && range.endOffset - range.startOffset === 1) {
+            const block = range.startContainer.childNodes[range.startOffset];
+            if (!(block instanceof HTMLElement) || !block.matches('p, div')) break;
+            range.selectNodeContents(block);
+        }
+        return range;
+    }
+
+    /** Links need inline selections that round-trip through Markdown; existing code-formatted labels remain editable. */
     canLinkSelection(existing?: HTMLAnchorElement): boolean {
         const link = existing ?? this.linkAtSelection();
         if (link) return this.element.contains(link) && !link.closest('code, pre');
-        const range = this.range();
+        const range = this.linkRange();
         if (this.parentElement(range.startContainer)?.closest('code, pre') || this.parentElement(range.endContainer)?.closest('code, pre')) return false;
         if (range.collapsed) return true;
+        // Block wrappers or line breaks inside an anchor would lose their structure when serialized as an inline link.
+        if (range.cloneContents().querySelector('p, div, ul, ol, li, blockquote, pre, br')) return false;
         return !Array.from(this.element.querySelectorAll('code, pre')).some((code) => {
             const content = this.element.ownerDocument.createRange();
             content.selectNode(code);
@@ -481,7 +494,7 @@ export class MessageEditorDom {
                 this.select(caret);
             } else {
                 const link = this.element.ownerDocument.createElement('a');
-                const selection = this.range();
+                const selection = this.linkRange();
                 if (!selection.collapsed && selection.toString() === label) {
                     // A URL-only operation must preserve each selected inline mark rather than flatten the label.
                     const contents = selection.cloneContents();
@@ -492,6 +505,7 @@ export class MessageEditorDom {
                     link.textContent = label || url;
                 }
                 link.setAttribute('href', url);
+                this.select(selection);
                 this.replace(link);
             }
         });

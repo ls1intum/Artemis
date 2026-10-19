@@ -143,6 +143,8 @@
             role="group"
             [attr.aria-label]="'artemisApp.communication.formattedEditor.link' | artemisTranslate"
             (keydown.escape)="closeLink(); $event.stopPropagation()"
+            (compositionstart)="linkComposing.set(true)"
+            (compositionend)="linkComposing.set(false)"
         >
             <label class="flex min-w-0 flex-1 flex-col gap-1 text-sm">
                 {{ 'artemisApp.communication.formattedEditor.linkText' | artemisTranslate }}

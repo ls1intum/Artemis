@@ -726,6 +726,97 @@ test.describe('Formatted message editor native editing', { tag: '@fast' }, () =>
         await expectText(reopened.editor, 'Read bold and italic next');
     });
 
+    test('links a single paragraph selected with native Select All and keeps its inline formatting after reopening', async ({ page, composer, communicationAPIRequests }) => {
+        const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', 'Read **course** guide');
+        const { posting, editor } = await reopen(page, original);
+        await editor.click();
+        await page.keyboard.press('ControlOrMeta+a');
+        await expect(posting.getByTestId('message-link-button')).toBeEnabled();
+        await posting.getByTestId('message-link-button').click();
+        await expect(posting.getByTestId('message-link-text')).toHaveValue('Read course guide');
+        await posting.getByTestId('message-link-url').fill('https://example.org/guide');
+        await posting.getByTestId('apply-message-link').click();
+        await expect(editor.locator('p')).toHaveCount(1);
+        await expect(editor.locator('p > a strong')).toHaveText('course');
+        const saved = await saveEdited(page, composer, posting, original);
+        expect(saved.content).toBe('[Read **course** guide](https://example.org/guide)');
+        const reopened = await reopen(page, saved);
+        await expect(reopened.editor.locator('p > a strong')).toHaveText('course');
+        await expect(reopened.editor.locator('a')).toHaveAttribute('href', 'https://example.org/guide');
+        await expectText(reopened.editor, 'Read course guide');
+    });
+
+    for (const example of [
+        {
+            kind: 'paragraphs',
+            message: 'First paragraph\n\nSecond paragraph',
+            text: 'First paragraphSecond paragraph',
+            selector: 'p',
+            expected: '[First](https://example.org/guide) paragraph\n\nSecond paragraph',
+        },
+        {
+            kind: 'list items',
+            message: '- First item\n- Second item',
+            text: 'First itemSecond item',
+            selector: 'li',
+            expected: '- [First](https://example.org/guide) item\n- Second item',
+        },
+    ]) {
+        test(`link actions reject selections across ${example.kind} and preserve the blocks when linking within one`, async ({ page, composer, communicationAPIRequests }) => {
+            const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', example.message);
+            const { posting, editor } = await reopen(page, original);
+            await selectText(editor, 0, example.text.length, example.text);
+            await expect(posting.getByTestId('message-link-button')).toBeDisabled();
+            const html = await editor.innerHTML();
+            await page.keyboard.press('ControlOrMeta+k');
+            await expect(posting.getByTestId('message-link-url')).toBeHidden();
+            expect(await editor.innerHTML()).toBe(html);
+            await expect(editor.locator(example.selector)).toHaveCount(2);
+
+            await selectText(editor, 0, 5, 'First');
+            await expect(posting.getByTestId('message-link-button')).toBeEnabled();
+            await posting.getByTestId('message-link-button').click();
+            await posting.getByTestId('message-link-url').fill('https://example.org/guide');
+            await posting.getByTestId('apply-message-link').click();
+            const saved = await saveEdited(page, composer, posting, original);
+            expect(saved.content).toBe(example.expected);
+            const reopened = await reopen(page, saved);
+            await expect(reopened.editor.locator(example.selector)).toHaveCount(2);
+            await expect(reopened.editor.locator('a')).toHaveAttribute('href', 'https://example.org/guide');
+            await expect(reopened.editor.locator('a')).toHaveText('First');
+        });
+    }
+
+    for (const fieldId of ['message-link-text', 'message-link-url']) {
+        test(`IME confirmation in ${fieldId} leaves the link form open until normal Enter`, async ({ page, composer, communicationAPIRequests }) => {
+            const original = await communicationAPIRequests.createCourseMessage(composer.course, composer.channel.id!, 'channel', '[Guide](https://example.org/old)');
+            const { posting, editor } = await reopen(page, original);
+            await editor.getByRole('link', { name: 'Guide', exact: true }).click();
+            const input = posting.getByTestId(fieldId);
+            await input.fill(fieldId === 'message-link-text' ? '日本語' : 'https://example.org/new');
+            await input.dispatchEvent('compositionstart');
+            for (const options of [{}, { isComposing: true }, { keyCode: 229 }]) {
+                const prevented = await input.evaluate((element, init) => {
+                    const event = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true, ...init });
+                    element.dispatchEvent(event);
+                    return event.defaultPrevented;
+                }, options);
+                expect(prevented).toBe(false);
+                await expect(input).toBeVisible();
+                await expect(editor.locator('a')).toHaveText('Guide');
+                await expect(editor.locator('a')).toHaveAttribute('href', 'https://example.org/old');
+                await input.dispatchEvent('compositionend');
+            }
+            await input.press('Enter');
+            await expect(input).toBeHidden();
+            const saved = await saveEdited(page, composer, posting, original);
+            expect(saved.content).toBe(fieldId === 'message-link-text' ? '[日本語](https://example.org/old)' : '[Guide](https://example.org/new)');
+            const reopened = await reopen(page, saved);
+            await expect(reopened.editor.locator('a')).toHaveText(fieldId === 'message-link-text' ? '日本語' : 'Guide');
+            await expect(reopened.editor.locator('a')).toHaveAttribute('href', fieldId === 'message-link-url' ? 'https://example.org/new' : 'https://example.org/old');
+        });
+    }
+
     for (const selection of [
         { start: 0, end: 26, label: 'Read guide and notes today', markdown: '[Read **guide** and *notes* today](https://example.org/new)', links: 1 },
         { start: 7, end: 26, label: 'ide and notes today', markdown: 'Read [**gu**](https://example.org/old)[**ide** and *notes* today](https://example.org/new)', links: 2 },
