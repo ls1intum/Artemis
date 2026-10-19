@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.service.exercisegeneration.worker;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -106,65 +105,38 @@ public class GenerationSeedService {
     }
 
     private void captureRepository(ProgrammingExercise exercise, RepositoryType role, List<WorkspaceFile> files, Map<RepositoryType, String> heads, String repositoryBranch) {
-        Path temporary = null;
-        Repository repository = null;
-        Throwable operationFailure = null;
-        IllegalStateException cleanupFailure = null;
         try {
-            temporary = temporaryFiles.createTempDirectory("hyperion-seed-");
-            var uri = exercise.getRepositoryURI(role);
-            if (uri == null) {
-                throw new IllegalStateException("Missing generation repository: " + role);
-            }
-            repository = gitService.getOrCheckoutRepositoryOnBranch(uri, temporary.resolve("repository"), repositoryBranch);
-            try (RevWalk commits = new RevWalk(repository); TreeWalk tree = new TreeWalk(repository)) {
-                var commit = commits.parseCommit(repository.resolve(Constants.HEAD));
-                heads.put(role, commit.name());
-                tree.addTree(commit.getTree());
-                tree.setRecursive(true);
-                long total = files.stream().mapToLong(WorkspaceFile::size).sum();
-                while (tree.next()) {
-                    FileMode mode = tree.getFileMode(0);
-                    if (!mode.equals(FileMode.REGULAR_FILE) && !mode.equals(FileMode.EXECUTABLE_FILE)) {
-                        throw new IllegalArgumentException("Generation does not accept repository links or submodules");
+            Path temporary = temporaryFiles.createTempDirectory("hyperion-seed-");
+            try (AutoCloseable temporaryCheckout = () -> FileUtils.deleteDirectory(temporary.toFile())) {
+                var uri = exercise.getRepositoryURI(role);
+                if (uri == null) {
+                    throw new IllegalStateException("Missing generation repository: " + role);
+                }
+                Repository repository = gitService.getOrCheckoutRepositoryOnBranch(uri, temporary.resolve("repository"), repositoryBranch);
+                try (AutoCloseable repositoryClose = repository::closeBeforeDelete; RevWalk commits = new RevWalk(repository); TreeWalk tree = new TreeWalk(repository)) {
+                    var commit = commits.parseCommit(repository.resolve(Constants.HEAD));
+                    heads.put(role, commit.name());
+                    tree.addTree(commit.getTree());
+                    tree.setRecursive(true);
+                    long total = files.stream().mapToLong(WorkspaceFile::size).sum();
+                    while (tree.next()) {
+                        FileMode mode = tree.getFileMode(0);
+                        if (!mode.equals(FileMode.REGULAR_FILE) && !mode.equals(FileMode.EXECUTABLE_FILE)) {
+                            throw new IllegalArgumentException("Generation does not accept repository links or submodules");
+                        }
+                        var blob = repository.open(tree.getObjectId(0), Constants.OBJ_BLOB);
+                        total = Math.addExact(total, blob.getSize());
+                        if (total > WorkspaceSnapshot.MAX_BYTES || files.size() >= WorkspaceSnapshot.MAX_FILES) {
+                            throw new IllegalArgumentException("Generation repository seed exceeds its bounds");
+                        }
+                        files.add(new WorkspaceFile(role.name().toLowerCase(Locale.ROOT) + "/" + tree.getPathString(), blob.getBytes(WorkspaceFile.MAX_FILE_BYTES),
+                                mode.equals(FileMode.EXECUTABLE_FILE)));
                     }
-                    var blob = repository.open(tree.getObjectId(0), Constants.OBJ_BLOB);
-                    total = Math.addExact(total, blob.getSize());
-                    if (total > WorkspaceSnapshot.MAX_BYTES || files.size() >= WorkspaceSnapshot.MAX_FILES) {
-                        throw new IllegalArgumentException("Generation repository seed exceeds its bounds");
-                    }
-                    files.add(new WorkspaceFile(role.name().toLowerCase(Locale.ROOT) + "/" + tree.getPathString(), blob.getBytes(WorkspaceFile.MAX_FILE_BYTES),
-                            mode.equals(FileMode.EXECUTABLE_FILE)));
                 }
             }
         }
         catch (Exception e) {
-            var failure = new IllegalStateException("Could not capture the " + role + " repository for generation", e);
-            operationFailure = failure;
-            throw failure;
-        }
-        catch (Error failure) {
-            operationFailure = failure;
-            throw failure;
-        }
-        finally {
-            try {
-                if (repository != null) {
-                    repository.closeBeforeDelete();
-                }
-                if (temporary != null) {
-                    FileUtils.deleteDirectory(temporary.toFile());
-                }
-            }
-            catch (IOException | RuntimeException e) {
-                cleanupFailure = new IllegalStateException("Could not remove the temporary generation checkout", e);
-                if (operationFailure != null) {
-                    operationFailure.addSuppressed(cleanupFailure);
-                }
-            }
-        }
-        if (cleanupFailure != null) {
-            throw cleanupFailure;
+            throw new IllegalStateException("Could not capture the " + role + " repository for generation", e);
         }
     }
 

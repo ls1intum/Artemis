@@ -31,6 +31,15 @@ class ProviderUsageTransportTest {
     }
 
     @Test
+    void capturesUsageWhenTheProviderDoesNotReportAModel() {
+        var metadata = ChatResponseMetadata.builder().usage(new DefaultUsage(10, 20)).build();
+
+        var captured = ProviderUsageTransport.capture(new ChatResponse(List.of(), metadata));
+
+        assertThat(captured).isEqualTo(new ProviderUsageUpdate.Call("", "", 10, 20, null));
+    }
+
+    @Test
     void rejectsMissingResponseRatherThanInventingZeroUsage() {
         assertThatThrownBy(() -> ProviderUsageTransport.capture(null)).isInstanceOf(IllegalArgumentException.class);
     }

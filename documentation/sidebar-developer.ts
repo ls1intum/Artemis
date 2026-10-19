@@ -57,6 +57,8 @@ const sidebars: SidebarsConfig = {
         'local-user-management',
         'open-source',
         'system-design',
+        'security-assurance',
+        'best-practices',
         'feature-usage',
         'feature-usage-catalogue',
         'test-servers',
