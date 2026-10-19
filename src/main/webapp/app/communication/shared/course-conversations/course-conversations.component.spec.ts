@@ -18,7 +18,7 @@ import { CourseWideSearchComponent } from 'app/communication/course-conversation
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { Course, CourseInformationSharingConfiguration } from 'app/course/shared/entities/course.model';
-import { BehaviorSubject, EMPTY, Subject, of } from 'rxjs';
+import { BehaviorSubject, EMPTY, Subject, of, throwError } from 'rxjs';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
@@ -433,6 +433,70 @@ examples.forEach((activeConversation) => {
                 component.openCreateChannelDialog();
 
                 expect(spy).toHaveBeenCalledExactlyOnceWith(ChannelsCreateDialogComponent, expect.anything());
+            });
+
+            for (const kind of ['group', 'direct'] as const) {
+                it.each(['complete', 'error', 'cancel'] as const)(`preserves sidebar read state when ${kind} chat creation ends with %s`, (outcome) => {
+                    fixture.detectChanges();
+                    const previousSidebar = component.sidebarData();
+                    const previousCards = component.sidebarConversations();
+                    const replacement = [{ id: 44, title: 'Study group', isCurrent: false, conversation: { id: 44, unreadMessagesCount: 2 }, size: 'S' as const }];
+                    vi.mocked(courseOverviewService.mapConversationsToSidebarCardElements).mockReturnValue(replacement);
+                    const create = kind === 'group' ? vi.mocked(courseConversationsService.createGroupChat) : vi.mocked(courseConversationsService.createOneToOneChat);
+                    create.mockReturnValue(outcome === 'error' ? throwError(() => new Error('conversation reload failed')) : EMPTY);
+                    const ref = new DynamicDialogRef();
+                    vi.spyOn(dialogService, 'open').mockReturnValue(ref);
+                    if (kind === 'group') component.openCreateGroupChatDialog();
+                    else component.openCreateOneToOneChatDialog();
+
+                    const partners = [
+                        { id: 41, login: 'student-a' },
+                        { id: 42, login: 'student-b' },
+                    ];
+                    ref.close(outcome === 'cancel' ? undefined : kind === 'group' ? partners : partners[0]);
+
+                    if (outcome === 'cancel') {
+                        expect(create).not.toHaveBeenCalled();
+                    } else {
+                        expect(create).toHaveBeenCalledExactlyOnceWith(kind === 'group' ? ['student-a', 'student-b'] : 'student-a');
+                    }
+                    if (outcome === 'complete') {
+                        expect(component.sidebarData()).not.toBe(previousSidebar);
+                        expect(component.sidebarConversations()).toEqual(replacement);
+                        expect(component.sidebarConversations()[0].conversation?.unreadMessagesCount).toBe(2);
+                    } else {
+                        expect(component.sidebarData()).toBe(previousSidebar);
+                        expect(component.sidebarConversations()).toBe(previousCards);
+                    }
+                });
+            }
+
+            it.each([
+                ['modified', true, false],
+                ['unmodified', false, false],
+                ['failed reload', true, true],
+            ] as const)('opens the overview selection only after a valid %s result and retains unread cards on failure', (_context, modified, failed) => {
+                fixture.detectChanges();
+                const previousSidebar = component.sidebarData();
+                const previousCards = component.sidebarConversations();
+                const selected = generateExampleChannelDTO({ id: 77, unreadMessagesCount: 2 } as ChannelDTO);
+                const ref = new DynamicDialogRef();
+                vi.spyOn(dialogService, 'open').mockReturnValue(ref);
+                vi.mocked(courseConversationsService.forceRefresh).mockReturnValue(failed ? throwError(() => new Error('reload failed')) : EMPTY);
+                setActiveConversationSpy.mockClear();
+                component.openChannelOverviewDialog();
+
+                ref.close([selected, modified]);
+
+                if (failed) {
+                    expect(setActiveConversationSpy).not.toHaveBeenCalled();
+                    expect(component.sidebarData()).toBe(previousSidebar);
+                    expect(component.sidebarConversations()).toBe(previousCards);
+                } else {
+                    expect(setActiveConversationSpy).toHaveBeenCalledExactlyOnceWith(selected);
+                    expect(component.sidebarData()).not.toBe(previousSidebar);
+                }
+                if (modified) expect(courseConversationsService.forceRefresh).toHaveBeenCalledWith(false, true);
             });
         });
 

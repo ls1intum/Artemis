@@ -392,7 +392,7 @@ public class ConversationMessagingService extends PostingService {
             service.deleteEntityAsync(SearchableEntitySchema.TypeValues.POST, postId);
             service.deleteAllAnswerPostsForPostAsync(postId);
         });
-        conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
+        conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), post.getAuthor().getId(), post.getCreationDate());
         conversation = conversationService.getConversationById(conversation.getId());
 
         // Delete all connected saved posts

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -637,6 +638,50 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         replyToMessage(ownMessage.id());
 
         assertThat(unreadMessagesInCourse()).isFalse();
+    }
+
+    @ParameterizedTest
+    @CsvSource({ "false,student1", "true,student1", "false,instructor1", "true,instructor1" })
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deletingPost_preservesUnreadRepliesAndDecrementsOnlyUnreadRecipients(boolean postUnread, String deleter) throws Exception {
+        var channel = createChannel(false, TEST_PREFIX + "delete-unread");
+        addUsersToConversation(channel.getId(), "student1", "tutor1");
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        var thread = postInConversation(channel.getId(), "student1");
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+        replyToMessage(thread.id());
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+        var post = postInConversation(channel.getId(), "student1");
+        var postDate = conversationMessageRepository.findByIdElseThrow(post.id()).getCreationDate();
+
+        // Establish read positions immediately around this post. The author never counts their own post.
+        for (String login : List.of("student1", "tutor1", "instructor1")) {
+            var user = userUtilService.getUserByLogin(TEST_PREFIX + login);
+            var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(channel.getId(), user.getId());
+            boolean hasReadPost = login.equals("tutor1") && !postUnread;
+            participant.setLastRead(hasReadPost ? postDate : postDate.minusNanos(1_000_000));
+            participant.setUnreadMessagesCount(login.equals("student1") || hasReadPost ? 0L : 1L);
+            conversationParticipantRepository.saveAndFlush(participant);
+        }
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+        replyToMessage(thread.id());
+        assertThat(unreadCountOf(channel.getId(), "student1")).as("the post author has an unread reply, but not their own post").isEqualTo(1);
+        assertThat(unreadCountOf(channel.getId(), "tutor1")).as("the earlier replier has the reply and possibly the unread post").isEqualTo(postUnread ? 2 : 1);
+        assertThat(unreadCountOf(channel.getId(), "instructor1")).as("the moderator has only the unread post, not their own reply").isEqualTo(1);
+
+        userUtilService.changeUser(TEST_PREFIX + deleter);
+        request.delete("/api/communication/courses/" + exampleCourseId + "/messages/" + post.id(), HttpStatus.OK);
+
+        assertThat(conversationMessageRepository.findById(post.id())).isEmpty();
+        assertThat(conversationMessageRepository.findById(thread.id())).isPresent();
+        assertThat(unreadCountOf(channel.getId(), "student1")).as("deleting one's own post cannot consume its author's unread reply").isEqualTo(1);
+        assertThat(unreadCountOf(channel.getId(), "tutor1")).as("only an unread top-level post is subtracted; the unread reply remains").isEqualTo(1);
+        assertThat(unreadCountOf(channel.getId(), "instructor1")).as("a moderator deleting another author's unread post also loses that post's count").isZero();
+    }
+
+    private Long unreadCountOf(Long conversationId, String login) {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + login);
+        return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversationId, user.getId()).getUnreadMessagesCount();
     }
 
     private boolean unreadMessagesInCourse() throws Exception {

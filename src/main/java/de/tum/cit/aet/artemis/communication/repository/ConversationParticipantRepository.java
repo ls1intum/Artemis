@@ -273,10 +273,12 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
     boolean userHasConversationWithUnreadCountInCourse(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     /**
-     * Decrement unreadMessageCount field of ConversationParticipant
+     * Remove a deleted top-level post from recipients' unread counts only when it was newer than their read position.
+     * The post author never counted their own post, even when a moderator performs the deletion. Unread replies remain counted.
      *
-     * @param senderId       userId of the sender of the message(Post)
      * @param conversationId conversationId id of the conversation with participants
+     * @param authorId       id of the post author, rather than the user deleting the post
+     * @param creationDate   creation date of the deleted post
      */
     @Transactional // ok because of modifying query
     @Modifying
@@ -284,9 +286,11 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             UPDATE ConversationParticipant conversationParticipant
             SET conversationParticipant.unreadMessagesCount = conversationParticipant.unreadMessagesCount - 1
             WHERE conversationParticipant.conversation.id = :conversationId
-                AND conversationParticipant.user.id <> :senderId
+                AND conversationParticipant.user.id <> :authorId
+                AND (conversationParticipant.lastRead IS NULL OR conversationParticipant.lastRead < :creationDate)
                 AND conversationParticipant.unreadMessagesCount > 0
                 AND conversationParticipant.unreadMessagesCount IS NOT NULL
             """)
-    void decrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
+    void decrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("authorId") Long authorId,
+            @Param("creationDate") ZonedDateTime creationDate);
 }

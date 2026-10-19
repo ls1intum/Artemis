@@ -494,8 +494,8 @@ export class CourseConversationsService implements OnDestroy {
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationEnd) {
                 // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation
-                if (this.activeConversation) {
-                    this.activeConversation.unreadMessagesCount = 0;
+                if (this.isReadingConversation(this.activeConversation?.id) && !this.isMarkedAsUnread) {
+                    this.updateConversationAsRead();
                     this.hasUnreadMessagesCheck();
                 }
             }
@@ -550,7 +550,15 @@ export class CourseConversationsService implements OnDestroy {
                 if (this.isReadingConversation(conversationDTO.id) && !this.isMarkedAsUnread) {
                     // The user is reading this conversation, so what arrived is not new to them, e.g. a reply in a thread of theirs. The server counted
                     // it for them anyway, and reading the conversation again is what resets that count.
+                    const selectionVersion = this.selectionVersion;
                     this.conversationService.markAsRead(this._courseId, conversationDTO.id!).subscribe({
+                        next: () => {
+                            // A delayed read must not clear a different selection or an explicit unread mark.
+                            if (selectionVersion === this.selectionVersion && this.isReadingConversation(conversationDTO.id) && !this.isMarkedAsUnread) {
+                                this.updateConversationAsRead();
+                                this.hasUnreadMessagesCheck();
+                            }
+                        },
                         // the count the server raised stays, so the badge has to show it
                         error: () => this.handleNewMessage(conversationDTO.id, conversationDTO.lastMessageDate),
                     });

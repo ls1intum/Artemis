@@ -12,6 +12,8 @@ import { ConversationService } from 'app/communication/conversations/service/con
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { provideLocationMocks } from '@angular/common/testing';
+import { Router, provideRouter } from '@angular/router';
 import { Subject, forkJoin, of, take, throwError } from 'rxjs';
 import { ConversationDTO } from '../shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
@@ -43,6 +45,8 @@ describe('CourseConversationsService', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
+                provideRouter([{ path: 'courses/:courseId/:tab', children: [] }]),
+                provideLocationMocks(),
                 { provide: CourseConversationsService, useClass: CourseConversationsService },
                 MockProvider(CourseManagementService),
                 MockProvider(GroupChatService),
@@ -654,6 +658,95 @@ describe('CourseConversationsService', () => {
                     },
                 });
             });
+        });
+
+        it.each([
+            ['another course tab', false, false, 1],
+            ['an explicitly unread conversation', true, true, 3],
+        ] as const)('preserves unread replies on navigation from %s', async (_context, viewOpen, markedUnread, expectedCount) => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setActiveConversation(channel);
+            courseConversationsService.setConversationViewOpen(viewOpen);
+            if (markedUnread) courseConversationsService.updateConversationUnreadState(channel.id, dayjs(), 2);
+            receiveMockSubject.next(eventFor(channel));
+            expect(cachedUnreadCount(channel.id)).toBe(expectedCount);
+
+            await TestBed.inject(Router).navigateByUrl('/courses/1/lectures');
+
+            expect(cachedUnreadCount(channel.id)).toBe(expectedCount);
+            expect(courseConversationsService['activeConversation']?.hasUnreadMessage).toBe(true);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(true);
+        });
+
+        it('clears the cached and course unread state when a read succeeds after an earlier failure', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(channel);
+            const successfulRead = new Subject<HttpResponse<void>>();
+            const unreadStates: boolean[] = [];
+            const unreadSubscription = courseConversationsService.hasUnreadMessages$.subscribe((value) => unreadStates.push(value));
+            const counts: number[] = [];
+            const countSubscription = courseConversationsService.conversationsOfUser$.subscribe((conversations) => {
+                counts.push(conversations.find((conversation) => conversation.id === channel.id)?.unreadMessagesCount ?? 0);
+            });
+            vi.spyOn(conversationService, 'markAsRead')
+                .mockReturnValueOnce(throwError(() => new Error('read failed')))
+                .mockReturnValueOnce(successfulRead);
+
+            receiveMockSubject.next(eventFor(channel));
+            expect(cachedUnreadCount(channel.id)).toBe(1);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(true);
+
+            receiveMockSubject.next(eventFor(channel));
+            expect(counts.at(-1)).toBe(1);
+            successfulRead.next(new HttpResponse<void>());
+
+            expect(cachedUnreadCount(channel.id)).toBe(0);
+            expect(courseConversationsService['activeConversation']?.hasUnreadMessage).toBe(false);
+            expect(courseConversationsService['hasUnreadMessages']).toBe(false);
+            expect(courseConversationsService['isMarkedAsUnread']).toBe(false);
+            expect(counts.at(-1)).toBe(0);
+            expect(unreadStates).toEqual([true, false]);
+            successfulRead.complete();
+            countSubscription.unsubscribe();
+            unreadSubscription.unsubscribe();
+        });
+
+        it('does not clear a manual unread mark made while the server read is pending', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(channel);
+            const pending = new Subject<HttpResponse<void>>();
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pending);
+            receiveMockSubject.next(eventFor(channel));
+            courseConversationsService.updateConversationUnreadState(channel.id, dayjs(), 3);
+
+            pending.next(new HttpResponse<void>());
+
+            expect(cachedUnreadCount(channel.id)).toBe(3);
+            expect(courseConversationsService['activeConversation']?.hasUnreadMessage).toBe(true);
+            expect(courseConversationsService['isMarkedAsUnread']).toBe(true);
+            pending.complete();
+        });
+
+        it('does not clear another conversation when a previous read completes after navigation', () => {
+            courseConversationsService.setUpConversationService(course).subscribe();
+            courseConversationsService.setConversationViewOpen(true);
+            courseConversationsService.setActiveConversation(channel);
+            const pending = new Subject<HttpResponse<void>>();
+            vi.spyOn(conversationService, 'markAsRead').mockReturnValue(pending);
+            receiveMockSubject.next(eventFor(channel));
+            courseConversationsService.setActiveConversation(groupChat);
+            courseConversationsService.setConversationViewOpen(false);
+            receiveMockSubject.next(eventFor(groupChat));
+            expect(cachedUnreadCount(groupChat.id)).toBe(1);
+
+            pending.next(new HttpResponse<void>());
+
+            expect(cachedUnreadCount(groupChat.id)).toBe(1);
+            expect(courseConversationsService['activeConversation']?.id).toBe(groupChat.id);
+            expect(courseConversationsService['activeConversation']?.hasUnreadMessage).toBe(true);
+            pending.complete();
         });
 
         it('should show the unread count the server kept when marking the open conversation as read fails', () => {
