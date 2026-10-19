@@ -76,12 +76,16 @@ class SlowQueryCollectorTest {
     }
 
     @Test
-    void templateCanShowBothShapes() {
+    void repeatsInsideAnNPlusOneAreCountedByIt() {
         query(SQL, 1);
         query(SQL, 1);
         query(SQL, 2);
 
-        assertThat(finishRequest()).extracting(RepeatedQueryFinding::type).containsExactlyInAnyOrder(Type.N_PLUS_ONE, Type.DUPLICATE);
+        assertThat(finishRequest()).singleElement().satisfies(finding -> {
+            assertThat(finding.type()).isEqualTo(Type.N_PLUS_ONE);
+            assertThat(finding.executions()).isEqualTo(3);
+            assertThat(finding.distinctParameterSets()).isEqualTo(2);
+        });
     }
 
     @Test
@@ -112,11 +116,42 @@ class SlowQueryCollectorTest {
             query(SQL, id, () -> later);
         }
 
-        assertThat(finishRequest()).hasSize(2).allSatisfy(finding -> {
-            assertThat(finding.type()).isEqualTo(Type.N_PLUS_ONE);
+        List<RepeatedQueryFinding> findings = finishRequest();
+        assertThat(findings).filteredOn(finding -> finding.type() == Type.N_PLUS_ONE).hasSize(2).allSatisfy(finding -> {
             assertThat(finding.executions()).isEqualTo(3);
             assertThat(finding.distinctParameterSets()).isEqualTo(3);
         }).extracting(RepeatedQueryFinding::callerMethod).containsExactlyInAnyOrder(SITE.callerMethod(), later.callerMethod());
+        assertThat(findings).filteredOn(finding -> finding.type() == Type.DUPLICATE).singleElement().satisfies(finding -> {
+            assertThat(finding.executions()).isEqualTo(6);
+            assertThat(finding.distinctParameterSets()).isEqualTo(3);
+            assertThat(finding.callSites()).containsExactly(SITE, later);
+        });
+    }
+
+    @Test
+    void duplicateAcrossCallSitesCountsOnlyTheStatementsSeveralOfThemRan() {
+        QueryCallSite later = new QueryCallSite("UserRepository.findByIdElseThrow", "ExamDeletionService.delete");
+        query(SQL, 1);
+        query(SQL, 2);
+        query(SQL, 2, () -> later);
+
+        List<RepeatedQueryFinding> findings = finishRequest();
+        assertThat(findings).extracting(RepeatedQueryFinding::type).containsExactlyInAnyOrder(Type.N_PLUS_ONE, Type.DUPLICATE);
+        assertThat(findings).filteredOn(finding -> finding.type() == Type.DUPLICATE).singleElement().satisfies(finding -> {
+            assertThat(finding.executions()).isEqualTo(2);
+            assertThat(finding.distinctParameterSets()).isEqualTo(1);
+            assertThat(finding.repositoryMethod()).isNull();
+            assertThat(finding.callerMethod()).isNull();
+            assertThat(finding.callSites()).containsExactly(SITE, later);
+        });
+    }
+
+    @Test
+    void differentStatementsFromDifferentCodeAreNoDuplicate() {
+        query(SQL, 1);
+        query(SQL, 2, () -> new QueryCallSite("UserRepository.findByIdElseThrow", "ExamDeletionService.delete"));
+
+        assertThat(finishRequest()).isEmpty();
     }
 
     @Test

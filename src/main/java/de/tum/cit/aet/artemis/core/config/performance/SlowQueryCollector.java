@@ -4,10 +4,13 @@ import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
@@ -42,6 +45,9 @@ public class SlowQueryCollector {
 
     private static final Logger log = LoggerFactory.getLogger(SlowQueryCollector.class);
 
+    private static final Comparator<QueryCallSite> CALL_SITE_ORDER = Comparator.comparing(QueryCallSite::callerMethod, Comparator.nullsLast(Comparator.naturalOrder()))
+            .thenComparing(QueryCallSite::repositoryMethod, Comparator.nullsLast(Comparator.naturalOrder()));
+
     private final SlowQueryProperties properties;
 
     /** Captured slow queries, ordered by insertion time. */
@@ -61,7 +67,7 @@ public class SlowQueryCollector {
      */
     private final ThreadLocal<Map<TemplateKey, TemplateStats>> requestTemplates = ThreadLocal.withInitial(HashMap::new);
 
-    /** Repeated-query findings, one per (request, template, issuing code, shape), capped like {@link #slowQueries}. */
+    /** Repeated-query findings of all requests, see {@link #addRepeatedQueryFindings}; capped like {@link #slowQueries}. */
     private final CopyOnWriteArrayList<RepeatedQueryFinding> repeatedQueries = new CopyOnWriteArrayList<>();
 
     /** One entry per completed HTTP request, capped like {@link #slowQueries}. */
@@ -165,8 +171,8 @@ public class SlowQueryCollector {
                     (a, b) -> new QueryCountEntry(sql, a.count() + b.count(), a.totalDurationMs() + b.totalDurationMs(), a.joinCount()));
             dbTimeMs += stats.totalDurationMs;
             queryCount += stats.executions;
-            addRepeatedQueryFindings(sql, e.getKey().callSite(), stats, httpMethod, httpEndpoint, testName, phase);
         }
+        addRepeatedQueryFindings(templates, httpMethod, httpEndpoint, testName, phase);
         List<QueryCountEntry> queries = new ArrayList<>(perTemplate.values());
 
         if (endpointTimings.size() < properties.getMaxRecordedQueries()) {
@@ -209,19 +215,59 @@ public class SlowQueryCollector {
     // Private helpers
     // --------------------------------------------------
 
-    private void addRepeatedQueryFindings(String sql, QueryCallSite callSite, TemplateStats stats, String httpMethod, String httpEndpoint, String testName, String phase) {
-        if (stats.executions < 2) {
-            return;
+    /**
+     * Derives the request's repeated-query findings. Each piece of code that ran a template more
+     * than once is one finding: N+1 if it used several parameter sets (its executions then include
+     * any repeats of the same set), duplicate if it used only one. A statement that several pieces
+     * of code ran with the same parameters is one more duplicate, of the request as a whole.
+     */
+    private void addRepeatedQueryFindings(Map<TemplateKey, TemplateStats> templates, String httpMethod, String httpEndpoint, String testName, String phase) {
+        Map<String, Map<QueryCallSite, TemplateStats>> callSitesBySql = new LinkedHashMap<>();
+        for (Map.Entry<TemplateKey, TemplateStats> e : templates.entrySet()) {
+            String sql = e.getKey().sql();
+            QueryCallSite site = e.getKey().callSite();
+            TemplateStats stats = e.getValue();
+            callSitesBySql.computeIfAbsent(sql, k -> new LinkedHashMap<>()).put(site, stats);
+            if (stats.executions < 2) {
+                continue;
+            }
+            int distinct = stats.parameterSignatures.size();
+            RepeatedQueryFinding.Type type = distinct >= 2 ? RepeatedQueryFinding.Type.N_PLUS_ONE : RepeatedQueryFinding.Type.DUPLICATE;
+            addRepeatedQueryFinding(new RepeatedQueryFinding(type, sql, stats.executions, distinct, site.repositoryMethod(), site.callerMethod(), httpMethod, httpEndpoint,
+                    testName, phase, List.of()));
         }
-        int distinct = stats.parameterSignatures.size();
-        QueryCallSite site = callSite != null ? callSite : QueryCallSite.UNKNOWN;
-        if (distinct >= 2) {
-            addRepeatedQueryFinding(new RepeatedQueryFinding(RepeatedQueryFinding.Type.N_PLUS_ONE, sql, stats.executions, distinct, site.repositoryMethod(), site.callerMethod(),
-                    httpMethod, httpEndpoint, testName, phase));
+        for (Map.Entry<String, Map<QueryCallSite, TemplateStats>> e : callSitesBySql.entrySet()) {
+            if (e.getValue().size() >= 2) {
+                addDuplicateAcrossCallSites(e.getKey(), e.getValue(), httpMethod, httpEndpoint, testName, phase);
+            }
         }
-        if (distinct < stats.executions) {
-            addRepeatedQueryFinding(new RepeatedQueryFinding(RepeatedQueryFinding.Type.DUPLICATE, sql, stats.executions, distinct, site.repositoryMethod(), site.callerMethod(),
-                    httpMethod, httpEndpoint, testName, phase));
+    }
+
+    /**
+     * Reports the statements of one template that more than one piece of code ran with the same
+     * parameters: the request loaded that data again, though no single place repeated it.
+     */
+    private void addDuplicateAcrossCallSites(String sql, Map<QueryCallSite, TemplateStats> callSites, String httpMethod, String httpEndpoint, String testName, String phase) {
+        Map<Long, Set<QueryCallSite>> callSitesBySignature = new HashMap<>();
+        Map<Long, Integer> executionsBySignature = new HashMap<>();
+        callSites.forEach((site, stats) -> stats.parameterSignatures.forEach((signature, count) -> {
+            callSitesBySignature.computeIfAbsent(signature, k -> new HashSet<>()).add(site);
+            executionsBySignature.merge(signature, count, Integer::sum);
+        }));
+        int executions = 0;
+        int distinct = 0;
+        Set<QueryCallSite> involved = new HashSet<>();
+        for (Map.Entry<Long, Set<QueryCallSite>> e : callSitesBySignature.entrySet()) {
+            if (e.getValue().size() >= 2) {
+                executions += executionsBySignature.get(e.getKey());
+                distinct++;
+                involved.addAll(e.getValue());
+            }
+        }
+        if (distinct > 0) {
+            List<QueryCallSite> sorted = involved.stream().sorted(CALL_SITE_ORDER).toList();
+            addRepeatedQueryFinding(
+                    new RepeatedQueryFinding(RepeatedQueryFinding.Type.DUPLICATE, sql, executions, distinct, null, null, httpMethod, httpEndpoint, testName, phase, sorted));
         }
     }
 
@@ -231,7 +277,8 @@ public class SlowQueryCollector {
      */
     private static QueryCallSite resolveCallSite(Supplier<QueryCallSite> callSiteResolver) {
         try {
-            return callSiteResolver.get();
+            QueryCallSite site = callSiteResolver.get();
+            return site != null ? site : QueryCallSite.UNKNOWN;
         }
         catch (RuntimeException e) {
             log.debug("[RepeatedQuery] Could not resolve the call site of a query", e);

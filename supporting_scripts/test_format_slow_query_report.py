@@ -103,15 +103,14 @@ class ProblemTest(unittest.TestCase):
         self.assertEqual((problems[0]["kind"], problems[0]["anchor"], problems[0]["category"]), ("function", "ResultService.loadAll", "n_plus_one"))
         self.assertEqual(len(problems[0]["queries"]), 2)
 
-    def test_duplicate_of_an_n_plus_one_at_the_same_place_is_folded_into_it(self):
-        problems = problems_of(repeated(executions=10, distinctParameterSets=5), repeated(type="DUPLICATE", executions=10, distinctParameterSets=5))
+    def test_duplicate_across_several_places_is_a_problem_of_its_endpoint_listing_them(self):
+        sites = [{"repositoryMethod": "UserRepository.findById", "callerMethod": "A.run"}, {"repositoryMethod": "UserRepository.findById", "callerMethod": "B.run"}]
+        problems = problems_of(repeated(type="DUPLICATE", repositoryMethod=None, callerMethod=None, callSites=sites),
+                               repeated(type="DUPLICATE", repositoryMethod=None, callerMethod=None, callSites=[{"callerMethod": "C.run"}], test="B.spec"))
         self.assertEqual(len(problems), 1)
-        self.assertEqual([q["shape"] for q in problems[0]["queries"]], ["N_PLUS_ONE"])
-
-    def test_duplicate_without_an_issuing_place_is_a_problem_of_its_endpoint(self):
-        problems = problems_of(repeated(type="DUPLICATE", repositoryMethod=None, callerMethod=None))
         self.assertEqual((problems[0]["kind"], problems[0]["category"]), ("endpoint", "duplicate_several_places"))
         self.assertEqual(problems[0]["anchor"], "GET /api/assessment/exercises/{exerciseId}/results")
+        self.assertEqual(problems[0]["queries"][0]["call_sites"], {"UserRepository.findById ← A.run", "UserRepository.findById ← B.run", "C.run"})
 
     def test_inserts_are_grouped_by_table(self):
         insert = "insert into plagiarism_submission_element (column,file,line) values (?,?,?)"

@@ -115,9 +115,11 @@ def group_repeated_queries(findings: list) -> list:
         g = groups.setdefault(key, {
             "key": key, "type": f.get("type"), "method": f.get("httpMethod"), "endpoint": f.get("httpEndpoint"), "sql": f.get("normalizedSql") or "",
             "repositoryMethod": f.get("repositoryMethod"), "callerMethod": f.get("callerMethod"), "max_executions": 0, "requests": 0, "tests": set(),
-            "occurrences": [],
+            "occurrences": [], "call_sites": set(),
         })
         g["requests"] += 1
+        # a duplicate across several pieces of code lists them; which ones can differ per request
+        g["call_sites"].update(source_label(site) for site in f.get("callSites") or [])
         g["max_executions"] = max(g["max_executions"], f.get("executions", 0))
         if f.get("testName"):
             g["tests"].add(f["testName"])
@@ -141,9 +143,10 @@ def link_static_confirmations(groups: list, static_findings: list):
 
 
 def source_label(g: dict) -> str:
-    if g["repositoryMethod"] and g["callerMethod"]:
-        return f"{g['repositoryMethod']} ← {g['callerMethod']}"
-    return g["repositoryMethod"] or g["callerMethod"] or "?"
+    repository_method, caller_method = g.get("repositoryMethod"), g.get("callerMethod")
+    if repository_method and caller_method:
+        return f"{repository_method} ← {caller_method}"
+    return repository_method or caller_method or "?"
 
 
 # ---------------------------------------------------------------------------
@@ -199,14 +202,8 @@ def endpoint_label(method: str, endpoint: str) -> str:
 
 def build_problems(groups: list) -> list:
     """One problem per place to fix, most avoidable executions first."""
-    def site(g):
-        return g["method"], g["endpoint"], g["repositoryMethod"], g["callerMethod"], g["sql"]
-
-    sites_with_n_plus_one = {site(g) for g in groups if g["type"] == "N_PLUS_ONE"}
     problems = {}
     for g in groups:
-        if g["type"] == "DUPLICATE" and site(g) in sites_with_n_plus_one:
-            continue  # the N+1 issued from the same place already counts these executions
         insert = INSERT_TABLE_PATTERN.match(g["sql"])
         if insert:
             kind, anchor = "insert", insert.group(1).lower()
@@ -217,8 +214,10 @@ def build_problems(groups: list) -> list:
         problem = problems.setdefault((kind, anchor), {"kind": kind, "anchor": anchor, "queries": {}})
         # rows of one table inserted by different code are different places to batch them
         query_key = (g["repositoryMethod"], g["callerMethod"] if kind == "insert" else None, g["sql"])
-        query = problem["queries"].setdefault(query_key, {"repositoryMethod": g["repositoryMethod"], "callerMethod": g["callerMethod"], "sql": g["sql"], "groups": []})
+        query = problem["queries"].setdefault(query_key, {"repositoryMethod": g["repositoryMethod"], "callerMethod": g["callerMethod"], "sql": g["sql"], "groups": [],
+                                                          "call_sites": set()})
         query["groups"].append(g)
+        query["call_sites"].update(g["call_sites"])
     return sorted((summarize_problem(p) for p in problems.values()), key=lambda p: (-p["avoidable"], -len(p["endpoints"]), -len(p["tests"]), p["anchor"]))
 
 
@@ -794,7 +793,7 @@ def query_item_html(q: dict, problem: dict) -> str:
     elif problem["kind"] == "function":
         source = q["repositoryMethod"] or ""
     else:
-        source = ""
+        source = "loaded by " + ", ".join(sorted(q["call_sites"])) if q["call_sites"] else ""
     source_html = f'<div class="query-source">{html.escape(source)}</div>' if source else ""
     return (f'<li class="query-item">{source_html}'
             f'<details class="query-sql"><summary><code>{html.escape(q["summary"])}</code></summary><pre>{highlight_sql(q["sql"])}</pre>{query_requests_html(q)}</details>'
