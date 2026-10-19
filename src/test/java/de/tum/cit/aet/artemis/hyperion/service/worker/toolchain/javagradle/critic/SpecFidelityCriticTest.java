@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.hyperion.service.worker.toolchain.javagradle.crit
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -2807,10 +2809,27 @@ class SpecFidelityCriticTest {
         assertThat(witnessesFrom("{\"witnesses\":[" + entries + "]}")).hasSize(4);
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "", "   ", "I could not find any uncovered rules.", "{", "{}", "null", "{\"witnesses\":null}" })
+    void authorContractWitnesses_reportsAnUnavailableResponse(String response) {
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> witnessesFrom(response));
+    }
+
     @Test
-    void authorContractWitnesses_authorsNothingWhenTheResponseIsNotUsableJson() {
-        assertThat(witnessesFrom("I could not find any uncovered rules.")).isEmpty();
-        assertThat(witnessesFrom("{\"witnesses\": null}")).isEmpty();
+    void contractWitnessProviderFailureReachesTheExecutableReviewBoundary() {
+        ReviewerClient reviewer = mock(ReviewerClient.class);
+        when(reviewer.configured()).thenReturn(true);
+        IllegalStateException failure = new IllegalStateException("provider unavailable");
+        when(reviewer.call(anyString(), anyString(), any(), any(), anyInt())).thenThrow(failure);
+        ContractWitnessAuthor author = new ContractWitnessAuthor(reviewer, JsonMapper.builder().build());
+
+        assertThatExceptionOfType(IllegalStateException.class)
+                .isThrownBy(() -> author.authorContractWitnesses(SPEC_WITH_RULES, "class Test {}", "class Solution {}", Map.of(), null, () -> false)).isSameAs(failure);
+    }
+
+    @Test
+    void authorContractWitnesses_acceptsAnExplicitEmptyArray() {
+        assertThat(witnessesFrom("{\"witnesses\":[]}")).isEmpty();
     }
 
     @Test

@@ -41,6 +41,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.slf4j.LoggerFactory;
@@ -1640,15 +1641,23 @@ class GenerationOrchestratorTest {
         assertThat(sink.lines).anySatisfy(line -> assertThat(line).contains("Quality review round 3", "no issues remain"));
     }
 
-    @Test
-    void aFailingContractWitnessAuthoringPassCostsTheExerciseNothing() {
-        // The model proposal is advisory scaffolding on an already-accepted candidate; an unavailable proposal must not disturb the verdict.
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
+    void aFailingContractWitnessAuthoringPassCostsTheExerciseNothing(boolean operatorCancelled) {
+        // Unavailable probes preserve the verified exercise, but must not claim that executable quality review completed.
         acceptedCandidateWithSpecAndTests();
-        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenThrow(new IllegalStateException("provider down"));
+        AtomicBoolean cancelled = new AtomicBoolean();
+        when(specFidelityCritic.authorContractWitnesses(anyString(), anyString(), anyString(), any(), any())).thenAnswer(invocation -> {
+            cancelled.set(operatorCancelled);
+            throw new IllegalStateException("provider down");
+        });
 
-        GenerationOutcome outcome = generate(() -> false);
+        GenerationOutcome outcome = generate(cancelled::get);
         assertThat(outcome.isMechanicallyVerified()).isTrue();
+        assertThat(outcome.specFidelityReport().findings()).anyMatch(finding -> finding.kind() == SpecFidelityReport.Kind.EXECUTABLE_EVIDENCE_UNAVAILABLE);
         assertThat(outcome.specFidelityReport().findings()).noneMatch(finding -> finding.kind() == SpecFidelityReport.Kind.CONTRACT_WITNESS_AVAILABLE);
+        assertThat(outcome.terminationReason()).isEqualTo(operatorCancelled ? TerminationReason.CANCELLED : TerminationReason.REVIEW_UNAVAILABLE);
+        verify(specFidelityCritic).authorContractWitnesses(anyString(), anyString(), anyString(), any(), any());
     }
 
     @Test
