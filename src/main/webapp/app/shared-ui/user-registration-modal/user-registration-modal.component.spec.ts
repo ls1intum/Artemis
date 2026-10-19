@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AlertService } from 'app/foundation/service/alert.service';
 import { UserRegistrationModalComponent } from './user-registration-modal.component';
@@ -207,6 +207,24 @@ describe('UserRegistrationModalComponent', () => {
             expect(component.isLoading()).toBe(true);
         });
 
+        it('should ignore a lazy load from a table mounted while the debounce is pending and load once when it fires', () => {
+            mockSearchFn.mockReturnValue(of({ content: [makeUser(1)], totalElements: 1 }));
+            const reload = vi.fn();
+            vi.spyOn(component, 'tableViewRef').mockReturnValue({ reload } as any);
+            component.hasSearched.set(true);
+
+            component.onSearch('ali');
+            component.onTableLazyLoad(lazyEvent); // the table loads on init when it mounts during the debounce
+
+            expect(mockSearchFn).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(300);
+            expect(reload).toHaveBeenCalledExactlyOnceWith({ page: 0 });
+            component.onTableLazyLoad(lazyEvent); // emitted by reload()
+
+            expect(mockSearchFn).toHaveBeenCalledExactlyOnceWith('ali', 0, 10);
+        });
+
         it('should debounce rapid calls and only trigger once for the last term', () => {
             component.onSearch('a');
             component.onSearch('al');
@@ -377,6 +395,43 @@ describe('UserRegistrationModalComponent', () => {
 
             expect(mockAlertService.error).toHaveBeenCalledWith('userRegistrationModal.registerError');
             expect(component.isLoading()).toBe(false);
+        });
+
+        describe('when the modal was dismissed and reopened before the registration finished', () => {
+            let finishRegistration: Subject<void>;
+
+            beforeEach(() => {
+                finishRegistration = new Subject<void>();
+                mockRegisterFn.mockReturnValue(finishRegistration);
+                component.isOpen.set(true);
+                component.selectedUsers.set([makeUser(1)]);
+                component.register();
+
+                component.onVisibleChange(false);
+                component.open();
+                component.selectedUsers.set([makeUser(2)]);
+            });
+
+            it('should notify the parent of the success but keep the new session open with its selection', () => {
+                const registeredSpy = vi.fn();
+                component.registered.subscribe(registeredSpy);
+
+                finishRegistration.next();
+                finishRegistration.complete();
+
+                expect(registeredSpy).toHaveBeenCalledOnce();
+                expect(component.isOpen()).toBe(true);
+                expect(component.selectedUsers()).toEqual([makeUser(2)]);
+            });
+
+            it('should report the failure but leave the loading state of the new session alone', () => {
+                component.isLoading.set(true);
+
+                finishRegistration.error(new Error('fail'));
+
+                expect(mockAlertService.error).toHaveBeenCalledWith('userRegistrationModal.registerError');
+                expect(component.isLoading()).toBe(true);
+            });
         });
     });
 
