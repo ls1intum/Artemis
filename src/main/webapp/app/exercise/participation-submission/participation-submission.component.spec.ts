@@ -30,14 +30,17 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { Submission, SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
-import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { InitializationState, Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ParticipationWebsocketService } from 'app/course/shared/services/participation-websocket.service';
+import { FeatureToggle, FeatureToggleService } from 'app/foundation/feature-toggle/feature-toggle.service';
 
 describe('ParticipationSubmissionComponent', () => {
     let comp: ParticipationSubmissionComponent;
@@ -72,6 +75,7 @@ describe('ParticipationSubmissionComponent', () => {
                 { provide: ActivatedRoute, useValue: { params: of({ participationId: 1, exerciseId: 42 }) } },
                 MockProvider(ParticipationService),
                 MockProvider(ProgrammingSubmissionService),
+                MockProvider(ParticipationWebsocketService, { subscribeForLatestResultOfParticipation: () => new BehaviorSubject<Result | undefined>(undefined) }),
                 MockProvider(ProfileService, { isProfileActive: () => true }),
                 MockProvider(DialogService),
                 { provide: AccountService, useClass: MockAccountService },
@@ -104,6 +108,156 @@ describe('ParticipationSubmissionComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+    });
+
+    describe('submission table controls', () => {
+        let buildStates: BehaviorSubject<ProgrammingSubmissionStateObj>;
+        let buildService: ProgrammingSubmissionService;
+
+        beforeEach(() => {
+            vi.spyOn(comp, 'setupPage').mockImplementation(() => {});
+            buildStates = new BehaviorSubject<ProgrammingSubmissionStateObj>({
+                participationId: 1,
+                submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
+            });
+            buildService = TestBed.inject(ProgrammingSubmissionService);
+            vi.spyOn(buildService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(buildStates);
+            vi.spyOn(buildService, 'fetchQueueReleaseDateEstimationByParticipationId').mockReturnValue(of(dayjs().add(1, 'minute')));
+            const exercise = new ProgrammingExercise(undefined, undefined);
+            exercise.id = 100;
+            exercise.isAtLeastInstructor = true;
+            exercise.dueDate = dayjs().add(1, 'day');
+            comp.exercise.set(exercise);
+            comp.participation.set({ id: 1, type: ParticipationType.PROGRAMMING, initializationState: InitializationState.INITIALIZED });
+            comp.isLoading.set(false);
+            TestBed.inject(FeatureToggleService).initializeFeatureToggles([FeatureToggle.ProgrammingExercises]);
+        });
+
+        function render() {
+            fixture.detectChanges();
+            fixture.detectChanges();
+        }
+
+        function rowIds(): number[] {
+            return Array.from(fixture.nativeElement.querySelectorAll('td[data-column="id"]'), (cell: HTMLTableCellElement) => Number(cell.textContent?.trim()));
+        }
+
+        function sortBy(headerKey: string) {
+            const header = fixture.debugElement.queryAll(By.css('th')).find((element) => element.nativeElement.textContent.includes(headerKey));
+            expect(header).toBeDefined();
+            header!.nativeElement.click();
+            render();
+        }
+
+        it('shows newest submissions first and toggles submission-date ordering without changing the loaded snapshot', () => {
+            const submissions: Submission[] = [
+                { id: 30, submissionDate: dayjs('2026-01-02') },
+                { id: 10, submissionDate: dayjs('2026-01-03') },
+                { id: 20, submissionDate: dayjs('2026-01-01') },
+            ];
+            comp.submissions.set(submissions);
+            render();
+
+            expect(rowIds()).toEqual([10, 30, 20]);
+            expect(submissions.map((submission) => submission.id)).toEqual([30, 10, 20]);
+
+            sortBy('artemisApp.participation.participationSubmission.submissionDate');
+            expect(rowIds()).toEqual([20, 30, 10]);
+            sortBy('artemisApp.participation.participationSubmission.submissionDate');
+            expect(rowIds()).toEqual([10, 30, 20]);
+        });
+
+        it('sorts by the latest completed result and preserves that order when a live submission arrives', () => {
+            comp.submissions.set([
+                { id: 1, submissionDate: dayjs('2026-01-01'), results: [{ completionDate: dayjs('2026-01-04') }, { completionDate: dayjs('2026-01-02') }] },
+                { id: 2, submissionDate: dayjs('2026-01-03'), results: [{ completionDate: dayjs('2026-01-03') }] },
+                { id: 3, submissionDate: dayjs('2026-01-02') },
+            ]);
+            render();
+
+            sortBy('artemisApp.exercise.completionDate');
+            expect(rowIds()).toEqual([3, 2, 1]);
+            sortBy('artemisApp.exercise.completionDate');
+            expect(rowIds()).toEqual([1, 2, 3]);
+
+            buildStates.next({
+                participationId: 1,
+                submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
+                submission: { id: 4, submissionDate: dayjs('2026-01-05') },
+            });
+            render();
+            expect(rowIds()).toEqual([1, 2, 4, 3]);
+        });
+
+        it('sorts completion dates received as ISO strings through the submissions API conversion', () => {
+            const submissions: Submission[] = JSON.parse(`[
+                {"id": 1, "submissionDate": "2026-01-03T00:00:00Z", "results": [{"completionDate": "2026-01-04T00:00:00Z"}]},
+                {"id": 2, "submissionDate": "2026-01-02T00:00:00Z", "results": [{"completionDate": "2026-01-05T00:00:00Z"}]}
+            ]`);
+            const realSubmissionService = TestBed.runInInjectionContext(() => new SubmissionService());
+            realSubmissionService.convertSubmissionArrayDatesFromServer(submissions);
+            comp.submissions.set(submissions);
+            render();
+
+            expect(rowIds()).toEqual([1, 2]);
+            sortBy('artemisApp.exercise.completionDate');
+            expect(rowIds()).toEqual([1, 2]);
+            sortBy('artemisApp.exercise.completionDate');
+            expect(rowIds()).toEqual([2, 1]);
+        });
+
+        it.each([false, true])('shows submission IDs only for admins (isAdmin=%s)', (isAdmin) => {
+            vi.spyOn(TestBed.inject(AccountService), 'isAdmin').mockReturnValue(isAdmin);
+            comp.submissions.set([{ id: 7 }]);
+            render();
+
+            expect(rowIds()).toEqual(isAdmin ? [7] : []);
+            const headers = fixture.debugElement.queryAll(By.css('th')).map((header) => header.nativeElement.textContent.trim());
+            expect(headers.includes('Id')).toBe(isAdmin);
+        });
+
+        it.each([ProgrammingSubmissionState.IS_QUEUED, ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION])(
+            'triggers an instructor build from the page toolbar and disables it in state %s',
+            (submissionState) => {
+                const trigger = vi.spyOn(buildService, 'triggerBuild').mockReturnValue(of({}));
+                render();
+                const button: HTMLButtonElement | null = fixture.nativeElement.querySelector('[data-testid="trigger-build"] button');
+                expect(button).not.toBeNull();
+                button!.click();
+                expect(trigger).toHaveBeenCalledExactlyOnceWith(1, SubmissionType.INSTRUCTOR);
+
+                buildStates.next({ participationId: 1, submissionState, submission: { id: 8 } });
+                render();
+                expect(button!.disabled).toBe(true);
+            },
+        );
+
+        it('does not offer a build action to tutors or for non-programming exercises', () => {
+            const tutorExercise = new ProgrammingExercise(undefined, undefined);
+            tutorExercise.id = 100;
+            tutorExercise.isAtLeastInstructor = false;
+            comp.exercise.set(tutorExercise);
+            render();
+            expect(fixture.nativeElement.querySelector('[data-testid="trigger-build"]')).toBeNull();
+
+            const textExercise = new TextExercise(undefined, undefined);
+            textExercise.id = 100;
+            textExercise.isAtLeastInstructor = true;
+            comp.exercise.set(textExercise);
+            render();
+            expect(fixture.nativeElement.querySelector('[data-testid="trigger-build"]')).toBeNull();
+        });
+
+        it('releases shared build state after both the toolbar and table unsubscribe', () => {
+            render();
+            const observedAtRelease: boolean[] = [];
+            vi.spyOn(buildService, 'unsubscribeForLatestSubmissionOfParticipation').mockImplementation(() => observedAtRelease.push(buildStates.observed));
+
+            fixture.destroy();
+
+            expect(buildStates.observed).toBe(false);
+            expect(observedAtRelease.at(-1)).toBe(false);
+        });
     });
 
     describe('live programming builds', () => {

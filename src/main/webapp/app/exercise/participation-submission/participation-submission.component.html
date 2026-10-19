@@ -1,9 +1,21 @@
 @if (participation()) {
     <div>
-        <h2
-            jhiTranslate="artemisApp.participation.participationSubmission.submissionsForParticipation"
-            [translateValues]="{ participant: getName(), exercise: exercise()?.title }"
-        ></h2>
+        <div class="flex flex-wrap items-start justify-between gap-2">
+            <h2
+                jhiTranslate="artemisApp.participation.participationSubmission.submissionsForParticipation"
+                [translateValues]="{ participant: getName(), exercise: exercise()?.title }"
+            ></h2>
+            @if (programmingExercise(); as programmingExercise) {
+                @if (programmingExercise.isAtLeastInstructor && !isLoading()) {
+                    <jhi-programming-exercise-instructor-trigger-build-button
+                        data-testid="trigger-build"
+                        [exercise]="programmingExercise"
+                        [participation]="participation()!"
+                        [title]="'artemisApp.programmingExercise.resubmitSingleLabel'"
+                    />
+                }
+            }
+        </div>
         @if (exercise()?.releaseDate) {
             <h4>
                 <span class="me-2"> {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}: {{ (exercise()!.releaseDate | artemisDate) || 'N/A' }} </span>
@@ -143,7 +155,7 @@
 
 <ng-template #completionDateTemplate let-params>
     <div class="d-flex flex-column">
-        @for (result of params.value ?? []; track result) {
+        @for (result of params.data.results ?? []; track result) {
             <div>{{ result.completionDate | artemisDate: 'long' : true }}</div>
         }
     </div>

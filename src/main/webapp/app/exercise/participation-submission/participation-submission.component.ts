@@ -37,11 +37,24 @@ import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSu
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { cloneWith } from 'app/foundation/util/deep-clone.util';
+import { AccountService } from 'app/core/auth/account.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 
 @Component({
     selector: 'jhi-participation-submission',
     templateUrl: './participation-submission.component.html',
-    imports: [TranslateDirective, TableViewComponent, ResultComponent, DeleteButtonDirective, FaIconComponent, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisTimeAgoPipe],
+    imports: [
+        TranslateDirective,
+        TableViewComponent,
+        ResultComponent,
+        DeleteButtonDirective,
+        FaIconComponent,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+        ArtemisTimeAgoPipe,
+        ProgrammingExerciseInstructorTriggerBuildButtonComponent,
+    ],
 })
 export class ParticipationSubmissionComponent implements OnInit {
     private route = inject(ActivatedRoute);
@@ -59,6 +72,7 @@ export class ParticipationSubmissionComponent implements OnInit {
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private profileService = inject(ProfileService);
     private destroyRef = inject(DestroyRef);
+    private accountService = inject(AccountService);
 
     readonly ParticipationType = ParticipationType;
     readonly buttonSizeSmall = ButtonSize.SMALL;
@@ -73,6 +87,10 @@ export class ParticipationSubmissionComponent implements OnInit {
     readonly exerciseStatusBadge = signal('bg-success');
     readonly isTmpOrSolutionProgrParticipation = signal(false);
     readonly exercise = signal<Exercise | undefined>(undefined);
+    readonly programmingExercise = computed<ProgrammingExercise | undefined>(() => {
+        const exercise = this.exercise();
+        return exercise?.type === ExerciseType.PROGRAMMING ? exercise : undefined;
+    });
     readonly participation = signal<Participation | undefined>(undefined);
     readonly dueDate = signal<dayjs.Dayjs | undefined>(undefined);
     readonly submissions = signal<Submission[]>([]);
@@ -94,7 +112,10 @@ export class ParticipationSubmissionComponent implements OnInit {
     readonly displayedSubmissions = computed(() => {
         const submissions = this.submissions();
         const pendingSubmission = this.activeBuild()?.submission;
-        return pendingSubmission?.id !== undefined && !submissions.some((submission) => submission.id === pendingSubmission.id) ? [pendingSubmission, ...submissions] : submissions;
+        // The table sorts its input in place. Keep the loaded snapshot and participation's submissions untouched.
+        return pendingSubmission?.id !== undefined && !submissions.some((submission) => submission.id === pendingSubmission.id)
+            ? [pendingSubmission, ...submissions]
+            : [...submissions];
     });
 
     eventSubscriber?: Subscription;
@@ -115,6 +136,8 @@ export class ParticipationSubmissionComponent implements OnInit {
         striped: true,
         // paginated: false,
         showSearch: false,
+        initialSortField: 'submissionDate',
+        initialSortOrder: -1,
     };
 
     readonly columns = computed<ColumnDef<Submission>[]>(() => {
@@ -122,11 +145,12 @@ export class ParticipationSubmissionComponent implements OnInit {
         const participation = this.participation();
 
         const cols: ColumnDef<Submission>[] = [
-            { header: 'Id', field: 'id' },
             { headerKey: 'artemisApp.participation.participationSubmission.submissionType', field: 'type', width: '90px' },
             {
                 headerKey: 'artemisApp.participation.participationSubmission.submissionDate',
                 field: 'submissionDate',
+                sort: true,
+                sortComparator: (rowA, rowB) => (rowA.submissionDate?.valueOf() ?? 0) - (rowB.submissionDate?.valueOf() ?? 0),
                 width: '180px',
                 templateRef: this.submissionDateTemplate(),
             },
@@ -144,6 +168,10 @@ export class ParticipationSubmissionComponent implements OnInit {
                 templateRef: this.resultsTemplate(),
             },
         ];
+
+        if (this.accountService.isAdmin()) {
+            cols.unshift({ header: 'Id', field: 'id' });
+        }
 
         if (isTmpOrSolution || participation?.type === ParticipationType.PROGRAMMING) {
             cols.push({
@@ -165,7 +193,10 @@ export class ParticipationSubmissionComponent implements OnInit {
             },
             {
                 headerKey: 'artemisApp.exercise.completionDate',
-                field: 'results',
+                // A distinct sort key avoids the other columns that also render the results collection.
+                field: 'completionDate',
+                sort: true,
+                sortComparator: (rowA, rowB) => this.latestCompletionTimestamp(rowA) - this.latestCompletionTimestamp(rowB),
                 width: '180px',
                 templateRef: this.completionDateTemplate(),
             },
@@ -173,6 +204,16 @@ export class ParticipationSubmissionComponent implements OnInit {
 
         return cols;
     });
+
+    private latestCompletionTimestamp(submission: Submission): number {
+        return (
+            submission.results?.reduce((latest, result) => {
+                // This endpoint can leave nested result dates as ISO strings; other loaders convert them to Dayjs.
+                const timestamp = result.completionDate ? dayjs(result.completionDate).valueOf() : 0;
+                return Number.isFinite(timestamp) ? Math.max(latest, timestamp) : latest;
+            }, 0) ?? 0
+        );
+    }
 
     constructor() {
         this.destroyRef.onDestroy(() => this.eventSubscriber?.unsubscribe());
