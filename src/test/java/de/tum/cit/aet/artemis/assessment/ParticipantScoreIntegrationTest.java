@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
 import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LtiResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
@@ -98,6 +99,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
+
+    @Autowired
+    private LtiResultRepository ltiResultRepository;
 
     @Autowired
     private ResultService resultService;
@@ -210,7 +214,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         preliminary.setCompletionDate(ZonedDateTime.now().plusMinutes(5));
         preliminary = resultRepository.save(preliminary);
 
-        assertThat(resultRepository.findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId())).get().extracting(Result::getId).isEqualTo(official.getId());
+        assertThat(ltiResultRepository.findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId())).get().extracting(Result::getId).isEqualTo(official.getId());
         var exerciseId = participation.getExercise().getId();
         if (team) {
             assertThat(resultRepository.getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(exerciseId, participation.getTeam().orElseThrow().getId()))
@@ -233,7 +237,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         official.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         resultRepository.save(official);
-        assertThat(resultRepository.findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId())).isEmpty();
+        assertThat(ltiResultRepository.findLatestNonAthenaResultWithSubmissionAndFeedbacks(participation.getId())).isEmpty();
     }
 
     private void testAllPreAuthorize() throws Exception {

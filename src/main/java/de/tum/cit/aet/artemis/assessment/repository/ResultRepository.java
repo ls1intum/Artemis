@@ -16,7 +16,6 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -191,25 +190,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         var id = resultOptional.get().getId();
         return findResultWithSubmissionAndFeedbacksById(id);
     }
-
-    /**
-     * Loads the latest non-Athena result with submission and feedback for official LTI grade export.
-     *
-     * @param participationId the participation whose grade is exported
-     * @return the latest eligible result, or empty when only preliminary results exist
-     */
-    default Optional<Result> findLatestNonAthenaResultWithSubmissionAndFeedbacks(long participationId) {
-        return findNonAthenaResultsByParticipationIdOrderByCompletionDateDesc(participationId, Pageable.ofSize(1)).stream().findFirst()
-                .flatMap(result -> findResultWithSubmissionAndFeedbacksById(result.getId()));
-    }
-
-    @Query("""
-            SELECT r FROM Result r
-            WHERE r.submission.participation.id = :participationId
-                AND (r.assessmentType IS NULL OR r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC_ATHENA)
-            ORDER BY r.completionDate DESC
-            """)
-    List<Result> findNonAthenaResultsByParticipationIdOrderByCompletionDateDesc(@Param("participationId") long participationId, Pageable pageable);
 
     Optional<Result> findFirstBySubmissionParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
 
