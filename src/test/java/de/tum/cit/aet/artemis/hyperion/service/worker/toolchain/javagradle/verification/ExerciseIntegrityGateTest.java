@@ -873,6 +873,35 @@ class ExerciseIntegrityGateTest {
     }
 
     @Test
+    void approvedSpecification_rejectsAStubbedTypeMissingOnlyFromTheReferenceSolution() {
+        String spec = """
+                ## Design
+                | Type | Role | Template status |
+                |---|---|---|
+                | `Input` | supplied value | given |
+                | `Processor` | behavior students complete | stubbed |
+                ## Public API
+                ```java
+                public record Input(int value) {}
+                ```
+                ```java
+                public class Processor {
+                    public int process();
+                }
+                ```
+                """;
+        String input = "public record Input(int value) {}";
+        Map<String, String> template = map("src/Input.java", input, "src/Processor.java",
+                "public class Processor { public int process() { throw new UnsupportedOperationException(); } }");
+        Map<String, String> solution = map("src/Input.java", input, "src/Processor.java", "public class Processor { public int process() { return 1; } }");
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, solution)).isEmpty();
+
+        assertThat(ExerciseIntegrityGate.approvedSpecificationReasons(spec, template, map("src/Input.java", input))).singleElement()
+                .satisfies(reason -> assertThat(reason).contains("solution", "Processor", "does not declare"));
+    }
+
+    @Test
     void approvedSpecification_rejectsAnIncompleteReferenceSolution() {
         String spec = """
                 ## Design
