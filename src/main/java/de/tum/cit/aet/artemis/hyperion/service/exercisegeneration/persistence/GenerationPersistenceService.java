@@ -401,10 +401,8 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Resolves the concrete branch shared by persistence and its durable recovery record.
-     *
      * @param exercise destination exercise
-     * @return configured branch, or the deployment default
+     * @return branch shared by persistence and recovery, falling back to the deployment default
      */
     public String repositoryBranch(ProgrammingExercise exercise) {
         String branch = buildConfigRepository.getProgrammingExerciseBuildConfigElseThrow(exercise.getId()).getBranch();
@@ -470,10 +468,7 @@ public class GenerationPersistenceService {
         return currentMetadataMatchingExpectedOrTarget(exercise, expectedProblemStatement, expectedTitle, problemStatement, title).isPresent();
     }
 
-    /**
-     * @return the id of the {@code ExerciseVersion} row created for this save, or {@code null} when none was recorded (a tolerated failure with
-     *         {@code failOnFinalizationFailure == false}, or a snapshot the version service judged unchanged)
-     */
+    /** Returns the saved version ID, or null for an unchanged snapshot or a tolerated finalization failure. */
     private Long syncTestCasesAndRecordVersion(ProgrammingExercise exercise, User user, TestsBuildSignal testsBuildSignal, boolean failOnFinalizationFailure,
             Runnable finalizationGuard, Map<RepositoryType, String> repositoryCommitIds, Runnable updateGrading) {
         finalizationGuard.run();
@@ -735,8 +730,7 @@ public class GenerationPersistenceService {
     }
 
     /**
-     * Thrown when a push fails inconclusively: the local commit succeeded, but the remote branch could not be confirmed to still be at its pre-persist state, so whether the push
-     * landed is unknown. Carries the repository and the best-known unconfirmed hash so the caller can report the live exercise as conservatively changed.
+     * An unconfirmed push: the local commit exists, but the remote state is unknown. Carries the repository and possible pushed hash so the caller reports the exercise as changed.
      */
     static final class AmbiguousCommitFailure extends IllegalStateException {
 
