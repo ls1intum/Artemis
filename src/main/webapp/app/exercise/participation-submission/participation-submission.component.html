@@ -27,7 +27,7 @@
 
 <jhi-table-view
     [cols]="columns()"
-    [vals]="submissions()"
+    [vals]="displayedSubmissions()"
     [loading]="isLoading()"
     [rowActions]="exercise()?.isAtLeastInstructor ? actionsTemplate : null"
     [options]="tableOptions"
@@ -58,7 +58,21 @@
 </ng-template>
 
 <ng-template #resultsTemplate let-params>
-    <div class="d-flex flex-column">
+    <div class="flex flex-col gap-1">
+        @if (activeBuild(); as build) {
+            @if (build.submission?.id === params.data.id) {
+                <jhi-result
+                    [exercise]="exercise()"
+                    [participation]="participation()!"
+                    [isBuilding]="build.submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION"
+                    [isQueued]="build.submissionState === ProgrammingSubmissionState.IS_QUEUED"
+                    [buildStartDate]="build.buildTimingInfo?.buildStartDate"
+                    [estimatedCompletionDate]="build.buildTimingInfo?.estimatedCompletionDate"
+                    [showProgressBar]="showBuildProgressBar"
+                    [isOwnParticipation]="false"
+                />
+            }
+        }
         @for (result of params.value ?? []; track result) {
             <div>
                 <jhi-result

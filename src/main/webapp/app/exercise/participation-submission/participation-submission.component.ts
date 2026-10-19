@@ -1,8 +1,8 @@
-import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, effect, inject, signal, untracked, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { Subject, Subscription, combineLatest, of } from 'rxjs';
-import { catchError, map, take } from 'rxjs/operators';
+import { catchError, map, startWith, switchMap, take } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
@@ -33,6 +33,10 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
 import { ArtemisTimeAgoPipe } from 'app/foundation/pipes/artemis-time-ago.pipe';
 import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared-ui/table-view/table-view';
 import { AlertService } from 'app/foundation/service/alert.service';
+import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/shared/services/programming-submission.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PROFILE_LOCALCI } from 'app/app.constants';
+import { cloneWith } from 'app/foundation/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-participation-submission',
@@ -52,6 +56,9 @@ export class ParticipationSubmissionComponent implements OnInit {
     private programmingAssessmentService = inject(ProgrammingAssessmentManualResultService);
     private eventManager = inject(EventManager);
     private alertService = inject(AlertService);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private profileService = inject(ProfileService);
+    private destroyRef = inject(DestroyRef);
 
     readonly ParticipationType = ParticipationType;
     readonly buttonSizeSmall = ButtonSize.SMALL;
@@ -71,6 +78,24 @@ export class ParticipationSubmissionComponent implements OnInit {
     readonly submissions = signal<Submission[]>([]);
     readonly isLoading = signal(true);
     readonly resultIdToBuildJobIdMap = signal<{ [key: string]: string } | undefined>(undefined);
+
+    private readonly buildState = signal<ProgrammingSubmissionStateObj | undefined>(undefined);
+    private readonly buildParticipationId = computed(() => this.participation()?.id);
+    private readonly programmingExerciseId = computed(() => (this.exercise()?.type === ExerciseType.PROGRAMMING ? this.exercise()?.id : undefined));
+    readonly showBuildProgressBar = this.profileService.isProfileActive(PROFILE_LOCALCI);
+    readonly ProgrammingSubmissionState = ProgrammingSubmissionState;
+    readonly activeBuild = computed(() => {
+        const state = this.buildState();
+        return state?.submissionState === ProgrammingSubmissionState.IS_QUEUED || state?.submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION
+            ? state
+            : undefined;
+    });
+
+    readonly displayedSubmissions = computed(() => {
+        const submissions = this.submissions();
+        const pendingSubmission = this.activeBuild()?.submission;
+        return pendingSubmission?.id !== undefined && !submissions.some((submission) => submission.id === pendingSubmission.id) ? [pendingSubmission, ...submissions] : submissions;
+    });
 
     eventSubscriber?: Subscription;
 
@@ -148,6 +173,50 @@ export class ParticipationSubmissionComponent implements OnInit {
 
         return cols;
     });
+
+    constructor() {
+        this.destroyRef.onDestroy(() => this.eventSubscriber?.unsubscribe());
+        effect((onCleanup) => {
+            const participationId = this.buildParticipationId();
+            const exerciseId = this.programmingExerciseId();
+            this.buildState.set(undefined);
+            if (participationId === undefined || exerciseId === undefined) {
+                return;
+            }
+
+            // Reloads replace the participation object; subscribe only when its id or the programming exercise changes.
+            untracked(() => {
+                const subscription = this.programmingSubmissionService
+                    .getLatestPendingSubmissionByParticipationId(participationId, exerciseId, false)
+                    .pipe(
+                        switchMap((state) => {
+                            if (this.showBuildProgressBar && state.submissionState === ProgrammingSubmissionState.IS_QUEUED) {
+                                return this.programmingSubmissionService.fetchQueueReleaseDateEstimationByParticipationId(participationId).pipe(
+                                    map((estimatedCompletionDate) =>
+                                        cloneWith(state, { buildTimingInfo: { buildStartDate: state.submission?.submissionDate, estimatedCompletionDate } }),
+                                    ),
+                                    startWith(state),
+                                    catchError(() => of(state)),
+                                );
+                            }
+                            return of(state);
+                        }),
+                    )
+                    .subscribe((state) => {
+                        const hadPendingSubmission = this.buildState()?.submission !== undefined;
+                        this.buildState.set(state);
+                        // The shared service clears pending state only after receiving the matching result.
+                        if (hadPendingSubmission && state.submissionState === ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION) {
+                            this.setupPage();
+                        }
+                    });
+                onCleanup(() => {
+                    subscription.unsubscribe();
+                    this.programmingSubmissionService.unsubscribeForLatestSubmissionOfParticipation(participationId);
+                });
+            });
+        });
+    }
 
     /**
      * Initialize component by setting up page and subscribe to eventManager
