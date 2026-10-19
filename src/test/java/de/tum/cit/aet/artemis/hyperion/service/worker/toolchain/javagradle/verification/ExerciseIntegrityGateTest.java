@@ -152,10 +152,20 @@ class ExerciseIntegrityGateTest {
     @ParameterizedTest
     @ValueSource(booleans = { false, true })
     void javaAresConvention_rejectsLegacyHarnessEvenWhenAdaptationLeavesItUnchanged(boolean adaptation) {
-        var legacy = map("build.gradle", classpathResource("hyperion/legacy-ares1-build.gradle"));
+        var legacy = map("build.gradle", "dependencies { testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0' }");
 
         assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(legacy)).anyMatch(reason -> reason.contains("legacy Ares 1 harnesses are not supported"));
         assertThat(ExerciseIntegrityGate.javaAresConventionReasons(legacy, legacy, adaptation)).anyMatch(reason -> reason.contains("legacy Ares 1 harnesses are not supported"));
+    }
+
+    @Test
+    void javaAresHarness_rejectsOldDependencyEvenAlongsideCurrentAres() {
+        var tests = aresTests("build.gradle", aresBuildGradle());
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(tests)).isEmpty();
+
+        tests.put("build.gradle", aresBuildGradle() + "\ndependencies { testImplementation 'de.tum.in.ase:artemis-java-test-sandbox:1.15.0' }");
+
+        assertThat(ExerciseIntegrityGate.javaAresHarnessReasons(tests)).singleElement().asString().contains("legacy Ares 1 harnesses are not supported");
     }
 
     @Test
