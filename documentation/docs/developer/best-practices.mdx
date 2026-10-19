@@ -152,7 +152,7 @@ suites now supply evidence above Gold's 90% statement and 80% branch targets.
 | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- | ---------------------------- |
 | Client, complete successful [CI 39163316687](https://github.com/ls1intum/Artemis/actions/runs/39163316687)                | Vitest statements: 82,875 / 90,018 (**92.06%**)     | 33,791 / 42,138 (**80.19%**) |
 | Server test expansion, complete successful [CI 39164068412](https://github.com/ls1intum/Artemis/actions/runs/39164068412) | JaCoCo instructions: 531,538 / 577,914 (**91.98%**) | 38,456 / 47,889 (**80.30%**) |
-| Server, merged-source recomputation from the three successful test-PR runs                                                | JaCoCo instructions: 534,108 / 577,958 (**92.41%**) | 38,842 / 47,897 (**81.09%**) |
+| Server, merged-source recomputation from passing server suites in three test-PR workflows                                 | JaCoCo instructions: 534,108 / 577,958 (**92.41%**) | 38,842 / 47,897 (**81.09%**) |
 
 JaCoCo instructions supply the Java statement-coverage proxy; the recomputed server line coverage
 is 99,314 / 107,851 (**92.08%**). The weighted README line badge does not establish either statement
@@ -170,6 +170,11 @@ existing class filters and exclusions and uses only passing CI execution data. T
 21 `.exec` files. Analyze them against the merged production classes with the existing JaCoCo report
 tasks, rather than summing coverage percentages or counters from reports with different class IDs.
 This is a recomputation from published CI data, not a new standalone CI run on `develop`.
+
+[CI 39160461237](https://github.com/ls1intum/Artemis/actions/runs/39160461237) failed its
+programming-assessment E2E case. All seven server shards passed and supplied the server coverage
+inputs. Its client test job was skipped; client coverage comes from the separate successful client
+run in the table. The server-suite result and overall workflow result are recorded separately.
 
 Refresh these measurements after production or test changes. Prefer a new complete run of the
 current revision; when using reports from separate runs, record each tested revision and verify the
