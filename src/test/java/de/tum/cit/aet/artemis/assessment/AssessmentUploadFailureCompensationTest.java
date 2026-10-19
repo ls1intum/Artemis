@@ -35,9 +35,6 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingS
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ZipContents;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadResultService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -81,7 +78,7 @@ class AssessmentUploadFailureCompensationTest {
         });
 
         final AssessmentUploadService service = new AssessmentUploadService(archiveParserReturningOneRow(), participationRepositoryReturningOneParticipation(),
-                submissionRepository, resultService, mock(SubmissionService.class), acquirableLockProvider());
+                submissionRepository, resultService, mock(SubmissionService.class));
 
         assertThatThrownBy(() -> service.importAssessments(exerciseAllowingManualResults(), new MockMultipartFile("file", "upload.zip", "application/zip", new byte[] { 1 })))
                 .isSameAs(storageFailure);
@@ -110,7 +107,7 @@ class AssessmentUploadFailureCompensationTest {
         when(participationRepository.findAllForAssessmentUpload(any(Long.class), any())).thenReturn(List.of(participation));
 
         final AssessmentUploadService service = new AssessmentUploadService(archiveParserReturningOneRow(), participationRepository, submissionRepository, resultService,
-                mock(SubmissionService.class), acquirableLockProvider());
+                mock(SubmissionService.class));
 
         assertThatThrownBy(() -> service.importAssessments(exerciseAllowingManualResults(), new MockMultipartFile("file", "upload.zip", "application/zip", new byte[] { 1 })))
                 .isSameAs(storageFailure);
@@ -119,38 +116,6 @@ class AssessmentUploadFailureCompensationTest {
         verify(submissionRepository, never()).deleteAllById(any());
         verify(submissionRepository, never()).deleteAll(any());
         verify(submissionRepository, never()).save(any(Submission.class));
-    }
-
-    @Test
-    void shouldRejectAnUploadWhileAnotherOneIntoTheSameExerciseIsStillBeingStored() {
-        // The storage phase reads which participants already have an assessment and then writes, which cannot be made atomic in one statement. Two overlapping uploads would
-        // otherwise both read a participant as unassessed and both write, so the second one has to wait, and say so rather than hang, when it cannot get the lock.
-        final DistributedLock heldLock = mock(DistributedLock.class);
-        when(heldLock.tryLock(any())).thenReturn(false);
-        final DistributedDataProvider provider = mock(DistributedDataProvider.class);
-        when(provider.getLock(any())).thenReturn(heldLock);
-
-        final SubmissionRepository submissionRepository = mock(SubmissionRepository.class);
-        final AssessmentUploadResultService resultService = mock(AssessmentUploadResultService.class);
-        when(resultService.findParticipationsWithComplaintOnResults(any())).thenReturn(Set.of());
-        final AssessmentUploadService service = new AssessmentUploadService(archiveParserReturningOneRow(), participationRepositoryReturningOneParticipation(),
-                submissionRepository, resultService, mock(SubmissionService.class), provider);
-
-        assertThatThrownBy(() -> service.importAssessments(exerciseAllowingManualResults(), new MockMultipartFile("file", "upload.zip", "application/zip", new byte[] { 1 })))
-                .isInstanceOf(ConflictException.class);
-
-        // Nothing of the second upload reached the database.
-        verify(submissionRepository, never()).save(any(Submission.class));
-        verify(resultService, never()).saveManualResults(any(), any(), anyBoolean());
-        verify(heldLock, never()).unlock();
-    }
-
-    private DistributedDataProvider acquirableLockProvider() {
-        final DistributedLock lock = mock(DistributedLock.class);
-        when(lock.tryLock(any())).thenReturn(true);
-        final DistributedDataProvider provider = mock(DistributedDataProvider.class);
-        when(provider.getLock(any())).thenReturn(lock);
-        return provider;
     }
 
     private AssessmentUploadArchiveParsingService archiveParserReturningOneRow() {

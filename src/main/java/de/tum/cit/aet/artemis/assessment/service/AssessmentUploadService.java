@@ -6,7 +6,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -46,9 +45,6 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingS
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ParsedCsv;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ZipContents;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -85,15 +81,6 @@ public class AssessmentUploadService {
     /** The extension (including the leading dot) of the per-participant feedback files inside the zip, used when reporting text files in errors. */
     private static final String TEXT_FILE_EXTENSION = ".txt";
 
-    /** Prefix of the lock that serializes the storage phase of the uploads for one exercise. */
-    private static final String STORAGE_LOCK_PREFIX = "assessmentUpload:exercise:";
-
-    /**
-     * How long an upload waits for another upload into the same exercise to finish before giving up. Long enough to cover a large import, short enough that an instructor is
-     * told what is going on instead of watching the request hang.
-     */
-    private static final Duration STORAGE_LOCK_TIMEOUT = Duration.ofMinutes(2);
-
     private final AssessmentUploadArchiveParsingService archiveParser;
 
     private final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository;
@@ -103,8 +90,6 @@ public class AssessmentUploadService {
     private final AssessmentUploadResultService assessmentUploadResultService;
 
     private final SubmissionService submissionService;
-
-    private final DistributedDataProvider distributedDataProvider;
 
     /**
      * Creates a service for validating and storing uploaded manual assessments.
@@ -116,14 +101,11 @@ public class AssessmentUploadService {
      * @param submissionRepository                    the repository used to load the latest submissions and to create the missing ones
      * @param assessmentUploadResultService           the service used to replace manual assessment results
      * @param submissionService                       the service enforcing the shared assessment-availability gate
-     * @param distributedDataProvider                 provides the lock that serializes concurrent uploads into one exercise
      * @throws IllegalArgumentException if any parameter is {@code null}
      */
     public AssessmentUploadService(final AssessmentUploadArchiveParsingService archiveParser, final AssessmentUploadParticipationRepository assessmentUploadParticipationRepository,
-            final SubmissionRepository submissionRepository, final AssessmentUploadResultService assessmentUploadResultService, final SubmissionService submissionService,
-            final DistributedDataProvider distributedDataProvider) {
-        if (Stream.of(archiveParser, assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService, distributedDataProvider)
-                .anyMatch(Objects::isNull)) {
+            final SubmissionRepository submissionRepository, final AssessmentUploadResultService assessmentUploadResultService, final SubmissionService submissionService) {
+        if (Stream.of(archiveParser, assessmentUploadParticipationRepository, submissionRepository, assessmentUploadResultService, submissionService).anyMatch(Objects::isNull)) {
             throw new IllegalArgumentException("The assessment upload service dependencies must not be null");
         }
         this.archiveParser = archiveParser;
@@ -131,7 +113,6 @@ public class AssessmentUploadService {
         this.submissionRepository = submissionRepository;
         this.assessmentUploadResultService = assessmentUploadResultService;
         this.submissionService = submissionService;
-        this.distributedDataProvider = distributedDataProvider;
     }
 
     /**
@@ -298,20 +279,7 @@ public class AssessmentUploadService {
             return AssessmentUploadResultDTO.failure(errors);
         }
 
-        // Serialize the storage phase per exercise. Two instructors importing into the same exercise at the same time would otherwise both read a participant as unassessed and
-        // both write, leaving two manual assessments, or two external submissions for a participant who had none; the check and the write cannot be made atomic in one
-        // statement because they span several rows and several tables. Parsing and validating the archive stay outside, so the lock is held only for the reads and writes.
-        final DistributedLock storageLock = distributedDataProvider.getLock(STORAGE_LOCK_PREFIX + exercise.getId());
-        if (!storageLock.tryLock(STORAGE_LOCK_TIMEOUT)) {
-            throw new ConflictException("Another assessment upload for this exercise is still being stored. Please try again once it has finished.", ENTITY_NAME,
-                    "assessmentUpload.concurrentUpload");
-        }
-        try {
-            return storeValidatedRows(exercise, validatedRows);
-        }
-        finally {
-            storageLock.unlock();
-        }
+        return storeValidatedRows(exercise, validatedRows);
     }
 
     /**
@@ -497,7 +465,7 @@ public class AssessmentUploadService {
                 .collect(Collectors.toMap(StudentParticipation::getId, Function.identity()));
         // Enforce the shared assessment-availability gate (e.g. an exam that is not over for all students yet) before touching any result. Asked once rather than per
         // participation: the gate only distinguishes test runs, which are exempt, from everything else, and for an exam it answers the same exercise-wide question every time
-        // by reading the latest individual working time. Per row that would repeat one aggregate query per uploaded assessment, all of it while holding the exercise lock.
+        // by reading the latest individual working time. Per row that would repeat one aggregate query per uploaded assessment.
         participationsById.values().stream().filter(participation -> !participation.isTestRun()).findAny()
                 .ifPresent(participation -> submissionService.checkThatAssessmentIsPossibleElseThrow(exercise, participation));
 

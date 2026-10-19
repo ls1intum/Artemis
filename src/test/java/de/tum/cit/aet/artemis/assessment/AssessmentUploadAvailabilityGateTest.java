@@ -34,8 +34,6 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingS
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadArchiveParsingService.ZipContents;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadResultService;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentUploadService;
-import de.tum.cit.aet.artemis.core.service.distributed.api.DistributedDataProvider;
-import de.tum.cit.aet.artemis.core.service.distributed.api.lock.DistributedLock;
 import de.tum.cit.aet.artemis.course.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -103,13 +101,8 @@ class AssessmentUploadAvailabilityGateTest {
         when(participationRepository.findIdsOutsideExercise(eq(EXERCISE_ID), any())).thenReturn(Set.of());
         when(participationRepository.findAllForAssessmentUpload(eq(EXERCISE_ID), any())).thenReturn(participations);
 
-        final DistributedLock lock = mock(DistributedLock.class);
-        when(lock.tryLock(any())).thenReturn(true);
-        final DistributedDataProvider provider = mock(DistributedDataProvider.class);
-        when(provider.getLock(any())).thenReturn(lock);
-
         final AssessmentUploadService service = new AssessmentUploadService(archiveParserFor(participations), participationRepository, submissionRepository, resultService,
-                submissionService, provider);
+                submissionService);
         service.importAssessments(exercise(), new MockMultipartFile("file", "upload.zip", "application/zip", new byte[] { 1 }));
     }
 
