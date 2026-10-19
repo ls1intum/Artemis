@@ -305,7 +305,13 @@ public class GenerationTaskService {
 
             boolean savedToExercise = false;
             try {
-                TerminationReason terminationReason = refineTerminationReason(outcome.terminationReason(), deadlineExceeded.get(), tokenBudgetExceeded.get());
+                boolean accountingReviewUnavailable = tokenAccountingFailed.get() && outcome.isMechanicallyVerified()
+                        && outcome.specFidelityReport().findings().stream().anyMatch(finding -> switch (finding.kind()) {
+                            case QUALITY_REVIEW_UNAVAILABLE, ADAPTATION_SCOPE_REVIEW_UNAVAILABLE, EXECUTABLE_EVIDENCE_UNAVAILABLE -> true;
+                            default -> false;
+                        }) && !jobService.isCancelled(jobId);
+                TerminationReason terminationReason = refineTerminationReason(outcome.terminationReason(), deadlineExceeded.get(), tokenBudgetExceeded.get(),
+                        accountingReviewUnavailable);
                 // Retain the specification even when the run cannot save.
                 if (outcome.specDocument() != null) {
                     jobService.recordSpecDocument(exerciseId, jobId, outcome.specDocument());
@@ -663,9 +669,10 @@ public class GenerationTaskService {
                 ExerciseGenerationEventDTO.CompletionStatus.PARTIAL, verdict, true).withTerminationReason(terminationReason));
     }
 
-    /** Distinguishes a budget stop from user cancellation without replacing a completed run's own termination reason. */
+    /** Distinguishes budget and unavailable-review stops from user cancellation without replacing the worker's own conclusion. */
     @Nullable
-    static TerminationReason refineTerminationReason(@Nullable TerminationReason reason, boolean deadlineExceeded, boolean tokenBudgetExceeded) {
+    static TerminationReason refineTerminationReason(@Nullable TerminationReason reason, boolean deadlineExceeded, boolean tokenBudgetExceeded,
+            boolean accountingReviewUnavailable) {
         if (reason != TerminationReason.CANCELLED) {
             return reason;
         }
@@ -675,7 +682,7 @@ public class GenerationTaskService {
         if (tokenBudgetExceeded) {
             return TerminationReason.TOKEN_BUDGET_EXHAUSTED;
         }
-        return TerminationReason.CANCELLED;
+        return accountingReviewUnavailable ? TerminationReason.REVIEW_UNAVAILABLE : TerminationReason.CANCELLED;
     }
 
     private ProviderUsageSink budgetedUsageSink(Consumer<ChatResponse> delegate, long exerciseId, String jobId, AtomicBoolean tokenBudgetExceeded,
