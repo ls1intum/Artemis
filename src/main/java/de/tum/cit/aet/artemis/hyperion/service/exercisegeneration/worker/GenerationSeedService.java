@@ -117,17 +117,13 @@ public class GenerationSeedService {
                 Map<String, String> files = new LinkedHashMap<>();
                 for (String path : AresTestHarness.PATHS) {
                     try (TreeWalk tree = TreeWalk.forPath(repository, path, commit.getTree())) {
-                        if (tree == null) {
-                            continue;
-                        }
-                        if (!tree.getFileMode(0).equals(FileMode.REGULAR_FILE) && !tree.getFileMode(0).equals(FileMode.EXECUTABLE_FILE)) {
+                        if (tree == null || (!tree.getFileMode(0).equals(FileMode.REGULAR_FILE) && !tree.getFileMode(0).equals(FileMode.EXECUTABLE_FILE))) {
                             continue;
                         }
                         var blob = repository.open(tree.getObjectId(0), Constants.OBJ_BLOB);
-                        if (blob.getSize() > WorkspaceFile.MAX_FILE_BYTES) {
-                            continue;
+                        if (blob.getSize() <= WorkspaceFile.MAX_FILE_BYTES) {
+                            files.put(path, new String(blob.getBytes(WorkspaceFile.MAX_FILE_BYTES), StandardCharsets.UTF_8));
                         }
-                        files.put(path, new String(blob.getBytes(WorkspaceFile.MAX_FILE_BYTES), StandardCharsets.UTF_8));
                     }
                 }
                 return Map.copyOf(files);
