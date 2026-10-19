@@ -275,6 +275,9 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(updatedPlagiarismCase.getVerdictMessage()).as("should update plagiarism case verdict message").isEqualTo("This is a warning!");
     }
 
+    /**
+     * Verifies that a verdict message of exactly 1000 characters is accepted and persisted.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSavePlagiarismCaseVerdict_messageAtMaxLength_ok() throws Exception {
@@ -282,10 +285,14 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         var response = request.putWithResponseBody("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", plagiarismVerdictDTO,
                 PlagiarismCaseVerdictResponseDTO.class, HttpStatus.OK);
         assertThat(response.verdictMessage()).as("should accept a 1000-character verdict message").hasSize(1000);
-        var updatedPlagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCase1.getId());
-        assertThat(updatedPlagiarismCase.getVerdictMessage()).as("should persist the 1000-character verdict message").hasSize(1000);
+        var persistedCase = request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-instructor", HttpStatus.OK,
+                PlagiarismCaseDetailDTO.class);
+        assertThat(persistedCase.verdictMessage()).as("should persist the 1000-character verdict message").hasSize(1000);
     }
 
+    /**
+     * Verifies that a verdict message exceeding 1000 characters is rejected without changing the stored verdict or message.
+     */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSavePlagiarismCaseVerdict_messageTooLong_badRequest() throws Exception {
@@ -297,9 +304,10 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
         request.put("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict",
                 new PlagiarismVerdictDTO(WARNING, "a".repeat(1001), 0), HttpStatus.BAD_REQUEST);
 
-        var unchangedPlagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCase1.getId());
-        assertThat(unchangedPlagiarismCase.getVerdict()).as("verdict must stay unchanged after a rejected over-limit message").isEqualTo(PlagiarismVerdict.WARNING);
-        assertThat(unchangedPlagiarismCase.getVerdictMessage()).as("verdict message must stay unchanged after a rejected over-limit message").isEqualTo("existing message");
+        var unchangedCase = request.get("/api/plagiarism/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-instructor", HttpStatus.OK,
+                PlagiarismCaseDetailDTO.class);
+        assertThat(unchangedCase.verdict()).as("verdict must stay unchanged after a rejected over-limit message").isEqualTo(PlagiarismVerdict.WARNING);
+        assertThat(unchangedCase.verdictMessage()).as("verdict message must stay unchanged after a rejected over-limit message").isEqualTo("existing message");
     }
 
     @Test
