@@ -20,7 +20,31 @@ export function displayFormat(timeOnly: boolean, dateOnly = false): string {
     return dateOnly ? DATE_ONLY_FORMAT : timeOnly ? TIME_ONLY_FORMAT : DISPLAY_FORMAT;
 }
 
-/** Whether `text` is shaped like a complete entry for that format, used to flag an incomplete one on blur. */
+/**
+ * Trims the text and turns every run of whitespace into one space. Pasted dates often carry a non-breaking space between the date and
+ * the time (Word, Outlook, web pages) or a doubled one, which the picker accepts as the plain space it displays.
+ */
+export function normalizeDisplayText(text: string): string {
+    // A plain loop rather than a regular expression: the text is typed or pasted by the user.
+    const words: string[] = [];
+    let word = '';
+    for (const char of text) {
+        if (char.trim() === '') {
+            if (word) {
+                words.push(word);
+                word = '';
+            }
+        } else {
+            word += char;
+        }
+    }
+    if (word) {
+        words.push(word);
+    }
+    return words.join(' ');
+}
+
+/** Whether `text`, already passed through {@link normalizeDisplayText}, is shaped like a complete entry for that format, used to flag an incomplete one on blur. */
 export function matchesDisplayFormat(text: string, timeOnly: boolean, dateOnly = false): boolean {
     return dateOnly ? DATE_REGEX.test(text) : timeOnly ? TIME_REGEX.test(text) : DISPLAY_REGEX.test(text);
 }
@@ -30,11 +54,11 @@ export function matchesDisplayFormat(text: string, timeOnly: boolean, dateOnly =
  * value already held, or today - which keeps the date stable while only the time is edited.
  */
 export function parseDisplay(text: string, timeOnly = false, onDate?: dayjs.Dayjs, dateOnly = false): dayjs.Dayjs | undefined {
-    const trimmed = text.trim();
-    if (!trimmed) {
+    const normalized = normalizeDisplayText(text);
+    if (!normalized) {
         return undefined;
     }
-    const parsed = dayjs(trimmed, displayFormat(timeOnly, dateOnly), true);
+    const parsed = dayjs(normalized, displayFormat(timeOnly, dateOnly), true);
     if (!parsed.isValid()) {
         return undefined;
     }

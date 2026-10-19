@@ -37,6 +37,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.exceptions.TemplateProcessingException;
 import org.thymeleaf.spring6.SpringTemplateEngine;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import de.tum.cit.aet.artemis.account.domain.User;
 import de.tum.cit.aet.artemis.notification.domain.course_notifications.CourseNotificationCategory;
@@ -110,6 +111,33 @@ class CourseNotificationEmailServiceTest {
             assertThat(capturedContext.getVariable("recipient")).isEqualTo(CourseNotificationRecipientDTO.from(recipient));
             assertThat(capturedContext.getVariable("courseId")).isEqualTo(123L);
         });
+    }
+
+    @Test
+    void shouldRenderAnnouncementImagesFromTheInstallationUrl() {
+        var resolver = new ClassLoaderTemplateResolver();
+        resolver.setPrefix("templates/");
+        resolver.setSuffix(".html");
+        var renderingEngine = new SpringTemplateEngine();
+        renderingEngine.setTemplateResolver(resolver);
+        courseNotificationEmailService = new CourseNotificationEmailService(messageSource, renderingEngine, mailSendingService, markdownCustomLinkRendererService,
+                markdownCustomReferenceRendererService);
+        ReflectionTestUtils.setField(courseNotificationEmailService, "artemisServerUrl", serverUrl);
+
+        User recipient = createUser("user1", "en");
+        CourseNotificationDTO notification = new CourseNotificationDTO("newAnnouncementNotification", 1L, 123L, FIXED_CREATION_DATE, CourseNotificationCategory.COMMUNICATION,
+                "Test Course", null, new NewAnnouncementPayloadDTO(1L, "Test Announcement", "Test content", "Test Author", null, 2L, 3L), "/courses/123");
+        when(messageSource.getMessage(anyString(), any(), any(Locale.class))).thenReturn("Test Subject");
+        when(markdownCustomLinkRendererService.render(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(markdownCustomReferenceRendererService.render(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        var delivery = courseNotificationEmailService.sendCourseNotification(notification, List.of(CourseNotificationRecipientDTO.from(recipient)));
+
+        assertThat(delivery).isCompletedWithValue(null);
+        var contentCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mailSendingService).sendEmailSync(any(), eq("Test Subject"), contentCaptor.capture(), eq(false), eq(true), eq(MailPriority.BULK));
+        assertThat(contentCaptor.getValue()).contains("href=\"https://example.org/logo/favicon.svg\"", "src=\"https://example.org/public/images/logo.png\"",
+                "href=\"https://example.org/courses/123/settings\"").doesNotContain("null/");
     }
 
     @Test

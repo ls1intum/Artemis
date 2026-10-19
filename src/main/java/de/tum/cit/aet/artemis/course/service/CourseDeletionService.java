@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
+import de.tum.cit.aet.artemis.communication.service.FaqService;
 import de.tum.cit.aet.artemis.course.domain.CourseOperationType;
 import de.tum.cit.aet.artemis.course.dto.CourseSummaryDTO;
 import de.tum.cit.aet.artemis.course.repository.CourseRepository;
@@ -38,7 +39,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.SearchableEntitySchema;
 import de.tum.cit.aet.artemis.globalsearch.service.SearchableEntityWeaviateService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
-import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.notification.repository.CourseNotificationRepository;
 import de.tum.cit.aet.artemis.notification.repository.UserCourseNotificationSettingPresetRepository;
@@ -83,7 +83,7 @@ public class CourseDeletionService {
 
     private final Optional<IrisSettingsApi> irisSettingsApi;
 
-    private final Optional<PyrisFaqApi> pyrisFaqApi;
+    private final FaqService faqService;
 
     private final Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi;
 
@@ -122,7 +122,7 @@ public class CourseDeletionService {
     public CourseDeletionService(ExerciseDeletionService exerciseDeletionService, ExerciseRepository exerciseRepository, Optional<LectureApi> lectureApi,
             Optional<TutorialGroupApi> tutorialGroupApi, Optional<ExamDeletionApi> examDeletionApi, Optional<ExamRepositoryApi> examRepositoryApi,
             GradingScaleRepository gradingScaleRepository, Optional<CompetencyRelationApi> competencyRelationApi, Optional<PrerequisitesApi> prerequisitesApi,
-            Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<PyrisFaqApi> pyrisFaqApi,
+            Optional<LearnerProfileApi> learnerProfileApi, Optional<IrisSettingsApi> irisSettingsApi, FaqService faqService,
             Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseNotificationRepository courseNotificationRepository,
             ConversationRepository conversationRepository, FaqRepository faqRepository, CourseRepository courseRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             UserCourseNotificationSettingPresetRepository userCourseNotificationSettingPresetRepository,
@@ -142,7 +142,7 @@ public class CourseDeletionService {
         this.prerequisitesApi = prerequisitesApi;
         this.learnerProfileApi = learnerProfileApi;
         this.irisSettingsApi = irisSettingsApi;
-        this.pyrisFaqApi = pyrisFaqApi;
+        this.faqService = faqService;
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.courseNotificationRepository = courseNotificationRepository;
         this.conversationRepository = conversationRepository;
@@ -511,9 +511,9 @@ public class CourseDeletionService {
         // 2. Provide a single REST endpoint to delete all ingested data for a course at once (preferred)
         // See: https://github.com/ls1intum/edutelligence/blob/main/iris/src/iris/pipeline/faq_ingestion_pipeline.py
         var faqs = faqRepository.findAllByCourseId(courseId);
-        pyrisFaqApi.ifPresent(api -> faqs.forEach(api::deleteFaq));
         searchableEntityWeaviateService.ifPresent(service -> faqs.forEach(faq -> service.deleteEntityAsync(SearchableEntitySchema.TypeValues.FAQ, faq.getId())));
         faqRepository.deleteAllByCourseId(courseId);
+        faqs.forEach(faq -> faqService.deleteFaqInPyris(faq.getId(), courseId));
     }
 
     /**

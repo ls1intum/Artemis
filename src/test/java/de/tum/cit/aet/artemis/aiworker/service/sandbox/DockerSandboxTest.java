@@ -89,6 +89,20 @@ class DockerSandboxTest {
         when(dockerClient.startContainerCmd("container-1")).thenReturn(startContainerCmd);
     }
 
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = { "", " ", "\t\n" })
+    void createSessionRejectsMissingImageIdBeforeCreatingContainer(String imageId) {
+        org.mockito.Mockito.doReturn(imageId).when(inspectImageResponse).getId();
+        DockerSandboxService service = new DockerSandboxService(dockerClient, sandboxPolicy("worker-1", IMAGE_ID, "runc", 1024 * 1024 * 1024, 100_000, 128));
+
+        assertThatExceptionOfType(SandboxUnavailableException.class).isThrownBy(service::createSession).withMessage("Interactive sandbox image inspection returned no image ID");
+
+        verify(inspectImageCmd).close();
+        verify(dockerClient, never()).createContainerCmd(any());
+        verify(dockerClient, never()).startContainerCmd(any());
+    }
+
     @Test
     void createSession_enforcesNoNetworkAndSandboxHardening() {
         DockerSandboxService service = new DockerSandboxService(dockerClient, sandboxPolicy("worker-1", IMAGE_ID, "runc", 1024 * 1024 * 1024, 100_000, 128));

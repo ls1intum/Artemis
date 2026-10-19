@@ -5,13 +5,13 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { UMLDiagramType, UMLModel, importDiagram } from '@tumaet/apollon';
-import { CompetencySelectionPrimengComponent } from 'app/atlas/shared/competency-selection-primeng/competency-selection-primeng.component';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/calendar/shared/service/calendar.service';
 import { CourseManagementService } from 'app/course/manage/services/course-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
-import { ExerciseTitleChannelNamePrimengComponent } from 'app/exercise/exercise-title-channel-name-primeng/exercise-title-channel-name-primeng.component';
+import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
@@ -72,13 +72,13 @@ import { ExerciseGroupDateNoticeComponent } from 'app/exercise/exercise-group-da
         TranslateDirective,
         DocumentationButtonComponent,
         FormStatusBarComponent,
-        ExerciseTitleChannelNamePrimengComponent,
+        ExerciseTitleChannelNameComponent,
         HelpIconComponent,
         CategorySelectorPrimengComponent,
         DifficultyPickerComponent,
         TeamConfigFormGroupComponent,
         MarkdownEditorMonacoComponent,
-        CompetencySelectionPrimengComponent,
+        CompetencySelectionComponent,
         ModelingEditorComponent,
         ModelingEditorBottomCenterDirective,
         ModelingEditorTopLeftDirective,
@@ -117,7 +117,7 @@ export class ModelingExerciseUpdateComponent implements OnDestroy, OnInit {
     private readonly languageChange = toSignal(this.translateService.onLangChange, { initialValue: undefined });
     timelineStatus = signal<TimelineStatus>({ valid: true, empty: false, invalidItems: [] });
 
-    readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNamePrimengComponent);
+    readonly exerciseTitleChannelNameComponent = viewChild(ExerciseTitleChannelNameComponent);
     readonly modelingEditor = viewChild(ModelingEditorComponent);
     readonly gradingInstructionsDetails = viewChild(GradingInstructionsDetailsComponent);
 

@@ -392,6 +392,12 @@ A transaction boundary may only be declared inside a repository, and in practice
 query that needs one. `@Transactional`, `TransactionTemplate` and `PlatformTransactionManager` are not
 allowed in services or controllers.
 
+The one other case is a read-only transaction on a repository default method that assembles one graph from
+several selects, so that they share a session and an entity the first one read is found in it by the others
+instead of being read again; see [Reading an exercise reads its course](/developer/guidelines/database#reading-an-exercise-reads-its-course).
+It writes nothing and takes no lock, and it is as short as the selects it wraps, because it ends with the
+repository method and never spans a remote call.
+
 Two architecture tests enforce this over the whole of production code, with no exception list.
 `ArchitectureTest.testTransactionBoundariesOnlyInRepositories` requires that a `@Transactional` method be
 declared in a repository interface and that no class outside one carries the annotation.

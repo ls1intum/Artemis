@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.Internal;
 import de.tum.cit.aet.artemis.core.service.featureusage.FeatureUsage;
 import de.tum.cit.aet.artemis.core.service.featureusage.UserFeature;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
+import de.tum.cit.aet.artemis.iris.exception.IrisVideoSourceUnavailableException;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisPreparedLectureIngestionJobDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
@@ -36,6 +37,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.ProcessingPhase;
 import de.tum.cit.aet.artemis.lecture.dto.ClaimedIngestionUnitDTO;
 
 /**
@@ -111,7 +113,14 @@ public class PyrisInternalIngestionWorkerResource {
             }
             PyrisPreparedLectureIngestionJobDTO prepared;
             try {
-                prepared = pyrisWebhookService.prepareLectureUnitIngestion(unit, claim.contentFingerprint(), claim.forceReingest());
+                prepared = pyrisWebhookService.prepareLectureUnitIngestion(unit, claim.contentFingerprint(), claim.fingerprintWithoutVideo(), claim.forceReingest());
+            }
+            catch (IrisVideoSourceUnavailableException e) {
+                // The unit's only content is a video that cannot be resolved right now. Retried later under its own error key, which the
+                // background intake does not read as a sign that Iris is down.
+                log.info("Claimed unit {} has only a video that cannot be resolved right now, retrying later", claim.lectureUnitId());
+                processingStateCallbackApi.get().failClaimedUnitVideoUnavailable(claim.lectureUnitId(), claim.claimToken());
+                continue;
             }
             catch (Exception e) {
                 // Isolate each claimed item: claimUnitsForWorker already claimed the whole batch, so
@@ -120,8 +129,7 @@ public class PyrisInternalIngestionWorkerResource {
                 // prepareLectureUnitIngestion registers its job token only after this step succeeds
                 // (see PyrisWebhookService#prepareLectureAdditionJob), so a failure here never leaks
                 // one. The failure is charged to the claim, so an error that repeats runs out of retries
-                // instead of being released and re-claimed for free. A video link that cannot be resolved
-                // right now (TUM Live unreachable) fails here as well and is retried later.
+                // instead of being released and re-claimed for free.
                 log.error("Failed to prepare claimed unit {} for the worker: {}", claim.lectureUnitId(), e.getMessage());
                 processingStateCallbackApi.get().failClaimedUnitPreparation(claim.lectureUnitId(), claim.claimToken());
                 continue;
@@ -130,7 +138,10 @@ public class PyrisInternalIngestionWorkerResource {
                 processingStateCallbackApi.get().markClaimedUnitSkipped(claim.lectureUnitId(), claim.claimToken());
                 continue;
             }
-            if (!processingStateCallbackApi.get().activateClaimedJob(claim.lectureUnitId(), prepared.jobToken(), claim.targetPhase(), claim.contentFingerprint(), request.bootId(),
+            // Activate with what the payload carries: the fingerprint Iris stamps (without the video when it could not be resolved), and no
+            // transcription phase for a run that has no video to transcribe.
+            ProcessingPhase targetPhase = prepared.includesVideo() ? claim.targetPhase() : ProcessingPhase.INGESTING;
+            if (!processingStateCallbackApi.get().activateClaimedJob(claim.lectureUnitId(), prepared.jobToken(), targetPhase, prepared.contentFingerprint(), request.bootId(),
                     claim.claimToken())) {
                 // The claim lapsed between claiming and preparing (released, re-claimed by a newer request, or already
                 // activated). A job the ledger does not track must not be handed to the worker. The token registered

@@ -22,7 +22,7 @@ system, and neither of the last two counts as use. The interaction follows from 
 `@UsageInteraction` overrides it; every override is listed at the end. See
 [Feature Usage Analysis](/developer/feature-usage) for how the tracking works.
 
-Currently 20 product areas, 148 features, 1072 REST endpoints in 28 modules, and 62 interaction overrides.
+Currently 20 product areas, 152 features, 1086 REST endpoints in 29 modules, and 62 interaction overrides.
 
 ## Courses
 
@@ -847,6 +847,7 @@ Also recorded outside REST by `LocalVCUsageTrackingService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
+| communication | `FaqImportResource` | 1 | 1 | 0 | 0 |
 | communication | `FaqResource` | 3 | 5 | 0 | 0 |
 
 ## Notifications
@@ -1038,7 +1039,6 @@ Also recorded outside REST by `CourseNotificationService`.
 
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
-| communication | `FaqResource` | 1 | 0 | 0 | 0 |
 | iris | `IrisResource` | 0 | 1 | 0 | 0 |
 | iris | `PyrisInternalStatusUpdateResource` | 0 | 0 | 0 | 1 |
 
@@ -1087,6 +1087,30 @@ Also recorded outside REST by `AthenaFeedbackSuggestionsService`.
 | Module | Resource | Actions | Views | Automatic | System |
 |--------|----------|--------:|------:|----------:|-------:|
 | hyperion | `HyperionCodeGenerationResource` | 1 | 0 | 1 | 0 |
+
+### AI exercise generation
+
+`HYPERION_EXERCISE_GENERATION`: Generating a whole programming exercise from a brief or selected review feedback.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `HyperionExerciseGenerationResource` | 4 | 4 | 0 | 0 |
+
+### AI generation monitoring
+
+`HYPERION_GENERATION_MONITORING`: Inspecting and stopping whole-exercise generation jobs.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `AdminHyperionGenerationMonitoringResource` | 1 | 1 | 0 | 0 |
+
+### AI generation recovery
+
+`HYPERION_GENERATION_RECOVERY`: Inspecting and releasing blocked exercise mutation slots.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| hyperion | `AdminHyperionGenerationResource` | 1 | 1 | 0 | 0 |
 
 ### AI exercise variants
 
@@ -1322,6 +1346,14 @@ Also recorded outside REST by `ContinuousPlagiarismControlService`.
 |--------|----------|--------:|------:|----------:|-------:|
 | admin | `AdminBuildJobQueueResource` | 9 | 9 | 0 | 0 |
 | localvc | `PublicBuildAgentAddressResource` | 0 | 0 | 0 | 1 |
+
+### AI workers
+
+`AI_WORKERS`: Checking the status and capacity of AI workers.
+
+| Module | Resource | Actions | Views | Automatic | System |
+|--------|----------|--------:|------:|----------:|-------:|
+| aiworker | `AdminAiWorkerResource` | 0 | 1 | 0 | 0 |
 
 ## Administration and operations
 

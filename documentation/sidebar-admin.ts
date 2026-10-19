@@ -26,6 +26,7 @@ const sidebars: SidebarsConfig = {
                 'production-setup/multiple-artemis-instances',
             ],
         },
+        'aiworker',
         'hyperion',
         'deimos',
         'adaptive-learning',
