@@ -40,7 +40,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
                     <span jhiTranslate="artemisApp.exerciseManagement.action.createVariantWithAi"></span>
                 </tumaet-ui-button>
                 @if (blocker(); as reason) {
-                    <span class="text-sm text-muted" role="status" [jhiTranslate]="reason" data-testid="create-variant-ai-reason"></span>
+                    <span class="text-sm text-muted-color" role="status" [jhiTranslate]="reason" data-testid="create-variant-ai-reason"></span>
                 }
                 @if (canRetry()) {
                     <tumaet-ui-button severity="secondary" variant="text" size="small" (clicked)="generationCapabilities.reload()" data-testid="create-variant-ai-retry">

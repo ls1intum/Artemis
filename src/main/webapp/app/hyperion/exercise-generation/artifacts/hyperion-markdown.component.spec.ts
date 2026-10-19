@@ -200,7 +200,7 @@ describe('HyperionMarkdownComponent', () => {
             const host = render('<div style="position:fixed;width:100vw;height:100vh">overlay</div>');
             const style = getComputedStyle(host.querySelector('[data-slot="prose"]')!);
 
-            // jsdom checks the CSS contract, not layout. Browser hit-testing verifies that paint cannot escape.
+            // jsdom checks these CSS declarations, not their effect on browser layout.
             expect(style.contain).toBe('paint');
             expect(style.overflow).toBe('auto');
         });

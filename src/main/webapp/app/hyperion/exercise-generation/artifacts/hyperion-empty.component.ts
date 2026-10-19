@@ -8,8 +8,7 @@ import { ArtemisTranslatePipe } from 'app/foundation/pipes/artemis-translate.pip
     selector: 'jhi-hyperion-empty',
     template: `
         <tumaet-ui-empty-state
-            [class.p-4]="size() === 'small'"
-            [class.p-6]="size() === 'medium'"
+            class="p-6"
             variant="plain"
             [icon]="icon()"
             [title]="titleKey() | artemisTranslate: titleParams()"
@@ -27,5 +26,4 @@ export class HyperionEmptyComponent {
     readonly descriptionKey = input<string | undefined>();
     readonly descriptionParams = input<Record<string, unknown> | undefined>();
     readonly icon = input<IconDefinition | undefined>();
-    readonly size = input<'small' | 'medium'>('medium');
 }

@@ -256,8 +256,6 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
         this.reviewCommentService.toggleThreadFeedbackSelection(this.thread().id);
     }
 
-    /** Adapts the exercise from this thread: it joins the shared feedback selection and the owning editor opens the adapt dialog. */
-
     /**
      * Resolves all threads in the current thread group.
      */

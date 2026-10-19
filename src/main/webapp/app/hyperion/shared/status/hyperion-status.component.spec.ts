@@ -54,10 +54,6 @@ describe('HyperionStatusComponent', () => {
         }
     });
 
-    // The dot's shape and its pulse are pure CSS driven by `data-state`, and jsdom evaluates neither `@media
-    // (prefers-reduced-motion)` nor `var()` substitution. The visible contract — `neutral` filled, `queued` a ring,
-    // `unknown` a dashed ring, and only `queued` and `running` animating — is asserted in a real browser by the
-    // `StateShapes` play function of the status dot story.
     it('keeps one indicator element whatever the state is', () => {
         for (const state of ['queued', 'running', 'success', 'warning', 'danger', 'neutral', 'unknown'] as const) {
             withState(state);

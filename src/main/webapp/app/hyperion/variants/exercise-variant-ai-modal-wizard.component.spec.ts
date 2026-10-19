@@ -1168,6 +1168,7 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
     it('does not attach an old account response to the new account', () => {
         component.placementChoice.set('standalone');
         component.startGeneration();
+        expect(startProgramming).toHaveBeenCalledOnce();
         identity.set({ login: 'another-instructor' });
         started.next({ jobId: 'run', exerciseId: 81 });
         expect(track).not.toHaveBeenCalled();
@@ -1195,6 +1196,7 @@ describe('ExerciseVariantAiModalWizardComponent (shared programming authoring)',
     it('detaches a late response after destruction', () => {
         component.placementChoice.set('standalone');
         component.startGeneration();
+        expect(startProgramming).toHaveBeenCalledOnce();
         fixture.destroy();
         started.next({ jobId: 'run', exerciseId: 81 });
         expect(track).not.toHaveBeenCalled();

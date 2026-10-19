@@ -115,8 +115,6 @@
 @source './app/shared-ui/components/buttons/copy-to-clipboard-button';
 @source './app/quiz/manage/apollon-diagrams';
 
-/* AI exercise variant generation: the navbar progress tray and the wizard modal. */
-@source './app/core/navbar/variant-generation-tray';
 @source './app/account';
 @source './app/course/manage/update';
 @source './app/assessment/shared/assessment-dashboard';
@@ -216,11 +214,6 @@
     --tumaet-ui-state-warning-contrast: var(--artemis-alert-warning-background);
     --tumaet-ui-state-info: var(--artemis-alert-info-color);
     --tumaet-ui-state-info-contrast: var(--artemis-alert-info-background);
-}
-
-/* Keep usage labels readable on the page background. */
-.hyperion-run-detail {
-    --p-text-muted-color: var(--body-color);
 }
 
 /* Keep navbar trigger colors local; portalled content retains the body theme. */
